@@ -9,7 +9,7 @@ IndexCreator::IndexCreator()
     kmerExtractor = new KmerExtractor();
 }
 
-void IndexCreator::takeThisSequenceFile(char * referenceFileName, char * outputFileName)
+void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileName)
 {
     string buffer;
     string forwardRead;
@@ -17,11 +17,11 @@ void IndexCreator::takeThisSequenceFile(char * referenceFileName, char * outputF
     string reads[2];
     ExtractStartPoint ESP = {0 ,0};
     size_t bufferIdx = 0;
-    ifstream targetFile(referenceFileName);
+    //FILE * seqFILE = fopen(referenceFileName,"w");
+    //ifstream targetFile(targetFile);
 
 
     Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
-    //KmerInfo * infoBuffer = (KmerInfo *)malloc(sizeof(KmerInfo) * kmerBufSize);
 
     getline(targetFile, buffer);
     int seqID = 1;
@@ -174,4 +174,8 @@ void IndexCreator::writeInfo(KmerInfo * entryToWrite, FILE * infoFile, KmerInfo 
 void IndexCreator::flushInfoBuf(KmerInfo * buffer, FILE * infoFile, size_t & localBufIdx ) {
     fwrite(buffer, sizeof(KmerInfo), localBufIdx, infoFile);
     localBufIdx = 0;
+}
+int IndexCreator::getNumOfFlush()
+{
+    return numOfFlush;
 }

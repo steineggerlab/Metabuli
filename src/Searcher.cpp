@@ -85,8 +85,8 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
     int perfect = 0;
 
     sort(kmerBuffer, kmerBuffer + bufferIdx , [=](Kmer x, Kmer y) { return x.ADkmer < y.ADkmer; });
-    cout<<"first after sort : "<<kmerBuffer[0].ADkmer<<endl;
-    cout<<"last  after sort : "<<kmerBuffer[bufferIdx-2].ADkmer<<endl;
+//    cout<<"first after sort : "<<kmerBuffer[0].ADkmer<<endl;
+//    cout<<"last  after sort : "<<kmerBuffer[bufferIdx-1].ADkmer<<endl;
     vector<matchedKmer> matchedKmerList;
     nextTarget = getNextTargetKmer(0, targetDiffIdxList.data, diffIdxPos);
 
@@ -101,12 +101,10 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
         {
 
             lookingTarget = nextTarget;
-            //cout<<lookingTarget<<"here"<<endl;
             lookingTargetPos = diffIdxPos;
             nextTarget = getNextTargetKmer(lookingTarget, targetDiffIdxList.data, diffIdxPos);
 
             if((lookingTarget & marker) == (lookingQuery & marker)) {
-                if (lookingTarget == lookingQuery) perfect++;
                 matchCount++;
                 matchedKmer temp = {lookingTarget, lookingQuery, kmerBuffer[i].info.sequenceID,
                                     targetInfoList.data[j].sequenceID,
@@ -156,7 +154,6 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
         diffIdxPos = lastFirstDiffIdxPos;
     }
     int asdd = matchedKmerList.size();
-    cout<<"asdd "<<asdd<<endl;
     cout<<"query count                          : "<<queryCount<<endl;
     cout<<"Total match count                    : "<< matchCount <<endl;
     cout<<"mutipleMatch in AA level             : "<< multipleMatch << endl;
@@ -166,12 +163,12 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
         if(matchedKmerList[i].hammingDistance == 0)
             pm++;
     }
-    cout<<"matches in DNA level                 : "<<pm<<" "<<perfect;
+    cout<<"matches in DNA level                 : "<<pm;
 
 }
 uint64_t Searcher::getNextTargetKmer(uint64_t lookingTarget, const uint16_t* targetDiffIdxList, size_t & diffIdxPos)
 {
-    uint16_t fragment = 0;
+    uint16_t fragment;
     uint64_t diffIn64bit = 0;
     for(int i = 0; i < 5; i++)
     {

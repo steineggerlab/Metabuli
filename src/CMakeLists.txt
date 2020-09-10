@@ -1,5 +1,5 @@
 include_directories(../lib2)
-link_directories(../build/lib2)
+#link_directories(../build/lib2)
 
 add_executable(ADclassifier2
         main.cpp
@@ -15,6 +15,7 @@ add_executable(ADclassifier2
         printBinary.cpp
         printBinary.h
         Searcher.cpp
-        Searcher.h )
+        Searcher.h
+        createTargetDB.cpp createTargetDB.h)
 
 target_link_libraries(ADclassifier2 lib2 )

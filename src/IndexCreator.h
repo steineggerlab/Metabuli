@@ -24,7 +24,7 @@ class IndexCreator{
 private:
     size_t availableMemory;
   //  char * outPath;
-    size_t numOfFlush=0;
+    int numOfFlush=0;
     KmerExtractor * kmerExtractor;
 
 
@@ -38,7 +38,8 @@ private:
 public:
 
     IndexCreator();
-    void takeThisSequenceFile(char * targetFile, char * outputFileName);
+    int getNumOfFlush();
+    void startIndexCreating(ifstream & targetFile, char * outputFileName);
     void writeKmerDiff(uint64_t lastKmer, uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx );
     void writeInfo(KmerInfo * entryToWrite, FILE * infoFile, KmerInfo * infoBuffer, size_t & infoBufferIdx);
     void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
