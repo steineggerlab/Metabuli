@@ -10,7 +10,7 @@
 #include "printBinary.h"
 
 #define kmerLength 8
-#define kmerBufSize 250000000
+#define kmerBufSize1 2500
 #define nuc2int(x) (x & 6u)>>1u
 
 using namespace std;

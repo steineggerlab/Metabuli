@@ -143,7 +143,7 @@ ExtractStartPoint KmerExtractor::fillKmerBuffer(const string * dnaSeq, Kmer * km
             kmerList[kmerBufferIdx].info.pos = startOfKmer;
             kmerBufferIdx++;
 
-            if(kmerBufferIdx == kmerBufSize)
+            if(kmerBufferIdx == kmerBufSize1)
             {
                 ExtractStartPoint ESP = {frame, startOfKmer + 1};
                 return ESP;
@@ -154,7 +154,8 @@ ExtractStartPoint KmerExtractor::fillKmerBuffer(const string * dnaSeq, Kmer * km
         startOfKmer = 0;
     }
 
-    return defaultStartPoint;
+    ExtractStartPoint zero{0,0};
+    return zero;
 }
 
 uint64_t KmerExtractor::addDNAInfo(uint64_t kmer, const string& read, const int startOfKmer, const int frame)
