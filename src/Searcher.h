@@ -11,13 +11,18 @@
 #include "Kmer.h"
 #include "KmerExtractor.h"
 #include "printBinary.h"
+#include "common.h"
 using namespace std;
 
 class Searcher
 {
 private:
     KmerExtractor * kmerExtractor;
-
+    size_t queryCount;
+    size_t totalMatchCount;
+    size_t multipleMatchCount;
+    size_t perfectMatchCount;
+    vector<matchedKmer> matchedKmerList;
     uint8_t hammingLookup[6][6]= {
             {0, 1, 1, 1, 2, 1},
             {1, 0, 1, 1, 2, 2},

@@ -4,7 +4,8 @@
 
 #include "Searcher.h"
 
-Searcher::Searcher(){ kmerExtractor = new KmerExtractor();}
+Searcher::Searcher() : queryCount(0), multipleMatchCount(0), totalMatchCount(0), perfectMatchCount(0)
+{ kmerExtractor = new KmerExtractor();}
 
 void Searcher::startSearch(char * queryFileName, char * targetDiffIdxFileName, char * targetInfoFileName)
 {
@@ -70,24 +71,23 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
     size_t lookingTargetPos = 0;
     uint64_t nextTarget = 0;
     uint8_t hammingDistance = 0;
-    int matchCount  = 0;
+
     int isMatched;
-    int queryCount = 0;
+
     uint64_t marker= ~0 & ~16777215;
     uint64_t lastFirstMatch = 0;
     long lastFirstDiffIdxPos = 0;
-    int multipleMatch = 0;
+
     size_t maxTarget = targetInfoList.fileSize / sizeof(KmerInfo);
 
     size_t diffIdxPos = 0;
     int lastFirstTargetIdx = 0;
 
-    int perfect = 0;
 
     sort(kmerBuffer, kmerBuffer + bufferIdx , [=](Kmer x, Kmer y) { return x.ADkmer < y.ADkmer; });
 //    cout<<"first after sort : "<<kmerBuffer[0].ADkmer<<endl;
 //    cout<<"last  after sort : "<<kmerBuffer[bufferIdx-1].ADkmer<<endl;
-    vector<matchedKmer> matchedKmerList;
+
     nextTarget = getNextTargetKmer(0, targetDiffIdxList.data, diffIdxPos);
 
     for(size_t i = 0; i < bufferIdx; i++)
@@ -105,7 +105,7 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
             nextTarget = getNextTargetKmer(lookingTarget, targetDiffIdxList.data, diffIdxPos);
 
             if((lookingTarget & marker) == (lookingQuery & marker)) {
-                matchCount++;
+                totalMatchCount++;
                 matchedKmer temp = {lookingTarget, lookingQuery, kmerBuffer[i].info.sequenceID,
                                     targetInfoList.data[j].sequenceID,
                                     kmerBuffer[i].info.pos - targetInfoList.data[j].pos,
@@ -129,7 +129,7 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
 //                    cout<<"query : "<<lookingQuery<<endl;
 //                    cout<<"target: "<<lookingTarget<<endl;
 //                    cout<<"next  : "<<nextTarget<<endl;
-                    multipleMatch++;
+                    multipleMatchCount++;
                 }
             }
 
@@ -140,11 +140,11 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
         }
         if((nextTarget & marker) == (lookingQuery & marker))
         {
-            if(nextTarget == lookingQuery) perfect ++;
+            if(nextTarget == lookingQuery) perfectMatchCount++;
             cout<<queryCount<<"last"<<endl;
             cout<<"query : "<<lookingQuery<<endl;
             cout<<"target: "<<nextTarget<<endl;
-            matchCount++;
+            totalMatchCount++;
             matchedKmer temp = {nextTarget, lookingQuery, kmerBuffer[i].info.sequenceID, targetInfoList.data[maxTarget-1].sequenceID,
                                 kmerBuffer[i].info.pos - targetInfoList.data[maxTarget-1].pos,
                                 getHammingDistance(lookingQuery, nextTarget)};
@@ -153,18 +153,18 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
         nextTarget = lastFirstMatch;
         diffIdxPos = lastFirstDiffIdxPos;
     }
-    int asdd = matchedKmerList.size();
-    cout<<"query count                          : "<<queryCount<<endl;
-    cout<<"Total match count                    : "<< matchCount <<endl;
-    cout<<"mutipleMatch in AA level             : "<< multipleMatch << endl;
-    int pm = 0;
-    for(int i = 0 ; i < asdd; i++)
-    {
-        if(matchedKmerList[i].hammingDistance == 0)
-            pm++;
-    }
-    cout<<"matches in DNA level                 : "<<pm;
 
+    cout<<"query count                          : "<<queryCount<<endl;
+    cout<<"Total match count                    : "<< totalMatchCount <<endl;
+    cout<<"mutipleMatch in AA level             : "<< multipleMatchCount << endl;
+
+//    for(int i = 0 ; i < asdd; i++)
+//    {
+//        if(matchedKmerList[i].hammingDistance == 0)
+//            perfectMatchCount++;
+//    }
+    cout<<"matches in DNA level                 : "<<perfectMatchCount<<endl;
+    bufferIdx = 0;
 }
 uint64_t Searcher::getNextTargetKmer(uint64_t lookingTarget, const uint16_t* targetDiffIdxList, size_t & diffIdxPos)
 {
