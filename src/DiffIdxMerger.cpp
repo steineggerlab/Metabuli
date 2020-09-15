@@ -14,58 +14,104 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
     FILE * mergedDiffFIle = fopen(mergedDiffFileName, "wb");
     FILE * mergedInfoFIle = fopen(mergedInfoFileName, "wb");
 
+    char taxID[100];
+    FILE * taxIdFile = fopen("/Users/kjb/Desktop/ADclassifier/tengenome/taxIDs", "r");
+    vector<int> taxIdList;
+
+    while(feof(taxIdFile) == 0)
+    {
+        fscanf(taxIdFile,"%s",taxID);
+        taxIdList.push_back(atoi(taxID));
+    }
+
     size_t fileCnt = diffIdxFileNames.size();
     size_t leftFile = fileCnt;
     uint64_t lookingKmers[fileCnt];
     KmerInfo lookingInfo[fileCnt];
     size_t diffFileIdx[fileCnt]; for(size_t i = 0; i < fileCnt; i++) diffFileIdx[i] = 0;
+    size_t infoFileIdx[fileCnt]; for(size_t i = 0; i < fileCnt; i++) infoFileIdx[i] = 0;
     size_t idxOfMin;
     struct MmapedData<uint16_t> *diffFileList = new struct MmapedData<uint16_t>[fileCnt];
     struct MmapedData<KmerInfo> *infoFileList = new struct MmapedData<KmerInfo>[fileCnt];
 
     uint16_t * diffBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 250000000); size_t diffBufferIdx = 0;
     KmerInfo * infoBuffer = (KmerInfo *)malloc(sizeof(KmerInfo) * 250000000); size_t infoBufferIdx = 0;
-    uint64_t lastEntry = 0;
+    uint64_t lastWrittenKmer = 0;
+    uint64_t lastKmer = 0;
+    KmerInfo lastInfo;
     size_t maxIdxOfEachFiles[fileCnt];
-
+    size_t rightnumber = 0;
+    //mmap split files
     for (size_t file = 0; file < fileCnt; file++) {
         diffFileList[file] = mmapData<uint16_t>(diffIdxFileNames[file]);
         infoFileList[file] = mmapData<KmerInfo>(infoFileNames[file]);
         maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
+        rightnumber += infoFileList[file].fileSize/sizeof(KmerInfo);
     }
 
     size_t totalKmerCnt = 0;
-    for (size_t file = 0; file < fileCnt; file++) {
-        totalKmerCnt += infoFileList[file].fileSize / sizeof(KmerInfo);
-    }
+    size_t writtenKmerCnt = 0;
 
     // get the first entry
     for(size_t file = 0; file < fileCnt; file++)
     {
         lookingKmers[file] = getNextKmer(0, diffFileList[file], diffFileIdx[file]);
         lookingInfo[file] = infoFileList[file].data[0];
+        infoFileIdx[file] ++;
     }
     idxOfMin = smallest(lookingKmers, fileCnt);
-    lastEntry = lookingKmers[idxOfMin];
+    lastKmer = lookingKmers[idxOfMin];
+    lastInfo = lookingInfo[idxOfMin];
 
-    cre->writeKmerDiff(0, lastEntry, mergedDiffFIle, diffBuffer, diffBufferIdx);
-    cre->writeInfo(&lookingInfo[idxOfMin], mergedInfoFIle, infoBuffer, infoBufferIdx);
-
-    for (size_t i = 0; i < totalKmerCnt - 1; i++)
-    while(leftFile){
-        lookingKmers[idxOfMin] = getNextKmer(lastEntry, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
-        //cout<<diffFileIdx[idxOfMin]<<" "<<maxIdxOfEachFiles[idxOfMin]<<endl;
+    cre->writeKmerDiff(0, lastKmer, mergedDiffFIle, diffBuffer, diffBufferIdx);
+    lastWrittenKmer = lastKmer;
+    ///info바르게 기록되는지 확인할 것
+    cre->writeInfo(&lastInfo, mergedInfoFIle, infoBuffer, infoBufferIdx);
+    totalKmerCnt++;
+    writtenKmerCnt++;
+    size_t intraSpe = 0;
+    size_t interSpe = 0;
+    uint64_t marker= ~0 & ~16777215;
+    ///끝부분 잘 되는지 확인할 것
+    while(1){
+        //update looking K mer
+        lookingKmers[idxOfMin] = getNextKmer(lastKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
+        lookingInfo[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]]; infoFileIdx[idxOfMin] ++;
         if( diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] )
         {
             lookingKmers[idxOfMin] = 18446744073709551615;
             leftFile--;
+            if(leftFile == 0) break;
         }
+        totalKmerCnt ++;
         idxOfMin = smallest(lookingKmers, fileCnt);
+        if(lastKmer == lookingKmers[idxOfMin])
+        {
+            if(taxIdList[lastInfo.sequenceID] == taxIdList[lookingInfo[idxOfMin].sequenceID]){
+                cout<<taxIdList[lastInfo.sequenceID]<<endl;
+                intraSpe ++;
+                continue;
+            }
+            else{
+                lookingKmers[idxOfMin] = getNextKmer(lastKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
+                lookingInfo[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]]; infoFileIdx[idxOfMin] ++;
+                totalKmerCnt ++;
+                idxOfMin = smallest(lookingKmers, fileCnt);
+                lastKmer = lookingKmers[idxOfMin];
+                lastInfo = lookingInfo[idxOfMin];
+                interSpe ++;
+                continue;
+            };
+        }
         //fill buffer with min. k-mer
-        cre->writeKmerDiff(lastEntry, lookingKmers[idxOfMin], mergedDiffFIle, diffBuffer, diffBufferIdx);
-        cre->writeInfo(&lookingInfo[idxOfMin], mergedInfoFIle, infoBuffer, infoBufferIdx);
-        //update last entry
-        lastEntry = lookingKmers[idxOfMin];
+        cre->writeKmerDiff(lastWrittenKmer, lastKmer, mergedDiffFIle, diffBuffer, diffBufferIdx);
+        lastWrittenKmer = lastKmer;
+        cre->writeInfo(&lastInfo, mergedInfoFIle, infoBuffer, infoBufferIdx);
+        writtenKmerCnt++;
+
+        //update last k-mer
+        lastKmer = lookingKmers[idxOfMin];
+        lastInfo = lookingInfo[idxOfMin];
     }
 
     cre->flushInfoBuf(infoBuffer, mergedInfoFIle, infoBufferIdx);
@@ -77,6 +123,12 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
         munmap(diffFileList[file].data, diffFileList[file].fileSize + 1);
         munmap(infoFileList[file].data, infoFileList[file].fileSize + 1);
     }
+    cout<<"please: "<<rightnumber<<endl;
+    cout<<"Creating target DB is done"<<endl;
+    cout<<"Total k-mer count    : "<<totalKmerCnt<<endl;
+    cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
+    cout<<"within a species     : "<<intraSpe<<endl;
+    cout<<"between species      : "<<interSpe<<endl;
 }
 uint64_t DiffIdxMerger::getNextKmer(uint64_t lookingTarget, const struct MmapedData<uint16_t> diffList, size_t & idx)
 {
@@ -103,7 +155,6 @@ size_t DiffIdxMerger::smallest(const uint64_t lookingKmers[], const size_t & fil
 {
     size_t idxOfMin = 0;
     uint64_t min = lookingKmers[0];
-
     for(size_t i = 1; i < fileCnt; i++)
     {
         if(lookingKmers[i] < min)

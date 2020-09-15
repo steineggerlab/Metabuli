@@ -4,5 +4,5 @@
 
 #ifndef ADCLASSIFIER2_COMMON_H
 #define ADCLASSIFIER2_COMMON_H
-#define kmerBufSize 2500
+#define kmerBufSize 20000000
 #endif //ADCLASSIFIER2_COMMON_H

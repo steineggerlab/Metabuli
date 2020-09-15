@@ -9,6 +9,8 @@ IndexCreator::IndexCreator()
     kmerExtractor = new KmerExtractor();
 }
 
+IndexCreator::~IndexCreator() { delete kmerExtractor;}
+
 void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileName)
 {
     string buffer;
@@ -17,24 +19,21 @@ void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileNa
     string reads[2];
     ExtractStartPoint ESP = {0 ,0};
     size_t bufferIdx = 0;
-    //FILE * seqFILE = fopen(referenceFileName,"w");
-    //ifstream targetFile(targetFile);
+
 
 
     Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
-
+    int seqID = 0;
     getline(targetFile, buffer);
-    int seqID = 1;
-
-    /// mmap을 써보자
     while(targetFile)
     {
         getline(targetFile, buffer);
+        //cout<<buffer<<endl;
         if(buffer[0] == '>'){
             reverseComplimentRead = kmerExtractor->reverseCompliment(forwardRead);
             reads[0] = forwardRead; reads[1] = reverseComplimentRead;
             kmerExtractor->dna2aa(forwardRead, reverseComplimentRead);
-
+//            seqID = taxIdList[idIdx]; idIdx++;
             ESP = kmerExtractor->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
             while (ESP.startOfFrame + ESP.frame != 0)
             {
@@ -42,9 +41,9 @@ void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileNa
                 ESP = kmerExtractor->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
             }
             forwardRead.clear();
-            seqID++;
-            continue;
+            seqID ++;
 
+            continue;
         }
         forwardRead.append(buffer);
     }
@@ -52,22 +51,19 @@ void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileNa
     reverseComplimentRead = kmerExtractor->reverseCompliment(forwardRead);
     reads[0] = forwardRead; reads[1] = reverseComplimentRead;
     kmerExtractor->dna2aa(forwardRead, reverseComplimentRead);
+    //seqID = taxIdList[idIdx]; idIdx++;
     ESP = kmerExtractor->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
     while (ESP.startOfFrame + ESP.frame != 0)
     {
         writeTargetFiles(kmerBuffer, bufferIdx, outputFileName);
         ESP = kmerExtractor->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
     }
-    //
-//    for(int i = 0; i <bufferIdx; i++)
-//    {
-//        cout<<kmerBuffer[i].ADkmer<<endl;
-//    }
 
     //flush last buffer
     writeTargetFiles(kmerBuffer, bufferIdx, outputFileName);
     targetFile.close();
     free(kmerBuffer);
+
 }
 
 void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, char * outputFileName)
@@ -75,22 +71,26 @@ void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, char *
     char suffixedDiffIdxFileName[100];
     char suffixedInfoFileName[100];
 
-    sprintf(suffixedDiffIdxFileName,"%s_diffIdx_%zu.txt", outputFileName,numOfFlush);
-    sprintf(suffixedInfoFileName,"%s_info_%zu.txt", outputFileName,numOfFlush);
-
+    sprintf(suffixedDiffIdxFileName,"%s_diffIdx_%zu", outputFileName,numOfFlush);
+    sprintf(suffixedInfoFileName,"%s_info_%zu", outputFileName,numOfFlush);
+    cout<<suffixedInfoFileName<<endl;
 
     FILE * diffIdxFile = fopen(suffixedDiffIdxFileName, "wb");
     FILE * idAndPosFile = fopen(suffixedInfoFileName, "wb");
-    sort(kmerBuffer, kmerBuffer + bufferIdx, [=](Kmer x, Kmer y) { return x.ADkmer < y.ADkmer; });
+    if (diffIdxFile == NULL || idAndPosFile == NULL)
+    {
+        cout<<"Cannot open the file for writing target DB"<<endl;
+        return;
+    }
 
+
+    sort(kmerBuffer, kmerBuffer + bufferIdx, [=](Kmer x, Kmer y) { return x.ADkmer < y.ADkmer; });
     //// make it faster
     for(size_t i = 0 ; i < bufferIdx ; i++)
     {
         fwrite(&kmerBuffer[i].info, sizeof(KmerInfo), 1, idAndPosFile);
     }
-
     writeDiffIndexFile(kmerBuffer, bufferIdx, diffIdxFile);
-
 
     fclose(idAndPosFile);
     bufferIdx = 0;
@@ -112,8 +112,8 @@ void IndexCreator::writeDiffIndexFile(Kmer * kmerBuffer, const size_t & bufferId
     {
         //if(posInTable->ADkmer != entryToWrite->ADkmer){
         writeKmerDiff(lastKmer, kmerBuffer[i].ADkmer, diffIndexFile, kmerLocalBuf, localBufIdx);
-        if((lastKmer & marker) != (kmerBuffer[i].ADkmer & marker))
-       // if(lastKmer != kmerBuffer[i].ADkmer)
+        //if((lastKmer & marker) != (kmerBuffer[i].ADkmer & marker))
+        if(lastKmer != kmerBuffer[i].ADkmer)
         {
             ++distinctKmerCount;
         }

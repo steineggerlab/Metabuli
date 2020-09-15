@@ -8,9 +8,9 @@
 #include <vector>
 #include "Kmer.h"
 #include "printBinary.h"
-
+#include "common.h"
 #define kmerLength 8
-#define kmerBufSize1 2500
+
 #define nuc2int(x) (x & 6u)>>1u
 
 using namespace std;

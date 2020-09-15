@@ -14,9 +14,10 @@
 #include <time.h>
 #include "KmerExtractor.h"
 #include "BitManipulateMacros.h"
+#include "common.h"
 #define kmerLength 8
 
-#define kmerBufSize 250000000
+
 
 using namespace std;
 
@@ -38,6 +39,7 @@ private:
 public:
 
     IndexCreator();
+    ~IndexCreator();
     int getNumOfFlush();
     void startIndexCreating(ifstream & targetFile, char * outputFileName);
     void writeKmerDiff(uint64_t lastKmer, uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx );

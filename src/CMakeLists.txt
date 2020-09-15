@@ -16,6 +16,7 @@ add_executable(ADclassifier2
         printBinary.h
         Searcher.cpp
         Searcher.h
-        createTargetDB.cpp createTargetDB.h)
+        createTargetDB.cpp
+        createTargetDB.h common.h fileUtil.cpp fileUtil.h)
 
 target_link_libraries(ADclassifier2 lib2 )
