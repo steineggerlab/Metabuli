@@ -3,32 +3,43 @@
 #include "DiffIdxMerger.h"
 #include "createTargetDB.h"
 
+int showMenu();
 int main() {
 
-    createTargetDB();
+    //createTargetDB();
 //    std::cout << "Hello, World!" << std::endl;
-//    char * targetFile =  "/Users/kjb/Desktop/ADclassifier/test/queryHIV.txt";
-//    char * outputFileName = "/Users/kjb/Desktop/ADclassifier/test/test";
+//    char * targetFile =  "/Users/kjb/Desktop/ADclassifier/tengenome/tengenome.fna";
+//    char * outputFileName = "/Users/kjb/Desktop/ADclassifier/test/test12";
 //
-//    cout<<"github test"<<endl;
 //    IndexCreator cre;
 //    ifstream seqFile;
 //    seqFile.open(targetFile);
 //    cre.startIndexCreating(seqFile, outputFileName);
-//
-//    Searcher searcher;
-//    searcher.startSearch("/Users/kjb/Desktop/ADclassifier/test/queryHIV.txt","/Users/kjb/Desktop/ADclassifier/test/test_diffIdx_0.txt",
-//            "/Users/kjb/Desktop/ADclassifier/test/test_info_0.txt");
 
-//    char * mergedDiffIdx = "/Users/kjb/CLionProjects/ADclassifier2/mergedDiff1.txt";
-//    char * mergedInfo = "/Users/kjb/CLionProjects/ADclassifier2/mergedInfo1.txt";
-//    DiffIdxMerger merger(mergedDiffIdx, mergedInfo);
-//    vector<char*> diffs;
-//    vector<char*> infos;
-//    diffs.push_back("/Users/kjb/CLionProjects/ADclassifier2/ecoli1_diffIdx_0.txt");
-//    diffs.push_back("/Users/kjb/CLionProjects/ADclassifier2/HIV1_diffIdx_0.txt");
-//    infos.push_back("/Users/kjb/CLionProjects/ADclassifier2/ecoli1_info_0.txt");
-//    infos.push_back("/Users/kjb/CLionProjects/ADclassifier2/HIV1_info_0.txt");
-//    merger.mergeTargetFiles(diffs,infos);
+//    Searcher searcher;
+//    searcher.startSearch("/Users/kjb/Desktop/ADclassifier/test/queryHIV.txt","/Users/kjb/Desktop/ADclassifier/test/test1235_diffIdx",
+//            "/Users/kjb/Desktop/ADclassifier/test/test1235_info");
+
+    char * mergedDiffIdx = "/Users/kjb/Desktop/ADclassifier/test/mergedDiff.txt";
+    char * mergedInfo = "/Users/kjb/Desktop/ADclassifier/test/mergedInfo.txt";
+    DiffIdxMerger merger(mergedDiffIdx, mergedInfo);
+    vector<char*> diffs;
+    vector<char*> infos;
+    diffs.push_back("/Users/kjb/Desktop/ADclassifier/test/test11_diffIdx_0");
+    diffs.push_back("/Users/kjb/Desktop/ADclassifier/test/test11_diffIdx_1");
+    diffs.push_back("/Users/kjb/Desktop/ADclassifier/test/test11_diffIdx_2");
+    infos.push_back("/Users/kjb/Desktop/ADclassifier/test/test11_info_0");
+    infos.push_back("/Users/kjb/Desktop/ADclassifier/test/test11_info_1");
+    infos.push_back("/Users/kjb/Desktop/ADclassifier/test/test11_info_2");
+    merger.mergeTargetFiles(diffs,infos);
    return 0;
 }
+
+//
+//int showMenu()
+//{
+//    cout<<"Options"<<endl;
+//    cout<<"1. Create target k-mer Database"<<endl;
+//    cout<<"2. Search query sequences to target DB"<<endl;
+//    cout<<"3. "
+//}

@@ -157,13 +157,14 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
     cout<<"query count                          : "<<queryCount<<endl;
     cout<<"Total match count                    : "<< totalMatchCount <<endl;
     cout<<"mutipleMatch in AA level             : "<< multipleMatchCount << endl;
-
 //    for(int i = 0 ; i < asdd; i++)
 //    {
 //        if(matchedKmerList[i].hammingDistance == 0)
 //            perfectMatchCount++;
 //    }
     cout<<"matches in DNA level                 : "<<perfectMatchCount<<endl;
+
+
     bufferIdx = 0;
 }
 uint64_t Searcher::getNextTargetKmer(uint64_t lookingTarget, const uint16_t* targetDiffIdxList, size_t & diffIdxPos)

@@ -51,13 +51,13 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
 
     size_t totalKmerCnt = 0;
     size_t writtenKmerCnt = 0;
-
     // get the first entry
     for(size_t file = 0; file < fileCnt; file++)
     {
         lookingKmers[file] = getNextKmer(0, diffFileList[file], diffFileIdx[file]);
         lookingInfo[file] = infoFileList[file].data[0];
         infoFileIdx[file] ++;
+        totalKmerCnt ++;
     }
     idxOfMin = smallest(lookingKmers, fileCnt);
     lastKmer = lookingKmers[idxOfMin];
@@ -66,12 +66,17 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
     cre->writeKmerDiff(0, lastKmer, mergedDiffFIle, diffBuffer, diffBufferIdx);
     lastWrittenKmer = lastKmer;
     ///info바르게 기록되는지 확인할 것
-    cre->writeInfo(&lastInfo, mergedInfoFIle, infoBuffer, infoBufferIdx);
-    totalKmerCnt++;
+    cre->writeInfo(&lastInfo, mergedInfoFIle, infoBuffer, infoBufferIdx);;
     writtenKmerCnt++;
     size_t intraSpe = 0;
     size_t interSpe = 0;
-    uint64_t marker= ~0 & ~16777215;
+
+    int sharedInSpecies = 0;
+    int sharedBwSpecies = 0;
+    int endFlag = 0;
+    int both = 0;
+    int interloss = 0;
+    int intraloss = 0;
     ///끝부분 잘 되는지 확인할 것
     while(1){
         //update looking K mer
@@ -85,29 +90,48 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
         }
         totalKmerCnt ++;
         idxOfMin = smallest(lookingKmers, fileCnt);
-        if(lastKmer == lookingKmers[idxOfMin])
+
+        int asd = 0;
+        while(lastKmer == lookingKmers[idxOfMin])
         {
-            if(taxIdList[lastInfo.sequenceID] == taxIdList[lookingInfo[idxOfMin].sequenceID]){
-                cout<<taxIdList[lastInfo.sequenceID]<<endl;
+            if(taxIdList[lastInfo.sequenceID] == taxIdList[lookingInfo[idxOfMin].sequenceID])
+            {
+                sharedInSpecies = 1;
                 intraSpe ++;
-                continue;
             }
             else{
-                lookingKmers[idxOfMin] = getNextKmer(lastKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
-                lookingInfo[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]]; infoFileIdx[idxOfMin] ++;
-                totalKmerCnt ++;
-                idxOfMin = smallest(lookingKmers, fileCnt);
-                lastKmer = lookingKmers[idxOfMin];
-                lastInfo = lookingInfo[idxOfMin];
+                sharedBwSpecies = 1;
                 interSpe ++;
-                continue;
-            };
+            }
+            lookingKmers[idxOfMin] = getNextKmer(lookingKmers[idxOfMin],diffFileList[idxOfMin],diffFileIdx[idxOfMin]);
+            totalKmerCnt ++;
+            lookingInfo[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]]; infoFileIdx[idxOfMin] ++;
+
+            if( diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] )
+            {
+                lookingKmers[idxOfMin] = 18446744073709551615;
+                leftFile--;
+                if(leftFile == 0)
+                {
+                    endFlag = 1;
+                    break;
+                }
+            }
+            asd++;
+            idxOfMin = smallest(lookingKmers, fileCnt);
         }
-        //fill buffer with min. k-mer
-        cre->writeKmerDiff(lastWrittenKmer, lastKmer, mergedDiffFIle, diffBuffer, diffBufferIdx);
-        lastWrittenKmer = lastKmer;
-        cre->writeInfo(&lastInfo, mergedInfoFIle, infoBuffer, infoBufferIdx);
-        writtenKmerCnt++;
+        if(sharedBwSpecies == 0)
+        {
+            cre->writeKmerDiff(lastWrittenKmer, lastKmer, mergedDiffFIle, diffBuffer, diffBufferIdx);
+            cre->writeInfo(&lastInfo, mergedInfoFIle, infoBuffer, infoBufferIdx);
+            writtenKmerCnt++;
+        }
+        if(endFlag == 1)
+        {
+            break;
+        }
+        sharedBwSpecies = 0;
+        sharedInSpecies = 0;
 
         //update last k-mer
         lastKmer = lookingKmers[idxOfMin];
@@ -126,7 +150,9 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
     cout<<"please: "<<rightnumber<<endl;
     cout<<"Creating target DB is done"<<endl;
     cout<<"Total k-mer count    : "<<totalKmerCnt<<endl;
-    cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
+    cout<<"Written k-mer count  : "<< writtenKmerCnt << endl;
+    cout<<"intra loss           : "<<intraloss<<endl;
+    cout<<"inter loss           : "<<interloss<<endl;
     cout<<"within a species     : "<<intraSpe<<endl;
     cout<<"between species      : "<<interSpe<<endl;
 }
