@@ -29,7 +29,7 @@ vector<char*> createTargetDB()
     int numOfSplits = idxCre.getNumOfFlush();
     char suffixedDiffIdxFileName[numOfSplits][100];
     char suffixedInfoFileName[numOfSplits][100];
-    if (numOfSplits > 8) return mergedFileNames;
+
     if(numOfSplits == 1)
     {
         sprintf(suffixedDiffIdxFileName[0],"%s_diffIdx_0", kmerFileName);

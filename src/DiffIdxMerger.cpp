@@ -74,9 +74,9 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
     int sharedInSpecies = 0;
     int sharedBwSpecies = 0;
     int endFlag = 0;
-    int both = 0;
     int interloss = 0;
     int intraloss = 0;
+    int unique = 0;
     ///끝부분 잘 되는지 확인할 것
     while(1){
         //update looking K mer
@@ -106,7 +106,7 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
             lookingKmers[idxOfMin] = getNextKmer(lookingKmers[idxOfMin],diffFileList[idxOfMin],diffFileIdx[idxOfMin]);
             totalKmerCnt ++;
             lookingInfo[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]]; infoFileIdx[idxOfMin] ++;
-
+            asd++;
             if( diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] )
             {
                 lookingKmers[idxOfMin] = 18446744073709551615;
@@ -117,22 +117,36 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
                     break;
                 }
             }
-            asd++;
+
             idxOfMin = smallest(lookingKmers, fileCnt);
         }
+
         if(sharedBwSpecies == 0)
         {
             cre->writeKmerDiff(lastWrittenKmer, lastKmer, mergedDiffFIle, diffBuffer, diffBufferIdx);
             cre->writeInfo(&lastInfo, mergedInfoFIle, infoBuffer, infoBufferIdx);
             writtenKmerCnt++;
         }
+        if(sharedInSpecies == 1 && sharedBwSpecies == 0)
+        {
+            intraloss += asd;
+        }
+        if(sharedBwSpecies == 1)
+        {
+            interloss += asd + 1;
+        }
+        if( sharedBwSpecies + sharedInSpecies == 0) unique++;
+
         if(endFlag == 1)
         {
             break;
         }
+
+
+
+
         sharedBwSpecies = 0;
         sharedInSpecies = 0;
-
         //update last k-mer
         lastKmer = lookingKmers[idxOfMin];
         lastInfo = lookingInfo[idxOfMin];
@@ -150,11 +164,13 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
     cout<<"please: "<<rightnumber<<endl;
     cout<<"Creating target DB is done"<<endl;
     cout<<"Total k-mer count    : "<<totalKmerCnt<<endl;
-    cout<<"Written k-mer count  : "<< writtenKmerCnt << endl;
+    cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
     cout<<"intra loss           : "<<intraloss<<endl;
     cout<<"inter loss           : "<<interloss<<endl;
     cout<<"within a species     : "<<intraSpe<<endl;
     cout<<"between species      : "<<interSpe<<endl;
+    cout<<"unique               : "<<unique<<endl;
+
 }
 uint64_t DiffIdxMerger::getNextKmer(uint64_t lookingTarget, const struct MmapedData<uint16_t> diffList, size_t & idx)
 {
