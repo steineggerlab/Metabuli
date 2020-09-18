@@ -6,15 +6,15 @@
 int showMenu();
 int main() {
 
-    //createTargetDB();
-    std::cout << "Hello, World!" << std::endl;
-    char * targetFile =  "/Users/kjb/Desktop/ADclassifier/test1/ecoliss.txt";
-    char * outputFileName = "/Users/kjb/Desktop/ADclassifier/test1/test0918";
-
-    IndexCreator cre;
-    ifstream seqFile;
-    seqFile.open(targetFile);
-    cre.startIndexCreating(seqFile, outputFileName);
+    createTargetDB();
+//    std::cout << "Hello, World!" << std::endl;
+//    char * targetFile =  "/Users/kjb/Desktop/ADclassifier/test1/ecoliss.txt";
+//    char * outputFileName = "/Users/kjb/Desktop/ADclassifier/test1/test0918";
+//  /Users/kjb/Desktop/ADclassifier/tengenome/tengenome.fna
+//    IndexCreator cre;
+//    ifstream seqFile;
+//    seqFile.open(targetFile);
+//    cre.startIndexCreating(seqFile, outputFileName);
 
 //    Searcher searcher;
 //    searcher.startSearch("/Users/kjb/Desktop/ADclassifier/test/queryHIV.txt","/Users/kjb/Desktop/ADclassifier/test/test1235_diffIdx",

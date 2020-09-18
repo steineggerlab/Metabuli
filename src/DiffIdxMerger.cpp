@@ -92,21 +92,15 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
         idxOfMin = smallest(lookingKmers, fileCnt);
 
         int asd = 0;
-        while(lastKmer == lookingKmers[idxOfMin])
+        while(taxIdList[lastInfo.sequenceID] == taxIdList[lookingInfo[idxOfMin].sequenceID])
         {
-            if(taxIdList[lastInfo.sequenceID] == taxIdList[lookingInfo[idxOfMin].sequenceID])
-            {
-                sharedInSpecies = 1;
-                intraSpe ++;
-            }
-            else{
-                sharedBwSpecies = 1;
-                interSpe ++;
-            }
-            lookingKmers[idxOfMin] = getNextKmer(lookingKmers[idxOfMin],diffFileList[idxOfMin],diffFileIdx[idxOfMin]);
-            totalKmerCnt ++;
+            if(lastKmer != lookingKmers[idxOfMin]) break;
+
+            lookingKmers[idxOfMin] = getNextKmer(lastKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
             lookingInfo[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]]; infoFileIdx[idxOfMin] ++;
+            totalKmerCnt ++;
             asd++;
+
             if( diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] )
             {
                 lookingKmers[idxOfMin] = 18446744073709551615;
@@ -117,25 +111,16 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
                     break;
                 }
             }
-
             idxOfMin = smallest(lookingKmers, fileCnt);
         }
 
-        if(sharedBwSpecies == 0)
-        {
-            cre->writeKmerDiff(lastWrittenKmer, lastKmer, mergedDiffFIle, diffBuffer, diffBufferIdx);
-            cre->writeInfo(&lastInfo, mergedInfoFIle, infoBuffer, infoBufferIdx);
-            writtenKmerCnt++;
-        }
-        if(sharedInSpecies == 1 && sharedBwSpecies == 0)
-        {
-            intraloss += asd;
-        }
-        if(sharedBwSpecies == 1)
-        {
-            interloss += asd + 1;
-        }
-        if( sharedBwSpecies + sharedInSpecies == 0) unique++;
+
+        cre->writeKmerDiff(lastWrittenKmer, lastKmer, mergedDiffFIle, diffBuffer, diffBufferIdx);
+        lastWrittenKmer = lastKmer;
+        cre->writeInfo(&lastInfo, mergedInfoFIle, infoBuffer, infoBufferIdx);
+        writtenKmerCnt++;
+
+        intraloss += asd;
 
         if(endFlag == 1)
         {
@@ -166,10 +151,10 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
     cout<<"Total k-mer count    : "<<totalKmerCnt<<endl;
     cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
     cout<<"intra loss           : "<<intraloss<<endl;
-    cout<<"inter loss           : "<<interloss<<endl;
-    cout<<"within a species     : "<<intraSpe<<endl;
-    cout<<"between species      : "<<interSpe<<endl;
-    cout<<"unique               : "<<unique<<endl;
+//    cout<<"inter loss           : "<<interloss<<endl;
+//    cout<<"within a species     : "<<intraSpe<<endl;
+//    cout<<"between species      : "<<interSpe<<endl;
+//    cout<<"unique               : "<<unique<<endl;
 
 }
 uint64_t DiffIdxMerger::getNextKmer(uint64_t lookingTarget, const struct MmapedData<uint16_t> diffList, size_t & idx)

@@ -79,7 +79,7 @@ void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, char *
     while(feof(taxIdFile) == 0)
     {
         fscanf(taxIdFile,"%s",taxID);
-        taxIdList.push_back(atoi(taxID));
+        taxIdList.push_back(atol(taxID));
     }
 
     FILE * diffIdxFile = fopen(suffixedDiffIdxFileName, "wb");
@@ -104,8 +104,7 @@ void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, char *
     int endFlag = 0;
     //// make it faster
     for(size_t i = 1 ; i < bufferIdx ; i++) {
-//        while (taxIdList[lookingKmer.info.sequenceID] == taxIdList[kmerBuffer[i].info.sequenceID])
-        while(1){
+        while(taxIdList[lookingKmer.info.sequenceID] == taxIdList[kmerBuffer[i].info.sequenceID]){
             if (lookingKmer.ADkmer != kmerBuffer[i].ADkmer) {
                 break;
             }
@@ -125,6 +124,13 @@ void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, char *
         lastKmer = lookingKmer.ADkmer;
         lookingKmer = kmerBuffer[i];
     }
+    if(!((kmerBuffer[bufferIdx - 2].ADkmer == kmerBuffer[bufferIdx - 1].ADkmer) && (kmerBuffer[bufferIdx - 2].info.sequenceID == kmerBuffer[bufferIdx - 1].info.sequenceID)))
+    {
+        fwrite(&lookingKmer.info, sizeof(KmerInfo), 1, idAndPosFile);
+        write++;
+        writeKmerDiff(lastKmer, lookingKmer.ADkmer, diffIdxFile, kmerLocalBuf, localBufIdx);
+    }
+
 
 
 
