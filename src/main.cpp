@@ -5,20 +5,21 @@
 
 int showMenu();
 int main() {
-
-    createTargetDB();
+  //  createTargetDB();
 //    std::cout << "Hello, World!" << std::endl;
-//    char * targetFile =  "/Users/kjb/Desktop/ADclassifier/test1/ecoliss.txt";
-//    char * outputFileName = "/Users/kjb/Desktop/ADclassifier/test1/test0918";
-//  /Users/kjb/Desktop/ADclassifier/tengenome/tengenome.fna
+//    char * targetFile =  "/Users/kjb/Desktop/ADclassifier/test1/threeHIVs.txt";
+//    char * outputFileName = "/Users/kjb/Desktop/ADclassifier/test1/threeHIVs";
+///Users/kjb/Desktop/ADclassifier/refseq/refseqs.fna
+   //Users/kjb/Desktop/ADclassifier/refseq/taxIDs
+                                           //Users/kjb/Desktop/ADclassifier/test1/refseqs0922
 //    IndexCreator cre;
 //    ifstream seqFile;
 //    seqFile.open(targetFile);
 //    cre.startIndexCreating(seqFile, outputFileName);
-
-//    Searcher searcher;
-//    searcher.startSearch("/Users/kjb/Desktop/ADclassifier/test/queryHIV.txt","/Users/kjb/Desktop/ADclassifier/test/test1235_diffIdx",
-//            "/Users/kjb/Desktop/ADclassifier/test/test1235_info");
+//
+    Searcher searcher;
+    searcher.startSearch("/Users/kjb/Desktop/ADclassifier/refseq/Kingella_kingae_strain_NCTC10529-tax504-GCF_900475905.1_49595_E01_genomic.fna","/Users/kjb/Desktop/ADclassifier/test1/refseqs0922_diffIdx_0",
+            "/Users/kjb/Desktop/ADclassifier/test1/refseqs0922_info_0");
 
 //    char * mergedDiffIdx = "/Users/kjb/Desktop/ADclassifier/test1/mergedDiff.txt";
 //    char * mergedInfo = "/Users/kjb/Desktop/ADclassifier/test1/mergedInfo.txt";

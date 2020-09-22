@@ -9,6 +9,8 @@ vector<char*> createTargetDB()
     IndexCreator idxCre;
     string seqFileName;
     char kmerFileName[100];
+    char taxIdFileName[300];
+    FILE * taxIdFile;
 
     cout<<"Input the directory of a sequence file from which you want to make k-mer DB"<<endl;
     cin >> seqFileName;
@@ -21,9 +23,25 @@ vector<char*> createTargetDB()
         return mergedFileNames;
     }
 
+    cout<<"Input the directory of corresponding taxID list"<<endl;
+    cin>>taxIdFileName;
+
+    if((taxIdFile = fopen(taxIdFileName,"r")) == NULL){
+        cout<<"Cannot open the taxID list file."<<endl;
+        return mergedFileNames;
+    }
+    vector<int> taxIdList; char taxID[100];
+    while(feof(taxIdFile) == 0)
+    {
+        fscanf(taxIdFile,"%s",taxID);
+        taxIdList.push_back(atol(taxID));
+    }
+    fclose(taxIdFile);
+
+
     cout<<"Input the directory where k-mer DB would be created"<<endl;
     cin>>kmerFileName;
-    idxCre.startIndexCreating(seqFile,kmerFileName);
+    idxCre.startIndexCreating(seqFile,kmerFileName,taxIdList);
 
 
     int numOfSplits = idxCre.getNumOfFlush();

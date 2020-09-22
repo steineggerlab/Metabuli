@@ -5,88 +5,94 @@
 #include "Searcher.h"
 
 Searcher::Searcher() : queryCount(0), multipleMatchCount(0), totalMatchCount(0), perfectMatchCount(0)
-{ kmerExtractor = new KmerExtractor();}
+{
+    kmerExtractor = new KmerExtractor();
+    numOfSplit = 0;
+    ESP = {0 ,0};
+}
 
 void Searcher::startSearch(char * queryFileName, char * targetDiffIdxFileName, char * targetInfoFileName)
 {
-    string buffer;
-    string forwardRead;
-    string reverseComplimentRead;
+    string dnaBuffer;
     string reads[2];
-    ExtractStartPoint ESP = {0 ,0};
+
     size_t bufferIdx = 0;
     ifstream queryFile(queryFileName);
     struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName);
     struct MmapedData<KmerInfo> targetInfoList = mmapData<KmerInfo>(targetInfoFileName);
 
+    char taxID[100];
+    vector<int> taxIdList;
+    FILE * taxIdFile = fopen("/Users/kjb/Desktop/ADclassifier/refseq/taxIDs", "r");
+    while(feof(taxIdFile) == 0)
+    {
+        fscanf(taxIdFile,"%s",taxID);
+        taxIdList.push_back(atoi(taxID));
+    }
+    fclose(taxIdFile);
+
     Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
 
-    getline(queryFile, buffer);
+    getline(queryFile, dnaBuffer);
     int seqID = 1;
 
-    /// mmap을 써보자
     while(queryFile)
     {
-        getline(queryFile, buffer);
-        if(buffer[0] == '>'){
-            reverseComplimentRead = kmerExtractor->reverseCompliment(forwardRead);
-            reads[0] = forwardRead; reads[1] = reverseComplimentRead;
-            kmerExtractor->dna2aa(forwardRead, reverseComplimentRead);
-
+        getline(queryFile, dnaBuffer);
+        if(dnaBuffer[0] == '>'){
+            reads[1] = kmerExtractor->reverseCompliment(reads[0]);
+            kmerExtractor->dna2aa(reads[0], reads[1]);
             ESP = kmerExtractor->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
             while (ESP.startOfFrame + ESP.frame != 0)
             {
-                linearSearch(kmerBuffer, bufferIdx, targetDiffIdxList, targetInfoList);
+                linearSearch(kmerBuffer, bufferIdx, targetDiffIdxList, targetInfoList, taxIdList);
+                writeResultFile(matchedKmerList,queryFileName);
                 ESP = kmerExtractor->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
             }
-            forwardRead.clear();
+            reads[0].clear();
             seqID++;
             continue;
         }
-        forwardRead.append(buffer);
+        reads[0].append(dnaBuffer);
     }
     // For last one
-    reverseComplimentRead = kmerExtractor->reverseCompliment(forwardRead);
-    reads[0] = forwardRead; reads[1] = reverseComplimentRead;
-    kmerExtractor->dna2aa(forwardRead, reverseComplimentRead);
+    reads[1] = kmerExtractor->reverseCompliment(reads[0]);
+    kmerExtractor->dna2aa(reads[0], reads[1]);
     ESP = kmerExtractor->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
     while (ESP.startOfFrame + ESP.frame != 0)
     {
-        linearSearch(kmerBuffer, bufferIdx, targetDiffIdxList, targetInfoList);
+        linearSearch(kmerBuffer, bufferIdx, targetDiffIdxList, targetInfoList, taxIdList);
+        writeResultFile(matchedKmerList,queryFileName);
         ESP = kmerExtractor->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
     }
+
     //compare the rest query k-mers with target k-mers
-    linearSearch(kmerBuffer, bufferIdx, targetDiffIdxList, targetInfoList);
+    linearSearch(kmerBuffer, bufferIdx, targetDiffIdxList, targetInfoList, taxIdList);
+    writeResultFile(matchedKmerList,queryFileName);
+
+    cout<<"query count                          : "<<queryCount<<endl;
+    cout<<"Total match count                    : "<<totalMatchCount <<endl;
+    cout<<"mutipleMatch in AA level             : "<<multipleMatchCount << endl;
+    cout<<"matches in DNA level                 : "<<perfectMatchCount<<endl;
+    cout<<"number of closest matches            : "<<matchedKmerList.size()<<endl;
+
 
     queryFile.close();
     free(kmerBuffer);
     munmap(targetDiffIdxList.data, targetDiffIdxList.fileSize + 1);
     munmap(targetInfoList.data, targetInfoList.fileSize + 1);
 }
-void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<KmerInfo> & targetInfoList) {
+void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<KmerInfo> & targetInfoList, const vector<int> & taxIdList) {
 
     cout<<"compare started"<<endl;
-    uint64_t lookingQuery = 0;
-    uint64_t lookingTarget = 0;
-    size_t lookingTargetPos = 0;
-    uint64_t nextTarget = 0;
-    uint8_t hammingDistance = 0;
 
-    int isMatched;
-
-    uint64_t marker= ~0 & ~16777215;
     uint64_t lastFirstMatch = 0;
     long lastFirstDiffIdxPos = 0;
-
     size_t maxTarget = targetInfoList.fileSize / sizeof(KmerInfo);
-
     size_t diffIdxPos = 0;
     int lastFirstTargetIdx = 0;
-
-
+    uint8_t lowestHamming;
     sort(kmerBuffer, kmerBuffer + bufferIdx , [=](Kmer x, Kmer y) { return x.ADkmer < y.ADkmer; });
-//    cout<<"first after sort : "<<kmerBuffer[0].ADkmer<<endl;
-//    cout<<"last  after sort : "<<kmerBuffer[bufferIdx-1].ADkmer<<endl;
 
     nextTarget = getNextTargetKmer(0, targetDiffIdxList.data, diffIdxPos);
 
@@ -95,10 +101,10 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
         /// get next query
         lookingQuery = kmerBuffer[i].ADkmer;
         isMatched=0;
+        lowestHamming = 100;
         queryCount ++;
 
-        for (int j = lastFirstTargetIdx; j < maxTarget - 1; j++)
-        {
+        for (size_t j = lastFirstTargetIdx; j < maxTarget - 1; j++){
 
             lookingTarget = nextTarget;
             lookingTargetPos = diffIdxPos;
@@ -106,14 +112,13 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
 
             if((lookingTarget & marker) == (lookingQuery & marker)) {
                 totalMatchCount++;
-                matchedKmer temp = {lookingTarget, lookingQuery, kmerBuffer[i].info.sequenceID,
-                                    targetInfoList.data[j].sequenceID,
-                                    kmerBuffer[i].info.pos - targetInfoList.data[j].pos,
-                                    getHammingDistance(lookingQuery, lookingTarget)};
-                matchedKmerList.push_back(temp);
-//                cout << queryCount << endl;
-//                cout << "query : " << lookingQuery << endl;
-//                cout << "target: " << lookingTarget << endl;
+                currentHamming =  getHammingDistance(lookingQuery, lookingTarget);
+                if(getHammingDistance(lookingQuery, lookingTarget) < lowestHamming)
+                {
+                    closestKmers.clear();
+                    lowestHamming = currentHamming;
+                }
+                if(currentHamming == lowestHamming) closestKmers.push_back(j);
 
                 if (isMatched == 0) {
                     lastFirstMatch = lookingTarget;
@@ -122,48 +127,41 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
                     isMatched = 1;
                 }
                 if ((nextTarget & marker) != (lookingQuery & marker)) {
+                    int closetMatchCount = closestKmers.size();
+                    for(size_t k  = 0; k < closetMatchCount ; k++ )
+                    {
+                        matchedKmer temp = {kmerBuffer[i].info.sequenceID, targetInfoList.data[closestKmers[k]].sequenceID, taxIdList[targetInfoList.data[closestKmers[k]].sequenceID],
+                                             kmerBuffer[i].info.pos - targetInfoList.data[closestKmers[k]].pos,
+                                            lowestHamming,targetInfoList.data[closestKmers[k]].redundancy};
+                        matchedKmerList.push_back(temp);
+                    }
                     break;
                 }
-                if ((nextTarget & marker) == (lookingQuery & marker)) {
-//                    cout<<"Multiple Match "<<queryCount<<endl;
-//                    cout<<"query : "<<lookingQuery<<endl;
-//                    cout<<"target: "<<lookingTarget<<endl;
-//                    cout<<"next  : "<<nextTarget<<endl;
-                    multipleMatchCount++;
-                }
             }
 
-            if((nextTarget & marker) > (lookingQuery & marker)) {
+            if((lookingTarget & marker) > (lookingQuery & marker)) {
                 break;
             }
-
         }
+
         if((nextTarget & marker) == (lookingQuery & marker))
         {
-            if(nextTarget == lookingQuery) perfectMatchCount++;
-            cout<<queryCount<<"last"<<endl;
-            cout<<"query : "<<lookingQuery<<endl;
-            cout<<"target: "<<nextTarget<<endl;
             totalMatchCount++;
-            matchedKmer temp = {nextTarget, lookingQuery, kmerBuffer[i].info.sequenceID, targetInfoList.data[maxTarget-1].sequenceID,
-                                kmerBuffer[i].info.pos - targetInfoList.data[maxTarget-1].pos,
-                                getHammingDistance(lookingQuery, nextTarget)};
-            matchedKmerList.push_back(temp);
+            if(nextTarget == lookingQuery) perfectMatchCount++;
+            closestKmers.push_back(maxTarget-1);
+            int closetMatchCount = closestKmers.size();
+            for(size_t k  = 0; i < closetMatchCount ; k++ )
+            {
+                matchedKmer temp = {kmerBuffer[i].info.sequenceID, targetInfoList.data[closestKmers[k]].sequenceID, taxIdList[targetInfoList.data[closestKmers[k]].sequenceID],
+                                     kmerBuffer[i].info.pos - targetInfoList.data[closestKmers[k]].pos,
+                                    lowestHamming,targetInfoList.data[closestKmers[k]].redundancy};
+                matchedKmerList.push_back(temp);
+            }
         }
+
         nextTarget = lastFirstMatch;
         diffIdxPos = lastFirstDiffIdxPos;
     }
-
-    cout<<"query count                          : "<<queryCount<<endl;
-    cout<<"Total match count                    : "<< totalMatchCount <<endl;
-    cout<<"mutipleMatch in AA level             : "<< multipleMatchCount << endl;
-//    for(int i = 0 ; i < asdd; i++)
-//    {
-//        if(matchedKmerList[i].hammingDistance == 0)
-//            perfectMatchCount++;
-//    }
-    cout<<"matches in DNA level                 : "<<perfectMatchCount<<endl;
-
 
     bufferIdx = 0;
 }
@@ -197,4 +195,16 @@ uint8_t Searcher::getHammingDistance(uint64_t kmer1, uint64_t kmer2)
         kmer2 >>= 3U;
     }
     return hammingDist;
+}
+void Searcher::writeResultFile(vector<matchedKmer> & matchList, char * queryFileName)
+{
+    char suffixedResultFileName[1000];
+    sprintf(suffixedResultFileName,"%s_result_%zu", queryFileName,numOfSplit);
+    numOfSplit++;
+    cout<<suffixedResultFileName<<endl;
+    FILE * fp = fopen(suffixedResultFileName,"wb");
+    cout<<matchList.size();
+    fwrite(&(matchList[0]), sizeof(matchedKmer), matchList.size(), fp);
+    fclose(fp);
+    matchList.clear();
 }

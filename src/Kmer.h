@@ -8,23 +8,22 @@
 typedef struct KmerInfo {
     int sequenceID;
     int pos;
-    int redundancy;
+    bool redundancy;
 } KmerInfo;
 
 typedef struct Kmer {
     uint64_t ADkmer;
     KmerInfo info;
-    } Kmer;
-
+} Kmer;
 
 typedef struct matchedKmer{
-    uint64_t targetKmer;
-    uint64_t queryKmer;
     int queryID;
-    int targetID;
+    int tragetID;
+    int taxID;
     int posInfo;
     uint8_t hammingDistance;
-}matchedKmer;
+    bool redundancy;
+} __attribute__((packed)) matchedKmer;
 
 //typedef struct diffIdxKmer{
 //    uint16_t * diffIdx;

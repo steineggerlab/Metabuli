@@ -68,14 +68,8 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
     ///info바르게 기록되는지 확인할 것
     cre->writeInfo(&lastInfo, mergedInfoFIle, infoBuffer, infoBufferIdx);;
     writtenKmerCnt++;
-    size_t intraSpe = 0;
-    size_t interSpe = 0;
 
-    int sharedInSpecies = 0;
-    int sharedBwSpecies = 0;
     int endFlag = 0;
-    int interloss = 0;
-    int intraloss = 0;
     int unique = 0;
     ///끝부분 잘 되는지 확인할 것
     while(1){
@@ -120,18 +114,11 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
         cre->writeInfo(&lastInfo, mergedInfoFIle, infoBuffer, infoBufferIdx);
         writtenKmerCnt++;
 
-        intraloss += asd;
-
         if(endFlag == 1)
         {
             break;
         }
 
-
-
-
-        sharedBwSpecies = 0;
-        sharedInSpecies = 0;
         //update last k-mer
         lastKmer = lookingKmers[idxOfMin];
         lastInfo = lookingInfo[idxOfMin];
@@ -150,12 +137,6 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
     cout<<"Creating target DB is done"<<endl;
     cout<<"Total k-mer count    : "<<totalKmerCnt<<endl;
     cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
-    cout<<"intra loss           : "<<intraloss<<endl;
-//    cout<<"inter loss           : "<<interloss<<endl;
-//    cout<<"within a species     : "<<intraSpe<<endl;
-//    cout<<"between species      : "<<interSpe<<endl;
-//    cout<<"unique               : "<<unique<<endl;
-
 }
 uint64_t DiffIdxMerger::getNextKmer(uint64_t lookingTarget, const struct MmapedData<uint16_t> diffList, size_t & idx)
 {
