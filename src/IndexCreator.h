@@ -40,6 +40,7 @@ public:
     ~IndexCreator();
     int getNumOfFlush();
     void startIndexCreating(ifstream & targetFile, char * outputFileName, vector<int> & taxIdList);
+    void startIndexCreating2(ifstream & targetFile, char * outputFileName, vector<int> & taxIdList);
     void writeKmerDiff(uint64_t lastKmer, uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx );
     void writeInfo(KmerInfo * entryToWrite, FILE * infoFile, KmerInfo * infoBuffer, size_t & infoBufferIdx);
     void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);

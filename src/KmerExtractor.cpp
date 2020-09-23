@@ -14,7 +14,7 @@ KmerExtractor::KmerExtractor() {
     }
 
     ///Reverse compliment table
-    iupacReverseComplementTable =
+    iRCT =
             "................................................................"
             ".TVGH..CD..M.KN...YSAABW.R.......tvgh..cd..m.kn...ysaabw.r......"
             "................................................................"
@@ -112,6 +112,80 @@ void KmerExtractor::dna2aa(const string & forward, const string & reverse){
         aaFrames[4].push_back(nuc2aa[nuc2int(reverse[len - 3])][nuc2int(reverse[len - 2])][nuc2int(reverse[len - 1])]);
     }
 }
+void KmerExtractor::dna2aa2(const size_t start, const size_t end, const MmapedData<char> seqFile){
+
+    for(int i = 0 ; i < 6 ; i++){ aaFrames[i].clear(); }
+
+    //int len = forward.length();
+    size_t len = end - start + 1;
+    ///translation from DNA to AA. in each frame
+    for(int i = 0; i < len - 4; i = i+3 )
+    {
+        aaFrames[0].push_back(nuc2aa[nuc2int(seqFile.data[i + start    ])][nuc2int(seqFile.data[i + start + 1])][nuc2int(seqFile.data[i + start + 2])]);
+        aaFrames[1].push_back(nuc2aa[nuc2int(seqFile.data[i + start + 1])][nuc2int(seqFile.data[i + start + 2])][nuc2int(seqFile.data[i + start + 3])]);
+        aaFrames[2].push_back(nuc2aa[nuc2int(seqFile.data[i + start + 2])][nuc2int(seqFile.data[i + start + 3])][nuc2int(seqFile.data[i + start + 4])]);
+
+        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[seqFile.data[end - (i + 0)]])][nuc2int(iRCT[seqFile.data[end - (i + 1)]])][nuc2int(iRCT[seqFile.data[end - (i + 2)]])]);
+        aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[seqFile.data[end - (i + 1)]])][nuc2int(iRCT[seqFile.data[end - (i + 2)]])][nuc2int(iRCT[seqFile.data[end - (i + 3)]])]);
+        aaFrames[5].push_back(nuc2aa[nuc2int(iRCT[seqFile.data[end - (i + 2)]])][nuc2int(iRCT[seqFile.data[end - (i + 3)]])][nuc2int(iRCT[seqFile.data[end - (i + 4)]])]);
+
+    }
+    if(len % 3 == 0){
+        aaFrames[0].push_back(nuc2aa[nuc2int(seqFile.data[len - 3])][nuc2int(seqFile.data[len - 2])][nuc2int(seqFile.data[len - 1])]);
+        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[seqFile.data[start + 2]])][nuc2int(iRCT[seqFile.data[start + 1]])][nuc2int(iRCT[seqFile.data[start]])]);
+    }
+    if(len % 3 == 1 ){
+        aaFrames[0].push_back(nuc2aa[nuc2int(seqFile.data[len - 4])][nuc2int(seqFile.data[len - 3])][nuc2int(seqFile.data[len - 2])]);
+        aaFrames[1].push_back(nuc2aa[nuc2int(seqFile.data[len - 3])][nuc2int(seqFile.data[len - 2])][nuc2int(seqFile.data[len - 1])]);
+        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[seqFile.data[start + 3]])][nuc2int(iRCT[seqFile.data[start + 2]])][nuc2int(iRCT[seqFile.data[start + 1]])]);
+        aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[seqFile.data[start + 2]])][nuc2int(iRCT[seqFile.data[start + 1]])][nuc2int(iRCT[seqFile.data[start + 0]])]);
+    }
+}
+
+ExtractStartPoint KmerExtractor::fillKmerBuffer2(SeqSegment seq, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP)
+{
+    ExtractStartPoint defaultStartPoint = { 0, 0};
+    if(ESP.startOfFrame + ESP.startOfFrame != 0){
+        defaultStartPoint = {ESP.frame , ESP.startOfFrame};
+    }
+    uint64_t tempKmer = 0;
+    size_t startOfKmer = defaultStartPoint.startOfFrame;
+    size_t frame = defaultStartPoint.frame;
+    int forOrRev;
+
+    for( frame ; frame < 6 ; frame++)
+    {
+        int len = aaFrames[frame].size();
+        forOrRev = frame / 3;
+        for (startOfKmer ; startOfKmer < len - kmerLength ; startOfKmer++)
+        {
+            ///Amino acid 2 number
+            for (size_t i = 0; i < kmerLength; i++)
+            {
+                tempKmer += aaFrames[frame][startOfKmer + i] * powers[i];
+            }
+            tempKmer = addDNAInfo(tempKmer, dnaSeq[forOrRev], startOfKmer, frame);
+
+            ///memcpy를 써보자
+            kmerList[kmerBufferIdx].ADkmer = tempKmer;
+            kmerList[kmerBufferIdx].info.sequenceID = seqID;
+            kmerList[kmerBufferIdx].info.pos = startOfKmer;
+            kmerBufferIdx++;
+
+            if(kmerBufferIdx == kmerBufSize)
+            {
+                ExtractStartPoint ESP = {frame, startOfKmer + 1};
+                return ESP;
+            }
+
+            tempKmer = 0;
+        }
+        startOfKmer = 0;
+    }
+
+    ExtractStartPoint zero{0,0};
+    return zero;
+}
 
 ExtractStartPoint KmerExtractor::fillKmerBuffer(const string * dnaSeq, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP)
 {
@@ -171,13 +245,37 @@ uint64_t KmerExtractor::addDNAInfo(uint64_t kmer, const string& read, const int 
     return kmer;
 }
 
+uint64_t KmerExtractor::addDNAInfo2(uint64_t kmer, SeqSegment seqFile, const int startOfKmer, const int frame, MmapedData<char> seqFile)
+{
+    int start = frame + (startOfKmer * 3);
+    uint64_t temp = kmer;
+    kmer <<= 25;
+
+    for( int i = 0; i < kmerLength*3; i += 3)
+    {
+        kmer |= nuc2num[nuc2int(read[start + i])][nuc2int(read[start + i + 1])][nuc2int(read[start + i + 2])] << i;
+    }
+    return kmer;
+}
 string KmerExtractor::reverseCompliment(string & read) const
 {
     int len = read.length();
     string out;
     for(int i = 0; i < len; i++)
     {
-        out.push_back(iupacReverseComplementTable[read[i]]);
+        out.push_back(iRCT[read[i]]);
+    }
+    reverse(out.begin(),out.end());
+    return out;
+}
+
+string KmerExtractor::reverseCompliment2(size_t start, size_t end, MmapedData<char> & seq) const
+{
+    //int len = read.length();
+    string out;
+    for(int i = start; i < end; i++)
+    {
+        out.push_back(iRCT[seq.data[i]]);
     }
     reverse(out.begin(),out.end());
     return out;

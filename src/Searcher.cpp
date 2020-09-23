@@ -8,6 +8,10 @@ Searcher::Searcher() : queryCount(0), multipleMatchCount(0), totalMatchCount(0),
 {
     kmerExtractor = new KmerExtractor();
     numOfSplit = 0;
+    closestCount = 0;
+    queryCount = 0;
+    totalMatchCount = 0;
+    perfectMatchCount = 0;
     ESP = {0 ,0};
 }
 
@@ -74,8 +78,7 @@ void Searcher::startSearch(char * queryFileName, char * targetDiffIdxFileName, c
     cout<<"Total match count                    : "<<totalMatchCount <<endl;
     cout<<"mutipleMatch in AA level             : "<<multipleMatchCount << endl;
     cout<<"matches in DNA level                 : "<<perfectMatchCount<<endl;
-    cout<<"number of closest matches            : "<<matchedKmerList.size()<<endl;
-
+    cout<<"number of closest matches            : "<<closestCount<<endl;
 
     queryFile.close();
     free(kmerBuffer);
@@ -85,12 +88,14 @@ void Searcher::startSearch(char * queryFileName, char * targetDiffIdxFileName, c
 void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<KmerInfo> & targetInfoList, const vector<int> & taxIdList) {
 
     cout<<"compare started"<<endl;
-
+    //initialize
+    size_t diffIdxPos = 0;
     uint64_t lastFirstMatch = 0;
     long lastFirstDiffIdxPos = 0;
-    size_t maxTarget = targetInfoList.fileSize / sizeof(KmerInfo);
-    size_t diffIdxPos = 0;
     int lastFirstTargetIdx = 0;
+
+    size_t maxTarget = targetInfoList.fileSize / sizeof(KmerInfo);
+
     uint8_t lowestHamming;
     sort(kmerBuffer, kmerBuffer + bufferIdx , [=](Kmer x, Kmer y) { return x.ADkmer < y.ADkmer; });
 
@@ -112,13 +117,13 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
 
             if((lookingTarget & marker) == (lookingQuery & marker)) {
                 totalMatchCount++;
-                currentHamming =  getHammingDistance(lookingQuery, lookingTarget);
-                if(getHammingDistance(lookingQuery, lookingTarget) < lowestHamming)
-                {
+                lookingHamming = getHammingDistance(lookingQuery, lookingTarget);
+
+                if(lookingHamming < lowestHamming){
                     closestKmers.clear();
-                    lowestHamming = currentHamming;
+                    lowestHamming = lookingHamming;
                 }
-                if(currentHamming == lowestHamming) closestKmers.push_back(j);
+                if(lookingHamming == lowestHamming) closestKmers.push_back(j);
 
                 if (isMatched == 0) {
                     lastFirstMatch = lookingTarget;
@@ -128,12 +133,12 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
                 }
                 if ((nextTarget & marker) != (lookingQuery & marker)) {
                     int closetMatchCount = closestKmers.size();
-                    for(size_t k  = 0; k < closetMatchCount ; k++ )
-                    {
+                    for(size_t k  = 0; k < closetMatchCount ; k++ ){
                         matchedKmer temp = {kmerBuffer[i].info.sequenceID, targetInfoList.data[closestKmers[k]].sequenceID, taxIdList[targetInfoList.data[closestKmers[k]].sequenceID],
                                              kmerBuffer[i].info.pos - targetInfoList.data[closestKmers[k]].pos,
                                             lowestHamming,targetInfoList.data[closestKmers[k]].redundancy};
                         matchedKmerList.push_back(temp);
+                        closestCount++;
                     }
                     break;
                 }
@@ -144,25 +149,22 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
             }
         }
 
-        if((nextTarget & marker) == (lookingQuery & marker))
-        {
+        if((nextTarget & marker) == (lookingQuery & marker)){
             totalMatchCount++;
             if(nextTarget == lookingQuery) perfectMatchCount++;
             closestKmers.push_back(maxTarget-1);
             int closetMatchCount = closestKmers.size();
-            for(size_t k  = 0; i < closetMatchCount ; k++ )
-            {
+            for(size_t k  = 0; i < closetMatchCount ; k++ ){
                 matchedKmer temp = {kmerBuffer[i].info.sequenceID, targetInfoList.data[closestKmers[k]].sequenceID, taxIdList[targetInfoList.data[closestKmers[k]].sequenceID],
                                      kmerBuffer[i].info.pos - targetInfoList.data[closestKmers[k]].pos,
                                     lowestHamming,targetInfoList.data[closestKmers[k]].redundancy};
                 matchedKmerList.push_back(temp);
+                closestCount++;
             }
         }
-
         nextTarget = lastFirstMatch;
         diffIdxPos = lastFirstDiffIdxPos;
     }
-
     bufferIdx = 0;
 }
 uint64_t Searcher::getNextTargetKmer(uint64_t lookingTarget, const uint16_t* targetDiffIdxList, size_t & diffIdxPos)

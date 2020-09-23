@@ -26,9 +26,13 @@ MmapedData<T> mmapData(char* filename)
     struct MmapedData<T> mmapedData;
     struct stat stat1;
     int file = open(filename, O_CREAT|O_RDWR );
-    stat(filename, &stat1);
+    int a;
+    a = stat(filename, &stat1);
     mmapedData.fileSize = stat1.st_size;
     mmapedData.data = static_cast<T*>(mmap(0, stat1.st_size + 1, PROT_WRITE|PROT_READ, MAP_SHARED, file, 0));
+    if(a == -1){
+        mmapedData.fileSize = 0;
+    }
     return mmapedData;
 }
 

@@ -7,8 +7,8 @@ vector<char*> createTargetDB()
 {
     vector<char*> mergedFileNames;
     IndexCreator idxCre;
-    string seqFileName;
-    char kmerFileName[100];
+    char seqFileName[300];
+    char kmerFileName[300];
     char taxIdFileName[300];
     FILE * taxIdFile;
 
@@ -17,11 +17,11 @@ vector<char*> createTargetDB()
     ifstream seqFile;
     seqFile.open(seqFileName);
 
-    if (!seqFile.is_open())
-    {
+    if (!seqFile.is_open()){
         cout<<"Cannot open the sequence file."<<endl;
         return mergedFileNames;
     }
+    seqFile.close();
 
     cout<<"Input the directory of corresponding taxID list"<<endl;
     cin>>taxIdFileName;

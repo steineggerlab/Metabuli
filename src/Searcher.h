@@ -23,16 +23,15 @@ private:
     size_t totalMatchCount;
     size_t multipleMatchCount;
     size_t perfectMatchCount;
-
+    size_t closestCount;
     uint64_t lookingTarget;
     uint64_t lookingQuery;
     uint64_t nextTarget;
-    uint64_t lastQuery;
     size_t lookingTargetPos;
     int isMatched;
     vector<matchedKmer> matchedKmerList;
     vector<int> closestKmers;
-    int currentHamming;
+    int lookingHamming;
     ExtractStartPoint ESP;
 
     uint64_t marker= ~0 & ~16777215;
