@@ -27,7 +27,7 @@ void IndexCreator::startIndexCreating2(ifstream & targetFile, char * outputFileN
     SeqSegment temp;
     for(size_t i = 0; i < maxNuc; i++)
     {
-        if((seqFile.data[i] == '>') || (i == (maxNuc - 1)))
+        if(seqFile.data[i] == '>')
         {
             end = i - 2;
             temp = {start, end};
@@ -43,18 +43,19 @@ void IndexCreator::startIndexCreating2(ifstream & targetFile, char * outputFileN
     }
     temp = {start, maxNuc - 2};
     seqSegments.push_back(temp);
-
+    cout<<seqSegments.size()<<endl;
+    cout<<seqSegments[18].start<<" "<<seqSegments[18].end<<endl;
     Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
 
     int seqID = 0;
     for(size_t i = 1 ; i < seqSegments.size(); i++)
     {
-        kmerExtractor -> dna2aa2(seqSegments[i].start, seqSegments[i].end, seqFile);
-        ESP = kmerExtractor->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
+        kmerExtractor -> dna2aa2(seqSegments[i], seqFile);
+        ESP = kmerExtractor->fillKmerBuffer2(seqSegments[i], seqFile, kmerBuffer, seqID, bufferIdx, ESP);
         while (ESP.startOfFrame + ESP.frame != 0)
         {
             writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdList);
-            ESP = kmerExtractor->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
+            ESP = kmerExtractor->fillKmerBuffer2(seqSegments[i], seqFile, kmerBuffer, seqID, bufferIdx, ESP);
         }
         seqID ++;
     }
@@ -63,7 +64,7 @@ void IndexCreator::startIndexCreating2(ifstream & targetFile, char * outputFileN
     writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdList);
     targetFile.close();
     free(kmerBuffer);
-
+    munmap(seqFile.data, seqFile.fileSize + 1);
 }
 void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileName, vector<int> & taxIdList)
 {
@@ -80,7 +81,6 @@ void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileNa
     while(targetFile)
     {
         getline(targetFile, buffer);
-        //cout<<buffer<<endl;
         if(buffer[0] == '>'){
             reverseComplimentRead = kmerExtractor->reverseCompliment(forwardRead);
             reads[0] = forwardRead; reads[1] = reverseComplimentRead;

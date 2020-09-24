@@ -6,35 +6,8 @@
 int showMenu();
 int main() {
 
-    struct MmapedData<char> seqFile = mmapData<char>( "/Users/kjb/Desktop/ADclassifier/tengenome/tengenome.fna");
-    size_t maxNuc = seqFile.fileSize/sizeof(char);
-    vector<SeqSegment> seqSegments;
-    size_t start = 0;
-    size_t end = 0;
-    SeqSegment temp;
-    for(size_t i = 0; i < maxNuc; i++)
-    {
-        if(seqFile.data[i] == '>')
-        {
-            end = i-2;
-            temp = {start, end};
-            seqSegments.push_back(temp);
-            while(seqFile.data[i] != '\n')
-            {
-                cout<<seqFile.data[i];
-                i++;
-            }
-            cout<<endl;
-            start = i + 1;
-        }
-    }
-    temp = {start, maxNuc - 2};
-    seqSegments[0] = temp;
-    for(int i = 0 ; i<seqSegments.size(); i++)
-    {
-        cout<<seqFile.data[seqSegments[i].start]<<" "<<seqFile.data[seqSegments[i].end]<<endl;
-    }
-  //  createTargetDB();
+//
+      createTargetDB();
 //    std::cout << "Hello, World!" << std::endl;
 //    char * targetFile =  "/Users/kjb/Desktop/ADclassifier/test1/threeHIVs.txt";
 //    char * outputFileName = "/Users/kjb/Desktop/ADclassifier/test1/threeHIVs";

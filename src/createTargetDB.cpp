@@ -41,7 +41,7 @@ vector<char*> createTargetDB()
 
     cout<<"Input the directory where k-mer DB would be created"<<endl;
     cin>>kmerFileName;
-    idxCre.startIndexCreating(seqFile,kmerFileName,taxIdList);
+    idxCre.startIndexCreating2(seqFile,kmerFileName,taxIdList);
 
 
     int numOfSplits = idxCre.getNumOfFlush();
