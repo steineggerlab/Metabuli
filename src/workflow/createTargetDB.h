@@ -4,8 +4,8 @@
 
 #ifndef ADCLASSIFIER2_CREATETARGETDB_H
 #define ADCLASSIFIER2_CREATETARGETDB_H
-#include "IndexCreator.h"
-#include "DiffIdxMerger.h"
+#include "../commons/IndexCreator.h"
+#include "../commons/DiffIdxMerger.h"
 
 vector<char*> createTargetDB();
 #endif //ADCLASSIFIER2_CREATETARGETDB_H

@@ -1,12 +1,11 @@
-#include "IndexCreator.h"
-#include "Searcher.h"
-#include "DiffIdxMerger.h"
-#include "createTargetDB.h"
+#include "commons/IndexCreator.h"
+#include "commons/Searcher.h"
+#include "commons/DiffIdxMerger.h"
+#include "workflow/createTargetDB.h"
 
 int showMenu();
 int main() {
 
-//
       createTargetDB();
 //    std::cout << "Hello, World!" << std::endl;
 //    char * targetFile =  "/Users/kjb/Desktop/ADclassifier/test1/threeHIVs.txt";

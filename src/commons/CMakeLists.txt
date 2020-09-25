@@ -1,0 +1,17 @@
+set(commons_source_files
+        commons/common.h
+        commons/count8mers.cpp
+        commons/DiffIdxMerger.h
+        commons/DiffIdxMerger.cpp
+        commons/IndexCreator.cpp
+        commons/IndexCreator.h
+        commons/Kmer.h
+        commons/KmerExtractor.cpp
+        commons/KmerExtractor.h
+        commons/Mmap.h
+        commons/printBinary.cpp
+        commons/printBinary.h
+        commons/Searcher.cpp
+        commons/Searcher.h
+        commons/BitManipulateMacros.h
+        PARENT_SCOPE)
