@@ -14,4 +14,6 @@ set(commons_source_files
         commons/Searcher.cpp
         commons/Searcher.h
         commons/BitManipulateMacros.h
+        commons/LocalParameters.cpp
+        commons/LocalParameters.h
         PARENT_SCOPE)

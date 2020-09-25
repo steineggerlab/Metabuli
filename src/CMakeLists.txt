@@ -1,18 +1,19 @@
 include_directories(commons)
+include_directories(workflow)
 add_subdirectory(commons)
 add_subdirectory(util)
 add_subdirectory(version)
 add_subdirectory(workflow)
 
-include_directories(../lib2)
-include_directories(../lib)
-#link_directories(../build/lib2)
-
-add_executable(ADclassifier2
+add_executable(adclassifier
         ${commons_source_files}
         ${util_source_files}
         ${workflow_source_files}
-        main.cpp
+        adclassifier.cpp
+        LocalCommandDeclarations.h
         )
+mmseqs_setup_derived_target(adclassifier)
+target_link_libraries(adclassifier version)
 
-target_link_libraries(ADclassifier2 version)
+
+install(TARGETS adclassifier DESTINATION bin)

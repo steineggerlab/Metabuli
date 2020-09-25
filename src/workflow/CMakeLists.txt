@@ -1,6 +1,5 @@
 set(workflow_source_files
         workflow/createTargetDB.cpp
-        workflow/createTargetDB.h
-        workflow/search.cpp
-        workflow/search.h
+        workflow/classify.cpp
+        workflow/classify.h
         PARENT_SCOPE)

@@ -132,7 +132,7 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
                     isMatched = 1;
                 }
                 if ((nextTarget & marker) != (lookingQuery & marker)) {
-                    int closetMatchCount = closestKmers.size();
+                    size_t closetMatchCount = closestKmers.size();
                     for(size_t k  = 0; k < closetMatchCount ; k++ ){
                         matchedKmer temp = {kmerBuffer[i].info.sequenceID, targetInfoList.data[closestKmers[k]].sequenceID, taxIdList[targetInfoList.data[closestKmers[k]].sequenceID],
                                              kmerBuffer[i].info.pos - targetInfoList.data[closestKmers[k]].pos,
@@ -153,8 +153,8 @@ void Searcher::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedD
             totalMatchCount++;
             if(nextTarget == lookingQuery) perfectMatchCount++;
             closestKmers.push_back(maxTarget-1);
-            int closetMatchCount = closestKmers.size();
-            for(size_t k  = 0; i < closetMatchCount ; k++ ){
+            size_t closestMatchCount = closestKmers.size();
+            for(size_t k  = 0; k < closestMatchCount ; k++ ){
                 matchedKmer temp = {kmerBuffer[i].info.sequenceID, targetInfoList.data[closestKmers[k]].sequenceID, taxIdList[targetInfoList.data[closestKmers[k]].sequenceID],
                                      kmerBuffer[i].info.pos - targetInfoList.data[closestKmers[k]].pos,
                                     lowestHamming,targetInfoList.data[closestKmers[k]].redundancy};

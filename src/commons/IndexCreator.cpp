@@ -10,7 +10,7 @@ IndexCreator::IndexCreator()
 }
 
 IndexCreator::~IndexCreator() { delete kmerExtractor;}
-void IndexCreator::startIndexCreating2(ifstream & targetFile, char * outputFileName, vector<int> & taxIdList)
+void IndexCreator::startIndexCreating2(ifstream & targetFile, const char * outputFileName, vector<int> & taxIdList)
 {
     string buffer;
     string forwardRead;
@@ -118,7 +118,7 @@ void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileNa
 
 }
 
-void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, char * outputFileName, vector<int> & taxIdList)
+void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, const char * outputFileName, vector<int> & taxIdList)
 {
     char suffixedDiffIdxFileName[100];
     char suffixedInfoFileName[100];
