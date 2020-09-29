@@ -3,27 +3,38 @@
 //
 
 #include "IndexCreator.h"
-//#include "NcbiTaxonomy.h"
+
 IndexCreator::IndexCreator()
 {
     kmerExtractor = new KmerExtractor();
+    string name, node, merged;
+    cout<<"name.dmp"<<endl;
+    cin>>name;
+    cout<<"node.dmp"<<endl;
+    cin>>node;
+    cout<<"merged.dmp"<<endl;
+    cin>>merged;
+
+    ncbiTaxonomy = new NcbiTaxonomy(name, node, merged);
 }
 
-IndexCreator::~IndexCreator() { delete kmerExtractor;}
-void IndexCreator::startIndexCreating2(ifstream & targetFile, const char * outputFileName, vector<int> & taxIdList)
+IndexCreator::~IndexCreator() {
+    delete kmerExtractor;
+    delete ncbiTaxonomy;
+}
+
+void IndexCreator::startIndexCreating2(const char * seqFileName, const char * outputFileName, vector<int> & taxIdList)
 {
     string buffer;
-    string forwardRead;
-    string reverseComplimentRead;
-    string reads[2];
     ExtractStartPoint ESP = {0 ,0};
     size_t bufferIdx = 0;
 
-    struct MmapedData<char> seqFile = mmapData<char>( "/Users/kjb/Desktop/ADclassifier/tengenome/tengenome.fna");
+    struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
     size_t maxNuc = seqFile.fileSize/sizeof(char);
     vector<SeqSegment> seqSegments;
     size_t start = 0;
     size_t end = 0;
+
     SeqSegment temp;
     for(size_t i = 0; i < maxNuc; i++)
     {
@@ -44,7 +55,6 @@ void IndexCreator::startIndexCreating2(ifstream & targetFile, const char * outpu
     temp = {start, maxNuc - 2};
     seqSegments.push_back(temp);
     cout<<seqSegments.size()<<endl;
-    cout<<seqSegments[18].start<<" "<<seqSegments[18].end<<endl;
     Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
 
     int seqID = 0;
@@ -62,7 +72,7 @@ void IndexCreator::startIndexCreating2(ifstream & targetFile, const char * outpu
 
     //flush last buffer
     writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdList);
-    targetFile.close();
+
     free(kmerBuffer);
     munmap(seqFile.data, seqFile.fileSize + 1);
 }
@@ -145,9 +155,13 @@ void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, const 
     size_t write = 0;
     int endFlag = 0;
 
-
+    vector<string> asd;
+    asd.push_back("species");
     for(size_t i = 1 ; i < bufferIdx ; i++) {
-        while(taxIdList[lookingKmer.info.sequenceID] == taxIdList[kmerBuffer[i].info.sequenceID]){
+        cout<<ncbiTaxonomy->taxIdAtRank(taxIdList[lookingKmer.info.sequenceID],asd[0])<<endl;
+
+        while(ncbiTaxonomy->taxIdAtRank(taxIdList[lookingKmer.info.sequenceID],asd[0])
+                == ncbiTaxonomy->taxIdAtRank(taxIdList[kmerBuffer[i].info.sequenceID],asd[0])){
             if (lookingKmer.ADkmer != kmerBuffer[i].ADkmer) {
                 break;
             }

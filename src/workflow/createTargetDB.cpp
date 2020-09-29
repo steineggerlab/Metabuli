@@ -46,7 +46,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
 //    cout<<"Input the directory where k-mer DB would be created"<<endl;
 //    cin >> outputFileName;
-    idxCre.startIndexCreating2(seqFile,outputFileName,taxIdList);
+    idxCre.startIndexCreating2(seqFileName,outputFileName,taxIdList);
 
 
     int numOfSplits = idxCre.getNumOfFlush();

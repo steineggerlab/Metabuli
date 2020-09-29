@@ -15,6 +15,7 @@
 #include "KmerExtractor.h"
 #include "BitManipulateMacros.h"
 #include "common.h"
+#include "NcbiTaxonomy.h"
 #define kmerLength 8
 
 
@@ -27,6 +28,7 @@ private:
   //  char * outPath;
     int numOfFlush=0;
     KmerExtractor * kmerExtractor;
+    NcbiTaxonomy * ncbiTaxonomy;
 
 
     void writeTargetFiles(Kmer * kmerBuffer, size_t & bufferIdx, const char * outputFileName, vector<int> & taxIdList);
@@ -40,7 +42,7 @@ public:
     ~IndexCreator();
     int getNumOfFlush();
     void startIndexCreating(ifstream & targetFile, char * outputFileName, vector<int> & taxIdList);
-    void startIndexCreating2(ifstream & targetFile, const char * outputFileName, vector<int> & taxIdList);
+    void startIndexCreating2(const char * seqFileName, const char * outputFileName, vector<int> & taxIdList);
     void writeKmerDiff(uint64_t lastKmer, uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx );
     void writeInfo(KmerInfo * entryToWrite, FILE * infoFile, KmerInfo * infoBuffer, size_t & infoBufferIdx);
     void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);

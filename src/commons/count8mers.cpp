@@ -7,8 +7,8 @@
 #include <iostream>
 #include <vector>
 using namespace std;
-void count8mers(char * fileName) {
-    struct MmapedData<char> seqFile = mmapData<char>("fileName");
+void count8mers(const char * fileName) {
+    struct MmapedData<char> seqFile = mmapData<char>(fileName);
     size_t maxNuc = seqFile.fileSize/sizeof(char);
     vector<SeqSegment> seqSegments;
     size_t start = 0;

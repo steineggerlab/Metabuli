@@ -21,7 +21,7 @@ struct MmapedData
 };
 
 template <typename T>
-MmapedData<T> mmapData(char* filename)
+MmapedData<T> mmapData(const char* filename)
 {
     struct MmapedData<T> mmapedData;
     struct stat stat1;
