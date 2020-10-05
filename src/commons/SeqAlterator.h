@@ -21,7 +21,7 @@ typedef struct ExtractStartPoint {
     size_t startOfFrame;
 }ExtractStartPoint;
 
-class KmerExtractor
+class SeqAlterator
 {
 private:
     string iRCT;
@@ -37,11 +37,11 @@ public:
     ExtractStartPoint fillKmerBuffer(const string * dnaSeq, Kmer* kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP);
     ExtractStartPoint fillKmerBuffer2(SeqSegment seq, MmapedData<char> & seqFile, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP);
     string reverseCompliment(string & read) const ;
-    //string reverseCompliment2(size_t start, size_t end, MmapedData<char> & seq) const ;
     void dna2aa(const string& forward, const string & reverse);
     void dna2aa2(const SeqSegment & seq, const MmapedData<char> & seqFile);
+    void getSeqSegments(vector<SeqSegment> & seqSegs, MmapedData<char> seqFile);
 
-    KmerExtractor();
+    SeqAlterator();
 };
 #endif //ADKMER4_KMEREXTRACTOR_H
 

@@ -12,7 +12,7 @@
 #include <fstream>
 #include "Kmer.h"
 #include <time.h>
-#include "KmerExtractor.h"
+#include "SeqAlterator.h"
 #include "BitManipulateMacros.h"
 #include "common.h"
 #include "NcbiTaxonomy.h"
@@ -27,14 +27,12 @@ private:
     size_t availableMemory;
   //  char * outPath;
     int numOfFlush=0;
-    KmerExtractor * kmerExtractor;
+    SeqAlterator * kmerExtractor;
     NcbiTaxonomy * ncbiTaxonomy;
 
 
     void writeTargetFiles(Kmer * kmerBuffer, size_t & bufferIdx, const char * outputFileName, vector<int> & taxIdList);
-    void writeDiffIndexFile(Kmer * kmerBuffer, const size_t & bufferIdx, FILE * diffIdxFile);
     void writeKmer(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
-//    void addSequence(Kmer *kmerBuffer, size_t & bufferIdx, int & seqID, string & forwardRead);
 
 public:
 

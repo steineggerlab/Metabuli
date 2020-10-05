@@ -2,9 +2,9 @@
 // Created by KJB on 01/09/2020.
 //
 
-#include "KmerExtractor.h"
+#include "SeqAlterator.h"
 
-KmerExtractor::KmerExtractor() {
+SeqAlterator::SeqAlterator() {
 
     ///powers
     int pow = 1;
@@ -86,7 +86,7 @@ KmerExtractor::KmerExtractor() {
 
 }
 
-void KmerExtractor::dna2aa(const string & forward, const string & reverse){
+void SeqAlterator::dna2aa(const string & forward, const string & reverse){
 
     for(int i = 0 ; i < 6 ; i++){ aaFrames[i].clear(); }
 
@@ -113,12 +113,12 @@ void KmerExtractor::dna2aa(const string & forward, const string & reverse){
         aaFrames[4].push_back(nuc2aa[nuc2int(reverse[len - 3])][nuc2int(reverse[len - 2])][nuc2int(reverse[len - 1])]);
     }
 }
-void KmerExtractor::dna2aa2(const SeqSegment & seq, const MmapedData<char> & seqFile){
+
+void SeqAlterator::dna2aa2(const SeqSegment & seq, const MmapedData<char> & seqFile){
     const size_t & start = seq.start;
     const size_t & end = seq.end;
     for(int i = 0 ; i < 6 ; i++){ aaFrames[i].clear(); }
 
-    //int len = forward.length();
     size_t len = end - start + 1;
     ///translation from DNA to AA. in each frame
     for(size_t i = 0; i < len - 4; i = i+3 )
@@ -144,7 +144,7 @@ void KmerExtractor::dna2aa2(const SeqSegment & seq, const MmapedData<char> & seq
     }
 }
 
-ExtractStartPoint KmerExtractor::fillKmerBuffer2(SeqSegment seq, MmapedData<char> & seqFile, Kmer * kmerList,  int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP)
+ExtractStartPoint SeqAlterator::fillKmerBuffer2(SeqSegment seq, MmapedData<char> & seqFile, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP)
 {
     ExtractStartPoint defaultStartPoint = { 0, 0};
     if(ESP.startOfFrame + ESP.startOfFrame != 0){
@@ -189,7 +189,7 @@ ExtractStartPoint KmerExtractor::fillKmerBuffer2(SeqSegment seq, MmapedData<char
     return zero;
 }
 
-ExtractStartPoint KmerExtractor::fillKmerBuffer(const string * dnaSeq, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP)
+ExtractStartPoint SeqAlterator::fillKmerBuffer(const string * dnaSeq, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP)
 {
     ExtractStartPoint defaultStartPoint = { 0, 0};
     if(ESP.startOfFrame + ESP.startOfFrame != 0){
@@ -234,7 +234,7 @@ ExtractStartPoint KmerExtractor::fillKmerBuffer(const string * dnaSeq, Kmer * km
     return zero;
 }
 
-uint64_t KmerExtractor::addDNAInfo(uint64_t kmer, const string& read, const int startOfKmer, const int frame)
+uint64_t SeqAlterator::addDNAInfo(uint64_t kmer, const string& read, const int startOfKmer, const int frame)
 {
     int start = frame % 3 + (startOfKmer * 3);
     kmer <<= 25;
@@ -246,7 +246,7 @@ uint64_t KmerExtractor::addDNAInfo(uint64_t kmer, const string& read, const int 
     return kmer;
 }
 
-void KmerExtractor::addDNAInfo2(uint64_t & kmer, SeqSegment & seq, MmapedData<char> & seqFile, const int & forOrRev, const int & startOfKmer, const int & frame)
+void SeqAlterator::addDNAInfo2(uint64_t & kmer, SeqSegment & seq, MmapedData<char> & seqFile, const int & forOrRev, const int & startOfKmer, const int & frame)
 {
     int start = (frame % 3) + (startOfKmer * 3);
     uint64_t temp = kmer;
@@ -264,7 +264,8 @@ void KmerExtractor::addDNAInfo2(uint64_t & kmer, SeqSegment & seq, MmapedData<ch
     }
     return;
 }
-string KmerExtractor::reverseCompliment(string & read) const
+
+string SeqAlterator::reverseCompliment(string & read) const
 {
     int len = read.length();
     string out;
@@ -276,14 +277,30 @@ string KmerExtractor::reverseCompliment(string & read) const
     return out;
 }
 
-//string KmerExtractor::reverseCompliment2(size_t start, size_t end, MmapedData<char> & seq) const
-//{
-//    //int len = read.length();
-//    string out;
-//    for(int i = start; i < end; i++)
-//    {
-//        out.push_back(iRCT[seq.data[i]]);
-//    }
-//    reverse(out.begin(),out.end());
-//    return out;
-//}
+void SeqAlterator::getSeqSegments(vector<SeqSegment> & seqSegments, MmapedData<char> seqFile)
+{
+    size_t start = 0;
+    size_t end = 0;
+    size_t numOfChar = seqFile.fileSize / sizeof(char);
+
+    SeqSegment temp;
+    for(size_t i = 0; i < numOfChar; i++)
+    {
+        if(seqFile.data[i] == '>')
+        {
+            end = i - 2;
+            temp = {start, end};
+            seqSegments.push_back(temp); // the first push_back is a garbage.
+            while(seqFile.data[i] != '\n')
+            {
+                cout<<seqFile.data[i];
+                i++;
+            }
+            cout<<endl;
+            start = i + 1;
+        }
+    }
+    temp = {start, numOfChar - 2};
+    seqSegments.push_back(temp);
+}
+

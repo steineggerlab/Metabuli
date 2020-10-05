@@ -6,13 +6,13 @@
 
 IndexCreator::IndexCreator()
 {
-    kmerExtractor = new KmerExtractor();
+    kmerExtractor = new SeqAlterator();
     string name, node, merged;
-    cout<<"name.dmp"<<endl;
+    cout<<"Input the directory for name.dmp"<<endl;
     cin>>name;
-    cout<<"node.dmp"<<endl;
+    cout<<"Input the directory for node.dmp"<<endl;
     cin>>node;
-    cout<<"merged.dmp"<<endl;
+    cout<<"Input the directory for merged.dmp"<<endl;
     cin>>merged;
 
     ncbiTaxonomy = new NcbiTaxonomy(name, node, merged);
@@ -30,31 +30,11 @@ void IndexCreator::startIndexCreating2(const char * seqFileName, const char * ou
     size_t bufferIdx = 0;
 
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
-    size_t maxNuc = seqFile.fileSize/sizeof(char);
-    vector<SeqSegment> seqSegments;
-    size_t start = 0;
-    size_t end = 0;
+    size_t numOfChar = seqFile.fileSize / sizeof(char);
 
-    SeqSegment temp;
-    for(size_t i = 0; i < maxNuc; i++)
-    {
-        if(seqFile.data[i] == '>')
-        {
-            end = i - 2;
-            temp = {start, end};
-            seqSegments.push_back(temp); // the first push_back is a garbage.
-            while(seqFile.data[i] != '\n')
-            {
-                cout<<seqFile.data[i];
-                i++;
-            }
-            cout<<endl;
-            start = i + 1;
-        }
-    }
-    temp = {start, maxNuc - 2};
-    seqSegments.push_back(temp);
-    cout<<seqSegments.size()<<endl;
+    vector<SeqSegment> seqSegments;
+    kmerExtractor ->getSeqSegments(seqSegments, seqFile);
+
     Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
 
     int seqID = 0;
@@ -137,7 +117,7 @@ void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, const 
     numOfFlush++;
     FILE * diffIdxFile = fopen(suffixedDiffIdxFileName, "wb");
     FILE * idAndPosFile = fopen(suffixedInfoFileName, "wb");
-    cout<<suffixedInfoFileName<<endl;
+
 
     uint16_t *kmerLocalBuf = (uint16_t *)malloc(sizeof(uint16_t) * kmerBufSize);
     size_t localBufIdx = 0;

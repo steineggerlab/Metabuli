@@ -17,7 +17,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     const char * taxIdFileName = argv[1];
     const char * outputFileName = argv[2];
 
-    FILE * taxIdFile;
+
 //    cout<<"Input the directory of a sequence file from which you want to make k-mer DB"<<endl;
     ifstream seqFile;
     seqFile.open(seqFileName);
@@ -30,7 +30,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     cout<<"Input the directory of corresponding taxID list"<<endl;
     //cin>>taxIdFileName;
-
+    FILE * taxIdFile;
     if((taxIdFile = fopen(taxIdFileName,"r")) == NULL){
         cout<<"Cannot open the taxID list file."<<endl;
         return 0;

@@ -23,7 +23,7 @@ public:
     }
 
     std::vector<MMseqsParameter*> createTargetDB;
-    std::vector<MMseqsParameter*> search;
+    std::vector<MMseqsParameter*> classify;
 
 private:
     LocalParameters() :
