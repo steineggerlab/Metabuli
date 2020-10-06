@@ -27,7 +27,7 @@ std::vector<Command> commands = {
          "extract k-mers from query sequences, and compare them to the target database",
          NULL,
          "Jaebeom Kim <jbeom0731@gmail.com>",
-         "<i:queryFile[.txt]> <i:targetDB[.txt]> <i:targetTaxIdList> <o:output[.txt]> <tmpDir>",
+         "<i:queryFile[.txt]> <i:targetDiffIdx[.txt]> <i:targetInfo> <i:targetTaxIdList> <o:output[.txt]> <tmpDir>",
          CITATION_SPACEPHARER,
          {{"queryFile", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::sequenceDb},
           {"targetDB", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},

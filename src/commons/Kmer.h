@@ -8,7 +8,7 @@
 typedef struct KmerInfo {
     int sequenceID;
     int pos;
-    bool redundancy;
+    bool redundancy = false;
 } KmerInfo;
 
 typedef struct Kmer {

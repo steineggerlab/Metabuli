@@ -27,7 +27,7 @@ private:
     size_t availableMemory;
   //  char * outPath;
     int numOfFlush=0;
-    SeqAlterator * kmerExtractor;
+    SeqAlterator * seqAlterator;
     NcbiTaxonomy * ncbiTaxonomy;
 
 

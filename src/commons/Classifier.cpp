@@ -3,7 +3,7 @@
 //
 
 #include "Classifier.h"
-
+#include "FastSort.h"
 Classifier::Classifier() : queryCount(0), multipleMatchCount(0), totalMatchCount(0), perfectMatchCount(0)
 {
     seqAlterator = new SeqAlterator();
@@ -18,7 +18,7 @@ Classifier::Classifier() : queryCount(0), multipleMatchCount(0), totalMatchCount
 
 }
 
-Classifier::~Classifier() { delete seqAlterator}
+Classifier::~Classifier() { delete seqAlterator; }
 
 //void Classifier::startSearch(char * queryFileName, char * targetDiffIdxFileName, char * targetInfoFileName)
 //{
@@ -100,6 +100,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     struct MmapedData<char> queryFile = mmapData<char>(queryFileName);
     size_t numOfChar = queryFile.fileSize / sizeof(char);
     struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName);
+    targetDiffIdxList.data[targetDiffIdxList.fileSize/sizeof(uint16_t)] = 32768; //1000000000000000
     struct MmapedData<KmerInfo> targetInfoList = mmapData<KmerInfo>(targetInfoFileName);
 
     vector<SeqSegment> seqSegments;
@@ -145,76 +146,82 @@ void Classifier::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const Mmape
     long lastFirstDiffIdxPos = 0;
     int lastFirstTargetIdx = 0;
 
-    size_t maxTarget = targetInfoList.fileSize / sizeof(KmerInfo);
+    size_t maxTargetSize = targetInfoList.fileSize / sizeof(KmerInfo);
 
     uint8_t lowestHamming;
-    sort(kmerBuffer, kmerBuffer + bufferIdx , [=](Kmer x, Kmer y) { return x.ADkmer < y.ADkmer; });
 
-    nextTarget = getNextTargetKmer(0, targetDiffIdxList.data, diffIdxPos);
+    SORT_PARALLEL(kmerBuffer, kmerBuffer + bufferIdx , [=](Kmer x, Kmer y) { return x.ADkmer < y.ADkmer; });
 
+    uint64_t nextTargetKmer = getNextTargetKmer(0, targetDiffIdxList.data, diffIdxPos);
+    size_t tarIter = 0;
+
+    uint64_t currentQuery = UINT64_MAX;
+    uint64_t currentTargetKmer = UINT64_MAX;
+    uint64_t currentQueryAA;
+//    size_t closestKmersCnt = 0;
     for(size_t i = 0; i < bufferIdx; i++)
     {
         /// get next query
-        lookingQuery = kmerBuffer[i].ADkmer;
-        isMatched=0;
+        if(AminoAcid(currentQuery) == AminoAcid(kmerBuffer[i].ADkmer)){
+            nextTargetKmer = lastFirstMatch;
+            diffIdxPos = lastFirstDiffIdxPos;
+            tarIter = lastFirstTargetIdx;
+        }
+        currentQuery = kmerBuffer[i].ADkmer;
+        isMatched = 0;
         lowestHamming = 100;
         queryCount ++;
-
-        for (size_t j = lastFirstTargetIdx; j < maxTarget - 1; j++){
-
-            lookingTarget = nextTarget;
-            lookingTargetPos = diffIdxPos;
-            nextTarget = getNextTargetKmer(lookingTarget, targetDiffIdxList.data, diffIdxPos);
-
-            if((lookingTarget & marker) == (lookingQuery & marker)) {
-                totalMatchCount++;
-                lookingHamming = getHammingDistance(lookingQuery, lookingTarget);
-
-                if(lookingHamming < lowestHamming){
-                    closestKmers.clear();
-                    lowestHamming = lookingHamming;
-                }
-                if(lookingHamming == lowestHamming) closestKmers.push_back(j);
-
+        currentQueryAA = AminoAcid(currentQuery);
+       // && nextTargetKmer != UINT64_MAX
+        while(tarIter < maxTargetSize  && AminoAcid(nextTargetKmer) <= currentQueryAA){
+            currentTargetKmer = nextTargetKmer;
+            currentTargetPos = diffIdxPos;
+            nextTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
+            perfectMatchCount += (currentQuery == currentTargetKmer);
+            if(AminoAcid(currentTargetKmer) == AminoAcid(currentQuery)){
                 if (isMatched == 0) {
-                    lastFirstMatch = lookingTarget;
-                    lastFirstDiffIdxPos = lookingTargetPos;
-                    lastFirstTargetIdx = j;
+                    lastFirstMatch = currentTargetKmer;
+                    lastFirstDiffIdxPos = currentTargetPos;
+                    lastFirstTargetIdx = tarIter;
                     isMatched = 1;
                 }
-                if ((nextTarget & marker) != (lookingQuery & marker)) {
-                    size_t closetMatchCount = closestKmers.size();
-                    for(size_t k  = 0; k < closetMatchCount ; k++ ){
-                        matchedKmer temp = {kmerBuffer[i].info.sequenceID, targetInfoList.data[closestKmers[k]].sequenceID, taxIdList[targetInfoList.data[closestKmers[k]].sequenceID],
-                                             kmerBuffer[i].info.pos - targetInfoList.data[closestKmers[k]].pos,
-                                            lowestHamming,targetInfoList.data[closestKmers[k]].redundancy};
-                        matchedKmerList.push_back(temp);
-                        closestCount++;
-                    }
-                    break;
+                totalMatchCount++;
+
+                currentHamming = getHammingDistance(currentQuery, currentTargetKmer);
+                if(currentHamming > lowestHamming){
+                    tarIter ++;
+                    continue;
                 }
-            }
+                else if(currentHamming < lowestHamming){
+                    closestKmers.clear();
+                    lowestHamming = currentHamming;
+                }
+                if(currentHamming == lowestHamming) closestKmers.push_back(tarIter);
 
-            if((lookingTarget & marker) > (lookingQuery & marker)) {
-                break;
+//                if(currentHamming > lowestHamming){
+//                    tarIter ++;
+//                    continue;
+//                } else if(currentHamming < lowestHamming){
+//                    closestKmersCnt = (currentHamming == lowestHamming) ? closestKmersCnt : 0;
+//                    closestKmers[closestKmersCnt] = tarIter;
+//                    lowestHamming = currentHamming;
+//                    closestKmersCnt++;
+//
+//                }
+
             }
+            tarIter ++;
         }
 
-        if((nextTarget & marker) == (lookingQuery & marker)){
-            totalMatchCount++;
-            if(nextTarget == lookingQuery) perfectMatchCount++;
-            closestKmers.push_back(maxTarget-1);
-            size_t closestMatchCount = closestKmers.size();
-            for(size_t k  = 0; k < closestMatchCount ; k++ ){
-                matchedKmer temp = {kmerBuffer[i].info.sequenceID, targetInfoList.data[closestKmers[k]].sequenceID, taxIdList[targetInfoList.data[closestKmers[k]].sequenceID],
-                                     kmerBuffer[i].info.pos - targetInfoList.data[closestKmers[k]].pos,
-                                    lowestHamming,targetInfoList.data[closestKmers[k]].redundancy};
-                matchedKmerList.push_back(temp);
-                closestCount++;
-            }
+        for(size_t k = 0; k < closestKmers.size(); k++)
+        {
+            matchedKmer temp = {kmerBuffer[i].info.sequenceID, targetInfoList.data[closestKmers[k]].sequenceID, taxIdList[targetInfoList.data[closestKmers[k]].sequenceID],
+                                kmerBuffer[i].info.pos - targetInfoList.data[closestKmers[k]].pos,
+                                lowestHamming,targetInfoList.data[closestKmers[k]].redundancy};
+            matchedKmerList.emplace_back(temp);
+            closestCount++;
         }
-        nextTarget = lastFirstMatch;
-        diffIdxPos = lastFirstDiffIdxPos;
+        closestKmers.clear();
     }
     bufferIdx = 0;
 }

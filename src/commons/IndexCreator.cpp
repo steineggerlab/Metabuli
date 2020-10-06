@@ -6,7 +6,7 @@
 
 IndexCreator::IndexCreator()
 {
-    kmerExtractor = new SeqAlterator();
+    seqAlterator = new SeqAlterator();
     string name, node, merged;
     cout<<"Input the directory for name.dmp"<<endl;
     cin>>name;
@@ -19,7 +19,7 @@ IndexCreator::IndexCreator()
 }
 
 IndexCreator::~IndexCreator() {
-    delete kmerExtractor;
+    delete seqAlterator;
     delete ncbiTaxonomy;
 }
 
@@ -33,19 +33,19 @@ void IndexCreator::startIndexCreating2(const char * seqFileName, const char * ou
     size_t numOfChar = seqFile.fileSize / sizeof(char);
 
     vector<SeqSegment> seqSegments;
-    kmerExtractor ->getSeqSegments(seqSegments, seqFile);
+    seqAlterator -> getSeqSegments(seqSegments, seqFile);
 
     Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
 
     int seqID = 0;
     for(size_t i = 1 ; i < seqSegments.size(); i++)
     {
-        kmerExtractor -> dna2aa2(seqSegments[i], seqFile);
-        ESP = kmerExtractor->fillKmerBuffer2(seqSegments[i], seqFile, kmerBuffer, seqID, bufferIdx, ESP);
+        seqAlterator -> dna2aa2(seqSegments[i], seqFile);
+        ESP = seqAlterator->fillKmerBuffer2(seqSegments[i], seqFile, kmerBuffer, seqID, bufferIdx, ESP);
         while (ESP.startOfFrame + ESP.frame != 0)
         {
             writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdList);
-            ESP = kmerExtractor->fillKmerBuffer2(seqSegments[i], seqFile, kmerBuffer, seqID, bufferIdx, ESP);
+            ESP = seqAlterator->fillKmerBuffer2(seqSegments[i], seqFile, kmerBuffer, seqID, bufferIdx, ESP);
         }
         seqID ++;
     }
@@ -72,15 +72,15 @@ void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileNa
     {
         getline(targetFile, buffer);
         if(buffer[0] == '>'){
-            reverseComplimentRead = kmerExtractor->reverseCompliment(forwardRead);
+            reverseComplimentRead = seqAlterator->reverseCompliment(forwardRead);
             reads[0] = forwardRead; reads[1] = reverseComplimentRead;
-            kmerExtractor->dna2aa(forwardRead, reverseComplimentRead);
+            seqAlterator->dna2aa(forwardRead, reverseComplimentRead);
 //            seqID = taxIdList[idIdx]; idIdx++;
-            ESP = kmerExtractor->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
+            ESP = seqAlterator->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
             while (ESP.startOfFrame + ESP.frame != 0)
             {
                 writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdList);
-                ESP = kmerExtractor->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
+                ESP = seqAlterator->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
             }
             forwardRead.clear();
             seqID ++;
@@ -90,15 +90,15 @@ void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileNa
         forwardRead.append(buffer);
     }
     // For last one
-    reverseComplimentRead = kmerExtractor->reverseCompliment(forwardRead);
+    reverseComplimentRead = seqAlterator->reverseCompliment(forwardRead);
     reads[0] = forwardRead; reads[1] = reverseComplimentRead;
-    kmerExtractor->dna2aa(forwardRead, reverseComplimentRead);
+    seqAlterator->dna2aa(forwardRead, reverseComplimentRead);
     //seqID = taxIdList[idIdx]; idIdx++;
-    ESP = kmerExtractor->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
+    ESP = seqAlterator->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
     while (ESP.startOfFrame + ESP.frame != 0)
     {
         writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdList);
-        ESP = kmerExtractor->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
+        ESP = seqAlterator->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
     }
 
     //flush last buffer
@@ -131,6 +131,7 @@ void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, const 
     sort(kmerBuffer, kmerBuffer + bufferIdx, [](const Kmer & a, const Kmer & b) {
         return a.ADkmer < b.ADkmer || (a.ADkmer == b.ADkmer && a.info.sequenceID < b.info.sequenceID);
     });
+
     Kmer lookingKmer = kmerBuffer[0];
     size_t write = 0;
     int endFlag = 0;
@@ -138,12 +139,13 @@ void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, const 
     vector<string> asd;
     asd.push_back("species");
     for(size_t i = 1 ; i < bufferIdx ; i++) {
-        cout<<ncbiTaxonomy->taxIdAtRank(taxIdList[lookingKmer.info.sequenceID],asd[0])<<endl;
-
         while(ncbiTaxonomy->taxIdAtRank(taxIdList[lookingKmer.info.sequenceID],asd[0])
                 == ncbiTaxonomy->taxIdAtRank(taxIdList[kmerBuffer[i].info.sequenceID],asd[0])){
             if (lookingKmer.ADkmer != kmerBuffer[i].ADkmer) {
                 break;
+            }
+            else{
+                lookingKmer.info.redundancy = true;
             }
             i++;
             if(i == bufferIdx)

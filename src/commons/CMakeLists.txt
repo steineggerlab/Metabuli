@@ -6,13 +6,13 @@ set(commons_source_files
         commons/IndexCreator.cpp
         commons/IndexCreator.h
         commons/Kmer.h
-        commons/KmerExtractor.cpp
-        commons/KmerExtractor.h
+        commons/SeqAlterator.cpp
+        commons/SeqAlterator.h
         commons/Mmap.h
         commons/printBinary.cpp
         commons/printBinary.h
-        commons/Searcher.cpp
-        commons/Searcher.h
+        commons/Classifier.cpp
+        commons/Classifier.h
         commons/BitManipulateMacros.h
         commons/LocalParameters.cpp
         commons/LocalParameters.h

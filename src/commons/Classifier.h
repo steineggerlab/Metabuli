@@ -11,6 +11,7 @@
 #include "SeqAlterator.h"
 #include "printBinary.h"
 #include "common.h"
+#define AminoAcid(x) (size_t)(x & (~0 & ~16777215))
 using namespace std;
 
 class Classifier
@@ -23,18 +24,18 @@ private:
     size_t multipleMatchCount;
     size_t perfectMatchCount;
     size_t closestCount;
-    uint64_t lookingTarget;
-    uint64_t lookingQuery;
-    uint64_t nextTarget;
-    size_t lookingTargetPos;
+//    uint64_t currentTargetKmer;
+//    uint64_t currentQuery;
+//    uint64_t nextTargetKmer;
+    size_t currentTargetPos;
     int isMatched;
     vector<matchedKmer> matchedKmerList;
-    vector<int> closestKmers;
-    int lookingHamming;
+    vector<size_t> closestKmers;
+    int currentHamming;
     ExtractStartPoint ESP;
 
 
-    uint64_t marker= ~0 & ~16777215;
+    const static uint64_t MARKER = ~0 & ~16777215;
     uint8_t hammingLookup[6][6]= {
             {0, 1, 1, 1, 2, 1},
             {1, 0, 1, 1, 2, 2},
