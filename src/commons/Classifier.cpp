@@ -98,14 +98,12 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     size_t bufferIdx = 0;
 
     struct MmapedData<char> queryFile = mmapData<char>(queryFileName);
-    size_t numOfChar = queryFile.fileSize / sizeof(char);
     struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName);
     targetDiffIdxList.data[targetDiffIdxList.fileSize/sizeof(uint16_t)] = 32768; //1000000000000000
     struct MmapedData<KmerInfo> targetInfoList = mmapData<KmerInfo>(targetInfoFileName);
 
     vector<SeqSegment> seqSegments;
     seqAlterator->getSeqSegments(seqSegments, queryFile);
-
     Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
 
     int seqID = 0;
@@ -215,10 +213,9 @@ void Classifier::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const Mmape
 
         for(size_t k = 0; k < closestKmers.size(); k++)
         {
-            matchedKmer temp = {kmerBuffer[i].info.sequenceID, targetInfoList.data[closestKmers[k]].sequenceID, taxIdList[targetInfoList.data[closestKmers[k]].sequenceID],
-                                kmerBuffer[i].info.pos - targetInfoList.data[closestKmers[k]].pos,
-                                lowestHamming,targetInfoList.data[closestKmers[k]].redundancy};
-            matchedKmerList.emplace_back(temp);
+            matchedKmerList.emplace_back(kmerBuffer[i].info.sequenceID, targetInfoList.data[closestKmers[k]].sequenceID, taxIdList[targetInfoList.data[closestKmers[k]].sequenceID],
+                                         kmerBuffer[i].info.pos - targetInfoList.data[closestKmers[k]].pos,
+                                         lowestHamming, targetInfoList.data[closestKmers[k]].redundancy);
             closestCount++;
         }
         closestKmers.clear();
@@ -257,7 +254,7 @@ uint8_t Classifier::getHammingDistance(uint64_t kmer1, uint64_t kmer2)
     }
     return hammingDist;
 }
-void Classifier::writeResultFile(vector<matchedKmer> & matchList, const char * queryFileName)
+void Classifier::writeResultFile(vector<MatchedKmer> & matchList, const char * queryFileName)
 {
     char suffixedResultFileName[1000];
     sprintf(suffixedResultFileName,"%s_result_%zu", queryFileName,numOfSplit);
@@ -265,7 +262,7 @@ void Classifier::writeResultFile(vector<matchedKmer> & matchList, const char * q
     cout<<suffixedResultFileName<<endl;
     FILE * fp = fopen(suffixedResultFileName,"wb");
     cout<<matchList.size();
-    fwrite(&(matchList[0]), sizeof(matchedKmer), matchList.size(), fp);
+    fwrite(&(matchList[0]), sizeof(MatchedKmer), matchList.size(), fp);
     fclose(fp);
     matchList.clear();
 }

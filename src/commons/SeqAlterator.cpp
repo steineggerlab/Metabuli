@@ -214,9 +214,10 @@ ExtractStartPoint SeqAlterator::fillKmerBuffer(const string * dnaSeq, Kmer * kme
             tempKmer = addDNAInfo(tempKmer, dnaSeq[forOrRev], startOfKmer, frame);
 
             ///memcpy를 써보자
-            kmerList[kmerBufferIdx].ADkmer = tempKmer;
-            kmerList[kmerBufferIdx].info.sequenceID = seqID;
-            kmerList[kmerBufferIdx].info.pos = startOfKmer;
+            kmerList[kmerBufferIdx] = {tempKmer, seqID, (int)startOfKmer, 0};
+//            kmerList[kmerBufferIdx].ADkmer = tempKmer;
+//            kmerList[kmerBufferIdx].info.sequenceID = seqID;
+//            kmerList[kmerBufferIdx].info.pos = startOfKmer;
             kmerBufferIdx++;
 
             if(kmerBufferIdx == kmerBufSize)

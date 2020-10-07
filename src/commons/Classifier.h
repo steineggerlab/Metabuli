@@ -29,7 +29,7 @@ private:
 //    uint64_t nextTargetKmer;
     size_t currentTargetPos;
     int isMatched;
-    vector<matchedKmer> matchedKmerList;
+    vector<MatchedKmer> matchedKmerList;
     vector<size_t> closestKmers;
     int currentHamming;
     ExtractStartPoint ESP;
@@ -46,7 +46,7 @@ private:
     uint8_t getHammingDistance(uint64_t kmer1, uint64_t kmer2);
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);
     void linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<KmerInfo> & targetInfoList, const vector<int> & taxIdList);
-    void writeResultFile(vector<matchedKmer> & matchList, const char * queryFileName);
+    void writeResultFile(vector<MatchedKmer> & matchList, const char * queryFileName);
 public:
     void startSearch(char * queryFileName, char * targetDiffIdxFileName, char * targetInfoFileName);
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const vector<int> & taxIdList);
