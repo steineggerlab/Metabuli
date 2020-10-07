@@ -38,7 +38,7 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
     KmerInfo * infoBuffer = (KmerInfo *)malloc(sizeof(KmerInfo) * 250000000); size_t infoBufferIdx = 0;
     uint64_t lastWrittenKmer = 0;
     uint64_t lastKmer = 0;
-    KmerInfo lastInfo;
+    KmerInfo lastInfo(0, 0,0);
     size_t maxIdxOfEachFiles[fileCnt];
     size_t rightnumber = 0;
     //mmap split files

@@ -13,9 +13,6 @@ Classifier::Classifier() : queryCount(0), multipleMatchCount(0), totalMatchCount
     totalMatchCount = 0;
     perfectMatchCount = 0;
     ESP = {0 ,0};
-
-
-
 }
 
 Classifier::~Classifier() { delete seqAlterator; }
@@ -94,7 +91,6 @@ Classifier::~Classifier() { delete seqAlterator; }
 void Classifier::startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const vector<int> & taxIdList)
 {
     string dnaBuffer;
-
     size_t bufferIdx = 0;
 
     struct MmapedData<char> queryFile = mmapData<char>(queryFileName);
@@ -136,8 +132,8 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 }
 
 void Classifier::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<KmerInfo> & targetInfoList, const vector<int> & taxIdList) {
-
     cout<<"compare started"<<endl;
+
     //initialize
     size_t diffIdxPos = 0;
     uint64_t lastFirstMatch = 0;
@@ -170,7 +166,6 @@ void Classifier::linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const Mmape
         lowestHamming = 100;
         queryCount ++;
         currentQueryAA = AminoAcid(currentQuery);
-       // && nextTargetKmer != UINT64_MAX
         while(tarIter < maxTargetSize  && AminoAcid(nextTargetKmer) <= currentQueryAA){
             currentTargetKmer = nextTargetKmer;
             currentTargetPos = diffIdxPos;

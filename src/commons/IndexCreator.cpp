@@ -65,6 +65,9 @@ void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileNa
     ExtractStartPoint ESP = {0 ,0};
     size_t bufferIdx = 0;
 
+    vector<int> taxIdListAtRank;
+    makeTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
+
     Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
     int seqID = 0;
     getline(targetFile, buffer);
@@ -79,7 +82,7 @@ void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileNa
             ESP = seqAlterator->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
             while (ESP.startOfFrame + ESP.frame != 0)
             {
-                writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdList);
+                writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdListAtRank);
                 ESP = seqAlterator->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
             }
             forwardRead.clear();
@@ -97,18 +100,18 @@ void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileNa
     ESP = seqAlterator->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
     while (ESP.startOfFrame + ESP.frame != 0)
     {
-        writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdList);
+        writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdListAtRank);
         ESP = seqAlterator->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
     }
 
     //flush last buffer
-    writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdList);
+    writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdListAtRank);
     targetFile.close();
     free(kmerBuffer);
 
 }
 
-void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, const char * outputFileName, vector<int> & taxIdList)
+void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, const char * outputFileName, vector<int> & taxIdListAtRank)
 {
     char suffixedDiffIdxFileName[100];
     char suffixedInfoFileName[100];
@@ -139,8 +142,9 @@ void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, const 
     vector<string> asd;
     asd.push_back("species");
     for(size_t i = 1 ; i < bufferIdx ; i++) {
-        while(ncbiTaxonomy->taxIdAtRank(taxIdList[lookingKmer.info.sequenceID],asd[0])
-                == ncbiTaxonomy->taxIdAtRank(taxIdList[kmerBuffer[i].info.sequenceID],asd[0])){
+//        while(ncbiTaxonomy->taxIdAtRank(taxIdList[lookingKmer.info.sequenceID],asd[0])
+//                == ncbiTaxonomy->taxIdAtRank(taxIdList[kmerBuffer[i].info.sequenceID],asd[0]))
+        while(taxIdListAtRank[lookingKmer.info.sequenceID] == taxIdListAtRank[kmerBuffer[i].info.sequenceID]){
             if (lookingKmer.ADkmer != kmerBuffer[i].ADkmer) {
                 break;
             }
@@ -148,8 +152,7 @@ void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, const 
                 lookingKmer.info.redundancy = true;
             }
             i++;
-            if(i == bufferIdx)
-            {
+            if(i == bufferIdx){
                 endFlag = 1;
                 break;
             }
@@ -181,21 +184,25 @@ void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, const 
     bufferIdx = 0;
 }
 
+void IndexCreator::makeTaxIdListAtRank(vector<int> &taxID, vector<int> &taxIdAtRank, string rank) {
+    size_t listSize = taxID.size();
+    for(int i = 0; i < listSize; i++){
+        taxIdAtRank[i] = ncbiTaxonomy -> taxIdAtRank(taxID[i], rank);
+    }
+}
+
 void IndexCreator::writeKmerDiff(uint64_t lastKmer, uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx ){
     uint64_t kmerdiff = entryToWrite - lastKmer;
     uint16_t buffer[5];
     int idx = 3;
-
     buffer[4] = SET_END_FLAG(GET_15_BITS(kmerdiff));
     kmerdiff >>= 15U;
-
     while (kmerdiff) {
         uint16_t toWrite = GET_15_BITS(kmerdiff);
         kmerdiff >>= 15U;
         buffer[idx] = toWrite;
         idx--;
     }
-
     writeKmer(kmerBuf, handleKmerTable, (buffer + idx + 1), (4 - idx), localBufIdx);
 }
 

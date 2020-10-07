@@ -169,9 +169,7 @@ ExtractStartPoint SeqAlterator::fillKmerBuffer2(SeqSegment seq, MmapedData<char>
             addDNAInfo2(tempKmer, seq, seqFile, forOrRev, startOfKmer, frame);
 
             ///memcpy를 써보자
-            kmerList[kmerBufferIdx].ADkmer = tempKmer;
-            kmerList[kmerBufferIdx].info.sequenceID = seqID;
-            kmerList[kmerBufferIdx].info.pos = startOfKmer;
+            kmerList[kmerBufferIdx] = {tempKmer, seqID, (int)startOfKmer, 0};
             kmerBufferIdx++;
 
             if(kmerBufferIdx == kmerBufSize)
@@ -257,8 +255,7 @@ void SeqAlterator::addDNAInfo2(uint64_t & kmer, SeqSegment & seq, MmapedData<cha
         for( int i = 0; i < kmerLength * 3; i += 3) {
             kmer |= nuc2num[nuc2int(seqFile.data[seq.start + (start + i)])][nuc2int(seqFile.data[seq.start + (start + i + 1)])][nuc2int(seqFile.data[seq.start + (start + i + 2)])] << i;
         }
-    }
-    if(forOrRev == 1){
+    } else{
         for( int i = 0; i < kmerLength * 3; i += 3) {
             kmer |= nuc2num[nuc2int(iRCT[seqFile.data[seq.end - (start + i)]])][nuc2int(iRCT[seqFile.data[seq.end - (start + i + 1)]])][nuc2int(iRCT[seqFile.data[seq.end - (start + i + 2)]])] << i;
         }

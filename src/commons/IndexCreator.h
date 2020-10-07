@@ -33,6 +33,7 @@ private:
 
     void writeTargetFiles(Kmer * kmerBuffer, size_t & bufferIdx, const char * outputFileName, vector<int> & taxIdList);
     void writeKmer(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
+    void makeTaxIdListAtRank(vector<int> & taxID, vector<int> & taxIdAtRank, string rank);
 
 public:
 
