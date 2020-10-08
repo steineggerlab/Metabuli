@@ -13,12 +13,20 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     vector<char*> mergedFileNames;
     IndexCreator idxCre;
+    string name, node, merged;
+//    cout<<"Input the directory for name.dmp"<<endl;
+//    cin>>name;
+//    cout<<"Input the directory for node.dmp"<<endl;
+//    cin>>node;
+//    cout<<"Input the directory for merged.dmp"<<endl;
+//    cin>>merged;
+    NcbiTaxonomy ncbiTaxonomy("/Users/kjb/Desktop/ADclassifier/taxdmp/names.dmp",
+            "/Users/kjb/Desktop/ADclassifier/taxdmp/nodes.dmp",
+                 "/Users/kjb/Desktop/ADclassifier/taxdmp/merged.dmp");
     const char * seqFileName = argv[0];
     const char * taxIdFileName = argv[1];
     const char * outputFileName = argv[2];
 
-
-//    cout<<"Input the directory of a sequence file from which you want to make k-mer DB"<<endl;
     ifstream seqFile;
     seqFile.open(seqFileName);
 
@@ -28,8 +36,6 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     }
     seqFile.close();
 
-    cout<<"Input the directory of corresponding taxID list"<<endl;
-    //cin>>taxIdFileName;
     FILE * taxIdFile;
     if((taxIdFile = fopen(taxIdFileName,"r")) == NULL){
         cout<<"Cannot open the taxID list file."<<endl;
@@ -43,11 +49,10 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     }
     fclose(taxIdFile);
 
+    vector<int> taxIdListAtRank;
+    ncbiTaxonomy.makeTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
 
-//    cout<<"Input the directory where k-mer DB would be created"<<endl;
-//    cin >> outputFileName;
-    idxCre.startIndexCreating2(seqFileName,outputFileName,taxIdList);
-
+    idxCre.startIndexCreating2(seqFileName,outputFileName,taxIdListAtRank);
 
     int numOfSplits = idxCre.getNumOfFlush();
     char suffixedDiffIdxFileName[numOfSplits][100];
@@ -82,10 +87,10 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     sprintf(mergedDiffFileName, "%s_diffIdx", outputFileName);
     sprintf(mergedInfoFileName, "%s_info", outputFileName);
     DiffIdxMerger merger(mergedDiffFileName, mergedInfoFileName);
-    merger.mergeTargetFiles(diffSplits, infoSplits);
+    merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtRank);
 
     cout<<"k-mer DB in: "<<endl;
-    cout<<mergedDiffFileName<<"and"<<endl;
+    cout<<mergedDiffFileName<<" and"<<endl;
     cout<<mergedInfoFileName<<endl;
 
     mergedFileNames.push_back(mergedDiffFileName);

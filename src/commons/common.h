@@ -4,7 +4,7 @@
 
 #ifndef ADCLASSIFIER2_COMMON_H
 #define ADCLASSIFIER2_COMMON_H
-#define kmerBufSize 20000000
+#define kmerBufSize 10000000
 #define AApart(x) x & ()
 typedef struct SeqSegment{
     size_t start;

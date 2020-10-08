@@ -9,20 +9,10 @@ DiffIdxMerger::DiffIdxMerger(char* mergedDiffFileName, char * mergedInfoFileNmae
     cre = new IndexCreator();
 }
 
-void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames) {
+void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & taxIdList) {
 
     FILE * mergedDiffFIle = fopen(mergedDiffFileName, "wb");
     FILE * mergedInfoFIle = fopen(mergedInfoFileName, "wb");
-
-    char taxID[100];
-    FILE * taxIdFile = fopen("/Users/kjb/Desktop/ADclassifier/tengenome/taxIDs", "r");
-    vector<int> taxIdList;
-
-    while(feof(taxIdFile) == 0)
-    {
-        fscanf(taxIdFile,"%s",taxID);
-        taxIdList.push_back(atoi(taxID));
-    }
 
     size_t fileCnt = diffIdxFileNames.size();
     size_t leftFile = fileCnt;
@@ -78,7 +68,7 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
         lookingInfo[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]]; infoFileIdx[idxOfMin] ++;
         if( diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] )
         {
-            lookingKmers[idxOfMin] = 18446744073709551615;
+            lookingKmers[idxOfMin] = UINT64_MAX;
             leftFile--;
             if(leftFile == 0) break;
         }
@@ -97,7 +87,7 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
 
             if( diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] )
             {
-                lookingKmers[idxOfMin] = 18446744073709551615;
+                lookingKmers[idxOfMin] = UINT64_MAX;
                 leftFile--;
                 if(leftFile == 0)
                 {

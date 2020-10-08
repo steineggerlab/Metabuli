@@ -7,23 +7,14 @@
 IndexCreator::IndexCreator()
 {
     seqAlterator = new SeqAlterator();
-    string name, node, merged;
-    cout<<"Input the directory for name.dmp"<<endl;
-    cin>>name;
-    cout<<"Input the directory for node.dmp"<<endl;
-    cin>>node;
-    cout<<"Input the directory for merged.dmp"<<endl;
-    cin>>merged;
 
-    ncbiTaxonomy = new NcbiTaxonomy(name, node, merged);
 }
 
 IndexCreator::~IndexCreator() {
     delete seqAlterator;
-    delete ncbiTaxonomy;
 }
 
-void IndexCreator::startIndexCreating2(const char * seqFileName, const char * outputFileName, vector<int> & taxIdList)
+void IndexCreator::startIndexCreating2(const char * seqFileName, const char * outputFileName, vector<int> & taxIdListAtRank)
 {
     string buffer;
     ExtractStartPoint ESP = {0 ,0};
@@ -44,19 +35,20 @@ void IndexCreator::startIndexCreating2(const char * seqFileName, const char * ou
         ESP = seqAlterator->fillKmerBuffer2(seqSegments[i], seqFile, kmerBuffer, seqID, bufferIdx, ESP);
         while (ESP.startOfFrame + ESP.frame != 0)
         {
-            writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdList);
+            writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdListAtRank);
             ESP = seqAlterator->fillKmerBuffer2(seqSegments[i], seqFile, kmerBuffer, seqID, bufferIdx, ESP);
         }
         seqID ++;
     }
 
     //flush last buffer
-    writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdList);
+    writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdListAtRank);
 
     free(kmerBuffer);
     munmap(seqFile.data, seqFile.fileSize + 1);
 }
-void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileName, vector<int> & taxIdList)
+
+void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileName, vector<int> & taxIdListAtRank)
 {
     string buffer;
     string forwardRead;
@@ -64,9 +56,6 @@ void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileNa
     string reads[2];
     ExtractStartPoint ESP = {0 ,0};
     size_t bufferIdx = 0;
-
-    vector<int> taxIdListAtRank;
-    makeTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
 
     Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
     int seqID = 0;
@@ -142,8 +131,6 @@ void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, const 
     vector<string> asd;
     asd.push_back("species");
     for(size_t i = 1 ; i < bufferIdx ; i++) {
-//        while(ncbiTaxonomy->taxIdAtRank(taxIdList[lookingKmer.info.sequenceID],asd[0])
-//                == ncbiTaxonomy->taxIdAtRank(taxIdList[kmerBuffer[i].info.sequenceID],asd[0]))
         while(taxIdListAtRank[lookingKmer.info.sequenceID] == taxIdListAtRank[kmerBuffer[i].info.sequenceID]){
             if (lookingKmer.ADkmer != kmerBuffer[i].ADkmer) {
                 break;
@@ -184,14 +171,9 @@ void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, const 
     bufferIdx = 0;
 }
 
-void IndexCreator::makeTaxIdListAtRank(vector<int> &taxID, vector<int> &taxIdAtRank, string rank) {
-    size_t listSize = taxID.size();
-    for(int i = 0; i < listSize; i++){
-        taxIdAtRank[i] = ncbiTaxonomy -> taxIdAtRank(taxID[i], rank);
-    }
-}
 
-void IndexCreator::writeKmerDiff(uint64_t lastKmer, uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx ){
+
+void IndexCreator::writeKmerDiff(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx ){
     uint64_t kmerdiff = entryToWrite - lastKmer;
     uint16_t buffer[5];
     int idx = 3;

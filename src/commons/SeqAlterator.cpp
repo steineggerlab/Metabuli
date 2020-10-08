@@ -117,9 +117,12 @@ void SeqAlterator::dna2aa(const string & forward, const string & reverse){
 void SeqAlterator::dna2aa2(const SeqSegment & seq, const MmapedData<char> & seqFile){
     const size_t & start = seq.start;
     const size_t & end = seq.end;
-    for(int i = 0 ; i < 6 ; i++){ aaFrames[i].clear(); }
-
     size_t len = end - start + 1;
+    for(int i = 0 ; i < 6 ; i++){
+        aaFrames[i].clear();
+        aaFrames[i].reserve(len / 3 + 1);
+    }
+
     ///translation from DNA to AA. in each frame
     for(size_t i = 0; i < len - 4; i = i+3 )
     {
