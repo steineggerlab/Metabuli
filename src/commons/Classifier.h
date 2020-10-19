@@ -17,7 +17,7 @@ using namespace std;
 class Classifier
 {
 private:
-    size_t numOfSplit;
+    int numOfSplit;
     SeqAlterator * seqAlterator;
     size_t queryCount;
     size_t totalMatchCount;
@@ -47,9 +47,12 @@ private:
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);
     void linearSearch(Kmer * kmerBuffer, size_t & bufferIdx, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<KmerInfo> & targetInfoList, const vector<int> & taxIdList);
     void writeResultFile(vector<MatchedKmer> & matchList, const char * queryFileName);
+
+
 public:
-    void startSearch(char * queryFileName, char * targetDiffIdxFileName, char * targetInfoFileName);
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const vector<int> & taxIdList);
+    void analyseResult(const char * queryFileName);
+    int getNumOfSplits() const;
     Classifier();
     ~Classifier();
 };

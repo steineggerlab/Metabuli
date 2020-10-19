@@ -31,5 +31,6 @@ int classify(int argc, const char **argv, const Command& command)
     fclose(taxIdFile);
 
     classifier.startClassify(queryFileName, targetDiffIdxFileName, targetInfoFileName, taxIdList);
+
     return 0;
 }
