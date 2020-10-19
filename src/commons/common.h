@@ -6,6 +6,8 @@
 #define ADCLASSIFIER2_COMMON_H
 #define kmerBufSize 10000000
 #define AApart(x) x & ()
+//asdfasd
+
 typedef struct SeqSegment{
     size_t start;
     size_t end;
