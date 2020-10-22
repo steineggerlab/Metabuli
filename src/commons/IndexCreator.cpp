@@ -128,8 +128,6 @@ void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, const 
     size_t write = 0;
     int endFlag = 0;
 
-    vector<string> asd;
-    asd.push_back("species");
     for(size_t i = 1 ; i < bufferIdx ; i++) {
         while(taxIdListAtRank[lookingKmer.info.sequenceID] == taxIdListAtRank[kmerBuffer[i].info.sequenceID]){
             if (lookingKmer.ADkmer != kmerBuffer[i].ADkmer) {
