@@ -5,6 +5,7 @@
 #ifndef ADKMER3_KMER_H
 #define ADKMER3_KMER_H
 #include <iostream>
+////
 typedef struct KmerInfo {
     KmerInfo(int seqID = 0, int pos = 0, bool redundancy = 0) : sequenceID(seqID), pos(pos), redundancy(redundancy) {}
     int sequenceID;
