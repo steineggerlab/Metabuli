@@ -3,14 +3,12 @@
 //
 
 #include "Classifier.h"
-#include "FastSort.h"
+
 Classifier::Classifier() : queryCount(0), multipleMatchCount(0), totalMatchCount(0), perfectMatchCount(0) {
     seqAlterator = new SeqAlterator();
     numOfSplit = 0;
     closestCount = 0;
     queryCount = 0;
-    totalMatchCount = 0;
-    perfectMatchCount = 0;
     ESP = {0 ,0};
 }
 
@@ -199,8 +197,11 @@ void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTa
     size_t currentRead;
     size_t currentKmer;
     vector<int> matchedKmers;
-    vector<int> matchedLCAs;
-    vector<int> matchedTaxons;
+//    vector<TaxID> matchedLCAs;
+    vector<TaxID>::iterator matchedLCAsIt;
+    vector<int> matchedLCACounts;
+    unordered_map<TaxID, int> matchedLCAs; //int for counting
+    unordered_map<int, TaxID> assignedReads; //map<queryID, TaxID>
 
 //    for(size_t i = 0; i < numOfMatches; i++){
 
@@ -210,149 +211,158 @@ void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTa
     double selectedPercent = 0;
 
     size_t i = 0;
-    while(i < numOfMatches){
+    while(i < numOfMatches) {
         currentRead = resultFile.data[i].queryID;
-        while(currentRead == (size_t)resultFile.data[i].queryID){
+        while (currentRead == (size_t) resultFile.data[i].queryID) {
             currentKmer = resultFile.data[i].posInfo;
-            while(currentKmer == (size_t)resultFile.data[i].posInfo){
+            while (currentKmer == (size_t) resultFile.data[i].posInfo) {
                 matchedKmers.push_back(i);
                 i++;
             }
-            TaxID selectedLCA = selectLcaFromTaxIdList(matchedKmers,ncbiTaxonomy, 0.8, numAssignedSeqs, numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon, selectedPercent);
-            matchedLCAs.push_back(selectedLCA);
+            TaxID selectedLCA = selectLcaFromTaxIdList(matchedKmers, ncbiTaxonomy, 0.8, numAssignedSeqs,
+                                                       numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
+                                                       selectedPercent);
+            if (matchedLCAs.find(selectedLCA) == matchedLCAs.end()) {
+                matchedLCAs.insert(pair<TaxID, int>(selectedLCA, 1));
+            } else {
+                matchedLCAs[selectedLCA]++;
+            }
             matchedKmers.clear();
         }
-       ///TODO: giveTaxonToRead(matchedLCA)
-       ///TODO: matchedLCA.clear()
-
+        assignedReads.insert(pair<int, TaxID>(currentRead, selectALeaf(matchedLCAs,ncbiTaxonomy)));
+        matchedLCAs.clear();
     }
 
+    for(auto it: assignedReads){
+        cout<<it.first<<" "<<it.second<<endl;
+    }
 }
 
-//TaxID Classifier::selectTaxForSet(const std::vector<int> &setTaxa, NcbiTaxonomy const *taxonomy, const float majorityCutoff,
-//                       size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent) {
-//    // count num occurences of each ancestor, possibly weighted
-//    std::map<TaxID,taxNode> ancTaxIdsCounts;
-//
-//    // initialize counters and weights
-//    numAssignedSeqs = 0;
-//    numUnassignedSeqs = 0;
-//    numSeqsAgreeWithSelectedTaxon = 0;
-//    selectedPercent = 0;
-//    double totalAssignedSeqsWeights = 0.0;
-//
-//    for (size_t i = 0; i < setTaxa.size(); ++i) {
-//        TaxID currTaxId = setTaxa[i].taxon;
-//        double currWeight = setTaxa[i].weight;
-//        // ignore unassigned sequences
-//        if (currTaxId == 0) {
-//            numUnassignedSeqs++;
-//            continue;
-//        }
-//        TaxonNode const * node = taxonomy->taxonNode(currTaxId, false);
-//        if (node == NULL) {
-//            Debug(Debug::ERROR) << "taxonid: " << currTaxId << " does not match a legal taxonomy node.\n";
-//            EXIT(EXIT_FAILURE);
-//        }
-//        totalAssignedSeqsWeights += currWeight;
-//        numAssignedSeqs++;
-//
-//        // each start of a path due to an orf is a candidate
-//        if (ancTaxIdsCounts.find(currTaxId) != ancTaxIdsCounts.end()) { //원소가 있다면
-//            ancTaxIdsCounts[currTaxId].update(currWeight, 0);
-//        } else {
-//            taxNode currNode;
-//            currNode.set(currWeight, true, 0);
-//            ancTaxIdsCounts.insert(std::pair<TaxID,taxNode>(currTaxId, currNode));
-//        }
-//
-//        // iterate all ancestors up to root (including). add currWeight and candidate status to each
-//        TaxID currParentTaxId = node->parentTaxId;
-//        while (currParentTaxId != currTaxId) {
-//            if (ancTaxIdsCounts.find(currParentTaxId) != ancTaxIdsCounts.end()) {
-//                ancTaxIdsCounts[currParentTaxId].update(currWeight, currTaxId);
-//            } else {
-//                taxNode currParentNode;
-//                currParentNode.set(currWeight, false, currTaxId);
-//                ancTaxIdsCounts.insert(std::pair<TaxID,taxNode>(currParentTaxId, currParentNode));
-//            }
-//            // move up:
-//            currTaxId = currParentTaxId;
-//            node = taxonomy->taxonNode(currParentTaxId, false);
-//            currParentTaxId = node->parentTaxId;
-//        }
-//    }
-//
-//    // select the lowest ancestor that meets the cutoff
-//    int minRank = INT_MAX;
-//    TaxID selctedTaxon = 0;
-//
-//    for (std::map<TaxID,taxNode>::iterator it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
-//        // consider only candidates:
-//        if (!(it->second.isCandidate)) {
-//            continue;
-//        }
-//
-//        double currPercent = float(it->second.weight) / totalAssignedSeqsWeights;
-//        if (currPercent >= majorityCutoff) {
-//            // iterate all ancestors to find lineage min rank (the candidate is a descendant of a node with this rank)
-//            TaxID currTaxId = it->first;
-//            TaxonNode const * node = taxonomy->taxonNode(currTaxId, false);
-//            int currMinRank = ROOT_RANK;
-//            TaxID currParentTaxId = node->parentTaxId;
-//            while (currParentTaxId != currTaxId) {
-//                int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
-//                if ((currRankInd > 0) && (currRankInd < currMinRank)) {
-//                    currMinRank = currRankInd;
-//                    // the rank can only go up on the way to the root, so we can break
-//                    break;
-//                }
-//                // move up:
-//                currTaxId = currParentTaxId;
-//                node = taxonomy->taxonNode(currParentTaxId, false);
-//                currParentTaxId = node->parentTaxId;
-//            }
-//
-//            if ((currMinRank < minRank) || ((currMinRank == minRank) && (currPercent > selectedPercent))) {
-//                selctedTaxon = it->first;
-//                minRank = currMinRank;
-//                selectedPercent = currPercent;
-//            }
-//        }
-//    }
-//
-//    // count the number of seqs who have selectedTaxon in their ancestors (agree with selection):
-//    if (selctedTaxon == ROOT_TAXID) {
-//        // all agree with "root"
-//        numSeqsAgreeWithSelectedTaxon = numAssignedSeqs;
-//        return (selctedTaxon);
-//    }
-//    if (selctedTaxon == 0) {
-//        // nothing informative
-//        return (selctedTaxon);
-//    }
-//    // otherwise, iterate over all seqs
-//    for (size_t i = 0; i < setTaxa.size(); ++i) {
-//        TaxID currTaxId = setTaxa[i].taxon;
-//        // ignore unassigned sequences
-//        if (currTaxId == 0) {
-//            continue;
-//        }
-//        TaxonNode const * node = taxonomy->taxonNode(currTaxId, false);
-//
-//        // iterate all ancestors up to the root
-//        TaxID currParentTaxId = node->parentTaxId;
-//        while (currParentTaxId != currTaxId) {
-//            if (currTaxId == selctedTaxon) {
-//                numSeqsAgreeWithSelectedTaxon++;
-//                break;
-//            }
-//            currTaxId = currParentTaxId;
-//            node = taxonomy->taxonNode(currParentTaxId, false);
-//            currParentTaxId = node->parentTaxId;
-//        }
-//    }
-//
-//    return (selctedTaxon);
-//}
+TaxID Classifier::selectALeaf(unordered_map<TaxID, int> & taxIdList, NcbiTaxonomy & ncbiTaxonomy, float majorityThr){
+    unordered_map<TaxID, int> taxonNodeCount;
+    double totalCount = 0;
+    TaxID currTaxId;
+    int currCount;
+//    typedef unordered_map<TaxID, int>::iterator TaxonNodeCntIt;
+    for(unordered_map<TaxID, int>::iterator it = taxIdList.begin(); it != taxIdList.end(); ++it){
+        currTaxId = it->first;
+        currCount = it->second;
+        for(std::pair<TaxID, int> it2 : taxIdList){
+            if((it2.first != currTaxId) && ncbiTaxonomy.IsAncestor(it2.first, currTaxId)){
+                currCount += it2.second;
+            }
+        }
+        taxonNodeCount.insert(pair<TaxID,int>(currTaxId, currCount));
+        totalCount += it->second;
+    }
+    /// 두 루프를 하나로 합칠 수 있을 듯
+    TaxID selectedLeaf = 0;
+    int minRank = INT_MAX;
+    int maxCount = 0;
+    int currRank;
+    for(auto it: taxonNodeCount){
+        if((it.second > maxCount) && float(it.second/totalCount) >= majorityThr){
+            currRank = NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(it.first)->rank);
+            if( currRank < minRank) {
+                minRank = currRank;
+                maxCount = it.second;
+                selectedLeaf = it.first;
+            }
+        }
+    }
 
+    return selectedLeaf; // 0 -> unclassified
+}
+
+TaxID Classifier::selectLcaFromTaxIdList(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,
+                             size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent){
+    std::map<TaxID,taxNode> ancTaxIdsCounts;
+
+    numAssignedSeqs = 0;
+    numUnassignedSeqs = 0;
+    numSeqsAgreeWithSelectedTaxon = 0;
+    selectedPercent = 0;
+    double totalAssignedSeqsWeights = 0.0;
+
+    for (size_t i = 0; i < taxIdList.size(); ++i) {
+        TaxID currTaxId = taxIdList[i];
+        double currWeight = 1;
+        // ignore unassigned sequences
+        if (currTaxId == 0) {
+            numUnassignedSeqs++;
+            continue;
+        }
+        TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
+        if (node == NULL) {
+            Debug(Debug::ERROR) << "taxonid: " << currTaxId << " does not match a legal taxonomy node.\n";
+            EXIT(EXIT_FAILURE);
+        }
+        totalAssignedSeqsWeights += currWeight;
+        numAssignedSeqs++;
+
+        // each start of a path due to an orf is a candidate
+        if (ancTaxIdsCounts.find(currTaxId) != ancTaxIdsCounts.end()) { //원소가 있다면
+            ancTaxIdsCounts[currTaxId].update(currWeight, 0);
+        } else {
+            taxNode currNode;
+            currNode.set(currWeight, true, 0);
+            ancTaxIdsCounts.insert(std::pair<TaxID,taxNode>(currTaxId, currNode));
+        }
+
+        // iterate all ancestors up to root (including). add currWeight and candidate status to each
+        TaxID currParentTaxId = node->parentTaxId;
+        while (currParentTaxId != currTaxId) {
+            if (ancTaxIdsCounts.find(currParentTaxId) != ancTaxIdsCounts.end()) {
+                ancTaxIdsCounts[currParentTaxId].update(currWeight, currTaxId);
+            } else {
+                taxNode currParentNode;
+                currParentNode.set(currWeight, false, currTaxId);
+                ancTaxIdsCounts.insert(std::pair<TaxID,taxNode>(currParentTaxId, currParentNode));
+            }
+            // move up:
+            currTaxId = currParentTaxId;
+            node = taxonomy.taxonNode(currParentTaxId, false);
+            currParentTaxId = node->parentTaxId;
+        }
+    }
+
+    // select the lowest ancestor that meets the cutoff
+    int minRank = INT_MAX;
+    TaxID selctedTaxon = 0;
+
+    for (std::map<TaxID,taxNode>::iterator it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
+        // consider only candidates:
+        if (!(it->second.isCandidate)) {
+            continue;
+        }
+
+        double currPercent = float(it->second.weight) / totalAssignedSeqsWeights;
+        if (currPercent >= majorityCutoff) {
+            // iterate all ancestors to find lineage min rank (the candidate is a descendant of a node with this rank)
+            TaxID currTaxId = it->first;
+            TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
+            int currMinRank = INT_MAX;
+            TaxID currParentTaxId = node->parentTaxId;
+            while (currParentTaxId != currTaxId) {
+                int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
+                if ((currRankInd > 0) && (currRankInd < currMinRank)) {
+                    currMinRank = currRankInd;
+                    // the rank can only go up on the way to the root, so we can break
+                    break;
+                }
+                // move up:
+                currTaxId = currParentTaxId;
+                node = taxonomy.taxonNode(currParentTaxId, false);
+                currParentTaxId = node->parentTaxId;
+            }
+
+            if ((currMinRank < minRank) || ((currMinRank == minRank) && (currPercent > selectedPercent))) {
+                selctedTaxon = it->first;
+                minRank = currMinRank;
+                selectedPercent = currPercent;
+            }
+        }
+    }
+
+    return selctedTaxon;
+}

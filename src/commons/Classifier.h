@@ -13,7 +13,10 @@
 #include "common.h"
 #include "NcbiTaxonomy.h"
 #include "Debug.h"
-#include "aggregatetax.h"
+
+#include <vector>
+#include <algorithm>
+#include "FastSort.h"
 
 #define AminoAcid(x) (size_t)(x & (~0 & ~16777215))
 using namespace std;
@@ -21,6 +24,27 @@ using namespace std;
 class Classifier
 {
 private:
+    struct taxNode {
+        void set(const double weightInput, const bool isCandidateInput, const TaxID & childTaxonInput) {
+            weight = weightInput;
+            isCandidate = isCandidateInput;
+            childTaxon = childTaxonInput;
+        }
+
+        void update(const double weightToAdd, const TaxID & childTaxonInput) {
+            if (childTaxon != childTaxonInput) { //isCandidate가 뭐야??
+                isCandidate = true;
+                childTaxon = childTaxonInput;
+            }
+            weight += weightToAdd;
+        }
+
+        // these will be filled when iterating over all contributing lineages
+        double weight;
+        bool isCandidate;
+        TaxID childTaxon;
+    };
+
     int numOfSplit;
     SeqAlterator * seqAlterator;
     size_t queryCount;
@@ -51,6 +75,9 @@ private:
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);
     void linearSearch(Kmer * queryKmerList, size_t & bufferIdx, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<KmerInfo> & targetInfoList, const vector<int> & taxIdList);
     void writeResultFile(vector<MatchedKmer> & matchList, const char * queryFileName);
+    static TaxID selectALeaf(unordered_map<TaxID, int> & TaxIdList, NcbiTaxonomy & ncbiTaxonomy, float majorityThr = 0.8);
+    TaxID selectLcaFromTaxIdList(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,
+                           size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent);
 //    TaxID selectTaxForSet(const std::vector<int> &setTaxa, NcbiTaxonomy const *taxonomy, const float majorityCutoff,
 //                          size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent);
 

@@ -4,9 +4,6 @@
 
 #include "Classifier.h"
 #include "Parameters.h"
-#include "NcbiTaxonomy.h"
-
-using namespace std;
 
 int classify(int argc, const char **argv, const Command& command)
 {
@@ -34,6 +31,7 @@ int classify(int argc, const char **argv, const Command& command)
     fclose(taxIdFile);
 
     classifier.startClassify(queryFileName, targetDiffIdxFileName, targetInfoFileName, taxIdList);
+    classifier.analyseResult(queryFileName, ncbiTaxonomy);
 
     return 0;
 }
