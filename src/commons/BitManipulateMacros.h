@@ -4,7 +4,7 @@
 
 #ifndef ADCLASSIFIER2_BITMANIPULATEMACROS_H
 #define ADCLASSIFIER2_BITMANIPULATEMACROS_H
-
+//////////
 #define SET_END_FLAG(num)           (0x8000U | (num))
 #define IS_LAST_15_BITS(num)        (0x8000U & (num))
 #define GET_15_BITS(num)            (0x7fffU & (num))
