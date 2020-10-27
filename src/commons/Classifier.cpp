@@ -42,7 +42,9 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     }
     //compare the rest query k-mers with target k-mers
     linearSearch(kmerBuffer, bufferIdx, targetDiffIdxList, targetInfoList, taxIdList);
+    cout<<"matchedKmerListSize: "<<matchedKmerList.size()<<endl;
     writeResultFile(matchedKmerList,queryFileName);
+
 
     cout<<"query count                          : "<<queryCount<<endl;
     cout<<"Total match count                    : "<<totalMatchCount <<endl;
@@ -178,6 +180,7 @@ void Classifier::writeResultFile(vector<MatchedKmer> & matchList, const char * q
 //    sort(matchList.begin(), matchList.end(), [=](MatchedKmer x, MatchedKmer y) { return x.queryID < y.queryID; });
 //    cout<<suffixedResultFileName<<endl;
     FILE * fp = fopen(suffixedResultFileName,"ab");
+    cout<<"writeResultFile: matchList.size()"<<matchList.size()<<endl;
     fwrite(&(matchList[0]), sizeof(MatchedKmer), matchList.size(), fp);
     fclose(fp);
     matchList.clear();
@@ -193,8 +196,8 @@ void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTa
     struct MmapedData<MatchedKmer> resultFile = mmapData<MatchedKmer>(suffixedResultFileName);
     size_t numOfMatches = resultFile.fileSize / sizeof(MatchedKmer);
     SORT_PARALLEL(resultFile.data, resultFile.data + numOfMatches, [](const MatchedKmer & a, const MatchedKmer & b) {
-        return a.queryID < b.queryID || (a.queryID == b.queryID && a.posInfo < b.posInfo);});
-    size_t currentRead;
+        return a.queryID < b.queryID || (a.queryID == b.queryID && a.queryPos < b.queryPos);});
+    size_t currentReadId;
     size_t currentKmer;
     vector<int> matchedKmers;
 //    vector<TaxID> matchedLCAs;
@@ -209,13 +212,15 @@ void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTa
     size_t numUnassignedSeqs = 0;
     size_t numSeqsAgreeWithSelectedTaxon = 0;
     double selectedPercent = 0;
-
+    cout<<"numOfMatches: "<<numOfMatches<<endl;
     size_t i = 0;
     while(i < numOfMatches) {
-        currentRead = resultFile.data[i].queryID;
-        while (currentRead == (size_t) resultFile.data[i].queryID && i < numOfMatches) {
-            currentKmer = resultFile.data[i].posInfo;
-            while (currentKmer == (size_t) resultFile.data[i].posInfo && i < numOfMatches) {
+        currentReadId = resultFile.data[i].queryID;
+        while((currentReadId == (size_t) resultFile.data[i].queryID) && (i < numOfMatches)){
+            currentKmer = resultFile.data[i].queryPos;
+            while((currentKmer == (size_t) resultFile.data[i].queryPos) && (i < numOfMatches)) {
+                cout<<currentKmer<<" "<<resultFile.data[i].queryPos<<" "<<resultFile.data[i].tragetID<<endl;
+                cout<<resultFile.data[i].taxID<<endl;
                 matchedKmers.push_back(resultFile.data[i].taxID);
                 i++;
             }
@@ -223,7 +228,7 @@ void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTa
             TaxID selectedLCA = selectLcaFromTaxIdList(matchedKmers, ncbiTaxonomy, 0.8, numAssignedSeqs,
                                                        numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
                                                        selectedPercent);
-
+            cout<<"selectedLCA: "<<selectedLCA<<endl;
             if (matchedLCAs.find(selectedLCA) == matchedLCAs.end()) {
                 matchedLCAs.insert(pair<TaxID, int>(selectedLCA, 1));
             } else {
@@ -231,7 +236,8 @@ void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTa
             }
             matchedKmers.clear();
         }
-        assignedReads.insert(pair<int, TaxID>(currentRead, selectALeaf(matchedLCAs,ncbiTaxonomy)));
+        cout<<"selected leaf:"<<selectALeaf(matchedLCAs,ncbiTaxonomy)<<endl;
+        assignedReads.insert(pair<int, TaxID>(currentReadId, selectALeaf(matchedLCAs, ncbiTaxonomy)));
         matchedLCAs.clear();
     }
 
@@ -249,7 +255,7 @@ TaxID Classifier::selectALeaf(unordered_map<TaxID, int> & taxIdList, NcbiTaxonom
     int maxCount = 0;
     int currRank;
     TaxID selectedLeaf = 0;
-
+    majorityThr = 0.1;
 //    typedef unordered_map<TaxID, int>::iterator TaxonNodeCntIt;
     for(unordered_map<TaxID, int>::iterator it = taxIdList.begin(); it != taxIdList.end(); ++it) {
         currTaxId = it->first;
@@ -260,17 +266,19 @@ TaxID Classifier::selectALeaf(unordered_map<TaxID, int> & taxIdList, NcbiTaxonom
             }
         }
         taxonNodeCount.insert(pair<TaxID, int>(currTaxId, currCount));
-        if ((currCount > maxCount) && float(currCount / totalCount) >= majorityThr) {
-            currRank = NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(currTaxId)->rank);
+
+        totalCount += it->second;
+    }
+    for(auto it = taxonNodeCount.begin(); it != taxonNodeCount.end(); ++it ) {
+        if ((it->second > maxCount) && float(it->second / totalCount) >= majorityThr) {
+            currRank = NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(it->first)->rank);
             if (currRank < minRank) {
                 minRank = currRank;
                 maxCount = currCount;
                 selectedLeaf = currTaxId;
             }
         }
-        totalCount += it->second;
     }
-
     return selectedLeaf; // 0 -> unclassified
 }
 

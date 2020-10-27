@@ -154,8 +154,8 @@ ExtractStartPoint SeqAlterator::fillKmerBuffer2(SeqSegment seq, MmapedData<char>
         defaultStartPoint = {ESP.frame , ESP.startOfFrame};
     }
     uint64_t tempKmer = 0;
-    size_t startOfKmer = defaultStartPoint.startOfFrame;
-    size_t frame = defaultStartPoint.frame;
+    uint32_t startOfKmer = defaultStartPoint.startOfFrame;
+    uint32_t frame = defaultStartPoint.frame;
     int forOrRev;
 
     for( frame ; frame < 6 ; frame++)
@@ -172,7 +172,7 @@ ExtractStartPoint SeqAlterator::fillKmerBuffer2(SeqSegment seq, MmapedData<char>
             addDNAInfo2(tempKmer, seq, seqFile, forOrRev, startOfKmer, frame);
 
             ///memcpy를 써보자
-            kmerList[kmerBufferIdx] = {tempKmer, seqID, (int)startOfKmer, 0};
+            kmerList[kmerBufferIdx] = {tempKmer, seqID, startOfKmer*(frame+1), 0};
             kmerBufferIdx++;
 
             if(kmerBufferIdx == kmerBufSize)
@@ -197,14 +197,15 @@ ExtractStartPoint SeqAlterator::fillKmerBuffer(const string * dnaSeq, Kmer * kme
         defaultStartPoint = {ESP.frame , ESP.startOfFrame};
     }
     uint64_t tempKmer = 0;
-    size_t startOfKmer = defaultStartPoint.startOfFrame;
-    size_t frame = defaultStartPoint.frame;
+    uint32_t startOfKmer = defaultStartPoint.startOfFrame;
+    uint32_t frame = defaultStartPoint.frame;
     int forOrRev;
-
+    uint32_t frameSeparator;
     for( frame ; frame < 6 ; frame++)
     {
         int len = aaFrames[frame].size();
         forOrRev = frame / 3;
+        frameSeparator = frame * (len - kmerLength);
         for (startOfKmer ; startOfKmer < len - kmerLength ; startOfKmer++)
         {
             ///Amino acid 2 number
@@ -215,7 +216,7 @@ ExtractStartPoint SeqAlterator::fillKmerBuffer(const string * dnaSeq, Kmer * kme
             tempKmer = addDNAInfo(tempKmer, dnaSeq[forOrRev], startOfKmer, frame);
 
             ///memcpy를 써보자
-            kmerList[kmerBufferIdx] = {tempKmer, seqID, (int)startOfKmer, 0};
+            kmerList[kmerBufferIdx] = {tempKmer, seqID, startOfKmer + frameSeparator, 0};
 //            kmerList[kmerBufferIdx].ADkmer = tempKmer;
 //            kmerList[kmerBufferIdx].info.sequenceID = seqID;
 //            kmerList[kmerBufferIdx].info.pos = startOfKmer;

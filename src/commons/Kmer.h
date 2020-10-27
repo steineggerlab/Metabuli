@@ -7,24 +7,24 @@
 #include <iostream>
 ////
 typedef struct KmerInfo {
-    KmerInfo(int seqID = 0, int pos = 0, bool redundancy = 0) : sequenceID(seqID), pos(pos), redundancy(redundancy) {}
+    KmerInfo(int seqID = 0, uint32_t pos = 0, bool redundancy = 0) : sequenceID(seqID), pos(pos), redundancy(redundancy) {}
     int sequenceID;
-    int pos;
+    uint32_t pos;
     bool redundancy = false;
 } KmerInfo;
 
 typedef struct Kmer {
-    Kmer(uint64_t ADkmer, int seqID, int pos, bool redundacy) : ADkmer(ADkmer),info(seqID, pos, redundacy) {}
+    Kmer(uint64_t ADkmer, int seqID, uint32_t pos, bool redundacy) : ADkmer(ADkmer),info(seqID, pos, redundacy) {}
     uint64_t ADkmer;
     KmerInfo info;
 } Kmer;
 
 typedef struct MatchedKmer{
-    MatchedKmer(int quID, int tarID, int taxID, int pos, uint8_t hamming, bool red): queryID(quID), tragetID(tarID), taxID(taxID), posInfo(pos), hammingDistance(hamming), redundancy(red) {}
+    MatchedKmer(int quID, int tarID, int taxID, int pos, uint8_t hamming, bool red): queryID(quID), tragetID(tarID), taxID(taxID), queryPos(pos), hammingDistance(hamming), redundancy(red) {}
     int queryID;
     int tragetID;
     int taxID;
-    int posInfo;
+    int queryPos;
     uint8_t hammingDistance;
     bool redundancy;
 } __attribute__((packed)) matchedKmer;

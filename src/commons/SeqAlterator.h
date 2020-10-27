@@ -17,8 +17,8 @@
 using namespace std;
 
 typedef struct ExtractStartPoint {
-    size_t frame;
-    size_t startOfFrame;
+    uint32_t frame;
+    uint32_t startOfFrame;
 }ExtractStartPoint;
 
 class SeqAlterator
