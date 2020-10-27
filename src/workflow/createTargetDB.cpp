@@ -20,9 +20,9 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 //    cin>>node;
 //    cout<<"Input the directory for merged.dmp"<<endl;
 //    cin>>merged;
-    NcbiTaxonomy ncbiTaxonomy("/Users/jaebeomkim/Desktop/ADclassifier/taxdmp/names.dmp",
-            "/Users/jaebeomkim/Desktop/ADclassifier/taxdmp/nodes.dmp",
-                 "/Users/jaebeomkim/Desktop/ADclassifier/taxdmp/merged.dmp");
+    NcbiTaxonomy ncbiTaxonomy("/Users/jaebeomkim/Desktop/pjt/taxdmp/names.dmp",
+            "/Users/jaebeomkim/Desktop/pjt/taxdmp/nodes.dmp",
+                 "/Users/jaebeomkim/Desktop/pjt/taxdmp/merged.dmp");
     const char * seqFileName = argv[0];
     const char * taxIdFileName = argv[1];
     const char * outputFileName = argv[2];

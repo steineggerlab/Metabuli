@@ -213,15 +213,17 @@ void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTa
     size_t i = 0;
     while(i < numOfMatches) {
         currentRead = resultFile.data[i].queryID;
-        while (currentRead == (size_t) resultFile.data[i].queryID) {
+        while (currentRead == (size_t) resultFile.data[i].queryID && i < numOfMatches) {
             currentKmer = resultFile.data[i].posInfo;
-            while (currentKmer == (size_t) resultFile.data[i].posInfo) {
-                matchedKmers.push_back(i);
+            while (currentKmer == (size_t) resultFile.data[i].posInfo && i < numOfMatches) {
+                matchedKmers.push_back(resultFile.data[i].taxID);
                 i++;
             }
+
             TaxID selectedLCA = selectLcaFromTaxIdList(matchedKmers, ncbiTaxonomy, 0.8, numAssignedSeqs,
                                                        numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
                                                        selectedPercent);
+
             if (matchedLCAs.find(selectedLCA) == matchedLCAs.end()) {
                 matchedLCAs.insert(pair<TaxID, int>(selectedLCA, 1));
             } else {
@@ -243,32 +245,30 @@ TaxID Classifier::selectALeaf(unordered_map<TaxID, int> & taxIdList, NcbiTaxonom
     double totalCount = 0;
     TaxID currTaxId;
     int currCount;
-//    typedef unordered_map<TaxID, int>::iterator TaxonNodeCntIt;
-    for(unordered_map<TaxID, int>::iterator it = taxIdList.begin(); it != taxIdList.end(); ++it){
-        currTaxId = it->first;
-        currCount = it->second;
-        for(std::pair<TaxID, int> it2 : taxIdList){
-            if((it2.first != currTaxId) && ncbiTaxonomy.IsAncestor(it2.first, currTaxId)){
-                currCount += it2.second;
-            }
-        }
-        taxonNodeCount.insert(pair<TaxID,int>(currTaxId, currCount));
-        totalCount += it->second;
-    }
-    /// 두 루프를 하나로 합칠 수 있을 듯
-    TaxID selectedLeaf = 0;
     int minRank = INT_MAX;
     int maxCount = 0;
     int currRank;
-    for(auto it: taxonNodeCount){
-        if((it.second > maxCount) && float(it.second/totalCount) >= majorityThr){
-            currRank = NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(it.first)->rank);
-            if( currRank < minRank) {
-                minRank = currRank;
-                maxCount = it.second;
-                selectedLeaf = it.first;
+    TaxID selectedLeaf = 0;
+
+//    typedef unordered_map<TaxID, int>::iterator TaxonNodeCntIt;
+    for(unordered_map<TaxID, int>::iterator it = taxIdList.begin(); it != taxIdList.end(); ++it) {
+        currTaxId = it->first;
+        currCount = it->second;
+        for (std::pair<TaxID, int> it2 : taxIdList) {
+            if ((it2.first != currTaxId) && ncbiTaxonomy.IsAncestor(it2.first, currTaxId)) {
+                currCount += it2.second;
             }
         }
+        taxonNodeCount.insert(pair<TaxID, int>(currTaxId, currCount));
+        if ((currCount > maxCount) && float(currCount / totalCount) >= majorityThr) {
+            currRank = NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(currTaxId)->rank);
+            if (currRank < minRank) {
+                minRank = currRank;
+                maxCount = currCount;
+                selectedLeaf = currTaxId;
+            }
+        }
+        totalCount += it->second;
     }
 
     return selectedLeaf; // 0 -> unclassified

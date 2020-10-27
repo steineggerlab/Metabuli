@@ -30,7 +30,8 @@ std::vector<Command> commands = {
          "<i:queryFile[.txt]> <i:targetDiffIdx[.txt]> <i:targetInfo> <i:targetTaxIdList> <o:output[.txt]> <tmpDir>",
          CITATION_SPACEPHARER,
          {{"queryFile", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::sequenceDb},
-          {"targetDB", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+          {"targetDiffIdx", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+          {"targetInfo", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
           {"targetTaxIdList", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
           {"tmpDir", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}}
 };

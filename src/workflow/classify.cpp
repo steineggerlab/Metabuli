@@ -8,9 +8,9 @@
 int classify(int argc, const char **argv, const Command& command)
 {
     Classifier classifier;
-    NcbiTaxonomy ncbiTaxonomy("/Users/jaebeomkim/Desktop/ADclassifier/taxdmp/names.dmp",
-                              "/Users/jaebeomkim/Desktop/ADclassifier/taxdmp/nodes.dmp",
-                              "/Users/jaebeomkim/Desktop/ADclassifier/taxdmp/merged.dmp");
+    NcbiTaxonomy ncbiTaxonomy("/Users/jaebeomkim/Desktop/pjt/taxdmp/names.dmp",
+                              "/Users/jaebeomkim/Desktop/pjt/taxdmp/nodes.dmp",
+                              "/Users/jaebeomkim/Desktop/pjt/taxdmp/merged.dmp");
     const char * queryFileName = argv[0];
     const char * targetDiffIdxFileName = argv[1];
     const char * targetInfoFileName = argv[2];
