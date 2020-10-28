@@ -285,14 +285,13 @@ void SeqAlterator::getSeqSegments(vector<SeqSegment> & seqSegments, MmapedData<c
     size_t end = 0;
     size_t numOfChar = seqFile.fileSize / sizeof(char);
 
-    SeqSegment temp;
+    //SeqSegment temp(0,0);
     for(size_t i = 0; i < numOfChar; i++)
     {
         if(seqFile.data[i] == '>')
         {
             end = i - 2;
-            temp = {start, end};
-            seqSegments.push_back(temp); // the first push_back is a garbage.
+            seqSegments.emplace_back(start, end);// the first push_back is a garbage.
             while(seqFile.data[i] != '\n')
             {
                 cout<<seqFile.data[i];
@@ -302,7 +301,6 @@ void SeqAlterator::getSeqSegments(vector<SeqSegment> & seqSegments, MmapedData<c
             start = i + 1;
         }
     }
-    temp = {start, numOfChar - 2};
-    seqSegments.push_back(temp);
+    seqSegments.emplace_back(start, numOfChar - 2);
 }
 

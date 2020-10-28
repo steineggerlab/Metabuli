@@ -15,6 +15,9 @@ Classifier::Classifier() : queryCount(0), multipleMatchCount(0), totalMatchCount
 Classifier::~Classifier() { delete seqAlterator; }
 
 void Classifier::startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const vector<int> & taxIdList) {
+    NcbiTaxonomy ncbiTaxonomy("/Users/jaebeomkim/Desktop/pjt/taxdmp/names.dmp",
+                              "/Users/jaebeomkim/Desktop/pjt/taxdmp/nodes.dmp",
+                              "/Users/jaebeomkim/Desktop/pjt/taxdmp/merged.dmp");
     string dnaBuffer;
     size_t bufferIdx = 0;
 
@@ -25,10 +28,11 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     vector<SeqSegment> seqSegments;
     seqAlterator->getSeqSegments(seqSegments, queryFile);
+
     Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
 
     int seqID = 0;
-    for(size_t i = 1 ; i < seqSegments.size(); i++)
+    for(size_t i = 1 ; i < seqSegments.size(); i++) //size_t i = 1 is not an error. seqSegments[0] is garbage
     {
         seqAlterator-> dna2aa2(seqSegments[i], queryFile);
         ESP = seqAlterator->fillKmerBuffer2(seqSegments[i], queryFile, kmerBuffer, seqID, bufferIdx, ESP);
@@ -45,12 +49,13 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     cout<<"matchedKmerListSize: "<<matchedKmerList.size()<<endl;
     writeResultFile(matchedKmerList,queryFileName);
 
-
     cout<<"query count                          : "<<queryCount<<endl;
     cout<<"Total match count                    : "<<totalMatchCount <<endl;
     cout<<"mutipleMatch in AA level             : "<<multipleMatchCount << endl;
     cout<<"matches in DNA level                 : "<<perfectMatchCount<<endl;
     cout<<"number of closest matches            : "<<closestCount<<endl;
+
+    analyseResult(queryFileName, ncbiTaxonomy, seqSegments);
 
     free(kmerBuffer);
     munmap(queryFile.data, queryFile.fileSize + 1);
@@ -190,7 +195,7 @@ int Classifier::getNumOfSplits() const {
     return this->numOfSplit;
 }
 
-void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy) {
+void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, vector<SeqSegment> & seqSegments) {
     char suffixedResultFileName[1000];
     sprintf(suffixedResultFileName,"%s_result", queryFileName);
     struct MmapedData<MatchedKmer> resultFile = mmapData<MatchedKmer>(suffixedResultFileName);
@@ -246,8 +251,9 @@ void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTa
     }
 }
 
-TaxID Classifier::selectALeaf(unordered_map<TaxID, int> & taxIdList, NcbiTaxonomy & ncbiTaxonomy, float majorityThr){
+TaxID Classifier::selectALeaf(unordered_map<TaxID, int> & taxIdList, NcbiTaxonomy & ncbiTaxonomy, const size_t & length, float coverageThr){
     unordered_map<TaxID, int> taxonNodeCount;
+    size_t numberOfPossibleKmersFromThisRead = (length/3 - kmerLength +1) * 6;
     double totalCount = 0;
     TaxID currTaxId;
     int currCount;
@@ -255,7 +261,7 @@ TaxID Classifier::selectALeaf(unordered_map<TaxID, int> & taxIdList, NcbiTaxonom
     int maxCount = 0;
     int currRank;
     TaxID selectedLeaf = 0;
-    majorityThr = 0.1;
+    coverageThr = 0.1;
 //    typedef unordered_map<TaxID, int>::iterator TaxonNodeCntIt;
     for(unordered_map<TaxID, int>::iterator it = taxIdList.begin(); it != taxIdList.end(); ++it) {
         currTaxId = it->first;
@@ -270,7 +276,7 @@ TaxID Classifier::selectALeaf(unordered_map<TaxID, int> & taxIdList, NcbiTaxonom
         totalCount += it->second;
     }
     for(auto it = taxonNodeCount.begin(); it != taxonNodeCount.end(); ++it ) {
-        if ((it->second > maxCount) && float(it->second / totalCount) >= majorityThr) {
+        if ((it->second > maxCount) && float(it->second / numberOfPossibleKmersFromThisRead) >= coverageThr) {
             currRank = NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(it->first)->rank);
             if (currRank < minRank) {
                 minRank = currRank;

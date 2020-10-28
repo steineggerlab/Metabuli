@@ -4,12 +4,14 @@
 
 #ifndef ADCLASSIFIER2_COMMON_H
 #define ADCLASSIFIER2_COMMON_H
-#define kmerBufSize 10000000
+#define kmerBufSize 1000000000
 #define AApart(x) x & ()
 //asdfasd
 
 typedef struct SeqSegment{
+    SeqSegment(size_t start, size_t end) : start(start), end(end), length(start - end + 1) { }
     size_t start;
     size_t end;
+    size_t length = end - start + 1;
 }SeqSegment;
 #endif //ADCLASSIFIER2_COMMON_H
