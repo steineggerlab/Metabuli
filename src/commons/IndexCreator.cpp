@@ -16,15 +16,16 @@ IndexCreator::~IndexCreator() {
 
 void IndexCreator::startIndexCreating2(const char * seqFileName, const char * outputFileName, vector<int> & taxIdListAtRank)
 {
-    string buffer;
     ExtractStartPoint ESP = {0 ,0};
     size_t bufferIdx = 0;
 
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
     size_t numOfChar = seqFile.fileSize / sizeof(char);
 
+
     vector<SeqSegment> seqSegments;
     seqAlterator -> getSeqSegments(seqSegments, seqFile);
+
 
     Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
 
@@ -48,56 +49,37 @@ void IndexCreator::startIndexCreating2(const char * seqFileName, const char * ou
     munmap(seqFile.data, seqFile.fileSize + 1);
 }
 
-void IndexCreator::startIndexCreating(ifstream & targetFile, char * outputFileName, vector<int> & taxIdListAtRank)
+
+void IndexCreator::startIndexCreating(const char * seqFileName, const char * outputFileName, vector<int> & taxIdListAtRank)
 {
-    string buffer;
-    string forwardRead;
-    string reverseComplimentRead;
-    string reads[2];
     ExtractStartPoint ESP = {0 ,0};
     size_t bufferIdx = 0;
 
-    Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
-    int seqID = 0;
-    getline(targetFile, buffer);
-    while(targetFile)
-    {
-        getline(targetFile, buffer);
-        if(buffer[0] == '>'){
-            reverseComplimentRead = seqAlterator->reverseCompliment(forwardRead);
-            reads[0] = forwardRead; reads[1] = reverseComplimentRead;
-            seqAlterator->dna2aa(forwardRead, reverseComplimentRead);
-//            seqID = taxIdList[idIdx]; idIdx++;
-            ESP = seqAlterator->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
-            while (ESP.startOfFrame + ESP.frame != 0)
-            {
-                writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdListAtRank);
-                ESP = seqAlterator->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
-            }
-            forwardRead.clear();
-            seqID ++;
+    struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
+    size_t numOfChar = seqFile.fileSize / sizeof(char);
 
-            continue;
+    kseq_buffer_t buffer(const_cast<char*>(seqFile.data), seqFile.fileSize + 1);
+    kseq_t *seq = kseq_init(&buffer);
+
+    Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
+
+    int seqID = 0;
+    while(kseq_read(seq) >= 0){
+        seqAlterator->dna2aa(seq->seq.s);
+        ESP = seqAlterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
+        while (ESP.startOfFrame + ESP.frame != 0)
+        {
+            writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdListAtRank);
+            ESP = seqAlterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
         }
-        forwardRead.append(buffer);
-    }
-    // For last one
-    reverseComplimentRead = seqAlterator->reverseCompliment(forwardRead);
-    reads[0] = forwardRead; reads[1] = reverseComplimentRead;
-    seqAlterator->dna2aa(forwardRead, reverseComplimentRead);
-    //seqID = taxIdList[idIdx]; idIdx++;
-    ESP = seqAlterator->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
-    while (ESP.startOfFrame + ESP.frame != 0)
-    {
-        writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdListAtRank);
-        ESP = seqAlterator->fillKmerBuffer(reads, kmerBuffer, seqID, bufferIdx, ESP);
+        seqID ++;
     }
 
     //flush last buffer
     writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdListAtRank);
-    targetFile.close();
-    free(kmerBuffer);
 
+    free(kmerBuffer);
+    munmap(seqFile.data, seqFile.fileSize + 1);
 }
 
 void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, const char * outputFileName, vector<int> & taxIdListAtRank)

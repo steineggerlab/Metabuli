@@ -17,6 +17,10 @@
 #include <vector>
 #include <algorithm>
 #include "FastSort.h"
+#include "kseq.h"
+#include "KSeqBufferReader.h"
+
+KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
 
 #define AminoAcid(x) (size_t)(x & (~0 & ~16777215))
 using namespace std;

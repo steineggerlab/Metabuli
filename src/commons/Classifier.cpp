@@ -15,6 +15,7 @@ Classifier::Classifier() : queryCount(0), multipleMatchCount(0), totalMatchCount
 Classifier::~Classifier() { delete seqAlterator; }
 
 void Classifier::startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const vector<int> & taxIdList) {
+
     NcbiTaxonomy ncbiTaxonomy("/Users/jaebeomkim/Desktop/pjt/taxdmp/names.dmp",
                               "/Users/jaebeomkim/Desktop/pjt/taxdmp/nodes.dmp",
                               "/Users/jaebeomkim/Desktop/pjt/taxdmp/merged.dmp");
@@ -26,24 +27,39 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     targetDiffIdxList.data[targetDiffIdxList.fileSize/sizeof(uint16_t)] = 32768; //1000000000000000
     struct MmapedData<KmerInfo> targetInfoList = mmapData<KmerInfo>(targetInfoFileName);
 
+    kseq_buffer_t buffer(const_cast<char*>(queryFile.data), queryFile.fileSize + 1);
+    kseq_t *seq = kseq_init(&buffer);
+
     vector<SeqSegment> seqSegments;
     seqAlterator->getSeqSegments(seqSegments, queryFile);
 
     Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
-
     int seqID = 0;
-    for(size_t i = 1 ; i < seqSegments.size(); i++) //size_t i = 1 is not an error. seqSegments[0] is garbage
-    {
-        seqAlterator-> dna2aa2(seqSegments[i], queryFile);
-        ESP = seqAlterator->fillKmerBuffer2(seqSegments[i], queryFile, kmerBuffer, seqID, bufferIdx, ESP);
+    while(kseq_read(seq) >= 0){
+        seqAlterator->dna2aa(seq->seq.s);
+        ESP = seqAlterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
         while (ESP.startOfFrame + ESP.frame != 0)
         {
             linearSearch(kmerBuffer, bufferIdx, targetDiffIdxList, targetInfoList, taxIdList);
             writeResultFile(matchedKmerList,queryFileName);
-            ESP = seqAlterator->fillKmerBuffer2(seqSegments[i], queryFile, kmerBuffer, seqID, bufferIdx, ESP);
+            ESP = seqAlterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
         }
         seqID ++;
+
     }
+
+//    for(size_t i = 1 ; i < seqSegments.size(); i++) //size_t i = 1 is not an error. seqSegments[0] is garbage
+//    {
+//        seqAlterator-> dna2aa2(seqSegments[i], queryFile);
+//        ESP = seqAlterator->fillKmerBuffer2(seqSegments[i], queryFile, kmerBuffer, seqID, bufferIdx, ESP);
+//        while (ESP.startOfFrame + ESP.frame != 0)
+//        {
+//            linearSearch(kmerBuffer, bufferIdx, targetDiffIdxList, targetInfoList, taxIdList);
+//            writeResultFile(matchedKmerList,queryFileName);
+//            ESP = seqAlterator->fillKmerBuffer2(seqSegments[i], queryFile, kmerBuffer, seqID, bufferIdx, ESP);
+//        }
+//        seqID ++;
+//    }
     //compare the rest query k-mers with target k-mers
     linearSearch(kmerBuffer, bufferIdx, targetDiffIdxList, targetInfoList, taxIdList);
     cout<<"matchedKmerListSize: "<<matchedKmerList.size()<<endl;
@@ -64,7 +80,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 }
 
 void Classifier::linearSearch(Kmer * queryKmerList, size_t & bufferIdx, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<KmerInfo> & targetInfoList, const vector<int> & taxIdList) {
-    cout<<"compare started"<<endl;
+
 
     //initialize
     size_t diffIdxPos = 0;
@@ -184,7 +200,7 @@ void Classifier::writeResultFile(vector<MatchedKmer> & matchList, const char * q
     numOfSplit++;
 //    sort(matchList.begin(), matchList.end(), [=](MatchedKmer x, MatchedKmer y) { return x.queryID < y.queryID; });
 //    cout<<suffixedResultFileName<<endl;
-    FILE * fp = fopen(suffixedResultFileName,"ab");
+    FILE * fp = fopen(suffixedResultFileName,"wb");
     cout<<"writeResultFile: matchList.size()"<<matchList.size()<<endl;
     fwrite(&(matchList[0]), sizeof(MatchedKmer), matchList.size(), fp);
     fclose(fp);
@@ -241,8 +257,9 @@ void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTa
             }
             matchedKmers.clear();
         }
-        cout<<"selected leaf:"<<selectALeaf(matchedLCAs,ncbiTaxonomy)<<endl;
-        assignedReads.insert(pair<int, TaxID>(currentReadId, selectALeaf(matchedLCAs, ncbiTaxonomy)));
+        cout<<"selected leaf:"<<selectALeaf(matchedLCAs, ncbiTaxonomy, seqSegments[currentReadId+1].length )<<endl;
+        assignedReads.insert(pair<int, TaxID>(currentReadId, selectALeaf(matchedLCAs, ncbiTaxonomy,seqSegments[currentReadId+1].length)));
+        cout<<currentReadId<<" "<<seqSegments[currentReadId+1].length<<endl;
         matchedLCAs.clear();
     }
 
@@ -253,7 +270,7 @@ void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTa
 
 TaxID Classifier::selectALeaf(unordered_map<TaxID, int> & taxIdList, NcbiTaxonomy & ncbiTaxonomy, const size_t & length, float coverageThr){
     unordered_map<TaxID, int> taxonNodeCount;
-    size_t numberOfPossibleKmersFromThisRead = (length/3 - kmerLength +1) * 6;
+    size_t numberOfPossibleKmersFromThisRead = (length/3 - kmerLength +1); ///TODO: How to consider six frames?
     double totalCount = 0;
     TaxID currTaxId;
     int currCount;

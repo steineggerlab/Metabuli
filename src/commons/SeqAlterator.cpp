@@ -86,31 +86,32 @@ SeqAlterator::SeqAlterator() {
 
 }
 
-void SeqAlterator::dna2aa(const string & forward, const string & reverse){
-
+void SeqAlterator::dna2aa(const string & seq){
     for(int i = 0 ; i < 6 ; i++){ aaFrames[i].clear(); }
 
-    int len = forward.length();
-
+    int len = seq.length();
+    size_t end = len - 1;
+    //GATCACCTCTTCGGTTGCAGGGTTGATGCTTCTGAAGGTCTTGCCGGACACGGAGGGGACGAGCTTGCCGTCGATGACGAGCAGTTTCTCCCTTGCCGAGACCCGCCTGATGAGCGATACGGCATCATAGTCATATGCTACCGACATCATATTCCTCCTT
     ///translation from DNA to AA. in each frame
     for(int i = 0; i < len - 4; i = i+3 )
     {
-        aaFrames[0].push_back(nuc2aa[nuc2int(forward[i ])][nuc2int(forward[i + 1])][nuc2int(forward[i + 2])]);
-        aaFrames[1].push_back(nuc2aa[nuc2int(forward[i + 1])][nuc2int(forward[i + 2])][nuc2int(forward[i + 3])]);
-        aaFrames[2].push_back(nuc2aa[nuc2int(forward[i + 2])][nuc2int(forward[i + 3])][nuc2int(forward[i + 4])]);
-        aaFrames[3].push_back(nuc2aa[nuc2int(reverse[i ])][nuc2int(reverse[i + 1])][nuc2int(reverse[i + 2])]);
-        aaFrames[4].push_back(nuc2aa[nuc2int(reverse[i + 1])][nuc2int(reverse[i + 2])][nuc2int(reverse[i + 3])]);
-        aaFrames[5].push_back(nuc2aa[nuc2int(reverse[i + 2])][nuc2int(reverse[i + 3])][nuc2int(reverse[i + 4])]);
+        aaFrames[0].push_back(nuc2aa[nuc2int(seq[i    ])][nuc2int(seq[i + 1])][nuc2int(seq[i + 2])]);
+        aaFrames[1].push_back(nuc2aa[nuc2int(seq[i + 1])][nuc2int(seq[i + 2])][nuc2int(seq[i + 3])]);
+        aaFrames[2].push_back(nuc2aa[nuc2int(seq[i + 2])][nuc2int(seq[i + 3])][nuc2int(seq[i + 4])]);
+
+        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[seq[end - (i + 0)]])][nuc2int(iRCT[seq[end - (i + 1)]])][nuc2int(iRCT[seq[end - (i + 2)]])]);
+        aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[seq[end - (i + 1)]])][nuc2int(iRCT[seq[end - (i + 2)]])][nuc2int(iRCT[seq[end - (i + 3)]])]);
+        aaFrames[5].push_back(nuc2aa[nuc2int(iRCT[seq[end - (i + 2)]])][nuc2int(iRCT[seq[end - (i + 3)]])][nuc2int(iRCT[seq[end - (i + 4)]])]);
     }
     if(len % 3 == 0){
-        aaFrames[0].push_back(nuc2aa[nuc2int(forward[len - 3])][nuc2int(forward[len - 2])][nuc2int(forward[len - 1])]);
-        aaFrames[3].push_back(nuc2aa[nuc2int(reverse[len - 3])][nuc2int(reverse[len - 2])][nuc2int(reverse[len - 1])]);
+        aaFrames[0].push_back(nuc2aa[nuc2int(seq[end - 2])][nuc2int(seq[end - 1])][nuc2int(seq[end])]);
+        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[seq[2]])][nuc2int(iRCT[seq[1]])][nuc2int(iRCT[seq[0]])]);
     }
     if(len % 3 == 1 ){
-        aaFrames[0].push_back(nuc2aa[nuc2int(forward[len - 4])][nuc2int(forward[len - 3])][nuc2int(forward[len - 2])]);
-        aaFrames[1].push_back(nuc2aa[nuc2int(forward[len - 3])][nuc2int(forward[len - 2])][nuc2int(forward[len - 1])]);
-        aaFrames[3].push_back(nuc2aa[nuc2int(reverse[len - 4])][nuc2int(reverse[len - 3])][nuc2int(reverse[len - 2])]);
-        aaFrames[4].push_back(nuc2aa[nuc2int(reverse[len - 3])][nuc2int(reverse[len - 2])][nuc2int(reverse[len - 1])]);
+        aaFrames[0].push_back(nuc2aa[nuc2int(seq[end - 3])][nuc2int(seq[end - 2])][nuc2int(seq[end - 1])]);
+        aaFrames[1].push_back(nuc2aa[nuc2int(seq[end - 2])][nuc2int(seq[end - 1])][nuc2int(seq[end])]);
+        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[seq[3]])][nuc2int(iRCT[seq[2]])][nuc2int(iRCT[seq[1]])]);
+        aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[seq[2]])][nuc2int(iRCT[seq[1]])][nuc2int(iRCT[seq[0]])]);
     }
 }
 
@@ -144,6 +145,65 @@ void SeqAlterator::dna2aa2(const SeqSegment & seq, const MmapedData<char> & seqF
         aaFrames[1].push_back(nuc2aa[nuc2int(seqFile.data[len - 3])][nuc2int(seqFile.data[len - 2])][nuc2int(seqFile.data[len - 1])]);
         aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[seqFile.data[start + 3]])][nuc2int(iRCT[seqFile.data[start + 2]])][nuc2int(iRCT[seqFile.data[start + 1]])]);
         aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[seqFile.data[start + 2]])][nuc2int(iRCT[seqFile.data[start + 1]])][nuc2int(iRCT[seqFile.data[start + 0]])]);
+    }
+}
+ExtractStartPoint SeqAlterator::fillKmerBuffer(const string & seq, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP){
+    ExtractStartPoint defaultStartPoint = { 0, 0};
+    if(ESP.startOfFrame + ESP.startOfFrame != 0){
+        defaultStartPoint = {ESP.frame , ESP.startOfFrame};
+    }
+    uint64_t tempKmer = 0;
+    uint32_t startOfKmer = defaultStartPoint.startOfFrame;
+    uint32_t frame = defaultStartPoint.frame;
+    int forOrRev;
+
+    for( frame ; frame < 6 ; frame++)
+    {
+        int len = aaFrames[frame].size();
+        forOrRev = frame / 3;
+        for (startOfKmer ; startOfKmer < len - kmerLength + 1 ; startOfKmer++)
+        {
+            ///Amino acid 2 number
+            for (size_t i = 0; i < kmerLength; i++)
+            {
+                tempKmer += aaFrames[frame][startOfKmer + i] * powers[i];
+            }
+            addDNAInfo(tempKmer, seq, forOrRev, startOfKmer, frame);
+
+            ///memcpy를 써보자
+            kmerList[kmerBufferIdx] = {tempKmer, seqID, startOfKmer*(frame+1), 0};
+            kmerBufferIdx++;
+
+            if(kmerBufferIdx == kmerBufSize)
+            {
+                ExtractStartPoint ESP = {frame, startOfKmer + 1};
+                return ESP;
+            }
+
+            tempKmer = 0;
+        }
+        startOfKmer = 0;
+    }
+
+    ExtractStartPoint zero{0,0};
+    return zero;
+
+
+}
+
+uint64_t SeqAlterator::addDNAInfo(uint64_t & kmer, const string& seq, int forOrRev, const int startOfKmer, const int frame)
+{
+    int start = (frame % 3) + (startOfKmer * 3);
+    kmer <<= 25;
+    size_t end = seq.size() - 1;
+    if(forOrRev == 0){
+        for( int i = 0; i < kmerLength * 3; i += 3) {
+            kmer |= nuc2num[nuc2int(seq[start + i])][nuc2int(seq[start + i + 1])][nuc2int(seq[start + i + 2])] << i;
+        }
+    } else{
+        for( int i = 0; i < kmerLength * 3; i += 3) {
+            kmer |= nuc2num[nuc2int(iRCT[seq[end - (start + i)]])][nuc2int(iRCT[seq[end - (start + i + 1)]])][nuc2int(iRCT[seq[end - (start + i + 2)]])] << i;
+        }
     }
 }
 
@@ -190,69 +250,9 @@ ExtractStartPoint SeqAlterator::fillKmerBuffer2(SeqSegment seq, MmapedData<char>
     return zero;
 }
 
-ExtractStartPoint SeqAlterator::fillKmerBuffer(const string * dnaSeq, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP)
-{
-    ExtractStartPoint defaultStartPoint = { 0, 0};
-    if(ESP.startOfFrame + ESP.startOfFrame != 0){
-        defaultStartPoint = {ESP.frame , ESP.startOfFrame};
-    }
-    uint64_t tempKmer = 0;
-    uint32_t startOfKmer = defaultStartPoint.startOfFrame;
-    uint32_t frame = defaultStartPoint.frame;
-    int forOrRev;
-    uint32_t frameSeparator;
-    for( frame ; frame < 6 ; frame++)
-    {
-        int len = aaFrames[frame].size();
-        forOrRev = frame / 3;
-        frameSeparator = frame * (len - kmerLength);
-        for (startOfKmer ; startOfKmer < len - kmerLength ; startOfKmer++)
-        {
-            ///Amino acid 2 number
-            for (size_t i = 0; i < kmerLength; i++)
-            {
-                tempKmer += aaFrames[frame][startOfKmer + i] * powers[i];
-            }
-            tempKmer = addDNAInfo(tempKmer, dnaSeq[forOrRev], startOfKmer, frame);
-
-            ///memcpy를 써보자
-            kmerList[kmerBufferIdx] = {tempKmer, seqID, startOfKmer + frameSeparator, 0};
-//            kmerList[kmerBufferIdx].ADkmer = tempKmer;
-//            kmerList[kmerBufferIdx].info.sequenceID = seqID;
-//            kmerList[kmerBufferIdx].info.pos = startOfKmer;
-            kmerBufferIdx++;
-
-            if(kmerBufferIdx == kmerBufSize)
-            {
-                ExtractStartPoint ESP = {frame, startOfKmer + 1};
-                return ESP;
-            }
-
-            tempKmer = 0;
-        }
-        startOfKmer = 0;
-    }
-
-    ExtractStartPoint zero{0,0};
-    return zero;
-}
-
-uint64_t SeqAlterator::addDNAInfo(uint64_t kmer, const string& read, const int startOfKmer, const int frame)
-{
-    int start = frame % 3 + (startOfKmer * 3);
-    kmer <<= 25;
-
-    for( int i = 0; i < kmerLength*3; i += 3)
-    {
-        kmer |= nuc2num[nuc2int(read[start + i])][nuc2int(read[start + i + 1])][nuc2int(read[start + i + 2])] << i;
-    }
-    return kmer;
-}
-
 void SeqAlterator::addDNAInfo2(uint64_t & kmer, SeqSegment & seq, MmapedData<char> & seqFile, const int & forOrRev, const int & startOfKmer, const int & frame)
 {
     int start = (frame % 3) + (startOfKmer * 3);
-    uint64_t temp = kmer;
     kmer <<= 25;
 
     if(forOrRev == 0){
@@ -282,7 +282,6 @@ string SeqAlterator::reverseCompliment(string & read) const
 void SeqAlterator::getSeqSegments(vector<SeqSegment> & seqSegments, MmapedData<char> seqFile)
 {
     size_t start = 0;
-    size_t end = 0;
     size_t numOfChar = seqFile.fileSize / sizeof(char);
 
     //SeqSegment temp(0,0);
@@ -290,8 +289,7 @@ void SeqAlterator::getSeqSegments(vector<SeqSegment> & seqSegments, MmapedData<c
     {
         if(seqFile.data[i] == '>')
         {
-            end = i - 2;
-            seqSegments.emplace_back(start, end);// the first push_back is a garbage.
+            seqSegments.emplace_back(start, i-2);// the first push_back is a garbage.
             while(seqFile.data[i] != '\n')
             {
                 cout<<seqFile.data[i];
@@ -301,6 +299,6 @@ void SeqAlterator::getSeqSegments(vector<SeqSegment> & seqSegments, MmapedData<c
             start = i + 1;
         }
     }
-    seqSegments.emplace_back(start, numOfChar - 2);
+    seqSegments.emplace_back(start, numOfChar - 3);
 }
 

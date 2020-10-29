@@ -16,6 +16,11 @@
 #include "BitManipulateMacros.h"
 #include "common.h"
 #include "NcbiTaxonomy.h"
+#include "kseq.h"
+#include "KSeqBufferReader.h"
+
+KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
+
 #define kmerLength 8
 
 
@@ -38,7 +43,7 @@ public:
     IndexCreator();
     ~IndexCreator();
     int getNumOfFlush();
-    void startIndexCreating(ifstream & targetFile, char * outputFileName, vector<int> & taxIdList);
+    void startIndexCreating(const char * seqFileName, const char * outputFileName, vector<int> & taxIdList);
     void startIndexCreating2(const char * seqFileName, const char * outputFileName, vector<int> & taxIdList);
     void writeKmerDiff(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx );
     void writeInfo(KmerInfo * entryToWrite, FILE * infoFile, KmerInfo * infoBuffer, size_t & infoBufferIdx);

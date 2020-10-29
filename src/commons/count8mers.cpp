@@ -13,14 +13,12 @@ void count8mers(const char * fileName) {
     vector<SeqSegment> seqSegments;
     size_t start = 0;
     size_t end = 0;
-    SeqSegment temp;
+    //SeqSegment temp;
     for(size_t i = 0; i < maxNuc; i++)
     {
         if(seqFile.data[i] == '>')
         {
-            end = i-2;
-            temp = {start, end};
-            seqSegments.push_back(temp);
+            seqSegments.emplace_back(start, i - 2);
             while(seqFile.data[i] != '\n')
             {
                 cout<<seqFile.data[i];
@@ -30,8 +28,7 @@ void count8mers(const char * fileName) {
             start = i + 1;
         }
     }
-    temp = {start, maxNuc - 2};
-    seqSegments.push_back(temp);
+    seqSegments.emplace_back(start, maxNuc - 2);
     size_t len = 0;
     size_t sum = 0;
     for(int i = 1 ; i<seqSegments.size(); i++)
