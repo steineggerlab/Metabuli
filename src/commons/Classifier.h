@@ -88,6 +88,7 @@ private:
 
 public:
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const vector<int> & taxIdList);
+    void startClassify2(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const vector<int> & taxIdList);
     void analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, vector<SeqSegment> & seqSegments);
     int getNumOfSplits() const;
     Classifier();
