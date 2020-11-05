@@ -10,15 +10,15 @@ using namespace std;
 void count8mers(const char * fileName) {
     struct MmapedData<char> seqFile = mmapData<char>(fileName);
     size_t maxNuc = seqFile.fileSize/sizeof(char);
-    vector<SeqSegment> seqSegments;
+    vector<Sequence> seqSegments;
     size_t start = 0;
     size_t end = 0;
-    //SeqSegment temp;
+    //Sequence temp;
     for(size_t i = 0; i < maxNuc; i++)
     {
         if(seqFile.data[i] == '>')
         {
-            seqSegments.emplace_back(start, i - 2);
+            seqSegments.emplace_back(start, i - 2, i - start - 1 );
             while(seqFile.data[i] != '\n')
             {
                 cout<<seqFile.data[i];
@@ -28,7 +28,7 @@ void count8mers(const char * fileName) {
             start = i + 1;
         }
     }
-    seqSegments.emplace_back(start, maxNuc - 2);
+    seqSegments.emplace_back(start, maxNuc - 2, maxNuc - start - 1);
     size_t len = 0;
     size_t sum = 0;
     for(int i = 1 ; i<seqSegments.size(); i++)

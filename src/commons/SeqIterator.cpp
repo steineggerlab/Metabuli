@@ -2,9 +2,9 @@
 // Created by KJB on 01/09/2020.
 //
 
-#include "SeqAlterator.h"
+#include "SeqIterator.h"
 
-SeqAlterator::SeqAlterator() {
+SeqIterator::SeqIterator() {
 
     ///powers
     int pow = 1;
@@ -86,7 +86,7 @@ SeqAlterator::SeqAlterator() {
 
 }
 
-void SeqAlterator::dna2aa(const string & seq){
+void SeqIterator::dna2aa(const string & seq){
     for(int i = 0 ; i < 6 ; i++){ aaFrames[i].clear(); }
 
     int len = seq.length();
@@ -115,7 +115,7 @@ void SeqAlterator::dna2aa(const string & seq){
     }
 }
 
-void SeqAlterator::dna2aa2(const SeqSegment & seq, const MmapedData<char> & seqFile){
+void SeqIterator::dna2aa2(const Sequence & seq, const MmapedData<char> & seqFile){
     const size_t & start = seq.start;
     const size_t & end = seq.end;
     size_t len = end - start + 1;
@@ -147,7 +147,8 @@ void SeqAlterator::dna2aa2(const SeqSegment & seq, const MmapedData<char> & seqF
         aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[seqFile.data[start + 2]])][nuc2int(iRCT[seqFile.data[start + 1]])][nuc2int(iRCT[seqFile.data[start + 0]])]);
     }
 }
-ExtractStartPoint SeqAlterator::fillKmerBuffer(const string & seq, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP){
+
+ExtractStartPoint SeqIterator::fillKmerBuffer(const string & seq, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP){
     ExtractStartPoint defaultStartPoint = { 0, 0};
     if(ESP.startOfFrame + ESP.startOfFrame != 0){
         defaultStartPoint = {ESP.frame , ESP.startOfFrame};
@@ -191,7 +192,7 @@ ExtractStartPoint SeqAlterator::fillKmerBuffer(const string & seq, Kmer * kmerLi
 
 }
 
-uint64_t SeqAlterator::addDNAInfo(uint64_t & kmer, const string& seq, int forOrRev, const int startOfKmer, const int frame)
+uint64_t SeqIterator::addDNAInfo(uint64_t & kmer, const string& seq, int forOrRev, const int startOfKmer, const int frame)
 {
     int start = (frame % 3) + (startOfKmer * 3);
     kmer <<= 25;
@@ -207,7 +208,7 @@ uint64_t SeqAlterator::addDNAInfo(uint64_t & kmer, const string& seq, int forOrR
     }
 }
 
-ExtractStartPoint SeqAlterator::fillKmerBuffer2(SeqSegment seq, MmapedData<char> & seqFile, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP)
+ExtractStartPoint SeqIterator::fillKmerBuffer2(Sequence seq, MmapedData<char> & seqFile, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP)
 {
     ExtractStartPoint defaultStartPoint = { 0, 0};
     if(ESP.startOfFrame + ESP.startOfFrame != 0){
@@ -250,7 +251,7 @@ ExtractStartPoint SeqAlterator::fillKmerBuffer2(SeqSegment seq, MmapedData<char>
     return zero;
 }
 
-void SeqAlterator::addDNAInfo2(uint64_t & kmer, SeqSegment & seq, MmapedData<char> & seqFile, const int & forOrRev, const int & startOfKmer, const int & frame)
+void SeqIterator::addDNAInfo2(uint64_t & kmer, Sequence & seq, MmapedData<char> & seqFile, const int & forOrRev, const int & startOfKmer, const int & frame)
 {
     int start = (frame % 3) + (startOfKmer * 3);
     kmer <<= 25;
@@ -267,7 +268,7 @@ void SeqAlterator::addDNAInfo2(uint64_t & kmer, SeqSegment & seq, MmapedData<cha
     return;
 }
 
-string SeqAlterator::reverseCompliment(string & read) const
+string SeqIterator::reverseCompliment(string & read) const
 {
     int len = read.length();
     string out;
@@ -279,17 +280,17 @@ string SeqAlterator::reverseCompliment(string & read) const
     return out;
 }
 
-void SeqAlterator::getSeqSegments(vector<SeqSegment> & seqSegments, MmapedData<char> seqFile)
+void SeqIterator::getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile)
 {
     size_t start = 0;
     size_t numOfChar = seqFile.fileSize / sizeof(char);
 
-    //SeqSegment temp(0,0);
+    //Sequence temp(0,0);
     for(size_t i = 0; i < numOfChar; i++)
     {
         if(seqFile.data[i] == '>')
         {
-            seqSegments.emplace_back(start, i-2);// the first push_back is a garbage.
+            seqSegments.emplace_back(start, i-2, i - start - 1);// the first push_back is a garbage.
             while(seqFile.data[i] != '\n')
             {
                 cout<<seqFile.data[i];
@@ -299,6 +300,112 @@ void SeqAlterator::getSeqSegments(vector<SeqSegment> & seqSegments, MmapedData<c
             start = i + 1;
         }
     }
-    seqSegments.emplace_back(start, numOfChar - 3);
+    seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
 }
 
+void SeqIterator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile)
+{
+    size_t start = 0;
+    size_t numOfChar = seqFile.fileSize / sizeof(char);
+
+//    for(size_t i = 0; i < numOfChar; i++){
+//        if(seqFile.data[i] == '>'){
+//            start = i;
+//
+//        }
+//    }
+    //Sequence temp(0,0);
+    for(size_t i = 1; i < numOfChar; i++)
+    {
+        if(seqFile.data[i] == '>')
+        {
+            seqSegments.emplace_back(start, i-2, i - start - 1);// the first push_back is a garbage.
+            cout<<start<<" "<<i-2<<" "<<i-start-1<<endl;
+            start = i;
+        }
+    }
+    seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
+    cout<<start<<" "<<numOfChar-2<<" "<<numOfChar-start-1<<endl;
+}
+
+void SeqIterator::whatNameWouldBeGood(KmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, const size_t & offset, bool * checker) {
+
+    #pragma omp parallel
+    {
+        SeqIterator seqIterator;
+        size_t posToWrite;
+        bool hasOverflow = false;
+#pragma omp for schedule(dynamic, 1)
+        for (size_t i = offset; i < seqs.size(); i++) {
+            if(hasOverflow == false) {
+                kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
+                kseq_t *seq = kseq_init(&buffer);
+                kseq_read(seq);
+                seqIterator.dna2aa(seq->seq.s);
+                size_t kmerCnt = getNumOfKmerForSeq(seq->seq.s);
+//            cout<<"kmerCnt: "<<kmerCnt<<endl;
+                posToWrite = kmerBuffer.reserveMemory(kmerCnt);
+
+                if (posToWrite + kmerCnt < kmerBufSize && !checker[i]) {
+                    seqIterator.fillKmerBuffer3(seq->seq.s, kmerBuffer, posToWrite, i);
+                    checker[i] = true;
+                }
+            }
+                //  seqProcessedCounter++;
+                //}else{
+                //
+                //}
+
+                /*
+                 for(kmer in seqs.getKmers()){
+                    posToWrite=kmer;
+                    posToWrite++;
+                 }
+
+                */
+
+            }
+        }
+}
+
+void SeqIterator::fillKmerBuffer3(const string & seq,  KmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID)
+{
+    int forOrRev;
+    uint64_t tempKmer = 0;
+
+    for(uint32_t frame = 0 ; frame < 6 ; frame++)
+    {
+        int len = aaFrames[frame].size();
+        forOrRev = frame / 3;
+        for (uint32_t startOfKmer = 0 ; startOfKmer < len - kmerLength + 1 ; startOfKmer++)
+        {
+            ///Amino acid 2 number
+            for (size_t i = 0; i < kmerLength; i++)
+            {
+                tempKmer += aaFrames[frame][startOfKmer + i] * powers[i];
+            }
+            addDNAInfo(tempKmer, seq, forOrRev, startOfKmer, frame);
+
+            ///memcpy를 써보자
+            kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, startOfKmer*(frame+1), 0};
+            posToWrite++;
+            tempKmer = 0;
+        }
+
+    }
+}
+size_t SeqIterator::getNumOfKmerForSeq(const string & seq){
+    size_t len = seq.size();
+    if(len % 3 == 0)
+    {
+        return (6 * (len/3) - 46);
+    }
+    if(len % 3 == 1)
+    {
+        return (6 * (len/3) - 44);
+    }
+    if(len % 3 == 2)
+    {
+        return (6 * (len/3) - 42);
+    }
+}

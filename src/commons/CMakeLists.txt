@@ -6,8 +6,9 @@ set(commons_source_files
         commons/IndexCreator.cpp
         commons/IndexCreator.h
         commons/Kmer.h
-        commons/SeqAlterator.cpp
-        commons/SeqAlterator.h
+        commons/KmerBuffer.h
+        commons/SeqIterator.cpp
+        commons/SeqIterator.h
         commons/Mmap.h
         commons/printBinary.cpp
         commons/printBinary.h

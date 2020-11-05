@@ -10,7 +10,7 @@ typedef struct KmerInfo {
     KmerInfo(int seqID = 0, uint32_t pos = 0, bool redundancy = 0) : sequenceID(seqID), pos(pos), redundancy(redundancy) {}
     int sequenceID;
     uint32_t pos;
-    bool redundancy = false;
+    bool redundancy = true;
 } KmerInfo;
 
 typedef struct Kmer {

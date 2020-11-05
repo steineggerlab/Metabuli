@@ -11,7 +11,7 @@ add_executable(adclassifier
         ${workflow_source_files}
         adclassifier.cpp
         LocalCommandDeclarations.h
-        )
+        commons/KmerBuffer.h)
 mmseqs_setup_derived_target(adclassifier)
 target_link_libraries(adclassifier version)
 

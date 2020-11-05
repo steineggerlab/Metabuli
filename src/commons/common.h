@@ -8,8 +8,8 @@
 #define AApart(x) x & ()
 //asdfasd
 
-typedef struct SeqSegment{
-    SeqSegment(size_t start, size_t end) : start(start), end(end){ length = end - start + 1;}
+typedef struct Sequence{
+    Sequence(size_t start, size_t end, size_t length) : start(start), end(end), length(length) { }
     size_t start;
     size_t end;
     size_t length;

@@ -8,11 +8,12 @@
 #include "Mmap.h"
 #include <fstream>
 #include "Kmer.h"
-#include "SeqAlterator.h"
+#include "SeqIterator.h"
 #include "printBinary.h"
 #include "common.h"
 #include "NcbiTaxonomy.h"
 #include "Debug.h"
+#include "KmerBuffer.h"
 
 #include <vector>
 #include <algorithm>
@@ -20,7 +21,7 @@
 #include "kseq.h"
 #include "KSeqBufferReader.h"
 
-KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
+
 
 #define AminoAcid(x) (size_t)(x & (~0 & ~16777215))
 using namespace std;
@@ -50,7 +51,7 @@ private:
     };
 
     int numOfSplit;
-    SeqAlterator * seqAlterator;
+    SeqIterator * seqIterator;
     size_t queryCount;
     size_t totalMatchCount;
     size_t multipleMatchCount;
@@ -89,7 +90,8 @@ private:
 public:
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const vector<int> & taxIdList);
     void startClassify2(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const vector<int> & taxIdList);
-    void analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, vector<SeqSegment> & seqSegments);
+    void analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments);
+    void analyseResult2(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments);
     int getNumOfSplits() const;
     Classifier();
     ~Classifier();

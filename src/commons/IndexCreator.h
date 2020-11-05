@@ -7,19 +7,20 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <time.h>
+#include <fstream>
+#include <omp.h>
 #include "printBinary.h"
 #include "Mmap.h"
-#include <fstream>
 #include "Kmer.h"
-#include <time.h>
-#include "SeqAlterator.h"
+#include "SeqIterator.h"
 #include "BitManipulateMacros.h"
 #include "common.h"
 #include "NcbiTaxonomy.h"
-#include "kseq.h"
-#include "KSeqBufferReader.h"
 
-KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
+#include "FastSort.h"
+
 
 #define kmerLength 8
 
@@ -31,8 +32,8 @@ class IndexCreator{
 private:
     size_t availableMemory;
   //  char * outPath;
-    int numOfFlush=0;
-    SeqAlterator * seqAlterator;
+    size_t numOfFlush=0;
+    SeqIterator * seqAlterator;
 
     void writeTargetFiles(Kmer * kmerBuffer, size_t & bufferIdx, const char * outputFileName, vector<int> & taxIdList);
     void writeKmer(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );

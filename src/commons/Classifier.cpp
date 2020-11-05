@@ -5,20 +5,21 @@
 #include "Classifier.h"
 
 Classifier::Classifier() : queryCount(0), multipleMatchCount(0), totalMatchCount(0), perfectMatchCount(0) {
-    seqAlterator = new SeqAlterator();
+    seqIterator = new SeqIterator();
     numOfSplit = 0;
     closestCount = 0;
     queryCount = 0;
     ESP = {0 ,0};
 }
 
-Classifier::~Classifier() { delete seqAlterator; }
+Classifier::~Classifier() { delete seqIterator; }
 
 void Classifier::startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const vector<int> & taxIdList) {
 
     NcbiTaxonomy ncbiTaxonomy("/Users/jaebeomkim/Desktop/pjt/taxdmp/names.dmp",
                               "/Users/jaebeomkim/Desktop/pjt/taxdmp/nodes.dmp",
                               "/Users/jaebeomkim/Desktop/pjt/taxdmp/merged.dmp");
+
     string dnaBuffer;
     size_t bufferIdx = 0;
 
@@ -27,43 +28,34 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     targetDiffIdxList.data[targetDiffIdxList.fileSize/sizeof(uint16_t)] = 32768; //1000000000000000
     struct MmapedData<KmerInfo> targetInfoList = mmapData<KmerInfo>(targetInfoFileName);
 
-    kseq_buffer_t buffer(const_cast<char*>(queryFile.data), queryFile.fileSize + 1);
-    kseq_t *seq = kseq_init(&buffer);
+    vector<Sequence> sequences;
+    seqIterator->getSeqSegmentsWithHead(sequences, queryFile);
+    size_t numOfSeq = sequences.size();
 
-    vector<SeqSegment> seqSegments;
-    seqAlterator->getSeqSegments(seqSegments, queryFile);
+    bool processedSeqChecker[numOfSeq];
+    fill_n(processedSeqChecker, numOfSeq, false);
 
-    Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
-    int seqID = 0;
-    while(kseq_read(seq) >= 0){
-        seqAlterator->dna2aa(seq->seq.s);
-        ESP = seqAlterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
-        while (ESP.startOfFrame + ESP.frame != 0)
-        {
-            linearSearch(kmerBuffer, bufferIdx, targetDiffIdxList, targetInfoList, taxIdList);
-            writeResultFile(matchedKmerList,queryFileName);
-            ESP = seqAlterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
+    KmerBuffer kmerBuffer(kmerBufSize);
+    size_t offset = 0;
+
+    cout<<"while"<<endl;
+    cout<<"numOfseq: "<<numOfSeq<<endl;
+    while(offset < numOfSeq){ ///check this condition
+        seqIterator->whatNameWouldBeGood(kmerBuffer, queryFile, sequences, offset, processedSeqChecker);
+        cout<<"here: "<<kmerBuffer.startIndexOfReserve<<endl;
+        linearSearch(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, taxIdList);
+        for(; offset < numOfSeq; ++offset){
+            if(!processedSeqChecker[offset]){
+                break;
+            }
         }
-        seqID ++;
-
+        cout<<"offset: "<<offset<<endl;
     }
+    cout<<"endOfWhile"<<endl;
 
-//    for(size_t i = 1 ; i < seqSegments.size(); i++) //size_t i = 1 is not an error. seqSegments[0] is garbage
-//    {
-//        seqAlterator-> dna2aa2(seqSegments[i], queryFile);
-//        ESP = seqAlterator->fillKmerBuffer2(seqSegments[i], queryFile, kmerBuffer, seqID, bufferIdx, ESP);
-//        while (ESP.startOfFrame + ESP.frame != 0)
-//        {
-//            linearSearch(kmerBuffer, bufferIdx, targetDiffIdxList, targetInfoList, taxIdList);
-//            writeResultFile(matchedKmerList,queryFileName);
-//            ESP = seqAlterator->fillKmerBuffer2(seqSegments[i], queryFile, kmerBuffer, seqID, bufferIdx, ESP);
-//        }
-//        seqID ++;
-//    }
     //compare the rest query k-mers with target k-mers
-    linearSearch(kmerBuffer, bufferIdx, targetDiffIdxList, targetInfoList, taxIdList);
-    cout<<"matchedKmerListSize: "<<matchedKmerList.size()<<endl;
-    writeResultFile(matchedKmerList,queryFileName);
+//    linearSearch(kmerBuffer.buffer, bufferIdx, targetDiffIdxList, targetInfoList, taxIdList);
+//    writeResultFile(matchedKmerList,queryFileName);
 
     cout<<"query count                          : "<<queryCount<<endl;
     cout<<"Total match count                    : "<<totalMatchCount <<endl;
@@ -71,9 +63,9 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     cout<<"matches in DNA level                 : "<<perfectMatchCount<<endl;
     cout<<"number of closest matches            : "<<closestCount<<endl;
 
-    analyseResult(queryFileName, ncbiTaxonomy, seqSegments);
+    analyseResult2(queryFileName, ncbiTaxonomy, sequences);
 
-    free(kmerBuffer);
+    free(kmerBuffer.buffer);
     munmap(queryFile.data, queryFile.fileSize + 1);
     munmap(targetDiffIdxList.data, targetDiffIdxList.fileSize + 1);
     munmap(targetInfoList.data, targetInfoList.fileSize + 1);
@@ -94,26 +86,26 @@ void Classifier::startClassify2(const char * queryFileName, const char * targetD
     kseq_buffer_t buffer(const_cast<char*>(queryFile.data), queryFile.fileSize + 1);
     kseq_t *seq = kseq_init(&buffer);
 
-    vector<SeqSegment> seqSegments;
-    seqAlterator->getSeqSegments(seqSegments, queryFile);
+    vector<Sequence> seqSegments;
+    seqIterator->getSeqSegmentsWithoutHead(seqSegments, queryFile);
 
     Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
     int seqID = 0;
     while(kseq_read(seq) >= 0){
-        seqAlterator->dna2aa(seq->seq.s);
-        ESP = seqAlterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
+        seqIterator->dna2aa(seq->seq.s);
+        ESP = seqIterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
         while (ESP.startOfFrame + ESP.frame != 0)
         {
             linearSearch(kmerBuffer, bufferIdx, targetDiffIdxList, targetInfoList, taxIdList);
             writeResultFile(matchedKmerList,queryFileName);
-            ESP = seqAlterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
+            ESP = seqIterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
         }
         seqID ++;
     }
 
 //    for(size_t i = 1 ; i < seqSegments.size(); i++) //size_t i = 1 is not an error. seqSegments[0] is garbage
 //    {
-//        seqAlterator-> dna2aa2(seqSegments[i], queryFile);
+//        seqAlterator->dna2aa2(seqSegments[i], queryFile);
 //        ESP = seqAlterator->fillKmerBuffer2(seqSegments[i], queryFile, kmerBuffer, seqID, bufferIdx, ESP);
 //        while (ESP.startOfFrame + ESP.frame != 0)
 //        {
@@ -153,7 +145,8 @@ void Classifier::linearSearch(Kmer * queryKmerList, size_t & bufferIdx, const Mm
     uint8_t lowestHamming;
 
     SORT_PARALLEL(queryKmerList, queryKmerList + bufferIdx , [=](Kmer x, Kmer y) { return x.ADkmer < y.ADkmer; });
-
+    cout<<queryKmerList[0].ADkmer<<endl;
+    cout<<queryKmerList[1000].ADkmer<<endl;
     uint64_t nextTargetKmer = getNextTargetKmer(0, targetDiffIdxList.data, diffIdxPos);
     size_t tarIter = 0;
 
@@ -261,7 +254,6 @@ void Classifier::writeResultFile(vector<MatchedKmer> & matchList, const char * q
 //    sort(matchList.begin(), matchList.end(), [=](MatchedKmer x, MatchedKmer y) { return x.queryID < y.queryID; });
 //    cout<<suffixedResultFileName<<endl;
     FILE * fp = fopen(suffixedResultFileName,"wb");
-    cout<<"writeResultFile: matchList.size()"<<matchList.size()<<endl;
     fwrite(&(matchList[0]), sizeof(MatchedKmer), matchList.size(), fp);
     fclose(fp);
     matchList.clear();
@@ -271,9 +263,10 @@ int Classifier::getNumOfSplits() const {
     return this->numOfSplit;
 }
 
-void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, vector<SeqSegment> & seqSegments) {
+void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments) {
     char suffixedResultFileName[1000];
     sprintf(suffixedResultFileName,"%s_result", queryFileName);
+    string reduceLevel = "species";
     struct MmapedData<MatchedKmer> resultFile = mmapData<MatchedKmer>(suffixedResultFileName);
     size_t numOfMatches = resultFile.fileSize / sizeof(MatchedKmer);
     SORT_PARALLEL(resultFile.data, resultFile.data + numOfMatches, [](const MatchedKmer & a, const MatchedKmer & b) {
@@ -302,7 +295,11 @@ void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTa
             while((currentKmer == (size_t) resultFile.data[i].queryPos) && (i < numOfMatches)) {
 //                cout<<currentKmer<<" "<<resultFile.data[i].queryPos<<" "<<resultFile.data[i].tragetID<<endl;
 //                cout<<resultFile.data[i].taxID<<endl;
-                matchedKmers.push_back(resultFile.data[i].taxID);
+                if(resultFile.data[i].redundancy){
+                    matchedKmers.push_back(ncbiTaxonomy.taxIdAtRank(resultFile.data[i].taxID, reduceLevel));
+                }else {
+                    matchedKmers.push_back(resultFile.data[i].taxID);
+                }
                 i++;
             }
 
@@ -318,8 +315,70 @@ void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTa
             matchedKmers.clear();
         }
 //        cout<<"selected leaf:"<<selectALeaf(matchedLCAs, ncbiTaxonomy, seqSegments[currentReadId+1].length )<<endl;
-        assignedReads.insert(pair<int, TaxID>(currentReadId, selectALeaf(matchedLCAs, ncbiTaxonomy,seqSegments[currentReadId+1].length)));
-        cout<<currentReadId<<" "<<seqSegments[currentReadId+1].length<<endl;
+        assignedReads.insert(pair<int, TaxID>(currentReadId, selectALeaf(matchedLCAs, ncbiTaxonomy,seqSegments[currentReadId].length)));
+        cout<<currentReadId<<" "<<seqSegments[currentReadId].length<<endl;
+        matchedLCAs.clear();
+    }
+
+    for(auto it: assignedReads){
+        cout<<it.first<<" "<<it.second<<endl;
+    }
+}
+void Classifier::analyseResult2(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments) {
+    char suffixedResultFileName[1000];
+    sprintf(suffixedResultFileName,"%s_result", queryFileName);
+    string reduceLevel = "species";
+    struct MmapedData<MatchedKmer> resultFile = mmapData<MatchedKmer>(suffixedResultFileName);
+    size_t numOfMatches = matchedKmerList.size() / sizeof(MatchedKmer);
+
+    SORT_PARALLEL(matchedKmerList.begin(), matchedKmerList.end(), [](const MatchedKmer & a, const MatchedKmer & b) {
+        return a.queryID < b.queryID || (a.queryID == b.queryID && a.queryPos < b.queryPos);});
+    size_t currentReadId;
+    size_t currentKmer;
+    vector<int> matchedKmers;
+//    vector<TaxID> matchedLCAs;
+    vector<TaxID>::iterator matchedLCAsIt;
+    vector<int> matchedLCACounts;
+    unordered_map<TaxID, int> matchedLCAs; //int for counting
+    unordered_map<int, TaxID> assignedReads; //map<queryID, TaxID>
+
+//    for(size_t i = 0; i < numOfMatches; i++){
+
+    size_t numAssignedSeqs = 0;
+    size_t numUnassignedSeqs = 0;
+    size_t numSeqsAgreeWithSelectedTaxon = 0;
+    double selectedPercent = 0;
+    cout<<"numOfMatches: "<<numOfMatches<<endl;
+    size_t i = 0;
+    while(i < numOfMatches) {
+        currentReadId = matchedKmerList[i].queryID;
+        while((currentReadId == (size_t) matchedKmerList[i].queryID) && (i < numOfMatches)){
+            currentKmer = matchedKmerList[i].queryPos;
+            while((currentKmer == (size_t) matchedKmerList[i].queryPos) && (i < numOfMatches)) {
+//                cout<<currentKmer<<" "<<resultFile.data[i].queryPos<<" "<<resultFile.data[i].tragetID<<endl;
+//                cout<<resultFile.data[i].taxID<<endl;
+                if(matchedKmerList[i].redundancy){
+                    matchedKmers.push_back(ncbiTaxonomy.taxIdAtRank(matchedKmerList[i].taxID, reduceLevel));
+                }else {
+                    matchedKmers.push_back(matchedKmerList[i].taxID);
+                }
+                i++;
+            }
+
+            TaxID selectedLCA = selectLcaFromTaxIdList(matchedKmers, ncbiTaxonomy, 0.8, numAssignedSeqs,
+                                                       numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
+                                                       selectedPercent);
+            cout<<"selectedLCA: "<<selectedLCA<<endl;
+            if (matchedLCAs.find(selectedLCA) == matchedLCAs.end()) {
+                matchedLCAs.insert(pair<TaxID, int>(selectedLCA, 1));
+            } else {
+                matchedLCAs[selectedLCA]++;
+            }
+            matchedKmers.clear();
+        }
+//        cout<<"selected leaf:"<<selectALeaf(matchedLCAs, ncbiTaxonomy, seqSegments[currentReadId+1].length )<<endl;
+        assignedReads.insert(pair<int, TaxID>(currentReadId, selectALeaf(matchedLCAs, ncbiTaxonomy,seqSegments[currentReadId].length)));
+        cout<<currentReadId<<" "<<seqSegments[currentReadId].length<<endl;
         matchedLCAs.clear();
     }
 
@@ -328,23 +387,21 @@ void Classifier::analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTa
     }
 }
 
-//Pediococcus_damnosus
-//>1_Pediococcus_damnosus
-//>2_Pediococcus_damnosus
-//>3_Pediococcus_damnosus
-//>4_Pediococcus_damnosus
 TaxID Classifier::selectALeaf(unordered_map<TaxID, int> & taxIdList, NcbiTaxonomy & ncbiTaxonomy, const size_t & length, float coverageThr){
     unordered_map<TaxID, float> taxonNodeCount; //int = count
     float numberOfPossibleKmersFromThisRead = (length/3 - kmerLength +1);
     cout<<numberOfPossibleKmersFromThisRead<<endl; ///TODO: How to consider six frames?, \n is included in length
     double totalCount = 0;
     TaxID currTaxId;
-    int currCount;
-    int minRank = INT_MAX;
+    float currCount;
+    int highestRankSatisfyingThr = 0;
     int maxCount = 0;
     int currRank;
     TaxID selectedLeaf = 0;
     coverageThr = 0.1;
+    float maxCoverage = 0;
+    float currCoverage;
+
     for(unordered_map<TaxID, int>::iterator it = taxIdList.begin(); it != taxIdList.end(); ++it) {
         currTaxId = it->first;
         currCount = it->second;
@@ -353,19 +410,23 @@ TaxID Classifier::selectALeaf(unordered_map<TaxID, int> & taxIdList, NcbiTaxonom
                 currCount += it2.second;
             }
         }
-        cout<<"count of leaf: "<<currTaxId<< " "<<currCount<<endl;
-        taxonNodeCount.insert(pair<TaxID, int>(currTaxId, currCount));
+        cout<<"count of leaf: "<<currTaxId<< " "<<currCount<<" "<<((float)currCount)/numberOfPossibleKmersFromThisRead<<endl;
+        taxonNodeCount.insert(pair<TaxID, float>(currTaxId, currCount));
 
         totalCount += it->second;
     }
 
     for(auto it = taxonNodeCount.begin(); it != taxonNodeCount.end(); ++it ) {
-        if ((it->second > maxCount) && ((it->second / numberOfPossibleKmersFromThisRead) >= coverageThr)){
+        currCoverage = it->second / numberOfPossibleKmersFromThisRead;
+        if (currCoverage >= coverageThr){
             currRank = NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(it->first)->rank);
-            if (currRank < minRank) {
-                minRank = currRank;
-                maxCount = currCount;
-                selectedLeaf = currTaxId;
+//            cout<<"rank: "<<ncbiTaxonomy.taxonNode(it->first)->rank<<endl;
+//            cout<<"currRank: "<<currRank<<endl;
+            if((currRank > highestRankSatisfyingThr) || (currRank == highestRankSatisfyingThr && currCoverage > maxCoverage )) {
+                highestRankSatisfyingThr = currRank;
+                maxCount = it->second;
+                selectedLeaf = it->first;
+                cout<<"highestRank: "<<highestRankSatisfyingThr<<" "<<"maxCount: "<<maxCount<<" "<<"selected leaf: "<<selectedLeaf<<endl;
             }
         }
     }

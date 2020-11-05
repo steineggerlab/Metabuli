@@ -6,7 +6,7 @@
 
 IndexCreator::IndexCreator()
 {
-    seqAlterator = new SeqAlterator();
+    seqAlterator = new SeqIterator();
 
 }
 
@@ -22,9 +22,8 @@ void IndexCreator::startIndexCreating2(const char * seqFileName, const char * ou
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
     size_t numOfChar = seqFile.fileSize / sizeof(char);
 
-
-    vector<SeqSegment> seqSegments;
-    seqAlterator -> getSeqSegments(seqSegments, seqFile);
+    vector<Sequence> seqSegments;
+    seqAlterator->getSeqSegmentsWithoutHead(seqSegments, seqFile);
 
 
     Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
@@ -58,12 +57,16 @@ void IndexCreator::startIndexCreating(const char * seqFileName, const char * out
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
     size_t numOfChar = seqFile.fileSize / sizeof(char);
 
+    vector<Sequence> seqSegments;
+    seqAlterator->getSeqSegmentsWithoutHead(seqSegments, seqFile);
+
     kseq_buffer_t buffer(const_cast<char*>(seqFile.data), seqFile.fileSize + 1);
     kseq_t *seq = kseq_init(&buffer);
 
     Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
 
     int seqID = 0;
+
     while(kseq_read(seq) >= 0){
         seqAlterator->dna2aa(seq->seq.s);
         ESP = seqAlterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
@@ -102,7 +105,7 @@ void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, const 
     }
     uint64_t lastKmer = 0;
 
-    sort(kmerBuffer, kmerBuffer + bufferIdx, [](const Kmer & a, const Kmer & b) {
+    SORT_PARALLEL(kmerBuffer, kmerBuffer + bufferIdx, [](const Kmer & a, const Kmer & b) {
         return a.ADkmer < b.ADkmer || (a.ADkmer == b.ADkmer && a.info.sequenceID < b.info.sequenceID);
     });
 

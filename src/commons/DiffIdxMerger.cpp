@@ -98,6 +98,9 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
             idxOfMin = smallest(lookingKmers, fileCnt);
         }
 
+        if(asd == 0){
+            lastInfo.redundancy = false;
+        }
 
         cre->writeKmerDiff(lastWrittenKmer, lastKmer, mergedDiffFIle, diffBuffer, diffBufferIdx);
         lastWrittenKmer = lastKmer;
