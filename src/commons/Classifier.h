@@ -78,9 +78,9 @@ private:
             {1, 2, 2, 2, 1, 0}};
     uint8_t getHammingDistance(uint64_t kmer1, uint64_t kmer2);
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);
-    void linearSearch(Kmer * queryKmerList, size_t & bufferIdx, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<KmerInfo> & targetInfoList, const vector<int> & taxIdList);
+    void linearSearch(Kmer * queryKmerList, size_t & numOfKmer, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<KmerInfo> & targetInfoList, const vector<int> & taxIdList);
     void writeResultFile(vector<MatchedKmer> & matchList, const char * queryFileName);
-    static TaxID selectALeaf(unordered_map<TaxID, int> & TaxIdList, NcbiTaxonomy & ncbiTaxonomy, const size_t & length, float coverageThr = 0.8);
+    static TaxID selectALeaf(unordered_map<TaxID, int> & listOfLCAs, NcbiTaxonomy & ncbiTaxonomy, const size_t & length, float coverageThr = 0.8);
     TaxID selectLcaFromTaxIdList(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,
                            size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent);
 //    TaxID selectTaxForSet(const std::vector<int> &setTaxa, NcbiTaxonomy const *taxonomy, const float majorityCutoff,
@@ -91,7 +91,7 @@ public:
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const vector<int> & taxIdList);
     void startClassify2(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const vector<int> & taxIdList);
     void analyseResult(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments);
-    void analyseResult2(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments);
+    void analyseResult2(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments);
     int getNumOfSplits() const;
     Classifier();
     ~Classifier();

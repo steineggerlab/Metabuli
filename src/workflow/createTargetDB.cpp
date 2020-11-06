@@ -52,7 +52,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     vector<int> taxIdListAtRank;
     ncbiTaxonomy.makeTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
 
-    idxCre.startIndexCreating(seqFileName,outputFileName,taxIdListAtRank);
+    idxCre.startIndexCreatingParallel(seqFileName,outputFileName,taxIdListAtRank);
 
     int numOfSplits = idxCre.getNumOfFlush();
     char suffixedDiffIdxFileName[numOfSplits][100];

@@ -15,7 +15,8 @@ public:
     size_t startIndexOfReserve;
     size_t bufferSize;
     KmerBuffer(size_t sizeOfBuffer){
-        buffer = (Kmer *)malloc(sizeof(Kmer) * sizeOfBuffer);
+        buffer = (Kmer *) malloc(sizeof(Kmer) * sizeOfBuffer);
+
         bufferSize = sizeOfBuffer;
         startIndexOfReserve = 0;
     };
@@ -27,7 +28,7 @@ public:
 //        }
 
 //        startIndexOfReserve += numOfKmer;
-        cout<<startIndexOfReserve<<endl;
+        //cout<<startIndexOfReserve<<endl;
         //return &buffer[offsetToWrite];
         return offsetToWrite;
     };

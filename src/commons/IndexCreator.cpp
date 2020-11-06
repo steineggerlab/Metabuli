@@ -6,45 +6,36 @@
 
 IndexCreator::IndexCreator()
 {
-    seqAlterator = new SeqIterator();
+    seqIterator = new SeqIterator();
 
 }
 
 IndexCreator::~IndexCreator() {
-    delete seqAlterator;
+    delete seqIterator;
 }
 
-void IndexCreator::startIndexCreating2(const char * seqFileName, const char * outputFileName, vector<int> & taxIdListAtRank)
+void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const char * outputFileName, vector<int> & taxIdListAtRank)
 {
-    ExtractStartPoint ESP = {0 ,0};
-    size_t bufferIdx = 0;
-
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
     size_t numOfChar = seqFile.fileSize / sizeof(char);
 
-    vector<Sequence> seqSegments;
-    seqAlterator->getSeqSegmentsWithoutHead(seqSegments, seqFile);
+    vector<Sequence> sequences;
+    seqIterator->getSeqSegmentsWithHead(sequences, seqFile);
+    size_t numOfSeq = sequences.size();
+
+    bool processedSeqChecker[numOfSeq];
+    fill_n(processedSeqChecker, numOfSeq, false);
+
+    KmerBuffer kmerBuffer(kmerBufSize);
+    size_t processedSeqCnt = 0;
 
 
-    Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
-
-    int seqID = 0;
-    for(size_t i = 1 ; i < seqSegments.size(); i++)
-    {
-        seqAlterator -> dna2aa2(seqSegments[i], seqFile);
-        ESP = seqAlterator->fillKmerBuffer2(seqSegments[i], seqFile, kmerBuffer, seqID, bufferIdx, ESP);
-        while (ESP.startOfFrame + ESP.frame != 0)
-        {
-            writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdListAtRank);
-            ESP = seqAlterator->fillKmerBuffer2(seqSegments[i], seqFile, kmerBuffer, seqID, bufferIdx, ESP);
-        }
-        seqID ++;
+    while(processedSeqCnt < numOfSeq){ ///check this condition
+        seqIterator->whatNameWouldBeGood(kmerBuffer, seqFile, sequences, processedSeqChecker, processedSeqCnt);
+        writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdListAtRank);
     }
 
-    //flush last buffer
-    writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdListAtRank);
-
-    free(kmerBuffer);
+    free(kmerBuffer.buffer);
     munmap(seqFile.data, seqFile.fileSize + 1);
 }
 
@@ -58,7 +49,7 @@ void IndexCreator::startIndexCreating(const char * seqFileName, const char * out
     size_t numOfChar = seqFile.fileSize / sizeof(char);
 
     vector<Sequence> seqSegments;
-    seqAlterator->getSeqSegmentsWithoutHead(seqSegments, seqFile);
+    seqIterator->getSeqSegmentsWithoutHead(seqSegments, seqFile);
 
     kseq_buffer_t buffer(const_cast<char*>(seqFile.data), seqFile.fileSize + 1);
     kseq_t *seq = kseq_init(&buffer);
@@ -68,12 +59,12 @@ void IndexCreator::startIndexCreating(const char * seqFileName, const char * out
     int seqID = 0;
 
     while(kseq_read(seq) >= 0){
-        seqAlterator->dna2aa(seq->seq.s);
-        ESP = seqAlterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
+        seqIterator->dna2aa(seq->seq.s);
+        ESP = seqIterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
         while (ESP.startOfFrame + ESP.frame != 0)
         {
             writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdListAtRank);
-            ESP = seqAlterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
+            ESP = seqIterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
         }
         seqID ++;
     }
@@ -85,7 +76,7 @@ void IndexCreator::startIndexCreating(const char * seqFileName, const char * out
     munmap(seqFile.data, seqFile.fileSize + 1);
 }
 
-void IndexCreator::writeTargetFiles(Kmer *kmerBuffer, size_t & bufferIdx, const char * outputFileName, vector<int> & taxIdListAtRank)
+void IndexCreator::writeTargetFiles(Kmer * kmerBuffer, size_t & bufferIdx, const char * outputFileName, vector<int> & taxIdListAtRank)
 {
     char suffixedDiffIdxFileName[100];
     char suffixedInfoFileName[100];

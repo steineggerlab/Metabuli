@@ -45,7 +45,7 @@ public:
     ExtractStartPoint fillKmerBuffer(const string & seq, Kmer* kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP);
     ExtractStartPoint fillKmerBuffer2(Sequence seq, MmapedData<char> & seqFile, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP);
     void fillKmerBuffer3(const string & seq , KmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID);
-    void whatNameWouldBeGood(KmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, const size_t & offset, bool * checker);
+    size_t whatNameWouldBeGood(KmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt);
     string reverseCompliment(string & read) const ;
     void dna2aa(const string& seq);
     void dna2aa2(const Sequence & seq, const MmapedData<char> & seqFile);
