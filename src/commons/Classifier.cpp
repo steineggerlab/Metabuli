@@ -132,7 +132,7 @@ void Classifier::linearSearch(Kmer * queryKmerList, size_t & numOfKmer, const Mm
     uint64_t lastFirstMatch = 0;
     long lastFirstDiffIdxPos = 0;
     int lastFirstTargetIdx = 0;
-    cout<<"here"<<numOfKmer<<endl;
+
     size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(KmerInfo);
     uint8_t lowestHamming;
     SORT_PARALLEL(queryKmerList, queryKmerList + numOfKmer , [=](Kmer x, Kmer y) { return x.ADkmer < y.ADkmer; });
@@ -143,7 +143,6 @@ void Classifier::linearSearch(Kmer * queryKmerList, size_t & numOfKmer, const Mm
     uint64_t currentTargetKmer = UINT64_MAX;
     uint64_t currentQueryAA;
 
-    int temp = 0;
     for(size_t i = 0; i < numOfKmer; i++)
     {
         /// get next query
@@ -196,12 +195,7 @@ void Classifier::linearSearch(Kmer * queryKmerList, size_t & numOfKmer, const Mm
             }
             tarIter ++;
         }
-        if(isMatched == 0){
-            cout<<queryKmerList[i].ADkmer<<endl;
-            cout<<queryKmerList[i].info.redundancy<<endl;
-            cout<<queryKmerList[i].info.pos<<endl;
-            cout<<queryKmerList[i].info.sequenceID<<endl;
-        }
+
         for(size_t k = 0; k < closestKmers.size(); k++){
             matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID, targetInfoList.data[closestKmers[k]].sequenceID, taxIdList[targetInfoList.data[closestKmers[k]].sequenceID],
                                          queryKmerList[i].info.pos, lowestHamming, targetInfoList.data[closestKmers[k]].redundancy);
@@ -210,7 +204,6 @@ void Classifier::linearSearch(Kmer * queryKmerList, size_t & numOfKmer, const Mm
         closestKmers.clear();
     }
     numOfKmer = 0;
-    cout<<"temp "<<temp<<endl;
     cout<<matchedKmerList.size()<<endl;
 }
 
@@ -339,7 +332,6 @@ void Classifier::analyseResult2(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & 
     double selectedPercent = 0;
 
     size_t i = 0;
-    size_t tmp = 0;
     while(i < numOfMatches) {
         currentQuery = matchedKmerList[i].queryID;
         while((currentQuery ==  matchedKmerList[i].queryID) && (i < numOfMatches)){
@@ -350,17 +342,13 @@ void Classifier::analyseResult2(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & 
                 }else {
                     matchedKmers.push_back(matchedKmerList[i].taxID);
                 }
-                cout<<i<<" "<<currentKmer<<" "<<matchedKmerList[i].queryPos<<endl;
                 i++;
 
             }
-            cout<<endl;
-
             TaxID selectedLCA = selectLcaFromTaxIdList(matchedKmers, ncbiTaxonomy, 0.8, numAssignedSeqs,
                                                        numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
                                                        selectedPercent);
-            tmp++;
-//            cout<<"selectedLCA: "<<selectedLCA<<endl;
+
             if (matchedLCAs.find(selectedLCA) == matchedLCAs.end()) {
                 matchedLCAs.insert(pair<TaxID, int>(selectedLCA, 1));
             } else {
@@ -368,7 +356,6 @@ void Classifier::analyseResult2(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & 
             }
             matchedKmers.clear();
         }
-        cout<<tmp<<endl;
 //        cout<<"selected leaf:"<<selectALeaf(matchedLCAs, ncbiTaxonomy, seqSegments[currentQuery+1].length )<<endl;
         assignedReads.insert(pair<int, TaxID>(currentQuery, selectALeaf(matchedLCAs, ncbiTaxonomy, seqSegments[currentQuery].length)));
         matchedLCAs.clear();
@@ -397,7 +384,7 @@ TaxID Classifier::selectALeaf(unordered_map<TaxID, int> & listOfLCAs, NcbiTaxono
     int maxCount = 0;
     int currRank;
     TaxID selectedLeaf = 0;
-    coverageThr = 0.01;
+    coverageThr = 0.1;
     float maxCoverage = 0;
     float currCoverage;
 

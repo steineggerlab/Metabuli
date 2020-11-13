@@ -1,5 +1,7 @@
 include_directories(commons)
 include_directories(workflow)
+include_directories(../lib/prodigal)
+
 add_subdirectory(commons)
 add_subdirectory(util)
 add_subdirectory(version)
@@ -10,10 +12,12 @@ add_executable(adclassifier
         ${util_source_files}
         ${workflow_source_files}
         adclassifier.cpp
-        LocalCommandDeclarations.h
-        commons/KmerBuffer.h)
+        LocalCommandDeclarations.h commons/ProdigalWrapper.h commons/ProdigalWrapper.cpp)
+
 mmseqs_setup_derived_target(adclassifier)
 target_link_libraries(adclassifier version)
+target_link_libraries(adclassifier prodigal)
+
 
 
 install(TARGETS adclassifier DESTINATION bin)

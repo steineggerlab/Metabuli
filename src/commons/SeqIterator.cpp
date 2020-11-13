@@ -292,10 +292,8 @@ void SeqIterator::getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, Mmap
             seqSegments.emplace_back(start, i-2, i - start - 1);// the first push_back is a garbage.
             while(seqFile.data[i] != '\n')
             {
-                cout<<seqFile.data[i];
                 i++;
             }
-            cout<<endl;
             start = i + 1;
         }
     }
@@ -345,6 +343,36 @@ size_t SeqIterator::whatNameWouldBeGood(KmerBuffer & kmerBuffer, MmapedData<char
 
     }
 }
+}
+size_t SeqIterator::whatNameWouldBeGoodWithFramePrediction(KmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt) {
+#pragma omp parallel
+    {
+        ProdigalWrapper prodial;
+        SeqIterator seqIterator;
+        size_t posToWrite;
+        bool hasOverflow = false;
+#pragma omp for schedule(dynamic, 1)
+        for (size_t i = 0; i < seqs.size(); i++) {
+            if(checker[i] == false && !hasOverflow) {
+                kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
+                kseq_t *seq = kseq_init(&buffer);
+                kseq_read(seq);
+                prodial.getPredictedFrames(seq->seq.s);
+                seqs[i].length = strlen(seq->seq.s);
+                seqIterator.dna2aa(seq->seq.s);
+                size_t kmerCnt = getNumOfKmerForSeq(seq->seq.s);
+                posToWrite = kmerBuffer.reserveMemory(kmerCnt);
+                if (posToWrite + kmerCnt < kmerBufSize) {
+                    seqIterator.fillKmerBuffer3(seq->seq.s, kmerBuffer, posToWrite, i);
+                    checker[i] = true;
+                    processedSeqCnt ++;
+                } else{
+                    hasOverflow = true;
+                }
+            }
+
+        }
+    }
 }
 
 void SeqIterator::fillKmerBuffer3(const string & seq,  KmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID)

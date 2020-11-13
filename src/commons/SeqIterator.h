@@ -15,6 +15,7 @@
 #include "omp.h"
 #include "kseq.h"
 #include "KSeqBufferReader.h"
+#include "ProdigalWrapper.h"
 
 KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
 
@@ -40,12 +41,14 @@ private:
 
     uint64_t addDNAInfo(uint64_t & kmer, const string&, int forOrRev, int startOfKmer, int frame);
     void addDNAInfo2(uint64_t & kmer, Sequence & seq, MmapedData<char> & seqFile, const int & forOrRev, const int & startOfKmer, const int & frame);
+    //void numAA2alphabet();
 
 public:
     ExtractStartPoint fillKmerBuffer(const string & seq, Kmer* kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP);
     ExtractStartPoint fillKmerBuffer2(Sequence seq, MmapedData<char> & seqFile, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP);
     void fillKmerBuffer3(const string & seq , KmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID);
     size_t whatNameWouldBeGood(KmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt);
+    size_t whatNameWouldBeGoodWithFramePrediction(KmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt);
     string reverseCompliment(string & read) const ;
     void dna2aa(const string& seq);
     void dna2aa2(const Sequence & seq, const MmapedData<char> & seqFile);
