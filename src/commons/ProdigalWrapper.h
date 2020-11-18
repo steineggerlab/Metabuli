@@ -23,7 +23,7 @@
 
 class ProdigalWrapper{
 private:
-    int rv, slen, nn, ng, i, ipath, *gc_frame, do_training, output, max_phase;
+    int rv, slen, nn, ng, ipath, *gc_frame, do_training, output, max_phase;
     int closed, do_mask, nmask, force_nonsd, user_tt, is_meta, num_seq, quiet;
     int piped, max_slen, fnum;
     double max_score, gc, low, high;
@@ -35,8 +35,8 @@ private:
     fptr input_ptr = NULL;
     struct stat fbuf;
     pid_t pid;
-    struct _node *nodes;
-    struct _gene *genes;
+
+
     struct _training tinf;
     struct _metagenomic_bin meta[NUM_META];
     mask mlist[MAX_MASKS];
@@ -45,10 +45,14 @@ private:
 
 
 public:
+    struct _node *nodes;
+    struct _gene *genes;
+    int getNumberOfPredictedGenes();
     void getPredictedFrames(char * genome);
     void trainASpecies(char * genome);
     int getNextSeq(char * seq);
     ProdigalWrapper();
+    ~ProdigalWrapper();
 
 };
 #endif //ADCLASSIFIER2_PRODIGALWRAPPER_H

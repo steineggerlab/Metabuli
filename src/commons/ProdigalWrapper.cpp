@@ -2,13 +2,20 @@
 // Created by 김재범 on 2020/11/10.
 //
 #include "ProdigalWrapper.h"
-
+#include <iostream>
+ProdigalWrapper::~ProdigalWrapper() {
+    free(seq);
+    free(rseq);
+    free(useq);
+    free(nodes);
+    free(genes);
+}
 ProdigalWrapper::ProdigalWrapper() {
-    seq = (unsigned char *)malloc(MAX_SEQ/4*sizeof(unsigned char));
-    rseq = (unsigned char *)malloc(MAX_SEQ/4*sizeof(unsigned char));
-    useq = (unsigned char *)malloc(MAX_SEQ/8*sizeof(unsigned char));
-    nodes = (struct _node *)malloc(STT_NOD*sizeof(struct _node));
-    genes = (struct _gene *)malloc(MAX_GENES*sizeof(struct _gene));
+    seq = (unsigned char *)malloc(MAX_SEQ/4*sizeof(unsigned char)); // 8 Mb
+    rseq = (unsigned char *)malloc(MAX_SEQ/4*sizeof(unsigned char)); // 8 Mb
+    useq = (unsigned char *)malloc(MAX_SEQ/8*sizeof(unsigned char)); // 4 Mb
+    nodes = (struct _node *)malloc(STT_NOD*sizeof(struct _node)); // 13.6 Mb
+    genes = (struct _gene *)malloc(MAX_GENES*sizeof(struct _gene)); // 30 Mb
     if(seq == NULL || rseq == NULL || nodes == NULL || genes == NULL) {
         fprintf(stderr, "\nError: Malloc failed on sequence/orfs\n\n"); exit(1);
     }
@@ -32,8 +39,8 @@ ProdigalWrapper::ProdigalWrapper() {
 
 }
 void ProdigalWrapper::trainASpecies(char * genome){
-    slen = read_seq_training(input_ptr, seq, useq, &(tinf.gc), do_mask, mlist,
-                             &nmask);
+
+    slen = getNextSeq(genome);
     if(slen == 0) {
         fprintf(stderr, "\n\nSequence read failed (file must be Fasta, ");
         fprintf(stderr, "Genbank, or EMBL format).\n\n");
@@ -141,6 +148,7 @@ void ProdigalWrapper::trainASpecies(char * genome){
         fprintf(stderr, "done!\n");
     }
 
+    memset(&tinf, 0, sizeof(struct _training));
     memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
     memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
     memset(useq, 0, (slen/8+1)*sizeof(unsigned char));
@@ -150,6 +158,16 @@ void ProdigalWrapper::trainASpecies(char * genome){
 }
 
 void ProdigalWrapper::getPredictedFrames(char * genome){
+    /* Initialize structure */
+    memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
+    memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
+    memset(useq, 0, (slen/8+1)*sizeof(unsigned char));
+    memset(nodes, 0, nn*sizeof(struct _node));
+    memset(genes, 0, MAX_GENES*sizeof(struct _gene));
+    nn = 0; slen = 0; ipath = 0; nmask = 0;
+
+
+    slen = getNextSeq(genome);
     rcom_seq(seq, rseq, useq, slen);
     if(slen == 0) {
         fprintf(stderr, "\nSequence read failed (file must be Fasta, ");
@@ -203,176 +221,58 @@ void ProdigalWrapper::getPredictedFrames(char * genome){
 
 
     }
+
+
 }
 
 int ProdigalWrapper::getNextSeq(char * line) {
     int hdr = 0, fhdr = 0, bctr = 0, len = 0, wrn = 0;
     int gc_cont = 0, mask_beg = -1;
-    unsigned int i, gapsize = 0;
+    size_t lengthOfLine = strlen(line);
+    for(size_t i = 0; i < lengthOfLine; i++) {
+        if(line[i] < 'A' || line[i] > 'z') continue;
+        if(do_mask == 1 && mask_beg != -1 && line[i] != 'N' && line[i] != 'n') {
+            if(len - mask_beg >= MASK_SIZE) {
+                if(nmask == MAX_MASKS) {
+                    fprintf(stderr, "Error: saw too many regions of 'N''s in the ");
+                    fprintf(stderr, "sequence.\n");
+                    exit(52);
+                }
+                mlist[nmask].begin = mask_beg;
+                mlist[nmask].end = len-1;
+                (nmask)++;
+            }
+            mask_beg = -1;
+        }
+        if(do_mask == 1 && mask_beg == -1 && (line[i] == 'N' || line[i] == 'n'))
+            mask_beg = len;
+        if(line[i] == 'g' || line[i] == 'G'){
+            set(seq, bctr); gc_cont++;
+        }else if(line[i] == 't' || line[i] == 'T') {
+            set(seq, bctr);
+            set(seq, bctr+1);
+        }else if(line[i] == 'c' || line[i] == 'C') {
+            set(seq, bctr+1);
+            gc_cont++;
+        }else if(line[i] != 'a' && line[i] != 'A') {
+            set(seq, bctr+1);
+            set(useq, len);
+        }
 
-    if(hdr == 0 && line[strlen(line)-1] != '\n' && wrn == 0) {
-        wrn = 1;
-        fprintf(stderr, "\n\nWarning: saw non-sequence line longer than ");
-        fprintf(stderr, "%d chars, sequence might not be read ", MAX_LINE);
-        fprintf(stderr, "correctly.\n\n");
-    }
-    if(line[0] == '>' || (line[0] == 'S' && line[1] == 'Q') ||
-       (strlen(line) > 6 && strncmp(line, "ORIGIN", 6) == 0)) {
-        hdr = 1;
-        if(fhdr > 0) {
-            for(i = 0; i < 12; i++) {
-                if(i%4 == 0 || i%4 == 1) { set(seq, bctr); set(seq, bctr+1); }
-                bctr+=2; len++;
-            }
-        }
-        fhdr++;
-    }
-    else if(hdr == 1 && (line[0] == '/' && line[1] == '/')) hdr = 0;
-    else if(hdr == 1) {
-        if(strstr(line, "Expand") != NULL && strstr(line, "gap") != NULL) {
-            sscanf(strstr(line, "gap")+4, "%u", &gapsize);
-            if(gapsize < 1 || gapsize > MAX_LINE) {
-                fprintf(stderr, "Error: gap size in gbk file can't exceed line");
-                fprintf(stderr, " size.\n");
-                exit(51);
-            }
-            for(i = 0; i < gapsize; i++) line[i] = 'n';
-            line[i] = '\0';
-        }
-        for(i = 0; i < strlen(line); i++) {
-            if(line[i] < 'A' || line[i] > 'z') continue;
-            if(do_mask == 1 && mask_beg != -1 && line[i] != 'N' && line[i] != 'n') {
-                if(len - mask_beg >= MASK_SIZE) {
-                    if(nmask == MAX_MASKS) {
-                        fprintf(stderr, "Error: saw too many regions of 'N''s in the ");
-                        fprintf(stderr, "sequence.\n");
-                        exit(52);
-                    }
-                    mlist[nmask].begin = mask_beg;
-                    mlist[nmask].end = len-1;
-                    (nmask)++;
-                }
-                mask_beg = -1;
-            }
-            if(do_mask == 1 && mask_beg == -1 && (line[i] == 'N' || line[i] == 'n'))
-                mask_beg = len;
-            if(line[i] == 'g' || line[i] == 'G') { set(seq, bctr); gc_cont++; }
-            else if(line[i] == 't' || line[i] == 'T') {
-                set(seq, bctr);
-                set(seq, bctr+1);
-            }
-            else if(line[i] == 'c' || line[i] == 'C') {
-                set(seq, bctr+1);
-                gc_cont++;
-            }
-            else if(line[i] != 'a' && line[i] != 'A') {
-                set(seq, bctr+1);
-                set(useq, len);
-            }
-            bctr+=2; len++;
-        }
-    }
-    if(len+MAX_LINE >= MAX_SEQ) {
-        fprintf(stderr, "\n\nWarning:  Sequence is long (max %d for training).\n",
-                MAX_SEQ);
-        fprintf(stderr, "Training on the first %d bases.\n\n", MAX_SEQ);
-        break;
-    }
-
-    if(fhdr > 1) {
-        for(i = 0; i < 12; i++) {
-            if(i%4 == 0 || i%4 == 1) { set(seq, bctr); set(seq, bctr+1); }
-            bctr+=2; len++;
-        }
-    }
-    *gc = ((double)gc_cont / (double)len);
-    return len;
-}
-
-int read_seq_training(fptr fp, unsigned char *seq, unsigned char *useq,
-                      double *gc, int do_mask, mask *mlist, int *nm) {
-    char line[MAX_LINE+1];
-    int hdr = 0, fhdr = 0, bctr = 0, len = 0, wrn = 0;
-    int gc_cont = 0, mask_beg = -1;
-    unsigned int i, gapsize = 0;
-
-    line[MAX_LINE] = '\0';
-    while(INPUT_GETS(line, MAX_LINE, fp) != NULL) {
-        if(hdr == 0 && line[strlen(line)-1] != '\n' && wrn == 0) {
-            wrn = 1;
-            fprintf(stderr, "\n\nWarning: saw non-sequence line longer than ");
-            fprintf(stderr, "%d chars, sequence might not be read ", MAX_LINE);
-            fprintf(stderr, "correctly.\n\n");
-        }
-        if(line[0] == '>' || (line[0] == 'S' && line[1] == 'Q') ||
-           (strlen(line) > 6 && strncmp(line, "ORIGIN", 6) == 0)) {
-            hdr = 1;
-            if(fhdr > 0) {
-                for(i = 0; i < 12; i++) {
-                    if(i%4 == 0 || i%4 == 1) { set(seq, bctr); set(seq, bctr+1); }
-                    bctr+=2; len++;
-                }
-            }
-            fhdr++;
-        }
-        else if(hdr == 1 && (line[0] == '/' && line[1] == '/')) hdr = 0;
-        else if(hdr == 1) {
-            if(strstr(line, "Expand") != NULL && strstr(line, "gap") != NULL) {
-                sscanf(strstr(line, "gap")+4, "%u", &gapsize);
-                if(gapsize < 1 || gapsize > MAX_LINE) {
-                    fprintf(stderr, "Error: gap size in gbk file can't exceed line");
-                    fprintf(stderr, " size.\n");
-                    exit(51);
-                }
-                for(i = 0; i < gapsize; i++) line[i] = 'n';
-                line[i] = '\0';
-            }
-            for(i = 0; i < strlen(line); i++) {
-                if(line[i] < 'A' || line[i] > 'z') continue;
-                if(do_mask == 1 && mask_beg != -1 && line[i] != 'N' && line[i] != 'n') {
-                    if(len - mask_beg >= MASK_SIZE) {
-                        if(*nm == MAX_MASKS) {
-                            fprintf(stderr, "Error: saw too many regions of 'N''s in the ");
-                            fprintf(stderr, "sequence.\n");
-                            exit(52);
-                        }
-                        mlist[*nm].begin = mask_beg;
-                        mlist[*nm].end = len-1;
-                        (*nm)++;
-                    }
-                    mask_beg = -1;
-                }
-                if(do_mask == 1 && mask_beg == -1 && (line[i] == 'N' || line[i] == 'n'))
-                    mask_beg = len;
-                if(line[i] == 'g' || line[i] == 'G') { set(seq, bctr); gc_cont++; }
-                else if(line[i] == 't' || line[i] == 'T') {
-                    set(seq, bctr);
-                    set(seq, bctr+1);
-                }
-                else if(line[i] == 'c' || line[i] == 'C') {
-                    set(seq, bctr+1);
-                    gc_cont++;
-                }
-                else if(line[i] != 'a' && line[i] != 'A') {
-                    set(seq, bctr+1);
-                    set(useq, len);
-                }
-                bctr+=2; len++;
-            }
-        }
-        if(len+MAX_LINE >= MAX_SEQ) {
+        bctr+=2; len++;
+        if(len >= MAX_SEQ) {
             fprintf(stderr, "\n\nWarning:  Sequence is long (max %d for training).\n",
                     MAX_SEQ);
             fprintf(stderr, "Training on the first %d bases.\n\n", MAX_SEQ);
             break;
         }
     }
-    if(fhdr > 1) {
-        for(i = 0; i < 12; i++) {
-            if(i%4 == 0 || i%4 == 1) { set(seq, bctr); set(seq, bctr+1); }
-            bctr+=2; len++;
-        }
-    }
-    *gc = ((double)gc_cont / (double)len);
+
+
+
+    tinf.gc = ((double)gc_cont / (double)len);
     return len;
 }
+
+int ProdigalWrapper::getNumberOfPredictedGenes(){ return ng; }
+

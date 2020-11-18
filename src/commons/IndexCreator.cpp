@@ -28,10 +28,10 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 
     KmerBuffer kmerBuffer(kmerBufSize);
     size_t processedSeqCnt = 0;
-
+    cout<<sizeof(_gene)<<endl;
 
     while(processedSeqCnt < numOfSeq){ ///check this condition
-        seqIterator->whatNameWouldBeGood(kmerBuffer, seqFile, sequences, processedSeqChecker, processedSeqCnt);
+        seqIterator->whatNameWouldBeGoodWithFramePrediction(kmerBuffer, seqFile, sequences, processedSeqChecker, processedSeqCnt);
         writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdListAtRank);
     }
 

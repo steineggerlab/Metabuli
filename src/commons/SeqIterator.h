@@ -25,6 +25,12 @@ KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
 
 using namespace std;
 
+typedef struct PredictedGene {
+    PredictedGene(int start, int end) : start(start), end(end) { }
+    int start;
+    int end;
+}PredictedGene;
+
 typedef struct ExtractStartPoint {
     uint32_t frame;
     uint32_t startOfFrame;

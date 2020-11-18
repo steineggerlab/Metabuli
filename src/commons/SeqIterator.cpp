@@ -345,9 +345,10 @@ size_t SeqIterator::whatNameWouldBeGood(KmerBuffer & kmerBuffer, MmapedData<char
 }
 }
 size_t SeqIterator::whatNameWouldBeGoodWithFramePrediction(KmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt) {
+omp_set_num_threads(1);
 #pragma omp parallel
-    {
-        ProdigalWrapper prodial;
+{
+        ProdigalWrapper prodigal;
         SeqIterator seqIterator;
         size_t posToWrite;
         bool hasOverflow = false;
@@ -357,7 +358,43 @@ size_t SeqIterator::whatNameWouldBeGoodWithFramePrediction(KmerBuffer & kmerBuff
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
-                prodial.getPredictedFrames(seq->seq.s);
+                cout<<"before prodigal"<<endl;
+                prodigal.trainASpecies(seq->seq.s);
+                prodigal.getPredictedFrames(seq->seq.s);
+                cout<<"after"<<endl;
+                int overlap = 0;
+                vector<PredictedGene> forward;
+                vector<PredictedGene> reverse;
+                for(size_t i = 0; i < prodigal.getNumberOfPredictedGenes() ; i++) {
+                    if (prodigal.nodes[prodigal.genes[i].start_ndx].strand == 1) {
+                        forward.emplace_back(prodigal.genes[i].begin, prodigal.genes[i].end);
+                    } else {
+                        reverse.emplace_back(prodigal.genes[i].begin, prodigal.genes[i].end);
+                    }
+                    for(size_t j = prodigal.genes[i].begin - 1; j < prodigal.genes[i].end; j++  ){
+                        cout<<seq->seq.s[j];
+                    } cout<<endl;
+                }
+                for(size_t i = 0; i < forward.size() - 1; i ++) {
+                    if (forward[i].end > forward[i + 1].start) {
+                        overlap++;
+                    }
+                }
+                cout<<"overlapl: "<<overlap<<endl;
+                for(size_t i = 0; i < reverse.size() - 1; i ++) {
+                    if (reverse[i].end > reverse[i + 1].start) {
+                        overlap++;
+                    }
+                }
+                cout<<"overlapl: "<<overlap<<endl;
+
+                        //cout << prodigal.genes[i].begin << " " << prodigal.genes[i].end <<" "<< prodigal.nodes[prodigal.genes[i].start_ndx].strand <<" "<< prodigal.nodes[prodigal.genes[i].stop_ndx].strand<<endl;
+
+
+
+
+
+                cout<<"ng: "<<prodigal.getNumberOfPredictedGenes()<<endl;
                 seqs[i].length = strlen(seq->seq.s);
                 seqIterator.dna2aa(seq->seq.s);
                 size_t kmerCnt = getNumOfKmerForSeq(seq->seq.s);
@@ -370,10 +407,11 @@ size_t SeqIterator::whatNameWouldBeGoodWithFramePrediction(KmerBuffer & kmerBuff
                     hasOverflow = true;
                 }
             }
+            }
 
-        }
-    }
 }
+}
+
 
 void SeqIterator::fillKmerBuffer3(const string & seq,  KmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID)
 {
