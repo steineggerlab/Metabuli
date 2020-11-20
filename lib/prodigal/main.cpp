@@ -304,8 +304,7 @@ int main(int argc, char *argv[]) {
   if(is_meta == 0 && (do_training == 1 || (do_training == 0 && train_file ==
      NULL))) {
     if(quiet == 0) {
-      fprintf(stderr, "Request:  Single Genome, Phase:  Training\n");
-      fprintf(stderr, "Reading in the sequence(s) to train...");
+
     }
     slen = read_seq_training(input_ptr, seq, useq, &(tinf.gc), do_mask, mlist,
                              &nmask);
@@ -466,6 +465,8 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "Request:  Metagenomic, Phase:  Gene Finding\n");
     else fprintf(stderr, "Request:  Single Genome, Phase:  Gene Finding\n");
   }
+
+
 
   /* Read and process each sequence in the file in succession */
   sprintf(cur_header, "Prodigal_Seq_1");

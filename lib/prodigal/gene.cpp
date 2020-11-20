@@ -382,7 +382,7 @@ void print_genes(FILE *fp, struct _gene *genes, int ng, struct _node *nod,
   for(i = 0; i < ng; i++) {
     ndx = genes[i].start_ndx;
     sndx = genes[i].stop_ndx;
-
+    printf("%d\n", ng);
     /* Print the coordinates and data */
     if(nod[ndx].strand == 1) {
 

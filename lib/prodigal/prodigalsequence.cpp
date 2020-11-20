@@ -44,6 +44,7 @@ int read_seq_training(fptr fp, unsigned char *seq, unsigned char *useq,
       fprintf(stderr, "%d chars, sequence might not be read ", MAX_LINE);
       fprintf(stderr, "correctly.\n\n");
     }
+
     if(line[0] == '>' || (line[0] == 'S' && line[1] == 'Q') ||
        (strlen(line) > 6 && strncmp(line, "ORIGIN", 6) == 0)) {
       hdr = 1;
@@ -67,6 +68,9 @@ int read_seq_training(fptr fp, unsigned char *seq, unsigned char *useq,
         for(i = 0; i < gapsize; i++) line[i] = 'n';
         line[i] = '\0';
       }
+
+
+
       for(i = 0; i < strlen(line); i++) {
         if(line[i] < 'A' || line[i] > 'z') continue;
         if(do_mask == 1 && mask_beg != -1 && line[i] != 'N' && line[i] != 'n') {

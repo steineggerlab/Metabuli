@@ -352,7 +352,8 @@ omp_set_num_threads(1);
         SeqIterator seqIterator;
         size_t posToWrite;
         bool hasOverflow = false;
-#pragma omp for schedule(dynamic, 1)
+
+        #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < seqs.size(); i++) {
             if(checker[i] == false && !hasOverflow) {
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
@@ -371,10 +372,12 @@ omp_set_num_threads(1);
                     } else {
                         reverse.emplace_back(prodigal.genes[i].begin, prodigal.genes[i].end);
                     }
-                    for(size_t j = prodigal.genes[i].begin - 1; j < prodigal.genes[i].end; j++  ){
-                        cout<<seq->seq.s[j];
-                    } cout<<endl;
+//                    for(size_t j = prodigal.genes[i].begin - 1; j < prodigal.genes[i].end; j++  ){
+//                        cout<<seq->seq.s[j];
+//                    } cout<<endl;
+                    cout << prodigal.genes[i].begin << " " << prodigal.genes[i].end <<" "<< prodigal.nodes[prodigal.genes[i].start_ndx].strand <<" "<< prodigal.nodes[prodigal.genes[i].stop_ndx].strand<<endl;
                 }
+                cout<<forward.size()<<endl;
                 for(size_t i = 0; i < forward.size() - 1; i ++) {
                     if (forward[i].end > forward[i + 1].start) {
                         overlap++;
@@ -386,7 +389,7 @@ omp_set_num_threads(1);
                         overlap++;
                     }
                 }
-                cout<<"overlapl: "<<overlap<<endl;
+                cout<<"overlap: "<<overlap<<endl;
 
                         //cout << prodigal.genes[i].begin << " " << prodigal.genes[i].end <<" "<< prodigal.nodes[prodigal.genes[i].start_ndx].strand <<" "<< prodigal.nodes[prodigal.genes[i].stop_ndx].strand<<endl;
 
@@ -407,7 +410,7 @@ omp_set_num_threads(1);
                     hasOverflow = true;
                 }
             }
-            }
+        }
 
 }
 }

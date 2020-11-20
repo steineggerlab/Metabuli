@@ -30,17 +30,23 @@ ProdigalWrapper::ProdigalWrapper() {
     nn = 0; slen = 0; ipath = 0; ng = 0; nmask = 0;
     user_tt = 0; is_meta = 0; num_seq = 0; quiet = 0;
     max_phase = 0; max_score = -100.0;
-    train_file = NULL; do_training = 0;
+    train_file = NULL;
     start_file = NULL; trans_file = NULL; nuc_file = NULL;
     start_ptr = stdout; trans_ptr = stdout; nuc_ptr = stdout;
-    input_file = NULL; output_file = NULL; piped = 0;
-    output_ptr = stdout; max_slen = 0;
-    output = 0; closed = 0; do_mask = 0; force_nonsd = 0;
+    input_file = NULL; output_file = NULL;
+    max_slen = 0;
+    output = 0; closed = 1; do_mask = 0; force_nonsd = 0;
 
+    tinf.st_wt = 4.35;
+    tinf.trans_table = 11;
 }
+
 void ProdigalWrapper::trainASpecies(char * genome){
 
-    slen = getNextSeq(genome);
+    fprintf(stderr, "Request:  Single Genome, Phase:  Training\n");
+    fprintf(stderr, "Reading in the sequence(s) to train...");
+
+    slen = getNextSeq(genome, 1);
     if(slen == 0) {
         fprintf(stderr, "\n\nSequence read failed (file must be Fasta, ");
         fprintf(stderr, "Genbank, or EMBL format).\n\n");
@@ -148,26 +154,17 @@ void ProdigalWrapper::trainASpecies(char * genome){
         fprintf(stderr, "done!\n");
     }
 
-    memset(&tinf, 0, sizeof(struct _training));
     memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
     memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
     memset(useq, 0, (slen/8+1)*sizeof(unsigned char));
     memset(nodes, 0, nn*sizeof(struct _node));
     nn = 0; slen = 0; ipath = 0; nmask = 0;
-
 }
 
 void ProdigalWrapper::getPredictedFrames(char * genome){
+
     /* Initialize structure */
-    memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
-    memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
-    memset(useq, 0, (slen/8+1)*sizeof(unsigned char));
-    memset(nodes, 0, nn*sizeof(struct _node));
-    memset(genes, 0, MAX_GENES*sizeof(struct _gene));
-    nn = 0; slen = 0; ipath = 0; nmask = 0;
-
-
-    slen = getNextSeq(genome);
+    slen = getNextSeq(genome, 0);
     rcom_seq(seq, rseq, useq, slen);
     if(slen == 0) {
         fprintf(stderr, "\nSequence read failed (file must be Fasta, ");
@@ -189,48 +186,41 @@ void ProdigalWrapper::getPredictedFrames(char * genome){
         max_slen = slen;
     }
 
-    /* Calculate short header for this sequence */
-    calc_short_header(cur_header, short_header, num_seq);
+    /* Single Genome Version */
+     /***********************************************************************
+      Find all the potential starts and stops, sort them, and create
+      comprehensive list of nodes for dynamic programming.
+      ***********************************************************************/
+     nn = add_nodes(seq, rseq, slen, nodes, closed, mlist, nmask, &tinf);
+     qsort(nodes, nn, sizeof(struct _node), &compare_nodes);
 
-    if(is_meta == 0) { /* Single Genome Version */
+     /***********************************************************************
+     Second dynamic programming, using the dicodon statistics as the
+     scoring function.
+     ***********************************************************************/
+     score_nodes(seq, rseq, slen, nodes, nn, &tinf, closed, is_meta);
+     record_overlapping_starts(nodes, nn, &tinf, 1);
+     ipath = dprog(nodes, nn, &tinf, 1);
+     eliminate_bad_genes(nodes, ipath, &tinf);
+     ng = add_genes(genes, nodes, ipath);
 
-        /***********************************************************************
-          Find all the potential starts and stops, sort them, and create a
-          comprehensive list of nodes for dynamic programming.
-        ***********************************************************************/
-        nn = add_nodes(seq, rseq, slen, nodes, closed, mlist, nmask, &tinf);
-        qsort(nodes, nn, sizeof(struct _node), &compare_nodes);
-
-        /***********************************************************************
-          Second dynamic programming, using the dicodon statistics as the
-          scoring function.
-        ***********************************************************************/
-        score_nodes(seq, rseq, slen, nodes, nn, &tinf, closed, is_meta);
-        if(start_ptr != stdout)
-            write_start_file(start_ptr, nodes, nn, &tinf, num_seq, slen, 0, NULL,
-                             VERSION, cur_header);
-        record_overlapping_starts(nodes, nn, &tinf, 1);
-        ipath = dprog(nodes, nn, &tinf, 1);
-        eliminate_bad_genes(nodes, ipath, &tinf);
-        ng = add_genes(genes, nodes, ipath);
-        tweak_final_starts(genes, ng, nodes, nn, &tinf);
-        record_gene_data(genes, ng, nodes, &tinf, num_seq);
-        if(quiet == 0) {
-            fprintf(stderr, "done!\n");
-        }
-
-
-    }
-
+     tweak_final_starts(genes, ng, nodes, nn, &tinf);
+     record_gene_data(genes, ng, nodes, &tinf, num_seq);
+     if(quiet == 0) {
+         fprintf(stderr, "done!\n");
+     }
 
 }
 
-int ProdigalWrapper::getNextSeq(char * line) {
-    int hdr = 0, fhdr = 0, bctr = 0, len = 0, wrn = 0;
+int ProdigalWrapper::getNextSeq(char * line, int training) {
+    int bctr = 0, len = 0;
     int gc_cont = 0, mask_beg = -1;
     size_t lengthOfLine = strlen(line);
+
     for(size_t i = 0; i < lengthOfLine; i++) {
-        if(line[i] < 'A' || line[i] > 'z') continue;
+        if(line[i] < 'A' || line[i] > 'z') {
+            continue;
+        }
         if(do_mask == 1 && mask_beg != -1 && line[i] != 'N' && line[i] != 'n') {
             if(len - mask_beg >= MASK_SIZE) {
                 if(nmask == MAX_MASKS) {
@@ -268,11 +258,15 @@ int ProdigalWrapper::getNextSeq(char * line) {
         }
     }
 
+    if(training == 1){
+        tinf.gc = ((double)gc_cont / (double)len);
+    }else{
+        gc = ((double)gc_cont / (double)len);
+    }
 
-
-    tinf.gc = ((double)gc_cont / (double)len);
     return len;
 }
 
 int ProdigalWrapper::getNumberOfPredictedGenes(){ return ng; }
+
 
