@@ -25,11 +25,12 @@ KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
 
 using namespace std;
 
-typedef struct PredictedGene {
-    PredictedGene(int start, int end) : start(start), end(end) { }
+typedef struct PredictedBlock {
+    PredictedBlock(int start, int end) : start(start), end(end) { }
     int start;
     int end;
-}PredictedGene;
+    int strand; //true for forward
+}PredictedBlock;
 
 typedef struct ExtractStartPoint {
     uint32_t frame;
@@ -47,6 +48,7 @@ private:
 
     uint64_t addDNAInfo(uint64_t & kmer, const string&, int forOrRev, int startOfKmer, int frame);
     void addDNAInfo2(uint64_t & kmer, Sequence & seq, MmapedData<char> & seqFile, const int & forOrRev, const int & startOfKmer, const int & frame);
+    void getTranslationBlocks(struct _gene * genes, struct _node * nodes, PredictedBlock * blocks, size_t numOfGene, size_t length);
     //void numAA2alphabet();
 
 public:

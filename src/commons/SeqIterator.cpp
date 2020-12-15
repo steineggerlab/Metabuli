@@ -345,14 +345,16 @@ size_t SeqIterator::whatNameWouldBeGood(KmerBuffer & kmerBuffer, MmapedData<char
 }
 }
 size_t SeqIterator::whatNameWouldBeGoodWithFramePrediction(KmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt) {
-omp_set_num_threads(1);
+int z = 0;
+int y = 0;
+    omp_set_num_threads(1);
 #pragma omp parallel
 {
         ProdigalWrapper prodigal;
         SeqIterator seqIterator;
         size_t posToWrite;
         bool hasOverflow = false;
-
+        PredictedBlock * frames;
         #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < seqs.size(); i++) {
             if(checker[i] == false && !hasOverflow) {
@@ -364,31 +366,39 @@ omp_set_num_threads(1);
                 prodigal.getPredictedFrames(seq->seq.s);
                 cout<<"after"<<endl;
                 int overlap = 0;
-                vector<PredictedGene> forward;
-                vector<PredictedGene> reverse;
-                for(size_t i = 0; i < prodigal.getNumberOfPredictedGenes() ; i++) {
-                    if (prodigal.nodes[prodigal.genes[i].start_ndx].strand == 1) {
-                        forward.emplace_back(prodigal.genes[i].begin, prodigal.genes[i].end);
-                    } else {
-                        reverse.emplace_back(prodigal.genes[i].begin, prodigal.genes[i].end);
-                    }
-//                    for(size_t j = prodigal.genes[i].begin - 1; j < prodigal.genes[i].end; j++  ){
-//                        cout<<seq->seq.s[j];
-//                    } cout<<endl;
-                    cout << prodigal.genes[i].begin << " " << prodigal.genes[i].end <<" "<< prodigal.nodes[prodigal.genes[i].start_ndx].strand <<" "<< prodigal.nodes[prodigal.genes[i].stop_ndx].strand<<endl;
-                }
-                cout<<forward.size()<<endl;
-                for(size_t i = 0; i < forward.size() - 1; i ++) {
-                    if (forward[i].end > forward[i + 1].start) {
-                        overlap++;
-                    }
-                }
-                cout<<"overlapl: "<<overlap<<endl;
-                for(size_t i = 0; i < reverse.size() - 1; i ++) {
-                    if (reverse[i].end > reverse[i + 1].start) {
-                        overlap++;
+
+                vector<PredictedBlock> reverse;
+                frames = (PredictedBlock*)malloc((prodigal.getNumberOfPredictedGenes() + 1) * sizeof(PredictedBlock));
+                getTranslationBlocks(prodigal.genes, prodigal.nodes, frames, prodigal.getNumberOfPredictedGenes(),
+                                     strlen(seq->seq.s));
+
+                for(size_t i = 0; i < 1000 ; i++) {
+
+
+                    if((prodigal.genes[i].end - prodigal.genes[i].begin + 1) % 3 != 0){
+                        for(size_t j = prodigal.genes[i].begin ; j < prodigal.genes[i].end + 1 ; j++  ){
+                            cout<<seq->seq.s[j];
+                        } cout<<endl;
+                        cout << prodigal.genes[i].begin << " " << prodigal.genes[i].end <<" "<< prodigal.nodes[prodigal.genes[i].start_ndx].type <<" "<< prodigal.nodes[prodigal.genes[i].stop_ndx].type<<endl;
+                        if(prodigal.nodes[prodigal.genes[i].start_ndx].strand == 1){
+                            z++;
+                        } else{
+                            y++;
+                        }
                     }
                 }
+//                cout<<forward.size()<<endl;
+//                for(size_t i = 0; i < forward.size() - 1; i ++) {
+//                    if (forward[i].end > forward[i + 1].start) {
+//                        overlap++;
+//                    }
+//                }
+//                cout<<"overlapl: "<<overlap<<endl;
+//                for(size_t i = 0; i < reverse.size() - 1; i ++) {
+//                    if (reverse[i].end > reverse[i + 1].start) {
+//                        overlap++;
+//                    }
+//                }
                 cout<<"overlap: "<<overlap<<endl;
 
                         //cout << prodigal.genes[i].begin << " " << prodigal.genes[i].end <<" "<< prodigal.nodes[prodigal.genes[i].start_ndx].strand <<" "<< prodigal.nodes[prodigal.genes[i].stop_ndx].strand<<endl;
@@ -413,6 +423,7 @@ omp_set_num_threads(1);
         }
 
 }
+cout<< z<<" " <<y<<endl;
 }
 
 
@@ -464,4 +475,65 @@ size_t SeqIterator::getNumOfKmerForSeq(const string & seq){
     {
         return (6 * (len/3) - 42);
     }
+}
+
+void SeqIterator::getTranslationBlocks(struct _gene * genes, struct _node * nodes, PredictedBlock * blocks, size_t numOfGene, size_t length){
+
+    size_t blockIdx = 0;
+    int cutNext = 0;
+    //for the first frame
+    blocks[0].start = 0;
+    blocks[0].end = genes[0].begin - 1;
+    blocks[0].strand = 1;
+    blockIdx++;
+    int frame;
+    int rightEnd = 0;
+
+    for(size_t geneIdx = 0 ; geneIdx < numOfGene - 1; geneIdx++){
+
+        if(genes[geneIdx].end > genes[geneIdx + 1].end){ //one gene completely includes another gene
+            blocks[blockIdx].start = genes[geneIdx].begin;
+            blocks[blockIdx].end = genes[geneIdx].end;
+            blocks[blockIdx].strand = nodes[genes[geneIdx].begin].strand;
+            geneIdx++;
+            blockIdx++;
+            continue;
+        }
+
+        if(nodes[genes[geneIdx].start_ndx].strand == 1){ //forward
+            blocks[blockIdx].start = genes[geneIdx].begin;
+            blocks[blockIdx].end = genes[geneIdx + 1].begin - 1;
+            blocks[blockIdx].strand = nodes[genes[geneIdx].start_ndx].strand;
+            blockIdx ++;
+        }else{ // reverse
+            frame = genes[geneIdx].end % 3;
+            rightEnd = genes[geneIdx+1].begin - 1;
+            while(rightEnd%3 != frame){
+                rightEnd--;
+            }
+            blocks[blockIdx].start = genes[geneIdx].begin;
+            blocks[blockIdx].end = rightEnd;
+            blocks[blockIdx].strand = nodes[genes[geneIdx].start_ndx].strand;
+            blockIdx++;
+        }
+    }
+
+    //For the last block
+    if(nodes[genes[numOfGene - 1].start_ndx].strand == 1){ //forward
+        blocks[blockIdx].start = genes[numOfGene - 1].begin;
+        blocks[blockIdx].end = length -1;
+        blocks[blockIdx].strand = nodes[genes[numOfGene-1].start_ndx].strand;
+        blockIdx ++;
+    }else{ // reverse
+        frame = genes[numOfGene-1].end % 3;
+        rightEnd = length - 1;
+        while(rightEnd%3 != frame){
+            rightEnd--;
+        }
+        blocks[blockIdx].start = genes[numOfGene - 1].begin;
+        blocks[blockIdx].end = rightEnd;
+        blocks[blockIdx].strand = nodes[genes[numOfGene-1].start_ndx].strand;
+        blockIdx ++;
+    }
+    cout << "frameIdx: " << blockIdx << endl;
 }

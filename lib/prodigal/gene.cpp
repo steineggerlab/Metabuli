@@ -32,7 +32,7 @@ int add_genes(struct _gene *glist, struct _node *nod, int dbeg) {
   while(path != -1) {
     if(nod[path].elim == 1) { path = nod[path].tracef; continue; }
     if(nod[path].strand == 1 && nod[path].type != STOP) {
-      glist[ctr].begin = nod[path].ndx+1;
+      glist[ctr].begin = nod[path].ndx+1 ;
       glist[ctr].start_ndx = path;
     }
     if(nod[path].strand == -1 && nod[path].type == STOP) {
@@ -40,12 +40,12 @@ int add_genes(struct _gene *glist, struct _node *nod, int dbeg) {
       glist[ctr].stop_ndx = path;
     }
     if(nod[path].strand == 1 && nod[path].type == STOP) {
-      glist[ctr].end = nod[path].ndx+3;
+      glist[ctr].end = nod[path].ndx+3 ;
       glist[ctr].stop_ndx = path;
       ctr++;
     }
     if(nod[path].strand == -1 && nod[path].type != STOP) {
-      glist[ctr].end = nod[path].ndx+1;
+      glist[ctr].end = nod[path].ndx+1 ;
       glist[ctr].start_ndx = path;
       ctr++;
     }

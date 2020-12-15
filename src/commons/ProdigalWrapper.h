@@ -39,6 +39,7 @@ private:
     struct _training tinf;
     mask mlist[MAX_MASKS];
 
+    void getTranslationFrames( struct _gene * genes);
 public:
     struct _node *nodes;
     struct _gene *genes;
