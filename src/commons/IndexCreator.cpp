@@ -26,7 +26,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     bool processedSeqChecker[numOfSeq];
     fill_n(processedSeqChecker, numOfSeq, false);
 
-    KmerBuffer kmerBuffer(kmerBufSize);
+    TargetKmerBuffer kmerBuffer(kmerBufSize);
     size_t processedSeqCnt = 0;
     cout<<sizeof(_gene)<<endl;
 
@@ -54,20 +54,20 @@ void IndexCreator::startIndexCreating(const char * seqFileName, const char * out
     kseq_buffer_t buffer(const_cast<char*>(seqFile.data), seqFile.fileSize + 1);
     kseq_t *seq = kseq_init(&buffer);
 
-    Kmer * kmerBuffer = (Kmer *)malloc(sizeof(Kmer) * kmerBufSize);
+    TargetKmer * kmerBuffer = (TargetKmer *)malloc(sizeof(TargetKmer) * kmerBufSize);
 
     int seqID = 0;
 
-    while(kseq_read(seq) >= 0){
-        seqIterator->dna2aa(seq->seq.s);
-        ESP = seqIterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
-        while (ESP.startOfFrame + ESP.frame != 0)
-        {
-            writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdListAtRank);
-            ESP = seqIterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
-        }
-        seqID ++;
-    }
+//    while(kseq_read(seq) >= 0){
+//        seqIterator->dna2aa(seq->seq.s);
+//        ESP = seqIterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
+//        while (ESP.startOfFrame + ESP.frame != 0)
+//        {
+//            writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdListAtRank);
+//            ESP = seqIterator->fillKmerBuffer(seq->seq.s, kmerBuffer, seqID, bufferIdx, ESP);
+//        }
+//        seqID ++;
+//    }
 
     //flush last buffer
     writeTargetFiles(kmerBuffer, bufferIdx, outputFileName, taxIdListAtRank);
@@ -76,7 +76,9 @@ void IndexCreator::startIndexCreating(const char * seqFileName, const char * out
     munmap(seqFile.data, seqFile.fileSize + 1);
 }
 
-void IndexCreator::writeTargetFiles(Kmer * kmerBuffer, size_t & bufferIdx, const char * outputFileName, vector<int> & taxIdListAtRank)
+
+///This function sort the TargetKmerBuffer, do redundancy reducing task, write the differential index of them
+void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & bufferIdx, const char * outputFileName, vector<int> & taxIdListAtRank)
 {
     char suffixedDiffIdxFileName[100];
     char suffixedInfoFileName[100];
@@ -84,23 +86,23 @@ void IndexCreator::writeTargetFiles(Kmer * kmerBuffer, size_t & bufferIdx, const
     sprintf(suffixedInfoFileName,"%s_info_%zu", outputFileName,numOfFlush);
     numOfFlush++;
     FILE * diffIdxFile = fopen(suffixedDiffIdxFileName, "wb");
-    FILE * idAndPosFile = fopen(suffixedInfoFileName, "wb");
+    FILE * infoFile = fopen(suffixedInfoFileName, "wb");
 
 
     uint16_t *kmerLocalBuf = (uint16_t *)malloc(sizeof(uint16_t) * kmerBufSize);
     size_t localBufIdx = 0;
 
-    if (diffIdxFile == NULL || idAndPosFile == NULL){
+    if (diffIdxFile == NULL || infoFile == NULL){
         cout<<"Cannot open the file for writing target DB"<<endl;
         return;
     }
     uint64_t lastKmer = 0;
 
-    SORT_PARALLEL(kmerBuffer, kmerBuffer + bufferIdx, [](const Kmer & a, const Kmer & b) {
+    SORT_PARALLEL(kmerBuffer, kmerBuffer + bufferIdx, [](const TargetKmer & a, const TargetKmer & b) {
         return a.ADkmer < b.ADkmer || (a.ADkmer == b.ADkmer && a.info.sequenceID < b.info.sequenceID);
     });
 
-    Kmer lookingKmer = kmerBuffer[0];
+    TargetKmer lookingKmer = kmerBuffer[0];
     size_t write = 0;
     int endFlag = 0;
 
@@ -119,7 +121,7 @@ void IndexCreator::writeTargetFiles(Kmer * kmerBuffer, size_t & bufferIdx, const
             }
         }
 
-        fwrite(&lookingKmer.info, sizeof(KmerInfo), 1, idAndPosFile);
+        fwrite(&lookingKmer.info, sizeof(TargetKmerInfo), 1, infoFile);
         write++;
         writeKmerDiff(lastKmer, lookingKmer.ADkmer, diffIdxFile, kmerLocalBuf, localBufIdx);
 
@@ -128,9 +130,10 @@ void IndexCreator::writeTargetFiles(Kmer * kmerBuffer, size_t & bufferIdx, const
         lastKmer = lookingKmer.ADkmer;
         lookingKmer = kmerBuffer[i];
     }
+
     if(!((kmerBuffer[bufferIdx - 2].ADkmer == kmerBuffer[bufferIdx - 1].ADkmer) &&
         (kmerBuffer[bufferIdx - 2].info.sequenceID == kmerBuffer[bufferIdx - 1].info.sequenceID))){
-        fwrite(&lookingKmer.info, sizeof(KmerInfo), 1, idAndPosFile);
+        fwrite(&lookingKmer.info, sizeof(KmerInfo), 1, infoFile);
         write++;
         writeKmerDiff(lastKmer, lookingKmer.ADkmer, diffIdxFile, kmerLocalBuf, localBufIdx);
     }
@@ -141,7 +144,7 @@ void IndexCreator::writeTargetFiles(Kmer * kmerBuffer, size_t & bufferIdx, const
 
     free(kmerLocalBuf);
     fclose(diffIdxFile);
-    fclose(idAndPosFile);
+    fclose(infoFile);
     bufferIdx = 0;
 }
 

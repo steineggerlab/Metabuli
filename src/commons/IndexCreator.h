@@ -35,7 +35,7 @@ private:
     size_t numOfFlush=0;
     SeqIterator * seqIterator;
 
-    void writeTargetFiles(Kmer * kmerBuffer, size_t & bufferIdx, const char * outputFileName, vector<int> & taxIdList);
+    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & bufferIdx, const char * outputFileName, vector<int> & taxIdList);
     void writeKmer(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
 
 
