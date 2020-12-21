@@ -162,6 +162,11 @@ void ProdigalWrapper::trainASpecies(char * genome){
 }
 
 void ProdigalWrapper::getPredictedFrames(char * genome){
+    memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
+    memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
+    memset(useq, 0, (slen/8+1)*sizeof(unsigned char));
+    memset(nodes, 0, nn*sizeof(struct _node));
+    nn = 0; slen = 0; ipath = 0; nmask = 0;
 
     /* Initialize structure */
     slen = getNextSeq(genome, 0);
@@ -204,10 +209,11 @@ void ProdigalWrapper::getPredictedFrames(char * genome){
      eliminate_bad_genes(nodes, ipath, &tinf);
      ng = add_genes(genes, nodes, ipath);
 
+
      tweak_final_starts(genes, ng, nodes, nn, &tinf);
      record_gene_data(genes, ng, nodes, &tinf, num_seq);
      if(quiet == 0) {
-         fprintf(stderr, "done!\n");
+         fprintf(stderr, "done! gene count: %d\n", ng);
      }
 
 }

@@ -81,15 +81,18 @@ SeqIterator::SeqIterator() {
     ///for Leu
     nuc2num[2][2][3] = 4;
     nuc2num[2][2][0] = 5;
+    ///for Ser
+    nuc2num[0][3][2] = 6;
+    nuc2num[0][3][1] = 7;
     ///for stop codon
     nuc2num[2][3][0] = 5;
 
 }
 
-void SeqIterator::dna2aa(const string & seq){
+void SeqIterator::sixFrameTranslateASeq(const char * seq){
     for(int i = 0 ; i < 6 ; i++){ aaFrames[i].clear(); }
 
-    int len = seq.length();
+    int len = strlen(seq);
     size_t end = len - 1;
     ///translation from DNA to AA. in each frame
     for(int i = 0; i < len - 4; i = i+3 )
@@ -114,124 +117,43 @@ void SeqIterator::dna2aa(const string & seq){
     }
 }
 
-void SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
-    size_t blockLength;
-    aaFrames[0].clear();
-    if(block.strand == 1){
-        block.end += 23;
-        blockLength = block.end - block.start + 1;
-        for(size_t i = 0; i < blockLength - 2; i = i + 3){
-            aaFrames[0].push_back(nuc2aa[nuc2int(seq[block.start + i])][nuc2int(seq[block.start+i+1])][nuc2int(seq[block.start+i+2])]);
-        }
-    }else{
-        block.end += 21;
-        blockLength = block.end - block.start + 1;
-        for(size_t i = 0; i < blockLength - 2; i = i + 3){
-            aaFrames[0].push_back(nuc2aa[nuc2int(iRCT[seq[block.end - i]])][nuc2int(iRCT[seq[block.end-i-1]])][nuc2int(iRCT[seq[block.end-i-2]])]);
-        }
-    }
-}
-void SeqIterator::addDNAInfo3(uint64_t & kmer, Sequence & seq, MmapedData<char> & seqFile, const int & forOrRev, const int & startOfKmer, const int & frame)
-{
-    int start = (frame % 3) + (startOfKmer * 3);
-    kmer <<= 25;
-
-    if(forOrRev == 0){
-        for( int i = 0; i < kmerLength * 3; i += 3) {
-            kmer |= nuc2num[nuc2int(seqFile.data[seq.start + (start + i)])][nuc2int(seqFile.data[seq.start + (start + i + 1)])][nuc2int(seqFile.data[seq.start + (start + i + 2)])] << i;
-        }
-    } else{
-        for( int i = 0; i < kmerLength * 3; i += 3) {
-            kmer |= nuc2num[nuc2int(iRCT[seqFile.data[seq.end - (start + i)]])][nuc2int(iRCT[seqFile.data[seq.end - (start + i + 1)]])][nuc2int(iRCT[seqFile.data[seq.end - (start + i + 2)]])] << i;
-        }
-    }
-    return;
-}
-
-
-void SeqIterator::dna2aa2(const Sequence & seq, const MmapedData<char> & seqFile){
-    const size_t & start = seq.start;
-    const size_t & end = seq.end;
-    size_t len = end - start + 1;
-    for(int i = 0 ; i < 6 ; i++){
-        aaFrames[i].clear();
-        aaFrames[i].reserve(len / 3 + 1);
-    }
-
-    ///translation from DNA to AA. in each frame
-    for(size_t i = 0; i < len - 4; i = i+3 )
-    {
-        aaFrames[0].push_back(nuc2aa[nuc2int(seqFile.data[i + start    ])][nuc2int(seqFile.data[i + start + 1])][nuc2int(seqFile.data[i + start + 2])]);
-        aaFrames[1].push_back(nuc2aa[nuc2int(seqFile.data[i + start + 1])][nuc2int(seqFile.data[i + start + 2])][nuc2int(seqFile.data[i + start + 3])]);
-        aaFrames[2].push_back(nuc2aa[nuc2int(seqFile.data[i + start + 2])][nuc2int(seqFile.data[i + start + 3])][nuc2int(seqFile.data[i + start + 4])]);
-
-        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[seqFile.data[end - (i + 0)]])][nuc2int(iRCT[seqFile.data[end - (i + 1)]])][nuc2int(iRCT[seqFile.data[end - (i + 2)]])]);
-        aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[seqFile.data[end - (i + 1)]])][nuc2int(iRCT[seqFile.data[end - (i + 2)]])][nuc2int(iRCT[seqFile.data[end - (i + 3)]])]);
-        aaFrames[5].push_back(nuc2aa[nuc2int(iRCT[seqFile.data[end - (i + 2)]])][nuc2int(iRCT[seqFile.data[end - (i + 3)]])][nuc2int(iRCT[seqFile.data[end - (i + 4)]])]);
-
-    }
-    if(len % 3 == 0){
-        aaFrames[0].push_back(nuc2aa[nuc2int(seqFile.data[len - 3])][nuc2int(seqFile.data[len - 2])][nuc2int(seqFile.data[len - 1])]);
-        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[seqFile.data[start + 2]])][nuc2int(iRCT[seqFile.data[start + 1]])][nuc2int(iRCT[seqFile.data[start]])]);
-    }
-    if(len % 3 == 1 ){
-        aaFrames[0].push_back(nuc2aa[nuc2int(seqFile.data[len - 4])][nuc2int(seqFile.data[len - 3])][nuc2int(seqFile.data[len - 2])]);
-        aaFrames[1].push_back(nuc2aa[nuc2int(seqFile.data[len - 3])][nuc2int(seqFile.data[len - 2])][nuc2int(seqFile.data[len - 1])]);
-        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[seqFile.data[start + 3]])][nuc2int(iRCT[seqFile.data[start + 2]])][nuc2int(iRCT[seqFile.data[start + 1]])]);
-        aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[seqFile.data[start + 2]])][nuc2int(iRCT[seqFile.data[start + 1]])][nuc2int(iRCT[seqFile.data[start + 0]])]);
-    }
-}
-
-ExtractStartPoint SeqIterator::fillKmerBuffer(const string & seq, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP){
-    ExtractStartPoint defaultStartPoint = { 0, 0};
-    if(ESP.startOfFrame + ESP.startOfFrame != 0){
-        defaultStartPoint = {ESP.frame , ESP.startOfFrame};
-    }
-    uint64_t tempKmer = 0;
-    uint32_t startOfKmer = defaultStartPoint.startOfFrame;
-    uint32_t frame = defaultStartPoint.frame;
+void SeqIterator::fillQueryKmerBuffer(const char * seq, KmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID) {
+    int tmp = 0;
     int forOrRev;
+    uint64_t tempKmer = 0;
+    uint32_t maxLength = 0;
+    for(int i = 0; i < 6; i++){
+        if(aaFrames[i].size() > maxLength)
+            maxLength = aaFrames->size();
+    }
+    maxLength = maxLength - kmerLength + 1;
 
-    for( frame ; frame < 6 ; frame++)
-    {
+    for(uint32_t frame = 0 ; frame < 6 ; frame++){
         int len = aaFrames[frame].size();
         forOrRev = frame / 3;
-        for (startOfKmer ; startOfKmer < len - kmerLength + 1 ; startOfKmer++)
-        {
+        for (uint32_t kmerCnt = 0 ; kmerCnt < len - kmerLength + 1 ; kmerCnt++) {
             ///Amino acid 2 number
             for (size_t i = 0; i < kmerLength; i++)
             {
-                tempKmer += aaFrames[frame][startOfKmer + i] * powers[i];
+                tempKmer += aaFrames[frame][kmerCnt + i] * powers[i];
             }
-            addDNAInfo(tempKmer, seq, forOrRev, startOfKmer, frame);
-
+            addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame);
+           // printKmerInDNAsequence(tempKmer);
             ///memcpy를 써보자
-            kmerList[kmerBufferIdx] = {tempKmer, seqID, startOfKmer*(frame+1), 0};
-            kmerBufferIdx++;
-
-            if(kmerBufferIdx == kmerBufSize)
-            {
-                ExtractStartPoint ESP = {frame, startOfKmer + 1};
-                return ESP;
-            }
-
+            kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, kmerCnt + (frame * maxLength) , 0};
+            tmp++;
+            posToWrite++;
             tempKmer = 0;
         }
-        startOfKmer = 0;
+
     }
-
-    ExtractStartPoint zero{0,0};
-    return zero;
-
-
 }
 
-uint64_t SeqIterator::addDNAInfo(uint64_t & kmer, const string& seq, int forOrRev, const int startOfKmer, const int frame)
-{
-    int start = (frame % 3) + (startOfKmer * 3);
+uint64_t SeqIterator::addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int forOrRev, const int kmerCnt, const int frame){
+    int start = (frame % 3) + (kmerCnt * 3);
     kmer <<= 25;
-    size_t end = seq.size() - 1;
-    if(forOrRev == 1){
+    size_t end = strlen(seq) - 1;
+    if(forOrRev == 0){
         for( int i = 0; i < kmerLength * 3; i += 3) {
             kmer |= nuc2num[nuc2int(seq[start + i])][nuc2int(seq[start + i + 1])][nuc2int(seq[start + i + 2])] << i;
         }
@@ -242,64 +164,24 @@ uint64_t SeqIterator::addDNAInfo(uint64_t & kmer, const string& seq, int forOrRe
     }
 }
 
-ExtractStartPoint SeqIterator::fillKmerBuffer2(Sequence seq, MmapedData<char> & seqFile, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP)
-{
-    ExtractStartPoint defaultStartPoint = { 0, 0};
-    if(ESP.startOfFrame + ESP.startOfFrame != 0){
-        defaultStartPoint = {ESP.frame , ESP.startOfFrame};
-    }
-    uint64_t tempKmer = 0;
-    uint32_t startOfKmer = defaultStartPoint.startOfFrame;
-    uint32_t frame = defaultStartPoint.frame;
-    int forOrRev;
+void SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
+    aaFrames[0].clear();
 
-    for( frame ; frame < 6 ; frame++)
-    {
-        int len = aaFrames[frame].size();
-        forOrRev = frame / 3;
-        for (startOfKmer ; startOfKmer < len - kmerLength + 1 ; startOfKmer++)
-        {
-            ///Amino acid 2 number
-            for (size_t i = 0; i < kmerLength; i++)
-            {
-                tempKmer += aaFrames[frame][startOfKmer + i] * powers[i];
-            }
-            addDNAInfo2(tempKmer, seq, seqFile, forOrRev, startOfKmer, frame);
-
-            ///memcpy를 써보자
-            kmerList[kmerBufferIdx] = {tempKmer, seqID, startOfKmer*(frame+1), 0};
-            kmerBufferIdx++;
-
-            if(kmerBufferIdx == kmerBufSize)
-            {
-                ExtractStartPoint ESP = {frame, startOfKmer + 1};
-                return ESP;
-            }
-
-            tempKmer = 0;
+    if(block.strand == 1){
+        block.end += 21;
+        size_t blockLength = block.end - block.start + 1;
+        aaFrames[0].reserve(blockLength / 3 + 1);
+        for(size_t i = 0; i < blockLength - 2; i = i + 3){
+            aaFrames[0].push_back(nuc2aa[nuc2int(seq[block.start + i])][nuc2int(seq[block.start+i+1])][nuc2int(seq[block.start+i+2])]);
         }
-        startOfKmer = 0;
-    }
-
-    ExtractStartPoint zero{0,0};
-    return zero;
-}
-
-void SeqIterator::addDNAInfo2(uint64_t & kmer, Sequence & seq, MmapedData<char> & seqFile, const int & forOrRev, const int & startOfKmer, const int & frame)
-{
-    int start = (frame % 3) + (startOfKmer * 3);
-    kmer <<= 25;
-
-    if(forOrRev == 0){
-        for( int i = 0; i < kmerLength * 3; i += 3) {
-            kmer |= nuc2num[nuc2int(seqFile.data[seq.start + (start + i)])][nuc2int(seqFile.data[seq.start + (start + i + 1)])][nuc2int(seqFile.data[seq.start + (start + i + 2)])] << i;
-        }
-    } else{
-        for( int i = 0; i < kmerLength * 3; i += 3) {
-            kmer |= nuc2num[nuc2int(iRCT[seqFile.data[seq.end - (start + i)]])][nuc2int(iRCT[seqFile.data[seq.end - (start + i + 1)]])][nuc2int(iRCT[seqFile.data[seq.end - (start + i + 2)]])] << i;
+    }else{
+        block.end += 21;
+        size_t blockLength = block.end - block.start + 1;
+        aaFrames[0].reserve(blockLength / 3 + 1);
+        for(size_t i = 0; i < blockLength - 2; i = i + 3){
+            aaFrames[0].push_back(nuc2aa[nuc2int(iRCT[seq[block.end - i]])][nuc2int(iRCT[seq[block.end-i-1]])][nuc2int(iRCT[seq[block.end-i-2]])]);
         }
     }
-    return;
 }
 
 string SeqIterator::reverseCompliment(string & read) const
@@ -344,15 +226,18 @@ void SeqIterator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedD
     {
         if(seqFile.data[i] == '>')
         {
-            seqSegments.emplace_back(start, i-2, i - start - 1);// the first push_back is a garbage.
+            cout<<start<<" "<<i-2<<endl;
+            seqSegments.emplace_back(start, i-2, i - start - 1);
             start = i;
+
         }
     }
     seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
 }
 
-size_t SeqIterator::whatNameWouldBeGood(KmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt) {
-#pragma omp parallel
+size_t SeqIterator::fillQueryKmerBufferParallel(KmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt) {
+    omp_set_num_threads(1);
+    #pragma omp parallel
 {
     SeqIterator seqIterator;
     size_t posToWrite;
@@ -363,12 +248,13 @@ size_t SeqIterator::whatNameWouldBeGood(KmerBuffer & kmerBuffer, MmapedData<char
             kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
             kseq_t *seq = kseq_init(&buffer);
             kseq_read(seq);
-            seqs[i].length = strlen(seq->seq.s);
-            seqIterator.dna2aa(seq->seq.s);
-            size_t kmerCnt = getNumOfKmerForSeq(seq->seq.s);
+
+            seqIterator.sixFrameTranslateASeq(seq->seq.s);
+
+            size_t kmerCnt = seqIterator.getNumOfKmerForSeq(seq->seq.s);
             posToWrite = kmerBuffer.reserveMemory(kmerCnt);
             if (posToWrite + kmerCnt < kmerBufSize) {
-                seqIterator.fillKmerBuffer3(seq->seq.s, kmerBuffer, posToWrite, i);
+                seqIterator.fillQueryKmerBuffer(seq->seq.s, kmerBuffer, posToWrite, i);
                 checker[i] = true;
                 processedSeqCnt ++;
             } else{
@@ -379,11 +265,9 @@ size_t SeqIterator::whatNameWouldBeGood(KmerBuffer & kmerBuffer, MmapedData<char
     }
 }
 }
-size_t SeqIterator::whatNameWouldBeGoodWithFramePrediction(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt) {
-int z = 0;
-int y = 0;
-    omp_set_num_threads(1);
-#pragma omp parallel
+size_t SeqIterator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedTaxIdCnt, const vector<int> & startsOfTaxIDs, const vector<int> & seqCntOfTaxIDs) {
+  //  omp_set_num_threads(1);
+    #pragma omp parallel
 {
     ProdigalWrapper prodigal;
     SeqIterator seqIterator;
@@ -391,30 +275,60 @@ int y = 0;
     bool hasOverflow = false;
     PredictedBlock * blocks;
     size_t numOfBlocks = 0;
+    size_t totalSeqLengthForOneTaxID;
+    size_t totalKmerCntForOneTaxID;
     #pragma omp for schedule(dynamic, 1)
-    for (size_t i = 0; i < seqs.size(); i++) {
+    for (size_t i = 0; i < startsOfTaxIDs.size(); i++) {
         if(checker[i] == false && !hasOverflow) {
-            kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
-            kseq_t *seq = kseq_init(&buffer);
-            kseq_read(seq);
+            totalSeqLengthForOneTaxID = seqs[startsOfTaxIDs[i] + seqCntOfTaxIDs[i] - 1].end - seqs[startsOfTaxIDs[i]].start + 1;
+            totalKmerCntForOneTaxID = totalSeqLengthForOneTaxID/3 - 7;
+            if(totalKmerCntForOneTaxID + kmerBuffer.startIndexOfReserve < kmerBufSize){ //When we have enough space in buffer
+                ///Training with the first fasta sequence of current TaxID
+                kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[startsOfTaxIDs[i]].start]), seqs[startsOfTaxIDs[i]].length);
+                kseq_t *seq = kseq_init(&buffer);
+                kseq_read(seq);
+                prodigal.trainASpecies(seq->seq.s);
 
-            prodigal.trainASpecies(seq->seq.s);
-            prodigal.getPredictedFrames(seq->seq.s);
+                ///Do gene prediction & extracting kmers & filling the buffer
+                prodigal.getPredictedFrames(seq->seq.s);
+                blocks = (PredictedBlock*)malloc((prodigal.getNumberOfPredictedGenes() + 1) * sizeof(PredictedBlock));
+                numOfBlocks = 0;
+                seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks, prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s), numOfBlocks);
 
-            blocks = (PredictedBlock*)malloc((prodigal.getNumberOfPredictedGenes() + 1) * sizeof(PredictedBlock));
-            getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks, prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s), numOfBlocks);
-
-            size_t kmerCntOfSeq = seqIterator.getNumOfKmerForSeq(seq->seq.s);
-
-            if(kmerCntOfSeq + kmerBuffer.startIndexOfReserve < kmerBufSize) {
                 for (size_t b = 0; b < numOfBlocks; b++) {
                     seqIterator.translateBlock(seq->seq.s, blocks[b]); /// Translate a block
                     size_t kmerCntOfBlock = seqIterator.getNumOfKmerForBlock(blocks[b]);
                     posToWrite = kmerBuffer.reserveMemory(kmerCntOfBlock);
                     seqIterator.fillBufferWithKmerFromBlock(blocks[b], seq->seq.s, kmerBuffer, posToWrite, i);
                 }
+                free(blocks);
+                ///If there are multiple sequences for current Tax ID, Do gene prediction & extracting kmers & filling the buffer with them.
+                ///In this case, you don't need a new training.
+                if(seqCntOfTaxIDs[i] > 1){
+                    for(size_t p = 1; p < seqCntOfTaxIDs[i]; p++ ) {
+                        kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[startsOfTaxIDs[i] + p].start]),
+                                             seqs[startsOfTaxIDs[i] + p].length);
+                        kseq_t *seq = kseq_init(&buffer);
+                        kseq_read(seq);
+
+                        prodigal.getPredictedFrames(seq->seq.s);
+                        blocks = (PredictedBlock *) malloc(
+                                (prodigal.getNumberOfPredictedGenes() + 1) * sizeof(PredictedBlock));
+                        numOfBlocks = 0;
+                        seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks,
+                                                         prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
+                                                         numOfBlocks);
+                        for (size_t b = 0; b < numOfBlocks; b++) {
+                            seqIterator.translateBlock(seq->seq.s, blocks[b]); /// Translate a block
+                            size_t kmerCntOfBlock = seqIterator.getNumOfKmerForBlock(blocks[b]);
+                            posToWrite = kmerBuffer.reserveMemory(kmerCntOfBlock);
+                            seqIterator.fillBufferWithKmerFromBlock(blocks[b], seq->seq.s, kmerBuffer, posToWrite, i);
+                        }
+                    }
+                    free(blocks);
+                }
                 checker[i] = true;
-                processedSeqCnt ++;
+                processedTaxIdCnt ++;
             }else{
                 hasOverflow = true;
             }
@@ -424,29 +338,32 @@ int y = 0;
 }
 
 ///It extracts kmers from amino acid sequence with DNA information and fill the kmerBuffer with them.
-void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID)
-{
+void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID) {
     uint64_t tempKmer = 0;
     int len = aaFrames[0].size();
+    int dnaLen = block.end - block.start + 1;
+//    for(int i = 0 ; i < dnaLen; i++){
+//        cout<<seq[block.start + i];
+//    }
+//    cout<<endl;
     for (uint32_t startOfKmer = 0 ; startOfKmer < len - kmerLength + 1 ; startOfKmer++){
         ///Amino acid 2 number
         for (size_t i = 0; i < kmerLength; i++)
         {
             tempKmer += aaFrames[0][startOfKmer + i] * powers[i];
         }
-        addDNAInfo4(tempKmer, seq, block, startOfKmer);
+        addDNAInfo_TargetKmer(tempKmer, seq, block, startOfKmer);
         kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, 0};
+       // printKmerInDNAsequence(tempKmer);
         posToWrite++;
         tempKmer = 0;
-        }
+    }
 
 }
 
-///It adds DAN information to kmers referring the original DNA sequence.
-void SeqIterator::addDNAInfo4(uint64_t & kmer, const char * seq, const PredictedBlock& block, int startOfKmer)
-{
+///It adds DNA information to kmers referring the original DNA sequence.
+void SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, int startOfKmer) {
     kmer <<= 25;
-   // size_t end = strlen(seq) - 1;
     if(block.strand == 1){
         int start = block.start + (startOfKmer * 3);
         for( int i = 0; i < kmerLength * 3; i += 3) {
@@ -455,58 +372,23 @@ void SeqIterator::addDNAInfo4(uint64_t & kmer, const char * seq, const Predicted
     } else{
         int start = block.end - (startOfKmer * 3);
         for( int i = 0; i < kmerLength * 3; i += 3) {
-            kmer |= nuc2num[nuc2int(iRCT[seq[start - i]])][nuc2int(iRCT[seq[start - i - 1]])][nuc2int(iRCT[seq[start - i -2]])] << i;
+            kmer |= nuc2num[nuc2int(iRCT[seq[start - i]])][nuc2int(iRCT[seq[start - i - 1]])][
+                    nuc2int(iRCT[seq[start - i - 2]])] << i;
         }
     }
 }
-
-void SeqIterator::fillKmerBuffer3(const string & seq,  KmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID)
-{
-    int tmp = 0;
-    int forOrRev;
-    uint64_t tempKmer = 0;
-    uint32_t maxLength = 0;
-    for(int i = 0; i < 6; i++){
-        if(aaFrames[i].size() > maxLength)
-            maxLength = aaFrames->size();
-    }
-    maxLength = maxLength - kmerLength + 1;
-    for(uint32_t frame = 0 ; frame < 6 ; frame++)
-    {
-        int len = aaFrames[frame].size();
-        forOrRev = frame / 3;
-        for (uint32_t startOfKmer = 0 ; startOfKmer < len - kmerLength + 1 ; startOfKmer++)
-        {
-            ///Amino acid 2 number
-            for (size_t i = 0; i < kmerLength; i++)
-            {
-                tempKmer += aaFrames[frame][startOfKmer + i] * powers[i];
-            }
-            addDNAInfo(tempKmer, seq, forOrRev, startOfKmer, frame);
-
-            ///memcpy를 써보자
-            kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, startOfKmer + (frame * maxLength) , 0};
-            tmp++;
-            posToWrite++;
-            tempKmer = 0;
-        }
-
-    }
-}
-
 size_t SeqIterator::getNumOfKmerForSeq(const string & seq){
     size_t len = seq.size();
     return len/3 -7;
 }
-
 size_t SeqIterator::getNumOfKmerForBlock(const PredictedBlock & block){
     size_t len = block.end - block.start + 1;
     return len/3 -7;
 }
 
+///It makes the block for translation from DNA to AA
+///Each block has a predicted gene part and intergenic region. When another gene shows up, new block starts.
 void SeqIterator::getTranslationBlocks(struct _gene * genes, struct _node * nodes, PredictedBlock * blocks, size_t numOfGene, size_t length, size_t & blockIdx){
-
-    int cutNext = 0;
     //for the first frame
     blocks[0].start = 0;
     blocks[0].end = genes[0].begin - 1;
@@ -520,7 +402,7 @@ void SeqIterator::getTranslationBlocks(struct _gene * genes, struct _node * node
         if(genes[geneIdx].end > genes[geneIdx + 1].end){ //one gene completely includes another gene
             blocks[blockIdx].start = genes[geneIdx].begin;
             blocks[blockIdx].end = genes[geneIdx].end;
-            blocks[blockIdx].strand = nodes[genes[geneIdx].begin].strand;
+            blocks[blockIdx].strand = nodes[genes[geneIdx].start_ndx].strand;
             geneIdx++;
             blockIdx++;
             continue;
@@ -543,7 +425,6 @@ void SeqIterator::getTranslationBlocks(struct _gene * genes, struct _node * node
             blockIdx++;
         }
     }
-
     //For the last block
     if(nodes[genes[numOfGene - 1].start_ndx].strand == 1){ //forward
         blocks[blockIdx].start = genes[numOfGene - 1].begin;
@@ -561,9 +442,315 @@ void SeqIterator::getTranslationBlocks(struct _gene * genes, struct _node * node
         blocks[blockIdx].strand = nodes[genes[numOfGene-1].start_ndx].strand;
         blockIdx ++;
     }
-    cout << "frameIdx: " << blockIdx << endl;
 
-    for(int i = 0 ; i < blockIdx; i++){
-        cout<<blocks[i].start<< " "<<blocks[i].end<< " "<<blocks[i].strand<<endl;
+//    for(int i = 0 ; i < 100; i++){
+//        cout<<"Block: "<<blocks[i].start<< " "<<blocks[i].end<< " "<<blocks[i].strand<<endl;
+//    }
+}
+
+void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
+    uint64_t copy = kmer;
+    kmer >>= 25;
+    int quotient;
+    int dnaInfo;
+    vector<int> aa8mer(8);
+    vector<string> dna24mer(8);
+    for (int i = 0; i < 8; i++) {
+        quotient = kmer / powers[7 - i];
+        kmer = kmer - (quotient * powers[7 - i]);
+        aa8mer[7 - i] = quotient;
     }
+
+    ///Print Amino Acid 8 mer
+    for(int i  = 0; i<8; i++){
+        cout<<aa8mer[i]<<" ";
+    }
+    cout<<endl;
+
+
+    for (int i = 0; i < 8; i++) {
+        dnaInfo = copy & 7u;
+        copy >>= 3;
+        switch (aa8mer[i]) {
+            case 0: //A
+                cout << "A";
+                if (dnaInfo == 0) {
+                    dna24mer[7 - i] = "GCA";
+                } else if (dnaInfo == 1) {
+                    dna24mer[7 - i] = "GCC";
+                } else if (dnaInfo == 2) {
+                    dna24mer[7 - i] = "GCT";
+                } else {
+                    dna24mer[7 - i] = "GCG";
+                }
+                break;
+            case 1: //R
+                cout << "R";
+                if (dnaInfo == 0) {
+                    dna24mer[7 - i] = "CGA";
+                } else if (dnaInfo == 1) {
+                    dna24mer[7 - i] = "CGC";
+                } else if (dnaInfo == 2) {
+                    dna24mer[7 - i] = "CGT";
+                } else if (dnaInfo == 3) {
+                    dna24mer[7 - i] = "CGG";
+                } else if (dnaInfo == 4) {
+                    dna24mer[7 - i] = "AGG";
+                } else {
+                    dna24mer[7 - i] = "AGA";
+                }
+                break;
+            case 2: //N
+                cout << "N";
+                if (dnaInfo == 0) {
+                    cout << "FUCK";
+                } else if (dnaInfo == 1) {
+                    dna24mer[7 - i] = "AAC";
+                } else if (dnaInfo == 2) {
+                    dna24mer[7 - i] = "AAT";
+                } else {
+                    cout << "FUCK";
+                }
+                break;
+            case 3: //D
+                cout << "D";
+                if (dnaInfo == 0) {
+                    cout << "FUCK";
+                } else if (dnaInfo == 1) {
+                    dna24mer[7 - i] = "GAC";
+                } else if (dnaInfo == 2) {
+                    dna24mer[7 - i] = "GAT";
+                } else {
+                    cout << "FUCK";
+                }
+                break;
+            case 4: //C
+                cout << "C";
+                if (dnaInfo == 0) {
+                    cout << "FUCK";
+                } else if (dnaInfo == 1) {
+                    dna24mer[7 - i] = "TGC";
+                } else if (dnaInfo == 2) {
+                    dna24mer[7 - i] = "TGT";
+                } else {
+                    cout << "FUCK";
+                }
+                break;
+            case 5: // Q
+                cout << "Q";
+                if (dnaInfo == 0) {
+                    dna24mer[7 - i] = "CAA";
+                } else if (dnaInfo == 1) {
+                    cout << "FUCK";
+                } else if (dnaInfo == 2) {
+                    cout << "FUCK";
+                } else {
+                    dna24mer[7 - i] = "CAG";
+                }
+                break;
+            case 6: //E
+                cout << "E";
+                if (dnaInfo == 0) {
+                    dna24mer[7 - i] = "GAA";
+                } else if (dnaInfo == 1) {
+                    cout << "FUCK";
+                } else if (dnaInfo == 2) {
+                    cout << "FUCK" ;
+                } else {
+                    dna24mer[7 - i] = "GAG";
+                }
+                break;
+            case 7: //G
+                cout << "G";
+                if (dnaInfo == 0) {
+                    dna24mer[7 - i] = "GGA";
+                } else if (dnaInfo == 1) {
+                    dna24mer[7 - i] = "GGC";
+                } else if (dnaInfo == 2) {
+                    dna24mer[7 - i] = "GGT";
+                } else {
+                    dna24mer[7 - i] = "GGG";
+                }
+                break;
+                case 8: //H
+                cout << "H";
+                if (dnaInfo == 0) {
+                    cout << "FUCK";
+                } else if (dnaInfo == 1) {
+                    dna24mer[7 - i] = "CAC";
+                } else if (dnaInfo == 2) {
+                    dna24mer[7 - i] = "CAT";
+                } else {
+                    cout << "FUCK";
+                }
+                break;
+                case 9: //I
+                cout << "I";
+                if (dnaInfo == 0) {
+                    dna24mer[7 - i] = "ATA";
+                } else if (dnaInfo == 1) {
+                    dna24mer[7 - i] = "ATC";
+                } else if (dnaInfo == 2) {
+                    dna24mer[7 - i] = "ATT";
+                } else {
+                    cout << "FUCK";
+                }
+                break;
+                case 10: //L
+                cout << "L";
+                if (dnaInfo == 0) {
+                    dna24mer[7 - i] = "CTA";
+                } else if (dnaInfo == 1) {
+                    dna24mer[7 - i] = "CTC";
+                } else if (dnaInfo == 2) {
+                    dna24mer[7 - i] = "CTT";
+                } else if (dnaInfo == 3) {
+                    dna24mer[7 - i] = "CTG";
+                } else if (dnaInfo == 4) {
+                    dna24mer[7 - i] = "TTG";
+                } else {
+                    dna24mer[7 - i] = "TTA";
+                }
+                break;
+                case 11: //K
+                cout << "K";
+                if (dnaInfo == 0) {
+                    dna24mer[7 - i] = "AAA";
+                } else if (dnaInfo == 1) {
+                    cout << "FUCK";
+                } else if (dnaInfo == 2) {
+                    cout << "FUCK";
+                } else {
+                    dna24mer[7 - i] = "AAG";
+                }
+                break;
+                case 12: // M
+                cout << "M";
+                if (dnaInfo == 0) {
+                    cout << "FUCK";
+                } else if (dnaInfo == 1) {
+                    cout << "FUCK";
+                } else if (dnaInfo == 2) {
+                    cout << "FUCK";
+                } else {
+                    dna24mer[7 - i] = "ATG";
+                }
+                break;
+                case 13://F
+                cout << "F";
+                if (dnaInfo == 0) {
+                    cout << "FUCK" ;
+                } else if (dnaInfo == 1) {
+                    dna24mer[7 - i] = "TTC";
+                } else if (dnaInfo == 2) {
+                    dna24mer[7 - i] = "TTT";
+                } else {
+                    cout << "FUCK";
+                }
+                break;
+                case 14: //P
+                cout << "P";
+                if (dnaInfo == 0) {
+                    dna24mer[7 - i] = "CCA";
+                } else if (dnaInfo == 1) {
+                    dna24mer[7 - i] = "CCC";
+                } else if (dnaInfo == 2) {
+                    dna24mer[7 - i] = "CCT";
+                } else {
+                    dna24mer[7 - i] = "CCG";
+                }
+                break;
+                case 15: //S
+                cout << "S";
+                if (dnaInfo == 0) {
+                    dna24mer[7 - i] = "TCA";
+                } else if (dnaInfo == 1) {
+                    dna24mer[7 - i] = "TCC";
+                } else if (dnaInfo == 2) {
+                    dna24mer[7 - i] = "TCT";
+                } else if (dnaInfo == 3) {
+                    dna24mer[7 - i] = "TCG";
+                } else if (dnaInfo == 4) {
+                    cout << "FUCK";
+                } else if (dnaInfo == 5) {
+                    cout << "FUCK";
+                } else if (dnaInfo == 6) {
+                    dna24mer[7 - i] = "AGT";
+                } else {
+                    dna24mer[7 - i] = "AGC";
+                }
+                break;
+                case 16: //T
+                cout << "T";
+                if (dnaInfo == 0) {
+                    dna24mer[7 - i] = "ACA";
+                } else if (dnaInfo == 1) {
+                    dna24mer[7 - i] = "ACC";
+                } else if (dnaInfo == 2) {
+                    dna24mer[7 - i] = "ACT";
+                } else {
+                    dna24mer[7 - i] = "ACG";
+                }
+                break;
+                case 17: //W
+                cout << "W";
+                if (dnaInfo == 0) {
+                    cout << "FUCK";
+                } else if (dnaInfo == 1) {
+                    cout << "FUCK";
+                } else if (dnaInfo == 2) {
+                    cout << "FUCK";
+                } else {
+                    dna24mer[7 - i] = "TGG";
+                }
+                break;
+                case 18: //Y
+                cout << "Y";
+                if (dnaInfo == 0) {
+                    cout << "FUCK";
+                } else if (dnaInfo == 1) {
+                    dna24mer[7 - i] = "TAC";
+                } else if (dnaInfo == 2) {
+                    dna24mer[7 - i] = "TAT";
+                } else {
+                    cout << "FUCK";
+                }
+                break;
+                case 19: //V
+                cout << "V";
+                if (dnaInfo == 0) {
+                    dna24mer[7 - i] = "GTA";
+                } else if (dnaInfo == 1) {
+                    dna24mer[7 - i] = "GTC";
+                } else if (dnaInfo == 2) {
+                    dna24mer[7 - i] = "GTT";
+                } else {
+                    dna24mer[7 - i] = "GTG";
+                }
+                break;
+                case 20: //stop
+                cout << "Z";
+                if (dnaInfo == 0) {
+                    dna24mer[7 - i] = "TAA";
+                } else if (dnaInfo == 1) {
+                    cout << "FUCK";
+                } else if (dnaInfo == 2) {
+                    cout << "FUCK";
+                } else if (dnaInfo == 3) {
+                    dna24mer[7 - i] = "TAG";
+                } else if (dnaInfo == 4) {
+                    cout << "FUCK";
+                } else {
+                    dna24mer[7 - i] = "TGA";
+                }
+                break;
+        }
+        cout<<dnaInfo<<" ";
+    }
+
+    cout<<endl;
+    for (int i = 0; i < 8; i++) {
+        cout << dna24mer[7-i];
+    }
+    cout << endl;
 }

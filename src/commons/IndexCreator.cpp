@@ -19,19 +19,42 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
     size_t numOfChar = seqFile.fileSize / sizeof(char);
 
+    vector<int> startsOfTaxIDs;
+    startsOfTaxIDs.reserve(taxIdListAtRank.size());
+    startsOfTaxIDs.push_back(0);
+    vector<int> seqCntOfTaxIDs;
+    seqCntOfTaxIDs.reserve(taxIdListAtRank.size());
+    int seqCnt = 0;
+    int currentTaxID = taxIdListAtRank[0];
+    for(size_t i = 0; i < taxIdListAtRank.size(); i++){
+        if(taxIdListAtRank[i] == currentTaxID){
+            seqCnt++;
+        }
+        else{
+            seqCntOfTaxIDs.push_back(seqCnt);
+            startsOfTaxIDs.push_back(i);
+            currentTaxID = taxIdListAtRank[i];
+            seqCnt = 1;
+        }
+    }
+    seqCntOfTaxIDs.push_back(seqCnt);
+
+//    for(int i = 0; i < numOfSeqOfATaxID.size(); i++){
+//        cout<< startsOfTaxIDs[i] << " "<<numOfSeqOfATaxID[i]<<endl;
+//    }
     vector<Sequence> sequences;
     seqIterator->getSeqSegmentsWithHead(sequences, seqFile);
-    size_t numOfSeq = sequences.size();
 
-    bool processedSeqChecker[numOfSeq];
-    fill_n(processedSeqChecker, numOfSeq, false);
+    size_t numOfTaxIDs = startsOfTaxIDs.size();
+    bool processedSeqChecker[numOfTaxIDs];
+    fill_n(processedSeqChecker, numOfTaxIDs, false);
 
     TargetKmerBuffer kmerBuffer(kmerBufSize);
-    size_t processedSeqCnt = 0;
+    size_t processedTaxIDCnt = 0;
     cout<<sizeof(_gene)<<endl;
 
-    while(processedSeqCnt < numOfSeq){ ///check this condition
-        seqIterator->whatNameWouldBeGoodWithFramePrediction(kmerBuffer, seqFile, sequences, processedSeqChecker, processedSeqCnt);
+    while(processedTaxIDCnt < numOfTaxIDs){ ///check this condition
+        seqIterator->fillTargetKmerBuffer(kmerBuffer, seqFile, sequences, processedSeqChecker, processedTaxIDCnt, startsOfTaxIDs, seqCntOfTaxIDs);
         writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdListAtRank);
     }
 

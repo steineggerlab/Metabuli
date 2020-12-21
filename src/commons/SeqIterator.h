@@ -46,22 +46,16 @@ private:
     int nuc2aa[4][4][4];
     uint64_t nuc2num[4][4][4];
 
-    uint64_t addDNAInfo(uint64_t & kmer, const string&, int forOrRev, int startOfKmer, int frame);
-    void addDNAInfo2(uint64_t & kmer, Sequence & seq, MmapedData<char> & seqFile, const int & forOrRev, const int & startOfKmer, const int & frame);
+    uint64_t addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int forOrRev, const int kmerCnt, const int frame);
     void getTranslationBlocks(struct _gene * genes, struct _node * nodes, PredictedBlock * blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
-    //void numAA2alphabet();
-    void addDNAInfo3(uint64_t & kmer, Sequence & seq, MmapedData<char> & seqFile, const int & forOrRev, const int & startOfKmer, const int & frame);
-    void addDNAInfo4(uint64_t & kmer, const char * seq, const PredictedBlock& block, int startOfKmer);
+    void addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, int startOfKmer);
 
 public:
-    ExtractStartPoint fillKmerBuffer(const string & seq, Kmer* kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP);
-    ExtractStartPoint fillKmerBuffer2(Sequence seq, MmapedData<char> & seqFile, Kmer * kmerList, int seqID, size_t & kmerBufferIdx, ExtractStartPoint ESP);
-    void fillKmerBuffer3(const string & seq , KmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID);
-    size_t whatNameWouldBeGood(KmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt);
-    size_t whatNameWouldBeGoodWithFramePrediction(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt);
+    void fillQueryKmerBuffer(const char * seq , KmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID);
+    size_t fillQueryKmerBufferParallel(KmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt);
+    size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedTaxIdCnt, const vector<int> & startsOfTaxIDs, const vector<int> & seqCntOfTaxIDs);
     string reverseCompliment(string & read) const ;
-    void dna2aa(const string& seq);
-    void dna2aa2(const Sequence & seq, const MmapedData<char> & seqFile);
+    void sixFrameTranslateASeq(const char * seq);
     void translateBlock(const char* seq, PredictedBlock & block);
     void getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
     void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
@@ -69,6 +63,7 @@ public:
     size_t getNumOfKmerForBlock(const PredictedBlock & block);
 
     void fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID);
+    void printKmerInDNAsequence(uint64_t kmer);
     SeqIterator();
 };
 #endif //ADKMER4_KMEREXTRACTOR_H
