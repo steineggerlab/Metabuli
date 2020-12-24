@@ -32,9 +32,9 @@ typedef struct TargetKmer{
 };
 
 typedef struct MatchedKmer{
-    MatchedKmer(int quID, int tarID, int taxID, uint32_t pos, uint8_t hamming, bool red): queryID(quID), tragetID(tarID), taxID(taxID), queryPos(pos), hammingDistance(hamming), redundancy(red) {}
+    MatchedKmer(int quID, int tarID, int taxID, uint32_t pos, uint8_t hamming, bool red): queryID(quID), targetID(tarID), taxID(taxID), queryPos(pos), hammingDistance(hamming), redundancy(red) {}
     int queryID;
-    int tragetID;
+    int targetID;
     int taxID;
     uint32_t queryPos;
     uint8_t hammingDistance;

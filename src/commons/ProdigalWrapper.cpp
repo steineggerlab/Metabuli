@@ -28,7 +28,7 @@ ProdigalWrapper::ProdigalWrapper() {
     memset(&tinf, 0, sizeof(struct _training));
 
     nn = 0; slen = 0; ipath = 0; ng = 0; nmask = 0;
-    user_tt = 0; is_meta = 0; num_seq = 0; quiet = 0;
+    user_tt = 0; is_meta = 0; num_seq = 0; quiet = 1;
     max_phase = 0; max_score = -100.0;
     train_file = NULL;
     start_file = NULL; trans_file = NULL; nuc_file = NULL;
@@ -43,8 +43,15 @@ ProdigalWrapper::ProdigalWrapper() {
 
 void ProdigalWrapper::trainASpecies(char * genome){
 
+    memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
+    memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
+    memset(useq, 0, (slen/8+1)*sizeof(unsigned char));
+    memset(nodes, 0, nn*sizeof(struct _node));
+    memset(&tinf, 0, sizeof(struct _training));
+    nn = 0; slen = 0; ipath = 0; nmask = 0;
+
     fprintf(stderr, "Request:  Single Genome, Phase:  Training\n");
-    fprintf(stderr, "Reading in the sequence(s) to train...");
+    fprintf(stderr, "Reading in the sequence(s) to train...\n");
 
     slen = getNextSeq(genome, 1);
     if(slen == 0) {
@@ -153,15 +160,10 @@ void ProdigalWrapper::trainASpecies(char * genome){
     if(quiet == 0) {
         fprintf(stderr, "done!\n");
     }
-
-    memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
-    memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
-    memset(useq, 0, (slen/8+1)*sizeof(unsigned char));
-    memset(nodes, 0, nn*sizeof(struct _node));
-    nn = 0; slen = 0; ipath = 0; nmask = 0;
 }
 
 void ProdigalWrapper::getPredictedFrames(char * genome){
+
     memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
     memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
     memset(useq, 0, (slen/8+1)*sizeof(unsigned char));
@@ -212,9 +214,10 @@ void ProdigalWrapper::getPredictedFrames(char * genome){
 
      tweak_final_starts(genes, ng, nodes, nn, &tinf);
      record_gene_data(genes, ng, nodes, &tinf, num_seq);
-     if(quiet == 0) {
-         fprintf(stderr, "done! gene count: %d\n", ng);
+     if(1) {
+         fprintf(stderr, "done! gene count: %d (%d bp)\n", ng, slen);
      }
+
 
 }
 

@@ -26,7 +26,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     struct MmapedData<char> queryFile = mmapData<char>(queryFileName);
     struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName);
     targetDiffIdxList.data[targetDiffIdxList.fileSize/sizeof(uint16_t)] = 32768; //1000000000000000
-    struct MmapedData<KmerInfo> targetInfoList = mmapData<KmerInfo>(targetInfoFileName);
+    struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName);
 
     vector<Sequence> sequences;
     seqIterator->getSeqSegmentsWithHead(sequences, queryFile);
@@ -63,16 +63,17 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     munmap(targetInfoList.data, targetInfoList.fileSize + 1);
 }
 
-void Classifier::linearSearch(Kmer * queryKmerList, size_t & numOfKmer, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<KmerInfo> & targetInfoList, const vector<int> & taxIdList) {
+///It compares query k-mers to target k-mers. If a query has matches, the matches with the smallest difference are selected.
+void Classifier::linearSearch(Kmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList, const vector<int> & taxIdList) {
     //initialize
     size_t diffIdxPos = 0;
     uint64_t lastFirstMatch = 0;
     long lastFirstDiffIdxPos = 0;
     int lastFirstTargetIdx = 0;
 
-    size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(KmerInfo);
+    size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
     uint8_t lowestHamming;
-    SORT_PARALLEL(queryKmerList, queryKmerList + numOfKmer , [=](Kmer x, Kmer y) { return x.ADkmer < y.ADkmer; });
+    SORT_PARALLEL(queryKmerList, queryKmerList + numOfQuery , [=](Kmer x, Kmer y) { return x.ADkmer < y.ADkmer; });
     uint64_t nextTargetKmer = getNextTargetKmer(0, targetDiffIdxList.data, diffIdxPos);
     size_t tarIter = 0;
 
@@ -80,8 +81,7 @@ void Classifier::linearSearch(Kmer * queryKmerList, size_t & numOfKmer, const Mm
     uint64_t currentTargetKmer = UINT64_MAX;
     uint64_t currentQueryAA;
 
-    for(size_t i = 0; i < numOfKmer; i++)
-    {
+    for(size_t i = 0; i < numOfQuery; i++){
         /// get next query
         if(AminoAcid(currentQuery) == AminoAcid(queryKmerList[i].ADkmer)){
             nextTargetKmer = lastFirstMatch;
@@ -92,12 +92,19 @@ void Classifier::linearSearch(Kmer * queryKmerList, size_t & numOfKmer, const Mm
         isMatched = 0;
         lowestHamming = 100;
         queryCount ++;
+
         currentQueryAA = AminoAcid(currentQuery);
+
         while((tarIter < numOfTargetKmer) && (AminoAcid(nextTargetKmer) <= currentQueryAA)){
             currentTargetKmer = nextTargetKmer;
             currentTargetPos = diffIdxPos;
             nextTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
-            perfectMatchCount += (currentQuery == currentTargetKmer);
+          //  seqIterator->printKmerInDNAsequence(nextTargetKmer);
+            if(currentQuery == currentTargetKmer){
+                perfectMatchCount ++;
+                cout<<taxIdList[targetInfoList.data[tarIter].sequenceID]<<endl;
+            }
+
             if(AminoAcid(currentTargetKmer) == AminoAcid(currentQuery)){
                 if (isMatched == 0) {
                     lastFirstMatch = currentTargetKmer;
@@ -140,7 +147,7 @@ void Classifier::linearSearch(Kmer * queryKmerList, size_t & numOfKmer, const Mm
         }
         closestKmers.clear();
     }
-    numOfKmer = 0;
+    numOfQuery = 0;
     cout<<matchedKmerList.size()<<endl;
 }
 

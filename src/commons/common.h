@@ -4,7 +4,7 @@
 
 #ifndef ADCLASSIFIER2_COMMON_H
 #define ADCLASSIFIER2_COMMON_H
-#define kmerBufSize 1000000000
+#define kmerBufSize 100000000
 #define AApart(x) x & ()
 //asdfasd
 

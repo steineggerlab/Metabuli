@@ -80,7 +80,7 @@ private:
             {3, 2, 3, 3, 4, 4, 1, 0}};
     uint8_t getHammingDistance(uint64_t kmer1, uint64_t kmer2);
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);
-    void linearSearch(Kmer * queryKmerList, size_t & numOfKmer, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<KmerInfo> & targetInfoList, const vector<int> & taxIdList);
+    void linearSearch(Kmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList, const vector<int> & taxIdList);
     void writeResultFile(vector<MatchedKmer> & matchList, const char * queryFileName);
     static TaxID selectALeaf(unordered_map<TaxID, int> & listOfLCAs, NcbiTaxonomy & ncbiTaxonomy, const size_t & length, float coverageThr = 0.8);
     TaxID selectLcaFromTaxIdList(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,

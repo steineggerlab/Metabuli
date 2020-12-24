@@ -35,7 +35,7 @@ private:
     size_t numOfFlush=0;
     SeqIterator * seqIterator;
 
-    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & bufferIdx, const char * outputFileName, vector<int> & taxIdList);
+    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName, const vector<int> & taxIdList);
     void writeKmer(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
 
 
@@ -44,11 +44,10 @@ public:
     IndexCreator();
     ~IndexCreator();
     int getNumOfFlush();
-    void startIndexCreating(const char * seqFileName, const char * outputFileName, vector<int> & taxIdList);
     void startIndexCreatingParallel(const char * seqFileName, const char * outputFileName, vector<int> & taxIdList);
     void writeKmerDiff(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx );
-    void writeInfo(KmerInfo * entryToWrite, FILE * infoFile, KmerInfo * infoBuffer, size_t & infoBufferIdx);
+    void writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t & infoBufferIdx);
     void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
-    void flushInfoBuf(KmerInfo * buffer, FILE * infoFile, size_t & localBufIdx );
+    void flushInfoBuf(TargetKmerInfo * buffer, FILE * infoFile, size_t & localBufIdx );
 };
 #endif //ADKMER4_INDEXCREATOR_H
