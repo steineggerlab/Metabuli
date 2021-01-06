@@ -70,13 +70,18 @@ struct _node {
   int ov_mark;         /* Marker to help untangle overlapping genes */
   double score;        /* Score of total solution to this point */
   int elim;            /* If set to 1, eliminate this gene from the model */
+  size_t numbering;
 };
 
 int add_nodes(unsigned char *, unsigned char *, int, struct _node *, int,
               mask *, int, struct _training *);
 void reset_node_scores(struct _node *, int);
 int compare_nodes(const void *, const void *);
+///
+int compare_nodes2(const void *, const void *);
+///
 int stopcmp_nodes(const void *, const void *);
+
 
 void record_overlapping_starts(struct _node *, int, struct _training *, int);
 void record_gc_bias(int *, struct _node *, int, struct _training *);

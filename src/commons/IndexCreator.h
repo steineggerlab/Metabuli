@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <time.h>
 #include <fstream>
-#include <omp.h>
 #include "printBinary.h"
 #include "Mmap.h"
 #include "Kmer.h"
@@ -18,8 +17,12 @@
 #include "BitManipulateMacros.h"
 #include "common.h"
 #include "NcbiTaxonomy.h"
-
 #include "FastSort.h"
+#include "Classifier.h"
+
+#ifdef OPENMP
+#include <omp.h>
+#endif
 
 
 #define kmerLength 8
@@ -31,23 +34,23 @@ using namespace std;
 class IndexCreator{
 private:
     size_t availableMemory;
-  //  char * outPath;
     size_t numOfFlush=0;
     SeqIterator * seqIterator;
 
     void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName, const vector<int> & taxIdList);
-    void writeKmer(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
-
+    void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
+    static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
+    size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedTaxIdCnt, const vector<int> & startsOfTaxIDs, const vector<int> & seqCntOfTaxIDs);
 
 public:
-
     IndexCreator();
     ~IndexCreator();
     int getNumOfFlush();
     void startIndexCreatingParallel(const char * seqFileName, const char * outputFileName, vector<int> & taxIdList);
-    void writeKmerDiff(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx );
+    void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx );
     void writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t & infoBufferIdx);
     void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
     void flushInfoBuf(TargetKmerInfo * buffer, FILE * infoFile, size_t & localBufIdx );
+
 };
 #endif //ADKMER4_INDEXCREATOR_H

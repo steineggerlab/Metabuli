@@ -28,7 +28,7 @@
 
 #define MAX_SAM_OVLP 60
 #define MAX_OPP_OVLP 200
-#define MAX_NODE_DIST 500
+#define MAX_NODE_DIST 300
 
 int dprog(struct _node *, int, struct _training *, int);
 void score_connection(struct _node *, int, int, struct _training *, int);

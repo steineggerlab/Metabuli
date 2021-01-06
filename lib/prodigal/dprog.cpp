@@ -42,15 +42,20 @@ int dprog(struct _node *nod, int nn, struct _training *tinf, int flag) {
 
     /* Set up distance constraints for making connections, */
     /* but make exceptions for giant ORFS.                 */
-    if(i < MAX_NODE_DIST) min = 0; else min = i-MAX_NODE_DIST;
-    if(nod[i].strand == -1 && nod[i].type != STOP && nod[min].ndx >=
-       nod[i].stop_val)
-      while(min >= 0 && nod[i].ndx != nod[i].stop_val) min--;
-    if(nod[i].strand == 1 && nod[i].type == STOP && nod[min].ndx >=
-       nod[i].stop_val)
-      while(min >= 0 && nod[i].ndx != nod[i].stop_val) min--;
-    if(min < MAX_NODE_DIST) min = 0;
-    else min = min-MAX_NODE_DIST;
+    if(i < MAX_NODE_DIST) {
+        min = 0;
+    } else {
+        min = i-MAX_NODE_DIST;
+    } //너무 먼 node랑은 연결 짓지 않겠다
+
+    if(nod[i].strand == -1 && nod[i].type != STOP && nod[min].ndx >= nod[i].stop_val) {
+        while (min > 0 && nod[min].ndx != nod[i].stop_val) min--;
+    }
+
+    if(nod[i].strand == 1 && nod[i].type == STOP && nod[min].ndx >= nod[i].stop_val) {
+        while (min > 0 && nod[min].ndx != nod[i].stop_val) min--;
+    }
+
     for(j = min; j < i; j++) {
       score_connection(nod, j, i, tinf, flag);
     }
@@ -60,6 +65,8 @@ int dprog(struct _node *nod, int nn, struct _training *tinf, int flag) {
     if(nod[i].strand == -1 && nod[i].type == STOP) continue;
     if(nod[i].score > max_sc) { max_sc = nod[i].score; max_ndx = i; }
   }
+
+  //qsort(nod, nn, sizeof(struct _node), &compare_nodes);
 
   /* First Pass: untangle the triple overlaps */
   path = max_ndx;
@@ -84,7 +91,7 @@ int dprog(struct _node *nod, int nn, struct _training *tinf, int flag) {
     nxt = nod[path].traceb;
     if(nod[path].strand == -1 && nod[path].type != STOP && nod[nxt].strand == 1
        && nod[nxt].type == STOP) {
-      for(i = path; nod[i].ndx != nod[path].stop_val; i--);
+      for(i = path; nod[i].ndx != nod[path].stop_val; i--);  ///ndx로 정렬이 되어있어야만 정상 작동
       nod[path].traceb = i; nod[i].traceb = nxt;
     }
     if(nod[path].strand == 1 && nod[path].type == STOP && nod[nxt].strand == 1
@@ -123,7 +130,11 @@ int dprog(struct _node *nod, int nn, struct _training *tinf, int flag) {
 void score_connection(struct _node *nod, int p1, int p2, struct _training *tinf,
                       int flag) {
   struct _node *n1 = &(nod[p1]), *n2 = &(nod[p2]), *n3;
-  int i, left = n1->ndx, right = n2->ndx, bnd, ovlp = 0, maxfr = -1;
+  int left = n1->ndx;
+  int right = n2->ndx;
+  int bnd;
+  int ovlp = 0;
+  int maxfr = -1;
   double score = 0.0, scr_mod = 0.0, maxval;
 
   /***********************/
@@ -134,7 +145,9 @@ void score_connection(struct _node *nod, int p1, int p2, struct _training *tinf,
   if(n1->type != STOP && n2->type != STOP && n1->strand == n2->strand) return;
 
   /* 5'fwd->5'rev, 5'fwd->3'rev */
-  else if(n1->strand == 1 && n1->type != STOP && n2->strand == -1) return;
+  else if(n1->strand == 1 && n1->type != STOP && n2->strand == -1) {
+      return;
+  }
 
   /* 3'rev->5'fwd, 3'rev->3'fwd) */
   else if(n1->strand == -1 && n1->type == STOP && n2->strand == 1) return;
@@ -194,7 +207,7 @@ void score_connection(struct _node *nod, int p1, int p2, struct _training *tinf,
     if(left >= right) return;
     /* Overlapping Gene Case 2: Three consecutive overlapping genes f r r */
     maxfr = -1; maxval = 0.0;
-    for(i = 0; i < 3; i++) {
+    for(int i = 0; i < 3; i++) {
       if(n2->star_ptr[i] == -1) continue;
       n3 = &(nod[n2->star_ptr[i]]);
       ovlp = left - n3->stop_val + 3;
@@ -291,6 +304,7 @@ void score_connection(struct _node *nod, int p1, int p2, struct _training *tinf,
   if(n1->score + score >= n2->score) {
     n2->score = n1->score + score;
     n2->traceb = p1;
+    //n2->traceb = n1->numbering;
     n2->ov_mark = maxfr;
   }
 

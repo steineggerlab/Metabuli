@@ -29,7 +29,7 @@ private:
     LocalParameters() :
         Parameters()
     {
-
+        createTargetDB.push_back(&PARAM_THREADS);
     }
 
     LocalParameters(LocalParameters const&);

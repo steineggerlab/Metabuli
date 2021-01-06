@@ -42,7 +42,9 @@ int add_nodes(unsigned char *seq, unsigned char *rseq, int slen, struct _node
   for(i = slen-3; i >= 0; i--) {
     if(is_stop(seq, i, tinf)==1) {
       if(saw_start[i%3] == 1) {
-        if(is_stop(seq, last[i%3], tinf) == 0) nodes[nn].edge = 1;
+        if(is_stop(seq, last[i%3], tinf) == 0) {
+            nodes[nn].edge = 1;
+        }
         nodes[nn].ndx = last[i%3]; 
         nodes[nn].type = STOP;
         nodes[nn].strand = 1; 
@@ -1584,6 +1586,19 @@ int compare_nodes(const void *v1, const void *v2) {
   if(n1->strand > n2->strand) return -1;
   if(n1->strand < n2->strand) return 1;
   return 0;
+}
+
+int compare_nodes2(const void *v1, const void *v2) {
+    struct _node *n1, *n2;
+    n1 = (struct _node *)v1;
+    n2 = (struct _node *)v2;
+    if(n1->strand < n2->strand) return -1;
+    if(n1->strand > n2->strand) return 1;
+    if(n1->ndx % 3 > n2->ndx % 3) return -1;
+    if(n1->ndx % 3 < n2->ndx % 3) return 1;
+    if(n1->ndx < n2->ndx) return -1;
+    if(n1->ndx > n2->ndx) return 1;
+    return 0;
 }
 
 /* Sorts all nodes by common stop */

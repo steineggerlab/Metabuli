@@ -127,6 +127,7 @@ void ProdigalWrapper::trainASpecies(char * genome){
         fprintf(stderr, "Building initial set of genes to train from...");
     }
     record_overlapping_starts(nodes, nn, &tinf, 0);
+
     ipath = dprog(nodes, nn, &tinf, 0);
     if(quiet == 0) {
         fprintf(stderr, "done!\n");
@@ -199,14 +200,23 @@ void ProdigalWrapper::getPredictedFrames(char * genome){
       comprehensive list of nodes for dynamic programming.
       ***********************************************************************/
      nn = add_nodes(seq, rseq, slen, nodes, closed, mlist, nmask, &tinf);
-     qsort(nodes, nn, sizeof(struct _node), &compare_nodes);
-
+     //qsort(nodes, nn, sizeof(struct _node), &compare_nodes);
+//     for(size_t i = 0; i < nn; i++){
+//         nodes[i].numbering = i;
+//     }
+//     for(size_t i = 0; i < nn; i++){
+//         cout<<nodes[i].ndx<<" "<<nodes[i].strand<<endl;
+//     }
+    qsort(nodes, nn, sizeof(struct _node), &compare_nodes);
      /***********************************************************************
      Second dynamic programming, using the dicodon statistics as the
      scoring function.
      ***********************************************************************/
      score_nodes(seq, rseq, slen, nodes, nn, &tinf, closed, is_meta);
      record_overlapping_starts(nodes, nn, &tinf, 1);
+
+     //qsort(nodes, nn, sizeof(struct _node), &compare_nodes2);
+
      ipath = dprog(nodes, nn, &tinf, 1);
      eliminate_bad_genes(nodes, ipath, &tinf);
      ng = add_genes(genes, nodes, ipath);

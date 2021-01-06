@@ -12,10 +12,13 @@
 #include "Mmap.h"
 #include "KmerBuffer.h"
 #include <algorithm>
-#include "omp.h"
 #include "kseq.h"
 #include "KSeqBufferReader.h"
 #include "ProdigalWrapper.h"
+
+#ifdef OPENMP
+#include <omp.h>
+#endif
 
 KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
 
@@ -46,16 +49,13 @@ private:
     int nuc2aa[4][4][4];
     uint64_t nuc2num[4][4][4];
 
-    uint64_t addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int forOrRev, const int kmerCnt, const int frame);
-    void getTranslationBlocks(struct _gene * genes, struct _node * nodes, PredictedBlock * blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
+    void addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int forOrRev, const int kmerCnt, const int frame);
+
     void addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, const int startOfKmer);
 
 public:
     void fillQueryKmerBuffer(const char * seq , KmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID);
-    size_t fillQueryKmerBufferParallel(KmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt);
-    size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedTaxIdCnt, const vector<int> & startsOfTaxIDs, const vector<int> & seqCntOfTaxIDs);
-    size_t fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedTaxIdCnt, const vector<int> & startsOfTaxIDs, const vector<int> & seqCntOfTaxIDs);
-
+    void getTranslationBlocks(struct _gene * genes, struct _node * nodes, PredictedBlock * blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
     string reverseCompliment(string & read) const ;
     void sixFrameTranslateASeq(const char * seq);
     void translateBlock(const char* seq, PredictedBlock & block);
@@ -63,8 +63,8 @@ public:
     void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
     size_t KmerNumOfSixFrameTranslation(const string & seq);
     size_t getNumOfKmerForBlock(const PredictedBlock & block);
-
     void fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID);
+
     void printKmerInDNAsequence(uint64_t kmer);
     SeqIterator();
 };
