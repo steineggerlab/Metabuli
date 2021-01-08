@@ -15,8 +15,10 @@ IndexCreator::~IndexCreator() {
 }
 
 ///It reads a reference sequence file and write a differential index file and target k-mer info file.
-void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const char * outputFileName, vector<int> & taxIdListAtRank)
+void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const char * outputFileName, const vector<int> & taxIdListAtRank, const vector<int> & taxIdList)
 {
+
+
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
 
     vector<int> startsOfTaxIDs; ///start points where sequences of next species start
@@ -51,7 +53,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 
     while(processedTaxIDCnt < numOfTaxIDs){ ///check this condition
         fillTargetKmerBuffer(kmerBuffer, seqFile, sequences, processedSeqChecker, processedTaxIDCnt, startsOfTaxIDs, seqCntOfTaxIDs);
-        writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdListAtRank);
+        writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdListAtRank, taxIdList);
     }
 
     free(kmerBuffer.buffer);
@@ -138,7 +140,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
 }
 
 ///This function sort the TargetKmerBuffer, do redundancy reducing task, write the differential index of them
-void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName, const vector<int> & taxIdListAtRank)
+void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName, const vector<int> & taxIdListAtRank, const vector<int> & taxIdList)
 {
     ///open a split file, which will be merged later.
     char suffixedDiffIdxFileName[100];
@@ -164,19 +166,36 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
     TargetKmer lookingKmer = kmerBuffer[0];
     size_t write = 0;
     int endFlag = 0;
+    int hasSeenOtherStrains;
+    int redundant;
+    size_t asd= 0;
+
     for(size_t i = 1 ; i < kmerNum ; i++) {
+        hasSeenOtherStrains = 0;
+        redundant = 0;
         while(taxIdListAtRank[lookingKmer.info.sequenceID] == taxIdListAtRank[kmerBuffer[i].info.sequenceID]){
             if (lookingKmer.ADkmer != kmerBuffer[i].ADkmer) {
                 break;
-            } else{
-                lookingKmer.info.redundancy = true;
             }
+            if (taxIdList[lookingKmer.info.sequenceID] != taxIdList[kmerBuffer[i].info.sequenceID]){
+                hasSeenOtherStrains = 1;
+            }
+            redundant = 1;
             i++;
             if(i == kmerNum){
                 endFlag = 1;
                 break;
             }
         }
+
+        if(hasSeenOtherStrains == 1){
+            lookingKmer.info.redundancy = true;
+        }
+
+        if((redundant == 1) && (hasSeenOtherStrains == 1)){
+            asd ++;
+        }
+
 
         fwrite(&lookingKmer.info, sizeof(TargetKmerInfo), 1, infoFile);
         write++;
@@ -194,7 +213,7 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
         write++;
         getDiffIdx(lastKmer, lookingKmer.ADkmer, diffIdxFile, kmerLocalBuf, localBufIdx);
     }
-
+    cout<<asd<<endl;
     cout<<"total k-mer count  : "<< kmerNum << endl;
     cout<<"written k-mer count: "<<write<<endl;
 

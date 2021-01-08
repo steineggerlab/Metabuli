@@ -37,7 +37,7 @@ private:
     size_t numOfFlush=0;
     SeqIterator * seqIterator;
 
-    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName, const vector<int> & taxIdList);
+    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName, const vector<int> & taxIdListAtRank, const vector<int> & taxIdList);
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
     size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedTaxIdCnt, const vector<int> & startsOfTaxIDs, const vector<int> & seqCntOfTaxIDs);
@@ -46,7 +46,7 @@ public:
     IndexCreator();
     ~IndexCreator();
     int getNumOfFlush();
-    void startIndexCreatingParallel(const char * seqFileName, const char * outputFileName, vector<int> & taxIdList);
+    void startIndexCreatingParallel(const char * seqFileName, const char * outputFileName, const vector<int> & taxIdListAtRank, const vector<int> & taxIdList);
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx );
     void writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t & infoBufferIdx);
     void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);

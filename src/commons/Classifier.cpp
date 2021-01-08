@@ -117,6 +117,7 @@ void Classifier::linearSearch(Kmer * queryKmerList, size_t & numOfQuery, const M
     uint64_t currentQuery = UINT64_MAX;
     uint64_t currentTargetKmer = UINT64_MAX;
     uint64_t currentQueryAA;
+    vector<int> hammings;
 
     for(size_t i = 0; i < numOfQuery; i++){
         /// get next query
@@ -154,15 +155,21 @@ void Classifier::linearSearch(Kmer * queryKmerList, size_t & numOfQuery, const M
                 totalMatchCount++;
 
                 currentHamming = getHammingDistance(currentQuery, currentTargetKmer);
-                if(currentHamming > lowestHamming){
-                    tarIter ++;
-                    continue;
-                }
-                else if(currentHamming < lowestHamming){
-                    closestKmers.clear();
+                hammings.push_back(currentHamming);
+                closestKmers.push_back(tarIter);
+
+                if(currentHamming < lowestHamming){
                     lowestHamming = currentHamming;
                 }
-                if(currentHamming == lowestHamming) closestKmers.push_back(tarIter);
+
+//                if(currentHamming > lowestHamming + 1){
+//                    tarIter ++;
+//                    continue;
+//                } else if(currentHamming < lowestHamming){
+//                    closestKmers.clear();
+//                    lowestHamming = currentHamming;
+//                }
+//                 if(currentHamming == lowestHamming) closestKmers.push_back(tarIter);
 
 //                if(currentHamming > lowestHamming){
 //                    tarIter ++;
@@ -180,11 +187,16 @@ void Classifier::linearSearch(Kmer * queryKmerList, size_t & numOfQuery, const M
         }
 
         for(size_t k = 0; k < closestKmers.size(); k++){
-            matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID, targetInfoList.data[closestKmers[k]].sequenceID, taxIdList[targetInfoList.data[closestKmers[k]].sequenceID],
-                                         queryKmerList[i].info.pos, lowestHamming, targetInfoList.data[closestKmers[k]].redundancy);
+            if(hammings[k] < lowestHamming + 2){
+                matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID, targetInfoList.data[closestKmers[k]].sequenceID, taxIdList[targetInfoList.data[closestKmers[k]].sequenceID],
+                                             queryKmerList[i].info.pos, hammings[k], targetInfoList.data[closestKmers[k]].redundancy);
+            }
+//            matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID, targetInfoList.data[closestKmers[k]].sequenceID, taxIdList[targetInfoList.data[closestKmers[k]].sequenceID],
+//                                         queryKmerList[i].info.pos, lowestHamming, targetInfoList.data[closestKmers[k]].redundancy);
             closestCount++;
         }
         closestKmers.clear();
+        hammings.clear();
     }
     numOfQuery = 0;
 }
@@ -290,10 +302,12 @@ void Classifier::analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & s
             matchedKmers.clear();
         }
 //        cout<<"selected leaf:"<<selectALeaf(matchedLCAs, ncbiTaxonomy, seqSegments[currentQuery+1].length )<<endl;
+        cout<<currentQuery<<endl;
         assignedReads.insert(pair<int, TaxID>(currentQuery,
                                               lca2taxon(matchedLCAs, ncbiTaxonomy, seqSegments[currentQuery].length)));
         matchedLCAs.clear();
     }
+
 
     for(auto it: assignedReads){
         cout<<it.first<<" "<<it.second<<endl;

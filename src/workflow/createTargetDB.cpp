@@ -14,12 +14,6 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     vector<char*> mergedFileNames;
     IndexCreator idxCre;
     string name, node, merged;
-//    cout<<"Input the directory for name.dmp"<<endl;
-//    cin>>name;
-//    cout<<"Input the directory for node.dmp"<<endl;
-//    cin>>node;
-//    cout<<"Input the directory for merged.dmp"<<endl;
-//    cin>>merged;
     NcbiTaxonomy ncbiTaxonomy("/Users/jaebeomkim/Desktop/pjt/taxdmp/names.dmp",
             "/Users/jaebeomkim/Desktop/pjt/taxdmp/nodes.dmp",
                  "/Users/jaebeomkim/Desktop/pjt/taxdmp/merged.dmp");
@@ -36,26 +30,24 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     }
     seqFile.close();
 
+
+    ///Make mapping from sequence ID to TaxID. Index of vector is sequence ID.
     FILE * taxIdFile;
     if((taxIdFile = fopen(taxIdFileName,"r")) == NULL){
         cout<<"Cannot open the taxID list file."<<endl;
         return 0;
     }
     vector<int> taxIdList; char taxID[100];
-    while(feof(taxIdFile) == 0)
-    {
+    while(feof(taxIdFile) == 0) {
         fscanf(taxIdFile,"%s",taxID);
         taxIdList.push_back(atol(taxID));
     }
     fclose(taxIdFile);
-
     vector<int> taxIdListAtRank;
     ncbiTaxonomy.makeTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
-//    for(int i = 0; i < taxIdListAtRank.size(); i++){
-//        cout<<taxIdListAtRank[i]<<endl;
-//    }
 
-    idxCre.startIndexCreatingParallel(seqFileName,outputFileName,taxIdListAtRank);
+    ///Make files of differential indexing and infromation of k-mers
+    idxCre.startIndexCreatingParallel(seqFileName,outputFileName,taxIdListAtRank, taxIdList);
 
     int numOfSplits = idxCre.getNumOfFlush();
     char suffixedDiffIdxFileName[numOfSplits][100];
@@ -70,9 +62,10 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         cout<<suffixedInfoFileName<<endl;
         return 0;
     }
+
+    ///Merge files
     vector<char *> diffSplits;
     vector<char *> infoSplits;
-
     for(int split = 0; split < numOfSplits ; split++)
     {
         sprintf(suffixedDiffIdxFileName[split], "%s_diffIdx_%d", outputFileName, split);
