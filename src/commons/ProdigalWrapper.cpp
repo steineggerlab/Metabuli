@@ -4,6 +4,10 @@
 #include "ProdigalWrapper.h"
 #include <iostream>
 ProdigalWrapper::~ProdigalWrapper() {
+    for(size_t i = 0; i < NUM_META; i++){
+        delete meta[i].tinf;
+    }
+    free(meta);
     free(seq);
     free(rseq);
     free(useq);
@@ -39,6 +43,12 @@ ProdigalWrapper::ProdigalWrapper() {
 
     tinf.st_wt = 4.35;
     tinf.trans_table = 11;
+
+    meta = (struct _metagenomic_bin *)malloc(NUM_META * sizeof(struct _metagenomic_bin));
+    for(size_t i = 0; i < NUM_META; i++){
+        meta[i].tinf = new _training();
+    }
+
 }
 
 void ProdigalWrapper::trainASpecies(char * genome){
@@ -59,13 +69,13 @@ void ProdigalWrapper::trainASpecies(char * genome){
         fprintf(stderr, "Genbank, or EMBL format).\n\n");
         exit(9);
     }
-    if(slen < MIN_SINGLE_GENOME) {
-        fprintf(stderr, "\n\nError:  Sequence must be %d", MIN_SINGLE_GENOME);
-        fprintf(stderr, " characters (only %d read).\n(Consider", slen);
-        fprintf(stderr, " running with the -p meta option or finding");
-        fprintf(stderr, " more contigs from the same genome.)\n\n");
-        exit(10);
-    }
+//    if(slen < MIN_SINGLE_GENOME) {
+//        fprintf(stderr, "\n\nError:  Sequence must be %d", MIN_SINGLE_GENOME);
+//        fprintf(stderr, " characters (only %d read).\n(Consider", slen);
+//        fprintf(stderr, " running with the -p meta option or finding");
+//        fprintf(stderr, " more contigs from the same genome.)\n\n");
+//        exit(10);
+//    }
     if(slen < IDEAL_SINGLE_GENOME) {
         fprintf(stderr, "\n\nWarning:  ideally Prodigal should be given at");
         fprintf(stderr, " least %d bases for ", IDEAL_SINGLE_GENOME);
@@ -163,13 +173,78 @@ void ProdigalWrapper::trainASpecies(char * genome){
     }
 }
 
-void ProdigalWrapper::getPredictedFrames(char * genome){
+void ProdigalWrapper::trainMeta(char *genome) {
 
     memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
     memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
     memset(useq, 0, (slen/8+1)*sizeof(unsigned char));
     memset(nodes, 0, nn*sizeof(struct _node));
     nn = 0; slen = 0; ipath = 0; nmask = 0;
+
+    if(1) {
+        fprintf(stderr, "Request:  Metagenomic, Phase:  Training\n");
+        fprintf(stderr, "Initializing training files...");
+    }
+
+    initialize_metagenomic_bins(meta);
+
+    if(1) {
+        fprintf(stderr, "done!\n");
+        fprintf(stderr, "-------------------------------------\n");
+    }
+
+    slen = getNextSeq(genome, 1);
+    rcom_seq(seq, rseq, useq, slen);
+    if(slen == 0) {
+        fprintf(stderr, "\nSequence read failed (file must be Fasta, ");
+        fprintf(stderr, "Genbank, or EMBL format).\n\n");
+        exit(14);
+    }
+    if(slen > max_slen && slen > STT_NOD*8) {
+        nodes = (struct _node *)realloc(nodes, (int)(slen/8)*sizeof(struct _node));
+        if(nodes == NULL) {
+            fprintf(stderr, "Realloc failed on nodes\n\n");
+            exit(11);
+        }
+        max_slen = slen;
+    }
+
+    low = 0.88495*gc - 0.0102337;
+    if(low > 0.65) low = 0.65;
+    high = 0.86596*gc + .1131991;
+    if(high < 0.35) high = 0.35;
+
+    max_score = -100.0;
+    for(int i = 0; i < NUM_META; i++) {
+        if (i == 0 || meta[i].tinf->trans_table !=
+                      meta[i - 1].tinf->trans_table) {
+            memset(nodes, 0, nn * sizeof(struct _node));
+            nn = add_nodes(seq, rseq, slen, nodes, closed, mlist, nmask,
+                           meta[i].tinf);
+            qsort(nodes, nn, sizeof(struct _node), &compare_nodes);
+        }
+        if (meta[i].tinf->gc < low || meta[i].tinf->gc > high) continue;
+        reset_node_scores(nodes, nn);
+        score_nodes(seq, rseq, slen, nodes, nn, meta[i].tinf, closed, is_meta);
+        record_overlapping_starts(nodes, nn, meta[i].tinf, 1);
+        ipath = dprog(nodes, nn, meta[i].tinf, 1);
+        if (nodes[ipath].score > max_score) {
+            max_phase = i;
+            max_score = nodes[ipath].score;
+//            eliminate_bad_genes(nodes, ipath, meta[i].tinf);
+//            ng = add_genes(genes, nodes, ipath);
+//            tweak_final_starts(genes, ng, nodes, nn, meta[i].tinf);
+//            record_gene_data(genes, ng, nodes, meta[i].tinf, num_seq);
+        }
+    }
+}
+void ProdigalWrapper::getPredictedFrames(char * genome){
+
+    memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
+    memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
+    memset(useq, 0, (slen/8+1)*sizeof(unsigned char));
+    memset(nodes, 0, nn*sizeof(struct _node));
+    nn = 0; slen = 0; nmask = 0;
 
     /* Initialize structure */
     slen = getNextSeq(genome, 0);
@@ -180,8 +255,8 @@ void ProdigalWrapper::getPredictedFrames(char * genome){
         exit(14);
     }
 
-    if(quiet == 0) {
-        fprintf(stderr, "Finding genes in sequence #%d (%d bp)...", num_seq, slen);
+    if(1) {
+        fprintf(stderr, "Finding genes in sequence #%d (%d bp)...\n", num_seq, slen);
     }
 
     /* Reallocate memory if this is the biggest sequence we've seen */
@@ -194,41 +269,52 @@ void ProdigalWrapper::getPredictedFrames(char * genome){
         max_slen = slen;
     }
 
-    /* Single Genome Version */
-     /***********************************************************************
-      Find all the potential starts and stops, sort them, and create
-      comprehensive list of nodes for dynamic programming.
-      ***********************************************************************/
-     nn = add_nodes(seq, rseq, slen, nodes, closed, mlist, nmask, &tinf);
-     //qsort(nodes, nn, sizeof(struct _node), &compare_nodes);
-//     for(size_t i = 0; i < nn; i++){
-//         nodes[i].numbering = i;
-//     }
-//     for(size_t i = 0; i < nn; i++){
-//         cout<<nodes[i].ndx<<" "<<nodes[i].strand<<endl;
-//     }
-    qsort(nodes, nn, sizeof(struct _node), &compare_nodes);
-     /***********************************************************************
-     Second dynamic programming, using the dicodon statistics as the
-     scoring function.
-     ***********************************************************************/
-     score_nodes(seq, rseq, slen, nodes, nn, &tinf, closed, is_meta);
-     record_overlapping_starts(nodes, nn, &tinf, 1);
+    if(is_meta == 0) {
+        ipath = 0;
+        /***********************************************************************
+         Find all the potential starts and stops, sort them, and create
+         comprehensive list of nodes for dynamic programming.
+         ***********************************************************************/
+        nn = add_nodes(seq, rseq, slen, nodes, closed, mlist, nmask, &tinf);
+        qsort(nodes, nn, sizeof(struct _node), &compare_nodes);
 
-     //qsort(nodes, nn, sizeof(struct _node), &compare_nodes2);
+        /***********************************************************************
+        Second dynamic programming, using the dicodon statistics as the
+        scoring function.
+        ***********************************************************************/
+        score_nodes(seq, rseq, slen, nodes, nn, &tinf, closed, is_meta);
+        record_overlapping_starts(nodes, nn, &tinf, 1);
 
-     ipath = dprog(nodes, nn, &tinf, 1);
-     eliminate_bad_genes(nodes, ipath, &tinf);
-     ng = add_genes(genes, nodes, ipath);
+        ipath = dprog(nodes, nn, &tinf, 1);
+        eliminate_bad_genes(nodes, ipath, &tinf);
+        ng = add_genes(genes, nodes, ipath);
 
 
-     tweak_final_starts(genes, ng, nodes, nn, &tinf);
-     record_gene_data(genes, ng, nodes, &tinf, num_seq);
+        tweak_final_starts(genes, ng, nodes, nn, &tinf);
+        record_gene_data(genes, ng, nodes, &tinf, num_seq);
+    }
+    else{
+
+    ///metagenomic version
+        //trainMeta(genome);
+        fprintf(stderr, "Request:  Metagenomic, Phase:  Gene Finding\n");
+
+        nn = add_nodes(seq, rseq, slen, nodes, closed, mlist, nmask,
+                       meta[max_phase].tinf);
+        qsort(nodes, nn, sizeof(struct _node), &compare_nodes);
+        score_nodes(seq, rseq, slen, nodes, nn, meta[max_phase].tinf, closed,
+                    is_meta);
+        record_overlapping_starts(nodes, nn, meta[max_phase].tinf, 1);
+        ipath = dprog(nodes, nn, meta[max_phase].tinf, 1);
+        eliminate_bad_genes(nodes, ipath, meta[max_phase].tinf);
+        ng = add_genes(genes, nodes, ipath);
+        fprintf(stderr, "done! gene count: %d (%d bp)\n", ng, slen);
+        tweak_final_starts(genes, ng, nodes, nn, meta[max_phase].tinf);
+        record_gene_data(genes, ng, nodes, meta[max_phase].tinf, num_seq);
+    }
      if(1) {
          fprintf(stderr, "done! gene count: %d (%d bp)\n", ng, slen);
      }
-
-
 }
 
 int ProdigalWrapper::getNextSeq(char * line, int training) {

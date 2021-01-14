@@ -62,10 +62,14 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 
 size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedTaxIdCnt, const vector<int> & startsOfTaxIDs, const vector<int> & seqCntOfTaxIDs) {
 #ifdef OPENMP
-  //  omp_set_num_threads(1);
+    omp_set_num_threads(1);
 #endif
+    for(int i = 0; i < startsOfTaxIDs.size();i++){
+        cout<<startsOfTaxIDs[i]<<endl;
+        cout<<seqCntOfTaxIDs[i]<<endl<<endl;
+    }
     bool hasOverflow = false;
-#pragma omp parallel default(none), shared(checker, hasOverflow, seqCntOfTaxIDs, seqFile, seqs, kmerBuffer, processedTaxIdCnt, startsOfTaxIDs)
+#pragma omp parallel default(none), shared(checker, hasOverflow, seqCntOfTaxIDs, seqFile, seqs, kmerBuffer, processedTaxIdCnt, startsOfTaxIDs, cout)
     {
         ProdigalWrapper prodigal;
         SeqIterator seqIterator;
@@ -86,7 +90,15 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[startsOfTaxIDs[i]].start]), seqs[startsOfTaxIDs[i]].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
-                prodigal.trainASpecies(seq->seq.s);
+
+                prodigal.is_meta = 0;
+                if(strlen(seq->seq.s) < 20000){
+                    prodigal.is_meta = 1;
+                    prodigal.trainMeta(seq->seq.s);
+                }else{
+                    prodigal.trainASpecies(seq->seq.s);
+                }
+
 
                 prodigal.getPredictedFrames(seq->seq.s);
                 ///fix here
@@ -131,6 +143,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     kmerBuffer.startIndexOfReserve -= totalKmerCntForOneTaxID;
                     hasOverflow = true;
                 }
+                cout<<numOfBlocks<<endl;
                 free(blocks);
                 free(numOfBlocksList);
             }

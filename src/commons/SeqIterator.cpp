@@ -117,16 +117,11 @@ void SeqIterator::sixFrameTranslateASeq(const char * seq){
     }
 }
 
-void SeqIterator::fillQueryKmerBuffer(const char * seq, KmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID) {
-    int tmp = 0;
+void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID) {
+
     int forOrRev;
     uint64_t tempKmer = 0;
-    uint32_t maxLength = 0;
-    for(int i = 0; i < 6; i++){
-        if(aaFrames[i].size() > maxLength)
-            maxLength = aaFrames->size();
-    }
-    maxLength = maxLength - kmerLength + 1;
+    uint32_t seqLen = strlen(seq);
 
     for(uint32_t frame = 0 ; frame < 6 ; frame++){
         int len = aaFrames[frame].size();
@@ -137,16 +132,17 @@ void SeqIterator::fillQueryKmerBuffer(const char * seq, KmerBuffer & kmerBuffer,
                 tempKmer += aaFrames[frame][kmerCnt + i] * powers[i];
             }
             addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame);
-           // printKmerInDNAsequence(tempKmer);
-            ///memcpy를 써보자
-            kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, kmerCnt + (frame * maxLength) , 0};
-            tmp++;
+            //printKmerInDNAsequence(tempKmer);
+
+            if(forOrRev == 0) {
+                kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3), frame};
+            } else{
+                kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, seqLen - ((frame%3) + (kmerCnt*3)) - 24 , frame};
+            }
             posToWrite++;
             tempKmer = 0;
         }
-
     }
-    cout<<"numOfQeuryKmer: "<<posToWrite<<endl;
 }
 
 void SeqIterator::addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int forOrRev, const int kmerCnt, const int frame){

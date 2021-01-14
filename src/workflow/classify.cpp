@@ -8,7 +8,6 @@
 int classify(int argc, const char **argv, const Command& command)
 {
     Classifier classifier;
-
     const char * queryFileName = argv[0];
     const char * targetDiffIdxFileName = argv[1];
     const char * targetInfoFileName = argv[2];
@@ -27,9 +26,6 @@ int classify(int argc, const char **argv, const Command& command)
         taxIdList.push_back(atol(taxID));
     }
     fclose(taxIdFile);
-
     classifier.startClassify(queryFileName, targetDiffIdxFileName, targetInfoFileName, taxIdList);
-
-
     return 0;
 }

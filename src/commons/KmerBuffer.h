@@ -7,15 +7,15 @@
 #include <iostream>
 #include <Kmer.h>
 
-class KmerBuffer{
+class QueryKmerBuffer{
 private:
 
 public:
-    Kmer * buffer;
+    QueryKmer * buffer;
     size_t startIndexOfReserve;
     size_t bufferSize;
-    KmerBuffer(size_t sizeOfBuffer){
-        buffer = (Kmer *) malloc(sizeof(Kmer) * sizeOfBuffer);
+    QueryKmerBuffer(size_t sizeOfBuffer){
+        buffer = (QueryKmer *) malloc(sizeof(QueryKmer) * sizeOfBuffer);
         bufferSize = sizeOfBuffer;
         startIndexOfReserve = 0;
     };
