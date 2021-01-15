@@ -20,6 +20,7 @@
 
 #include "metagenomic.h"
 
+
 /*******************************************************************************
   Initialize the metagenomic bins with the precalculated training files
   from the model organisms that best represent all of microbial Genbank.  
@@ -225,4 +226,6 @@ void initialize_metagenomic_bins(struct _metagenomic_bin *meta) {
   sprintf(meta[49].desc, "%d|%s|%s|%.1f|%d|%d", 49,
           "_Nostoc_azollae__0708",
           "B", 38.45, meta[49].tinf->trans_table, meta[49].tinf->uses_sd);
+
+    return;
 }

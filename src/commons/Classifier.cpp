@@ -139,9 +139,9 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
           //  seqIterator->printKmerInDNAsequence(nextTargetKmer);
             if(currentQuery == currentTargetKmer){
                 perfectMatchCount ++;
-                cout<<taxIdList[targetInfoList.data[tarIter].sequenceID]<<" "<<targetInfoList.data[tarIter].sequenceID<<endl;
-                cout<<"query : "; seqIterator->printKmerInDNAsequence(currentQuery); cout<<endl;
-                cout<<"target: "; seqIterator->printKmerInDNAsequence(currentTargetKmer); cout<<endl;
+//                cout<<taxIdList[targetInfoList.data[tarIter].sequenceID]<<" "<<targetInfoList.data[tarIter].sequenceID<<endl;
+//                cout<<"query : "; seqIterator->printKmerInDNAsequence(currentQuery); cout<<endl;
+//                cout<<"target: "; seqIterator->printKmerInDNAsequence(currentTargetKmer); cout<<endl;
             }
 
             if(AminoAcid(currentTargetKmer) == AminoAcid(currentQuery)){
@@ -188,7 +188,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
         for(size_t k = 0; k < closestKmers.size(); k++){
             ///TODO generous hamming?
             if(hammings[k] == lowestHamming){
-                if( targetInfoList.data[closestKmers[k]].redundancy == true) {
+                if(targetInfoList.data[closestKmers[k]].redundancy == true) {
                     matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
                                                  targetInfoList.data[closestKmers[k]].sequenceID,
                                                  taxIdListAtRank[targetInfoList.data[closestKmers[k]].sequenceID],
@@ -487,50 +487,52 @@ void Classifier::analyseResult3(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & 
         }
         queryEnd = i - 1;
         cout<<currentQuery<<endl;
-        TaxID selectedLCA = chooseBestTaxon2(ncbiTaxonomy, 10, queryOffset, queryEnd);
+        cout<<seqSegments[currentQuery].length<<endl;
+        TaxID selectedLCA = chooseBestTaxon2(ncbiTaxonomy, seqSegments[currentQuery].length, queryOffset, queryEnd);
         matchesOfCurrentQuery.clear();
 
     }
 }
 
 TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLen, const size_t & offset, const size_t & end){
-    for(size_t i = offset; i < end + 1; i++){
-        cout<<matchedKmerList[i].queryID<<" "<<matchedKmerList[i].taxID<<" "<<matchedKmerList[i].queryFrame<<" "<<matchedKmerList[i].queryPos<<" "<<int(matchedKmerList[i].hammingDistance)<<" "<<matchedKmerList[i].redundancy<<endl;
-    }
-
-
-    int currentFrame;
+//    for(size_t i = offset; i < end + 1; i++){
+//        cout<<matchedKmerList[i].queryID<<" "<<matchedKmerList[i].taxID<<" "<<matchedKmerList[i].queryFrame<<" "<<matchedKmerList[i].queryPos<<" "<<int(matchedKmerList[i].hammingDistance)<<" "<<matchedKmerList[i].redundancy<<endl;
+//    }
 
     vector<ConsecutiveMathces> coMatches;
     int gapThr = 0;
+    float coverageThr = 0.5;
     int conCnt = 0;
     uint32_t gapCnt = 0;
     uint32_t hammingSum = 0;
     uint32_t conBegin = 0;
     uint32_t conEnd = 0;
-    size_t iterMax;
+    size_t beginIdx = 0;
+    size_t endIdx = 0;
+
 
     size_t i = offset;
-    while(i < end){
-        currentFrame = matchedKmerList[i].queryFrame;
-        while((matchedKmerList[i+1].queryFrame == matchedKmerList[i].queryFrame) && (i < end)){
-            if(matchedKmerList[i + 1].queryPos <= matchedKmerList[i].queryPos + (gapThr + 1) * 3){
-                if(conCnt == 0){
+    while(i < end) {
+        while ((matchedKmerList[i + 1].queryFrame == matchedKmerList[i].queryFrame) && (i < end)) {
+            if (matchedKmerList[i + 1].queryPos <= matchedKmerList[i].queryPos + (gapThr + 1) * 3) {
+                if (conCnt == 0) {
                     conBegin = matchedKmerList[i].queryPos;
-                    cout<<"here"<<conBegin<<endl;
+                    beginIdx = i;
                 }
                 conCnt++;
                 hammingSum += matchedKmerList[i].hammingDistance;
-                if(matchedKmerList[i + 1].queryPos != matchedKmerList[i].queryPos) {
+                if (matchedKmerList[i + 1].queryPos != matchedKmerList[i].queryPos) {
                     gapCnt += (matchedKmerList[i + 1].queryPos - matchedKmerList[i].queryPos) / 3 - 1;
                 }
-            }else{
-                if(conCnt > 0){
-                    conCnt ++;
+            } else {
+                if (conCnt > 0) {
+                    conCnt++;
                     hammingSum += matchedKmerList[i].hammingDistance;
                     conEnd = matchedKmerList[i].queryPos;
-                    coMatches.emplace_back(conBegin, conEnd, hammingSum, gapCnt);
-                    cout<<currentFrame<<" "<<conBegin<<" "<<conEnd<<" "<<conCnt<<" "<< gapCnt<<" "<<hammingSum<<endl;
+                    endIdx = i;
+                    coMatches.emplace_back(conBegin, conEnd, hammingSum, gapCnt, beginIdx, endIdx);
+//                    cout << currentFrame << " " << conBegin << " " << conEnd << " " << conCnt << " " << gapCnt << " "
+//                         << hammingSum << endl;
                     conCnt = 0;
                     gapCnt = 0;
                     hammingSum = 0;
@@ -539,12 +541,14 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
             i++;
         }
 
-        if(conCnt > 0) {
-            conCnt ++;
+        if (conCnt > 0) {
+            conCnt++;
             hammingSum += matchedKmerList[i].hammingDistance;
             conEnd = matchedKmerList[i].queryPos;
-            coMatches.emplace_back(conBegin, conEnd, hammingSum, gapCnt);
-            cout<<currentFrame<<" "<<conBegin<<" "<<conEnd<<" "<<conCnt<<" "<< gapCnt<<" "<<hammingSum<<endl;
+            endIdx = i;
+            coMatches.emplace_back(conBegin, conEnd, hammingSum, gapCnt, beginIdx, endIdx);
+//            cout << currentFrame << " " << conBegin << " " << conEnd << " " << conCnt << " " << gapCnt << " "
+//                 << hammingSum << endl;
             conCnt = 0;
             gapCnt = 0;
             hammingSum = 0;
@@ -553,13 +557,123 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
         i++;
     }
 
+    SORT_PARALLEL(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
 
 
-//    for(size_t i2 = 0 ; i2 < coMatches.size(); i2++){
-//        coMatches
-//    }
+    vector<ConsecutiveMathces> alignedCoMatches;
+    alignedCoMatches.push_back(coMatches[0]);
+    int isOverlaped= 0;
+    for(size_t i = 1; i < coMatches.size(); i++){
+        isOverlaped = 0;
+        for(size_t j = 0; j < alignedCoMatches.size(); j++){
+            if((alignedCoMatches[j].begin < coMatches[i].end) && (alignedCoMatches[j].end > coMatches[i].begin)){ ///TODO check this condition
+                isOverlaped = 1;
+                break;
+            }
+        }
+        if(1 == isOverlaped){ ///TODO: do what here?
+            continue;
+        } else{
+            alignedCoMatches.push_back(coMatches[i]);
+        }
+    }
+
+    for(size_t cs = 0; cs < alignedCoMatches.size(); cs++ ){
+        for(size_t k = alignedCoMatches[cs].beginIdx ; k < alignedCoMatches[cs].endIdx + 1; k++ ){
+            cout<<matchedKmerList[k].queryID<<" "<<matchedKmerList[k].queryFrame<<" "<<matchedKmerList[k].queryPos<<" "<<matchedKmerList[k].taxID<<" "<<int(matchedKmerList[k].hammingDistance)<<" "<<matchedKmerList[k].redundancy<<" "<<matchedKmerList[k].targetID<<endl;
+        }
+        cout<<(alignedCoMatches[cs].end - alignedCoMatches[cs].begin)/3 + 1<<endl;
+        cout<<endl;
+    }
+
+    ///check a query coverage
+    int maxNum = queryLen / 3 - kmerLength + 1;
+    int matchedNum = 0;
+    float coverage;
+    for(size_t cm = 0 ; cm < alignedCoMatches.size(); cm ++){
+        matchedNum += (alignedCoMatches[cm].end - alignedCoMatches[cm].begin)/3 + 1;
+    }
+    coverage = float(matchedNum) / float(maxNum);
+    cout<<coverage<<endl;
+
+    ///No classification for low coverage
+    if(coverage < coverageThr){
+        return 0;
+    }
+
+    ///get a lowest common ancestor
+    vector<TaxID> taxIdList;
+    unordered_map<TaxID, int> strainMatchCnt;
+    int strainCheck = 0;
+    TaxID temp;
+
+    for(size_t cs = 0; cs < alignedCoMatches.size(); cs++ ){
+        for(size_t k = alignedCoMatches[cs].beginIdx ; k < alignedCoMatches[cs].endIdx + 1; k++ ){
+            temp = matchedKmerList[k].taxID;
+            taxIdList.push_back(temp);
+            if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(temp)->rank) < 4){
+                strainCheck = 1;
+                if(strainMatchCnt.find(temp) == strainMatchCnt.end()){
+                    strainMatchCnt.insert(pair<TaxID, int>(temp, 1));
+                } else {
+                    strainMatchCnt[temp] ++;
+                }
+            }
+        }
+    }
+
+
+    size_t numAssignedSeqs = 0;
+    size_t numUnassignedSeqs = 0;
+    size_t numSeqsAgreeWithSelectedTaxon = 0;
+    double selectedPercent = 0;
+
+    TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.8, numAssignedSeqs,
+                                  numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
+                                  selectedPercent);
+
+    ///TODO optimize strain specific classification criteria
+    ///Strain classification for high coverage with LCA of species level
+    int maxStrainCnt = 0;
+
+    if(coverage > 0.95 && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4 && strainCheck == 1){
+        TaxID speciesTaxID = selectedLCA;
+        for(auto it = strainMatchCnt.begin(); it != strainMatchCnt.end(); it++){
+            if( float(it->second) / float(maxNum) > 0.1 && it->second > maxStrainCnt && ncbiTaxonomy.IsAncestor(speciesTaxID, it->first)){
+                maxStrainCnt = it->second;
+                selectedLCA = it->first;
+                cout<<"strain level classification: "<<selectedLCA<<endl;
+            }
+        }
+
+        return selectedLCA;
+    } else{
+        if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
+            cout<<"strain level classification: "<<selectedLCA<<endl;
+        }else {
+            cout << selectedLCA << " " << selectedPercent << endl;
+        }
+        return selectedLCA;
+    }
+
+
+
+//        if(isClassified && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLeaf)->rank) == 4) {
+//            for (int st = 0; st < strainList.size(); st++) {
+//                if ((taxonNodeCount[strainList[st]] > 1.1 * maxCount) && (taxonNodeCount[strainList[st]] / numberOfPossibleKmersFromThisRead > 0.9)) {
+//                    if(taxonNodeCount[strainList[st]] > maxStrainCnt){
+//                        maxStrainCnt = taxonNodeCount[strainList[st]];
+//                        selectedLeaf = strainList[st];
+//                        cout << "here: " << taxonNodeCount[strainList[st]] << endl;
+//                    }
+//                }
+//            }
+//        }
+
+
 
     cout<<endl;
+    return selectedLCA;
 }
 
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLen, const size_t & offset, const size_t & end) {
@@ -687,7 +801,7 @@ int Classifier::scoreTaxon(const vector<vector<uint32_t>> & matches, const vecto
                 if(conCnt > 0){
                     conCnt ++;
                     hammingSum += hammings[frame][i];
-                    coMatches.emplace_back(matches[frame][i] - 3 * (conCnt + gapCnt - 1), matches[frame][i], hammingSum, gapCnt);
+                    coMatches.emplace_back(matches[frame][i] - 3 * (conCnt + gapCnt - 1), matches[frame][i], hammingSum, gapCnt, 0 ,0);
                     conCnt = 0;
                     gapCnt = 0;
                     hammingSum = 0;
@@ -697,7 +811,7 @@ int Classifier::scoreTaxon(const vector<vector<uint32_t>> & matches, const vecto
         if(conCnt > 0) {
             conCnt ++;
             hammingSum += hammings[frame][iterMax];
-            coMatches.emplace_back(matches[frame][iterMax] - 3 * (conCnt + gapCnt - 1), matches[frame][iterMax], hammingSum, gapCnt);
+            coMatches.emplace_back(matches[frame][iterMax] - 3 * (conCnt + gapCnt - 1), matches[frame][iterMax], hammingSum, gapCnt, 0 ,0);
             conCnt =
             gapCnt = 0;
             hammingSum = 0;

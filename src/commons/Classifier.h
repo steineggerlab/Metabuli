@@ -51,11 +51,13 @@ private:
     };
 
     typedef struct ConsecutiveMathces{
-        ConsecutiveMathces(uint32_t begin, uint32_t end, uint32_t hamming, uint32_t gapCnt) : begin(begin), end(end), hamming(hamming), gapCnt(gapCnt) {}
+        ConsecutiveMathces(uint32_t begin, uint32_t end, uint32_t hamming, uint32_t gapCnt, size_t bi, size_t ei) : begin(begin), end(end), hamming(hamming), gapCnt(gapCnt), beginIdx(bi), endIdx(ei) {}
         uint32_t begin;
         uint32_t end;
         uint32_t hamming;
         uint32_t gapCnt;
+        size_t beginIdx;
+        size_t endIdx;
     }consecutiveMatches;
 
     int numOfSplit;
