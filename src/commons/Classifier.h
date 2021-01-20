@@ -75,8 +75,6 @@ private:
     vector<MatchedKmer> matchedKmerList;
     vector<size_t> closestKmers;
     int currentHamming;
-    ExtractStartPoint ESP;
-
 
     const static uint64_t MARKER = ~0 & ~16777215;
     uint8_t hammingLookup[8][8]= {
@@ -87,7 +85,7 @@ private:
             {2, 2, 2, 1, 0, 1, 4, 4},
             {1, 2, 2, 2, 1, 0, 4, 4},
             {3, 3, 2, 3, 4, 4, 0, 1},
-            {3, 2, 3, 3, 4, 4, 1, 0}};
+            {3, 2, 3, 3, 4, 4, 1, 0}}; /// 4 means that there is no case where that value is used.
     uint8_t getHammingDistance(uint64_t kmer1, uint64_t kmer2);
 
     void linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank);
@@ -95,28 +93,19 @@ private:
     static TaxID lca2taxon(unordered_map<TaxID, int> & listOfLCAs, NcbiTaxonomy & ncbiTaxonomy, const size_t & length, float coverageThr = 0.8);
     TaxID match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,
                     size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent);
+
     static bool compareForAnalyzing( const MatchedKmer & a, const MatchedKmer & b);
-    static bool compareForAnalyzing2( const MatchedKmer & a, const MatchedKmer & b);
-    static bool compareForAnalyzing3( const MatchedKmer & a, const MatchedKmer & b);
     static bool compareForLinearSearch(const QueryKmer & a, const QueryKmer & b);
     static bool compareConsecutiveMatches(const ConsecutiveMathces & a, const ConsecutiveMathces & b);
     void fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt);
 
 
     TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const size_t & offset, const size_t & end);
-    TaxID chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const size_t & offset, const size_t & end);
     static void checkAndGive(vector<uint32_t> & posList,  vector<uint8_t> & hammingList, const uint32_t & pos, const uint8_t & hammingDist);
-    static int scoreTaxon(const vector<vector<uint32_t>> & matches, const vector<vector<uint8_t>> & hammings, const size_t & queryLen);
-
-//    TaxID selectTaxForSet(const std::vector<int> &setTaxa, NcbiTaxonomy const *taxonomy, const float majorityCutoff,
-//                          size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent);
-
 
 public:
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, vector<int> & taxIdList);
     void analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments);
-    void analyseResult2(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments);
-    void analyseResult3(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments);
     int getNumOfSplits() const;
     void writeLinearSearchResult();
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);

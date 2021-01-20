@@ -49,15 +49,15 @@ private:
     int nuc2aa[4][4][4];
     uint64_t nuc2num[4][4][4];
 
-    void addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int forOrRev, const int kmerCnt, const int frame);
+    void addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int forOrRev, const int & kmerCnt, const int & frame);
 
-    void addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, const int startOfKmer);
+    void addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, const int & startOfKmer);
 
 public:
     void fillQueryKmerBuffer(const char * seq , QueryKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID);
     void getTranslationBlocks(struct _gene * genes, struct _node * nodes, PredictedBlock * blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
     string reverseCompliment(string & read) const ;
-    void sixFrameTranslateASeq(const char * seq);
+    void sixFrameTranslation(const char * seq);
     void translateBlock(const char* seq, PredictedBlock & block);
     void getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
     void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);

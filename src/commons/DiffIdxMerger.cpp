@@ -10,7 +10,7 @@ DiffIdxMerger::DiffIdxMerger(char* mergedDiffFileName, char * mergedInfoFileNmae
 }
 
 ///Merge differential index and k-mer information files, reducing redundancy
-void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & taxIdList) {
+void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & taxIdListAtRank,vector<int> & taxIdList) {
     size_t numOfKmerBeforeMerge = 0;
     size_t writtenKmerCnt = 0;
 
@@ -74,7 +74,7 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
         idxOfMin = smallest(lookingKmers, numOfSplitFiles);
 
         int asd = 0;
-        while(taxIdList[lastInfo.sequenceID] == taxIdList[lookingInfos[idxOfMin].sequenceID]){
+        while(taxIdListAtRank[lastInfo.sequenceID] == taxIdListAtRank[lookingInfos[idxOfMin].sequenceID]){
             if(lastKmer != lookingKmers[idxOfMin]) break;
 
             lookingKmers[idxOfMin] = getNextKmer(lastKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
@@ -117,6 +117,8 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
 
     free(diffBuffer);
     free(infoBuffer);
+    fclose(mergedDiffFile);
+    fclose(mergedInfoFile);
     for(size_t file = 0; file < numOfSplitFiles; file++){
         munmap(diffFileList[file].data, diffFileList[file].fileSize + 1);
         munmap(infoFileList[file].data, infoFileList[file].fileSize + 1);
@@ -127,7 +129,139 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
     cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
 }
 
-uint64_t DiffIdxMerger::getNextKmer(uint64_t lookingTarget, const struct MmapedData<uint16_t> diffList, size_t & idx)
+///It updates target database. Most of this function is the same with 'mergeTargetFiles', only some additional tasks are added to handle seqID
+void DiffIdxMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & taxIdListAtRank, vector<int> & taxIdList, const int & seqIdOffset) {
+    size_t totalKmerCnt = 0;
+    size_t writtenKmerCnt = 0;
+
+    ///Files to write on & buffers to fill them
+    FILE * mergedDiffFile = fopen(mergedDiffFileName, "wb");
+    FILE * mergedInfoFile = fopen(mergedInfoFileName, "wb");
+    uint16_t * diffBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 250000000); size_t diffBufferIdx = 0;
+    TargetKmerInfo * infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * 250000000); size_t infoBufferIdx = 0;
+
+
+    ///Prepare files to merge
+    size_t numOfSplitFiles = diffIdxFileNames.size();
+    size_t numOfincompletedFiles = numOfSplitFiles;
+    uint64_t lookingKmers[numOfSplitFiles];
+    TargetKmerInfo lookingInfos[numOfSplitFiles];
+    size_t diffFileIdx[numOfSplitFiles];
+    memset(diffFileIdx, 0, sizeof(diffFileIdx));
+    size_t infoFileIdx[numOfSplitFiles];
+    memset(infoFileIdx, 0, sizeof(infoFileIdx));
+    size_t maxIdxOfEachFiles[numOfSplitFiles];
+    struct MmapedData<uint16_t> *diffFileList = new struct MmapedData<uint16_t>[numOfSplitFiles];
+    struct MmapedData<TargetKmerInfo> *infoFileList = new struct MmapedData<TargetKmerInfo>[numOfSplitFiles];
+    for (size_t file = 0; file < numOfSplitFiles; file++) {
+        diffFileList[file] = mmapData<uint16_t>(diffIdxFileNames[file]);
+        infoFileList[file] = mmapData<TargetKmerInfo>(infoFileNames[file]);
+        maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
+    }
+
+    /// get the first k-mer to write
+    for(size_t file = 0; file < numOfSplitFiles; file++){
+        lookingKmers[file] = getNextKmer(0, diffFileList[file], diffFileIdx[file]);
+        lookingInfos[file] = infoFileList[file].data[0];
+        infoFileIdx[file] ++;
+    }
+
+    size_t idxOfMin = smallest(lookingKmers, numOfSplitFiles);
+    uint64_t lastWrittenKmer = 0;
+    uint64_t lastKmer = lookingKmers[idxOfMin];
+    TargetKmerInfo lastInfo = lookingInfos[idxOfMin];
+
+    ///write first k-mer
+    cre->getDiffIdx(0, lastKmer, mergedDiffFile, diffBuffer, diffBufferIdx);
+    lastWrittenKmer = lastKmer;
+    cre->writeInfo(&lastInfo, mergedInfoFile, infoBuffer, infoBufferIdx);;
+    writtenKmerCnt++;
+
+    int endFlag = 0;
+    int isNew = 0;
+    int isRedundant = 0;
+    int hasSeenOtherStrains = 0;
+    ///끝부분 잘 되는지 확인할 것
+    while(1){
+        ///update looking k-mers
+        lookingKmers[idxOfMin] = getNextKmer(lastKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
+        lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
+        infoFileIdx[idxOfMin] ++;
+        if( diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] ){
+            lookingKmers[idxOfMin] = UINT64_MAX;
+            numOfincompletedFiles--;
+            if(numOfincompletedFiles == 0) break;
+        }
+        totalKmerCnt ++;
+        idxOfMin = smallest(lookingKmers, numOfSplitFiles);
+
+        hasSeenOtherStrains = 0;
+        isRedundant = 0;
+        while(taxIdListAtRank[lastInfo.sequenceID] == taxIdListAtRank[lookingInfos[idxOfMin].sequenceID]){
+            if(lastKmer != lookingKmers[idxOfMin]) break;
+
+            if (taxIdList[lastInfo.sequenceID] != taxIdList[lookingInfos[idxOfMin].sequenceID]){
+                hasSeenOtherStrains = 1;
+            }
+
+            lookingKmers[idxOfMin] = getNextKmer(lastKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
+            lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
+            infoFileIdx[idxOfMin] ++;
+            totalKmerCnt ++;
+            isRedundant = 1;
+
+            if( diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] ){
+                lookingKmers[idxOfMin] = UINT64_MAX;
+                numOfincompletedFiles--;
+                if(numOfincompletedFiles == 0){
+                    endFlag = 1;
+                    break;
+                }
+            }
+            idxOfMin = smallest(lookingKmers, numOfSplitFiles);
+        }
+
+        if(hasSeenOtherStrains == 1){
+            lastInfo.redundancy = true;
+        }
+
+        if(isNew == 1) lastInfo.sequenceID += seqIdOffset;
+
+        cre->getDiffIdx(lastWrittenKmer, lastKmer, mergedDiffFile, diffBuffer, diffBufferIdx);
+        lastWrittenKmer = lastKmer;
+        cre->writeInfo(&lastInfo, mergedInfoFile, infoBuffer, infoBufferIdx);
+        writtenKmerCnt++;
+
+        if(endFlag == 1){
+            break;
+        }
+
+        ///update last k-mer
+        lastKmer = lookingKmers[idxOfMin];
+        lastInfo = lookingInfos[idxOfMin];
+        if(idxOfMin > 0){
+            isNew = 1;
+        }
+    }
+
+    cre->flushInfoBuf(infoBuffer, mergedInfoFile, infoBufferIdx);
+    cre->flushKmerBuf(diffBuffer, mergedDiffFile, diffBufferIdx);
+
+    free(diffBuffer);
+    free(infoBuffer);
+    fclose(mergedDiffFile);
+    fclose(mergedInfoFile);
+    for(size_t file = 0; file < numOfSplitFiles; file++){
+        munmap(diffFileList[file].data, diffFileList[file].fileSize + 1);
+        munmap(infoFileList[file].data, infoFileList[file].fileSize + 1);
+    }
+
+    cout<<"Creating target DB is done"<<endl;
+    cout << "Total k-mer count    : " << totalKmerCnt << endl;
+    cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
+}
+
+uint64_t DiffIdxMerger::getNextKmer(uint64_t lookingTarget, const struct MmapedData<uint16_t> & diffList, size_t & idx)
 {
     uint16_t fragment = 0;
     uint64_t diffIn64bit = 0;

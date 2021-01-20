@@ -89,7 +89,8 @@ SeqIterator::SeqIterator() {
 
 }
 
-void SeqIterator::sixFrameTranslateASeq(const char * seq){
+///It translates a DNA sequence to amino acid sequences with six frames
+void SeqIterator::sixFrameTranslation(const char * seq){
     for(int i = 0 ; i < 6 ; i++){ aaFrames[i].clear(); }
 
     int len = strlen(seq);
@@ -116,6 +117,7 @@ void SeqIterator::sixFrameTranslateASeq(const char * seq){
         aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[seq[2]])][nuc2int(iRCT[seq[1]])][nuc2int(iRCT[seq[0]])]);
     }
 }
+
 
 void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID) {
 
@@ -145,7 +147,7 @@ void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBu
     }
 }
 
-void SeqIterator::addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int forOrRev, const int kmerCnt, const int frame){
+void SeqIterator::addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int forOrRev, const int & kmerCnt, const int & frame){
     int start = (frame % 3) + (kmerCnt * 3);
     kmer <<= 25;
     size_t end = strlen(seq) - 1;
@@ -158,7 +160,6 @@ void SeqIterator::addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int fo
             kmer |= nuc2num[nuc2int(iRCT[seq[end - (start + i)]])][nuc2int(iRCT[seq[end - (start + i + 1)]])][nuc2int(iRCT[seq[end - (start + i + 2)]])] << i;
         }
     }
-    return;
 }
 
 void SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
@@ -174,7 +175,6 @@ void SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
             aaFrames[0].push_back(nuc2aa[nuc2int(iRCT[seq[block.end - i]])][nuc2int(iRCT[seq[block.end-i-1]])][nuc2int(iRCT[seq[block.end-i-2]])]);
         }
     }
-    return;
 }
 
 string SeqIterator::reverseCompliment(string & read) const {
@@ -201,7 +201,6 @@ void SeqIterator::getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, Mmap
         }
     }
     seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
-    return;
 }
 
 void SeqIterator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile) {
@@ -233,11 +232,10 @@ void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, cons
         posToWrite++;
         tempKmer = 0;
     }
-    return;
 }
 
 ///It adds DNA information to kmers referring the original DNA sequence.
-void SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, const int startOfKmer) {
+void SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, const int & startOfKmer) {
     kmer <<= 25;
     if(block.strand == 1){
         int start = block.start + (startOfKmer * 3);
@@ -251,7 +249,6 @@ void SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const
                     nuc2int(iRCT[seq[start - i - 2]])] << i;
         }
     }
-    return;
 }
 
 size_t SeqIterator::KmerNumOfSixFrameTranslation(const string & seq){

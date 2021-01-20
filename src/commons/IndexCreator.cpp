@@ -158,8 +158,8 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
     ///open a split file, which will be merged later.
     char suffixedDiffIdxFileName[100];
     char suffixedInfoFileName[100];
-    sprintf(suffixedDiffIdxFileName,"%s_diffIdx_%zu", outputFileName,numOfFlush);
-    sprintf(suffixedInfoFileName,"%s_info_%zu", outputFileName,numOfFlush);
+    sprintf(suffixedDiffIdxFileName,"%s_%zu_diffIdx", outputFileName,numOfFlush);
+    sprintf(suffixedInfoFileName,"%s_%zu_info", outputFileName,numOfFlush);
     FILE * diffIdxFile = fopen(suffixedDiffIdxFileName, "wb");
     FILE * infoFile = fopen(suffixedInfoFileName, "wb");
     if (diffIdxFile == NULL || infoFile == NULL){

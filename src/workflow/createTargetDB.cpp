@@ -11,7 +11,6 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     LocalParameters &par = LocalParameters::getLocalInstance();
 //    par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
 
-    vector<char*> mergedFileNames;
     IndexCreator idxCre;
     string name, node, merged;
     NcbiTaxonomy ncbiTaxonomy("/Users/jaebeomkim/Desktop/pjt/taxdmp/names.dmp",
@@ -56,8 +55,8 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     if(numOfSplits == 1)
     {
-        sprintf(suffixedDiffIdxFileName[0], "%s_diffIdx_0", outputFileName);
-        sprintf(suffixedInfoFileName[0], "%s_info_0", outputFileName);
+        sprintf(suffixedDiffIdxFileName[0], "%s_0_diffIdx", outputFileName);
+        sprintf(suffixedInfoFileName[0], "%s_0_info", outputFileName);
         cout<<"k-mer DB in: "<<endl;
         cout<<suffixedDiffIdxFileName<<"and"<<endl;
         cout<<suffixedInfoFileName<<endl;
@@ -84,14 +83,11 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     sprintf(mergedDiffFileName, "%s_diffIdx", outputFileName);
     sprintf(mergedInfoFileName, "%s_info", outputFileName);
     DiffIdxMerger merger(mergedDiffFileName, mergedInfoFileName);
-    merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtRank);
+    merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtRank, taxIdList);
 
     cout<<"k-mer DB in: "<<endl;
     cout<<mergedDiffFileName<<" and"<<endl;
     cout<<mergedInfoFileName<<endl;
-
-    mergedFileNames.push_back(mergedDiffFileName);
-    mergedFileNames.push_back(mergedInfoFileName);
 
     return 0;
 }

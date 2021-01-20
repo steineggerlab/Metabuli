@@ -21,9 +21,10 @@ private:
     IndexCreator * cre;
 public:
     DiffIdxMerger(char* mergedDiffFileName, char * mergedInfoFileNmae);
-    void mergeTargetFiles(std::vector<char *> diffIdxFileNames, std::vector<char *> infoFileNames, std::vector<int> & taxIdList);
-    size_t smallest(const uint64_t *lookingKmer, const size_t &fileCnt);
-    uint64_t getNextKmer(uint64_t currentValue, const struct MmapedData<uint16_t> diffList, size_t &idx);
+    void mergeTargetFiles(std::vector<char *> diffIdxFileNames, std::vector<char *> infoFileNames, std::vector<int> & taxIdListAtRank, std::vector<int> & taxIdList);
+    void updateTargetDatabase(std::vector<char *> diffIdxFileNames, std::vector<char *> infoFileNames, std::vector<int> & taxIdListAtRank, std::vector<int> & taxIdList, const int & seqIdOffset);
+    static size_t smallest(const uint64_t *lookingKmer, const size_t &fileCnt);
+    static uint64_t getNextKmer(uint64_t currentValue, const struct MmapedData<uint16_t> & diffList, size_t &idx);
 };
 #endif //ADKMER4_MERGETARGETFILES_H
 
