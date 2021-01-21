@@ -14,15 +14,16 @@
 
 using namespace std;
 
-class DiffIdxMerger {
+class FileMerger {
 private:
     char * mergedDiffFileName;
     char * mergedInfoFileName;
     IndexCreator * cre;
 public:
-    DiffIdxMerger(char* mergedDiffFileName, char * mergedInfoFileNmae);
+    FileMerger(char* mergedDiffFileName, char * mergedInfoFileNmae);
     void mergeTargetFiles(std::vector<char *> diffIdxFileNames, std::vector<char *> infoFileNames, std::vector<int> & taxIdListAtRank, std::vector<int> & taxIdList);
-    void updateTargetDatabase(std::vector<char *> diffIdxFileNames, std::vector<char *> infoFileNames, std::vector<int> & taxIdListAtRank, std::vector<int> & taxIdList, const int & seqIdOffset);
+    void updateTargetDatabase(vector<char *> diffIdxFileNames, vector<char *> infoFileNames, vector<int> & oldTaxList, vector<int> & oldTaxAtRankList, vector<int> & newTaxListAtRank,
+                              vector<int> & newTaxList, const int & seqIdOffset);
     static size_t smallest(const uint64_t *lookingKmer, const size_t &fileCnt);
     static uint64_t getNextKmer(uint64_t currentValue, const struct MmapedData<uint16_t> & diffList, size_t &idx);
 };

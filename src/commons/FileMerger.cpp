@@ -2,15 +2,15 @@
 // Created by KJB on 01/09/2020.
 //
 
-#include "DiffIdxMerger.h"
-DiffIdxMerger::DiffIdxMerger(char* mergedDiffFileName, char * mergedInfoFileNmae)
+#include "FileMerger.h"
+FileMerger::FileMerger(char* mergedDiffFileName, char * mergedInfoFileNmae)
 :mergedDiffFileName(mergedDiffFileName), mergedInfoFileName(mergedInfoFileNmae)
 {
     cre = new IndexCreator();
 }
 
 ///Merge differential index and k-mer information files, reducing redundancy
-void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & taxIdListAtRank,vector<int> & taxIdList) {
+void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & taxIdListAtRank, vector<int> & taxIdList) {
     size_t numOfKmerBeforeMerge = 0;
     size_t writtenKmerCnt = 0;
 
@@ -130,7 +130,9 @@ void DiffIdxMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::v
 }
 
 ///It updates target database. Most of this function is the same with 'mergeTargetFiles', only some additional tasks are added to handle seqID
-void DiffIdxMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & taxIdListAtRank, vector<int> & taxIdList, const int & seqIdOffset) {
+///It has error now
+void FileMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & oldTaxListAtRank, vector<int> & oldTaxList,
+                                      vector<int> & newTaxListAtRank, vector<int> & newTaxList, const int & seqIdOffset) {
     size_t totalKmerCnt = 0;
     size_t writtenKmerCnt = 0;
 
@@ -197,10 +199,10 @@ void DiffIdxMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, st
 
         hasSeenOtherStrains = 0;
         isRedundant = 0;
-        while(taxIdListAtRank[lastInfo.sequenceID] == taxIdListAtRank[lookingInfos[idxOfMin].sequenceID]){
+        while(newTaxListAtRank[lastInfo.sequenceID] == newTaxListAtRank[lookingInfos[idxOfMin].sequenceID]){
             if(lastKmer != lookingKmers[idxOfMin]) break;
 
-            if (taxIdList[lastInfo.sequenceID] != taxIdList[lookingInfos[idxOfMin].sequenceID]){
+            if (newTaxList[lastInfo.sequenceID] != newTaxList[lookingInfos[idxOfMin].sequenceID]){
                 hasSeenOtherStrains = 1;
             }
 
@@ -261,7 +263,7 @@ void DiffIdxMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, st
     cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
 }
 
-uint64_t DiffIdxMerger::getNextKmer(uint64_t lookingTarget, const struct MmapedData<uint16_t> & diffList, size_t & idx)
+uint64_t FileMerger::getNextKmer(uint64_t lookingTarget, const struct MmapedData<uint16_t> & diffList, size_t & idx)
 {
     uint16_t fragment = 0;
     uint64_t diffIn64bit = 0;
@@ -282,7 +284,7 @@ uint64_t DiffIdxMerger::getNextKmer(uint64_t lookingTarget, const struct MmapedD
     return diffIn64bit + lookingTarget;
 }
 
-size_t DiffIdxMerger::smallest(const uint64_t lookingKmers[], const size_t & fileCnt)
+size_t FileMerger::smallest(const uint64_t lookingKmers[], const size_t & fileCnt)
 {
     size_t idxOfMin = 0;
     uint64_t min = lookingKmers[0];

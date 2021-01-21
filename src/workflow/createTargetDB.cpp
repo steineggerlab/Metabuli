@@ -3,7 +3,7 @@
 //
 //#include "createTargetDB.h"
 #include "IndexCreator.h"
-#include "DiffIdxMerger.h"
+#include "FileMerger.h"
 #include "LocalParameters.h"
 #include <Command.h>
 int createTargetDB(int argc, const char **argv, const Command &command)
@@ -82,7 +82,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     char mergedInfoFileName[100];
     sprintf(mergedDiffFileName, "%s_diffIdx", outputFileName);
     sprintf(mergedInfoFileName, "%s_info", outputFileName);
-    DiffIdxMerger merger(mergedDiffFileName, mergedInfoFileName);
+    FileMerger merger(mergedDiffFileName, mergedInfoFileName);
     merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtRank, taxIdList);
 
     cout<<"k-mer DB in: "<<endl;

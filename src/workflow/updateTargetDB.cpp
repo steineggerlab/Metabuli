@@ -3,7 +3,7 @@
 //
 
 #include "IndexCreator.h"
-#include "DiffIdxMerger.h"
+#include "FileMerger.h"
 #include "LocalParameters.h"
 #include <Command.h>
 
@@ -31,22 +31,39 @@ int updateTargetDB(int argc, const char **argv, const Command &command){
     seqFile.close();
 
     ///Make mapping from sequence ID to TaxID. Index of vector is sequence ID.
-    FILE * taxIdFile;
-    if((taxIdFile = fopen(taxIdFileName,"r")) == NULL){
-        cout<<"Cannot open the taxID list file."<<endl;
+    FILE * newTaxIdFile;
+    FILE * oldTaxIdFile;
+    if((newTaxIdFile = fopen(taxIdFileName, "r")) == NULL){
+        cout<<"Cannot open the new taxID list file."<<endl;
         return 0;
     }
-    vector<int> taxIdList; char taxID[100];
-    while(feof(taxIdFile) == 0) {
-        fscanf(taxIdFile,"%s",taxID);
-        taxIdList.push_back(atol(taxID));
+
+    if((oldTaxIdFile = fopen(outdatedTaxIdList, "r")) == NULL){
+        cout<<"Cannot open the old taxID list file."<<endl;
+        return 0;
     }
-    fclose(taxIdFile);
-    vector<int> taxIdListAtRank;
-    ncbiTaxonomy.makeTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
+
+    vector<int> newTaxIdList; char taxID[100];
+    vector<int> oldTaxIdList;
+    while(feof(newTaxIdFile) == 0) {
+        fscanf(newTaxIdFile, "%s", taxID);
+        newTaxIdList.push_back(atol(taxID));
+    }
+    fclose(newTaxIdFile);
+
+    while(feof(oldTaxIdFile) == 0) {
+        fscanf(oldTaxIdFile, "%s", taxID);
+        newTaxIdList.push_back(atol(taxID));
+    }
+    fclose(oldTaxIdFile);
+
+    vector<int> newTaxIdListAtRank;
+    vector<int> oldTaxIdListAtRank;
+    ncbiTaxonomy.makeTaxIdListAtRank(newTaxIdList, newTaxIdListAtRank, "species");
+    ncbiTaxonomy.makeTaxIdListAtRank(oldTaxIdList, oldTaxIdListAtRank, "species");
 
     IndexCreator idxCre;
-    idxCre.startIndexCreatingParallel(seqFileName, updatedFileName, taxIdListAtRank, taxIdList);
+    idxCre.startIndexCreatingParallel(seqFileName, updatedFileName, newTaxIdListAtRank, newTaxIdList);
 
 
     /**Merge new k-mer data into outdated database.**/
@@ -78,8 +95,8 @@ int updateTargetDB(int argc, const char **argv, const Command &command){
     char mergedInfoFileName[300];
     sprintf(mergedDiffFileName, "%s_diffIdx", updatedFileName);
     sprintf(mergedInfoFileName, "%s_info", updatedFileName);
-    DiffIdxMerger merger(mergedDiffFileName, mergedInfoFileName);
-    merger.updateTargetDatabase(diffSplits, infoSplits,taxIdListAtRank);
+    FileMerger merger(mergedDiffFileName, mergedInfoFileName);
+    merger.updateTargetDatabase(diffSplits, infoSplits, oldTaxIdListAtRank, oldTaxIdList, newTaxIdListAtRank, newTaxIdList, newTaxIdList.size()); ///이거 고쳐야함, 둘 다 필
 
     cout<<"k-mer DB in: "<<endl;
     cout<<mergedDiffFileName<<" and"<<endl;
@@ -89,16 +106,16 @@ int updateTargetDB(int argc, const char **argv, const Command &command){
     char mergedTaxIdListName[300];
     sprintf(mergedTaxIdListName, "%s_taxIDs", updatedFileName);
 
-    FILE * newTaxIdList;
+    FILE * newTaxIdListFile;
     FILE * oldTaxIdList;
     FILE * mergedTaxIdList;
-    newTaxIdList = fopen(taxIdFileName, "r");
+    newTaxIdListFile = fopen(taxIdFileName, "r");
     oldTaxIdList = fopen(outdatedTaxIdList, "r");
     mergedTaxIdList = fopen(mergedDiffFileName, "w");
 
     ///알아서 복사 붙여 넣기 해라 귀찮다.
 
-    fclose(newTaxIdList);
+    fclose(newTaxIdListFile);
     fclose(oldTaxIdList);
     fclose(mergedTaxIdList);
 

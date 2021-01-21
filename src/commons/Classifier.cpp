@@ -390,6 +390,10 @@ void Classifier::analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & s
             i++;
         }
         queryEnd = i - 1;
+        cout<<"query num: "<<currentQuery<<endl;
+        if(currentQuery == 12){
+            cout<<"here"<<endl;
+        }
         TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[currentQuery].length, queryOffset, queryEnd);
         cout<<endl;
         matchesOfCurrentQuery.clear();
@@ -405,7 +409,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     vector<ConsecutiveMathces> coMatches;
 
-    float coverageThr = 0.5;
+    float coverageThr = 0.3;
     int conCnt = 0;
     uint32_t gapCnt = 0;
     uint32_t hammingSum = 0;
@@ -419,8 +423,10 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     ///This routine is for getting consecutive matched k-mer
     ///gapThr decides the maximun gap
+    int currentFrame;
     int gapThr = 0;
     while(i < end) {
+        currentFrame = matchedKmerList[i].queryFrame;
         while ((matchedKmerList[i + 1].queryFrame == matchedKmerList[i].queryFrame) && (i < end)) {
             if (matchedKmerList[i + 1].queryPos <= matchedKmerList[i].queryPos + (gapThr + 1) * 3) {
                 if (conCnt == 0) {
@@ -439,8 +445,8 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
                     conEnd = matchedKmerList[i].queryPos;
                     endIdx = i;
                     coMatches.emplace_back(conBegin, conEnd, hammingSum, gapCnt, beginIdx, endIdx);
-//                    cout << currentFrame << " " << conBegin << " " << conEnd << " " << conCnt << " " << gapCnt << " "
-//                         << hammingSum << endl;
+                    cout << currentFrame << " " << conBegin << " " << conEnd << " " << conCnt << " " << gapCnt << " "
+                         << hammingSum << endl;
                     conCnt = 0;
                     gapCnt = 0;
                     hammingSum = 0;
@@ -455,8 +461,8 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
             conEnd = matchedKmerList[i].queryPos;
             endIdx = i;
             coMatches.emplace_back(conBegin, conEnd, hammingSum, gapCnt, beginIdx, endIdx);
-//            cout << currentFrame << " " << conBegin << " " << conEnd << " " << conCnt << " " << gapCnt << " "
-//                 << hammingSum << endl;
+            cout << currentFrame << " " << conBegin << " " << conEnd << " " << conCnt << " " << gapCnt << " "
+                 << hammingSum << endl;
             conCnt = 0;
             gapCnt = 0;
             hammingSum = 0;
@@ -470,21 +476,26 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     ///Align consecutive matches back to query.
     vector<ConsecutiveMathces> alignedCoMatches;
+
     alignedCoMatches.push_back(coMatches[0]);
+    auto alignedBegin = alignedCoMatches.begin();
     int isOverlaped= 0;
-    for(size_t i = 1; i < coMatches.size(); i++){
+    int overlappedIdx = 0;
+    for(size_t i2 = 1; i2 < coMatches.size(); i2++){
         isOverlaped = 0;
+        overlappedIdx = 0;
         for(size_t j = 0; j < alignedCoMatches.size(); j++){
-            if((alignedCoMatches[j].begin < coMatches[i].end) && (alignedCoMatches[j].end > coMatches[i].begin)){ ///TODO check this condition
+            if((alignedCoMatches[j].begin < coMatches[i2].end) && (alignedCoMatches[j].end > coMatches[i2].begin)){ ///TODO check this condition
                 isOverlaped = 1;
+                overlappedIdx = j;
                 break;
             }
         }
-        if(1 == isOverlaped){ ///TODO what to do here?
-            //alignedCoMatches.push_back(coMatches[i]);
+
+        if(1 == isOverlaped){
             continue;
         } else{
-            alignedCoMatches.push_back(coMatches[i]);
+            alignedCoMatches.push_back(coMatches[i2]);
         }
     }
 
@@ -498,9 +509,11 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     ///Check a query coverage
     int maxNum = queryLen / 3 - kmerLength + 1;
     int matchedNum = 0;
+    int coveredLen = 0;
     float coverage;
     for(size_t cm = 0 ; cm < alignedCoMatches.size(); cm ++){
         matchedNum += (alignedCoMatches[cm].end - alignedCoMatches[cm].begin)/3 + 1;
+        coveredLen += alignedCoMatches[cm].end - alignedCoMatches[cm].begin + 24;
     }
     coverage = float(matchedNum) / float(maxNum);
     cout<<"coverage: "<<coverage<<endl;
@@ -513,22 +526,12 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     ///TODO: how about considering hamming distance here?
     ///Get a lowest common ancestor, and check whether strain taxIDs are existing
     vector<TaxID> taxIdList;
-    unordered_map<TaxID, int> strainMatchCnt;
-    int strainCheck = 0;
     TaxID temp;
 
     for(size_t cs = 0; cs < alignedCoMatches.size(); cs++ ){
         for(size_t k = alignedCoMatches[cs].beginIdx ; k < alignedCoMatches[cs].endIdx + 1; k++ ){
             temp = matchedKmerList[k].taxID;
             taxIdList.push_back(temp);
-            if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(temp)->rank) < 4){
-                strainCheck = 1;
-                if(strainMatchCnt.find(temp) == strainMatchCnt.end()){
-                    strainMatchCnt.insert(pair<TaxID, int>(temp, 1));
-                } else {
-                    strainMatchCnt[temp] ++;
-                }
-            }
         }
     }
 
@@ -546,27 +549,43 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     ///TODO optimize strain specific classification criteria
     ///Strain classification only for high coverage with LCA of species level
     int maxStrainCnt = 0;
+    if(coverage > 0.90 && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
+        int strainCheck = 0;
+        unordered_map<TaxID, int> strainMatchCnt;
+        TaxID strainTaxId;
 
-    if(coverage > 0.95 && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4 && strainCheck == 1){
-        TaxID speciesTaxID = selectedLCA;
-        for(auto it = strainMatchCnt.begin(); it != strainMatchCnt.end(); it++){
-            if( float(it->second) / float(maxNum) > 0.1 && it->second > maxStrainCnt && ncbiTaxonomy.IsAncestor(speciesTaxID, it->first)){
-                maxStrainCnt = it->second;
-                selectedLCA = it->first;
-                cout<<"strain level classification: "<<selectedLCA<<endl;
-                return selectedLCA;
+        for(size_t cs = 0; cs < alignedCoMatches.size(); cs++ ){
+            for(size_t k = alignedCoMatches[cs].beginIdx ; k < alignedCoMatches[cs].endIdx + 1; k++ ){
+                temp = matchedKmerList[k].taxID;
+                if(selectedLCA != temp && ncbiTaxonomy.IsAncestor(selectedLCA, temp)){
+                    if(strainMatchCnt.find(temp) == strainMatchCnt.end()){
+                        strainCheck ++;
+                        strainTaxId = temp;
+                        strainMatchCnt.insert(pair<TaxID, int>(temp, 1));
+                    } else {
+                        strainMatchCnt[temp] ++;
+                    }
+                }
             }
         }
-        cout << selectedLCA << " " << selectedPercent << endl;
-        return selectedLCA;
-    } else{
-        if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
-            cout<<"strain level classification: "<<selectedLCA<<endl;
-        }else {
-            cout << selectedLCA << " " << selectedPercent << endl;
+
+        if(strainCheck == 1){
+            ///strain classification
+            selectedLCA = strainTaxId;
+            cout<<"strain level classification here: "<<selectedLCA<<endl;
+            return selectedLCA;
         }
-        return selectedLCA;
     }
+
+
+
+    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
+        cout<<"strain level classification: "<<selectedLCA<<endl;
+    }else {
+        cout<<selectedLCA<<" "<<selectedPercent<<endl;
+    }
+
+    return selectedLCA;
 }
 
 void Classifier::checkAndGive(vector<uint32_t> & posList, vector<uint8_t> & hammingList, const uint32_t & pos, const uint8_t & hammingDist){
@@ -658,7 +677,15 @@ bool Classifier::compareForLinearSearch(const QueryKmer & a, const QueryKmer & b
 }
 
 bool Classifier::compareConsecutiveMatches(const ConsecutiveMathces & a, const ConsecutiveMathces & b){
-    return (a.end - a.begin) > (b.end- b.begin);
+    if((a.end - a.begin) > (b.end- b.begin)){
+        if((a.end - a.begin) == (b.end - b.begin + 1)){
+            return (a.endIdx - a.beginIdx + 1) * 2 / ((a.hamming+1)*(a.gapCnt+1)) > (b.endIdx - b.beginIdx +1) * 2 / ((b.hamming + 1) * (b.gapCnt + 1));
+        }
+        return true;
+    }else if((a.end - a.begin) == (b.end- b.begin)){
+            return (a.endIdx - a.beginIdx + 1) * 2 / ((a.hamming+1)*(a.gapCnt+1)) > (b.endIdx - b.beginIdx +1) * 2 / ((b.hamming + 1) * (b.gapCnt + 1));
+    }
+    return false;
 }
 
 void Classifier::writeLinearSearchResult() {
