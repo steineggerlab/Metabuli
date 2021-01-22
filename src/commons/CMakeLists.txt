@@ -1,8 +1,8 @@
 set(commons_source_files
         commons/common.h
         commons/count8mers.cpp
-        commons/DiffIdxMerger.h
-        commons/DiffIdxMerger.cpp
+	commons/FileMerger.h
+	commons/FileMerger.cpp
         commons/IndexCreator.cpp
         commons/IndexCreator.h
         commons/Kmer.h
