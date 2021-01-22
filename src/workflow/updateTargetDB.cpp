@@ -107,16 +107,16 @@ int updateTargetDB(int argc, const char **argv, const Command &command){
     sprintf(mergedTaxIdListName, "%s_taxIDs", updatedFileName);
 
     FILE * newTaxIdListFile;
-    FILE * oldTaxIdList;
+    FILE * oldTaxIdListFile;
     FILE * mergedTaxIdList;
     newTaxIdListFile = fopen(taxIdFileName, "r");
-    oldTaxIdList = fopen(outdatedTaxIdList, "r");
+    oldTaxIdListFile = fopen(outdatedTaxIdList, "r");
     mergedTaxIdList = fopen(mergedDiffFileName, "w");
 
     ///알아서 복사 붙여 넣기 해라 귀찮다.
 
     fclose(newTaxIdListFile);
-    fclose(oldTaxIdList);
+    fclose(oldTaxIdListFile);
     fclose(mergedTaxIdList);
 
     return 0;
