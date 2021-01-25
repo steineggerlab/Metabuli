@@ -20,12 +20,12 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 
 
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
-
+	cout<<"after mmap"<<endl;
     vector<int> startsOfTaxIDs; ///start points where sequences of next species start
-    startsOfTaxIDs.reserve(taxIdListAtRank.size());
+  //  startsOfTaxIDs.reserve(taxIdListAtRank.size());
     startsOfTaxIDs.push_back(0);
     vector<int> seqCntOfTaxIDs; ///the number of sequences for each species
-    seqCntOfTaxIDs.reserve(taxIdListAtRank.size());
+   // seqCntOfTaxIDs.reserve(taxIdListAtRank.size());
     int seqCnt = 0;
     int currentTaxID = taxIdListAtRank[0];
     for(size_t i = 0; i < taxIdListAtRank.size(); i++){
@@ -41,19 +41,21 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     }
     seqCntOfTaxIDs.push_back(seqCnt);
 
+    cout<<"after seqCnt..."<<endl;
     vector<Sequence> sequences;
     seqIterator->getSeqSegmentsWithHead(sequences, seqFile);
-
+	cout<<"getSeqSeg..."<<endl;
     size_t numOfTaxIDs = startsOfTaxIDs.size();
     bool processedSeqChecker[numOfTaxIDs];
     fill_n(processedSeqChecker, numOfTaxIDs, false);
 
     TargetKmerBuffer kmerBuffer(kmerBufSize);
     size_t processedTaxIDCnt = 0;
-
+	cout<<"before while loop"<<endl;
     while(processedTaxIDCnt < numOfTaxIDs){ ///check this condition
         fillTargetKmerBuffer(kmerBuffer, seqFile, sequences, processedSeqChecker, processedTaxIDCnt, startsOfTaxIDs, seqCntOfTaxIDs);
-        writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdListAtRank, taxIdList);
+       	cout<<"before writing"<<endl;
+       	writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdListAtRank, taxIdList);
     }
 
     free(kmerBuffer.buffer);
@@ -62,7 +64,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 
 size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedTaxIdCnt, const vector<int> & startsOfTaxIDs, const vector<int> & seqCntOfTaxIDs) {
 #ifdef OPENMP
-    omp_set_num_threads(1);
+  // omp_set_num_threads(1);
 #endif
     for(int i = 0; i < startsOfTaxIDs.size();i++){
         cout<<startsOfTaxIDs[i]<<endl;
@@ -84,7 +86,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
         for (size_t i = 0; i < startsOfTaxIDs.size() ; i++) {
             if((checker[i] == false) && (!hasOverflow)) {
                // size_t numOfBlocksList[seqCntOfTaxIDs[i]];
-
+	
                 size_t * numOfBlocksList = (size_t*)malloc(seqCntOfTaxIDs[i] * sizeof(size_t));
 
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[startsOfTaxIDs[i]].start]), seqs[startsOfTaxIDs[i]].length);
@@ -102,8 +104,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
 
                 prodigal.getPredictedFrames(seq->seq.s);
                 ///fix here
-                blocks = (PredictedBlock*)malloc(((prodigal.getNumberOfPredictedGenes() + 1) * (seqCntOfTaxIDs[i] + 1)) * 2 * sizeof(PredictedBlock));
-                numOfBlocks = 0;
+		cout<<"before block malloc"<<endl;
+                blocks = (PredictedBlock*)malloc(((prodigal.getNumberOfPredictedGenes() + 1) * (seqCntOfTaxIDs[i] + 1)) * 100 * sizeof(PredictedBlock));
+                cout<<"after malloc"<<endl;
+		numOfBlocks = 0;
                 seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks, prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s), numOfBlocks);
                 numOfBlocksList[0] = numOfBlocks;
                 for(size_t p = 1; p < seqCntOfTaxIDs[i]; p++ ) {
@@ -115,8 +119,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks,
                                                      prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
                                                      numOfBlocks);
-                    numOfBlocksList[p] = numOfBlocks;
+                    cout<<"get translation block"<<startsOfTaxIDs[i]<<" "<<p<<endl;
+		    numOfBlocksList[p] = numOfBlocks;
                 }
+		cout<<"after get blocks"<<endl;
 
                 totalKmerCntForOneTaxID = 0;
                 for(size_t block = 0; block < numOfBlocks; block++){
