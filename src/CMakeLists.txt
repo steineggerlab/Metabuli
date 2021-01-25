@@ -1,6 +1,6 @@
 include_directories(commons)
 include_directories(workflow)
-include_directories(~/pjt/ADclassifier/lib/prodigal)
+include_directories(../lib/prodigal)
 
 add_subdirectory(commons)
 add_subdirectory(util)
@@ -12,7 +12,7 @@ add_executable(adclassifier
         ${util_source_files}
         ${workflow_source_files}
         adclassifier.cpp
-        LocalCommandDeclarations.h commons/ProdigalWrapper.h commons/ProdigalWrapper.cpp)
+        LocalCommandDeclarations.h)
 
 mmseqs_setup_derived_target(adclassifier)
 target_link_libraries(adclassifier version)

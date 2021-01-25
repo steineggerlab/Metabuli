@@ -17,4 +17,6 @@ set(commons_source_files
         commons/BitManipulateMacros.h
         commons/LocalParameters.cpp
         commons/LocalParameters.h
+		commons/ProdigalWrapper.h
+		commons/ProdigalWrapper.cpp
         PARENT_SCOPE)

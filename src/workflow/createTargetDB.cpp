@@ -13,9 +13,9 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     IndexCreator idxCre;
     string name, node, merged;
-    NcbiTaxonomy ncbiTaxonomy("/home/jaebeom/ncbitaxonomy/names.dmp",
-            "/home/jaebeom/ncbitaxonomy/nodes.dmp",
-                 "/home/jaebeom/ncbitaxonomy/merged.dmp");
+    NcbiTaxonomy ncbiTaxonomy("../../taxdmp/names.dmp",
+            "../../taxdmp/nodes.dmp",
+                 "../../taxdmp/merged.dmp");
     const char * seqFileName = argv[0];
     const char * taxIdFileName = argv[1];
     const char * outputFileName = argv[2];
