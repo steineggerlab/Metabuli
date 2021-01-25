@@ -29,9 +29,9 @@ KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
 using namespace std;
 
 typedef struct PredictedBlock {
-    PredictedBlock(int start, int end) : start(start), end(end) { }
-    int start;
-    int end;
+    PredictedBlock(uint32_t start, uint32_t end, int strand) : start(start), end(end), strand(strand) { }
+    uint32_t start;
+    uint32_t end;
     int strand; //true for forward
 }PredictedBlock;
 
@@ -50,7 +50,6 @@ private:
     uint64_t nuc2num[4][4][4];
 
     void addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int forOrRev, const int & kmerCnt, const int & frame);
-
     void addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, const int & startOfKmer);
 
 public:
@@ -64,7 +63,6 @@ public:
     size_t KmerNumOfSixFrameTranslation(const string & seq);
     size_t getNumOfKmerForBlock(const PredictedBlock & block);
     void fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID);
-
     void printKmerInDNAsequence(uint64_t kmer);
     SeqIterator();
 };

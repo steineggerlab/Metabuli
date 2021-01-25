@@ -12,7 +12,6 @@ void count8mers(const char * fileName) {
     size_t maxNuc = seqFile.fileSize/sizeof(char);
     vector<Sequence> seqSegments;
     size_t start = 0;
-    size_t end = 0;
     //Sequence temp;
     for(size_t i = 0; i < maxNuc; i++)
     {
@@ -31,7 +30,7 @@ void count8mers(const char * fileName) {
     seqSegments.emplace_back(start, maxNuc - 2, maxNuc - start - 1);
     size_t len = 0;
     size_t sum = 0;
-    for(int i = 1 ; i<seqSegments.size(); i++)
+    for(size_t i = 1 ; i<seqSegments.size(); i++)
     {
         len = (seqSegments[i].end - seqSegments[i].start + 1);
         if(len % 3 == 0)

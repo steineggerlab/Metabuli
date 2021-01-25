@@ -17,15 +17,13 @@ IndexCreator::~IndexCreator() {
 ///It reads a reference sequence file and write a differential index file and target k-mer info file.
 void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const char * outputFileName, const vector<int> & taxIdListAtRank, const vector<int> & taxIdList)
 {
-
-
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
 
     vector<int> startsOfTaxIDs; ///start points where sequences of next species start
-    startsOfTaxIDs.reserve(taxIdListAtRank.size());
+    //startsOfTaxIDs.reserve(taxIdListAtRank.size());
     startsOfTaxIDs.push_back(0);
     vector<int> seqCntOfTaxIDs; ///the number of sequences for each species
-    seqCntOfTaxIDs.reserve(taxIdListAtRank.size());
+    //seqCntOfTaxIDs.reserve(taxIdListAtRank.size());
     int seqCnt = 0;
     int currentTaxID = taxIdListAtRank[0];
     for(size_t i = 0; i < taxIdListAtRank.size(); i++){
@@ -64,10 +62,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
 #ifdef OPENMP
     omp_set_num_threads(1);
 #endif
-    for(int i = 0; i < startsOfTaxIDs.size();i++){
-        cout<<startsOfTaxIDs[i]<<endl;
-        cout<<seqCntOfTaxIDs[i]<<endl<<endl;
-    }
+//    for(int i = 0; i < startsOfTaxIDs.size();i++){
+//        cout<<startsOfTaxIDs[i]<<endl;
+//        cout<<seqCntOfTaxIDs[i]<<endl<<endl;
+//    }
     bool hasOverflow = false;
 #pragma omp parallel default(none), shared(checker, hasOverflow, seqCntOfTaxIDs, seqFile, seqs, kmerBuffer, processedTaxIdCnt, startsOfTaxIDs, cout)
     {
@@ -99,22 +97,23 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     prodigal.trainASpecies(seq->seq.s);
                 }
 
-
                 prodigal.getPredictedFrames(seq->seq.s);
                 ///fix here
-                blocks = (PredictedBlock*)malloc(((prodigal.getNumberOfPredictedGenes() + 1) * (seqCntOfTaxIDs[i] + 1)) * 2 * sizeof(PredictedBlock));
+                blocks = (PredictedBlock*)malloc(((prodigal.getNumberOfPredictedGenes() + 1) * (seqCntOfTaxIDs[i] + 1)) * 5 * sizeof(PredictedBlock));
                 numOfBlocks = 0;
                 seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks, prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s), numOfBlocks);
                 numOfBlocksList[0] = numOfBlocks;
                 for(size_t p = 1; p < seqCntOfTaxIDs[i]; p++ ) {
-                    kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[startsOfTaxIDs[i] + p].start]),
+                    kseq_buffer_t buffer2(const_cast<char *>(&seqFile.data[seqs[startsOfTaxIDs[i] + p].start]),
                                          seqs[startsOfTaxIDs[i] + p].length);
-                    kseq_t *seq = kseq_init(&buffer);
-                    kseq_read(seq);
-                    prodigal.getPredictedFrames(seq->seq.s);
+                    kseq_t *seq2 = kseq_init(&buffer2);
+                    kseq_read(seq2);
+                    prodigal.getPredictedFrames(seq2->seq.s);
+
                     seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks,
                                                      prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
                                                      numOfBlocks);
+
                     numOfBlocksList[p] = numOfBlocks;
                 }
 

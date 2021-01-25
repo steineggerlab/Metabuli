@@ -4,7 +4,7 @@
 
 #include "Classifier.h"
 
-Classifier::Classifier() : queryCount(0), multipleMatchCount(0), totalMatchCount(0), perfectMatchCount(0) {
+Classifier::Classifier() {
     seqIterator = new SeqIterator();
     numOfSplit = 0;
     closestCount = 0;

@@ -91,5 +91,3 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     return 0;
 }
-
-

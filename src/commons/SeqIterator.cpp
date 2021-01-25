@@ -121,12 +121,12 @@ void SeqIterator::sixFrameTranslation(const char * seq){
 
 void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID) {
 
-    int forOrRev;
+    uint32_t forOrRev;
     uint64_t tempKmer = 0;
     uint32_t seqLen = strlen(seq);
 
     for(uint32_t frame = 0 ; frame < 6 ; frame++){
-        int len = aaFrames[frame].size();
+        uint32_t len = aaFrames[frame].size();
         forOrRev = frame / 3;
         for (uint32_t kmerCnt = 0 ; kmerCnt < len - kmerLength + 1 ; kmerCnt++) {
             ///Amino acid 2 number
@@ -219,7 +219,7 @@ void SeqIterator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedD
 ///It extracts kmers from amino acid sequence with DNA information and fill the kmerBuffer with them.
 void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID) {
     uint64_t tempKmer = 0;
-    int len = aaFrames[0].size();
+    uint32_t len = aaFrames[0].size();
     for (uint32_t startOfKmer = 0 ; startOfKmer < len - kmerLength + 1 ; startOfKmer++){
         ///Amino acid 2 number
         for (size_t i = 0; i < kmerLength; i++)
@@ -260,7 +260,9 @@ size_t SeqIterator::KmerNumOfSixFrameTranslation(const string & seq){
     }else if(len % 3 == 2){
         return (6 * (len/3) - 42);
     }
+    return 0;
 }
+
 size_t SeqIterator::getNumOfKmerForBlock(const PredictedBlock & block){
     size_t len = block.end - block.start + 1;
     return len/3 -7;
@@ -269,6 +271,16 @@ size_t SeqIterator::getNumOfKmerForBlock(const PredictedBlock & block){
 ///It makes the block for translation from DNA to AA
 ///Each block has a predicted gene part and intergenic region. When another gene shows up, new block starts.
 void SeqIterator::getTranslationBlocks(struct _gene * genes, struct _node * nodes, PredictedBlock * blocks, size_t numOfGene, size_t length, size_t & blockIdx){
+
+    if(numOfGene == 0){
+        blocks[blockIdx].start = 0;
+        blocks[blockIdx].end = length - 1;
+        blocks[blockIdx].strand = 1;
+        blockIdx++;
+        return;
+    }
+
+
     //for the first frame
     if(genes[0].begin > 23) {
         blocks[blockIdx].start = 0;
@@ -307,6 +319,7 @@ void SeqIterator::getTranslationBlocks(struct _gene * genes, struct _node * node
             blockIdx++;
         }
     }
+
     //For the last block
     if(nodes[genes[numOfGene - 1].start_ndx].strand == 1){ //forward
         blocks[blockIdx].start = genes[numOfGene - 1].begin;
@@ -324,7 +337,6 @@ void SeqIterator::getTranslationBlocks(struct _gene * genes, struct _node * node
         blocks[blockIdx].strand = nodes[genes[numOfGene-1].start_ndx].strand;
         blockIdx ++;
     }
-    return;
 }
 
 void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
