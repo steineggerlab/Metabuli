@@ -53,6 +53,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
         fillTargetKmerBuffer(kmerBuffer, seqFile, sequences, processedSeqChecker, processedTaxIDCnt, startsOfTaxIDs, seqCntOfTaxIDs);
        	cout<<"before writing"<<endl;
        	writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdListAtRank, taxIdList);
+        cout<<"after writing "<<kmerBuffer.startIndexOfReserve<<endl;
     }
 
     free(kmerBuffer.buffer);
@@ -116,11 +117,11 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks,
                                                      prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
                                                      numOfBlocks);
+                    cout<<"upper loop: "<<startsOfTaxIDs[i] + p<<endl;
 
                     numOfBlocksList[p] = numOfBlocks;
 
                 }
-		cout<<"after get blocks"<<endl;
 
                 totalKmerCntForOneTaxID = 0;
                 for(size_t block = 0; block < numOfBlocks; block++){
@@ -135,9 +136,11 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                         kseq_t *seq = kseq_init(&buffer);
                         kseq_read(seq);
                         size_t end = numOfBlocksList[seqCnt];
+                        cout<<"lower loop: "<<startsOfTaxIDs[i] + seqCnt<<endl;
                         for(size_t bl = start; bl < end ; bl++){
                             seqIterator.translateBlock(seq->seq.s,blocks[bl]);
                             seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, startsOfTaxIDs[i]+seqCnt);
+                            cout<<"after filling: "<<startsOfTaxIDs[i] + seqCnt<<endl;
                         }
                         start = numOfBlocksList[seqCnt];
                     }
@@ -147,12 +150,12 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     kmerBuffer.startIndexOfReserve -= totalKmerCntForOneTaxID;
                     hasOverflow = true;
                 }
-                cout<<numOfBlocks<<endl;
                 free(blocks);
                 free(numOfBlocksList);
             }
         }
     }
+    cout<<"before return: "<<kmerBuffer.startIndexOfReserve<<endl;
     return 0;
 }
 
