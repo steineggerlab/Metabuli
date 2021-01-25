@@ -100,15 +100,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
 
                 prodigal.getPredictedFrames(seq->seq.s);
                 ///fix here
-<<<<<<< HEAD
+
                 blocks = (PredictedBlock*)malloc(((prodigal.getNumberOfPredictedGenes() + 1) * (seqCntOfTaxIDs[i] + 1)) * 5 * sizeof(PredictedBlock));
                 numOfBlocks = 0;
-=======
-		cout<<"before block malloc"<<endl;
-                blocks = (PredictedBlock*)malloc(((prodigal.getNumberOfPredictedGenes() + 1) * (seqCntOfTaxIDs[i] + 1)) * 100 * sizeof(PredictedBlock));
-                cout<<"after malloc"<<endl;
-		numOfBlocks = 0;
->>>>>>> cb1efe8fea96badf8d4464a7d8f08785846f929c
+
                 seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks, prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s), numOfBlocks);
                 numOfBlocksList[0] = numOfBlocks;
                 for(size_t p = 1; p < seqCntOfTaxIDs[i]; p++ ) {
@@ -121,13 +116,9 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks,
                                                      prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
                                                      numOfBlocks);
-<<<<<<< HEAD
 
                     numOfBlocksList[p] = numOfBlocks;
-=======
-                    cout<<"get translation block"<<startsOfTaxIDs[i]<<" "<<p<<endl;
-		    numOfBlocksList[p] = numOfBlocks;
->>>>>>> cb1efe8fea96badf8d4464a7d8f08785846f929c
+
                 }
 		cout<<"after get blocks"<<endl;
 
