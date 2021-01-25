@@ -140,8 +140,8 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                         for(size_t bl = start; bl < end ; bl++){
                             seqIterator.translateBlock(seq->seq.s,blocks[bl]);
                             seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, startsOfTaxIDs[i]+seqCnt);
-                            cout<<"after filling: "<<startsOfTaxIDs[i] + seqCnt<<endl;
                         }
+                        cout<<"after filling: "<<startsOfTaxIDs[i] + seqCnt<<endl;
                         start = numOfBlocksList[seqCnt];
                     }
                     checker[i] = true;
