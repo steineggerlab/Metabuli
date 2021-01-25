@@ -41,17 +41,16 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     }
     seqCntOfTaxIDs.push_back(seqCnt);
 
-    cout<<"after seqCnt..."<<endl;
     vector<Sequence> sequences;
     seqIterator->getSeqSegmentsWithHead(sequences, seqFile);
-	cout<<"getSeqSeg..."<<endl;
+   
     size_t numOfTaxIDs = startsOfTaxIDs.size();
     bool processedSeqChecker[numOfTaxIDs];
     fill_n(processedSeqChecker, numOfTaxIDs, false);
 
     TargetKmerBuffer kmerBuffer(kmerBufSize);
     size_t processedTaxIDCnt = 0;
-	cout<<"before while loop"<<endl;
+
     while(processedTaxIDCnt < numOfTaxIDs){ ///check this condition
         fillTargetKmerBuffer(kmerBuffer, seqFile, sequences, processedSeqChecker, processedTaxIDCnt, startsOfTaxIDs, seqCntOfTaxIDs);
        	cout<<"before writing"<<endl;
