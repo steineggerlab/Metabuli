@@ -1,6 +1,6 @@
 include_directories(commons)
 include_directories(workflow)
-include_directories(../lib/prodigal)
+include_directories(~/pjt/ADclassifier/lib/prodigal)
 
 add_subdirectory(commons)
 add_subdirectory(util)
