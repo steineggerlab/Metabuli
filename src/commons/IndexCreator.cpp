@@ -62,7 +62,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 
 size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedTaxIdCnt, const vector<int> & startsOfTaxIDs, const vector<int> & seqCntOfTaxIDs) {
 #ifdef OPENMP
-  // omp_set_num_threads(1);
+   omp_set_num_threads(1);
 #endif
 //    for(int i = 0; i < startsOfTaxIDs.size();i++){
 //        cout<<startsOfTaxIDs[i]<<endl;
