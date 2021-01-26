@@ -20,10 +20,18 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
 	cout<<"after mmap"<<endl;
     vector<int> startsOfTaxIDs; ///start points where sequences of next species start
-    //startsOfTaxIDs.reserve(taxIdListAtRank.size());
+
     startsOfTaxIDs.push_back(0);
     vector<int> seqCntOfTaxIDs; ///the number of sequences for each species
-    //seqCntOfTaxIDs.reserve(taxIdListAtRank.size());
+    vector<FastaSplit> splits;
+
+
+    getFastaSplits(taxIdListAtRank, splits);
+    for(int i = 0 ; i < splits.size(); i++){
+        cout<<splits[i].start<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
+    }
+    cout<<"here"<<endl;
+
     int seqCnt = 0;
     int currentTaxID = taxIdListAtRank[0];
     for(size_t i = 0; i < taxIdListAtRank.size(); i++){
@@ -38,20 +46,24 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
         }
     }
     seqCntOfTaxIDs.push_back(seqCnt);
-
     vector<Sequence> sequences;
     seqIterator->getSeqSegmentsWithHead(sequences, seqFile);
-   
+    size_t numOfSplits = splits.size();
+    bool splitChecker[numOfSplits];
+    fill_n(splitChecker, numOfSplits, false);
+
     size_t numOfTaxIDs = startsOfTaxIDs.size();
     bool processedSeqChecker[numOfTaxIDs];
     fill_n(processedSeqChecker, numOfTaxIDs, false);
 
     TargetKmerBuffer kmerBuffer(kmerBufSize);
     size_t processedTaxIDCnt = 0;
+    size_t processedSplitCnt = 0;
 
-    while(processedTaxIDCnt < numOfTaxIDs){ ///check this condition
-        fillTargetKmerBuffer(kmerBuffer, seqFile, sequences, processedSeqChecker, processedTaxIDCnt, startsOfTaxIDs, seqCntOfTaxIDs);
-       	cout<<"before writing"<<endl;
+    while(processedSplitCnt < numOfSplits){ ///check this condition
+      //  fillTargetKmerBuffer(kmerBuffer, seqFile, sequences, processedSeqChecker, processedTaxIDCnt, startsOfTaxIDs, seqCntOfTaxIDs);
+       	fillTargetKmerBuffer2(kmerBuffer, seqFile, sequences, splitChecker, processedSplitCnt, splits);
+        cout<<"before writing"<<endl;
        	writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdListAtRank, taxIdList);
         cout<<"after writing "<<kmerBuffer.startIndexOfReserve<<endl;
     }
@@ -159,6 +171,103 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
     return 0;
 }
 
+size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSplitCnt, const vector<FastaSplit> & splits) {
+#ifdef OPENMP
+  // omp_set_num_threads(1);
+#endif
+//    for(int i = 0; i < startsOfTaxIDs.size();i++){
+//        cout<<startsOfTaxIDs[i]<<endl;
+//        cout<<seqCntOfTaxIDs[i]<<endl<<endl;
+//    }
+    bool hasOverflow = false;
+    size_t numOfGene =0;
+#pragma omp parallel default(none), shared(checker, hasOverflow, splits, seqFile, seqs, kmerBuffer, processedSplitCnt, cout, numOfGene)
+    {
+        ProdigalWrapper prodigal;
+        SeqIterator seqIterator;
+        size_t posToWrite;
+
+        PredictedBlock * blocks;
+        size_t numOfBlocks;
+
+        size_t totalKmerCntForOneTaxID = 0;
+
+#pragma omp for schedule(dynamic, 1)
+        for (size_t i = 0; i < splits.size() ; i++) {
+            if((checker[i] == false) && (!hasOverflow)) {
+                // size_t numOfBlocksList[seqCntOfTaxIDs[i]];
+
+                //size_t * numOfBlocksList = (size_t*)malloc(seqCntOfTaxIDs[i] * sizeof(size_t));
+                size_t * numOfBlocksList = (size_t*)malloc(splits[i].cnt * sizeof(size_t));
+                kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[splits[i].start].start]), seqs[splits[i].start].length);
+                kseq_t *seq = kseq_init(&buffer);
+                kseq_read(seq);
+                prodigal.is_meta = 0;
+                if(strlen(seq->seq.s) < 20000){
+                    prodigal.is_meta = 1;
+                    prodigal.trainMeta(seq->seq.s);
+                    cout<<"nn "<<prodigal.nn<<" "<<prodigal.max_phase<<" "<<prodigal.max_score<<endl;
+                }else{
+                    prodigal.trainASpecies(seq->seq.s);
+                }
+
+                prodigal.getPredictedFrames(seq->seq.s);
+                ///fix here
+                blocks = (PredictedBlock*)malloc(((prodigal.getNumberOfPredictedGenes() + 1) * (splits[i].cnt + 1)) * 5 * sizeof(PredictedBlock));
+                numOfBlocks = 0;
+
+               // seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks, prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s), numOfBlocks);
+               // numOfBlocksList[0] = numOfBlocks;
+                for(size_t p = 0; p < splits[i].cnt; p++ ) {
+                    buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].start + splits[i].offset + p].start]), seqs[splits[i].start + splits[i].offset + p].length};
+                    seq = kseq_init(&buffer);
+                    kseq_read(seq);
+
+                    prodigal.getPredictedFrames(seq->seq.s);
+                    numOfGene += prodigal.getNumberOfPredictedGenes();
+                    seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks,
+                                                     prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
+                                                     numOfBlocks);
+                    cout<<"upper loop: "<<splits[i].start + splits[i].offset + p<<endl;
+                    numOfBlocksList[p] = numOfBlocks;
+                }
+
+                totalKmerCntForOneTaxID = 0;
+                for(size_t block = 0; block < numOfBlocks; block++){
+                    totalKmerCntForOneTaxID += seqIterator.getNumOfKmerForBlock(blocks[block]); ///이 함수 정확한지 확인해야
+                }
+                posToWrite = kmerBuffer.reserveMemory(totalKmerCntForOneTaxID);
+
+                if(posToWrite + totalKmerCntForOneTaxID < kmerBuffer.bufferSize){
+                    size_t start = 0;
+                    for(size_t seqIdx = 0; seqIdx < splits[i].cnt; seqIdx++){
+                        buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].start + splits[i].offset + seqIdx].start]), seqs[splits[i].start + splits[i].offset + seqIdx].length};
+                        seq = kseq_init(&buffer);
+                        kseq_read(seq);
+
+                        size_t end = numOfBlocksList[seqIdx];
+                        cout << "lower loop: " <<splits[i].start + splits[i].offset + seqIdx << endl;
+                        for(size_t bl = start; bl < end ; bl++){
+                            seqIterator.translateBlock(seq->seq.s,blocks[bl]);
+                            seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].start + splits[i].offset + seqIdx);
+                        }
+                        cout << "after filling: " << splits[i].start + splits[i].offset + seqIdx << " " << kmerBuffer.startIndexOfReserve << endl;
+                        start = numOfBlocksList[seqIdx];
+                    }
+                    checker[i] = true;
+                    processedSplitCnt ++;
+                }else {
+                    kmerBuffer.startIndexOfReserve -= totalKmerCntForOneTaxID;
+                    hasOverflow = true;
+                }
+                free(blocks);
+                free(numOfBlocksList);
+            }
+        }
+    }
+    cout<<"before return: "<<kmerBuffer.startIndexOfReserve<<" "<<double(numOfGene)/double(4136)<<endl;
+    return 0;
+}
 ///This function sort the TargetKmerBuffer, do redundancy reducing task, write the differential index of them
 void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName, const vector<int> & taxIdListAtRank, const vector<int> & taxIdList)
 {
@@ -304,4 +413,28 @@ int IndexCreator::getNumOfFlush()
 
 bool IndexCreator::compareForDiffIdx(const TargetKmer & a, const TargetKmer & b){
     return a.ADkmer < b.ADkmer || (a.ADkmer == b.ADkmer && a.info.sequenceID < b.info.sequenceID);
+}
+
+void IndexCreator::getFastaSplits(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit){
+    size_t start = 0;
+    size_t idx = 0;
+    uint32_t offset = 0;
+    uint32_t cnt = 0;
+    int currentTaxId = taxIdListAtRank[0];
+    while(idx < taxIdListAtRank.size()){
+        offset = 0;
+        cnt = 0;
+        currentTaxId = taxIdListAtRank[start];
+        while(currentTaxId == taxIdListAtRank[idx] && idx < taxIdListAtRank.size()){
+            cnt ++;
+            idx ++;
+            if(cnt > 50){
+                fastaSplit.emplace_back(start, offset, cnt-1);
+                offset += cnt - 1;
+                cnt = 1;
+            }
+        }
+        fastaSplit.emplace_back(start, offset, cnt);
+        start = idx;
+    }
 }

@@ -194,6 +194,9 @@ void ProdigalWrapper::trainMeta(char *genome) {
     }
 
     slen = getNextSeq(genome, 1);
+
+    cout<<"gc"<<gc<<" "<<tinf.gc<<endl;
+
     rcom_seq(seq, rseq, useq, slen);
     if(slen == 0) {
         fprintf(stderr, "\nSequence read failed (file must be Fasta, ");
@@ -209,9 +212,9 @@ void ProdigalWrapper::trainMeta(char *genome) {
         max_slen = slen;
     }
 
-    low = 0.88495*gc - 0.0102337;
+    low = 0.88495*tinf.gc - 0.0102337;
     if(low > 0.65) low = 0.65;
-    high = 0.86596*gc + .1131991;
+    high = 0.86596*tinf.gc + .1131991;
     if(high < 0.35) high = 0.35;
 
     max_score = -100.0;

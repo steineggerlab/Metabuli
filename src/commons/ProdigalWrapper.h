@@ -24,10 +24,10 @@
 
 class ProdigalWrapper{
 private:
-    int rv, slen, nn, ng, ipath, *gc_frame, output, max_phase;
+    int rv, slen, ng, ipath, *gc_frame, output;
     int closed, do_mask, nmask, force_nonsd, user_tt, num_seq, quiet;
     int max_slen, fnum;
-    double max_score, gc, low, high;
+    double gc, low, high;
     unsigned char *seq, *rseq, *useq;
     char *train_file, *start_file, *trans_file, *nuc_file;
     char *input_file, *output_file, input_copy[MAX_LINE];
@@ -44,6 +44,8 @@ private:
     void getTranslationFrames( struct _gene * genes);
 public:
     int is_meta;
+    int nn, max_phase;
+    double max_score;
     struct _node *nodes;
     struct _gene *genes;
     int getNumberOfPredictedGenes();

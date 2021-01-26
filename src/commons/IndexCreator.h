@@ -33,6 +33,13 @@ using namespace std;
 
 class IndexCreator{
 private:
+    typedef struct FastaSplit{
+        FastaSplit(size_t start, uint32_t offset, uint32_t cnt): start(start), offset(offset), cnt(cnt) {}
+        size_t start;
+        uint32_t offset;
+        uint32_t cnt;
+    } FastaSplit;
+
     size_t availableMemory;
     size_t numOfFlush=0;
     SeqIterator * seqIterator;
@@ -41,7 +48,9 @@ private:
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
     size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedTaxIdCnt, const vector<int> & startsOfTaxIDs, const vector<int> & seqCntOfTaxIDs);
+    size_t fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedTaxIdCnt, const vector<FastaSplit> & splits);
 
+    void getFastaSplits(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit);
 public:
     IndexCreator();
     ~IndexCreator();
