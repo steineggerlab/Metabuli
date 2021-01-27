@@ -58,8 +58,8 @@ public:
     string reverseCompliment(string & read) const ;
     void sixFrameTranslation(const char * seq);
     void translateBlock(const char* seq, PredictedBlock & block);
-    void getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
-    void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
+    static void getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
+    static void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
     size_t KmerNumOfSixFrameTranslation(const string & seq);
     size_t getNumOfKmerForBlock(const PredictedBlock & block);
     void fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID);

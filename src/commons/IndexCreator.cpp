@@ -47,7 +47,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     }
     seqCntOfTaxIDs.push_back(seqCnt);
     vector<Sequence> sequences;
-    seqIterator->getSeqSegmentsWithHead(sequences, seqFile);
+    SeqIterator::getSeqSegmentsWithHead(sequences, seqFile);
     size_t numOfSplits = splits.size();
     bool splitChecker[numOfSplits];
     fill_n(splitChecker, numOfSplits, false);
@@ -188,6 +188,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
         size_t posToWrite;
 
         PredictedBlock * blocks;
+        size_t * numOfBlocksList;
         size_t numOfBlocks;
 
         size_t totalKmerCntForOneTaxID = 0;
@@ -195,10 +196,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < splits.size() ; i++) {
             if((checker[i] == false) && (!hasOverflow)) {
-                // size_t numOfBlocksList[seqCntOfTaxIDs[i]];
-
-                //size_t * numOfBlocksList = (size_t*)malloc(seqCntOfTaxIDs[i] * sizeof(size_t));
-                size_t * numOfBlocksList = (size_t*)malloc(splits[i].cnt * sizeof(size_t));
+                numOfBlocksList = (size_t*)malloc(splits[i].cnt * sizeof(size_t));
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[splits[i].start].start]), seqs[splits[i].start].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
@@ -246,12 +244,11 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         kseq_read(seq);
 
                         size_t end = numOfBlocksList[seqIdx];
-                        cout << "lower loop: " <<splits[i].start + splits[i].offset + seqIdx << endl;
+
                         for(size_t bl = start; bl < end ; bl++){
                             seqIterator.translateBlock(seq->seq.s,blocks[bl]);
                             seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].start + splits[i].offset + seqIdx);
                         }
-                        cout << "after filling: " << splits[i].start + splits[i].offset + seqIdx << " " << kmerBuffer.startIndexOfReserve << endl;
                         start = numOfBlocksList[seqIdx];
                     }
                     checker[i] = true;
@@ -260,10 +257,12 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     kmerBuffer.startIndexOfReserve -= totalKmerCntForOneTaxID;
                     hasOverflow = true;
                 }
-                free(blocks);
+
+
                 free(numOfBlocksList);
             }
         }
+        free(blocks);
     }
     cout<<"before return: "<<kmerBuffer.startIndexOfReserve<<" "<<double(numOfGene)/double(4136)<<endl;
     return 0;
