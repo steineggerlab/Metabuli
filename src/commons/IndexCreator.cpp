@@ -184,8 +184,8 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
         SeqIterator seqIterator;
         size_t posToWrite;
 
-        PredictedBlock * blocks = (PredictedBlock*)malloc(10);
-        size_t * numOfBlocksList =(size_t*)malloc(10);
+        PredictedBlock * blocks = (PredictedBlock*)malloc(sizeof(PredictedBlock));
+        size_t * numOfBlocksList =(size_t*)malloc(sizeof(size_t));
         size_t numOfBlocks;
 
         size_t totalKmerCntForOneTaxID = 0;
