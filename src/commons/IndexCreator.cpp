@@ -184,8 +184,8 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
         SeqIterator seqIterator;
         size_t posToWrite;
 
-        //PredictedBlock * blocks;
-        //size_t * numOfBlocksList;
+        PredictedBlock * blocks = (PredictedBlock*)malloc(10);
+        size_t * numOfBlocksList =(size_t*)malloc(10);
         size_t numOfBlocks;
 
         size_t totalKmerCntForOneTaxID = 0;
@@ -193,7 +193,8 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < splits.size() ; i++) {
             if((checker[i] == false) && (!hasOverflow)) {
-                size_t * numOfBlocksList = (size_t*)malloc(splits[i].cnt * sizeof(size_t));
+//                size_t * numOfBlocksList = (size_t*)malloc(splits[i].cnt * sizeof(size_t));
+                realloc(numOfBlocksList, (splits[i].cnt + 1) * sizeof(size_t));
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[splits[i].start].start]), seqs[splits[i].start].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
@@ -201,13 +202,14 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                 if(strlen(seq->seq.s) < 20000){
                     prodigal.is_meta = 1;
                     prodigal.trainMeta(seq->seq.s);
-              }else{
+                }else{
                     prodigal.trainASpecies(seq->seq.s);
                 }
 
                 prodigal.getPredictedFrames(seq->seq.s);
                 ///fix here
-                PredictedBlock * blocks = (PredictedBlock*)malloc(((prodigal.getNumberOfPredictedGenes() + 1) * (splits[i].cnt + 1)) * 5 * sizeof(PredictedBlock));
+                realloc(blocks,(prodigal.getNumberOfPredictedGenes() + 1) * (splits[i].cnt + 1) * 5 * sizeof(PredictedBlock));
+               // blocks = (PredictedBlock*)realloc(((prodigal.getNumberOfPredictedGenes() + 1) * (splits[i].cnt + 1)) * 5 * sizeof(PredictedBlock));
                 numOfBlocks = 0;
 
                 for(size_t p = 0; p < splits[i].cnt; p++ ) {
@@ -252,11 +254,10 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     kmerBuffer.startIndexOfReserve -= totalKmerCntForOneTaxID;
                     hasOverflow = true;
                 }
-                free(numOfBlocksList);
-                free(blocks);
             }
         }
-
+        free(numOfBlocksList);
+        free(blocks);
     }
     cout<<"before return: "<<kmerBuffer.startIndexOfReserve<<" "<<double(numOfGene)/double(4136)<<endl;
     return 0;
