@@ -25,11 +25,8 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     vector<int> seqCntOfTaxIDs; ///the number of sequences for each species
     vector<FastaSplit> splits;
 
-
     getFastaSplits(taxIdListAtRank, splits);
-    for(int i = 0 ; i < splits.size(); i++){
-        cout<<splits[i].start<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
-    }
+
     cout<<"here"<<endl;
 
     int seqCnt = 0;
@@ -187,8 +184,8 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
         SeqIterator seqIterator;
         size_t posToWrite;
 
-        PredictedBlock * blocks;
-        size_t * numOfBlocksList;
+        //PredictedBlock * blocks;
+        //size_t * numOfBlocksList;
         size_t numOfBlocks;
 
         size_t totalKmerCntForOneTaxID = 0;
@@ -196,7 +193,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < splits.size() ; i++) {
             if((checker[i] == false) && (!hasOverflow)) {
-                numOfBlocksList = (size_t*)malloc(splits[i].cnt * sizeof(size_t));
+                size_t * numOfBlocksList = (size_t*)malloc(splits[i].cnt * sizeof(size_t));
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[splits[i].start].start]), seqs[splits[i].start].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
@@ -204,18 +201,15 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                 if(strlen(seq->seq.s) < 20000){
                     prodigal.is_meta = 1;
                     prodigal.trainMeta(seq->seq.s);
-                    cout<<"nn "<<prodigal.nn<<" "<<prodigal.max_phase<<" "<<prodigal.max_score<<endl;
-                }else{
+              }else{
                     prodigal.trainASpecies(seq->seq.s);
                 }
 
                 prodigal.getPredictedFrames(seq->seq.s);
                 ///fix here
-                blocks = (PredictedBlock*)malloc(((prodigal.getNumberOfPredictedGenes() + 1) * (splits[i].cnt + 1)) * 5 * sizeof(PredictedBlock));
+                PredictedBlock * blocks = (PredictedBlock*)malloc(((prodigal.getNumberOfPredictedGenes() + 1) * (splits[i].cnt + 1)) * 5 * sizeof(PredictedBlock));
                 numOfBlocks = 0;
 
-               // seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks, prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s), numOfBlocks);
-               // numOfBlocksList[0] = numOfBlocks;
                 for(size_t p = 0; p < splits[i].cnt; p++ ) {
                     buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].start + splits[i].offset + p].start]), seqs[splits[i].start + splits[i].offset + p].length};
                     seq = kseq_init(&buffer);
@@ -244,11 +238,12 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         kseq_read(seq);
 
                         size_t end = numOfBlocksList[seqIdx];
-
+                        cout<<"before writing "<<kmerBuffer.startIndexOfReserve<<" "<<posToWrite<<endl;
                         for(size_t bl = start; bl < end ; bl++){
                             seqIterator.translateBlock(seq->seq.s,blocks[bl]);
                             seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].start + splits[i].offset + seqIdx);
                         }
+                        cout<<"after writing "<<kmerBuffer.startIndexOfReserve<<" "<<posToWrite<<endl;
                         start = numOfBlocksList[seqIdx];
                     }
                     checker[i] = true;
@@ -257,12 +252,11 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     kmerBuffer.startIndexOfReserve -= totalKmerCntForOneTaxID;
                     hasOverflow = true;
                 }
-
-
                 free(numOfBlocksList);
+                free(blocks);
             }
         }
-        free(blocks);
+
     }
     cout<<"before return: "<<kmerBuffer.startIndexOfReserve<<" "<<double(numOfGene)/double(4136)<<endl;
     return 0;
