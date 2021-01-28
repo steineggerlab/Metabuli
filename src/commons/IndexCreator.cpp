@@ -170,7 +170,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
 
 size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSplitCnt, const vector<FastaSplit> & splits) {
 #ifdef OPENMP
-   omp_set_num_threads(1);
+  // omp_set_num_threads(1);
 #endif
 //    for(int i = 0; i < startsOfTaxIDs.size();i++){
 //        cout<<startsOfTaxIDs[i]<<endl;
@@ -238,14 +238,14 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].start + splits[i].offset + seqIdx].start]), seqs[splits[i].start + splits[i].offset + seqIdx].length};
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
-
+                        size_t temp = kmerBuffer.startIndexOfReserve;
                         size_t end = numOfBlocksList[seqIdx];
-                        cout<<"before filling "<<kmerBuffer.startIndexOfReserve<<" "<<posToWrite<<endl;
+                        cout<<"before filling "<<temp<<" "<<posToWrite<<endl;
                         for(size_t bl = start; bl < end ; bl++){
                             seqIterator.translateBlock(seq->seq.s,blocks[bl]);
                             seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].start + splits[i].offset + seqIdx);
                         }
-                        cout<<"after filling "<<kmerBuffer.startIndexOfReserve<<" "<<posToWrite<<endl;
+                        cout<<"after filling "<<temp<<" "<<posToWrite<<endl;
                         start = numOfBlocksList[seqIdx];
                     }
                     checker[i] = true;
@@ -259,7 +259,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
             }
         }
     }
-    cout<<"before return: "<<kmerBuffer.startIndexOfReserve<<" "<<double(numOfGene)/double(4136)<<endl;
+    cout<<"before return: "<<kmerBuffer.startIndexOfReserve<<endl;
     return 0;
 }
 ///This function sort the TargetKmerBuffer, do redundancy reducing task, write the differential index of them
