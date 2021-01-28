@@ -170,7 +170,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
 
 size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSplitCnt, const vector<FastaSplit> & splits) {
 #ifdef OPENMP
-  // omp_set_num_threads(1);
+   omp_set_num_threads(1);
 #endif
 //    for(int i = 0; i < startsOfTaxIDs.size();i++){
 //        cout<<startsOfTaxIDs[i]<<endl;
@@ -240,12 +240,12 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         kseq_read(seq);
 
                         size_t end = numOfBlocksList[seqIdx];
-                        cout<<"before writing "<<kmerBuffer.startIndexOfReserve<<" "<<posToWrite<<endl;
+                        cout<<"before filling "<<kmerBuffer.startIndexOfReserve<<" "<<posToWrite<<endl;
                         for(size_t bl = start; bl < end ; bl++){
                             seqIterator.translateBlock(seq->seq.s,blocks[bl]);
                             seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].start + splits[i].offset + seqIdx);
                         }
-                        cout<<"after writing "<<kmerBuffer.startIndexOfReserve<<" "<<posToWrite<<endl;
+                        cout<<"after filling "<<kmerBuffer.startIndexOfReserve<<" "<<posToWrite<<endl;
                         start = numOfBlocksList[seqIdx];
                     }
                     checker[i] = true;
