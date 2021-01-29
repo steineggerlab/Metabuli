@@ -130,9 +130,8 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
 }
 
 ///It updates target database. Most of this function is the same with 'mergeTargetFiles', only some additional tasks are added to handle seqID
-///It has error now
-void FileMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & oldTaxListAtRank, vector<int> & oldTaxList,
-                                      vector<int> & newTaxListAtRank, vector<int> & newTaxList, const int & seqIdOffset) {
+///It is not tested yet 2020.01.28
+void FileMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & taxListAtRank, vector<int> & taxIdList, const int & seqIdOffset) {
     size_t totalKmerCnt = 0;
     size_t writtenKmerCnt = 0;
 
@@ -159,6 +158,14 @@ void FileMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, std::
         diffFileList[file] = mmapData<uint16_t>(diffIdxFileNames[file]);
         infoFileList[file] = mmapData<TargetKmerInfo>(infoFileNames[file]);
         maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
+    }
+
+    ///Fix sequence IDs of new k-mers
+    for (int i = 1; i < numOfSplitFiles; i++){
+        size_t size = (infoFileList[i].fileSize - 1) / sizeof(TargetKmerInfo);
+        for(int j = 0; j < size + 1; j++){
+            infoFileList[i].data[j].sequenceID += seqIdOffset;
+        }
     }
 
     /// get the first k-mer to write
@@ -199,10 +206,10 @@ void FileMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, std::
 
         hasSeenOtherStrains = 0;
         isRedundant = 0;
-        while(newTaxListAtRank[lastInfo.sequenceID] == newTaxListAtRank[lookingInfos[idxOfMin].sequenceID]){
+        while(taxListAtRank[lastInfo.sequenceID] == taxListAtRank[lookingInfos[idxOfMin].sequenceID]){
             if(lastKmer != lookingKmers[idxOfMin]) break;
 
-            if (newTaxList[lastInfo.sequenceID] != newTaxList[lookingInfos[idxOfMin].sequenceID]){
+            if (taxIdList[lastInfo.sequenceID] != taxIdList[lookingInfos[idxOfMin].sequenceID]){
                 hasSeenOtherStrains = 1;
             }
 
@@ -231,6 +238,7 @@ void FileMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, std::
 
         cre->getDiffIdx(lastWrittenKmer, lastKmer, mergedDiffFile, diffBuffer, diffBufferIdx);
         lastWrittenKmer = lastKmer;
+
         cre->writeInfo(&lastInfo, mergedInfoFile, infoBuffer, infoBufferIdx);
         writtenKmerCnt++;
 

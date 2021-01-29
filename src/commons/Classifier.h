@@ -14,6 +14,7 @@
 #include "NcbiTaxonomy.h"
 #include "Debug.h"
 #include "KmerBuffer.h"
+#include "IndexCreator.h"
 
 #include <vector>
 #include <algorithm>
@@ -67,9 +68,6 @@ private:
     size_t multipleMatchCount;
     size_t perfectMatchCount;
     size_t closestCount;
-//    uint64_t currentTargetKmer;
-//    uint64_t currentQuery;
-//    uint64_t nextTargetKmer;
     size_t currentTargetPos;
     int isMatched;
     vector<MatchedKmer> matchedKmerList;

@@ -72,8 +72,8 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     vector<char *> infoSplits;
     for(int split = 0; split < numOfSplits ; split++)
     {
-        sprintf(suffixedDiffIdxFileName[split], "%s_diffIdx_%d", outputFileName, split);
-        sprintf(suffixedInfoFileName[split], "%s_info_%d", outputFileName, split);
+        sprintf(suffixedDiffIdxFileName[split], "%s_%d_diffIdx", outputFileName, split);
+        sprintf(suffixedInfoFileName[split], "%s_%d_info", outputFileName, split);
         diffSplits.push_back(suffixedDiffIdxFileName[split]);
         infoSplits.push_back(suffixedInfoFileName[split]);
     }

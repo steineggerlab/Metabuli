@@ -188,33 +188,7 @@ string SeqIterator::reverseCompliment(string & read) const {
     return out;
 }
 
-void SeqIterator::getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile) {
-    size_t start = 0;
-    size_t numOfChar = seqFile.fileSize / sizeof(char);
-    for(size_t i = 0; i < numOfChar; i++){
-        if(seqFile.data[i] == '>'){
-            seqSegments.emplace_back(start, i-2, i - start - 1);// the first push_back is a garbage.
-            while(seqFile.data[i] != '\n'){
-                i++;
-            }
-            start = i + 1;
-        }
-    }
-    seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
-}
 
-void SeqIterator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile) {
-    size_t start = 0;
-    size_t numOfChar = seqFile.fileSize / sizeof(char);
-
-    for(size_t i = 1; i < numOfChar; i++){
-        if(seqFile.data[i] == '>'){
-            seqSegments.emplace_back(start, i-2, i - start - 1);
-            start = i;
-        }
-    }
-    seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
-}
 
 ///It extracts kmers from amino acid sequence with DNA information and fill the kmerBuffer with them.
 void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID) {

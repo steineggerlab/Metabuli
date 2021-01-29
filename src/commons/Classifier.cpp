@@ -28,7 +28,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName);
 
     vector<Sequence> sequences;
-    seqIterator->getSeqSegmentsWithHead(sequences, queryFile);
+    IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
     size_t numOfSeq = sequences.size();
 
     bool processedSeqChecker[numOfSeq];

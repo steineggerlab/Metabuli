@@ -38,6 +38,7 @@ private:
         size_t start;
         uint32_t offset;
         uint32_t cnt;
+        size_t idxForTraining;
     } FastaSplit;
 
     size_t availableMemory;
@@ -49,9 +50,14 @@ private:
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
     size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedTaxIdCnt, const vector<int> & startsOfTaxIDs, const vector<int> & seqCntOfTaxIDs);
     size_t fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedTaxIdCnt, const vector<FastaSplit> & splits);
+    static void getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
+
+
 
     void getFastaSplits(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit);
+    void getFastaSplits2(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqSegments);
 public:
+    static void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
     IndexCreator();
     ~IndexCreator();
     int getNumOfFlush();

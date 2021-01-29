@@ -56,6 +56,7 @@ int updateTargetDB(int argc, const char **argv, const Command &command){
         newTaxIdList.push_back(atol(taxID));
     }
     fclose(oldTaxIdFile);
+    size_t numOfOldTaxIds = oldTaxIdList.size();
 
     vector<int> newTaxIdListAtRank;
     vector<int> oldTaxIdListAtRank;
@@ -90,34 +91,32 @@ int updateTargetDB(int argc, const char **argv, const Command &command){
         infoSplits.push_back(suffixedInfoFileName[split]);
     }
 
+    ///Make an updated list of taxonomical IDs
+    char mergedTaxIdListName[300];
+    sprintf(mergedTaxIdListName, "%s_taxIDs", updatedFileName);
+    oldTaxIdList.insert(oldTaxIdList.end(), newTaxIdList.begin(), newTaxIdList.end());
+    oldTaxIdListAtRank.insert(oldTaxIdListAtRank.end(), newTaxIdListAtRank.begin(), newTaxIdListAtRank.end());
+
+    FILE * mergedTaxIdList;
+    mergedTaxIdList = fopen(mergedTaxIdListName, "w");
+
+    ///알아서 복사 붙여 넣기 해라 귀찮다.
+
+    fclose(mergedTaxIdList);
+
     ///Merge the files in the list
     char mergedDiffFileName[300];
     char mergedInfoFileName[300];
     sprintf(mergedDiffFileName, "%s_diffIdx", updatedFileName);
     sprintf(mergedInfoFileName, "%s_info", updatedFileName);
     FileMerger merger(mergedDiffFileName, mergedInfoFileName);
-    merger.updateTargetDatabase(diffSplits, infoSplits, oldTaxIdListAtRank, oldTaxIdList, newTaxIdListAtRank, newTaxIdList, newTaxIdList.size()); ///이거 고쳐야함, 둘 다 필
+    merger.updateTargetDatabase(diffSplits, infoSplits, oldTaxIdListAtRank, oldTaxIdList, numOfOldTaxIds); ///이거 고쳐야함, 둘 다 필
 
     cout<<"k-mer DB in: "<<endl;
     cout<<mergedDiffFileName<<" and"<<endl;
     cout<<mergedInfoFileName<<endl;
 
-    ///Make an updated list of taxonomical IDs
-    char mergedTaxIdListName[300];
-    sprintf(mergedTaxIdListName, "%s_taxIDs", updatedFileName);
 
-    FILE * newTaxIdListFile;
-    FILE * oldTaxIdListFile;
-    FILE * mergedTaxIdList;
-    newTaxIdListFile = fopen(taxIdFileName, "r");
-    oldTaxIdListFile = fopen(outdatedTaxIdList, "r");
-    mergedTaxIdList = fopen(mergedDiffFileName, "w");
-
-    ///알아서 복사 붙여 넣기 해라 귀찮다.
-
-    fclose(newTaxIdListFile);
-    fclose(oldTaxIdListFile);
-    fclose(mergedTaxIdList);
 
     return 0;
 }
