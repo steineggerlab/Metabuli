@@ -486,7 +486,7 @@ void IndexCreator::getFastaSplits2(const vector<int> & taxIdListAtRank, vector<F
         while(currentTaxId == taxIdListAtRank[idx] && idx < taxIdListAtRank.size()){
             cnt ++;
             idx ++;
-            if(cnt > 3){
+            if(cnt > 100){
                 theLargest = 0;
                 for(uint32_t i = 0; i < cnt - 1; i++){
                     if(seqs[offset + i].length > theLargest){
