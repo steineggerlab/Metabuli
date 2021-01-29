@@ -208,6 +208,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                 if(strlen(seq->seq.s) < 20000){
                     prodigal.is_meta = 1;
                     prodigal.trainMeta(seq->seq.s);
+                    cout<<"train Meta: "<<splits[i].start<<" "<<seqs[splits[i].start].start<<" "<<i<<seq->headerOffset<<endl;
                 }else{
                     prodigal.trainASpecies(seq->seq.s);
                 }
@@ -501,7 +502,7 @@ void IndexCreator::getFastaSplits2(const vector<int> & taxIdListAtRank, vector<F
             }
         }
 
-        if(isLeftover){
+        if(isLeftover == 1){
             fastaSplit.emplace_back(training, offset, cnt);
         }else {
             for (uint32_t i = 0; i < cnt - 1; i++) {
