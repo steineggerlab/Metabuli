@@ -17,8 +17,8 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     ///Files to write on & buffers to fill them
     FILE * mergedDiffFile = fopen(mergedDiffFileName, "wb");
     FILE * mergedInfoFile = fopen(mergedInfoFileName, "wb");
-    uint16_t * diffBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 250000000); size_t diffBufferIdx = 0;
-    TargetKmerInfo * infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * 250000000); size_t infoBufferIdx = 0;
+    uint16_t * diffBuffer = (uint16_t *)malloc(sizeof(uint16_t) * kmerBufSize); size_t diffBufferIdx = 0;
+    TargetKmerInfo * infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * kmerBufSize); size_t infoBufferIdx = 0;
 
 
     ///Prepare files to merge
@@ -58,7 +58,6 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     writtenKmerCnt++;
 
     int endFlag = 0;
-    int unique = 0;
     ///끝부분 잘 되는지 확인할 것
     while(1){
         ///update looking k-mers
@@ -138,8 +137,8 @@ void FileMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, std::
     ///Files to write on & buffers to fill them
     FILE * mergedDiffFile = fopen(mergedDiffFileName, "wb");
     FILE * mergedInfoFile = fopen(mergedInfoFileName, "wb");
-    uint16_t * diffBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 250000000); size_t diffBufferIdx = 0;
-    TargetKmerInfo * infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * 250000000); size_t infoBufferIdx = 0;
+    uint16_t * diffBuffer = (uint16_t *)malloc(sizeof(uint16_t) * kmerBufSize); size_t diffBufferIdx = 0;
+    TargetKmerInfo * infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * kmerBufSize); size_t infoBufferIdx = 0;
 
 
     ///Prepare files to merge

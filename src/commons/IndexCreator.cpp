@@ -47,9 +47,8 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     getSeqSegmentsWithHead(sequences, seqFile);
     vector<FastaSplit> splits2;
     getFastaSplits2(taxIdListAtRank, splits2, sequences);
-    for(int i = 0 ; i < splits.size(); i++){
-        cout<<"before: "<<splits[i].start<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
-        cout<<"after: "<<splits2[i].start<<" "<<splits2[i].offset<<" "<<splits2[i].cnt<<endl;
+    for(int i = 0 ; i < splits2.size(); i++){
+        cout<<"after: "<<splits2[i].start<<" "<<splits2[i].offset<<" "<<splits2[i].cnt<<" "<<endl;
     }
     size_t numOfSplits = splits.size();
     bool splitChecker[numOfSplits];
@@ -285,7 +284,7 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
     }
     numOfFlush++;
 
-    uint16_t *kmerLocalBuf = (uint16_t *)malloc(sizeof(uint16_t) * kmerBufSize);
+    uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * kmerBufSize);
     size_t localBufIdx = 0;
     uint64_t lastKmer = 0;
 
@@ -329,7 +328,7 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
 
         fwrite(&lookingKmer.info, sizeof(TargetKmerInfo), 1, infoFile);
         write++;
-        getDiffIdx(lastKmer, lookingKmer.ADkmer, diffIdxFile, kmerLocalBuf, localBufIdx);
+        getDiffIdx(lastKmer, lookingKmer.ADkmer, diffIdxFile, diffIdxBuffer, localBufIdx);
 
         if(endFlag == 1) break;
         lastKmer = lookingKmer.ADkmer;
@@ -341,14 +340,14 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
         (taxIdListAtRank[kmerBuffer[kmerNum - 2].info.sequenceID] == taxIdListAtRank[kmerBuffer[kmerNum - 1].info.sequenceID]))){
         fwrite(&lookingKmer.info, sizeof(TargetKmerInfo), 1, infoFile);
         write++;
-        getDiffIdx(lastKmer, lookingKmer.ADkmer, diffIdxFile, kmerLocalBuf, localBufIdx);
+        getDiffIdx(lastKmer, lookingKmer.ADkmer, diffIdxFile, diffIdxBuffer, localBufIdx);
     }
     cout<<asd<<endl;
     cout<<"total k-mer count  : "<< kmerNum << endl;
     cout<<"written k-mer count: "<<write<<endl;
 
-    flushKmerBuf(kmerLocalBuf, diffIdxFile, localBufIdx);
-    free(kmerLocalBuf);
+    flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
+    free(diffIdxBuffer);
     fclose(diffIdxFile);
     fclose(infoFile);
     kmerNum = 0;
@@ -478,6 +477,7 @@ void IndexCreator::getFastaSplits2(const vector<int> & taxIdListAtRank, vector<F
     int isLeftover;
 
     int currentTaxId;
+
     while(idx < taxIdListAtRank.size()){
         offset = idx;
         training = idx;
@@ -487,7 +487,7 @@ void IndexCreator::getFastaSplits2(const vector<int> & taxIdListAtRank, vector<F
         while(currentTaxId == taxIdListAtRank[idx] && idx < taxIdListAtRank.size()){
             cnt ++;
             idx ++;
-            if(cnt > 100){
+            if(cnt > 100){ ///The smaller, the faster. The largest number of consecutive plasmid is the smallest. The smaller, the more training and the less time of single threading
                 theLargest = 0;
                 for(uint32_t i = 0; i < cnt - 1; i++){
                     if(seqs[offset + i].length > theLargest){
@@ -505,7 +505,8 @@ void IndexCreator::getFastaSplits2(const vector<int> & taxIdListAtRank, vector<F
         if(isLeftover == 1){
             fastaSplit.emplace_back(training, offset, cnt);
         }else {
-            for (uint32_t i = 0; i < cnt - 1; i++) {
+            theLargest = 0;
+            for (uint32_t i = 0; i < cnt; i++) {
                 if (seqs[offset + i].length > theLargest) {
                     training = offset + i;
                     theLargest = seqs[offset + i].length;

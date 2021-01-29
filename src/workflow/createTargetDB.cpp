@@ -13,9 +13,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     IndexCreator idxCre;
     string name, node, merged;
-    NcbiTaxonomy ncbiTaxonomy("../../taxdmp/names.dmp",
-            "../../taxdmp/nodes.dmp",
-                 "../../taxdmp/merged.dmp");
+    NcbiTaxonomy ncbiTaxonomy("../../taxdmp/names.dmp","../../taxdmp/nodes.dmp","../../taxdmp/merged.dmp");
     const char * seqFileName = argv[0];
     const char * taxIdFileName = argv[1];
     const char * outputFileName = argv[2];
@@ -29,23 +27,19 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     }
     seqFile.close();
 
-    cout<<"before openig taxIdFile"<<endl;
     ///Make mapping from sequence ID to TaxID. Index of vector is sequence ID.
     FILE * taxIdFile;
     if((taxIdFile = fopen(taxIdFileName,"r")) == NULL){
         cout<<"Cannot open the taxID list file."<<endl;
         return 0;
     }
-    cout<<"opened"<<endl;
     vector<int> taxIdList; char taxID[100];
     while(feof(taxIdFile) == 0) {
         fscanf(taxIdFile,"%s",taxID);
         taxIdList.push_back(atol(taxID));
     }
-    cout<<"taxIdList complete"<<endl;
     fclose(taxIdFile);
     vector<int> taxIdListAtRank;
-	cout<<"close file"<<endl;
     ncbiTaxonomy.makeTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
 
     cout<<"after taxId"<<endl;

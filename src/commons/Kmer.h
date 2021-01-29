@@ -5,7 +5,7 @@
 #ifndef ADKMER3_KMER_H
 #define ADKMER3_KMER_H
 #include <iostream>
-////
+
 typedef struct QueryKmerInfo {
     QueryKmerInfo(int seqID = 0, uint32_t pos = 0, uint32_t isReverse = 0 ) : sequenceID(seqID), pos(pos), frame(isReverse) {}
     int sequenceID;
@@ -43,9 +43,4 @@ typedef struct MatchedKmer{
     int queryFrame;
 } __attribute__((packed)) matchedKmer;
 
-//typedef struct diffIdxKmer{
-//    uint16_t * diffIdx;
-//    int sequenceID;
-//    int pos;
-//} diffIdxKmer;
 #endif //ADKMER3_KMER_H
