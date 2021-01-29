@@ -505,7 +505,7 @@ void IndexCreator::getFastaSplits2(const vector<int> & taxIdListAtRank, vector<F
         if(isLeftover == 1){
             fastaSplit.emplace_back(training, offset, cnt);
         }else {
-            theLargest = 0;
+                theLargest = 0;
             for (uint32_t i = 0; i < cnt; i++) {
                 if (seqs[offset + i].length > theLargest) {
                     training = offset + i;
