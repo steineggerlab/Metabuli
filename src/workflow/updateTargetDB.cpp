@@ -62,9 +62,16 @@ int updateTargetDB(int argc, const char **argv, const Command &command){
     vector<int> oldTaxIdListAtRank;
     ncbiTaxonomy.makeTaxIdListAtRank(newTaxIdList, newTaxIdListAtRank, "species");
     ncbiTaxonomy.makeTaxIdListAtRank(oldTaxIdList, oldTaxIdListAtRank, "species");
-
+    unordered_map<TaxID, TaxID> taxMap;
+    TaxID current;
+    for(size_t i = 0 ; i < oldTaxIdList.size(); i++){
+        current = oldTaxIdList[i];
+        if(taxMap.find(current) == taxMap.end()){
+            taxMap.insert(pair<TaxID, TaxID>(current, oldTaxIdList[i]));
+        }
+    }
     IndexCreator idxCre;
-    idxCre.startIndexCreatingParallel(seqFileName, updatedFileName, newTaxIdListAtRank, newTaxIdList);
+    idxCre.startIndexCreatingParallel(seqFileName, updatedFileName, newTaxIdListAtRank, newTaxIdList, taxMap);
 
 
     /**Merge new k-mer data into outdated database.**/

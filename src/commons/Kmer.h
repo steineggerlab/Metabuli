@@ -5,6 +5,7 @@
 #ifndef ADKMER3_KMER_H
 #define ADKMER3_KMER_H
 #include <iostream>
+#include "NcbiTaxonomy.h"
 
 typedef struct QueryKmerInfo {
     QueryKmerInfo(int seqID = 0, uint32_t pos = 0, uint32_t isReverse = 0 ) : sequenceID(seqID), pos(pos), frame(isReverse) {}
@@ -27,8 +28,9 @@ typedef struct TargetKmerInfo{
 } TargetKmerInfo;
 
 typedef struct TargetKmer{
-    TargetKmer(uint64_t ADkmer, int seqID, bool redundacy) : ADkmer(ADkmer),info(seqID, redundacy) {}
+    TargetKmer(uint64_t ADkmer, TaxID taxIdAtRank, int seqID, bool redundacy) : ADkmer(ADkmer), taxIdAtRank(taxIdAtRank),info(seqID, redundacy) {}
     uint64_t ADkmer;
+    TaxID taxIdAtRank;
     TargetKmerInfo info;
 } TargetKmer;
 

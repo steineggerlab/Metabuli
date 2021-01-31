@@ -42,8 +42,6 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     vector<int> taxIdListAtRank;
     ncbiTaxonomy.makeTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
 
-    cout<<"after taxId"<<endl;
-
     ///Make files of differential indexing and infromation of k-mers
     idxCre.startIndexCreatingParallel(seqFileName,outputFileName,taxIdListAtRank, taxIdList);
 

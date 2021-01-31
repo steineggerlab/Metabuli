@@ -191,7 +191,7 @@ string SeqIterator::reverseCompliment(string & read) const {
 
 
 ///It extracts kmers from amino acid sequence with DNA information and fill the kmerBuffer with them.
-void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID) {
+void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID, int taxIdAtRank) {
     uint64_t tempKmer = 0;
     uint32_t len = aaFrames[0].size();
     for (uint32_t startOfKmer = 0 ; startOfKmer < len - kmerLength + 1 ; startOfKmer++){
@@ -202,7 +202,7 @@ void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, cons
         }
         addDNAInfo_TargetKmer(tempKmer, seq, block, startOfKmer);
         //printKmerInDNAsequence(tempKmer);
-        kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, 0};
+        kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, 0};
         posToWrite++;
         tempKmer = 0;
     }
