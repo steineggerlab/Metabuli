@@ -17,7 +17,7 @@ std::vector<Command> commands = {
          "extract k-mers from sequecne file to make a target database",
          NULL,
          "Jaebeom Kim <jbeom0731@gmail.com>",
-         "<i:sequenceFile[.txt]> <i:taxIdList[.txt]> <o:output[.txt]> <tmpDir>",
+         "<i:sequenceFile[.txt]> <i:taxIdList[.txt]> <o:output[.txt]> <tmpDir> <num of treads>",
          CITATION_SPACEPHARER,
          {{"sequenceFile", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::sequenceDb},
           {"taxIdList", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},

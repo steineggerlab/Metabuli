@@ -46,7 +46,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 
 size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSplitCnt, const vector<FastaSplit> & splits, const vector<int> & taxIdListAtRank) {
 #ifdef OPENMP
-  // omp_set_num_threads(1);
+   omp_set_num_threads(64);
 #endif
     bool hasOverflow = false;
     size_t numOfGene =0;
@@ -315,8 +315,9 @@ void IndexCreator::getFastaSplits(const vector<int> & taxIdListAtRank, vector<Fa
         while(currentTaxId == taxIdListAtRank[idx] && idx < taxIdListAtRank.size()){
             cnt ++;
             idx ++;
-            if(cnt > 50) {
-		theLargest = 0;
+
+            if(cnt > 100){ ///The smaller, the faster. The largest number of consecutive plasmid is the smallest. The smaller, the more training and the less time of single threading
+                theLargest = 0;
                 for(uint32_t i = 0; i < cnt - 1; i++){
                     if(seqs[offset + i].length > theLargest){
                         training = offset + i;
