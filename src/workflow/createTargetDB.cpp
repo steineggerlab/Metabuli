@@ -39,10 +39,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         taxIdList.push_back(atol(taxID));
     }
     fclose(taxIdFile);
-    for(int i = 0 ; i < taxIdList.size(); i++){
-        cout<<taxIdList[i]<<endl;
-    }
-    cout<<"here"<<taxIdList[taxIdList.size()-1]<<endl;
+    taxIdList.pop_back();
     vector<int> taxIdListAtRank;
     ncbiTaxonomy.makeTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
 
