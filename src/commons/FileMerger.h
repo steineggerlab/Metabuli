@@ -21,7 +21,7 @@ private:
     IndexCreator * cre;
 public:
     FileMerger(char* mergedDiffFileName, char * mergedInfoFileNmae);
-    void mergeTargetFiles(std::vector<char *> diffIdxFileNames, std::vector<char *> infoFileNames, std::vector<int> & taxIdListAtRank, std::vector<int> & taxIdList, unordered_map<TaxID, TaxID> & taxMap);
+    void mergeTargetFiles(std::vector<char *> diffIdxFileNames, std::vector<char *> infoFileNames, std::vector<int> & taxIdListAtRank, std::vector<int> & taxIdList);
     void updateTargetDatabase(vector<char *> diffIdxFileNames, vector<char *> infoFileNames, vector<int> & taxListAtRank, vector<int> & taxIdList, const int & seqIdOffset);
     static size_t smallest(const uint64_t *lookingKmer, const TargetKmerInfo lookingInfos[], vector<int> & taxListAtRank, const size_t &fileCnt);
     static uint64_t getNextKmer(uint64_t currentValue, const struct MmapedData<uint16_t> & diffList, size_t &idx);

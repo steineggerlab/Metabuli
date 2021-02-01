@@ -71,7 +71,7 @@ int updateTargetDB(int argc, const char **argv, const Command &command){
         }
     }
     IndexCreator idxCre;
-    idxCre.startIndexCreatingParallel(seqFileName, updatedFileName, newTaxIdListAtRank, newTaxIdList, taxMap);
+    idxCre.startIndexCreatingParallel(seqFileName, updatedFileName, newTaxIdListAtRank, newTaxIdList);
 
 
     /**Merge new k-mer data into outdated database.**/
@@ -90,8 +90,7 @@ int updateTargetDB(int argc, const char **argv, const Command &command){
     int numOfSplits = idxCre.getNumOfFlush();
     char suffixedDiffIdxFileName[numOfSplits][100];
     char suffixedInfoFileName[numOfSplits][100];
-    for(int split = 0; split < numOfSplits ; split++)
-    {
+    for(int split = 0; split < numOfSplits ; split++){
         sprintf(suffixedDiffIdxFileName[split], "%s_diffIdx_%d", updatedFileName, split);
         sprintf(suffixedInfoFileName[split], "%s_info_%d", updatedFileName, split);
         diffSplits.push_back(suffixedDiffIdxFileName[split]);
