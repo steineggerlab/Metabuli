@@ -39,6 +39,10 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         taxIdList.push_back(atol(taxID));
     }
     fclose(taxIdFile);
+    for(int i = 0 ; i < taxIdList.size(); i++){
+        cout<<taxIdList[i]<<endl;
+    }
+    cout<<"here"<<taxIdList[taxIdList.size()-1]<<endl;
     vector<int> taxIdListAtRank;
     ncbiTaxonomy.makeTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
 
@@ -49,29 +53,26 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     char suffixedDiffIdxFileName[numOfSplits][100];
     char suffixedInfoFileName[numOfSplits][100];
 
-    if(numOfSplits == 1)
-    {
+    if(numOfSplits == 1){
         sprintf(suffixedDiffIdxFileName[0], "%s_0_diffIdx", outputFileName);
         sprintf(suffixedInfoFileName[0], "%s_0_info", outputFileName);
         cout<<"k-mer DB in: "<<endl;
-        cout<<suffixedDiffIdxFileName<<"and"<<endl;
-        cout<<suffixedInfoFileName<<endl;
+        cout<<suffixedDiffIdxFileName[0]<<"and"<<endl;
+        cout<<suffixedInfoFileName[0]<<endl;
         return 0;
     }
 
     ///Merge files
     vector<char *> diffSplits;
     vector<char *> infoSplits;
-    for(int split = 0; split < numOfSplits ; split++)
-    {
+    for(int split = 0; split < numOfSplits ; split++){
         sprintf(suffixedDiffIdxFileName[split], "%s_%d_diffIdx", outputFileName, split);
         sprintf(suffixedInfoFileName[split], "%s_%d_info", outputFileName, split);
         diffSplits.push_back(suffixedDiffIdxFileName[split]);
         infoSplits.push_back(suffixedInfoFileName[split]);
     }
 
-    for(int i = 0; i < numOfSplits; i++)
-    {
+    for(int i = 0; i < numOfSplits; i++){
         cout<<diffSplits[i]<<endl;
     }
     char mergedDiffFileName[100];

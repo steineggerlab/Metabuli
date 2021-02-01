@@ -50,126 +50,6 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
 
     size_t idxOfMin = smallest(lookingKmers, lookingInfos, taxIdListAtRank, numOfSplitFiles);
     uint64_t lastWrittenKmer = 0;
-    uint64_t lastKmer = lookingKmers[idxOfMin];
-    TargetKmerInfo lastInfo = lookingInfos[idxOfMin];
-
-    ///write first k-mer
-    cre->getDiffIdx(0, lastKmer, mergedDiffFile, diffBuffer, diffBufferIdx);
-    lastWrittenKmer = lastKmer;
-    cre->writeInfo(&lastInfo, mergedInfoFile, infoBuffer, infoBufferIdx);;
-    writtenKmerCnt++;
-
-    int endFlag = 0;
-    ///끝부분 잘 되는지 확인할 것
-    while(1){
-        ///update looking k-mers
-        lookingKmers[idxOfMin] = getNextKmer(lastKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
-        lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
-        infoFileIdx[idxOfMin] ++;
-        if( diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] ){
-            lookingKmers[idxOfMin] = UINT64_MAX;
-            numOfincompletedFiles--;
-            if(numOfincompletedFiles == 0) break;
-        }
-        numOfKmerBeforeMerge ++;
-        idxOfMin = smallest(lookingKmers, lookingInfos, taxIdListAtRank, numOfSplitFiles);
-
-        int asd = 0;
-        while(taxIdListAtRank[lastInfo.sequenceID] == taxIdListAtRank[lookingInfos[idxOfMin].sequenceID]){
-            if(lastKmer != lookingKmers[idxOfMin]) break;
-
-            lookingKmers[idxOfMin] = getNextKmer(lastKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
-            lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
-            infoFileIdx[idxOfMin] ++;
-            numOfKmerBeforeMerge ++;
-            asd++;
-
-            if(diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] ){
-                lookingKmers[idxOfMin] = UINT64_MAX;
-                numOfincompletedFiles--;
-                if(numOfincompletedFiles == 0){
-                    endFlag = 1;
-                    break;
-                }
-            }
-            idxOfMin = smallest(lookingKmers, lookingInfos, taxIdListAtRank, numOfSplitFiles);
-        }
-
-        if(asd == 0){
-            lastInfo.redundancy = false;
-        }
-
-        cre->getDiffIdx(lastWrittenKmer, lastKmer, mergedDiffFile, diffBuffer, diffBufferIdx);
-        lastWrittenKmer = lastKmer;
-        cre->writeInfo(&lastInfo, mergedInfoFile, infoBuffer, infoBufferIdx);
-        writtenKmerCnt++;
-
-        if(endFlag == 1){
-            break;
-        }
-
-        ///update last k-mer
-        lastKmer = lookingKmers[idxOfMin];
-        lastInfo = lookingInfos[idxOfMin];
-    }
-
-    cre->flushInfoBuf(infoBuffer, mergedInfoFile, infoBufferIdx);
-    cre->flushKmerBuf(diffBuffer, mergedDiffFile, diffBufferIdx);
-
-    free(diffBuffer);
-    free(infoBuffer);
-    fclose(mergedDiffFile);
-    fclose(mergedInfoFile);
-    for(size_t file = 0; file < numOfSplitFiles; file++){
-        munmap(diffFileList[file].data, diffFileList[file].fileSize + 1);
-        munmap(infoFileList[file].data, infoFileList[file].fileSize + 1);
-    }
-
-    cout<<"Creating target DB is done"<<endl;
-    cout<<"Total k-mer count    : " << numOfKmerBeforeMerge <<" "<<totalKmerNum<<endl;
-    cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
-}
-
-void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & taxIdListAtRank, vector<int> & taxIdList, unordered_map<TaxID, TaxID> & taxMap) {
-    size_t numOfKmerBeforeMerge = 0;
-    size_t writtenKmerCnt = 0;
-    size_t totalKmerNum = 0;
-
-    ///Files to write on & buffers to fill them
-    FILE * mergedDiffFile = fopen(mergedDiffFileName, "wb");
-    FILE * mergedInfoFile = fopen(mergedInfoFileName, "wb");
-    uint16_t * diffBuffer = (uint16_t *)malloc(sizeof(uint16_t) * kmerBufSize); size_t diffBufferIdx = 0;
-    TargetKmerInfo * infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * kmerBufSize); size_t infoBufferIdx = 0;
-
-
-    ///Prepare files to merge
-    size_t numOfSplitFiles = diffIdxFileNames.size();
-    size_t numOfincompletedFiles = numOfSplitFiles;
-    uint64_t lookingKmers[numOfSplitFiles];
-    TargetKmerInfo lookingInfos[numOfSplitFiles];
-    size_t diffFileIdx[numOfSplitFiles];
-    memset(diffFileIdx, 0, sizeof(diffFileIdx));
-    size_t infoFileIdx[numOfSplitFiles];
-    memset(infoFileIdx, 0, sizeof(infoFileIdx));
-    size_t maxIdxOfEachFiles[numOfSplitFiles];
-    struct MmapedData<uint16_t> *diffFileList = new struct MmapedData<uint16_t>[numOfSplitFiles];
-    struct MmapedData<TargetKmerInfo> *infoFileList = new struct MmapedData<TargetKmerInfo>[numOfSplitFiles];
-    for (size_t file = 0; file < numOfSplitFiles; file++) {
-        diffFileList[file] = mmapData<uint16_t>(diffIdxFileNames[file]);
-        infoFileList[file] = mmapData<TargetKmerInfo>(infoFileNames[file]);
-        maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
-        totalKmerNum += (infoFileList[file].fileSize - 1) / sizeof(TargetKmerInfo);
-    }
-
-    /// get the first k-mer to write
-    for(size_t file = 0; file < numOfSplitFiles; file++){
-        lookingKmers[file] = getNextKmer(0, diffFileList[file], diffFileIdx[file]);
-        lookingInfos[file] = infoFileList[file].data[0];
-        infoFileIdx[file] ++;
-    }
-
-    size_t idxOfMin = smallest(lookingKmers, lookingInfos, taxIdListAtRank, numOfSplitFiles);
-    uint64_t lastWrittenKmer = 0;
     uint64_t entryKmer = lookingKmers[idxOfMin];
     TargetKmerInfo entryInfo = lookingInfos[idxOfMin];
 
@@ -202,15 +82,13 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
         while(taxIdListAtRank[entryInfo.sequenceID] == taxIdListAtRank[lookingInfos[idxOfMin].sequenceID]){
             if(entryKmer != lookingKmers[idxOfMin]) break;
 
-            if (taxIdList[entryInfo.sequenceID] != taxIdList[lookingInfos[idxOfMin].sequenceID]){
-                hasSeenOtherStrains = 1;
-            }
+            hasSeenOtherStrains += (taxIdList[entryInfo.sequenceID] != taxIdList[lookingInfos[idxOfMin].sequenceID]);
 
             lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
             lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
             infoFileIdx[idxOfMin] ++;
             numOfKmerBeforeMerge ++;
-            
+
             if(diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] ){
                 lookingKmers[idxOfMin] = UINT64_MAX;
                 numOfincompletedFiles--;
@@ -221,20 +99,14 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
             }
             idxOfMin = smallest(lookingKmers, lookingInfos, taxIdListAtRank, numOfSplitFiles);
         }
-
-        if(hasSeenOtherStrains == 1){
-            entryInfo.redundancy = true;
-        }
+        entryInfo.redundancy = (hasSeenOtherStrains > 0);
 
         cre->getDiffIdx(lastWrittenKmer, entryKmer, mergedDiffFile, diffBuffer, diffBufferIdx);
         lastWrittenKmer = entryKmer;
         cre->writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx);
         writtenKmerCnt++;
 
-        if(endFlag == 1){
-            break;
-        }
-
+        if(endFlag == 1) break;
     }
 
     cre->flushInfoBuf(infoBuffer, mergedInfoFile, infoBufferIdx);
@@ -285,6 +157,7 @@ void FileMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, std::
         maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
     }
 
+    ///TODO check the for loop condition; size
     ///Fix sequence IDs of new k-mers
     for (int i = 1; i < numOfSplitFiles; i++){
         size_t size = (infoFileList[i].fileSize - 1) / sizeof(TargetKmerInfo);
@@ -312,11 +185,13 @@ void FileMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, std::
     writtenKmerCnt++;
 
     int endFlag = 0;
-    int isNew = 0;
-    int isRedundant = 0;
-    int hasSeenOtherStrains = 0;
+    int hasSeenOtherStrains;
     ///끝부분 잘 되는지 확인할 것
-    while(1){
+    while(true){
+        ///update last k-mer
+        lastKmer = lookingKmers[idxOfMin];
+        lastInfo = lookingInfos[idxOfMin];
+
         ///update looking k-mers
         lookingKmers[idxOfMin] = getNextKmer(lastKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
         lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
@@ -330,21 +205,16 @@ void FileMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, std::
         idxOfMin = smallest(lookingKmers, lookingInfos, taxListAtRank, numOfSplitFiles);
 
         hasSeenOtherStrains = 0;
-        isRedundant = 0;
         while(taxListAtRank[lastInfo.sequenceID] == taxListAtRank[lookingInfos[idxOfMin].sequenceID]){
             if(lastKmer != lookingKmers[idxOfMin]) break;
 
-            if (taxIdList[lastInfo.sequenceID] != taxIdList[lookingInfos[idxOfMin].sequenceID]){
-                hasSeenOtherStrains = 1;
-            }
-
+            hasSeenOtherStrains += (taxIdList[lastInfo.sequenceID] != taxIdList[lookingInfos[idxOfMin].sequenceID]);
             lookingKmers[idxOfMin] = getNextKmer(lastKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
             lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
             infoFileIdx[idxOfMin] ++;
             totalKmerCnt ++;
-            isRedundant = 1;
 
-            if( diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] ){
+            if(diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin]){
                 lookingKmers[idxOfMin] = UINT64_MAX;
                 numOfincompletedFiles--;
                 if(numOfincompletedFiles == 0){
@@ -355,28 +225,13 @@ void FileMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, std::
             idxOfMin = smallest(lookingKmers, lookingInfos, taxListAtRank, numOfSplitFiles);
         }
 
-        if(hasSeenOtherStrains == 1){
-            lastInfo.redundancy = true;
-        }
-
-        if(isNew == 1) lastInfo.sequenceID += seqIdOffset;
-
+        lastInfo.redundancy = (hasSeenOtherStrains > 0);
         cre->getDiffIdx(lastWrittenKmer, lastKmer, mergedDiffFile, diffBuffer, diffBufferIdx);
         lastWrittenKmer = lastKmer;
-
         cre->writeInfo(&lastInfo, mergedInfoFile, infoBuffer, infoBufferIdx);
         writtenKmerCnt++;
 
-        if(endFlag == 1){
-            break;
-        }
-
-        ///update last k-mer
-        lastKmer = lookingKmers[idxOfMin];
-        lastInfo = lookingInfos[idxOfMin];
-        if(idxOfMin > 0){
-            isNew = 1;
-        }
+        if(endFlag == 1) break;
     }
 
     cre->flushInfoBuf(infoBuffer, mergedInfoFile, infoBufferIdx);

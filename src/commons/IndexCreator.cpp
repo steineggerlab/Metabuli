@@ -164,20 +164,14 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
     size_t write = 0;
     int endFlag = 0;
     int hasSeenOtherStrains;
-    int redundant;
-    size_t asd= 0;
 
     for(size_t i = 1 ; i < kmerNum ; i++) {
         hasSeenOtherStrains = 0;
-        redundant = 0;
         while(lookingKmer.taxIdAtRank == kmerBuffer[i].taxIdAtRank){
             if (lookingKmer.ADkmer != kmerBuffer[i].ADkmer) {
                 break;
             }
-            if (taxIdList[lookingKmer.info.sequenceID] != taxIdList[kmerBuffer[i].info.sequenceID]){
-                   hasSeenOtherStrains = 1;
-            }
-            redundant = 1;
+            hasSeenOtherStrains = (taxIdList[lookingKmer.info.sequenceID] != taxIdList[kmerBuffer[i].info.sequenceID]);
             i++;
             if(i == kmerNum){
                 endFlag = 1;
@@ -185,13 +179,7 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
             }
         }
 
-        if(hasSeenOtherStrains == 1){
-            lookingKmer.info.redundancy = true;
-        }
-
-        if((redundant == 1) && (hasSeenOtherStrains == 1)){
-            asd ++;
-        }
+        lookingKmer.info.redundancy = (hasSeenOtherStrains > 0);
 
         fwrite(&lookingKmer.info, sizeof(TargetKmerInfo), 1, infoFile);
         write++;
@@ -209,7 +197,6 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
         write++;
         getDiffIdx(lastKmer, lookingKmer.ADkmer, diffIdxFile, diffIdxBuffer, localBufIdx);
     }
-    cout<<asd<<endl;
     cout<<"total k-mer count  : "<< kmerNum << endl;
     cout<<"written k-mer count: "<<write<<endl;
 
@@ -328,7 +315,7 @@ void IndexCreator::getFastaSplits(const vector<int> & taxIdListAtRank, vector<Fa
         while(currentTaxId == taxIdListAtRank[idx] && idx < taxIdListAtRank.size()){
             cnt ++;
             idx ++;
-            if(cnt > 100){ ///The smaller, the faster. The largest number of consecutive plasmid is the smallest. The smaller, the more training and the less time of single threading
+            if(cnt > 50){ ///The smaller, the faster. The largest number of consecutive plasmid is the smallest. The smaller, the more training and the less time of single threading
                 theLargest = 0;
                 for(uint32_t i = 0; i < cnt - 1; i++){
                     if(seqs[offset + i].length > theLargest){
