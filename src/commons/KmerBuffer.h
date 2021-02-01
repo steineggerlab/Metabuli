@@ -6,6 +6,7 @@
 #define ADCLASSIFIER2_KMERBUFFER_H
 #include <iostream>
 #include <Kmer.h>
+#include "Util.h"
 
 class QueryKmerBuffer{
 private:
@@ -22,13 +23,6 @@ public:
 
     size_t reserveMemory(size_t numOfKmer){
         size_t offsetToWrite = __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
-//        if(bufferSize < offsetToWrite + numOfKmer){
-//            return NULL;
-//        }
-
-//        startIndexOfReserve += numOfKmer;
-        //cout<<startIndexOfReserve<<endl;
-        //return &buffer[offsetToWrite];
         return offsetToWrite;
     };
 
@@ -42,22 +36,30 @@ public:
     size_t startIndexOfReserve;
     size_t bufferSize;
     TargetKmerBuffer(size_t sizeOfBuffer){
-        buffer = (TargetKmer *) malloc(sizeof(TargetKmer) * sizeOfBuffer);
-        bufferSize = sizeOfBuffer;
+        if(sizeOfBuffer == 0){
+            buffer = (TargetKmer *)malloc(sizeof(TargetKmer) * getTargetKmerBufferSize());
+            bufferSize = getTargetKmerBufferSize();
+            cout<<bufferSize<<endl;
+        }else {
+            buffer = (TargetKmer *) malloc(sizeof(TargetKmer) * sizeOfBuffer);
+            bufferSize = sizeOfBuffer;
+        }
         startIndexOfReserve = 0;
     };
 
     size_t reserveMemory(size_t numOfKmer){
         size_t offsetToWrite = __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
-//        if(bufferSize < offsetToWrite + numOfKmer){
-//            return NULL;
-//        }
-
-//        startIndexOfReserve += numOfKmer;
-        //cout<<startIndexOfReserve<<endl;
-        //return &buffer[offsetToWrite];
         return offsetToWrite;
     };
+
+    size_t getTargetKmerBufferSize(){
+        size_t memLimit = Util::getTotalSystemMemory() * 0.9;
+        size_t bufferSize = memLimit / sizeof(TargetKmer);
+        if(bufferSize > 10000000000){
+            bufferSize = 10000000000;
+        }
+        return bufferSize;
+    }
 
 };
 #endif //ADCLASSIFIER2_KMERBUFFER_H
