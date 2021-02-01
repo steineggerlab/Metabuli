@@ -6,10 +6,11 @@
 #include "FileMerger.h"
 #include "LocalParameters.h"
 #include <Command.h>
+#include "omp.h"
 int createTargetDB(int argc, const char **argv, const Command &command)
 {
     LocalParameters &par = LocalParameters::getLocalInstance();
-//    par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
+    //par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
 
     IndexCreator idxCre;
     string name, node, merged;
