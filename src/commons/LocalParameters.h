@@ -23,6 +23,8 @@ public:
     }
 
     std::vector<MMseqsParameter*> createTargetDB;
+    std::vector<MMseqsParameter*> prepareForTargetDB_GTDB;
+    std::vector<MMseqsParameter*> prepareForTargetDB;
     std::vector<MMseqsParameter*> classify;
 
 private:
