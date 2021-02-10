@@ -17,7 +17,7 @@ int prepareForTargetDB_GTDB(int argc, const char **argv, const Command &command)
     strcpy(accession, out);
     strcat(accession,"_accession");
     ///TODO: Make it better
-    const char * cmd = "/*.fna|sort|xargs awk '/^>/{x=FILENAME; sub(/.*tax[0-9]*-/,\"\",x); sub(/_[A-z].*/,\"\",x);print x}' > ";
+    const char * cmd = "/*.fna|sort|xargs awk '/^>/{x=FILENAME; sub(/.*tax[0-9]+-/,\"\",x); sub(/_[A-z].*/,\"\",x);print x}' > ";
     char * assembledLine = (char *)malloc(sizeof(char) * 1000);
     strcpy(assembledLine, "ls ");
     strcat(assembledLine, dir);

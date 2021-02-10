@@ -4,6 +4,7 @@
 
 #ifndef ADCLASSIFIER2_COMMON_H
 #define ADCLASSIFIER2_COMMON_H
+#include "NcbiTaxonomy.h"
 #define kmerBufSize 10000000000 //10000000000
 #define AApart(x) x & ()
 typedef struct Sequence{
@@ -12,4 +13,7 @@ typedef struct Sequence{
     size_t end;
     size_t length;
 }SeqSegment;
+
+
+
 #endif //ADCLASSIFIER2_COMMON_H

@@ -42,7 +42,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     fclose(taxIdFile);
     taxIdList.pop_back();
     vector<int> taxIdListAtRank;
-    ncbiTaxonomy.makeTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
+    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
 
     ///Make files of differential indexing and infromation of k-mers
     idxCre.startIndexCreatingParallel(seqFileName,outputFileName,taxIdListAtRank, taxIdList);
