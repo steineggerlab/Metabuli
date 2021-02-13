@@ -134,6 +134,14 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
     uint64_t nextTargetKmer = getNextTargetKmer(0, targetDiffIdxList.data, diffIdxPos);
     size_t tarIter = 0;
 
+    ///Find the first index of garbage k-mer (UINT64_MAX)
+    for(size_t checkN = numOfQuery - 1; checkN >= 0; checkN--){
+        if(queryKmerList[checkN].ADkmer != UINT64_MAX){
+            numOfQuery = checkN + 1;
+            break;
+        }
+    }
+
     uint64_t currentQuery = UINT64_MAX;
     uint64_t currentTargetKmer = UINT64_MAX;
     uint64_t currentQueryAA;
@@ -160,9 +168,6 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
           //  seqIterator->printKmerInDNAsequence(nextTargetKmer);
             if(currentQuery == currentTargetKmer){
                 perfectMatchCount ++;
-//                cout<<taxIdList[targetInfoList.data[tarIter].sequenceID]<<" "<<targetInfoList.data[tarIter].sequenceID<<endl;
-//                cout<<"query : "; seqIterator->printKmerInDNAsequence(currentQuery); cout<<endl;
-//                cout<<"target: "; seqIterator->printKmerInDNAsequence(currentTargetKmer); cout<<endl;
             }
 
             if(AminoAcid(currentTargetKmer) == AminoAcid(currentQuery)){
@@ -316,7 +321,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
             gapCnt = 0;
             hammingSum = 0;
         }
-
         i++;
     }
 

@@ -25,7 +25,7 @@ int prepareForTargetDB_GTDB(int argc, const char **argv, const Command &command)
     strcat(assembledLine, accession);
     system(assembledLine);
 
-    ///Loading a Map ( accession : gtdbTaxID ) from a tsv file (key \t value)
+    ///Loading a Map ( assembly accession 2 GTDB TaxID ) from a tsv file (key \t value)
     unordered_map<string, int> map;
     string key;
     string value;

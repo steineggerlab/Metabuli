@@ -159,6 +159,14 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
     ///Sort for differential indexing
     SORT_PARALLEL(kmerBuffer, kmerBuffer + kmerNum, IndexCreator::compareForDiffIdx);
 
+    ///Find the first index of garbage k-mer (UINT64_MAX)
+    for(size_t checkN = kmerNum - 1; checkN >= 0; checkN--){
+        if(kmerBuffer[checkN].ADkmer != UINT64_MAX){
+            kmerNum = checkN + 1;
+            break;
+        }
+    }
+
     ///Redundancy reduction task
     TargetKmer lookingKmer = kmerBuffer[0];
     size_t write = 0;

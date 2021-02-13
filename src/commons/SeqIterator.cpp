@@ -65,6 +65,16 @@ SeqIterator::SeqIterator() {
     ///Stop
     nuc2aa[2][0][0] = 20; nuc2aa[2][3][0] = 20; nuc2aa[2][0][3] = 20;
 
+    ///triplet code with N's
+    for(int i = 0; i < 8; i++){
+        for(int j = 0; j < 8; j++){
+            nuc2aa[7][i][j] = -1;
+            nuc2aa[i][7][j] = -1;
+            nuc2aa[i][j][7] = -1;
+        }
+    }
+
+    ///For encoding DNA information in k-mer
     for(int i =0; i < 4 ; i++)
     {
         for(int i2 = 0; i2 < 4 ; i2++)
@@ -124,25 +134,35 @@ void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBu
     uint32_t forOrRev;
     uint64_t tempKmer = 0;
     uint32_t seqLen = strlen(seq);
+    int checkN;
 
     for(uint32_t frame = 0 ; frame < 6 ; frame++){
         uint32_t len = aaFrames[frame].size();
         forOrRev = frame / 3;
         for (uint32_t kmerCnt = 0 ; kmerCnt < len - kmerLength + 1 ; kmerCnt++) {
             ///Amino acid 2 number
+            tempKmer = 0;
+            checkN = 0;
             for (size_t i = 0; i < kmerLength; i++){
+                if(-1 == aaFrames[frame][kmerCnt + i]){
+                    checkN = 1;
+                    break;
+                }
                 tempKmer += aaFrames[frame][kmerCnt + i] * powers[i];
             }
-            addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame);
-            //printKmerInDNAsequence(tempKmer);
 
-            if(forOrRev == 0) {
-                kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3), frame};
-            } else{
-                kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, seqLen - ((frame%3) + (kmerCnt*3)) - 24 , frame};
+            if(checkN == 1){
+                kmerBuffer.buffer[posToWrite] = {UINT64_MAX, 0, 0, frame};
+            }else{
+                addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame);
+                if(forOrRev == 0) {
+                    kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3), frame};
+                } else{
+                    kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, seqLen - ((frame%3) + (kmerCnt*3)) - 24 , frame};
+                }
             }
+            //printKmerInDNAsequence(tempKmer);
             posToWrite++;
-            tempKmer = 0;
         }
     }
 }
@@ -194,17 +214,25 @@ string SeqIterator::reverseCompliment(string & read) const {
 void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID, int taxIdAtRank) {
     uint64_t tempKmer = 0;
     uint32_t len = aaFrames[0].size();
+    int checkN;
     for (uint32_t startOfKmer = 0 ; startOfKmer < len - kmerLength + 1 ; startOfKmer++){
         ///Amino acid 2 number
-        for (size_t i = 0; i < kmerLength; i++)
-        {
+        tempKmer = 0;
+        checkN = 0;
+        for (size_t i = 0; i < kmerLength; i++){
+            if(-1 == aaFrames[0][startOfKmer + i]){
+                checkN = 1;
+                break;
+            }
             tempKmer += aaFrames[0][startOfKmer + i] * powers[i];
         }
-        addDNAInfo_TargetKmer(tempKmer, seq, block, startOfKmer);
-        //printKmerInDNAsequence(tempKmer);
-        kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, 0};
+        if(checkN == 1){
+            kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, -1,false};
+        }else{
+            addDNAInfo_TargetKmer(tempKmer, seq, block, startOfKmer);
+            kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, false};
+        }
         posToWrite++;
-        tempKmer = 0;
     }
 }
 
