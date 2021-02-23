@@ -79,7 +79,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
 void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt, vector<QueryInfo> & queryInfos) {
 #ifdef OPENMP
-    //omp_set_num_threads(1);
+    omp_set_num_threads(1);
 #endif
     bool hasOverflow = false;
 #pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, queryInfos, cout)
@@ -134,6 +134,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
     uint64_t nextTargetKmer = getNextTargetKmer(0, targetDiffIdxList.data, diffIdxPos);
     size_t tarIter = 0;
 
+    cout<<"before "<<numOfQuery<<endl;
     ///Find the first index of garbage k-mer (UINT64_MAX)
     for(size_t checkN = numOfQuery - 1; checkN >= 0; checkN--){
         if(queryKmerList[checkN].ADkmer != UINT64_MAX){
@@ -141,6 +142,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
             break;
         }
     }
+    cout<<"after "<<numOfQuery<<endl;
 
     uint64_t currentQuery = UINT64_MAX;
     uint64_t currentTargetKmer = UINT64_MAX;

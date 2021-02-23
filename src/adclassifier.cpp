@@ -19,8 +19,9 @@ std::vector<Command> commands = {
          "Jaebeom Kim <jbeom0731@gmail.com>",
          "<i:sequenceFile[.txt]> <i:taxIdList[.txt]> <o:output[.txt]> <tmpDir> <num of treads>",
          CITATION_SPACEPHARER,
-         {{"sequenceFile", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::sequenceDb},
-          {"taxIdList", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+         {{"lowest directory including FASTA files", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::directory},
+          {"mapping file (assembly accession to taxonomical ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+          {"name of output target database with path", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty},
           {"tmpDir", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
 
         {"prepareForTargetDB_GTDB", prepareForTargetDB_GTDB, &localPar.prepareForTargetDB_GTDB, COMMAND_MAIN,
