@@ -14,12 +14,17 @@ SeqIterator::SeqIterator() {
     }
 
     ///Reverse compliment table
+    atcg =
+            "................................................................"
+            ".AGCG..GT..G.CN...ACTG.A.T......agcg..gt..g.cn...actg.a.t......."
+            "................................................................"
+            "................................................................";
+
     iRCT =
             "................................................................"
             ".TVGH..CD..M.KN...YSAABW.R.......tvgh..cd..m.kn...ysaabw.r......"
             "................................................................"
             "................................................................";
-
 
     ///Codon table
     ///A
@@ -65,6 +70,16 @@ SeqIterator::SeqIterator() {
     ///Stop
     nuc2aa[2][0][0] = 20; nuc2aa[2][3][0] = 20; nuc2aa[2][0][3] = 20;
 
+    ///triplet code with N's
+    for(int i = 0; i < 8; i++){
+        for(int j = 0; j < 8; j++){
+            nuc2aa[7][i][j] = -1;
+            nuc2aa[i][7][j] = -1;
+            nuc2aa[i][j][7] = -1;
+        }
+    }
+
+    ///For encoding DNA information in k-mer
     for(int i =0; i < 4 ; i++)
     {
         for(int i2 = 0; i2 < 4 ; i2++)
@@ -98,23 +113,23 @@ void SeqIterator::sixFrameTranslation(const char * seq){
     ///translation from DNA to AA. in each frame
     for(int i = 0; i < len - 4; i = i+3 )
     {
-        aaFrames[0].push_back(nuc2aa[nuc2int(seq[i    ])][nuc2int(seq[i + 1])][nuc2int(seq[i + 2])]);
-        aaFrames[1].push_back(nuc2aa[nuc2int(seq[i + 1])][nuc2int(seq[i + 2])][nuc2int(seq[i + 3])]);
-        aaFrames[2].push_back(nuc2aa[nuc2int(seq[i + 2])][nuc2int(seq[i + 3])][nuc2int(seq[i + 4])]);
+        aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[i    ]])][nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])]);
+        aaFrames[1].push_back(nuc2aa[nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])][nuc2int(atcg[seq[i + 3]])]);
+        aaFrames[2].push_back(nuc2aa[nuc2int(atcg[seq[i + 2]])][nuc2int(atcg[seq[i + 3]])][nuc2int(atcg[seq[i + 4]])]);
 
-        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[seq[end - (i + 0)]])][nuc2int(iRCT[seq[end - (i + 1)]])][nuc2int(iRCT[seq[end - (i + 2)]])]);
-        aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[seq[end - (i + 1)]])][nuc2int(iRCT[seq[end - (i + 2)]])][nuc2int(iRCT[seq[end - (i + 3)]])]);
-        aaFrames[5].push_back(nuc2aa[nuc2int(iRCT[seq[end - (i + 2)]])][nuc2int(iRCT[seq[end - (i + 3)]])][nuc2int(iRCT[seq[end - (i + 4)]])]);
+        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 0)]]])][nuc2int(iRCT[atcg[seq[end - (i + 1)]]])][nuc2int(iRCT[atcg[seq[end - (i + 2)]]])]);
+        aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 1)]]])][nuc2int(iRCT[atcg[seq[end - (i + 2)]]])][nuc2int(iRCT[atcg[seq[end - (i + 3)]]])]);
+        aaFrames[5].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 2)]]])][nuc2int(iRCT[atcg[seq[end - (i + 3)]]])][nuc2int(iRCT[atcg[seq[end - (i + 4)]]])]);
     }
     if(len % 3 == 0){
-        aaFrames[0].push_back(nuc2aa[nuc2int(seq[end - 2])][nuc2int(seq[end - 1])][nuc2int(seq[end])]);
-        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[seq[2]])][nuc2int(iRCT[seq[1]])][nuc2int(iRCT[seq[0]])]);
+        aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[end - 2]])][nuc2int(atcg[seq[end - 1]])][nuc2int(atcg[seq[end]])]);
+        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[2]]])][nuc2int(iRCT[atcg[seq[1]]])][nuc2int(iRCT[atcg[seq[0]]])]);
     }
     if(len % 3 == 1 ){
-        aaFrames[0].push_back(nuc2aa[nuc2int(seq[end - 3])][nuc2int(seq[end - 2])][nuc2int(seq[end - 1])]);
-        aaFrames[1].push_back(nuc2aa[nuc2int(seq[end - 2])][nuc2int(seq[end - 1])][nuc2int(seq[end])]);
-        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[seq[3]])][nuc2int(iRCT[seq[2]])][nuc2int(iRCT[seq[1]])]);
-        aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[seq[2]])][nuc2int(iRCT[seq[1]])][nuc2int(iRCT[seq[0]])]);
+        aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[end - 3]])][nuc2int(atcg[seq[end - 2]])][nuc2int(atcg[seq[end - 1]])]);
+        aaFrames[1].push_back(nuc2aa[nuc2int(atcg[seq[end - 2]])][nuc2int(atcg[seq[end - 1]])][nuc2int(atcg[seq[end]])]);
+        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[3]]])][nuc2int(iRCT[atcg[seq[2]]])][nuc2int(iRCT[atcg[seq[1]]])]);
+        aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[2]]])][nuc2int(iRCT[atcg[seq[1]]])][nuc2int(iRCT[atcg[seq[0]]])]);
     }
 }
 
@@ -124,25 +139,36 @@ void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBu
     uint32_t forOrRev;
     uint64_t tempKmer = 0;
     uint32_t seqLen = strlen(seq);
+    int checkN;
 
     for(uint32_t frame = 0 ; frame < 6 ; frame++){
         uint32_t len = aaFrames[frame].size();
         forOrRev = frame / 3;
         for (uint32_t kmerCnt = 0 ; kmerCnt < len - kmerLength + 1 ; kmerCnt++) {
             ///Amino acid 2 number
+            tempKmer = 0;
+            checkN = 0;
             for (size_t i = 0; i < kmerLength; i++){
+                if(-1 == aaFrames[frame][kmerCnt + i]){
+                    checkN = 1;
+                    cout<<seq<<endl;
+                    break;
+                }
                 tempKmer += aaFrames[frame][kmerCnt + i] * powers[i];
             }
-            addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame);
-            //printKmerInDNAsequence(tempKmer);
 
-            if(forOrRev == 0) {
-                kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3), frame};
-            } else{
-                kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, seqLen - ((frame%3) + (kmerCnt*3)) - 24 , frame};
+            if(checkN == 1){
+                kmerBuffer.buffer[posToWrite] = {UINT64_MAX, 0, 0, frame};
+            }else{
+                addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame);
+                if(forOrRev == 0) {
+                    kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3), frame};
+                } else{
+                    kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, seqLen - ((frame%3) + (kmerCnt*3)) - 24 , frame};
+                }
             }
+            //printKmerInDNAsequence(tempKmer);
             posToWrite++;
-            tempKmer = 0;
         }
     }
 }
@@ -153,11 +179,11 @@ void SeqIterator::addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int fo
     size_t end = strlen(seq) - 1;
     if(forOrRev == 0){
         for( int i = 0; i < kmerLength * 3; i += 3) {
-            kmer |= nuc2num[nuc2int(seq[start + i])][nuc2int(seq[start + i + 1])][nuc2int(seq[start + i + 2])] << i;
+            kmer |= nuc2num[nuc2int(atcg[seq[start + i]])][nuc2int(atcg[seq[start + i + 1]])][nuc2int(atcg[seq[start + i + 2]])] << i;
         }
     } else{
         for( int i = 0; i < kmerLength * 3; i += 3) {
-            kmer |= nuc2num[nuc2int(iRCT[seq[end - (start + i)]])][nuc2int(iRCT[seq[end - (start + i + 1)]])][nuc2int(iRCT[seq[end - (start + i + 2)]])] << i;
+            kmer |= nuc2num[nuc2int(iRCT[atcg[seq[end - (start + i)]]])][nuc2int(iRCT[atcg[seq[end - (start + i + 1)]]])][nuc2int(iRCT[atcg[seq[end - (start + i + 2)]]])] << i;
         }
     }
 }
@@ -168,11 +194,11 @@ void SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
     aaFrames[0].reserve(blockLength / 3 + 1);
     if(block.strand == 1){
         for(size_t i = 0; i < blockLength - 2; i = i + 3){
-            aaFrames[0].push_back(nuc2aa[nuc2int(seq[block.start + i])][nuc2int(seq[block.start+i+1])][nuc2int(seq[block.start+i+2])]);
+            aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[block.start + i]])][nuc2int(atcg[seq[block.start+i+1]])][nuc2int(atcg[seq[block.start+i+2]])]);
         }
     }else{
         for(size_t i = 0; i < blockLength - 2; i = i + 3){
-            aaFrames[0].push_back(nuc2aa[nuc2int(iRCT[seq[block.end - i]])][nuc2int(iRCT[seq[block.end-i-1]])][nuc2int(iRCT[seq[block.end-i-2]])]);
+            aaFrames[0].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[block.end - i]]])][nuc2int(iRCT[atcg[seq[block.end-i-1]]])][nuc2int(iRCT[atcg[seq[block.end-i-2]]])]);
         }
     }
 }
@@ -194,17 +220,25 @@ string SeqIterator::reverseCompliment(string & read) const {
 void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID, int taxIdAtRank) {
     uint64_t tempKmer = 0;
     uint32_t len = aaFrames[0].size();
+    int checkN;
     for (uint32_t startOfKmer = 0 ; startOfKmer < len - kmerLength + 1 ; startOfKmer++){
         ///Amino acid 2 number
-        for (size_t i = 0; i < kmerLength; i++)
-        {
+        tempKmer = 0;
+        checkN = 0;
+        for (size_t i = 0; i < kmerLength; i++){
+            if(-1 == aaFrames[0][startOfKmer + i]){
+                checkN = 1;
+                break;
+            }
             tempKmer += aaFrames[0][startOfKmer + i] * powers[i];
         }
-        addDNAInfo_TargetKmer(tempKmer, seq, block, startOfKmer);
-        //printKmerInDNAsequence(tempKmer);
-        kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, 0};
+        if(checkN == 1){
+            kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, -1,false};
+        }else{
+            addDNAInfo_TargetKmer(tempKmer, seq, block, startOfKmer);
+            kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, false};
+        }
         posToWrite++;
-        tempKmer = 0;
     }
 }
 
@@ -214,18 +248,17 @@ void SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const
     if(block.strand == 1){
         int start = block.start + (startOfKmer * 3);
         for( int i = 0; i < kmerLength * 3; i += 3) {
-            kmer |= nuc2num[nuc2int(seq[start + i])][nuc2int(seq[start + i + 1])][nuc2int(seq[start + i + 2])] << i;
+            kmer |= nuc2num[nuc2int(atcg[seq[start + i]])][nuc2int(atcg[seq[start + i + 1]])][nuc2int(atcg[seq[start + i + 2]])] << i;
         }
     } else{
         int start = block.end - (startOfKmer * 3);
         for( int i = 0; i < kmerLength * 3; i += 3) {
-            kmer |= nuc2num[nuc2int(iRCT[seq[start - i]])][nuc2int(iRCT[seq[start - i - 1]])][
-                    nuc2int(iRCT[seq[start - i - 2]])] << i;
+            kmer |= nuc2num[nuc2int(iRCT[atcg[seq[start - i]]])][nuc2int(iRCT[atcg[seq[start - i - 1]]])][nuc2int(iRCT[atcg[seq[start - i - 2]]])] << i;
         }
     }
 }
 
-size_t SeqIterator::KmerNumOfSixFrameTranslation(const string & seq){
+size_t SeqIterator::kmerNumOfSixFrameTranslation(const string & seq){
     size_t len = seq.size();
     if(len % 3 == 0){
         return (6 * (len/3) - 46);

@@ -19,8 +19,7 @@
 #include <vector>
 #include <algorithm>
 #include "FastSort.h"
-#include "kseq.h"
-#include "KSeqBufferReader.h"
+#include "KSeqWrapper.h"
 
 
 
@@ -59,7 +58,23 @@ private:
         uint32_t gapCnt;
         size_t beginIdx;
         size_t endIdx;
-    }consecutiveMatches;
+    }ConsecutiveMatches;
+
+    typedef struct QueryInfo{
+        int queryId;
+        bool isClassified;
+        string name;
+        int taxId;
+        float coverage;
+        map<TaxID,int> taxCnt;
+        size_t queryLength;
+        QueryInfo(int queryId, bool isClassified, string name, int taxId, float coverage, size_t queryLength): queryId(queryId), isClassified(isClassified), name(name), taxId(taxId), coverage(coverage), queryLength(queryLength) {}
+        bool operator == (const int Id) const{
+            if(Id == queryId)
+                return true;
+            return false;
+        }
+    }QueryInfo;
 
     int numOfSplit;
     SeqIterator * seqIterator;
@@ -88,25 +103,21 @@ private:
 
     void linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank);
     void writeResultFile(vector<MatchedKmer> & matchList, const char * queryFileName);
-    static TaxID lca2taxon(unordered_map<TaxID, int> & listOfLCAs, NcbiTaxonomy & ncbiTaxonomy, const size_t & length, float coverageThr = 0.8);
     TaxID match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,
                     size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent);
-
     static bool compareForAnalyzing( const MatchedKmer & a, const MatchedKmer & b);
     static bool compareForLinearSearch(const QueryKmer & a, const QueryKmer & b);
     static bool compareConsecutiveMatches(const ConsecutiveMathces & a, const ConsecutiveMathces & b);
-    void fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt);
-
-
-    TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const size_t & offset, const size_t & end);
+    void fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt, vector<QueryInfo> & queryInfos);
+    TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, vector<QueryInfo> & queryInfos);
     static void checkAndGive(vector<uint32_t> & posList,  vector<uint8_t> & hammingList, const uint32_t & pos, const uint8_t & hammingDist);
-
+    void writeReadClassification(vector<QueryInfo> & queryInfos, ofstream & readClassificationFile);
+    void writeReportFile(const char * queryFileName);
+    static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);
+    void analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, vector<QueryInfo> & queryInfos);
 public:
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, vector<int> & taxIdList);
-    void analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments);
     int getNumOfSplits() const;
-    void writeLinearSearchResult();
-    static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);
     Classifier();
     ~Classifier();
 };

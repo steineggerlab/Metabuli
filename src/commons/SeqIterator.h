@@ -24,7 +24,7 @@ KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
 
 #define kmerLength 8
 
-#define nuc2int(x) (x & 6u)>>1u
+#define nuc2int(x) (x & 14u)>>1u
 
 using namespace std;
 
@@ -39,9 +39,10 @@ class SeqIterator
 {
 private:
     string iRCT;
+    string atcg;
     vector<int> aaFrames[6];
     uint64_t powers[10];
-    int nuc2aa[4][4][4];
+    int nuc2aa[8][8][8];
     uint64_t nuc2num[4][4][4];
 
     void addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int forOrRev, const int & kmerCnt, const int & frame);
@@ -54,7 +55,7 @@ public:
     void sixFrameTranslation(const char * seq);
     void translateBlock(const char* seq, PredictedBlock & block);
 
-    size_t KmerNumOfSixFrameTranslation(const string & seq);
+    size_t kmerNumOfSixFrameTranslation(const string & seq);
     size_t getNumOfKmerForBlock(const PredictedBlock & block);
     void fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID, int taxIdAtRank);
     void printKmerInDNAsequence(uint64_t kmer);

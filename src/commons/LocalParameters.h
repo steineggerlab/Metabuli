@@ -23,14 +23,17 @@ public:
     }
 
     std::vector<MMseqsParameter*> createTargetDB;
+    std::vector<MMseqsParameter*> prepareForTargetDB_GTDB;
+    std::vector<MMseqsParameter*> prepareForTargetDB;
     std::vector<MMseqsParameter*> classify;
 
+    PARAMETER(PARAM_GTDB_OR_NCBI)
+
+    //creatTargetDB
+    int createTargetDBMode;
+
 private:
-    LocalParameters() :
-        Parameters()
-    {
-        createTargetDB.push_back(&PARAM_THREADS);
-    }
+    LocalParameters();
 
     LocalParameters(LocalParameters const&);
     ~LocalParameters() {};

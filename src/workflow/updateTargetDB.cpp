@@ -60,8 +60,8 @@ int updateTargetDB(int argc, const char **argv, const Command &command){
 
     vector<int> newTaxIdListAtRank;
     vector<int> oldTaxIdListAtRank;
-    ncbiTaxonomy.makeTaxIdListAtRank(newTaxIdList, newTaxIdListAtRank, "species");
-    ncbiTaxonomy.makeTaxIdListAtRank(oldTaxIdList, oldTaxIdListAtRank, "species");
+    ncbiTaxonomy.createTaxIdListAtRank(newTaxIdList, newTaxIdListAtRank, "species");
+    ncbiTaxonomy.createTaxIdListAtRank(oldTaxIdList, oldTaxIdListAtRank, "species");
     unordered_map<TaxID, TaxID> taxMap;
     TaxID current;
     for(size_t i = 0 ; i < oldTaxIdList.size(); i++){

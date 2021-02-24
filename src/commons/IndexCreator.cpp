@@ -32,7 +32,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     bool splitChecker[numOfSplits];
     fill_n(splitChecker, numOfSplits, false);
 
-    TargetKmerBuffer kmerBuffer(kmerBufSize);
+    TargetKmerBuffer kmerBuffer(20000000);
     size_t processedSplitCnt = 0;
     while(processedSplitCnt < numOfSplits){ ///check this condition
         fillTargetKmerBuffer(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank);
@@ -46,7 +46,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 
 size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSplitCnt, const vector<FastaSplit> & splits, const vector<int> & taxIdListAtRank) {
 #ifdef OPENMP
-   omp_set_num_threads(64);
+   //omp_set_num_threads(64);
 #endif
     bool hasOverflow = false;
     size_t numOfGene =0;
@@ -78,7 +78,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
 
                 ///malloc
                 prodigal.getPredictedFrames(seq->seq.s);
-                PredictedBlock * blocks = (PredictedBlock*)malloc(((prodigal.getNumberOfPredictedGenes() + 1) * (splits[i].cnt + 1)) * 5 * sizeof(PredictedBlock));
+                PredictedBlock * blocks = (PredictedBlock*)malloc(((prodigal.getNumberOfPredictedGenes() + 1) * (splits[i].cnt + 1)) * 2 * sizeof(PredictedBlock));
                 numOfBlocks = 0;
 
                 ///Getting all the sequence blocks of current split. Each block will be translated later separately.
@@ -158,6 +158,14 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
 
     ///Sort for differential indexing
     SORT_PARALLEL(kmerBuffer, kmerBuffer + kmerNum, IndexCreator::compareForDiffIdx);
+
+    ///Find the first index of garbage k-mer (UINT64_MAX)
+    for(size_t checkN = kmerNum - 1; checkN >= 0; checkN--){
+        if(kmerBuffer[checkN].ADkmer != UINT64_MAX){
+            kmerNum = checkN + 1;
+            break;
+        }
+    }
 
     ///Redundancy reduction task
     TargetKmer lookingKmer = kmerBuffer[0];

@@ -13,7 +13,6 @@ FileMerger::FileMerger(char* mergedDiffFileName, char * mergedInfoFileNmae)
 void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & taxIdListAtRank, vector<int> & taxIdList) {
     size_t numOfKmerBeforeMerge = 0;
     size_t writtenKmerCnt = 0;
-    size_t totalKmerNum = 0;
 
     ///Files to write on & buffers to fill them
     FILE * mergedDiffFile = fopen(mergedDiffFileName, "wb");
@@ -38,7 +37,6 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
         diffFileList[file] = mmapData<uint16_t>(diffIdxFileNames[file]);
         infoFileList[file] = mmapData<TargetKmerInfo>(infoFileNames[file]);
         maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
-        totalKmerNum += (infoFileList[file].fileSize - 1) / sizeof(TargetKmerInfo);
     }
 
     /// get the first k-mer to write
@@ -58,11 +56,11 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     lastWrittenKmer = entryKmer;
     cre->writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx);;
     writtenKmerCnt++;
+    numOfKmerBeforeMerge++;
 
     int endFlag = 0;
-    ///끝부분 잘 되는지 확인할 것
     while(true){
-        ///update last k-mer
+        ///update entry k-mer
         entryKmer = lookingKmers[idxOfMin];
         entryInfo = lookingInfos[idxOfMin];
 
@@ -122,7 +120,7 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     }
 
     cout<<"Creating target DB is done"<<endl;
-    cout<<"Total k-mer count    : " << numOfKmerBeforeMerge <<" "<<totalKmerNum<<endl;
+    cout<<"Total k-mer count    : " << numOfKmerBeforeMerge <<endl;
     cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
 }
 
