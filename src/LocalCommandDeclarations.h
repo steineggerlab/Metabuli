@@ -7,8 +7,6 @@
 #include "Command.h"
 
 extern int createTargetDB(int argc, const char **argv, const Command& command);
-extern int prepareForTargetDB(int argc, const char **argv, const Command& command);
-extern int prepareForTargetDB_GTDB(int argc, const char **argv, const Command& command);
 extern int classify(int argc, const char **argv, const Command& command);
 //extern int updateTargetDB(int argc, const char **argv, const Command& command);
 

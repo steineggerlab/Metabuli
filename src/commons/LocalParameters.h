@@ -30,7 +30,7 @@ public:
     PARAMETER(PARAM_GTDB_OR_NCBI)
 
     //creatTargetDB
-    int createTargetDBMode;
+    int gtdbOrNcbi;
 
 private:
     LocalParameters();

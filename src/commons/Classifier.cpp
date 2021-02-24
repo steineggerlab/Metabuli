@@ -40,7 +40,6 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     readClassificationFile.open(string(queryFileName)+"_ReadClassification_temp.tsv");
 
     vector<QueryInfo> queryInfos;
-    //queryInfos.resize(numOfSeq, QueryInfo(0,false," ", 0, 0, 0)); ///TODO 사이즈를 정하고 이 사이즈 넘으면 서치,분석하는 방식으로 해야
 
     while(processedSeqCnt < numOfSeq){ ///check this condition
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryInfos);
@@ -57,19 +56,13 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     system(rmCall.c_str());
     readClassificationFile.close();
 
-    ///ReportFile
-
-
-
-
+    ///TODO: Merge ReportFiles
 
     cout<<"Number of query k-mer                : "<<queryCount<<endl;
     cout<<"Number of total match                : "<<totalMatchCount <<endl;
     cout<<"mutipleMatch in AA level             : "<<multipleMatchCount << endl;
     cout<<"matches in DNA level                 : "<<perfectMatchCount<<endl;
     cout<<"number of closest matches            : "<<closestCount<<endl;
-
-
 
     free(kmerBuffer.buffer);
     munmap(queryFile.data, queryFile.fileSize + 1);
@@ -78,9 +71,6 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 }
 
 void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt, vector<QueryInfo> & queryInfos) {
-#ifdef OPENMP
-    omp_set_num_threads(1);
-#endif
     bool hasOverflow = false;
 #pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, queryInfos, cout)
     {

@@ -4,18 +4,29 @@
 
 #include "Classifier.h"
 #include "Parameters.h"
+#include "LocalParameters.h"
 
 int classify(int argc, const char **argv, const Command& command)
 {
+    LocalParameters &par = LocalParameters::getLocalInstance();
+    par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
+
     Classifier classifier;
-    const char * queryFileName = argv[0];
-    const char * targetDiffIdxFileName = argv[1];
-    const char * targetInfoFileName = argv[2];
-    const char * taxIdFileName = argv[3];
-   // const char * outputdirectory = argv[4];
+    const char * queryFileName = par.filenames[0].c_str();
+    const string dbName = par.filenames[1];
+    const string outputDirectory = par.filenames[2];
+    const string targetDiffIdxFileName = dbName + "_diffIdx";
+    const string targetInfoFileName = dbName + "_info";
+    string taxIdFileName;
+
+    if(par.gtdbOrNcbi == 1 || par.gtdbOrNcbi == 0){
+        taxIdFileName = dbName + "_taxID_list_GTDB";
+    }else{
+        taxIdFileName = dbName + "_taxID_list_NCBI";
+    }
 
     FILE * taxIdFile;
-    if((taxIdFile = fopen(taxIdFileName,"r")) == NULL){
+    if((taxIdFile = fopen(taxIdFileName.c_str(),"r")) == NULL){
         cout<<"Cannot open the taxID list file."<<endl;
         return 0;
     }
@@ -26,6 +37,6 @@ int classify(int argc, const char **argv, const Command& command)
         taxIdList.push_back(atol(taxID));
     }
     fclose(taxIdFile);
-    classifier.startClassify(queryFileName, targetDiffIdxFileName, targetInfoFileName, taxIdList);
+    classifier.startClassify(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(), taxIdList);
     return 0;
 }
