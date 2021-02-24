@@ -32,7 +32,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     bool splitChecker[numOfSplits];
     fill_n(splitChecker, numOfSplits, false);
 
-    TargetKmerBuffer kmerBuffer(20000000);
+    TargetKmerBuffer kmerBuffer(kmerBufSize);
     size_t processedSplitCnt = 0;
     while(processedSplitCnt < numOfSplits){ ///check this condition
         fillTargetKmerBuffer(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank);

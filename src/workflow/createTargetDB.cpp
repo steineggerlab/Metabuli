@@ -12,7 +12,9 @@
 void prepareForCreatingTargetDB(const LocalParameters & par){
     const char * folder = par.filenames[0].c_str();
     const char * mappingFile = par.filenames[1].c_str();
-    int mode = par.createTargetDBMode;
+    const char * outputFileName = par.filenames[2].c_str();
+
+    int mode = par.gtdbOrNcbi;
     string taxid_fname_fname;
     string taxid_fname_sorted_fname;
     string fastList_fname;
@@ -23,14 +25,14 @@ void prepareForCreatingTargetDB(const LocalParameters & par){
         taxid_fname_fname = string(folder) + "/taxid_filename_GTDB";
         taxid_fname_sorted_fname = string(folder) + "/taxid_filename_sorted_GTDB";
         fastList_fname = string(folder) + "/fasta_list_GTDB";
-        taxidList_fname = string(folder) + "/taxID_list_GTDB";
+        taxidList_fname = string(outputFileName) + "_taxID_list_GTDB";
         genome_fname = string(folder) + "/concatenated_genome_GTDB";
         system("echo \"\t|\t\t|\" > ../../gtdb_taxdmp/merged.dmp");
     }else{
         taxid_fname_fname = string(folder) + "/taxid_filename_NCBI";
         taxid_fname_sorted_fname = string(folder) + "/taxid_filename_sorted_NCBI";
         fastList_fname = string(folder) + "/fasta_list_NCBI";
-        taxidList_fname = string(folder) + "/taxID_list_NCBI";
+        taxidList_fname = string(outputFileName) + "_taxID_list_NCBI";
         genome_fname = string(folder) + "/concatenated_genome_NCBI";
     }
 
@@ -89,8 +91,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     string taxIdList_fname;
     string names, nodes, merged;
 
-
-    if(par.createTargetDBMode == 1 || par.createTargetDBMode == 0){
+    if(par.gtdbOrNcbi == 1 || par.gtdbOrNcbi == 0){
         cout<<"Creating target database based on taxonomy of GTDB"<<endl;
         prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_GTDB";
@@ -98,7 +99,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         names = "../../gtdb_taxdmp/names.dmp";
         nodes = "../../gtdb_taxdmp/nodes.dmp";
         merged = "../../gtdb_taxdmp/merged.dmp";
-    } else if(par.createTargetDBMode == 2){
+    } else if(par.gtdbOrNcbi == 2){
         cout<<"Creating target database based on taxonomy of NCBI"<<endl;
         prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_NCBI";
@@ -151,8 +152,8 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     char suffixedInfoFileName[numOfSplits][100];
 
     if(numOfSplits == 1){
-        sprintf(suffixedDiffIdxFileName[0], "%s_0_diffIdx", outputFileName);
-        sprintf(suffixedInfoFileName[0], "%s_0_info", outputFileName);
+        sprintf(suffixedDiffIdxFileName[0], "%s_diffIdx", outputFileName);
+        sprintf(suffixedInfoFileName[0], "%s_info", outputFileName);
         cout<<"k-mer DB in: "<<endl;
         cout<<suffixedDiffIdxFileName[0]<<"and"<<endl;
         cout<<suffixedInfoFileName[0]<<endl;
