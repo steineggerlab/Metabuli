@@ -1,10 +1,5 @@
 #!/bin/bash
 
-FOLDER=$1
-TAXLIST="${FOLDER}/taxID_list_GTDB"
-TAX_FILE_SORTED="${FOLDER}/taxid_filename_sorted_GTDB"
-GENOME="${FOLDER}/concatenated_genome_GTDB"
-
 TAXLIST=$1
 TAX_FILE_SORTED=$2
 GENOME=$3

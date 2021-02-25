@@ -67,7 +67,7 @@ void prepareForCreatingTargetDB(const LocalParameters & par){
             if (assacc2taxid.count(assacc[0].str())) {
                 taxId = assacc2taxid[assacc[0].str()];
                 taxID_fname << taxId << "\t" << fileName << endl;
-                cout << taxId << "\t" << fileName << endl;
+                //cout << taxId << "\t" << fileName << endl;
             } else{
                 cout<<assacc[0].str()<<" is excluded in creating target DB because it is not mapped to taxonomical ID"<<endl;
             }
@@ -95,7 +95,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         cout<<"Creating target database based on taxonomy of GTDB"<<endl;
         prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_GTDB";
-        taxIdList_fname = string(folder) +"/taxID_list_GTDB";
+        taxIdList_fname = string(outputFileName) +"_taxID_list_GTDB";
         names = "../../gtdb_taxdmp/names.dmp";
         nodes = "../../gtdb_taxdmp/nodes.dmp";
         merged = "../../gtdb_taxdmp/merged.dmp";
@@ -103,7 +103,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         cout<<"Creating target database based on taxonomy of NCBI"<<endl;
         prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_NCBI";
-        taxIdList_fname = string(folder) +"/taxID_list_NCBI";
+        taxIdList_fname = string(outputFileName) +"_taxID_list_NCBI";
         names = "../../ncbi_taxdmp/names.dmp";
         nodes = "../../ncbi_taxdmp/nodes.dmp";
         merged = "../../ncbi_taxdmp/merged.dmp";

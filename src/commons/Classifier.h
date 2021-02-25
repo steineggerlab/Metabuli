@@ -20,7 +20,7 @@
 #include <algorithm>
 #include "FastSort.h"
 #include "KSeqWrapper.h"
-
+#include "LocalParameters.h"
 
 
 #define AminoAcid(x) (size_t)(x & (~0 & ~16777215))
@@ -50,8 +50,8 @@ private:
         TaxID childTaxon;
     };
 
-    typedef struct ConsecutiveMathces{
-        ConsecutiveMathces(uint32_t begin, uint32_t end, uint32_t hamming, uint32_t gapCnt, size_t bi, size_t ei) : begin(begin), end(end), hamming(hamming), gapCnt(gapCnt), beginIdx(bi), endIdx(ei) {}
+    typedef struct ConsecutiveMatches{
+        ConsecutiveMatches(uint32_t begin, uint32_t end, uint32_t hamming, uint32_t gapCnt, size_t bi, size_t ei) : begin(begin), end(end), hamming(hamming), gapCnt(gapCnt), beginIdx(bi), endIdx(ei) {}
         uint32_t begin;
         uint32_t end;
         uint32_t hamming;
@@ -66,7 +66,7 @@ private:
         string name;
         int taxId;
         float coverage;
-        map<TaxID,int> taxCnt;
+        map<TaxID,int> taxCnt; ///how about using it for REPORTFILE? --> k-mer count
         size_t queryLength;
         QueryInfo(int queryId, bool isClassified, string name, int taxId, float coverage, size_t queryLength): queryId(queryId), isClassified(isClassified), name(name), taxId(taxId), coverage(coverage), queryLength(queryLength) {}
         bool operator == (const int Id) const{
@@ -75,6 +75,7 @@ private:
             return false;
         }
     }QueryInfo;
+
 
     int numOfSplit;
     SeqIterator * seqIterator;
@@ -85,9 +86,13 @@ private:
     size_t closestCount;
     size_t currentTargetPos;
     int isMatched;
+    int currentHamming;
+
     vector<MatchedKmer> matchedKmerList;
     vector<size_t> closestKmers;
-    int currentHamming;
+    vector<QueryInfo> queryInfos;
+    unordered_map<TaxID, unsigned int> taxCounts;
+
 
     const static uint64_t MARKER = ~0 & ~16777215;
     uint8_t hammingLookup[8][8]= {
@@ -107,16 +112,19 @@ private:
                     size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent);
     static bool compareForAnalyzing( const MatchedKmer & a, const MatchedKmer & b);
     static bool compareForLinearSearch(const QueryKmer & a, const QueryKmer & b);
-    static bool compareConsecutiveMatches(const ConsecutiveMathces & a, const ConsecutiveMathces & b);
-    void fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt, vector<QueryInfo> & queryInfos);
+    static bool compareConsecutiveMatches(const ConsecutiveMatches & a, const ConsecutiveMatches & b);
+    void fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt);
     TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, vector<QueryInfo> & queryInfos);
     static void checkAndGive(vector<uint32_t> & posList,  vector<uint8_t> & hammingList, const uint32_t & pos, const uint8_t & hammingDist);
     void writeReadClassification(vector<QueryInfo> & queryInfos, ofstream & readClassificationFile);
-    void writeReportFile(const char * queryFileName);
+    void writeReportFile(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, const int numOfQuery);
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);
-    void analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, vector<QueryInfo> & queryInfos);
+    void analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments);
+    void writeReport(FILE * fp, const NcbiTaxonomy & ncbiTaxonomy, const unordered_map<TaxID, TaxonCounts> & cladeCounts, unsigned long totalReads,TaxID taxID = 0, int depth = 0);
+    unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts>& map, TaxID key);
+   // void getTaxCounts(const vector<QueryInfo> & queryInfos, )
 public:
-    void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, vector<int> & taxIdList);
+    void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, vector<int> & taxIdList, const LocalParameters & par);
     int getNumOfSplits() const;
     Classifier();
     ~Classifier();
