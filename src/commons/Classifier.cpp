@@ -3,6 +3,7 @@
 //
 
 #include "Classifier.h"
+#include "LocalParameters.h"
 
 Classifier::Classifier() {
     seqIterator = new SeqIterator();
@@ -13,14 +14,28 @@ Classifier::Classifier() {
 
 Classifier::~Classifier() { delete seqIterator; }
 
-void Classifier::startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, vector<int> & taxIdList) {
-
-    NcbiTaxonomy ncbiTaxonomy("../../taxdmp/names.dmp","../../taxdmp/nodes.dmp","../../taxdmp/merged.dmp");
+void Classifier::startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, vector<int> & taxIdList, const LocalParameters & par) {
+    string names, nodes, merged;
+    if(par.gtdbOrNcbi == 1 || par.gtdbOrNcbi == 0){
+        cout<<"Classifying query sequences based on taxonomy of GTDB"<<endl;
+        names = "../../gtdb_taxdmp/names.dmp";
+        nodes = "../../gtdb_taxdmp/nodes.dmp";
+        merged = "../../gtdb_taxdmp/merged.dmp";
+    } else if(par.gtdbOrNcbi == 2){
+        cout<<"Classifying query sequences based on taxonomy of NCBI"<<endl;
+        names = "../../ncbi_taxdmp/names.dmp";
+        nodes = "../../ncbi_taxdmp/nodes.dmp";
+        merged = "../../ncbi_taxdmp/merged.dmp";
+    } else{
+        cout<<"ERROR"<<endl;
+        return;
+    }
+    NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
 
     vector<int> taxIdListAtRank;
     ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
 
-    struct MmapedData<char> queryFile = mmapData<char>(queryFileName);
+    struct MmapedData<char> queryFile = mmapData<char>(par.filenames[0].c_str());
     struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName);
     targetDiffIdxList.data[targetDiffIdxList.fileSize/sizeof(uint16_t)] = 32768; //1000000000000000
     struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName);
@@ -37,26 +52,28 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     cout<<"numOfseq: "<<numOfSeq<<endl;
     ofstream readClassificationFile;
-    readClassificationFile.open(string(queryFileName)+"_ReadClassification_temp.tsv");
-
-    vector<QueryInfo> queryInfos;
+    readClassificationFile.open(par.filenames[0]+"_ReadClassification_temp.tsv");
 
     while(processedSeqCnt < numOfSeq){ ///check this condition
-        fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryInfos);
+        fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt);
         linearSearch(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, taxIdList, taxIdListAtRank);
-        analyseResult(ncbiTaxonomy, sequences, queryInfos);
+        analyseResult(ncbiTaxonomy, sequences);
         writeReadClassification(queryInfos,readClassificationFile);
         queryInfos.clear();
     }
 
+
+    ///TODO split count 고려할 것
     cout<<"Sorting the 'queryfile_ReadClassification.tsv' file"<<endl;
-    string sortCall = "sort -t$'\t' -k1 -n " + string(queryFileName) + "_ReadClassification_temp.tsv > "+string(queryFileName) + "_ReadClassification.tsv";
-    string rmCall = "rm " + string(queryFileName) +"_ReadClassification_temp.tsv";
+    string sortCall = "sort -t$'\t' -k1 -n " + par.filenames[0] + "_ReadClassification_temp.tsv > "+par.filenames[0]+"_ReadClassification.tsv";
+    string rmCall = "rm " +par.filenames[0]+"_ReadClassification_temp.tsv";
     system(sortCall.c_str());
     system(rmCall.c_str());
     readClassificationFile.close();
 
     ///TODO: Merge ReportFiles
+
+    writeReportFile(par.filenames[0].c_str(), ncbiTaxonomy, numOfSeq);
 
     cout<<"Number of query k-mer                : "<<queryCount<<endl;
     cout<<"Number of total match                : "<<totalMatchCount <<endl;
@@ -70,7 +87,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     munmap(targetInfoList.data, targetInfoList.fileSize + 1);
 }
 
-void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt, vector<QueryInfo> & queryInfos) {
+void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt) {
     bool hasOverflow = false;
 #pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, queryInfos, cout)
     {
@@ -234,7 +251,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
 }
 
 ///It analyses the result of linear search.
-void Classifier::analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, vector<QueryInfo> & queryInfos){
+void Classifier::analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments){
     SORT_PARALLEL(matchedKmerList.begin(), matchedKmerList.end(), Classifier::compareForAnalyzing);
     size_t numOfMatches = matchedKmerList.size();
     int currentQuery;
@@ -248,12 +265,13 @@ void Classifier::analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & s
         while((currentQuery ==  matchedKmerList[i].queryID) && (i < numOfMatches)) i++;
         queryEnd = i - 1;
         TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[currentQuery].length, currentQuery, queryOffset, queryEnd, queryInfos);
+        ++taxCounts[selectedLCA];
     }
 }
 
 ///For a query read, assign the best Taxon, using k-mer matches
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLen, const int & currentQuery, const size_t & offset, const size_t & end, vector<QueryInfo> & queryInfos){
-    vector<ConsecutiveMathces> coMatches;
+    vector<ConsecutiveMatches> coMatches;
 
     float coverageThr = 0.3;
     int conCnt = 0;
@@ -320,7 +338,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
 
     ///Align consecutive matches back to query.
-    vector<ConsecutiveMathces> alignedCoMatches;
+    vector<ConsecutiveMatches> alignedCoMatches;
 
     alignedCoMatches.push_back(coMatches[0]);
     auto alignedBegin = alignedCoMatches.begin();
@@ -625,7 +643,7 @@ bool Classifier::compareForLinearSearch(const QueryKmer & a, const QueryKmer & b
     return a.ADkmer < b.ADkmer;
 }
 
-bool Classifier::compareConsecutiveMatches(const ConsecutiveMathces & a, const ConsecutiveMathces & b){
+bool Classifier::compareConsecutiveMatches(const ConsecutiveMatches & a, const ConsecutiveMatches & b){
     if((a.end - a.begin) > (b.end- b.begin)){
         if((a.end - a.begin) == (b.end - b.begin + 1)){
             return (a.endIdx - a.beginIdx + 1) * 2 / ((a.hamming+1)*(a.gapCnt+1)) > (b.endIdx - b.beginIdx +1) * 2 / ((b.hamming + 1) * (b.gapCnt + 1));
@@ -647,8 +665,45 @@ void Classifier::writeReadClassification(vector<QueryInfo> & queryInfos, ofstrea
     }
 }
 
-void Classifier::writeReportFile(const char * queryFileName){
-    string readClassificationName = string(queryFileName) + "_ReadClassification.tsv";
-    ifstream readCl;
-    readCl.open(readClassificationName);
+void Classifier::writeReportFile(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, const int numOfQuery){
+    unordered_map<TaxID, TaxonCounts> cladeCounts = ncbiTaxonomy.getCladeCounts(taxCounts);
+    string outputFile = string(queryFileName) + "_REPORTFILE.tsv";
+    FILE * fp;
+    fp = fopen(outputFile.c_str(), "w");
+    writeReport(fp, ncbiTaxonomy, cladeCounts, numOfQuery);
+}
+
+void Classifier::writeReport(FILE * fp, const NcbiTaxonomy & ncbiTaxonomy, const unordered_map<TaxID, TaxonCounts> & cladeCounts, unsigned long totalReads, TaxID taxID, int depth){
+    auto it = cladeCounts.find(taxID);
+    unsigned int cladeCount = (it == cladeCounts.end()? 0 : it->second.cladeCount);
+    unsigned int taxCount = (it == cladeCounts.end()? 0 : it->second.taxCount);
+    if(taxID == 0) {
+        if (cladeCount > 0) {
+            fprintf(fp, "%.2f\t%i\t%i\t0\tno rank\tunclassified\n", 100 * cladeCount / double(totalReads), cladeCount, taxCount);
+        }
+        writeReport(fp, ncbiTaxonomy, cladeCounts, totalReads, 1);
+    } else{
+        if (cladeCount == 0){
+            return;
+        }
+        const TaxonNode * taxon = ncbiTaxonomy.taxonNode(taxID);
+        fprintf(fp, "%.2f\t%i\t%i\t%i\t%s\t%s%s\n", 100 * cladeCount / double(totalReads), cladeCount, taxCount, taxID, taxon->rank.c_str(), string(2*depth, ' ').c_str(), taxon->name.c_str());
+        vector<TaxID> children = it -> second.children;
+        sort(children.begin(), children.end(), [&](int a, int b) { return cladeCountVal(cladeCounts, a) > cladeCountVal(cladeCounts,b); });
+        for (TaxID childTaxId : children) {
+            if (cladeCounts.count(childTaxId)) {writeReport(fp, ncbiTaxonomy, cladeCounts, totalReads, childTaxId, depth + 1);
+            } else {
+                break;
+            }
+        }
+    }
+}
+
+unsigned int Classifier::cladeCountVal(const std::unordered_map<TaxID, TaxonCounts>& map, TaxID key) {
+    typename std::unordered_map<TaxID, TaxonCounts>::const_iterator it = map.find(key);
+    if (it == map.end()) {
+        return 0;
+    } else {
+        return it->second.cladeCount;
+    }
 }
