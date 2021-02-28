@@ -68,10 +68,12 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
                 prodigal.is_meta = 0;
+                string tmp = seq->name.s;
                 if(strlen(seq->seq.s) < 20000){
                     prodigal.is_meta = 1;
-                    prodigal.trainMeta(seq->seq.s);
                     cout<<"train Meta: "<<splits[i].training<<" "<<seqs[splits[i].training].start<<" "<<i<<seq->headerOffset<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
+                    cout<<tmp<<endl;
+                    prodigal.trainMeta(seq->seq.s);
                 }else{
                     prodigal.trainASpecies(seq->seq.s);
                 }
@@ -323,8 +325,7 @@ void IndexCreator::getFastaSplits(const vector<int> & taxIdListAtRank, vector<Fa
         while(currentTaxId == taxIdListAtRank[idx] && idx < taxIdListAtRank.size()){
             cnt ++;
             idx ++;
-
-            if(cnt > 100){ ///The smaller, the faster. The largest number of consecutive plasmid is the smallest. The smaller, the more training and the less time of single threading
+            if(cnt > 100){ //The largest number of consecutive plasmid is the smallest. The smaller, the more training and the less time of single threading
                 theLargest = 0;
                 for(uint32_t i = 0; i < cnt - 1; i++){
                     if(seqs[offset + i].length > theLargest){

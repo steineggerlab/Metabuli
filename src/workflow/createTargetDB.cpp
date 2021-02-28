@@ -77,7 +77,7 @@ void prepareForCreatingTargetDB(const LocalParameters & par){
 
     system(("sort -k 1 -g "+taxid_fname_fname+" > "+taxid_fname_sorted_fname).c_str());
     system("chmod +x ./../../util/make_taxIdList_and_concatenatedGenome.sh");
-    system(("./../../util/make_taxIdList_and_concatenatedGenome.sh "+taxidList_fname+" "+taxid_fname_sorted_fname+" "+genome_fname).c_str());
+   // system(("./../../util/make_taxIdList_and_concatenatedGenome.sh "+taxidList_fname+" "+taxid_fname_sorted_fname+" "+genome_fname).c_str());
 }
 
 int createTargetDB(int argc, const char **argv, const Command &command)

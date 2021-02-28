@@ -446,8 +446,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         }
     }
 
-
-
     if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
         cout<<"strain level classification: "<<selectedLCA<<endl;
     }else {
