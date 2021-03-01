@@ -346,6 +346,62 @@ void SeqIterator::getTranslationBlocks(struct _gene * genes, struct _node * node
     }
 }
 
+void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length, size_t & blockIdx){
+
+    if(numOfGene == 0){
+        blocks.emplace_back(0, length - 1, 1);
+        blockIdx++;
+        return;
+    }
+
+
+    //for the first frame
+    if(genes[0].begin > 23) {
+        blocks.emplace_back(0, genes[0].begin - 1, 1);
+        blockIdx++;
+    }
+
+    int frame;
+    int rightEnd = 0;
+
+    for (size_t geneIdx = 0 ; geneIdx < numOfGene - 1; geneIdx++) {
+        if(genes[geneIdx].end > genes[geneIdx + 1].end){ //one gene completely includes another gene
+            blocks.emplace_back(genes[geneIdx].begin, genes[geneIdx].end + 21, nodes[genes[geneIdx].start_ndx].strand);
+            geneIdx++;
+            blockIdx++;
+            continue;
+        }
+
+        if(nodes[genes[geneIdx].start_ndx].strand == 1){ //forward
+            blocks.emplace_back(genes[geneIdx].begin, genes[geneIdx + 1].begin + 20, nodes[genes[geneIdx].start_ndx].strand);
+            blockIdx ++;
+        } else { // reverse
+            frame = genes[geneIdx].end % 3;
+            rightEnd = genes[geneIdx+1].begin - 1;
+            while(rightEnd%3 != frame){
+                rightEnd--;
+            }
+            blocks.emplace_back(genes[geneIdx].begin, rightEnd + 21, nodes[genes[geneIdx].start_ndx].strand);
+            blockIdx++;
+        }
+    }
+
+    //For the last block
+    if(nodes[genes[numOfGene - 1].start_ndx].strand == 1){ //forward
+        blocks.emplace_back(genes[numOfGene - 1].begin, length -1, nodes[genes[numOfGene-1].start_ndx].strand);
+        blockIdx ++;
+    }else{ // reverse
+        frame = genes[numOfGene-1].end % 3;
+        rightEnd = length - 1;
+        while(rightEnd%3 != frame){
+            rightEnd--;
+        }
+        blocks.emplace_back(genes[numOfGene - 1].begin, rightEnd, nodes[genes[numOfGene-1].start_ndx].strand);
+        blockIdx ++;
+    }
+}
+
+
 void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
     uint64_t copy = kmer;
     kmer >>= 25;

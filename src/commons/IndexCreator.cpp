@@ -80,7 +80,8 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
 
                 ///malloc
                 prodigal.getPredictedFrames(seq->seq.s);
-                PredictedBlock * blocks = (PredictedBlock*)malloc(((prodigal.getNumberOfPredictedGenes() + 1) * (splits[i].cnt + 1)) * 2 * sizeof(PredictedBlock));
+                vector<PredictedBlock> blocks;
+                //PredictedBlock * blocks = (PredictedBlock*)malloc(((prodigal.getNumberOfPredictedGenes() + 1) * (splits[i].cnt + 1)) * 2 * sizeof(PredictedBlock));
                 numOfBlocks = 0;
 
                 ///Getting all the sequence blocks of current split. Each block will be translated later separately.
@@ -91,7 +92,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
 
                     prodigal.getPredictedFrames(seq->seq.s);
                     numOfGene += prodigal.getNumberOfPredictedGenes();
-                    seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks,
+                    seqIterator.getTranslationBlocks2(prodigal.genes, prodigal.nodes, blocks,
                                                      prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
                                                      numOfBlocks);
                     numOfBlocksList[p] = numOfBlocks;
@@ -129,7 +130,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     hasOverflow = true;
                 }
                 free(numOfBlocksList);
-                free(blocks);
+                //free(blocks);
             }
         }
     }
