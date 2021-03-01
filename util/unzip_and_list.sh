@@ -9,7 +9,7 @@ find "${FOLDER}" -name "*.fna.gz" -print0 | while read -d $'\0' gz; do
 done
 echo "...done"
 
-printf "Writing tax_file"
+echo "Writing a list of FASTA files"
 find "${FOLDER}" -name "*.fna" > "${FASTAFILES}"
 
 #for i in $(cat "${FASTAFILES}"); do
