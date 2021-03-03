@@ -260,16 +260,21 @@ void Classifier::analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & s
     size_t queryEnd;
     while(i < numOfMatches) {
         currentQuery = matchedKmerList[i].queryID;
+        cout<<"14"<<endl;
         queryOffset = i;
         while((currentQuery ==  matchedKmerList[i].queryID) && (i < numOfMatches)) i++;
+        cout<<"15"<<endl;
         queryEnd = i - 1;
         TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[currentQuery].length, currentQuery, queryOffset, queryEnd, queryInfos);
+        cout<<"12"<<endl;
         ++taxCounts[selectedLCA];
+        cout<<"13"<<endl;
     }
 }
 
 ///For a query read, assign the best Taxon, using k-mer matches
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLen, const int & currentQuery, const size_t & offset, const size_t & end, vector<QueryInfo> & queryInfos){
+    cout<<"1"<<endl;
     vector<ConsecutiveMatches> coMatches;
 
     float coverageThr = 0.3;
@@ -333,6 +338,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         i++;
     }
 
+    cout<<"2"<<endl;
     SORT_PARALLEL(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
 
 
@@ -361,12 +367,15 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         }
     }
 
+    cout<<"3"<<endl;
     for(size_t cs = 0; cs < alignedCoMatches.size(); cs++ ){
         for(size_t k = alignedCoMatches[cs].beginIdx ; k < alignedCoMatches[cs].endIdx + 1; k++ ){
             cout<<matchedKmerList[k].queryID<<" "<<matchedKmerList[k].queryFrame<<" "<<matchedKmerList[k].queryPos<<" "<<matchedKmerList[k].taxID<<" "<<int(matchedKmerList[k].hammingDistance)<<" "<<matchedKmerList[k].redundancy<<" "<<matchedKmerList[k].targetID<<endl;
         }
         cout<<(alignedCoMatches[cs].end - alignedCoMatches[cs].begin)/3 + 1<<endl;
     }
+
+    cout<<"4"<<endl;
 
     ///Check a query coverage
     int maxNum = queryLen / 3 - kmerLength + 1;
@@ -402,6 +411,8 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         }
     }
 
+    cout<<"5"<<endl;
+
     ///No classification for low coverage.
     if(coverage < coverageThr){
         currentInfo->coverage = coverage;
@@ -419,6 +430,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
                                   selectedPercent);
 
 
+    cout<<"6"<<endl;
     ///TODO optimize strain specific classification criteria
     ///Strain classification only for high coverage with LCA of species level
     if(coverage > 0.90 && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
