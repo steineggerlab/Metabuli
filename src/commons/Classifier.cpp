@@ -69,7 +69,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     ///TODO split count 고려할 것
     cout<<"Sorting the 'queryfile_ReadClassification.tsv' file"<<endl;
-    string sortCall = "sort -t$'\t' -k1 -n " + par.filenames[0] + "_ReadClassification_temp.tsv > "+par.filenames[0]+"_ReadClassification.tsv";
+    string sortCall = "sort -t '\t' -k1 -n " + par.filenames[0] + "_ReadClassification_temp.tsv > "+par.filenames[0]+"_ReadClassification.tsv";
     string rmCall = "rm " +par.filenames[0]+"_ReadClassification_temp.tsv";
     system(sortCall.c_str());
     system(rmCall.c_str());
