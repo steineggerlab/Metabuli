@@ -232,7 +232,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
             cout<<"350"<<endl;
             cout<<closestKmers.size()<<endl;
             if(closestKmers.size()) {
-                for (int i2 = 0; closestKmers.size(); i2++) {
+                for (size_t i2 = 0; i2 < closestKmers.size(); i2++) {
                     cout << closestKmers[i2] << endl;
                 }
             }
