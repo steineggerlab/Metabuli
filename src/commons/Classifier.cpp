@@ -69,7 +69,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     ///TODO split count 고려할 것
     cout<<"Sorting the 'queryfile_ReadClassification.tsv' file"<<endl;
-    string sortCall = "sort -t '\t' -k1 -n " + par.filenames[0] + "_ReadClassification_temp.tsv > "+par.filenames[0]+"_ReadClassification.tsv";
+    string sortCall = "sort -t :'\t' -k1 -n " + par.filenames[0] + "_ReadClassification_temp.tsv > "+par.filenames[0]+"_ReadClassification.tsv";
     string rmCall = "rm " +par.filenames[0]+"_ReadClassification_temp.tsv";
     system(sortCall.c_str());
     system(rmCall.c_str());
@@ -224,6 +224,16 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
             tarIter++;
         }
 
+        if(queryKmerList[i].info.sequenceID == 350){
+            cout<<"350"<<endl;
+            cout<<closestKmers.size()<<endl;
+            if(closestKmers.size()) {
+                for (int i2 = 0; closestKmers.size(); i2++) {
+                    cout << closestKmers[i2] << endl;
+                }
+            }
+
+        }
         if (lowestHamming < 3) {
             for (size_t k = 0; k < closestKmers.size(); k++) {
                 ///TODO generous hamming?
@@ -274,7 +284,6 @@ void Classifier::analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & s
 
 ///For a query read, assign the best Taxon, using k-mer matches
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLen, const int & currentQuery, const size_t & offset, const size_t & end, vector<QueryInfo> & queryInfos){
-    cout<<"1"<<endl;
     vector<ConsecutiveMatches> coMatches;
 
     float coverageThr = 0.3;
