@@ -140,7 +140,7 @@ void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBu
     uint64_t tempKmer = 0;
     uint32_t seqLen = strlen(seq);
     int checkN;
-
+    cout<<"fullQuerybuffer"<<endl;
     for(uint32_t frame = 0 ; frame < 6 ; frame++){
         uint32_t len = aaFrames[frame].size();
         forOrRev = frame / 3;
