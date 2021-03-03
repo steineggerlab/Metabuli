@@ -334,10 +334,11 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         i++;
     }
 
-    cout<<"2"<<endl;
     SORT_PARALLEL(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
-    cout<<"3"<<endl;
 
+    if(coMatches.size() == 0){
+        cout<<"nonononon"<<endl;
+    }
     ///Align consecutive matches back to query.
     vector<ConsecutiveMatches> alignedCoMatches;
 
