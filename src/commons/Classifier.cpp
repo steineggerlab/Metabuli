@@ -205,9 +205,13 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
                     continue;
                 } else if(currentHamming < lowestHamming){
                     closestKmers.clear();
+                    hammings.clear();
                     lowestHamming = currentHamming;
                 }
-                if(currentHamming == lowestHamming) closestKmers.push_back(tarIter);
+                if(currentHamming == lowestHamming) {
+                    closestKmers.push_back(tarIter);
+                    hammings.push_back(currentHamming);
+                }
 
 //                if(currentHamming > lowestHamming){
 //                    tarIter ++;
@@ -258,7 +262,6 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
             }
         }
         closestKmers.clear();
-        hammings.clear();
     }
     numOfQuery = 0;
 }
