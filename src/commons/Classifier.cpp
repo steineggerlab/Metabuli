@@ -141,7 +141,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
     uint64_t nextTargetKmer = getNextTargetKmer(0, targetDiffIdxList.data, diffIdxPos);
     size_t tarIter = 0;
 
-    cout<<"before "<<numOfQuery<<endl;
+
     ///Find the first index of garbage k-mer (UINT64_MAX)
     for(size_t checkN = numOfQuery - 1; checkN >= 0; checkN--){
         if(queryKmerList[checkN].ADkmer != UINT64_MAX){
@@ -149,7 +149,6 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
             break;
         }
     }
-    cout<<"after "<<numOfQuery<<endl;
 
     uint64_t currentQuery = UINT64_MAX;
     uint64_t currentTargetKmer = UINT64_MAX;
@@ -255,7 +254,7 @@ void Classifier::analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & s
     SORT_PARALLEL(matchedKmerList.begin(), matchedKmerList.end(), Classifier::compareForAnalyzing);
     size_t numOfMatches = matchedKmerList.size();
     int currentQuery;
-
+    cout<<"here"<<numOfMatches<<endl;
     size_t i = 0;
     size_t queryOffset;
     size_t queryEnd;
