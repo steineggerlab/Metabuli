@@ -111,7 +111,8 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         cout<<"ERROR"<<endl;
         return 0;
     }
-    return 0;
+
+
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
     IndexCreator idxCre;
 

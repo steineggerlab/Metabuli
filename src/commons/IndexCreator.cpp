@@ -123,6 +123,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                         start = numOfBlocksList[seqIdx];
                     }
                     checker[i] = true;
+                    #pragma omp atomic
                     processedSplitCnt ++;
                 }else {
                     ///Withdraw the reservation if the buffer is full.
