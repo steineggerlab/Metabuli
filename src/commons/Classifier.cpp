@@ -56,6 +56,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     while(processedSeqCnt < numOfSeq){ ///check this condition
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt);
+        cout<<"processedCnt"<<processedSeqCnt<<endl;
         linearSearch(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, taxIdList, taxIdListAtRank);
         analyseResult(ncbiTaxonomy, sequences);
         writeReadClassification(queryInfos,readClassificationFile);
