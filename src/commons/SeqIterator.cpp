@@ -161,6 +161,7 @@ void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBu
             }else{
                 addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame);
                 if(seqID == 350){
+                    cout<<frame<< " "<<kmerCnt<<endl;
                     printKmerInDNAsequence(tempKmer);
                 }
                 if(forOrRev == 0) {
