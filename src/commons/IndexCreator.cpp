@@ -49,8 +49,8 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
    omp_set_num_threads(64);
 #endif
     bool hasOverflow = false;
-    size_t numOfGene =0;
-#pragma omp parallel default(none), shared(checker, hasOverflow, splits, seqFile, seqs, kmerBuffer, processedSplitCnt, cout, numOfGene, taxIdListAtRank)
+
+    #pragma omp parallel default(none), shared(checker, hasOverflow, splits, seqFile, seqs, kmerBuffer, processedSplitCnt, cout, taxIdListAtRank)
     {
         ProdigalWrapper prodigal;
         SeqIterator seqIterator;
@@ -91,7 +91,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     kseq_read(seq);
 
                     prodigal.getPredictedFrames(seq->seq.s);
-                    numOfGene += prodigal.getNumberOfPredictedGenes();
                     seqIterator.getTranslationBlocks2(prodigal.genes, prodigal.nodes, blocks,
                                                      prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
                                                      numOfBlocks);
