@@ -69,7 +69,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     ///TODO split count 고려할 것
     cout<<"Sorting the 'queryfile_ReadClassification.tsv' file"<<endl;
-    string sortCall = "sort -t :'\t' -k1 -n " + par.filenames[0] + "_ReadClassification_temp.tsv > "+par.filenames[0]+"_ReadClassification.tsv";
+    string sortCall = "sort -t '\t' -k1 -n " + par.filenames[0] + "_ReadClassification_temp.tsv > "+par.filenames[0]+"_ReadClassification.tsv";
     string rmCall = "rm " +par.filenames[0]+"_ReadClassification_temp.tsv";
     system(sortCall.c_str());
     system(rmCall.c_str());
@@ -104,6 +104,10 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                 KSeqBuffer buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
                 buffer.ReadEntry();
                 seqs[i].length = strlen(buffer.entry.sequence.s);
+                if(i == 350){
+                    cout<<"sequence 350"<<endl;
+                    cout<<buffer.entry.sequence.s<<endl;
+                }
                 //queryInfos[i] = {int(i), false, buffer.entry.name.s, 0, 0, seqs[i].length};
                 infos.emplace_back(int(i), false, buffer.entry.name.s, 0, 0, seqs[i].length);
                 //cout<<buffer.entry.name.s<<endl;
