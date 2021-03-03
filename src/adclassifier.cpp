@@ -23,6 +23,7 @@ std::vector<Command> commands = {
           {"mapping file (assembly accession to taxonomical ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
           {"name of output target database with path", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty},
           {"tmpDir", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
+
         {"classify", classify, &localPar.classify, COMMAND_MAIN,
          "It extracts k-mers from query sequences, and compares them to the target database",
          NULL,
