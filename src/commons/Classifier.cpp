@@ -113,6 +113,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                 if (posToWrite + kmerCnt < kmerBufSize) {
                     seqIterator.fillQueryKmerBuffer(buffer.entry.sequence.s, kmerBuffer, posToWrite, i);
                     checker[i] = true;
+                    #pragma omp atomic
                     processedSeqCnt ++;
                 } else{
                     kmerBuffer.startIndexOfReserve -= kmerCnt;
