@@ -10,6 +10,7 @@ Classifier::Classifier() {
     numOfSplit = 0;
     closestCount = 0;
     queryCount = 0;
+    perfectMatchCount = 0;
 }
 
 Classifier::~Classifier() { delete seqIterator; }
