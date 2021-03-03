@@ -334,11 +334,9 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         i++;
     }
 
+    if (coMatches.size() == 0) return 0;
     SORT_PARALLEL(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
 
-    if(coMatches.size() == 0){
-        cout<<"nonononon"<<endl;
-    }
     ///Align consecutive matches back to query.
     vector<ConsecutiveMatches> alignedCoMatches;
 
@@ -364,7 +362,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         }
     }
 
-    cout<<"4"<<endl;
     for(size_t cs = 0; cs < alignedCoMatches.size(); cs++ ){
         for(size_t k = alignedCoMatches[cs].beginIdx ; k < alignedCoMatches[cs].endIdx + 1; k++ ){
             cout<<matchedKmerList[k].queryID<<" "<<matchedKmerList[k].queryFrame<<" "<<matchedKmerList[k].queryPos<<" "<<matchedKmerList[k].taxID<<" "<<int(matchedKmerList[k].hammingDistance)<<" "<<matchedKmerList[k].redundancy<<" "<<matchedKmerList[k].targetID<<endl;
