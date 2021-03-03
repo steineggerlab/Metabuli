@@ -193,21 +193,21 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
                 totalMatchCount++;
 
                 currentHamming = getHammingDistance(currentQuery, currentTargetKmer);
-                hammings.push_back(currentHamming);
-                closestKmers.push_back(tarIter);
-
-                if (currentHamming < lowestHamming) {
-                    lowestHamming = currentHamming;
-                }
-
-//                if(currentHamming > lowestHamming + 1){
-//                    tarIter ++;
-//                    continue;
-//                } else if(currentHamming < lowestHamming){
-//                    closestKmers.clear();
+//                hammings.push_back(currentHamming);
+//                closestKmers.push_back(tarIter);
+//
+//                if (currentHamming < lowestHamming) {
 //                    lowestHamming = currentHamming;
 //                }
-//                 if(currentHamming == lowestHamming) closestKmers.push_back(tarIter);
+
+                if(currentHamming > lowestHamming + 1){
+                    tarIter ++;
+                    continue;
+                } else if(currentHamming < lowestHamming){
+                    closestKmers.clear();
+                    lowestHamming = currentHamming;
+                }
+                if(currentHamming == lowestHamming) closestKmers.push_back(tarIter);
 
 //                if(currentHamming > lowestHamming){
 //                    tarIter ++;
@@ -237,7 +237,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
         if (lowestHamming < 3) {
             for (size_t k = 0; k < closestKmers.size(); k++) {
                 ///TODO generous hamming?
-                if (hammings[k] == lowestHamming) {
+                //if (hammings[k] == lowestHamming) {
                     if (targetInfoList.data[closestKmers[k]].redundancy == true) {
                         matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
                                                      targetInfoList.data[closestKmers[k]].sequenceID,
@@ -254,7 +254,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
                                                      queryKmerList[i].info.frame);
                     }
                     closestCount++;
-                }
+                //}
             }
         }
         closestKmers.clear();
