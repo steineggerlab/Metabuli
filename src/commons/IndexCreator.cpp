@@ -46,7 +46,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 
 size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSplitCnt, const vector<FastaSplit> & splits, const vector<int> & taxIdListAtRank) {
 #ifdef OPENMP
-   omp_set_num_threads(64);
+   omp_set_num_threads(6);
 #endif
     bool hasOverflow = false;
 
@@ -113,12 +113,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                         kseq_read(seq);
                         size_t temp = kmerBuffer.startIndexOfReserve;
                         size_t end = numOfBlocksList[seqIdx];
-                        //cout<<"before filling "<<temp<<" "<<posToWrite<<endl;
                         for(size_t bl = start; bl < end ; bl++){
                             seqIterator.translateBlock(seq->seq.s,blocks[bl]);
                             seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].offset + seqIdx, taxIdListAtRank[splits[i].offset + seqIdx]); //splits[i].offset + seqIdx
                         }
-                        //cout<<"after filling "<<temp<<" "<<posToWrite<<endl;
                         start = numOfBlocksList[seqIdx];
                     }
                     checker[i] = true;
@@ -344,7 +342,7 @@ void IndexCreator::getFastaSplits(const vector<int> & taxIdListAtRank, vector<Fa
         if(isLeftover == 1){
             fastaSplit.emplace_back(training, offset, cnt);
         }else {
-                theLargest = 0;
+            theLargest = 0;
             for (uint32_t i = 0; i < cnt; i++) {
                 if (seqs[offset + i].length > theLargest) {
                     training = offset + i;

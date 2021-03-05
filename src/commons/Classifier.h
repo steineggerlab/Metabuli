@@ -84,9 +84,9 @@ private:
     size_t multipleMatchCount;
     size_t perfectMatchCount;
     size_t closestCount;
-    size_t currentTargetPos;
-    int isMatched;
-    int currentHamming;
+
+//    int isMatched;
+//    int currentHamming;
 
     vector<MatchedKmer> matchedKmerList;
     vector<size_t> closestKmers;

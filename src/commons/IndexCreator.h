@@ -33,12 +33,12 @@ using namespace std;
 
 class IndexCreator{
 private:
-    typedef struct FastaSplit{
+   struct FastaSplit{
         FastaSplit(size_t training, uint32_t offset, uint32_t cnt): training(training), offset(offset), cnt(cnt) {}
         size_t training;
         uint32_t offset;
         uint32_t cnt;
-    } FastaSplit;
+    };
 
     size_t availableMemory;
     size_t numOfFlush=0;
