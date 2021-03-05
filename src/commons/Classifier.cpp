@@ -105,17 +105,8 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                 KSeqBuffer buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
                 buffer.ReadEntry();
                 seqs[i].length = strlen(buffer.entry.sequence.s);
-                if(i == 350){
-                    cout<<"sequence 350"<<endl;
-                    cout<<buffer.entry.sequence.s<<endl;
-                }
-                //queryInfos[i] = {int(i), false, buffer.entry.name.s, 0, 0, seqs[i].length};
                 infos.emplace_back(int(i), false, buffer.entry.name.s, 0, 0, seqs[i].length);
-                //cout<<buffer.entry.name.s<<endl;
-                //queryInfos.insert(pair<int, QueryInfo>(i, {false, buffer.entry.name.s, 0, 0, seqs[i].length}));
-                //queryInfo.insert(pair<int, QueryInfo>(i, {int(i), false, buffer.entry.name.s, 0, 0, seqs[i].length}));
                 seqIterator.sixFrameTranslation(buffer.entry.sequence.s);
-
                 size_t kmerCnt = seqIterator.kmerNumOfSixFrameTranslation(buffer.entry.sequence.s);
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt);
                 if (posToWrite + kmerCnt < kmerBufSize) {
@@ -143,15 +134,12 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
     size_t diffIdxPos = 0;
     uint64_t lastFirstMatch = 0;
     long lastFirstDiffIdxPos = 0;
-    int lastFirstTargetIdx = 0;
-
-    size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
+    int lastFirstTargetInfoPos = 0;
+    int isMatched;
+    int currentHamming;
     uint8_t lowestHamming;
+
     SORT_PARALLEL(queryKmerList, queryKmerList + numOfQuery , Classifier::compareForLinearSearch);
-    uint64_t nextTargetKmer = getNextTargetKmer(0, targetDiffIdxList.data, diffIdxPos);
-    size_t tarIter = 0;
-
-
     ///Find the first index of garbage k-mer (UINT64_MAX)
     for(size_t checkN = numOfQuery - 1; checkN >= 0; checkN--){
         if(queryKmerList[checkN].ADkmer != UINT64_MAX){
@@ -159,6 +147,11 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
             break;
         }
     }
+
+    uint64_t nextTargetKmer = getNextTargetKmer(0, targetDiffIdxList.data, diffIdxPos);
+    size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
+    size_t tarIter = 0; //idx of info
+    size_t currentTargetPos;
 
     uint64_t currentQuery = UINT64_MAX;
     uint64_t currentTargetKmer = UINT64_MAX;
@@ -170,20 +163,18 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
         if (AminoAcid(currentQuery) == AminoAcid(queryKmerList[i].ADkmer)) {
             nextTargetKmer = lastFirstMatch;
             diffIdxPos = lastFirstDiffIdxPos;
-            tarIter = lastFirstTargetIdx;
+            tarIter = lastFirstTargetInfoPos;
         }
         currentQuery = queryKmerList[i].ADkmer;
+        currentQueryAA = AminoAcid(currentQuery);
         isMatched = 0;
         lowestHamming = 100;
         queryCount++;
-
-        currentQueryAA = AminoAcid(currentQuery);
 
         while ((tarIter < numOfTargetKmer) && (AminoAcid(nextTargetKmer) <= currentQueryAA)) {
             currentTargetKmer = nextTargetKmer;
             currentTargetPos = diffIdxPos;
             nextTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
-            //  seqIterator->printKmerInDNAsequence(nextTargetKmer);
             if (currentQuery == currentTargetKmer) {
                 perfectMatchCount++;
             }
@@ -192,31 +183,30 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
                 if (isMatched == 0) {
                     lastFirstMatch = currentTargetKmer;
                     lastFirstDiffIdxPos = currentTargetPos;
-                    lastFirstTargetIdx = tarIter;
+                    lastFirstTargetInfoPos = tarIter;
                     isMatched = 1;
                 }
                 totalMatchCount++;
-
                 currentHamming = getHammingDistance(currentQuery, currentTargetKmer);
-//                hammings.push_back(currentHamming);
-//                closestKmers.push_back(tarIter);
+                hammings.push_back(currentHamming);
+                closestKmers.push_back(tarIter-1);
 //
-//                if (currentHamming < lowestHamming) {
-//                    lowestHamming = currentHamming;
-//                }
-
-                if(currentHamming > lowestHamming + 1){
-                    tarIter ++;
-                    continue;
-                } else if(currentHamming < lowestHamming){
-                    closestKmers.clear();
-                    hammings.clear();
+                if (currentHamming < lowestHamming) {
                     lowestHamming = currentHamming;
                 }
-                if(currentHamming == lowestHamming) {
-                    closestKmers.push_back(tarIter);
-                    hammings.push_back(currentHamming);
-                }
+
+//                if(currentHamming > lowestHamming + 1){
+//                    tarIter++;
+//                    continue;
+//                } else if(currentHamming < lowestHamming){
+//                    closestKmers.clear();
+//                    hammings.clear();
+//                    lowestHamming = currentHamming;
+//                }
+//                if(currentHamming == lowestHamming) {
+//                    closestKmers.push_back(tarIter);
+//                    hammings.push_back(currentHamming);
+//                }
 
 //                if(currentHamming > lowestHamming){
 //                    tarIter ++;
@@ -233,20 +223,10 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
             tarIter++;
         }
 
-        if(queryKmerList[i].info.sequenceID == 350){
-            cout<<"350"<<endl;
-            cout<<closestKmers.size()<<endl;
-            if(closestKmers.size()) {
-                for (size_t i2 = 0; i2 < closestKmers.size(); i2++) {
-                    cout << closestKmers[i2] << endl;
-                }
-            }
-
-        }
         if (lowestHamming < 3) {
             for (size_t k = 0; k < closestKmers.size(); k++) {
                 ///TODO generous hamming?
-                //if (hammings[k] == lowestHamming) {
+                if (hammings[k] == lowestHamming) {
                     if (targetInfoList.data[closestKmers[k]].redundancy == true) {
                         matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
                                                      targetInfoList.data[closestKmers[k]].sequenceID,
@@ -263,10 +243,11 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
                                                      queryKmerList[i].info.frame);
                     }
                     closestCount++;
-                //}
+                }
             }
         }
         closestKmers.clear();
+        hammings.clear();
     }
     numOfQuery = 0;
 }

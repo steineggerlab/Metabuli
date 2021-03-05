@@ -150,7 +150,6 @@ void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBu
             for (size_t i = 0; i < kmerLength; i++){
                 if(-1 == aaFrames[frame][kmerCnt + i]){
                     checkN = 1;
-                    cout<<seq<<endl;
                     break;
                 }
                 tempKmer += aaFrames[frame][kmerCnt + i] * powers[i];
@@ -160,17 +159,12 @@ void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBu
                 kmerBuffer.buffer[posToWrite] = {UINT64_MAX, 0, 0, frame};
             }else{
                 addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame);
-                if(seqID == 350){
-                    cout<<frame<< " "<<kmerCnt<<endl;
-                    printKmerInDNAsequence(tempKmer);
-                }
                 if(forOrRev == 0) {
                     kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3), frame};
                 } else{
                     kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, seqLen - ((frame%3) + (kmerCnt*3)) - 24 , frame};
                 }
             }
-            //printKmerInDNAsequence(tempKmer);
             posToWrite++;
         }
     }
@@ -220,7 +214,7 @@ string SeqIterator::reverseCompliment(string & read) const {
 
 
 ///It extracts kmers from amino acid sequence with DNA information and fill the kmerBuffer with them.
-void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID, int taxIdAtRank) {
+void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const uint32_t & seqID, int taxIdAtRank) {
     uint64_t tempKmer = 0;
     uint32_t len = aaFrames[0].size();
     int checkN;
@@ -236,7 +230,7 @@ void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, cons
             tempKmer += aaFrames[0][startOfKmer + i] * powers[i];
         }
         if(checkN == 1){
-            kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, -1,false};
+            kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0,false};
         }else{
             addDNAInfo_TargetKmer(tempKmer, seq, block, startOfKmer);
             kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, false};

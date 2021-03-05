@@ -21,18 +21,18 @@ typedef struct QueryKmer {
 } QueryKmer;
 
 
-typedef struct TargetKmerInfo{
+struct TargetKmerInfo{
     TargetKmerInfo(int seqID = 0, bool redundancy = false) : sequenceID(seqID), redundancy(redundancy) {}
-    int sequenceID;
+    uint32_t sequenceID;
     bool redundancy;
-} TargetKmerInfo;
+};
 
-typedef struct TargetKmer{
-    TargetKmer(uint64_t ADkmer, TaxID taxIdAtRank, int seqID, bool redundacy) : ADkmer(ADkmer), taxIdAtRank(taxIdAtRank),info(seqID, redundacy) {}
+struct TargetKmer{
+    TargetKmer(uint64_t ADkmer, TaxID taxIdAtRank, uint32_t seqID, bool redundacy) : ADkmer(ADkmer), taxIdAtRank(taxIdAtRank),info(seqID, redundacy) {}
     uint64_t ADkmer;
     TaxID taxIdAtRank;
     TargetKmerInfo info;
-} TargetKmer;
+};
 
 typedef struct MatchedKmer{
     MatchedKmer(int quID, int tarID, int taxID, uint32_t pos, uint8_t hamming, bool red, int queryStrand): queryID(quID), targetID(tarID), taxID(taxID), queryPos(pos), hammingDistance(hamming), redundancy(red), queryFrame(queryStrand) {}
