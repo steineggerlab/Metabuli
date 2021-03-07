@@ -6,7 +6,8 @@
 
 genomes=$1
 #mapping=$2
-fname=$2
+outdir=$2
+fname="${outdir}/temp"
 #answer=$4
 FASTAFILES="${genomes}/fastlist"
 
@@ -26,6 +27,8 @@ awk -F '/' '{print $0,$7}' "${FASTAFILES}" | while read -r fasta assacc; do
   num=$((num+1))
 done
 
+find "${outdir}" -name "temp_*" -print0 | xargs cat > "${outdir}/randomreads.fastq"
+find "${outdir}" -name "temp_*" -print0 | xargs rm
 #생성된 randomreads파일 합치기
 
 echo "...done"
