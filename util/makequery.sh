@@ -20,13 +20,13 @@ echo "Writing a list of FASTA files"
 find "${genomes}" -name "*.fna" > "${FASTAFILES}"
 
 num=0
-awk -F '/' '{print $0,$1}' "${FASTAFILES}" | while read -r fasta assacc; do
+awk -F '/' '{print $0,$7}' "${FASTAFILES}" | while read -r fasta assacc; do
   outname="${fname}_${num}"
   echo "${outname}"
   echo "${fasta}"
   echo "${assacc}"
   #~/miniconda3/bin/randomreads.sh ref="${fasta}" out="${outname}" length=140 reads=10 prefix="${assacc}"
-  ${num}++;
+  num=$((num+1))
 done
 
 #생성된 randomreads파일 합치기
