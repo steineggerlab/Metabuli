@@ -724,10 +724,13 @@ void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy){
             compareTaxon(classificationResult, rightAnswer, ncbiTaxonomy);
         }
     }
+    cout<<"Number of classification: "<< classifiedCnt << endl;
+    cout<<"classified / total =" << float(classifiedCnt)/float(queryInfos.size());
     cout<<"Genus: "<< genusCnt << endl;
     cout<<"Species: "<<speciesCnt<<endl;
     cout<<"Subspecies: "<<subspCnt<<endl;
-    cout<<"Num of queries" << queryInfos.size() << endl;
+    cout<<"correct / all classification" << float(genusCnt + speciesCnt + subspCnt)/ float(classifiedCnt) <<endl;
+    cout<<"Num of queries: " << queryInfos.size() << endl;
 }
 
 void Classifier::compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy) { ///target: subspecies or species
