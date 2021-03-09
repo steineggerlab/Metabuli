@@ -5,10 +5,8 @@
 #Input 3 : the name of output answer sheet
 
 genomes=$1
-#mapping=$2
 outdir=$2
 fname="${outdir}/temp"
-#answer=$4
 FASTAFILES="${genomes}/fastlist"
 
 printf "Decompressing fasta files"
@@ -27,9 +25,9 @@ awk -F '/' '{print $0,$7}' "${FASTAFILES}" | while read -r fasta assacc; do
   num=$((num+1))
 done
 
-cat "${fname}*" > "${outdir}/randomreads.fastq"
-#find "${outdir}" -name "temp_*" -print0 | xargs cat > "${outdir}/randomreads.fastq"
-#find "${outdir}" -name "temp_*" -print0 | xargs rm
-#생성된 randomreads파일 합치기
+cat ${fname}* > "${outdir}/randomreads.fastq"
+find "${outdir}" -name "temp_*" | while read -d $'\0' gz; do
+  rm "${gz}"
+done
 
-echo "...done"
+echo "The output fastq file is in ${outdir}/randomreads.fastq"

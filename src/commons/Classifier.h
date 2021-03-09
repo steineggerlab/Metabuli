@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <regex>
 #include "FastSort.h"
 #include "KSeqWrapper.h"
 #include "LocalParameters.h"
@@ -85,8 +86,9 @@ private:
     size_t perfectMatchCount;
     size_t closestCount;
 
-//    int isMatched;
-//    int currentHamming;
+    size_t correctCnt;
+    size_t perfectCnt;
+    
 
     vector<MatchedKmer> matchedKmerList;
     vector<size_t> closestKmers;
@@ -114,7 +116,7 @@ private:
     static bool compareForLinearSearch(const QueryKmer & a, const QueryKmer & b);
     static bool compareConsecutiveMatches(const ConsecutiveMatches & a, const ConsecutiveMatches & b);
     void fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt);
-    TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, vector<QueryInfo> & queryInfos);
+    TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end);
     static void checkAndGive(vector<uint32_t> & posList,  vector<uint8_t> & hammingList, const uint32_t & pos, const uint8_t & hammingDist);
     void writeReadClassification(vector<QueryInfo> & queryInfos, ofstream & readClassificationFile);
     void writeReportFile(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, const int numOfQuery);
@@ -128,5 +130,9 @@ public:
     int getNumOfSplits() const;
     Classifier();
     ~Classifier();
+
+
+    void performanceTest(NcbiTaxonomy & ncbiTaxonomy);
+    int compareTaxon(TaxID a, TaxID b);
 };
 #endif //ADKMER4_SEARCHER_H
