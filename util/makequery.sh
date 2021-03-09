@@ -27,7 +27,7 @@ awk -F '/' '{print $0,$7}' "${FASTAFILES}" | while read -r fasta assacc; do
   num=$((num+1))
 done
 
-cat "${fname}*" > "${outdir}/randomreads.fastq"
+cat ${fname}* > "${outdir}/randomreads.fastq"
 #find "${outdir}" -name "temp_*" -print0 | xargs cat > "${outdir}/randomreads.fastq"
 #find "${outdir}" -name "temp_*" -print0 | xargs rm
 #생성된 randomreads파일 합치기
