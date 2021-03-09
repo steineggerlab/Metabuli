@@ -133,6 +133,6 @@ public:
 
 
     void performanceTest(NcbiTaxonomy & ncbiTaxonomy);
-    int compareTaxon(TaxID a, TaxID b);
+    int compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy);
 };
 #endif //ADKMER4_SEARCHER_H
