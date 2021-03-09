@@ -86,9 +86,13 @@ private:
     size_t perfectMatchCount;
     size_t closestCount;
 
+    size_t speciesCnt;
+    size_t subspCnt;
+    size_t genusCnt;
+
     size_t correctCnt;
     size_t perfectCnt;
-    
+    size_t classifiedCnt;
 
     vector<MatchedKmer> matchedKmerList;
     vector<size_t> closestKmers;
@@ -133,6 +137,6 @@ public:
 
 
     void performanceTest(NcbiTaxonomy & ncbiTaxonomy);
-    int compareTaxon(TaxID a, TaxID b);
+    void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy);
 };
 #endif //ADKMER4_SEARCHER_H
