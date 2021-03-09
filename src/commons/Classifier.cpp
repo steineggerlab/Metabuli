@@ -686,7 +686,7 @@ unsigned int Classifier::cladeCountVal(const std::unordered_map<TaxID, TaxonCoun
 void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy){
 
     ///Load the mapping file
-    const char * mappingFile = "../../gtdb_taxdmp/assacc_to_taxid_gtdb";
+    const char * mappingFile = "../../gtdb_taxdmp/assacc_to_taxid_gtdb.tsv";
     unordered_map<string, int> assacc2taxid;
     string key, value;
     ifstream map;
