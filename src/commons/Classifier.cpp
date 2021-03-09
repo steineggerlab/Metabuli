@@ -13,6 +13,13 @@ Classifier::Classifier() {
     perfectMatchCount = 0;
     totalMatchCount = 0;
     multipleMatchCount = 0;
+
+    correctCnt = 0;
+    perfectCnt = 0;
+    classifiedCnt = 0;
+    speciesCnt = 0;
+    subspCnt = 0;
+    genusCnt = 0;
 }
 
 Classifier::~Classifier() { delete seqIterator; }
@@ -57,7 +64,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     ofstream readClassificationFile;
     readClassificationFile.open(par.filenames[0]+"_ReadClassification_temp.tsv");
 
-    while(processedSeqCnt < numOfSeq){ 
+    while(processedSeqCnt < numOfSeq){
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt);
         cout<<"processedCnt"<<processedSeqCnt<<endl;
         linearSearch(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, taxIdList, taxIdListAtRank);
@@ -77,6 +84,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     ///TODO: Merge ReportFiles
 
     writeReportFile(par.filenames[0].c_str(), ncbiTaxonomy, numOfSeq);
+    performanceTest(ncbiTaxonomy);
 
     cout<<"Number of query k-mer                : "<<queryCount<<endl;
     cout<<"Number of total match                : "<<totalMatchCount <<endl;
@@ -233,13 +241,13 @@ void Classifier::analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & s
         queryOffset = i;
         while((currentQuery ==  matchedKmerList[i].queryID) && (i < numOfMatches)) i++;
         queryEnd = i - 1;
-        TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[currentQuery].length, currentQuery, queryOffset, queryEnd, queryInfos);
+        TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[currentQuery].length, currentQuery, queryOffset, queryEnd);
         ++taxCounts[selectedLCA];
     }
 }
 
 ///For a query read, assign the best Taxon, using k-mer matches
-TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLen, const int & currentQuery, const size_t & offset, const size_t & end, vector<QueryInfo> & queryInfos){
+TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLen, const int & currentQuery, const size_t & offset, const size_t & end){
     vector<ConsecutiveMatches> coMatches;
 
     float coverageThr = 0.3;
@@ -673,4 +681,73 @@ unsigned int Classifier::cladeCountVal(const std::unordered_map<TaxID, TaxonCoun
     } else {
         return it->second.cladeCount;
     }
+}
+
+void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy){
+
+    ///Load the mapping file
+    const char * mappingFile = "../../gtdb_taxdmp/assacc_to_taxid_gtdb";
+    unordered_map<string, int> assacc2taxid;
+    string key, value;
+    ifstream map;
+    map.open(mappingFile);
+    if(map.is_open()){
+        while(getline(map,key,'\t')){
+            getline(map, value, '\n');
+            assacc2taxid[key] = stoi(value);
+        }
+    } else{
+        cout<<"Cannot open file for mappig from assemlby accession to tax ID"<<endl;
+    }
+    map.close();
+
+    regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
+    smatch assacc;
+    TaxID classificationResult;
+    int rightAnswer;
+    string queryName;
+
+    for(size_t i = 0; i < queryInfos.size(); i++) {
+        classificationResult = queryInfos[i].taxId;
+        if (classificationResult == 0) {
+            continue;
+        } else {
+            classifiedCnt ++;
+            queryName = queryInfos[i].name;
+            regex_search(queryName, assacc, regex1);
+            if (assacc2taxid.count(assacc[0].str())) {
+                rightAnswer = assacc2taxid[assacc[0].str()];
+            } else {
+                cout << assacc[0].str() << " is not in the mapping file" << endl;
+                continue;
+            }
+            compareTaxon(classificationResult, rightAnswer, ncbiTaxonomy);
+        }
+    }
+    cout<<"Genus: "<< genusCnt << endl;
+    cout<<"Species: "<<speciesCnt<<endl;
+    cout<<"Subspecies: "<<subspCnt<<endl;
+    cout<<"Num of queries" << queryInfos.size() << endl;
+}
+
+void Classifier::compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy) { ///target: subspecies or species
+    const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
+    string shotRank = shotNode->rank;
+
+    if(NcbiTaxonomy::findRankIndex(shotRank) <= 3){
+        if(shot == target){
+            subspCnt ++;
+        }
+    } else if(shotRank == "species") {
+        if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "species")){
+            speciesCnt ++;
+        }
+    } else if(shotRank == "genus"){
+        if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "genus")){
+            genusCnt ++;
+        }
+    } else{
+        return;
+    }
+
 }
