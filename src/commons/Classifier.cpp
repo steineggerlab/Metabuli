@@ -4,7 +4,7 @@
 
 #include "Classifier.h"
 #include "LocalParameters.h"
-
+#include <ctime>
 Classifier::Classifier() {
     seqIterator = new SeqIterator();
     numOfSplit = 0;
@@ -64,10 +64,15 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     cout<<"numOfseq: "<<numOfSeq<<endl;
     ofstream readClassificationFile;
     readClassificationFile.open(par.filenames[0]+"_ReadClassification_temp.tsv");
+    struct tm * curr_tm;
+    time_t curr_time;
+    curr_time = time(NULL);
+    curr_tm = localtime(&curr_time);
 
     while(processedSeqCnt < numOfSeq){
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt);
         cout<<"processedCnt"<<processedSeqCnt<<endl;
+        cout<<curr_tm ->tm_hour << "시" << curr_tm -> tm_min<<"분" <<curr_tm ->tm_sec<<"초 "<<endl;
         linearSearch(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, taxIdList, taxIdListAtRank);
     }
     cout<<"analyse Result"<<endl;
