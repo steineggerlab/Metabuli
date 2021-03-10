@@ -54,7 +54,9 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
     size_t numOfSeq = sequences.size();
 
-    bool processedSeqChecker[numOfSeq];
+    bool * processedSeqChecker = (bool *)malloc(numOfSeq);
+//    bool processedSeqChecker[numOfSeq];
+//    size_t * numOfBlocksList = (size_t*)malloc(splits[i].cnt * sizeof(size_t));
     fill_n(processedSeqChecker, numOfSeq, false);
 
     QueryKmerBuffer kmerBuffer(kmerBufSize);
@@ -69,8 +71,10 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
         cout<<"processedCnt"<<processedSeqCnt<<endl;
         linearSearch(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, taxIdList, taxIdListAtRank);
     }
-    //queryInfos.clear();
+    cout<<"analyse Result"<<endl;
     analyseResult(ncbiTaxonomy, sequences);
+
+    cout<<"write read classification"<<endl;
     writeReadClassification(queryInfos,readClassificationFile);
 
     ///TODO split count 고려할 것
@@ -232,7 +236,7 @@ void Classifier::analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & s
     SORT_PARALLEL(matchedKmerList.begin(), matchedKmerList.end(), Classifier::compareForAnalyzing);
     size_t numOfMatches = matchedKmerList.size();
     int currentQuery;
-    cout<<"here"<<numOfMatches<<endl;
+    cout<<"numOfMatches: "<<numOfMatches<<endl;
     size_t i = 0;
     size_t queryOffset;
     size_t queryEnd;
@@ -724,12 +728,13 @@ void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy){
             compareTaxon(classificationResult, rightAnswer, ncbiTaxonomy);
         }
     }
+
     cout<<"Number of classification: "<< classifiedCnt << endl;
-    cout<<"classified / total =" << float(classifiedCnt)/float(queryInfos.size());
+    cout<<"classified / total =" << float(classifiedCnt)/float(queryInfos.size()) << endl;
     cout<<"Genus: "<< genusCnt << endl;
     cout<<"Species: "<<speciesCnt<<endl;
     cout<<"Subspecies: "<<subspCnt<<endl;
-    cout<<"correct / all classification" << float(genusCnt + speciesCnt + subspCnt)/ float(classifiedCnt) <<endl;
+    cout<<"correct / all classification" << float(genusCnt + speciesCnt + subspCnt) / float(classifiedCnt) <<endl;
     cout<<"Num of queries: " << queryInfos.size() << endl;
 }
 
