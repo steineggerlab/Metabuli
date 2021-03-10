@@ -746,6 +746,7 @@ void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy){
                 cout << assacc[0].str() << " is not in the mapping file" << endl;
                 continue;
             }
+            cout<<"compareTaxon"<<" "<<i<<endl;
             compareTaxon(classificationResult, rightAnswer, ncbiTaxonomy);
         }
     }
