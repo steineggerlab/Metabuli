@@ -77,16 +77,10 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
         linearSearch(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, taxIdList, taxIdListAtRank);
     }
     cout<<"analyse Result"<<endl;
-    cout<<curr_tm ->tm_hour << "시" << curr_tm -> tm_min<<"분" <<curr_tm ->tm_sec<<"초 "<<endl;
-
     analyseResult(ncbiTaxonomy, sequences);
-    cout<<curr_tm ->tm_hour << "시" << curr_tm -> tm_min<<"분" <<curr_tm ->tm_sec<<"초 "<<endl;
 
 
-    cout<<"write read classification"<<endl;
     writeReadClassification(queryInfos,readClassificationFile);
-    cout<<curr_tm ->tm_hour << "시" << curr_tm -> tm_min<<"분" <<curr_tm ->tm_sec<<"초 "<<endl;
-
 
     ///TODO split count 고려할 것
     cout<<"Sorting the 'queryfile_ReadClassification.tsv' file"<<endl;
@@ -807,6 +801,7 @@ void Classifier::compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxon
         if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "superkingdom")) {
             superCnt++;
         }
+    }else{
+        return;
     }
-
 }
