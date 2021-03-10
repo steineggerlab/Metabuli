@@ -150,17 +150,11 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
 
 ///It compares query k-mers to target k-mers. If a query has matches, the matches with the smallest difference are selected.
 void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank) {
-    struct tm * curr_tm;
-    time_t curr_time;
-    curr_time = time(NULL);
-    curr_tm = localtime(&curr_time);
 
     cout<<"before sort"<<endl;
-    cout<<curr_tm ->tm_hour << "시" << curr_tm -> tm_min<<"분" <<curr_tm ->tm_sec<<"초 "<<endl;
-
     SORT_PARALLEL(queryKmerList, queryKmerList + numOfQuery , Classifier::compareForLinearSearch);
     cout<<"after sort"<<endl;
-    cout<<curr_tm ->tm_hour << "시" << curr_tm -> tm_min<<"분" <<curr_tm ->tm_sec<<"초 "<<endl;
+
 
     ///Find the first index of garbage k-mer (UINT64_MAX) and discard from there
     for(size_t checkN = numOfQuery - 1; checkN >= 0; checkN--){
@@ -206,10 +200,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
         currentQueryAA = AminoAcid(currentQuery);
         isMatched = 0;
         lowestHamming = 100;
-//        cout<<"Current index of query k-mer : "<<queryCount<<endl;
-//        cout<<"Current index of target k-mer: "<<targetInfoIdx<<endl;
         queryCount ++;
-
 
         while(AminoAcid(currentQuery) >= AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)){
             if(currentQueryAA == AminoAcid(currentTargetKmer)){
