@@ -758,10 +758,15 @@ void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy){
 
     cout<<"Number of classification: "<< classifiedCnt << endl;
     cout<<"classified / total =" << float(classifiedCnt)/float(queryInfos.size()) << endl;
+    cout<<"Superkingdom: "<< superCnt <<endl;
+    cout<<"Phylum: "<<phylumCnt<<endl;
+    cout<<"Class: "<<classCnt<<endl;
+    cout<<"Order: "<<orderCnt<<endl;
+    cout<<"Family: "<<familyCnt<<endl;
     cout<<"Genus: "<< genusCnt << endl;
     cout<<"Species: "<<speciesCnt<<endl;
     cout<<"Subspecies: "<<subspCnt<<endl;
-    cout<<"correct / all classification" << float(genusCnt + speciesCnt + subspCnt) / float(classifiedCnt) <<endl;
+    cout<<"(subS + S + G) / all classification" << float(genusCnt + speciesCnt + subspCnt) / float(classifiedCnt) <<endl;
     cout<<"Num of queries: " << queryInfos.size() << endl;
 }
 
@@ -781,8 +786,27 @@ void Classifier::compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxon
         if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "genus")){
             genusCnt ++;
         }
-    } else{
-        return;
+    } else if(shotRank == "family") {
+        if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "family")) {
+            familyCnt++;
+        }
+    }else if(shotRank == "order") {
+        if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "order")) {
+            orderCnt++;
+        }
+    }else if(shotRank == "class") {
+        if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "class")) {
+            classCnt++;
+        }
+    }
+    else if(shotRank == "phylum") {
+        if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "phylum")) {
+            phylumCnt++;
+        }
+    }else if(shotRank == "superkingdom") {
+        if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "superkingdom")) {
+            superCnt++;
+        }
     }
 
 }
