@@ -20,6 +20,10 @@ Classifier::Classifier() {
     speciesCnt = 0;
     subspCnt = 0;
     genusCnt = 0;
+    phylumCnt = 0;
+    classCnt = 0;
+    orderCnt = 0;
+    familyCnt = 0;
 }
 
 Classifier::~Classifier() { delete seqIterator; }
