@@ -194,6 +194,9 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
     uint8_t currentHamming;
 
     vector<size_t> matches;
+
+    cout<<"Number of query k-mers: "<<numOfQuery<<endl;
+    cout<<"Number of target k-mers: "<<numOfTargetKmer<<endl;
     for(size_t i = 0; i < numOfQuery; i++){
         if(currentQueryAA == AminoAcid(queryKmerList[i].ADkmer)){
             currentTargetKmer = targetKmerRe;
@@ -205,7 +208,10 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
         currentQueryAA = AminoAcid(currentQuery);
         isMatched = 0;
         lowestHamming = 100;
+        cout<<"Current index of query k-mer : "<<queryCount<<endl;
+        cout<<"Current index of target k-mer: "<<targetInfoIdx<<endl;
         queryCount ++;
+
 
         while(AminoAcid(currentQuery) >= AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)){
             if(currentQueryAA == AminoAcid(currentTargetKmer)){
