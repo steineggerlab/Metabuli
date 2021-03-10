@@ -69,6 +69,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     curr_time = time(NULL);
     curr_tm = localtime(&curr_time);
 
+    cout<<curr_tm ->tm_hour << "시" << curr_tm -> tm_min<<"분" <<curr_tm ->tm_sec<<"초 "<<endl;
     while(processedSeqCnt < numOfSeq){
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt);
         cout<<"processedCnt"<<processedSeqCnt<<endl;
@@ -76,10 +77,16 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
         linearSearch(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, taxIdList, taxIdListAtRank);
     }
     cout<<"analyse Result"<<endl;
+    cout<<curr_tm ->tm_hour << "시" << curr_tm -> tm_min<<"분" <<curr_tm ->tm_sec<<"초 "<<endl;
+
     analyseResult(ncbiTaxonomy, sequences);
+    cout<<curr_tm ->tm_hour << "시" << curr_tm -> tm_min<<"분" <<curr_tm ->tm_sec<<"초 "<<endl;
+
 
     cout<<"write read classification"<<endl;
     writeReadClassification(queryInfos,readClassificationFile);
+    cout<<curr_tm ->tm_hour << "시" << curr_tm -> tm_min<<"분" <<curr_tm ->tm_sec<<"초 "<<endl;
+
 
     ///TODO split count 고려할 것
     cout<<"Sorting the 'queryfile_ReadClassification.tsv' file"<<endl;
@@ -145,7 +152,17 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
 
 ///It compares query k-mers to target k-mers. If a query has matches, the matches with the smallest difference are selected.
 void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank) {
+    struct tm * curr_tm;
+    time_t curr_time;
+    curr_time = time(NULL);
+    curr_tm = localtime(&curr_time);
+
+    cout<<"before sort"<<endl;
+    cout<<curr_tm ->tm_hour << "시" << curr_tm -> tm_min<<"분" <<curr_tm ->tm_sec<<"초 "<<endl;
+
     SORT_PARALLEL(queryKmerList, queryKmerList + numOfQuery , Classifier::compareForLinearSearch);
+    cout<<"after sort"<<endl;
+    cout<<curr_tm ->tm_hour << "시" << curr_tm -> tm_min<<"분" <<curr_tm ->tm_sec<<"초 "<<endl;
 
     ///Find the first index of garbage k-mer (UINT64_MAX) and discard from there
     for(size_t checkN = numOfQuery - 1; checkN >= 0; checkN--){
