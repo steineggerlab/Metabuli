@@ -109,7 +109,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
 void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt) {
     bool hasOverflow = false;
-    omp_set_num_threads(64);
+    omp_set_num_threads(1);
 #pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, queryInfos, cout)
     {
         vector<QueryInfo> infos;
@@ -799,18 +799,12 @@ void Classifier::compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxon
         if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "class")) {
             classCnt++;
         }
-    }
-    else if(shotRank == "phylum") {
+    } else if(shotRank == "phylum") {
         cout<<"phylum"<<endl;
         if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "phylum")) {
             phylumCnt++;
         }
-    }else if(shotRank == "superkingdom") {
-        cout<<"super"<<endl;
-        if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "superkingdom")) {
-            superCnt++;
-        }
-    }else{
+    } else {
         return;
     }
 }
