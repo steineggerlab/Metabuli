@@ -202,8 +202,8 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
         currentQueryAA = AminoAcid(currentQuery);
         isMatched = 0;
         lowestHamming = 100;
-        cout<<"Current index of query k-mer : "<<queryCount<<endl;
-        cout<<"Current index of target k-mer: "<<targetInfoIdx<<endl;
+//        cout<<"Current index of query k-mer : "<<queryCount<<endl;
+//        cout<<"Current index of target k-mer: "<<targetInfoIdx<<endl;
         queryCount ++;
 
 
