@@ -41,7 +41,6 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
         return;
     }
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
-    cout<<"test"<<endl;
     vector<int> taxIdListAtRank;
     ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
 
