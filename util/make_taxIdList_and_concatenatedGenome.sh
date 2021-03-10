@@ -14,3 +14,4 @@ printf "Concatenating fasta files"
 awk -F '\t' '{print $2}' "${TAX_FILE_SORTED}"|xargs cat > "${GENOME}"
 echo "...done"
 echo "Path to concatenated_genome: ${GENOME}"
+
