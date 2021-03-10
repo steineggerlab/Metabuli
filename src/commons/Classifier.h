@@ -86,9 +86,15 @@ private:
     size_t perfectMatchCount;
     size_t closestCount;
 
-    size_t speciesCnt;
     size_t subspCnt;
+    size_t speciesCnt;
     size_t genusCnt;
+    size_t familyCnt;
+    size_t orderCnt;
+    size_t classCnt;
+    size_t phylumCnt;
+    size_t superCnt;
+
 
     size_t correctCnt;
     size_t perfectCnt;
