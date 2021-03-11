@@ -155,7 +155,6 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
     SORT_PARALLEL(queryKmerList, queryKmerList + numOfQuery , Classifier::compareForLinearSearch);
     cout<<"after sort"<<endl;
 
-
     ///Find the first index of garbage k-mer (UINT64_MAX) and discard from there
     for(size_t checkN = numOfQuery - 1; checkN >= 0; checkN--){
         if(queryKmerList[checkN].ADkmer != UINT64_MAX){
@@ -190,9 +189,9 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
     cout<<"Number of query k-mers: "<<numOfQuery<<endl;
     cout<<"Number of target k-mers: "<<numOfTargetKmer<<endl;
     for(size_t i = 0; i < numOfQuery; i++){
-
         if(currentQuery == queryKmerList[i].ADkmer){
             if(isMatched){
+                cout<<queryKmerList[i].info.sequenceID<<endl;
                 for(size_t k = 0; k < matches.size(); k ++){
                     if(hammings[k] == lowestHamming){
                         if (targetInfoList.data[matches[k]].redundancy == true) {
@@ -213,6 +212,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
                         closestCount++;
                     }
                 }
+                continue;
             } else{
                 continue;
             }
@@ -252,6 +252,10 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
             targetInfoIdx ++;
         }
 
+        if(isMatched){
+            cout<<queryKmerList[i].info.sequenceID<<endl;
+        }
+
         for(size_t k = 0; k < matches.size(); k ++){
             if(hammings[k] == lowestHamming){
                 if (targetInfoList.data[matches[k]].redundancy == true) {
@@ -274,7 +278,11 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
         }
 
     }
+//    for(size_t i = 0; i < matchedKmerList.size(); i++){
+//        cout<<matchedKmerList[i].queryID<<endl;
+//    }
 }
+
 
 ///It analyses the result of linear search.
 void Classifier::analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments){
@@ -664,7 +672,13 @@ bool Classifier::compareForAnalyzing( const MatchedKmer & a, const MatchedKmer &
 
 
 bool Classifier::compareForLinearSearch(const QueryKmer & a, const QueryKmer & b){
-    return a.ADkmer < b.ADkmer;
+    if(a.ADkmer < b.ADkmer){
+        return true;
+    } else if(a.ADkmer == b.ADkmer){
+        return (a.info.sequenceID < b.info.sequenceID);
+    }
+    return false;
+//    return a.ADkmer < b.ADkmer;
 }
 
 bool Classifier::compareConsecutiveMatches(const ConsecutiveMatches & a, const ConsecutiveMatches & b){
