@@ -190,6 +190,34 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
     cout<<"Number of query k-mers: "<<numOfQuery<<endl;
     cout<<"Number of target k-mers: "<<numOfTargetKmer<<endl;
     for(size_t i = 0; i < numOfQuery; i++){
+
+        if(currentQuery == queryKmerList[i].ADkmer){
+            if(isMatched){
+                for(size_t k = 0; k < matches.size(); k ++){
+                    if(hammings[k] == lowestHamming){
+                        if (targetInfoList.data[matches[k]].redundancy == true) {
+                            matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
+                                                         targetInfoList.data[matches[k]].sequenceID,
+                                                         taxIdListAtRank[targetInfoList.data[matches[k]].sequenceID],
+                                                         queryKmerList[i].info.pos, hammings[k],
+                                                         targetInfoList.data[matches[k]].redundancy,
+                                                         queryKmerList[i].info.frame);
+                        } else {
+                            matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
+                                                         targetInfoList.data[matches[k]].sequenceID,
+                                                         taxIdList[targetInfoList.data[matches[k]].sequenceID],
+                                                         queryKmerList[i].info.pos, hammings[k],
+                                                         targetInfoList.data[matches[k]].redundancy,
+                                                         queryKmerList[i].info.frame);
+                        }
+                        closestCount++;
+                    }
+                }
+            } else{
+                continue;
+            }
+        }
+
         if(currentQueryAA == AminoAcid(queryKmerList[i].ADkmer)){
             currentTargetKmer = targetKmerRe;
             diffIdxPos = diffIdxRe;
@@ -202,6 +230,8 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
         lowestHamming = 100;
         queryCount ++;
 
+        hammings.clear();
+        matches.clear();
         while(AminoAcid(currentQuery) >= AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)){
             if(currentQueryAA == AminoAcid(currentTargetKmer)){
                 if(isMatched == 0){
@@ -242,8 +272,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
                 closestCount++;
             }
         }
-        hammings.clear();
-        matches.clear();
+
     }
 }
 
