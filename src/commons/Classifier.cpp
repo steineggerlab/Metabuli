@@ -186,42 +186,41 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
 
     vector<size_t> matches;
 
-    cout<<"Number of query k-mers: "<<numOfQuery<<endl;
+    cout<<"Number of query k-mers : "<<numOfQuery<<endl;
     cout<<"Number of target k-mers: "<<numOfTargetKmer<<endl;
     for(size_t i = 0; i < numOfQuery; i++){
-        if(currentQuery == queryKmerList[i].ADkmer){
-            if(isMatched){
-                cout<<queryKmerList[i].info.sequenceID<<endl;
-                for(size_t k = 0; k < matches.size(); k ++){
-                    if(hammings[k] == lowestHamming){
-                        if (targetInfoList.data[matches[k]].redundancy == true) {
-                            matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
-                                                         targetInfoList.data[matches[k]].sequenceID,
-                                                         taxIdListAtRank[targetInfoList.data[matches[k]].sequenceID],
-                                                         queryKmerList[i].info.pos, hammings[k],
-                                                         targetInfoList.data[matches[k]].redundancy,
-                                                         queryKmerList[i].info.frame);
-                        } else {
-                            matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
-                                                         targetInfoList.data[matches[k]].sequenceID,
-                                                         taxIdList[targetInfoList.data[matches[k]].sequenceID],
-                                                         queryKmerList[i].info.pos, hammings[k],
-                                                         targetInfoList.data[matches[k]].redundancy,
-                                                         queryKmerList[i].info.frame);
-                        }
-                        closestCount++;
-                    }
-                }
-                continue;
-            } else{
-                continue;
-            }
-        }
-
         if(currentQueryAA == AminoAcid(queryKmerList[i].ADkmer)){
-            currentTargetKmer = targetKmerRe;
-            diffIdxPos = diffIdxRe;
-            targetInfoIdx = infoRe;
+            if(isMatched == 0){
+                continue;
+            } else {
+                if(currentQuery == queryKmerList[i].ADkmer){
+                    for(size_t k = 0; k < matches.size(); k ++){
+                        if(hammings[k] == lowestHamming){
+                            if (targetInfoList.data[matches[k]].redundancy == true) {
+                                matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
+                                                             targetInfoList.data[matches[k]].sequenceID,
+                                                             taxIdListAtRank[targetInfoList.data[matches[k]].sequenceID],
+                                                             queryKmerList[i].info.pos, hammings[k],
+                                                             targetInfoList.data[matches[k]].redundancy,
+                                                             queryKmerList[i].info.frame);
+                            } else {
+                                matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
+                                                             targetInfoList.data[matches[k]].sequenceID,
+                                                             taxIdList[targetInfoList.data[matches[k]].sequenceID],
+                                                             queryKmerList[i].info.pos, hammings[k],
+                                                             targetInfoList.data[matches[k]].redundancy,
+                                                             queryKmerList[i].info.frame);
+                            }
+                            closestCount++;
+                        }
+                    }
+                    continue;
+                } else{
+                    currentTargetKmer = targetKmerRe;
+                    diffIdxPos = diffIdxRe;
+                    targetInfoIdx = infoRe;
+                }
+            }
         }
 
         currentQuery = queryKmerList[i].ADkmer;
@@ -252,10 +251,6 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
             targetInfoIdx ++;
         }
 
-        if(isMatched){
-            cout<<queryKmerList[i].info.sequenceID<<endl;
-        }
-
         for(size_t k = 0; k < matches.size(); k ++){
             if(hammings[k] == lowestHamming){
                 if (targetInfoList.data[matches[k]].redundancy == true) {
@@ -276,11 +271,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
                 closestCount++;
             }
         }
-
     }
-//    for(size_t i = 0; i < matchedKmerList.size(); i++){
-//        cout<<matchedKmerList[i].queryID<<endl;
-//    }
 }
 
 
@@ -315,7 +306,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     uint32_t conEnd = 0;
     size_t beginIdx = 0;
     size_t endIdx = 0;
-
 
     size_t i = offset;
 
