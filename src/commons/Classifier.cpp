@@ -605,7 +605,7 @@ void Classifier::checkAndGive(vector<uint32_t> & posList, vector<uint8_t> & hamm
 }
 
 ///It reads differential index and return "current + (next - current)", which is equal to next.
-uint64_t Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t* targetDiffIdxList, size_t & diffIdxPos){
+inline uint64_t Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t* targetDiffIdxList, size_t & diffIdxPos){
     uint16_t fragment;
     uint64_t diffIn64bit = 0;
     for(int i = 0; i < 5; i++){
