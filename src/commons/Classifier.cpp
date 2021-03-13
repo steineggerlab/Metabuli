@@ -227,7 +227,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
         isMatched = 0;
         lowestHamming = 100;
         queryCount ++;
-        cout<<queryCount<<"\t"<<callCnt<<"\t"<<targetInfoIdx<<endl;
+        cout<<queryCount<<"\t"<<currentQueryAA<<"\t"<<callCnt<<"\t"<<targetInfoIdx<<endl;
         hammings.clear();
         matches.clear();
         while(AminoAcid(currentQuery) >= AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)){
