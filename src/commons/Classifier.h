@@ -16,6 +16,7 @@
 #include "KmerBuffer.h"
 #include "IndexCreator.h"
 
+#include <time.h>
 #include <vector>
 #include <algorithm>
 #include <regex>

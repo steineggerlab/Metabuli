@@ -113,7 +113,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
 void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt) {
     bool hasOverflow = false;
-    omp_set_num_threads(1);
+    omp_set_num_threads(64);
 #pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, queryInfos, cout)
     {
         vector<QueryInfo> infos;
@@ -150,10 +150,9 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
 
 ///It compares query k-mers to target k-mers. If a query has matches, the matches with the smallest difference are selected.
 void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank) {
-
-    cout<<"before sort"<<endl;
+    time_t beforeSort, afterSort;
     SORT_PARALLEL(queryKmerList, queryKmerList + numOfQuery , Classifier::compareForLinearSearch);
-    cout<<"after sort"<<endl;
+    cout<<"Time spent for sorting the query k-mer list: "<<double(afterSort-beforeSort)<<endl;
 
     ///Find the first index of garbage k-mer (UINT64_MAX) and discard from there
     for(size_t checkN = numOfQuery - 1; checkN >= 0; checkN--){
