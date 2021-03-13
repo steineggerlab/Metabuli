@@ -8,7 +8,7 @@
 Classifier::Classifier() {
     seqIterator = new SeqIterator();
     numOfSplit = 0;
-    closestCount = 0;
+    selectedMatchCount = 0;
     queryCount = 0;
     perfectMatchCount = 0;
     totalMatchCount = 0;
@@ -78,7 +78,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt);
         cout<<"processedCnt"<<processedSeqCnt<<endl;
         cout<<curr_tm ->tm_hour << "시" << curr_tm -> tm_min<<"분" <<curr_tm ->tm_sec<<"초 "<<endl;
-        linearSearch(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, taxIdList, taxIdListAtRank);
+        linearSearch2(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, taxIdList, taxIdListAtRank);
     }
     cout<<"analyse Result"<<endl;
     analyseResult(ncbiTaxonomy, sequences);
@@ -103,7 +103,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     cout<<"Number of total match                : "<<totalMatchCount <<endl;
     cout<<"mutipleMatch in AA level             : "<<multipleMatchCount << endl;
     cout<<"matches in DNA level                 : "<<perfectMatchCount<<endl;
-    cout<<"number of closest matches            : "<<closestCount<<endl;
+    cout << "number of closest matches            : " << selectedMatchCount << endl;
 
     free(kmerBuffer.buffer);
     munmap(queryFile.data, queryFile.fileSize + 1);
@@ -148,6 +148,152 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
     }
 }
 
+void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank){
+    time_t beforeSort, afterSort;
+    SORT_PARALLEL(queryKmerList, queryKmerList + numOfQuery , Classifier::compareForLinearSearch);
+    cout<<"Time spent for sorting the query k-mer list: "<<double(afterSort-beforeSort)<<endl;
+
+    ///Find the first index of garbage k-mer (UINT64_MAX) and discard from there
+    for(size_t checkN = numOfQuery - 1; checkN >= 0; checkN--){
+        if(queryKmerList[checkN].ADkmer != UINT64_MAX){
+            numOfQuery = checkN + 1;
+            break;
+        }
+    }
+
+    ///query variables
+    uint64_t currentQuery = UINT64_MAX;
+    uint64_t currentQueryAA = UINT64_MAX;
+
+    ///target variables
+    size_t diffIdxPos = 0;
+    size_t targetInfoIdx = 0;
+    vector<uint64_t> targetKmerCache;
+    uint64_t currentTargetKmer = getNextTargetKmer(0, targetDiffIdxList.data, diffIdxPos);
+    targetKmerCache.push_back(currentTargetKmer);
+    size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
+
+    ///
+    vector<uint8_t> selectedHammings;
+    vector<size_t> selectedMatches;
+
+    size_t callCnt = 0;
+    size_t startIdxOfAAmatch = 0;
+    for(size_t i = 0; i < numOfQuery; i++) {
+        ///Reuse the comparison data if queries are exactly identical
+        if(currentQuery == queryKmerList[i].ADkmer){
+            for (size_t k = 0; k < selectedMatches.size(); k++) {
+                if (targetInfoList.data[selectedMatches[k]].redundancy == true) {
+                    matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
+                                                 targetInfoList.data[selectedMatches[k]].sequenceID,
+                                                 taxIdListAtRank[targetInfoList.data[selectedMatches[k]].sequenceID],
+                                                 queryKmerList[i].info.pos, selectedHammings[k],
+                                                 targetInfoList.data[selectedMatches[k]].redundancy,
+                                                 queryKmerList[i].info.frame);
+                } else {
+                    matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
+                                                 targetInfoList.data[selectedMatches[k]].sequenceID,
+                                                 taxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+                                                 queryKmerList[i].info.pos, selectedHammings[k],
+                                                 targetInfoList.data[selectedMatches[k]].redundancy,
+                                                 queryKmerList[i].info.frame);
+                }
+                selectedMatchCount++;
+            }
+            continue;
+        }
+        selectedMatches.clear();
+        selectedHammings.clear();
+
+        ///Reuse the loaded target k-mers to compare if queris are the same only at amino acid level
+        if(currentQueryAA == AminoAcid(queryKmerList[i].ADkmer)){
+            compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
+            for (size_t k = 0; k < selectedMatches.size(); k++) {
+                if (targetInfoList.data[selectedMatches[k]].redundancy == true) {
+                    matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
+                                                 targetInfoList.data[selectedMatches[k]].sequenceID,
+                                                 taxIdListAtRank[targetInfoList.data[selectedMatches[k]].sequenceID],
+                                                 queryKmerList[i].info.pos, selectedHammings[k],
+                                                 targetInfoList.data[selectedMatches[k]].redundancy,
+                                                 queryKmerList[i].info.frame);
+                } else {
+                    matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
+                                                 targetInfoList.data[selectedMatches[k]].sequenceID,
+                                                 taxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+                                                 queryKmerList[i].info.pos, selectedHammings[k],
+                                                 targetInfoList.data[selectedMatches[k]].redundancy,
+                                                 queryKmerList[i].info.frame);
+                }
+                selectedMatchCount++;
+            }
+            continue;
+        }
+        targetKmerCache.clear();
+
+        ///Get next query and start to find
+        currentQuery = queryKmerList[i].ADkmer;
+        currentQueryAA = AminoAcid(currentQuery);
+        queryCount++;
+
+        ///Skip target k-mers that are not matched in amino acid level
+        while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
+            currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
+            callCnt++;
+            targetInfoIdx++;
+        }
+        startIdxOfAAmatch = targetInfoIdx;
+
+        ///Load target k-mers that are matched in amino acid level
+        while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
+            currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
+            targetKmerCache.push_back(currentTargetKmer);
+            callCnt++;
+            targetInfoIdx++;
+        }
+
+        ///Compare the current query and the loaded target k-mers and select
+        compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
+        for (size_t k = 0; k < selectedMatches.size(); k++) {
+            if (targetInfoList.data[selectedMatches[k]].redundancy == true) {
+                matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
+                                             targetInfoList.data[selectedMatches[k]].sequenceID,
+                                             taxIdListAtRank[targetInfoList.data[selectedMatches[k]].sequenceID],
+                                             queryKmerList[i].info.pos, selectedHammings[k],
+                                             targetInfoList.data[selectedMatches[k]].redundancy,
+                                             queryKmerList[i].info.frame);
+            } else {
+                matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
+                                             targetInfoList.data[selectedMatches[k]].sequenceID,
+                                             taxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+                                             queryKmerList[i].info.pos, selectedHammings[k],
+                                             targetInfoList.data[selectedMatches[k]].redundancy,
+                                             queryKmerList[i].info.frame);
+            }
+            selectedMatchCount++;
+        }
+    }
+}
+
+void Classifier::compareDna(const uint64_t & query, vector<uint64_t> & targetList, const size_t & startIdx, vector<size_t> & selectedMatches, vector<uint8_t> & selectedHamming) {
+    vector<uint8_t> hammings;
+    uint8_t currentHamming;
+    uint8_t minHamming = UINT8_MAX;
+    ///Calculate hamming distance
+    for(size_t i = 0; i < targetList.size(); i++){
+        currentHamming = getHammingDistance(query, targetList[i]);
+        if(currentHamming < minHamming)
+            minHamming = currentHamming;
+        hammings.push_back(currentHamming);
+    }
+
+    ///Select target k-mers that passed hamming criteria
+    for(size_t h = 0; h < hammings.size(); h++){
+        if(hammings[h] == minHamming){
+            selectedMatches.push_back(startIdx + h);
+            selectedHamming.push_back(hammings[h]);
+        }
+    }
+}
 ///It compares query k-mers to target k-mers. If a query has matches, the matches with the smallest difference are selected.
 void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank) {
     time_t beforeSort, afterSort;
@@ -169,7 +315,9 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
     ///target variables
     size_t diffIdxPos = 0;
     size_t targetInfoIdx = 0;
+    vector<uint64_t> targetKmerCache;
     uint64_t currentTargetKmer = getNextTargetKmer(0, targetDiffIdxList.data, diffIdxPos);
+    targetKmerCache.push_back(currentTargetKmer);
     size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
 
     ///re-start point of search
@@ -184,6 +332,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
     uint8_t currentHamming;
 
     vector<size_t> matches;
+
     size_t callCnt = 0;
     cout<<"Number of query k-mers : "<<numOfQuery<<endl;
     cout<<"Number of target k-mers: "<<numOfTargetKmer<<endl;
@@ -210,7 +359,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
                                                              targetInfoList.data[matches[k]].redundancy,
                                                              queryKmerList[i].info.frame);
                             }
-                            closestCount++;
+                            selectedMatchCount++;
                         }
                     }
                     continue;
@@ -268,7 +417,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
                                                  targetInfoList.data[matches[k]].redundancy,
                                                  queryKmerList[i].info.frame);
                 }
-                closestCount++;
+                selectedMatchCount++;
             }
         }
     }

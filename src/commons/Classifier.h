@@ -85,7 +85,7 @@ private:
     size_t totalMatchCount;
     size_t multipleMatchCount;
     size_t perfectMatchCount;
-    size_t closestCount;
+    size_t selectedMatchCount;
 
     size_t subspCnt;
     size_t speciesCnt;
@@ -120,6 +120,7 @@ private:
     uint8_t getHammingDistance(uint64_t kmer1, uint64_t kmer2);
 
     void linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank);
+    void linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank);
     void writeResultFile(vector<MatchedKmer> & matchList, const char * queryFileName);
     TaxID match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,
                     size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent);
@@ -136,6 +137,7 @@ private:
     void writeReport(FILE * fp, const NcbiTaxonomy & ncbiTaxonomy, const unordered_map<TaxID, TaxonCounts> & cladeCounts, unsigned long totalReads,TaxID taxID = 0, int depth = 0);
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts>& map, TaxID key);
     void storeKmerMatches();
+    void compareDna(const uint64_t & query, vector<uint64_t> & targetList, const size_t & startIdx, vector<size_t> & selectedMatches, vector<uint8_t> & selectedHamming);
    // void getTaxCounts(const vector<QueryInfo> & queryInfos, )
 public:
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, vector<int> & taxIdList, const LocalParameters & par);
