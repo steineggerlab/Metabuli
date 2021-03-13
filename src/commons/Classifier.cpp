@@ -185,7 +185,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
     uint8_t currentHamming;
 
     vector<size_t> matches;
-
+    size_t callCnt = 0;
     cout<<"Number of query k-mers : "<<numOfQuery<<endl;
     cout<<"Number of target k-mers: "<<numOfTargetKmer<<endl;
     for(size_t i = 0; i < numOfQuery; i++){
@@ -248,6 +248,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
                 totalMatchCount++;
             }
             currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
+            callCnt++;
             targetInfoIdx ++;
         }
 
@@ -272,6 +273,7 @@ void Classifier::linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, co
             }
         }
     }
+    cout<<"callCnt"<<callCnt<<endl;
 }
 
 
