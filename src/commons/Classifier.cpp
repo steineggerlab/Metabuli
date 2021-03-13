@@ -103,7 +103,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     cout<<"Number of total match                : "<<totalMatchCount <<endl;
     cout<<"mutipleMatch in AA level             : "<<multipleMatchCount << endl;
     cout<<"matches in DNA level                 : "<<perfectMatchCount<<endl;
-    cout << "number of closest matches            : " << selectedMatchCount << endl;
+    cout << "number of closest matches            : " << matchedKmerList.size() << endl;
 
     free(kmerBuffer.buffer);
     munmap(queryFile.data, queryFile.fileSize + 1);
