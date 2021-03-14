@@ -241,7 +241,7 @@ void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, c
         ///Get next query and start to find
         currentQuery = queryKmerList[i].ADkmer;
         currentQueryAA = AminoAcid(currentQuery);
-  //      cout<<i<<"\t"<<currentQueryAA<<"\t"<<callCnt<<"\t"<<targetInfoIdx<<endl;
+        cout<<i<<"\t"<<callCnt<<"\t"<<targetInfoIdx<<endl;
 
         ///Skip target k-mers that are not matched in amino acid level
         while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
