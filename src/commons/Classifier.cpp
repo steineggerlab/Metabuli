@@ -280,6 +280,7 @@ void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, c
             selectedMatchCount++;
         }
     }
+    cout<<"call Cnt: "<<callCnt<<endl;
 }
 
 void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetList, const size_t & startIdx, vector<size_t> & selectedMatches, vector<uint8_t> & selectedHamming) {
