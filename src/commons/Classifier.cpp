@@ -77,7 +77,6 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     while(processedSeqCnt < numOfSeq){
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt);
         cout<<"processedCnt"<<processedSeqCnt<<endl;
-        cout<<curr_tm ->tm_hour << "시" << curr_tm -> tm_min<<"분" <<curr_tm ->tm_sec<<"초 "<<endl;
         linearSearch2(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, taxIdList, taxIdListAtRank);
     }
     cout<<"analyse Result"<<endl;
@@ -164,6 +163,7 @@ void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, c
     ///query variables
     uint64_t currentQuery = UINT64_MAX;
     uint64_t currentQueryAA = UINT64_MAX;
+    int isMatched;
 
     ///target variables
     size_t diffIdxPos = 0;
@@ -179,7 +179,7 @@ void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, c
 
     size_t callCnt = 0;
     size_t startIdxOfAAmatch = 0;
-    for(size_t i = 0; i < numOfQuery; i++) {
+    for(size_t i = 0; i < numOfQuery; i ++) {
         ///Reuse the comparison data if queries are exactly identical
         if(currentQuery == queryKmerList[i].ADkmer){
             for (size_t k = 0; k < selectedMatches.size(); k++) {
@@ -208,7 +208,7 @@ void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, c
         ///Reuse the loaded target k-mers to compare if queris are the same only at amino acid level
         if(currentQueryAA == AminoAcid(queryKmerList[i].ADkmer)){
             compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
-            for (size_t k = 0; k < selectedMatches.size(); k++) {
+            for (size_t k = 0; k < selectedMatches.size(); k ++) {
                 if (targetInfoList.data[selectedMatches[k]].redundancy == true) {
                     matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
                                                  targetInfoList.data[selectedMatches[k]].sequenceID,
@@ -233,8 +233,7 @@ void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, c
         ///Get next query and start to find
         currentQuery = queryKmerList[i].ADkmer;
         currentQueryAA = AminoAcid(currentQuery);
-        queryCount++;
-        cout<<queryCount<<"\t"<<currentQueryAA<<"\t"<<callCnt<<"\t"<<targetInfoIdx<<endl;
+        cout<<i<<"\t"<<currentQueryAA<<"\t"<<callCnt<<"\t"<<targetInfoIdx<<endl;
 
         ///Skip target k-mers that are not matched in amino acid level
         while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
@@ -242,12 +241,12 @@ void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, c
             callCnt++;
             targetInfoIdx++;
         }
-        startIdxOfAAmatch = targetInfoIdx;
 
+        startIdxOfAAmatch = targetInfoIdx;
         ///Load target k-mers that are matched in amino acid level
         while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
-            currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
             targetKmerCache.push_back(currentTargetKmer);
+            currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
             callCnt++;
             targetInfoIdx++;
         }
@@ -275,7 +274,7 @@ void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, c
     }
 }
 
-void Classifier::compareDna(const uint64_t & query, vector<uint64_t> & targetList, const size_t & startIdx, vector<size_t> & selectedMatches, vector<uint8_t> & selectedHamming) {
+void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetList, const size_t & startIdx, vector<size_t> & selectedMatches, vector<uint8_t> & selectedHamming) {
     vector<uint8_t> hammings;
     uint8_t currentHamming;
     uint8_t minHamming = UINT8_MAX;
