@@ -24,6 +24,7 @@ Classifier::Classifier() {
     classCnt = 0;
     orderCnt = 0;
     familyCnt = 0;
+    superCnt = 0;
 }
 
 Classifier::~Classifier() { delete seqIterator; }
@@ -73,12 +74,17 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     curr_time = time(NULL);
     curr_tm = localtime(&curr_time);
 
+    time_t beforeSearch, afterSearch;
     cout<<curr_tm ->tm_hour << "시" << curr_tm -> tm_min<<"분" <<curr_tm ->tm_sec<<"초 "<<endl;
     while(processedSeqCnt < numOfSeq){
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt);
         cout<<"processedCnt"<<processedSeqCnt<<endl;
+        beforeSearch = time(NULL);
         linearSearch2(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, taxIdList, taxIdListAtRank);
+        afterSearch = time(NULL);
+        cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
     }
+
     cout<<"analyse Result"<<endl;
     analyseResult(ncbiTaxonomy, sequences);
 
@@ -149,7 +155,9 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
 
 void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank){
     time_t beforeSort, afterSort;
+    beforeSort = time(NULL);
     SORT_PARALLEL(queryKmerList, queryKmerList + numOfQuery , Classifier::compareForLinearSearch);
+    afterSort = time(NULL);
     cout<<"Time spent for sorting the query k-mer list: "<<double(afterSort-beforeSort)<<endl;
 
     ///Find the first index of garbage k-mer (UINT64_MAX) and discard from there
@@ -233,7 +241,7 @@ void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, c
         ///Get next query and start to find
         currentQuery = queryKmerList[i].ADkmer;
         currentQueryAA = AminoAcid(currentQuery);
-        cout<<i<<"\t"<<currentQueryAA<<"\t"<<callCnt<<"\t"<<targetInfoIdx<<endl;
+  //      cout<<i<<"\t"<<currentQueryAA<<"\t"<<callCnt<<"\t"<<targetInfoIdx<<endl;
 
         ///Skip target k-mers that are not matched in amino acid level
         while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
