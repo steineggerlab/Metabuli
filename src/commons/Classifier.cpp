@@ -244,7 +244,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
                               const MmapedData<TargetKmerInfo> & targetInfoList, Buffer<Match> & matchBuffer,
                               const vector<int> & taxIdList, const vector<int> & taxIdListAtRank){
 #ifdef OPENMP
-    omp_set_num_threads(1);
+    omp_set_num_threads(64);
 #endif
     ///Find the first index of garbage k-mer (UINT64_MAX) and discard from there
     for(size_t checkN = numOfQuery - 1; checkN >= 0; checkN--){
@@ -256,7 +256,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
 
     typedef Sequence Split;
     vector<Split> splits;
-    int threadNum = 1;
+    int threadNum = 64;
     size_t splitSize = numOfQuery / threadNum;
     for(size_t i = 0; i < threadNum; i++){
         splits.emplace_back(splitSize * i, splitSize * (i+1) - 1, splitSize);
