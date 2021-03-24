@@ -8,10 +8,10 @@
 #include "NcbiTaxonomy.h"
 
 typedef struct QueryKmerInfo {
-    QueryKmerInfo(int seqID = 0, uint32_t pos = 0, uint32_t isReverse = 0 ) : sequenceID(seqID), pos(pos), frame(isReverse) {}
-    int sequenceID;
-    uint32_t pos;
-    uint32_t frame; // 0, 1, 2 are forward, and 3, 4, 5 are reverse
+    QueryKmerInfo(int seqID = 0, uint32_t pos = 0, uint8_t frame = 0 ) : sequenceID(seqID), pos(pos), frame(frame) {}
+    uint32_t sequenceID;
+    uint16_t pos;
+    uint8_t frame; // 0, 1, 2 are forward, and 3, 4, 5 are reverse
 } QueryKmerInfo;
 
 typedef struct QueryKmer {

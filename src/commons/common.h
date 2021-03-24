@@ -8,12 +8,12 @@
 #define kmerBufSize 10000000000 // 10,000,000,000
 //#define kmerBufSize 1000000000
 #define AApart(x) x & ()
-typedef struct Sequence{
+struct Sequence{
     Sequence(size_t start, size_t end, size_t length) : start(start), end(end), length(length) { }
     size_t start;
     size_t end;
     size_t length;
-}SeqSegment;
+};
 
 
 

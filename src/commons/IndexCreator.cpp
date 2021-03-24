@@ -111,7 +111,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                         buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + seqIdx].start]), seqs[splits[i].offset + seqIdx].length};
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
-                        size_t temp = kmerBuffer.startIndexOfReserve;
                         size_t end = numOfBlocksList[seqIdx];
                         for(size_t bl = start; bl < end ; bl++){
                             seqIterator.translateBlock(seq->seq.s,blocks[bl]);
@@ -137,14 +136,13 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
 }
 
 ///This function sort the TargetKmerBuffer, do redundancy reducing task, write the differential index of them
-
 void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName, const vector<int> & taxIdList)
 {
     ///open a split file, which will be merged later.
     char suffixedDiffIdxFileName[100];
     char suffixedInfoFileName[100];
-    sprintf(suffixedDiffIdxFileName,"%s_%zu_diffIdx", outputFileName,numOfFlush);
-    sprintf(suffixedInfoFileName,"%s_%zu_info", outputFileName,numOfFlush);
+    sprintf(suffixedDiffIdxFileName,"%s_%zu_diffIdx", outputFileName, numOfFlush);
+    sprintf(suffixedInfoFileName,"%s_%zu_info", outputFileName, numOfFlush);
     FILE * diffIdxFile = fopen(suffixedDiffIdxFileName, "wb");
     FILE * infoFile = fopen(suffixedInfoFileName, "wb");
     if (diffIdxFile == NULL || infoFile == NULL){
@@ -273,7 +271,7 @@ int IndexCreator::getNumOfFlush()
 //    }
 //}
 
-bool IndexCreator::compareForDiffIdx(const TargetKmer & a, const TargetKmer & b){
+inline bool IndexCreator::compareForDiffIdx(const TargetKmer & a, const TargetKmer & b){
     return a.ADkmer < b.ADkmer || (a.ADkmer == b.ADkmer && a.taxIdAtRank < b.taxIdAtRank);
 }
 

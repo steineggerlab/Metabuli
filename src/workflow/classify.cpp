@@ -33,6 +33,6 @@ int classify(int argc, const char **argv, const Command& command)
         taxIdList.push_back(atol(taxID));
     }
     fclose(taxIdFile);
-    classifier.startClassify(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(), taxIdList, par);
+    classifier.startClassify2(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(), taxIdList, par);
     return 0;
 }

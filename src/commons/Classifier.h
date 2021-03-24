@@ -78,6 +78,62 @@ private:
         }
     }QueryInfo;
 
+    struct Match{ //16byte
+        uint32_t queryId;
+        int taxID;
+        uint16_t position;
+        uint8_t frame;
+        uint8_t hamming;
+    };
+
+    struct MatchedQueryKmer{
+        size_t queryID;
+        uint32_t pos;
+        uint8_t frame;
+        size_t st;
+        size_t endl;
+    };
+
+    template <typename T>
+    struct Buffer{
+        T * buffer;
+        size_t startIndexOfReserve;
+        size_t bufferSize;
+
+        Buffer(size_t sizeOfBuffer){
+            buffer = (T *) malloc(sizeof(T) * sizeOfBuffer);
+            bufferSize = sizeOfBuffer;
+            startIndexOfReserve = 0;
+        };
+
+        size_t reserveMemory(size_t numOfKmer){
+            size_t offsetToWrite = __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
+            return offsetToWrite;
+        };
+    };
+
+    struct MatchedTargetKmer{
+        int taxID;
+        uint8_t hamming;
+    };
+
+    struct MatchBuffer{
+        Match * buffer;
+        size_t startIndexOfReserve;
+        size_t bufferSize;
+
+        MatchBuffer(size_t sizeOfBuffer){
+            buffer = (Match *) malloc(sizeof(Match) * sizeOfBuffer);
+            bufferSize = sizeOfBuffer;
+            startIndexOfReserve = 0;
+        };
+
+        size_t reserveMemory(size_t numOfKmer){
+            size_t offsetToWrite = __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
+            return offsetToWrite;
+        };
+    };
+
 
     int numOfSplit;
     SeqIterator * seqIterator;
@@ -119,7 +175,7 @@ private:
             {3, 2, 3, 3, 4, 4, 1, 0}}; /// 4 means that there is no case where that value is used.
     uint8_t getHammingDistance(uint64_t kmer1, uint64_t kmer2);
 
-    void linearSearch(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank);
+    int linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList, Buffer<Match> & matchBufferconst, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank);
     void linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank);
     void writeResultFile(vector<MatchedKmer> & matchList, const char * queryFileName);
     TaxID match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,
@@ -129,18 +185,24 @@ private:
     static bool compareConsecutiveMatches(const ConsecutiveMatches & a, const ConsecutiveMatches & b);
     void fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt);
     TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end);
+    TaxID chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList);
     static void checkAndGive(vector<uint32_t> & posList,  vector<uint8_t> & hammingList, const uint32_t & pos, const uint8_t & hammingDist);
     void writeReadClassification(vector<QueryInfo> & queryInfos, ofstream & readClassificationFile);
     void writeReportFile(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, const int numOfQuery);
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);
     void analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments);
+    void analyseResult2(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName);
     void writeReport(FILE * fp, const NcbiTaxonomy & ncbiTaxonomy, const unordered_map<TaxID, TaxonCounts> & cladeCounts, unsigned long totalReads,TaxID taxID = 0, int depth = 0);
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts>& map, TaxID key);
     void storeKmerMatches();
     void compareDna(uint64_t & query, vector<uint64_t> & targetList, const size_t & startIdx, vector<size_t> & selectedMatches, vector<uint8_t> & selectedHamming);
+    void writeMatches(Buffer<Match> & matchBuffer, FILE * matchFile);
+    static bool compareForWritingMatches(const Match & a, const Match & b);
    // void getTaxCounts(const vector<QueryInfo> & queryInfos, )
 public:
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, vector<int> & taxIdList, const LocalParameters & par);
+    void startClassify2(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, vector<int> & taxIdList, const LocalParameters & par);
+
     int getNumOfSplits() const;
     Classifier();
     ~Classifier();
