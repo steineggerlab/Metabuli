@@ -126,17 +126,17 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     char suffixedDiffIdxFileName[3][100];
     char suffixedInfoFileName[3][100];
     for(int split = 0; split < 3 ; split++){
-        sprintf(suffixedDiffIdxFileName[split], "%s_%d_diffIdx", "20210303", split);
-        sprintf(suffixedInfoFileName[split], "%s_%d_info", "20210303", split);
+        sprintf(suffixedDiffIdxFileName[split], "%s_%d_diffIdx", outputFileName, split);
+        sprintf(suffixedInfoFileName[split], "%s_%d_info", outputFileName, split);
         diffSplits.push_back(suffixedDiffIdxFileName[split]);
         infoSplits.push_back(suffixedInfoFileName[split]);
     }
     char mergedDiffFileName[100];
     char mergedInfoFileName[100];
     char diffIdxSplitFileName[100];
-    sprintf(mergedDiffFileName, "%s_diffIdx", "20210327");
-    sprintf(mergedInfoFileName, "%s_info", "20210327");
-    sprintf(diffIdxSplitFileName, "%s_split", "20210327");
+    sprintf(mergedDiffFileName, "%s_diffIdx_1", outputFileName);
+    sprintf(mergedInfoFileName, "%s_info_1", outputFileName);
+    sprintf(diffIdxSplitFileName, "%s_split_1", outputFileName);
     FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName);
     merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtRank, taxIdList);
 
