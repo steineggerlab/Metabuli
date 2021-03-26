@@ -72,7 +72,7 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     lastWrittenKmer = entryKmer;
     cre->writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx);;
     writtenKmerCnt++;
-
+    int splitCheck = 0;
     int endFlag = 0;
     while(true){
         ///update entry k-mer
@@ -111,8 +111,9 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
             idxOfMin = smallest(lookingKmers, lookingInfos, taxIdListAtRank, numOfSplitFiles);
         }
 
-        if(AminoAcid(entryKmer) != AAofTempSplitOffset){
+        if(AminoAcid(entryKmer) != AAofTempSplitOffset && splitCheck == 1){
             splitList[splitListIdx++] = {lastWrittenKmer, diffBufferIdx, infoBufferIdx};
+            splitCheck = 0;
         }
 
 
@@ -124,6 +125,7 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
 
         if(writtenKmerCnt == offsetList[offsetListIdx]){
             AAofTempSplitOffset = AminoAcid(lastWrittenKmer);
+            splitCheck = 1;
             offsetListIdx++;
         }
 
