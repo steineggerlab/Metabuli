@@ -17,8 +17,8 @@ int classify(int argc, const char **argv, const Command& command)
     //const string outputDirectory = par.filenames[2];
     const string targetDiffIdxFileName = par.filenames[1];
     const string targetInfoFileName = par.filenames[2];
-    const string diffIdxSplitFileName = par.filenames[3];
-    string taxIdFileName = par.filenames[4];
+    string taxIdFileName = par.filenames[3];
+    const string diffIdxSplitFileName = par.filenames[4];
 
 
 
