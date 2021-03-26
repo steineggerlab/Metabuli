@@ -263,7 +263,6 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
 
     vector<QueryKmerSplit> splits;
     int threadNum = 64;
-    threadNum;
     size_t querySplitSize = numOfQuery / (threadNum - 1);
     uint64_t queryKmerAA;
     bool splitCheck = false;
@@ -324,7 +323,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
         for(size_t i = 0; i < splits.size(); i ++){
             if(hasOverflow) continue;
             diffIdxPos = splits[i].diffIdxSplit.diffIdxOffset;
-            targetInfoIdx = splits[i].diffIdxSplit.infoIdxOffset;
+            targetInfoIdx = splits[i].diffIdxSplit.infoIdxOffset - 1;
             currentTargetKmer = getNextTargetKmer(splits[i].diffIdxSplit.ADkmer, targetDiffIdxList.data, diffIdxPos);
             currentQuery = UINT64_MAX;
             currentQueryAA = UINT64_MAX;
@@ -1122,7 +1121,7 @@ void Classifier::checkAndGive(vector<uint32_t> & posList, vector<uint8_t> & hamm
 }
 
 ///It reads differential index and return "current + (next - current)", which is equal to next.
-inline uint64_t Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t* targetDiffIdxList, size_t & diffIdxPos){
+inline uint64_t Classifier::getNextTargetKmer2(uint64_t lookingTarget, const uint16_t* targetDiffIdxList, size_t & diffIdxPos){
     uint16_t fragment;
     uint64_t diffIn64bit = 0;
     //bit packing, SIMD,
@@ -1141,7 +1140,7 @@ inline uint64_t Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint
     return diffIn64bit + lookingTarget;
 }
 
-inline uint64_t Classifier::getNextTargetKmer2(uint64_t lookingTarget, const uint16_t* targetDiffIdxList, size_t & diffIdxPos){
+inline uint64_t Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t* targetDiffIdxList, size_t & diffIdxPos){
     uint16_t fragment;
     uint16_t check = (0x1u << 15u);
     uint64_t diffIn64bit = 0;
