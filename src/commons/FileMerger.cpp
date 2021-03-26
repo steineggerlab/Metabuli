@@ -17,8 +17,11 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     FILE * mergedDiffFile = fopen(mergedDiffFileName, "wb");
     FILE * mergedInfoFile = fopen(mergedInfoFileName, "wb");
     FILE * diffIdxSplitFile = fopen(diffIdxSplitFileName, "wb");
-    uint16_t * diffBuffer = (uint16_t *)malloc(sizeof(uint16_t) * kmerBufSize); size_t diffBufferIdx = 0;
-    TargetKmerInfo * infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * kmerBufSize); size_t infoBufferIdx = 0;
+    uint16_t * diffBuffer = (uint16_t *)malloc(sizeof(uint16_t) * kmerBufSize);
+    size_t diffBufferIdx = 0;
+    size_t totalBufferIdx = 0;
+    TargetKmerInfo * infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * kmerBufSize);
+    size_t infoBufferIdx = 0;
 
 
     ///Prepare files to merge
