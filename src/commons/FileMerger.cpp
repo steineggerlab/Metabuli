@@ -44,7 +44,7 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
         maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
         numOfKmerBeforeMerge += infoFileList[file].fileSize / sizeof(TargetKmerInfo);
     }
-    cout<<1<<endl;
+
     ///To make differential index splits
     uint64_t AAofTempSplitOffset = UINT64_MAX;
     size_t sizeOfSplit = numOfKmerBeforeMerge / 1023;
@@ -53,12 +53,12 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     for(size_t os = 0; os < 1024; os++){
         offsetList[os] = os * sizeOfSplit;
     }
-    cout<<2<<endl;
+
     DiffIdxSplit splitList[1024];
     memset(splitList, 0, sizeof(splitList));
     //splitList[0] = {0, 0 ,0};
     int splitListIdx = 1;
-    cout<<3<<endl;
+
     /// get the first k-mer to write
     for(size_t file = 0; file < numOfSplitFiles; file++){
         lookingKmers[file] = getNextKmer(0, diffFileList[file], diffFileIdx[file]);

@@ -254,19 +254,21 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
     }
 
     ///Devide query k-mer list into blocks for multi threading.
+    size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
+    for(size_t i = 1; i < numOfDiffIdxSplits; i++){
+        if(diffIdxSplits.data[i].ADkmer == 0){
+            diffIdxSplits.data[i] = {UINT64_MAX, UINT64_MAX, UINT64_MAX};
+        }
+    }
+
     vector<QueryKmerSplit> splits;
     int threadNum = 64;
     threadNum --;
     size_t querySplitSize = numOfQuery / threadNum;
-    size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
     uint64_t queryKmerAA;
     bool splitCheck = false;
-    cout<<" num of diff idx split" <<numOfDiffIdxSplits<<endl;
-    for(size_t i = 0; i < numOfDiffIdxSplits; i++){
-        cout<<i<<" "<<diffIdxSplits.data[i].ADkmer<<endl;
-        cout<<i<<" "<<diffIdxSplits.data[i].diffIdxOffset<<endl;
-        cout<<i<<" "<<diffIdxSplits.data[i].infoIdxOffset<<endl;
-    }
+
+
     splits.emplace_back(0, querySplitSize - 1, querySplitSize, 0, 0, 0);
     for(int i = 1; i < threadNum; i++) {
         queryKmerAA = AminoAcid(queryKmerList[querySplitSize * i].ADkmer);
