@@ -263,8 +263,8 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
 
     vector<QueryKmerSplit> splits;
     int threadNum = 64;
-    threadNum --;
-    size_t querySplitSize = numOfQuery / threadNum;
+    threadNum;
+    size_t querySplitSize = numOfQuery / (threadNum - 1);
     uint64_t queryKmerAA;
     bool splitCheck = false;
 
@@ -286,7 +286,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
                                 diffIdxSplits.data[numOfDiffIdxSplits - 1].diffIdxOffset,diffIdxSplits.data[numOfDiffIdxSplits - 1].infoIdxOffset);
         }
     }
-    splits.emplace_back(querySplitSize * threadNum, numOfQuery - 1, numOfQuery - querySplitSize * threadNum, 0 , 0, 0);
+ //   splits.emplace_back(querySplitSize * threadNum, numOfQuery - 1, numOfQuery - querySplitSize * threadNum, 0 , 0, 0);
 
     for(int i = 1 ; i < splits.size(); i++){
         cout<<splits[i].diffIdxSplit.ADkmer<<endl;
