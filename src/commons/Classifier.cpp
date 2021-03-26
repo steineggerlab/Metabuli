@@ -112,7 +112,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     munmap(targetInfoList.data, targetInfoList.fileSize + 1);
 }
 
-void Classifier::startClassify2(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, vector<int> & taxIdList, const LocalParameters & par) {
+void Classifier::startClassify2(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par) {
     string names, nodes, merged;
     if(par.gtdbOrNcbi == 1 || par.gtdbOrNcbi == 0){
         cout<<"Classifying query sequences based on taxonomy of GTDB"<<endl;
@@ -142,6 +142,7 @@ void Classifier::startClassify2(const char * queryFileName, const char * targetD
     struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName);
     targetDiffIdxList.data[targetDiffIdxList.fileSize/sizeof(uint16_t)] = 32768; //1000000000000000
     struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName);
+    struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName);
 
     vector<Sequence> sequences;
     IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
@@ -164,7 +165,7 @@ void Classifier::startClassify2(const char * queryFileName, const char * targetD
     while(processedSeqCnt < numOfSeq){
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
-        while(!linearSearch3(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, matchBuffer2, taxIdList, taxIdListAtRank)){
+        while(!linearSearch3(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer2, taxIdList, taxIdListAtRank)){
             writeMatches(matchBuffer2, matchFile);
         }
         writeMatches(matchBuffer2, matchFile);
@@ -241,11 +242,9 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
 }
 
 int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList,
-                              const MmapedData<TargetKmerInfo> & targetInfoList, Buffer<Match> & matchBuffer,
+                              const MmapedData<TargetKmerInfo> & targetInfoList, const MmapedData<DiffIdxSplit> & diffIdxSplits, Buffer<Match> & matchBuffer,
                               const vector<int> & taxIdList, const vector<int> & taxIdListAtRank){
-#ifdef OPENMP
-    omp_set_num_threads(64);
-#endif
+
     ///Find the first index of garbage k-mer (UINT64_MAX) and discard from there
     for(size_t checkN = numOfQuery - 1; checkN >= 0; checkN--){
         if(queryKmerList[checkN].ADkmer != UINT64_MAX){
@@ -254,18 +253,46 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
         }
     }
 
-    typedef Sequence Split;
-    vector<Split> splits;
+    ///Devide query k-mer list into blocks for multi threading.
+    vector<QueryKmerSplit> splits;
     int threadNum = 64;
-    size_t splitSize = numOfQuery / threadNum;
-    for(size_t i = 0; i < threadNum; i++){
-        splits.emplace_back(splitSize * i, splitSize * (i+1) - 1, splitSize);
+    threadNum --;
+    size_t querySplitSize = numOfQuery / threadNum;
+    size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
+    uint64_t queryKmerAA;
+    bool checkkk = false;
+    splits.emplace_back(0, querySplitSize - 1, querySplitSize, 0, 0, 0);
+    for(int i = 1; i < threadNum; i++) {
+        queryKmerAA = AminoAcid(queryKmerList[querySplitSize * i].ADkmer);
+        checkkk = false;
+        for(size_t j = 0; j < numOfDiffIdxSplits; j++){
+            if(queryKmerAA < diffIdxSplits.data[j].ADkmer){
+                splits.emplace_back(querySplitSize * i, querySplitSize * (i + 1) - 1, querySplitSize, diffIdxSplits.data[j-1].ADkmer,
+                                    diffIdxSplits.data[j-1].diffIdxOffset,diffIdxSplits.data[j-1].infoIdxOffset);
+                checkkk = true;
+                break;
+            }
+        }
+        if(!checkkk){
+            splits.emplace_back(querySplitSize * i, querySplitSize * (i + 1) - 1, querySplitSize, diffIdxSplits.data[numOfDiffIdxSplits - 1].ADkmer,
+                                diffIdxSplits.data[numOfDiffIdxSplits - 1].diffIdxOffset,diffIdxSplits.data[numOfDiffIdxSplits - 1].infoIdxOffset);
+        }
     }
+    splits.emplace_back(querySplitSize * threadNum, numOfQuery - 1, numOfQuery - querySplitSize * threadNum, 0 , 0, 0);
+
+    ///Give corresponding offset of differential index split to each query k-mer block
+
+    //    size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
+//    for(size_t i = 0; i < numOfDiffIdxSplits ; i++){
+//
+//    }
     vector<const vector<int> *> taxID;
     taxID.push_back(& taxIdList);
     taxID.push_back(& taxIdListAtRank);
-
-#pragma omp parallel default(none), shared(splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID)
+#ifdef OPENMP
+    omp_set_num_threads(64);
+#endif
+#pragma omp parallel default(none), shared(splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout)
     {
         ///query variables
         uint64_t currentQuery = UINT64_MAX;
@@ -275,7 +302,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
         size_t diffIdxPos = 0;
         size_t targetInfoIdx = 0;
         vector<uint64_t> targetKmerCache;
-        uint64_t currentTargetKmer = getNextTargetKmer(0, targetDiffIdxList.data, diffIdxPos);
+        uint64_t currentTargetKmer;
         targetKmerCache.push_back(currentTargetKmer);
         size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
 
@@ -288,6 +315,12 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
 #pragma omp for schedule(dynamic, 1)
         for(size_t i = 0; i < splits.size(); i ++){
             if(hasOverflow) continue;
+            diffIdxPos = splits[i].diffIdxSplit.diffIdxOffset;
+            targetInfoIdx = splits[i].diffIdxSplit.infoIdxOffset;
+            currentTargetKmer = getNextTargetKmer(splits[i].diffIdxSplit.ADkmer, targetDiffIdxList.data, diffIdxPos);
+            currentQuery = UINT64_MAX;
+            currentQueryAA = UINT64_MAX;
+
             for(size_t j = splits[i].start; j < splits[i].end + 1; j ++){
                 splits[i].start++;
                 if(currentQuery == queryKmerList[j].ADkmer){
@@ -341,6 +374,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
                 ///Load target k-mers that are matched in amino acid level
                 while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
                     targetKmerCache.push_back(currentTargetKmer);
+                    cout<<currentTargetKmer<<endl;
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                     targetInfoIdx++;
                 }
@@ -1084,7 +1118,8 @@ void Classifier::checkAndGive(vector<uint32_t> & posList, vector<uint8_t> & hamm
 inline uint64_t Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t* targetDiffIdxList, size_t & diffIdxPos){
     uint16_t fragment;
     uint64_t diffIn64bit = 0;
-    for(int i = 0; i < 5; i++){
+    //bit packing, SIMD,
+    for(int i = 0; i < 5  ; i++){
         fragment = targetDiffIdxList[diffIdxPos];
         diffIdxPos++;
         if(fragment & (0x1u << 15))
@@ -1096,6 +1131,25 @@ inline uint64_t Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint
         diffIn64bit |= fragment;
         diffIn64bit <<= 15u;
     }
+    return diffIn64bit + lookingTarget;
+}
+
+inline uint64_t Classifier::getNextTargetKmer2(uint64_t lookingTarget, const uint16_t* targetDiffIdxList, size_t & diffIdxPos){
+    uint16_t fragment;
+    uint16_t check = (0x1u << 15u);
+    uint64_t diffIn64bit = 0;
+
+    fragment = targetDiffIdxList[diffIdxPos];
+    diffIdxPos++;
+    while (!(fragment & check)){
+        diffIn64bit |= fragment;
+        diffIn64bit <<= 15u;
+        fragment = targetDiffIdxList[diffIdxPos];
+        diffIdxPos++;
+    }
+    fragment &= ~check;
+    diffIn64bit |= fragment;
+
     return diffIn64bit + lookingTarget;
 }
 

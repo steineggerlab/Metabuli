@@ -7,78 +7,10 @@
 #include "LocalParameters.h"
 #include <Command.h>
 #include <regex>
+#include "Classifier.h"
 #include "omp.h"
-
-void prepareForCreatingTargetDB(const LocalParameters & par){
-    const char * folder = par.filenames[0].c_str();
-    const char * mappingFile = par.filenames[1].c_str();
-    const char * outputFileName = par.filenames[2].c_str();
-
-    int mode = par.gtdbOrNcbi;
-    string taxid_fname_fname;
-    string taxid_fname_sorted_fname;
-    string fastList_fname;
-    string taxidList_fname;
-    string genome_fname;
-
-    if(mode == 0 || mode == 1){
-        taxid_fname_fname = string(folder) + "/taxid_filename_GTDB";
-        taxid_fname_sorted_fname = string(folder) + "/taxid_filename_sorted_GTDB";
-        fastList_fname = string(folder) + "/fasta_list_GTDB";
-        taxidList_fname = string(outputFileName) + "_taxID_list_GTDB";
-        genome_fname = string(folder) + "/concatenated_genome_GTDB";
-        system("echo \"\t|\t\t|\" > ../../gtdb_taxdmp/merged.dmp");
-    }else{
-        taxid_fname_fname = string(folder) + "/taxid_filename_NCBI";
-        taxid_fname_sorted_fname = string(folder) + "/taxid_filename_sorted_NCBI";
-        fastList_fname = string(folder) + "/fasta_list_NCBI";
-        taxidList_fname = string(outputFileName) + "_taxID_list_NCBI";
-        genome_fname = string(folder) + "/concatenated_genome_NCBI";
-    }
-
-    system(("./../../util/unzip_and_list.sh "+ string(folder)+" "+fastList_fname).c_str());
-
-    unordered_map<string, int> assacc2taxid;
-    string key, value;
-    ifstream map;
-    map.open(mappingFile);
-    if(map.is_open()){
-        while(getline(map,key,'\t')){
-            getline(map, value, '\n');
-            assacc2taxid[key] = stoi(value);
-        }
-    } else{
-        cout<<"Cannot open file for mappig from assemlby accession to tax ID"<<endl;
-    }
-    map.close();
-
-    ifstream fastaList;
-    ofstream taxID_fname;
-    taxID_fname.open(taxid_fname_fname);
-    fastaList.open(fastList_fname);
-    string fileName;
-    smatch assacc;
-    int taxId;
-    regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
-    if(fastaList.is_open()){
-        cout<<"Writing taxID to fileName mapping file"<<endl;
-        while(getline(fastaList,fileName,'\n')) {
-            regex_search(fileName, assacc, regex1);
-            if (assacc2taxid.count(assacc[0].str())) {
-                taxId = assacc2taxid[assacc[0].str()];
-                taxID_fname << taxId << "\t" << fileName << endl;
-                //cout << taxId << "\t" << fileName << endl;
-            } else{
-                cout<<assacc[0].str()<<" is excluded in creating target DB because it is not mapped to taxonomical ID"<<endl;
-            }
-        }
-    }
-    taxID_fname.close();
-
-    system(("sort -k 1 -g "+taxid_fname_fname+" > "+taxid_fname_sorted_fname).c_str());
-    system("chmod +x ./../../util/make_taxIdList_and_concatenatedGenome.sh");
-    system(("./../../util/make_taxIdList_and_concatenatedGenome.sh "+taxidList_fname+" "+taxid_fname_sorted_fname+" "+genome_fname).c_str());
-}
+void prepareForCreatingTargetDB(const LocalParameters & par);
+//void makeDiffIdxLookup(char * diffIdxFileName, char * infoFileName);
 
 int createTargetDB(int argc, const char **argv, const Command &command)
 {
@@ -157,6 +89,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     if(numOfSplits == 1){
         sprintf(suffixedDiffIdxFileName[0], "%s_diffIdx", outputFileName);
         sprintf(suffixedInfoFileName[0], "%s_info", outputFileName);
+//        makeDiffIdxLookup(suffixedDiffIdxFileName[0], suffixedInfoFileName[0]);
         cout<<"k-mer DB in: "<<endl;
         cout<<suffixedDiffIdxFileName[0]<<"and"<<endl;
         cout<<suffixedInfoFileName[0]<<endl;
@@ -178,14 +111,99 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     }
     char mergedDiffFileName[100];
     char mergedInfoFileName[100];
+    char diffIdxSplitFileName[100];
     sprintf(mergedDiffFileName, "%s_diffIdx", outputFileName);
     sprintf(mergedInfoFileName, "%s_info", outputFileName);
-    FileMerger merger(mergedDiffFileName, mergedInfoFileName);
+    sprintf(diffIdxSplitFileName, "%s_split", outputFileName);
+    FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName);
     merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtRank, taxIdList);
-
+   // makeDiffIdxLookup(suffixedDiffIdxFileName[0], suffixedInfoFileName[0]);
     cout<<"k-mer DB in: "<<endl;
     cout<<mergedDiffFileName<<" and"<<endl;
     cout<<mergedInfoFileName<<endl;
 
     return 0;
 }
+
+//void makeDiffIdxLookup(char * diffIdxFileName, char * infoFileName){
+//    struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(diffIdxFileName);
+//    targetDiffIdxList.data[targetDiffIdxList.fileSize/sizeof(uint16_t)] = 32768; //1000000000000000
+//    struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(infoFileName);
+//    size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
+//    size_t diffIdxPos = 0;
+//    size_t targetInfoIdx = 0;
+//    size_t currentKmer = Classifier::getNextTargetKmer2(0,targetDiffIdxList.data, diffIdxPos);
+//
+//}
+
+void prepareForCreatingTargetDB(const LocalParameters & par){
+    const char * folder = par.filenames[0].c_str();
+    const char * mappingFile = par.filenames[1].c_str();
+    const char * outputFileName = par.filenames[2].c_str();
+
+    int mode = par.gtdbOrNcbi;
+    string taxid_fname_fname;
+    string taxid_fname_sorted_fname;
+    string fastList_fname;
+    string taxidList_fname;
+    string genome_fname;
+
+    if(mode == 0 || mode == 1){
+        taxid_fname_fname = string(folder) + "/taxid_filename_GTDB";
+        taxid_fname_sorted_fname = string(folder) + "/taxid_filename_sorted_GTDB";
+        fastList_fname = string(folder) + "/fasta_list_GTDB";
+        taxidList_fname = string(outputFileName) + "_taxID_list_GTDB";
+        genome_fname = string(folder) + "/concatenated_genome_GTDB";
+        system("echo \"\t|\t\t|\" > ../../gtdb_taxdmp/merged.dmp");
+    }else{
+        taxid_fname_fname = string(folder) + "/taxid_filename_NCBI";
+        taxid_fname_sorted_fname = string(folder) + "/taxid_filename_sorted_NCBI";
+        fastList_fname = string(folder) + "/fasta_list_NCBI";
+        taxidList_fname = string(outputFileName) + "_taxID_list_NCBI";
+        genome_fname = string(folder) + "/concatenated_genome_NCBI";
+    }
+
+    system(("./../../util/unzip_and_list.sh "+ string(folder)+" "+fastList_fname).c_str());
+
+    unordered_map<string, int> assacc2taxid;
+    string key, value;
+    ifstream map;
+    map.open(mappingFile);
+    if(map.is_open()){
+        while(getline(map,key,'\t')){
+            getline(map, value, '\n');
+            assacc2taxid[key] = stoi(value);
+        }
+    } else{
+        cout<<"Cannot open file for mappig from assemlby accession to tax ID"<<endl;
+    }
+    map.close();
+
+    ifstream fastaList;
+    ofstream taxID_fname;
+    taxID_fname.open(taxid_fname_fname);
+    fastaList.open(fastList_fname);
+    string fileName;
+    smatch assacc;
+    int taxId;
+    regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
+    if(fastaList.is_open()){
+        cout<<"Writing taxID to fileName mapping file"<<endl;
+        while(getline(fastaList,fileName,'\n')) {
+            regex_search(fileName, assacc, regex1);
+            if (assacc2taxid.count(assacc[0].str())) {
+                taxId = assacc2taxid[assacc[0].str()];
+                taxID_fname << taxId << "\t" << fileName << endl;
+                //cout << taxId << "\t" << fileName << endl;
+            } else{
+                cout<<assacc[0].str()<<" is excluded in creating target DB because it is not mapped to taxonomical ID"<<endl;
+            }
+        }
+    }
+    taxID_fname.close();
+
+    system(("sort -k 1 -g "+taxid_fname_fname+" > "+taxid_fname_sorted_fname).c_str());
+    system("chmod +x ./../../util/make_taxIdList_and_concatenatedGenome.sh");
+    system(("./../../util/make_taxIdList_and_concatenatedGenome.sh "+taxidList_fname+" "+taxid_fname_sorted_fname+" "+genome_fname).c_str());
+}
+

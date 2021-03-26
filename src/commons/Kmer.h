@@ -34,6 +34,14 @@ struct TargetKmer{
     TargetKmerInfo info;
 };
 
+struct DiffIdxSplit{
+    DiffIdxSplit(uint64_t ADkmer, size_t diffIdxOffset, size_t infoIdxOffset) : ADkmer(ADkmer), diffIdxOffset(diffIdxOffset), infoIdxOffset(infoIdxOffset) { }
+    DiffIdxSplit() {};
+    uint64_t ADkmer;
+    size_t diffIdxOffset;
+    size_t infoIdxOffset;
+};
+
 typedef struct MatchedKmer{
     MatchedKmer(int quID, int tarID, int taxID, uint32_t pos, uint8_t hamming, bool red, int queryStrand): queryID(quID), targetID(tarID), taxID(taxID), queryPos(pos), hammingDistance(hamming), redundancy(red), queryFrame(queryStrand) {}
     int queryID;

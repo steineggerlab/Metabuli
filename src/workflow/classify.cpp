@@ -13,11 +13,12 @@ int classify(int argc, const char **argv, const Command& command)
 
     Classifier classifier;
     const char * queryFileName = par.filenames[0].c_str();
-   // const string dbName = par.filenames[1];
-    const string outputDirectory = par.filenames[2];
+    //const string dbName = par.filenames[1];
+    //const string outputDirectory = par.filenames[2];
     const string targetDiffIdxFileName = par.filenames[1];
     const string targetInfoFileName = par.filenames[2];
-    string taxIdFileName = par.filenames[3];
+    const string diffIdxSplitFileName = par.filenames[3];
+    string taxIdFileName = par.filenames[4];
 
 
 
@@ -33,6 +34,6 @@ int classify(int argc, const char **argv, const Command& command)
         taxIdList.push_back(atol(taxID));
     }
     fclose(taxIdFile);
-    classifier.startClassify2(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(), taxIdList, par);
+    classifier.startClassify2(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(), diffIdxSplitFileName.c_str(), taxIdList, par);
     return 0;
 }

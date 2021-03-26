@@ -115,7 +115,7 @@ int updateTargetDB(int argc, const char **argv, const Command &command){
     char mergedInfoFileName[300];
     sprintf(mergedDiffFileName, "%s_diffIdx", updatedFileName);
     sprintf(mergedInfoFileName, "%s_info", updatedFileName);
-    FileMerger merger(mergedDiffFileName, mergedInfoFileName);
+    FileMerger merger(mergedDiffFileName, mergedInfoFileName, "a");
     merger.updateTargetDatabase(diffSplits, infoSplits, oldTaxIdListAtRank, oldTaxIdList, numOfOldTaxIds); ///이거 고쳐야함, 둘 다 필
 
     cout<<"k-mer DB in: "<<endl;
