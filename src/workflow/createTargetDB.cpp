@@ -18,14 +18,14 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
     const char * folder = par.filenames[0].c_str();
     const char * outputFileName = par.filenames[2].c_str();
-
+//
     string genome_fname;
     string taxIdList_fname;
     string names, nodes, merged;
 
     if(par.gtdbOrNcbi == 1 || par.gtdbOrNcbi == 0){
         cout<<"Creating target database based on taxonomy of GTDB"<<endl;
-        prepareForCreatingTargetDB(par);
+//        prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_GTDB";
         taxIdList_fname = string(outputFileName) +"_taxID_list_GTDB";
         names = "../../gtdb_taxdmp/names.dmp";
@@ -33,7 +33,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         merged = "../../gtdb_taxdmp/merged.dmp";
     } else if(par.gtdbOrNcbi == 2){
         cout<<"Creating target database based on taxonomy of NCBI"<<endl;
-        prepareForCreatingTargetDB(par);
+  //      prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_NCBI";
         taxIdList_fname = string(outputFileName) +"_taxID_list_NCBI";
         names = "../../ncbi_taxdmp/names.dmp";
@@ -73,54 +73,73 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     fclose(taxIdFile);
     taxIdList.pop_back();
     vector<int> taxIdListAtRank;
-
+//
     ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
-    for(int i = 0 ; i < taxIdListAtRank.size(); i++){
-        cout<<i<<" "<<taxIdList[i]<<" "<<taxIdListAtRank[i]<<endl;
-    }
+//    for(int i = 0 ; i < taxIdListAtRank.size(); i++){
+//        cout<<i<<" "<<taxIdList[i]<<" "<<taxIdListAtRank[i]<<endl;
+//    }
+//
+//    ///Make files of differential indexing and information of k-mers
+//    idxCre.startIndexCreatingParallel(seqFileName,outputFileName,taxIdListAtRank, taxIdList);
+//
+//    int numOfSplits = idxCre.getNumOfFlush();
+//    char suffixedDiffIdxFileName[numOfSplits][100];
+//    char suffixedInfoFileName[numOfSplits][100];
+//
+//    if(numOfSplits == 1){
+//        sprintf(suffixedDiffIdxFileName[0], "%s_diffIdx", outputFileName);
+//        sprintf(suffixedInfoFileName[0], "%s_info", outputFileName);
+////        makeDiffIdxLookup(suffixedDiffIdxFileName[0], suffixedInfoFileName[0]);
+//        cout<<"k-mer DB in: "<<endl;
+//        cout<<suffixedDiffIdxFileName[0]<<"and"<<endl;
+//        cout<<suffixedInfoFileName[0]<<endl;
+//        return 0;
+//    }
 
-    ///Make files of differential indexing and information of k-mers
-    idxCre.startIndexCreatingParallel(seqFileName,outputFileName,taxIdListAtRank, taxIdList);
-
-    int numOfSplits = idxCre.getNumOfFlush();
-    char suffixedDiffIdxFileName[numOfSplits][100];
-    char suffixedInfoFileName[numOfSplits][100];
-
-    if(numOfSplits == 1){
-        sprintf(suffixedDiffIdxFileName[0], "%s_diffIdx", outputFileName);
-        sprintf(suffixedInfoFileName[0], "%s_info", outputFileName);
-//        makeDiffIdxLookup(suffixedDiffIdxFileName[0], suffixedInfoFileName[0]);
-        cout<<"k-mer DB in: "<<endl;
-        cout<<suffixedDiffIdxFileName[0]<<"and"<<endl;
-        cout<<suffixedInfoFileName[0]<<endl;
-        return 0;
-    }
-
-    ///Merge files
+//    ///Merge files
+//    vector<char *> diffSplits;
+//    vector<char *> infoSplits;
+//    for(int split = 0; split < numOfSplits ; split++){
+//        sprintf(suffixedDiffIdxFileName[split], "%s_%d_diffIdx", outputFileName, split);
+//        sprintf(suffixedInfoFileName[split], "%s_%d_info", outputFileName, split);
+//        diffSplits.push_back(suffixedDiffIdxFileName[split]);
+//        infoSplits.push_back(suffixedInfoFileName[split]);
+//    }
+//
+//    for(int i = 0; i < numOfSplits; i++){
+//        cout<<diffSplits[i]<<endl;
+//    }
+//    char mergedDiffFileName[100];
+//    char mergedInfoFileName[100];
+//    char diffIdxSplitFileName[100];
+//    sprintf(mergedDiffFileName, "%s_diffIdx", outputFileName);
+//    sprintf(mergedInfoFileName, "%s_info", outputFileName);
+//    sprintf(diffIdxSplitFileName, "%s_split", outputFileName);
+//    FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName);
+//    merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtRank, taxIdList);
+//   // makeDiffIdxLookup(suffixedDiffIdxFileName[0], suffixedInfoFileName[0]);
+//    cout<<"k-mer DB in: "<<endl;
+//    cout<<mergedDiffFileName<<" and"<<endl;
+//    cout<<mergedInfoFileName<<endl;
     vector<char *> diffSplits;
     vector<char *> infoSplits;
-    for(int split = 0; split < numOfSplits ; split++){
-        sprintf(suffixedDiffIdxFileName[split], "%s_%d_diffIdx", outputFileName, split);
-        sprintf(suffixedInfoFileName[split], "%s_%d_info", outputFileName, split);
+    char suffixedDiffIdxFileName[3][100];
+    char suffixedInfoFileName[3][100];
+    for(int split = 0; split < 3 ; split++){
+        sprintf(suffixedDiffIdxFileName[split], "%s_%d_diffIdx", "20210303", split);
+        sprintf(suffixedInfoFileName[split], "%s_%d_info", "20210303", split);
         diffSplits.push_back(suffixedDiffIdxFileName[split]);
         infoSplits.push_back(suffixedInfoFileName[split]);
-    }
-
-    for(int i = 0; i < numOfSplits; i++){
-        cout<<diffSplits[i]<<endl;
     }
     char mergedDiffFileName[100];
     char mergedInfoFileName[100];
     char diffIdxSplitFileName[100];
-    sprintf(mergedDiffFileName, "%s_diffIdx", outputFileName);
-    sprintf(mergedInfoFileName, "%s_info", outputFileName);
-    sprintf(diffIdxSplitFileName, "%s_split", outputFileName);
+    sprintf(mergedDiffFileName, "%s_diffIdx", "20210327");
+    sprintf(mergedInfoFileName, "%s_info", "20210327");
+    sprintf(diffIdxSplitFileName, "%s_split", "20210327");
     FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName);
     merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtRank, taxIdList);
-   // makeDiffIdxLookup(suffixedDiffIdxFileName[0], suffixedInfoFileName[0]);
-    cout<<"k-mer DB in: "<<endl;
-    cout<<mergedDiffFileName<<" and"<<endl;
-    cout<<mergedInfoFileName<<endl;
+
 
     return 0;
 }
