@@ -261,13 +261,18 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
     size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
     uint64_t queryKmerAA;
     bool splitCheck = false;
-
+    cout<<" num of diff idx split" <<numOfDiffIdxSplits<<endl;
+    for(size_t i = 0; i < numOfDiffIdxSplits; i++){
+        cout<<i<<diffIdxSplits.data[i].ADkmer<<endl;
+        cout<<i<<diffIdxSplits.data[i].diffIdxOffset<<endl;
+        cout<<i<<diffIdxSplits.data[i].infoIdxOffset<<endl;
+    }
     splits.emplace_back(0, querySplitSize - 1, querySplitSize, 0, 0, 0);
     for(int i = 1; i < threadNum; i++) {
         queryKmerAA = AminoAcid(queryKmerList[querySplitSize * i].ADkmer);
         splitCheck = false;
         for(size_t j = 0; j < numOfDiffIdxSplits; j++){
-            if(queryKmerAA < diffIdxSplits.data[j].ADkmer){
+            if(queryKmerAA < AminoAcid(diffIdxSplits.data[j].ADkmer)){
                 splits.emplace_back(querySplitSize * i, querySplitSize * (i + 1) - 1, querySplitSize, diffIdxSplits.data[j-1].ADkmer,
                                     diffIdxSplits.data[j-1].diffIdxOffset,diffIdxSplits.data[j-1].infoIdxOffset);
                 splitCheck = true;
@@ -281,6 +286,11 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
     }
     splits.emplace_back(querySplitSize * threadNum, numOfQuery - 1, numOfQuery - querySplitSize * threadNum, 0 , 0, 0);
 
+    for(int i = 1 ; i < splits.size(); i++){
+        cout<<splits[i].diffIdxSplit.ADkmer<<endl;
+        cout<<queryKmerList[splits[i].start].ADkmer<<endl;
+        cout<<AminoAcid(queryKmerList[splits[i].start].ADkmer)<<endl;
+    }
 
     vector<const vector<int> *> taxID;
     taxID.push_back(& taxIdList);
