@@ -322,7 +322,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
 #pragma omp for schedule(dynamic, 1)
         for(size_t i = 0; i < splits.size(); i ++){
             if(hasOverflow) continue;
-            diffIdxPos = splits[i].diffIdxSplit.diffIdxOffset;
+            diffIdxPos = splits[i].diffIdxSplit.diffIdxOffset - 1;
             targetInfoIdx = splits[i].diffIdxSplit.infoIdxOffset - 1;
             currentTargetKmer = getNextTargetKmer(splits[i].diffIdxSplit.ADkmer, targetDiffIdxList.data, diffIdxPos);
             currentQuery = UINT64_MAX;
