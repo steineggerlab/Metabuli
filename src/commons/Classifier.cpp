@@ -260,32 +260,28 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
     size_t querySplitSize = numOfQuery / threadNum;
     size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
     uint64_t queryKmerAA;
-    bool checkkk = false;
+    bool splitCheck = false;
+
     splits.emplace_back(0, querySplitSize - 1, querySplitSize, 0, 0, 0);
     for(int i = 1; i < threadNum; i++) {
         queryKmerAA = AminoAcid(queryKmerList[querySplitSize * i].ADkmer);
-        checkkk = false;
+        splitCheck = false;
         for(size_t j = 0; j < numOfDiffIdxSplits; j++){
             if(queryKmerAA < diffIdxSplits.data[j].ADkmer){
                 splits.emplace_back(querySplitSize * i, querySplitSize * (i + 1) - 1, querySplitSize, diffIdxSplits.data[j-1].ADkmer,
                                     diffIdxSplits.data[j-1].diffIdxOffset,diffIdxSplits.data[j-1].infoIdxOffset);
-                checkkk = true;
+                splitCheck = true;
                 break;
             }
         }
-        if(!checkkk){
+        if(!splitCheck){
             splits.emplace_back(querySplitSize * i, querySplitSize * (i + 1) - 1, querySplitSize, diffIdxSplits.data[numOfDiffIdxSplits - 1].ADkmer,
                                 diffIdxSplits.data[numOfDiffIdxSplits - 1].diffIdxOffset,diffIdxSplits.data[numOfDiffIdxSplits - 1].infoIdxOffset);
         }
     }
     splits.emplace_back(querySplitSize * threadNum, numOfQuery - 1, numOfQuery - querySplitSize * threadNum, 0 , 0, 0);
 
-    ///Give corresponding offset of differential index split to each query k-mer block
 
-    //    size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
-//    for(size_t i = 0; i < numOfDiffIdxSplits ; i++){
-//
-//    }
     vector<const vector<int> *> taxID;
     taxID.push_back(& taxIdList);
     taxID.push_back(& taxIdListAtRank);
@@ -316,7 +312,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
         for(size_t i = 0; i < splits.size(); i ++){
             if(hasOverflow) continue;
             diffIdxPos = splits[i].diffIdxSplit.diffIdxOffset;
-            targetInfoIdx = splits[i].diffIdxSplit.infoIdxOffset;
+            targetInfoIdx = splits[i].diffIdxSplit.infoIdxOffset + 1;
             currentTargetKmer = getNextTargetKmer(splits[i].diffIdxSplit.ADkmer, targetDiffIdxList.data, diffIdxPos);
             currentQuery = UINT64_MAX;
             currentQueryAA = UINT64_MAX;
@@ -374,7 +370,6 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
                 ///Load target k-mers that are matched in amino acid level
                 while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
                     targetKmerCache.push_back(currentTargetKmer);
-                    cout<<currentTargetKmer<<endl;
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                     targetInfoIdx++;
                 }
