@@ -273,18 +273,19 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
         queryKmerAA = AminoAcid(queryKmerList[querySplitSize * i].ADkmer);
         splitCheck = false;
         for(size_t j = 0; j < numOfDiffIdxSplits; j++){
-            if(queryKmerAA < diffIdxSplits.data[j].ADkmer){
+            if(queryKmerAA < AminoAcid(diffIdxSplits.data[j].ADkmer)){
                 if(i == threadNum - 1){
                     splits.emplace_back(querySplitSize * i, numOfQuery - 1, querySplitSize, diffIdxSplits.data[numOfDiffIdxSplits - 1].ADkmer,
                                         diffIdxSplits.data[numOfDiffIdxSplits - 1].diffIdxOffset,diffIdxSplits.data[numOfDiffIdxSplits - 1].infoIdxOffset);
                 } else{
-                    splits.emplace_back(querySplitSize * i, querySplitSize * (i + 1) - 1, querySplitSize, diffIdxSplits.data[numOfDiffIdxSplits - 1].ADkmer,
-                                        diffIdxSplits.data[numOfDiffIdxSplits - 1].diffIdxOffset,diffIdxSplits.data[numOfDiffIdxSplits - 1].infoIdxOffset);
+                    splits.emplace_back(querySplitSize * i, querySplitSize * (i + 1) - 1, querySplitSize, diffIdxSplits.data[j - 1].ADkmer,
+                                        diffIdxSplits.data[j - 1].diffIdxOffset,diffIdxSplits.data[j - 1].infoIdxOffset);
                 }
                 break;
             }
         }
     }
+
 
     for(int i = 0 ; i < splits.size(); i++){
         cout<<i<<" "<<splits[i].start<<"\t"<<splits[i].end<<"\t"<<splits[i].diffIdxSplit.ADkmer<<"\t"<<splits[i].diffIdxSplit.infoIdxOffset<<"\t"<<splits[i].diffIdxSplit.diffIdxOffset<<endl;
