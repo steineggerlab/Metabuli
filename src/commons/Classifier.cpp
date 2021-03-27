@@ -306,7 +306,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
     taxID.push_back(& taxIdListAtRank);
 
 #ifdef OPENMP
-    omp_set_num_threads(64);
+    omp_set_num_threads(1);
 #endif
 #pragma omp parallel default(none), shared(splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout)
     {
@@ -331,6 +331,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
 
         size_t numOfSameQuery = 0;
         size_t matchCnt = 0;
+        size_t numOfcall = 0;
 #pragma omp for schedule(dynamic, 1)
         for(size_t i = 0; i < splits.size(); i ++){
             if(hasOverflow) continue;
@@ -389,6 +390,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
                 ///Skip target k-mers that are not matched in amino acid level
                 while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
+                    numOfcall ++;
                     targetInfoIdx++;
                 }
 
@@ -399,6 +401,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
                     cout<<j<<" "<<matchCnt<<" "<<queryKmerList[j].info.sequenceID<<endl;
                     targetKmerCache.push_back(currentTargetKmer);
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
+                    numOfcall++;
                     targetInfoIdx++;
                 }
 
@@ -419,7 +422,9 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
 
             }
         }
+    cout<<"numofcall: "<<numOfcall<<endl;
     }
+
 
     for(size_t i = 0; i < splits.size(); i ++){
         if(splits[i].start - 1 != splits[i].end)
