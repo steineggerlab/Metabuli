@@ -303,7 +303,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
     taxID.push_back(& taxIdListAtRank);
 
 #ifdef OPENMP
-    omp_set_num_threads(64);
+    omp_set_num_threads(1);
 #endif
 #pragma omp parallel default(none), shared(splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout)
     {
