@@ -322,6 +322,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
         targetKmerCache.push_back(currentTargetKmer);
         size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
 
+        cout<<"here "<<numOfTargetKmer<<endl;
         vector<uint8_t> selectedHammings;
         vector<size_t> selectedMatches;
         size_t startIdxOfAAmatch = 0;
