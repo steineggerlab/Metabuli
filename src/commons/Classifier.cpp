@@ -288,9 +288,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
  //   splits.emplace_back(querySplitSize * threadNum, numOfQuery - 1, numOfQuery - querySplitSize * threadNum, 0 , 0, 0);
 
     for(int i = 1 ; i < splits.size(); i++){
-        cout<<splits[i].diffIdxSplit.ADkmer<<endl;
-        cout<<queryKmerList[splits[i].start].ADkmer<<endl;
-        cout<<AminoAcid(queryKmerList[splits[i].start].ADkmer)<<endl;
+        cout<<i<<" "<<splits[i].start<<"\t"<<splits[i].end<<splits[i].diffIdxSplit.ADkmer<<"\t"<<splits[i].diffIdxSplit.infoIdxOffset<<"\t"<<splits[i].diffIdxSplit.diffIdxOffset<<endl;
     }
 
     vector<const vector<int> *> taxID;
@@ -353,7 +351,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
 
                 ///Reuse the loaded target k-mers to compare if queris are the same only at amino acid level
                 if(currentQueryAA == AminoAcid(queryKmerList[j].ADkmer)){
-                    cout<<"query "<<queryKmerList[i].info.sequenceID<<" "<<queryKmerList[i].ADkmer<<endl;
+                    cout<<j<<" query "<<queryKmerList[j].info.sequenceID<<" "<<queryKmerList[j].ADkmer<<endl;
                     compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
                     posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
                     if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
@@ -390,7 +388,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
                 }
 
                 ///Compare the current query and the loaded target k-mers and select
-                cout<<"query "<<queryKmerList[i].info.sequenceID<<" "<<queryKmerList[i].ADkmer<<endl;
+                cout<<"query "<<queryKmerList[j].info.sequenceID<<" "<<queryKmerList[i].ADkmer<<endl;
                 compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
                 posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
                 if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
@@ -535,7 +533,6 @@ void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, c
         ///Get next query and start to find
         currentQuery = queryKmerList[i].ADkmer;
         currentQueryAA = AminoAcid(currentQuery);
-        cout<<i<<"\t"<<callCnt<<"\t"<<targetInfoIdx<<endl;
 
         ///Skip target k-mers that are not matched in amino acid level
         while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
