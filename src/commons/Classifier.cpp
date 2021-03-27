@@ -482,6 +482,7 @@ void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, c
         ///Reuse the comparison data if queries are exactly identical
         if(currentQuery == queryKmerList[i].ADkmer){
             numOfsamequery ++;
+            cout<<"same query"<<endl;
             for (size_t k = 0; k < selectedMatches.size(); k++) {
                 if (targetInfoList.data[selectedMatches[k]].redundancy == true) {
                     matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
