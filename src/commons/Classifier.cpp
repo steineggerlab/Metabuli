@@ -263,6 +263,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
             numOfDiffIdxSplits_use--;
         }
     }
+    cout<<"numOfDiffIdxSplits "<<numOfDiffIdxSplits_use<<endl;
 
     vector<QueryKmerSplit> splits;
     int threadNum = 64;
