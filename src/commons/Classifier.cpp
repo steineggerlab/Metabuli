@@ -281,8 +281,13 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
             }
         }
         if(!splitCheck){
+            if(i == threadNum - 1){
+                splits.emplace_back(querySplitSize * i, numOfQuery - 1, querySplitSize, diffIdxSplits.data[numOfDiffIdxSplits - 1].ADkmer,
+                                    diffIdxSplits.data[numOfDiffIdxSplits - 1].diffIdxOffset,diffIdxSplits.data[numOfDiffIdxSplits - 1].infoIdxOffset);
+            } else{
             splits.emplace_back(querySplitSize * i, querySplitSize * (i + 1) - 1, querySplitSize, diffIdxSplits.data[numOfDiffIdxSplits - 1].ADkmer,
                                 diffIdxSplits.data[numOfDiffIdxSplits - 1].diffIdxOffset,diffIdxSplits.data[numOfDiffIdxSplits - 1].infoIdxOffset);
+            }
         }
     }
  //   splits.emplace_back(querySplitSize * threadNum, numOfQuery - 1, numOfQuery - querySplitSize * threadNum, 0 , 0, 0);
