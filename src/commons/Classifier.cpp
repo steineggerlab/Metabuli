@@ -619,7 +619,7 @@ void Classifier::analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & s
     SORT_PARALLEL(matchedKmerList.begin(), matchedKmerList.end(), Classifier::compareForAnalyzing);
 
     for(size_t i = 0; i < matchedKmerList.size(); i++){
-        cout<<i<<" "<<matchedKmerList[i].queryID<<" "<<matchedKmerList[i].taxID<<" "<<matchedKmerList[i].queryFrame<<" "<<matchedKmerList[i].hammingDistance<<endl;
+        cout<<i<<" "<<matchedKmerList[i].queryID<<" "<<matchedKmerList[i].taxID<<" "<<matchedKmerList[i].queryFrame<<" "<<matchedKmerList[i].queryPos<<" "<<matchedKmerList[i].hammingDistance<<endl;
     }
     size_t numOfMatches = matchedKmerList.size();
     int currentQuery;
