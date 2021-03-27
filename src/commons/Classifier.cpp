@@ -643,7 +643,7 @@ void Classifier::analyseResult2(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & 
     SORT_PARALLEL(matchList.data, matchList.data + numOfMatches , Classifier::compareForWritingMatches);
 
     for(size_t i = 0; i < numOfMatches; i++){
-        cout<<i<<" "<<matchList.data[i].queryId<<" "<<matchList.data[i].taxID<<" "<<int(matchList.data[i].frame)<<" "<<int(matchList.data[i].hamming)<<endl;
+        cout<<i<<" "<<matchList.data[i].queryId<<" "<<matchList.data[i].taxID<<" "<<int(matchList.data[i].frame)<<" "<<matchList.data[i].position<<" "<<int(matchList.data[i].hamming)<<endl;
     }
     uint32_t currentQuery;
     cout<<"numOfMatches: "<<numOfMatches<<endl;
