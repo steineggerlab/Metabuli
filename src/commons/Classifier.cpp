@@ -331,8 +331,9 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
             for(size_t j = splits[i].start; j < splits[i].end + 1; j ++){
                 splits[i].start++;
                 if(currentQuery == queryKmerList[j].ADkmer){
-                    cout<<"same query"<<endl;
                     numOfSameQuery++;
+                    cout<<"same query "<<numOfSameQuery<<endl;
+
                     posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
                     if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
                         hasOverflow = true;
@@ -482,7 +483,7 @@ void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, c
         ///Reuse the comparison data if queries are exactly identical
         if(currentQuery == queryKmerList[i].ADkmer){
             numOfsamequery ++;
-            cout<<"same query"<<endl;
+            cout<<"same query "<<numOfsamequery<<endl;
             for (size_t k = 0; k < selectedMatches.size(); k++) {
                 if (targetInfoList.data[selectedMatches[k]].redundancy == true) {
                     matchedKmerList.emplace_back(queryKmerList[i].info.sequenceID,
@@ -508,7 +509,7 @@ void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, c
 
         ///Reuse the loaded target k-mers to compare if queris are the same only at amino acid level
         if(currentQueryAA == AminoAcid(queryKmerList[i].ADkmer)){
-            cout<<"query "<<queryKmerList[i].info.sequenceID<<" "<<queryKmerList[i].ADkmer<<endl;
+            cout<<i<<" query "<<queryKmerList[i].info.sequenceID<<" "<<queryKmerList[i].ADkmer<<endl;
             compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
             for (size_t k = 0; k < selectedMatches.size(); k ++) {
                 if (targetInfoList.data[selectedMatches[k]].redundancy == true) {
@@ -553,7 +554,7 @@ void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, c
         }
 
         ///Compare the current query and the loaded target k-mers and select
-        cout<<"query "<<queryKmerList[i].info.sequenceID<<" "<<queryKmerList[i].ADkmer<<endl;
+        cout<<i<<" query "<<queryKmerList[i].info.sequenceID<<" "<<queryKmerList[i].ADkmer<<endl;
         compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
         for (size_t k = 0; k < selectedMatches.size(); k++) {
             if (targetInfoList.data[selectedMatches[k]].redundancy == true) {
