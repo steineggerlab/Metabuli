@@ -255,9 +255,11 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
 
     ///Devide query k-mer list into blocks for multi threading.
     size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
+    size_t numOfDiffIdxSplits_use = numOfDiffIdxSplits;
     for(size_t i = 1; i < numOfDiffIdxSplits; i++){
         if(diffIdxSplits.data[i].ADkmer == 0){
             diffIdxSplits.data[i] = {UINT64_MAX, UINT64_MAX, UINT64_MAX};
+            numOfDiffIdxSplits_use--;
         }
     }
 
@@ -275,8 +277,8 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
         for(size_t j = 0; j < numOfDiffIdxSplits; j++){
             if(queryKmerAA < AminoAcid(diffIdxSplits.data[j].ADkmer)){
                 if(i == threadNum - 1){
-                    splits.emplace_back(querySplitSize * i, numOfQuery - 1, querySplitSize, diffIdxSplits.data[numOfDiffIdxSplits - 1].ADkmer,
-                                        diffIdxSplits.data[numOfDiffIdxSplits - 1].diffIdxOffset,diffIdxSplits.data[numOfDiffIdxSplits - 1].infoIdxOffset);
+                    splits.emplace_back(querySplitSize * i, numOfQuery - 1, querySplitSize, diffIdxSplits.data[numOfDiffIdxSplits_use - 1].ADkmer,
+                                        diffIdxSplits.data[numOfDiffIdxSplits_use - 1].diffIdxOffset,diffIdxSplits.data[numOfDiffIdxSplits_use - 1].infoIdxOffset);
                 } else{
                     splits.emplace_back(querySplitSize * i, querySplitSize * (i + 1) - 1, querySplitSize, diffIdxSplits.data[j - 1].ADkmer,
                                         diffIdxSplits.data[j - 1].diffIdxOffset,diffIdxSplits.data[j - 1].infoIdxOffset);
