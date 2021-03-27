@@ -173,6 +173,7 @@ void Classifier::startClassify2(const char * queryFileName, const char * targetD
         writeMatches(matchBuffer2, matchFile);
     }
     fclose(matchFile);
+    return;
 
     //load matches and analyze
     cout<<"analyse Result"<<endl;
