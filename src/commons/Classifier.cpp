@@ -288,7 +288,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
  //   splits.emplace_back(querySplitSize * threadNum, numOfQuery - 1, numOfQuery - querySplitSize * threadNum, 0 , 0, 0);
 
     for(int i = 1 ; i < splits.size(); i++){
-        cout<<i<<" "<<splits[i].start<<"\t"<<splits[i].end<<splits[i].diffIdxSplit.ADkmer<<"\t"<<splits[i].diffIdxSplit.infoIdxOffset<<"\t"<<splits[i].diffIdxSplit.diffIdxOffset<<endl;
+        cout<<i<<" "<<splits[i].start<<"\t"<<splits[i].end<<"\t"<<splits[i].diffIdxSplit.ADkmer<<"\t"<<splits[i].diffIdxSplit.infoIdxOffset<<"\t"<<splits[i].diffIdxSplit.diffIdxOffset<<endl;
     }
 
     vector<const vector<int> *> taxID;
@@ -331,6 +331,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
             for(size_t j = splits[i].start; j < splits[i].end + 1; j ++){
                 splits[i].start++;
                 if(currentQuery == queryKmerList[j].ADkmer){
+                    cout<<"same query"<<endl;
                     numOfSameQuery++;
                     posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
                     if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
@@ -388,7 +389,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
                 }
 
                 ///Compare the current query and the loaded target k-mers and select
-                cout<<"query "<<queryKmerList[j].info.sequenceID<<" "<<queryKmerList[i].ADkmer<<endl;
+                cout<<j<<" query "<<queryKmerList[j].info.sequenceID<<" "<<queryKmerList[j].ADkmer<<endl;
                 compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
                 posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
                 if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
