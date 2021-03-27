@@ -23,6 +23,7 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     size_t totalBufferIdx = 0;
     TargetKmerInfo * infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * kmerBufSize);
     size_t infoBufferIdx = 0;
+    size_t totalInfoIdx = 0;
 
 
     ///Prepare files to merge
@@ -115,17 +116,19 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
             idxOfMin = smallest(lookingKmers, lookingInfos, taxIdListAtRank, numOfSplitFiles);
         }
 
-        if(AminoAcid(entryKmer) != AAofTempSplitOffset && splitCheck == 1){
-            splitList[splitListIdx++] = {lastWrittenKmer, totalBufferIdx, infoBufferIdx};
-            splitCheck = 0;
-        }
+
 
 
         entryInfo.redundancy = (hasSeenOtherStrains > 0);
         getDiffIdx(lastWrittenKmer, entryKmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx);
         lastWrittenKmer = entryKmer;
-        cre->writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx);
+        writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx);
         writtenKmerCnt++;
+
+        if(AminoAcid(lastWrittenKmer) != AAofTempSplitOffset && splitCheck == 1){
+            splitList[splitListIdx++] = {lastWrittenKmer, totalBufferIdx, totalInfoIdx};
+            splitCheck = 0;
+        }
 
         if(writtenKmerCnt == offsetList[offsetListIdx]){
             AAofTempSplitOffset = AminoAcid(lastWrittenKmer);
@@ -344,5 +347,19 @@ void FileMerger::writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t 
 
 void FileMerger::flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx ) {
     fwrite(buffer, sizeof(uint16_t), localBufIdx, handleKmerTable);
+    localBufIdx = 0;
+}
+
+void FileMerger::writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t & infoBufferIdx, size_t & totalInfoIdx)
+{
+    if (infoBufferIdx >= kmerBufSize) {
+        flushInfoBuf(infoBuffer, infoFile, infoBufferIdx);
+    }
+    memcpy(infoBuffer + infoBufferIdx, entryToWrite, sizeof(TargetKmerInfo));
+    infoBufferIdx++;
+    totalInfoIdx ++;
+}
+void FileMerger::flushInfoBuf(TargetKmerInfo * buffer, FILE * infoFile, size_t & localBufIdx ) {
+    fwrite(buffer, sizeof(TargetKmerInfo), localBufIdx, infoFile);
     localBufIdx = 0;
 }
