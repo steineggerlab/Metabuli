@@ -290,8 +290,9 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
     vector<const vector<int> *> taxID;
     taxID.push_back(& taxIdList);
     taxID.push_back(& taxIdListAtRank);
+
 #ifdef OPENMP
-    omp_set_num_threads(64);
+    omp_set_num_threads(1);
 #endif
 #pragma omp parallel default(none), shared(splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout)
     {
@@ -315,6 +316,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
         size_t range;
 
         size_t numOfSameQuery = 0;
+        size_t matchCnt = 0;
 #pragma omp for schedule(dynamic, 1)
         for(size_t i = 0; i < splits.size(); i ++){
             if(hasOverflow) continue;
@@ -326,10 +328,9 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
 
             for(size_t j = splits[i].start; j < splits[i].end + 1; j ++){
                 splits[i].start++;
-                if(currentQuery == queryKmerList[j].ADkmer){
-                    numOfSameQuery++;
-                    cout<<"same query "<<numOfSameQuery<<endl;
 
+                ///Reuse the comparison data if queries are exactly identical
+                if(currentQuery == queryKmerList[j].ADkmer){
                     posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
                     if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
                         hasOverflow = true;
@@ -349,7 +350,6 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
 
                 ///Reuse the loaded target k-mers to compare if queris are the same only at amino acid level
                 if(currentQueryAA == AminoAcid(queryKmerList[j].ADkmer)){
-                    cout<<j<<" query "<<queryKmerList[j].info.sequenceID<<" "<<queryKmerList[j].ADkmer<<endl;
                     compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
                     posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
                     if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
@@ -380,13 +380,14 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
                 startIdxOfAAmatch = targetInfoIdx;
                 ///Load target k-mers that are matched in amino acid level
                 while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
+                    matchCnt ++;
+                    cout<<j<<" "<<matchCnt<<" "<<queryKmerList[j].info.sequenceID<<endl;
                     targetKmerCache.push_back(currentTargetKmer);
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                     targetInfoIdx++;
                 }
 
                 ///Compare the current query and the loaded target k-mers and select
-                cout<<j<<" query "<<queryKmerList[j].info.sequenceID<<" "<<queryKmerList[j].ADkmer<<endl;
                 compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
                 posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
                 if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
@@ -475,6 +476,7 @@ void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, c
     size_t callCnt = 0;
     size_t startIdxOfAAmatch = 0;
     size_t numOfsamequery = 0;
+    size_t matchCnt = 0;
     for(size_t i = 0; i < numOfQuery; i ++) {
         ///Reuse the comparison data if queries are exactly identical
         if(currentQuery == queryKmerList[i].ADkmer){
@@ -543,6 +545,8 @@ void Classifier::linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, c
         startIdxOfAAmatch = targetInfoIdx;
         ///Load target k-mers that are matched in amino acid level
         while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
+            matchCnt++;
+            cout<<i<<" "<<matchCnt<<" "<<queryKmerList[i].info.sequenceID<<endl;
             targetKmerCache.push_back(currentTargetKmer);
             currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
             callCnt++;
