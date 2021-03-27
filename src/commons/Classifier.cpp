@@ -304,11 +304,12 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
     vector<const vector<int> *> taxID;
     taxID.push_back(& taxIdList);
     taxID.push_back(& taxIdListAtRank);
+    size_t numOfcall = 0;
 
 #ifdef OPENMP
-    omp_set_num_threads(1);
+    omp_set_num_threads(64);
 #endif
-#pragma omp parallel default(none), shared(splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout)
+#pragma omp parallel default(none), shared(numOfcall,splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout)
     {
         ///query variables
         uint64_t currentQuery = UINT64_MAX;
@@ -332,7 +333,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
 
         size_t numOfSameQuery = 0;
         size_t matchCnt = 0;
-        size_t numOfcall = 0;
+
 #pragma omp for schedule(dynamic, 1)
         for(size_t i = 0; i < splits.size(); i ++){
             if(hasOverflow) continue;
@@ -391,6 +392,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
                 ///Skip target k-mers that are not matched in amino acid level
                 while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
+                    #pragma omp atomic
                     numOfcall ++;
                     targetInfoIdx++;
                 }
@@ -402,7 +404,8 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
                     cout<<j<<" "<<matchCnt<<" "<<queryKmerList[j].info.sequenceID<<endl;
                     targetKmerCache.push_back(currentTargetKmer);
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
-                    numOfcall++;
+                    #pragma omp atomic
+                    numOfcall ++;
                     targetInfoIdx++;
                 }
 
@@ -423,10 +426,11 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
 
             }
         }
-    cout<<"numofcall: "<<numOfcall<<endl;
+
     }
 
 
+    cout<<"numofcall: "<<numOfcall<<endl;
     for(size_t i = 0; i < splits.size(); i ++){
         if(splits[i].start - 1 != splits[i].end)
             return 0;
