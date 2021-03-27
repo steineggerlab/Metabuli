@@ -255,6 +255,9 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
 
     ///Devide query k-mer list into blocks for multi threading.
     size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
+    for(int i = 0 ; i < 1024; i++){
+        cout<<diffIdxSplits.data[i].ADkmer<<" "<<diffIdxSplits.data[i].diffIdxOffset<<" "<<diffIdxSplits.data[i].infoIdxOffset<<endl;
+    }
     size_t numOfDiffIdxSplits_use = numOfDiffIdxSplits;
     cout<<"numOfDiffIdxSplits "<<numOfDiffIdxSplits<<endl;
     for(size_t i = 1; i < numOfDiffIdxSplits; i++){
