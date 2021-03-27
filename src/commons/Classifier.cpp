@@ -286,6 +286,9 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
         }
     }
 
+    for(int i = 0 ; i < splits.size(); i++){
+        cout<<i<<" "<<splits[i].start<<"\t"<<splits[i].end<<"\t"<<splits[i].diffIdxSplit.ADkmer<<"\t"<<splits[i].diffIdxSplit.infoIdxOffset<<"\t"<<splits[i].diffIdxSplit.diffIdxOffset<<endl;
+    }
 
     vector<const vector<int> *> taxID;
     taxID.push_back(& taxIdList);
@@ -325,7 +328,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
             currentTargetKmer = splits[i].diffIdxSplit.ADkmer;
             currentQuery = UINT64_MAX;
             currentQueryAA = UINT64_MAX;
-
+            cout<<i<<" "<<splits[i].diffIdxSplit.diffIdxOffset<< " "<<splits[i].diffIdxSplit.infoIdxOffset<<" "<<splits[i].diffIdxSplit.ADkmer<<endl;
             for(size_t j = splits[i].start; j < splits[i].end + 1; j ++){
                 splits[i].start++;
 
@@ -404,8 +407,6 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
 
             }
         }
-
-    cout<<"num of same qeury "<<numOfSameQuery<<endl;
     }
 //
 //    cout<<matchBuffer.startIndexOfReserve<<endl;
