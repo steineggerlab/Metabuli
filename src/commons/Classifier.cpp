@@ -173,7 +173,6 @@ void Classifier::startClassify2(const char * queryFileName, const char * targetD
         writeMatches(matchBuffer2, matchFile);
     }
     fclose(matchFile);
-    return;
 
     //load matches and analyze
     cout<<"analyse Result"<<endl;
@@ -392,8 +391,6 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
                 ///Skip target k-mers that are not matched in amino acid level
                 while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
-                    #pragma omp atomic
-                    numOfcall ++;
                     targetInfoIdx++;
                 }
 
@@ -404,8 +401,6 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
                     cout<<j<<" "<<matchCnt<<" "<<queryKmerList[j].info.sequenceID<<endl;
                     targetKmerCache.push_back(currentTargetKmer);
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
-                    #pragma omp atomic
-                    numOfcall ++;
                     targetInfoIdx++;
                 }
 
@@ -622,6 +617,10 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetList, con
 ///It analyses the result of linear search.
 void Classifier::analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments){
     SORT_PARALLEL(matchedKmerList.begin(), matchedKmerList.end(), Classifier::compareForAnalyzing);
+
+    for(size_t i = 0; i < matchedKmerList.size(); i++){
+        cout<<i<<" "<<matchedKmerList[i].queryID<<" "<<matchedKmerList[i].taxID<<" "<<matchedKmerList[i].queryFrame<<" "<<matchedKmerList[i].hammingDistance<<endl;
+    }
     size_t numOfMatches = matchedKmerList.size();
     int currentQuery;
     cout<<"numOfMatches: "<<numOfMatches<<endl;
@@ -642,6 +641,10 @@ void Classifier::analyseResult2(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & 
     struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
     size_t numOfMatches = matchList.fileSize / sizeof(Match);
     SORT_PARALLEL(matchList.data, matchList.data + numOfMatches , Classifier::compareForWritingMatches);
+
+    for(size_t i = 0; i < numOfMatches; i++){
+        cout<<i<<" "<<matchList.data[i].queryId<<" "<<matchList.data[i].taxID<<" "<<matchList.data[i].frame<<" "<<matchList.data[i].hamming<<endl;
+    }
     uint32_t currentQuery;
     cout<<"numOfMatches: "<<numOfMatches<<endl;
     size_t i = 0;
