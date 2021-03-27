@@ -81,8 +81,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
         afterSearch = time(NULL);
         cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
     }
-
-    return;
+    
     cout<<"analyse Result"<<endl;
     analyseResult(ncbiTaxonomy, sequences);
 
