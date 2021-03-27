@@ -81,6 +81,8 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
         afterSearch = time(NULL);
         cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
     }
+
+    return;
     cout<<"analyse Result"<<endl;
     analyseResult(ncbiTaxonomy, sequences);
 
@@ -417,11 +419,6 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
             }
         }
     }
-//
-//    cout<<matchBuffer.startIndexOfReserve<<endl;
-//    for(size_t i = 0 ; i < matchBuffer.startIndexOfReserve; i++){
-//        cout<<matchBuffer.buffer[i].
-//    }
 
     for(size_t i = 0; i < splits.size(); i ++){
         if(splits[i].start - 1 != splits[i].end)
@@ -1119,32 +1116,6 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
     }
 
     return selctedTaxon;
-}
-
-void Classifier::checkAndGive(vector<uint32_t> & posList, vector<uint8_t> & hammingList, const uint32_t & pos, const uint8_t & hammingDist){
-    size_t vectorSize = posList.size();
-    vector<uint32_t>::iterator it = posList.begin();
-    vector<uint8_t>::iterator it2 = hammingList.begin();
-
-    if(posList.empty()){
-        return;
-    }
-
-    if(pos > posList.back()){
-        posList.push_back(pos);
-        hammingList.push_back(hammingDist);
-        return;
-    }
-    for(uint32_t i = 0; i < vectorSize; i++){
-        if(posList[i] == pos) {
-            return;
-        }
-        if(posList[i] > pos){
-            posList.insert(it + i, pos);
-            hammingList.insert(it2 + i, hammingDist);
-            return;
-        }
-    }
 }
 
 ///It reads differential index and return "current + (next - current)", which is equal to next.
