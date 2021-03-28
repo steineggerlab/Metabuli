@@ -250,7 +250,7 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
     bool * processedSeqChecker = (bool *)malloc(numOfSeq);
     fill_n(processedSeqChecker, numOfSeq, false);
 
-    QueryKmerBuffer kmerBuffer(kmerBufSize);
+    QueryKmerBuffer kmerBuffer(20000);
     //Match * matchBuffer = (Match *)malloc(sizeof(Match) * 2000000000);
     //MatchBuffer matchBuffer(2000000000);2000000000
     Buffer<Match> matchBuffer2(20000);
@@ -422,10 +422,8 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
             size_t range;
 #pragma omp for schedule(dynamic, 1)
             for (size_t i = 0; i < splits.size(); i++){
-                if(hasOverflow || splitCheckList[i]) {
-                    cout<<i<<endl;
+                if(hasOverflow || splitCheckList[i])
                     continue;
-                }
 
                 targetInfoIdx = splits[i].diffIdxSplit.infoIdxOffset;
                 diffIdxPos = splits[i].diffIdxSplit.diffIdxOffset + 1; //overflow 되었을 당시의 값들을 저장하여, target split의 처음부터 다시 시작하는 걸 방지할 수 있음             targetInfoIdx = splits[i].diffIdxSplit.infoIdxOffset;
@@ -441,7 +439,6 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
                         if(posToWrite + selectedMatches.size() >= matchBuffer.bufferSize){
                             hasOverflow = true;
                             splits[i].start = j;
-                            cout<<"break"<<endl;
 #pragma omp atomic
                             matchBuffer.startIndexOfReserve -= selectedMatches.size();
                             break;
@@ -465,7 +462,6 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
                         if(posToWrite + selectedMatches.size() >= matchBuffer.bufferSize){
                             hasOverflow = true;
                             splits[i].start = j;
-                            cout<<"break"<<endl;
 #pragma omp atomic
                             matchBuffer.startIndexOfReserve -= selectedMatches.size();
                             break;
@@ -505,7 +501,6 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
                     if(posToWrite + selectedMatches.size() >= matchBuffer.bufferSize){
                         hasOverflow = true;
                         splits[i].start = j;
-                        cout<<"break"<<endl;
 #pragma omp atomic
                         matchBuffer.startIndexOfReserve -= selectedMatches.size();
                         break;
@@ -522,7 +517,6 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
 
                ///Check whether current split is completed or not
                 if(splits[i].start - 1 == splits[i].end){
-
                     splitCheckList[i] = true;
                     #pragma omp atomic
                     completedSplitCnt ++;
