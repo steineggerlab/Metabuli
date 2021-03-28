@@ -396,6 +396,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
 
     size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
     while( completedSplitCnt < threadNum) {
+        cout<<completedSplitCnt<<endl;
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, numOfcall, splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout)
         {
