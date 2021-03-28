@@ -386,6 +386,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
         }
     }
     bool * splitCheckList = (bool *)malloc(sizeof(bool)*threadNum);
+    fill_n(splitCheckList, threadNum, false);
     int completedSplitCnt = 0;
 
     ///taxonomical ID at the lowest rank? or at the rank of redundancy reduced
