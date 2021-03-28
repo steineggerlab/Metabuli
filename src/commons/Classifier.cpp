@@ -276,7 +276,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
     bool splitCheck = false;
 
 
-    splits.emplace_back(0, querySplitSize - 1, querySplitSize, 0, 0, 1);
+    splits.emplace_back(0, querySplitSize - 1, querySplitSize, 0, 1, 1);
     for(int i = 1; i < threadNum; i++) {
         queryKmerAA = AminoAcid(queryKmerList[querySplitSize * i].ADkmer);
         splitCheck = false;
@@ -335,7 +335,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
 #pragma omp for schedule(dynamic, 1)
         for(size_t i = 0; i < splits.size(); i ++){
             if(hasOverflow) continue;
-            diffIdxPos = splits[i].diffIdxSplit.diffIdxOffset;
+            diffIdxPos = splits[i].diffIdxSplit.diffIdxOffset - 1;
             targetInfoIdx = splits[i].diffIdxSplit.infoIdxOffset- 1;
             currentTargetKmer = splits[i].diffIdxSplit.ADkmer;
             currentQuery = UINT64_MAX;
