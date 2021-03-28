@@ -300,6 +300,7 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
     cout << "number of closest matches            : " << matchedKmerList.size() << endl;
 
     free(kmerBuffer.buffer);
+    free(matchBuffer2.buffer);
     munmap(queryFile.data, queryFile.fileSize + 1);
     munmap(targetDiffIdxList.data, targetDiffIdxList.fileSize + 1);
     munmap(targetInfoList.data, targetInfoList.fileSize + 1);
