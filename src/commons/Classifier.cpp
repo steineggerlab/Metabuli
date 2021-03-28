@@ -250,8 +250,8 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
     bool * processedSeqChecker = (bool *)malloc(numOfSeq);
     fill_n(processedSeqChecker, numOfSeq, false);
 
-    QueryKmerBuffer kmerBuffer(kmerBufSize);
-    Buffer<Match> matchBuffer(20000);
+    QueryKmerBuffer kmerBuffer(10000);
+    Buffer<Match> matchBuffer(kmerBufSize);
     size_t processedSeqCnt = 0;
     size_t processedKmerCnt = 0;
 
