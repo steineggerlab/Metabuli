@@ -311,7 +311,7 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
 
 void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt) {
     bool hasOverflow = false;
-    omp_set_num_threads(1);
+    omp_set_num_threads(64);
 #pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, queryInfos, cout)
     {
         vector<QueryInfo> infos;
@@ -322,10 +322,10 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
             if(checker[i] == false && !hasOverflow) {
                 KSeqBuffer buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
                 buffer.ReadEntry();
-                cout<<i<<"length  "<<seqs[i].length<<endl;
+                //cout<<i<<"length  "<<seqs[i].length<<endl;
                 seqIterator.sixFrameTranslation(buffer.entry.sequence.s);
                 size_t kmerCnt = seqIterator.kmerNumOfSixFrameTranslation(buffer.entry.sequence.s);
-                cout<<i<<"kmerCnt "<<kmerCnt<<endl;
+                //cout<<i<<"kmerCnt "<<kmerCnt<<endl;
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt);
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
                     seqIterator.fillQueryKmerBuffer(buffer.entry.sequence.s, kmerBuffer, posToWrite, i);
