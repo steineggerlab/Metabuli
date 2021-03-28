@@ -320,10 +320,10 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                 KSeqBuffer buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
                 buffer.ReadEntry();
                 seqs[i].length = strlen(buffer.entry.sequence.s);
-                cout<<"length  "<<seqs[i].length<<endl;
+                cout<<i<<"length  "<<seqs[i].length<<endl;
                 seqIterator.sixFrameTranslation(buffer.entry.sequence.s);
                 size_t kmerCnt = seqIterator.kmerNumOfSixFrameTranslation(buffer.entry.sequence.s);
-                cout<<"kmerCnt "<<kmerCnt<<endl;
+                cout<<i<<"kmerCnt "<<kmerCnt<<endl;
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt);
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
                     seqIterator.fillQueryKmerBuffer(buffer.entry.sequence.s, kmerBuffer, posToWrite, i);
