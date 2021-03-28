@@ -398,6 +398,10 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     fill_n(splitCheckList, threadNum, false);
     int completedSplitCnt = 0;
 
+    for(int i = 0 ; i < splits.size(); i++){
+        cout<<i<<" "<<splits[i].start<<"\t"<<splits[i].end<<"\t"<<splits[i].diffIdxSplit.ADkmer<<"\t"<<splits[i].diffIdxSplit.infoIdxOffset<<"\t"<<splits[i].diffIdxSplit.diffIdxOffset<<endl;
+    }
+    
     ///taxonomical ID at the lowest rank? or at the rank of redundancy reduced
     vector<const vector<int> *> taxID;
     taxID.push_back(& taxIdList);
