@@ -123,6 +123,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     processedSplitCnt ++;
                 }else {
                     ///Withdraw the reservation if the buffer is full.
+                    #pragma omp atomic
                     kmerBuffer.startIndexOfReserve -= totalKmerCntForOneTaxID;
                     hasOverflow = true;
                 }

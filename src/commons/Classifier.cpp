@@ -438,10 +438,12 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
                     ///Reuse the comparison data if queries are exactly identical
                     if(currentQuery == queryKmerList[j].ADkmer){
                         posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
-                        if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
+                        if(posToWrite + selectedMatches.size() >= matchBuffer.bufferSize){
                             hasOverflow = true;
                             splits[i].start = j;
                             cout<<"break"<<endl;
+#pragma omp atomic
+                            matchBuffer.startIndexOfReserve -= selectedMatches.size();
                             break;
                         } else{
                             range = selectedMatches.size();
@@ -460,10 +462,12 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
                     if(currentQueryAA == AminoAcid(queryKmerList[j].ADkmer)){
                         compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
                         posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
-                        if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
+                        if(posToWrite + selectedMatches.size() >= matchBuffer.bufferSize){
                             hasOverflow = true;
                             splits[i].start = j;
                             cout<<"break"<<endl;
+#pragma omp atomic
+                            matchBuffer.startIndexOfReserve -= selectedMatches.size();
                             break;
                         } else{
                             range = selectedMatches.size();
@@ -498,10 +502,12 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
                     ///Compare the current query and the loaded target k-mers and select
                     compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
                     posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
-                    if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
+                    if(posToWrite + selectedMatches.size() >= matchBuffer.bufferSize){
                         hasOverflow = true;
                         splits[i].start = j;
                         cout<<"break"<<endl;
+#pragma omp atomic
+                        matchBuffer.startIndexOfReserve -= selectedMatches.size();
                         break;
                     } else{
                         range = selectedMatches.size();
