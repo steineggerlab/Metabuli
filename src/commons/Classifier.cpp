@@ -250,7 +250,7 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
     bool * processedSeqChecker = (bool *)malloc(numOfSeq);
     fill_n(processedSeqChecker, numOfSeq, false);
 
-    QueryKmerBuffer kmerBuffer(200000);
+    QueryKmerBuffer kmerBuffer(10000);
     Buffer<Match> matchBuffer(kmerBufSize);
     size_t processedSeqCnt = 0;
     size_t processedKmerCnt = 0;
@@ -348,7 +348,10 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                                       const MmapedData<TargetKmerInfo> & targetInfoList, const MmapedData<DiffIdxSplit> & diffIdxSplits,
                                       Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank,
                                       FILE * matchFile){
-
+    cout<<"lets see"<<endl;
+    for(size_t i = 0 ; i < queryKmerCnt; i++){
+        cout<<queryKmerList[i].ADkmer<<" "<<queryKmerList[i].info.sequenceID<<endl;
+    }
     ///Find the first index of garbage k-mer (UINT64_MAX) and discard from there
     for(size_t checkN = queryKmerCnt - 1; checkN >= 0; checkN--){
         if(queryKmerList[checkN].ADkmer != UINT64_MAX){
