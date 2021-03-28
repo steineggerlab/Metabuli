@@ -252,8 +252,8 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
 
     QueryKmerBuffer kmerBuffer(kmerBufSize);
     //Match * matchBuffer = (Match *)malloc(sizeof(Match) * 2000000000);
-    //MatchBuffer matchBuffer(2000000000);
-    Buffer<Match> matchBuffer2(200000);
+    //MatchBuffer matchBuffer(2000000000);2000000000
+    Buffer<Match> matchBuffer2(2000000000);
     size_t processedSeqCnt = 0;
     size_t processedKmerCnt = 0;
 
@@ -503,6 +503,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
 
                 }
 
+                cout<<splits[i].start - 1<<" "<<splits[i].end<<endl;
                 ///Check whether current split is completed or not
                 if(splits[i].start - 1 == splits[i].end){
                     splitCheckList[i] = true;
@@ -882,7 +883,6 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetList, con
         if(hammings[h] == minHamming){
             selectedMatches.push_back(startIdx + h);
             selectedHamming.push_back(hammings[h]);
-            cout<<targetList[h]<<endl;
         }
     }
 }
