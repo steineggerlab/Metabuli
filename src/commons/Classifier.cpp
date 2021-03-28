@@ -276,7 +276,7 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
     bool splitCheck = false;
 
 
-    splits.emplace_back(0, querySplitSize - 1, querySplitSize, 0, 1, 0);
+    splits.emplace_back(0, querySplitSize - 1, querySplitSize, 0, 0, 0);
     for(int i = 1; i < threadNum; i++) {
         queryKmerAA = AminoAcid(queryKmerList[querySplitSize * i].ADkmer);
         splitCheck = false;
