@@ -308,7 +308,7 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
 
 void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt) {
     bool hasOverflow = false;
-    omp_set_num_threads(64);
+    omp_set_num_threads(1);
 #pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, queryInfos, cout)
     {
         vector<QueryInfo> infos;
@@ -320,8 +320,10 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                 KSeqBuffer buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
                 buffer.ReadEntry();
                 seqs[i].length = strlen(buffer.entry.sequence.s);
+                cout<<"length  "<<seqs[i].length<<endl;
                 seqIterator.sixFrameTranslation(buffer.entry.sequence.s);
                 size_t kmerCnt = seqIterator.kmerNumOfSixFrameTranslation(buffer.entry.sequence.s);
+                cout<<"kmerCnt "<<kmerCnt<<endl;
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt);
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
                     seqIterator.fillQueryKmerBuffer(buffer.entry.sequence.s, kmerBuffer, posToWrite, i);
@@ -401,7 +403,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     for(int i = 0 ; i < splits.size(); i++){
         cout<<i<<" "<<splits[i].start<<"\t"<<splits[i].end<<"\t"<<splits[i].diffIdxSplit.ADkmer<<"\t"<<splits[i].diffIdxSplit.infoIdxOffset<<"\t"<<splits[i].diffIdxSplit.diffIdxOffset<<endl;
     }
-    
+
     ///taxonomical ID at the lowest rank? or at the rank of redundancy reduced
     vector<const vector<int> *> taxID;
     taxID.push_back(& taxIdList);
