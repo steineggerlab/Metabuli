@@ -305,6 +305,7 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
     munmap(targetDiffIdxList.data, targetDiffIdxList.fileSize + 1);
     munmap(targetInfoList.data, targetInfoList.fileSize + 1);
 }
+
 void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt) {
     bool hasOverflow = false;
     omp_set_num_threads(64);
@@ -323,7 +324,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                 seqIterator.sixFrameTranslation(buffer.entry.sequence.s);
                 size_t kmerCnt = seqIterator.kmerNumOfSixFrameTranslation(buffer.entry.sequence.s);
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt);
-                if (posToWrite + kmerCnt < kmerBufSize) {
+                if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
                     seqIterator.fillQueryKmerBuffer(buffer.entry.sequence.s, kmerBuffer, posToWrite, i);
                     checker[i] = true;
                     #pragma omp atomic
