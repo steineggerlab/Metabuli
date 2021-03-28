@@ -527,6 +527,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
         if(hasOverflow)
             writeMatches(matchBuffer, matchFile);
     }
+    free(splitCheckList);
 }
 
 int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList,
