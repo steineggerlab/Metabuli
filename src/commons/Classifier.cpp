@@ -434,6 +434,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
                         if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
                             hasOverflow = true;
                             splits[i].start = j;
+                            cout<<"break"<<endl;
                             break;
                         } else{
                             range = selectedMatches.size();
@@ -455,6 +456,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
                         if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
                             hasOverflow = true;
                             splits[i].start = j;
+                            cout<<"break"<<endl;
                             break;
                         } else{
                             range = selectedMatches.size();
@@ -492,6 +494,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
                     if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
                         hasOverflow = true;
                         splits[i].start = j;
+                        cout<<"break"<<endl;
                         break;
                     } else{
                         range = selectedMatches.size();
@@ -513,6 +516,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
                 }
             }
         }
+
         if(hasOverflow)
             writeMatches(matchBuffer, matchFile);
     }
