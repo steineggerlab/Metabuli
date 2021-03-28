@@ -250,7 +250,7 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
     bool * processedSeqChecker = (bool *)malloc(numOfSeq);
     fill_n(processedSeqChecker, numOfSeq, false);
 
-    QueryKmerBuffer kmerBuffer(10000);
+    QueryKmerBuffer kmerBuffer(200000);
     Buffer<Match> matchBuffer(kmerBufSize);
     size_t processedSeqCnt = 0;
     size_t processedKmerCnt = 0;
@@ -320,14 +320,14 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                 KSeqBuffer buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
                 buffer.ReadEntry();
                 seqs[i].length = strlen(buffer.entry.sequence.s);
-                infos.emplace_back(int(i), false, buffer.entry.name.s, 0, 0, seqs[i].length);
                 seqIterator.sixFrameTranslation(buffer.entry.sequence.s);
                 size_t kmerCnt = seqIterator.kmerNumOfSixFrameTranslation(buffer.entry.sequence.s);
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt);
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
                     seqIterator.fillQueryKmerBuffer(buffer.entry.sequence.s, kmerBuffer, posToWrite, i);
                     checker[i] = true;
-                    #pragma omp atomic
+                    infos.emplace_back(int(i), false, buffer.entry.name.s, 0, 0, seqs[i].length);
+#pragma omp atomic
                     processedSeqCnt ++;
                 } else{
                     #pragma omp atomic
