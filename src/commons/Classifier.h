@@ -184,8 +184,13 @@ private:
             {3, 2, 3, 3, 4, 4, 1, 0}}; /// 4 means that there is no case where that value is used.
     uint8_t getHammingDistance(uint64_t kmer1, uint64_t kmer2);
 
-    int linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList,
-                      const MmapedData<DiffIdxSplit> & diffIdxSplits, Buffer<Match> & matchBufferconst, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank);
+    void linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList,
+                              const MmapedData<TargetKmerInfo> & targetInfoList, const MmapedData<DiffIdxSplit> & diffIdxSplits,
+                              Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank,
+                              FILE * matchFile);
+    int linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList,
+                      const MmapedData<TargetKmerInfo> & targetInfoList, const MmapedData<DiffIdxSplit> & diffIdxSplits,
+                      Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank);
     void linearSearch2(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList, const MmapedData<TargetKmerInfo> & targetInfoList, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank);
     void writeResultFile(vector<MatchedKmer> & matchList, const char * queryFileName);
     TaxID match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,
@@ -212,6 +217,7 @@ private:
 public:
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, vector<int> & taxIdList, const LocalParameters & par);
     void startClassify2(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par);
+    void startClassify3(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par);
 
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);
     static uint64_t getNextTargetKmer2(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);

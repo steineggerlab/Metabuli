@@ -35,7 +35,7 @@ int classify(int argc, const char **argv, const Command& command)
     }
     fclose(taxIdFile);
     //classifier.startClassify(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(), taxIdList, par);
-    classifier.startClassify2(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(), diffIdxSplitFileName.c_str(), taxIdList, par);
+    classifier.startClassify3(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(), diffIdxSplitFileName.c_str(), taxIdList, par);
 
     return 0;
 }

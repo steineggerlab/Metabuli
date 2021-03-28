@@ -163,10 +163,12 @@ void Classifier::startClassify2(const char * queryFileName, const char * targetD
     ofstream readClassificationFile;
     readClassificationFile.open(par.filenames[0]+"_ReadClassification_temp.tsv");
     time_t beforeSearch, afterSearch;
+
     while(processedSeqCnt < numOfSeq){
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt);
         beforeSearch = time(NULL);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
+
         while(!linearSearch3(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer2, taxIdList, taxIdListAtRank)){
             writeMatches(matchBuffer2, matchFile);
         }
@@ -209,6 +211,98 @@ void Classifier::startClassify2(const char * queryFileName, const char * targetD
     munmap(targetInfoList.data, targetInfoList.fileSize + 1);
 }
 
+void Classifier::startClassify3(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par) {
+    string names, nodes, merged;
+    if(par.gtdbOrNcbi == 1 || par.gtdbOrNcbi == 0){
+        cout<<"Classifying query sequences based on taxonomy of GTDB"<<endl;
+        names = "../../gtdb_taxdmp/names.dmp";
+        nodes = "../../gtdb_taxdmp/nodes.dmp";
+        merged = "../../gtdb_taxdmp/merged.dmp";
+    } else if(par.gtdbOrNcbi == 2){
+        cout<<"Classifying query sequences based on taxonomy of NCBI"<<endl;
+        names = "../../ncbi_taxdmp/names.dmp";
+        nodes = "../../ncbi_taxdmp/nodes.dmp";
+        merged = "../../ncbi_taxdmp/merged.dmp";
+    } else{
+        cout<<"ERROR"<<endl;
+        return;
+    }
+    NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
+    vector<int> taxIdListAtRank;
+    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
+    char matchFileName[300];
+    sprintf(matchFileName,"%s_matches", queryFileName);
+    //const char * matchFileName = (string(queryFileName)+"_matches").c_str();
+    FILE * matchFile = fopen(matchFileName, "wb");
+
+
+
+    struct MmapedData<char> queryFile = mmapData<char>(par.filenames[0].c_str());
+    struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName);
+    targetDiffIdxList.data[targetDiffIdxList.fileSize/sizeof(uint16_t)] = 32768; //1000000000000000
+    struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName);
+    struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName);
+
+    vector<Sequence> sequences;
+    IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
+    size_t numOfSeq = sequences.size();
+
+    bool * processedSeqChecker = (bool *)malloc(numOfSeq);
+    fill_n(processedSeqChecker, numOfSeq, false);
+
+    QueryKmerBuffer kmerBuffer(kmerBufSize);
+    //Match * matchBuffer = (Match *)malloc(sizeof(Match) * 2000000000);
+    //MatchBuffer matchBuffer(2000000000);
+    Buffer<Match> matchBuffer2(200000);
+    size_t processedSeqCnt = 0;
+    size_t processedKmerCnt = 0;
+
+    cout<<"numOfseq: "<<numOfSeq<<endl;
+    ofstream readClassificationFile;
+    readClassificationFile.open(par.filenames[0]+"_ReadClassification_temp.tsv");
+    time_t beforeSearch, afterSearch;
+
+    while(processedSeqCnt < numOfSeq){
+        fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt);
+        beforeSearch = time(NULL);
+        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
+        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer2, taxIdList, taxIdListAtRank, matchFile);
+    }
+    fclose(matchFile);
+    afterSearch = time(NULL);
+    cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
+
+    //load matches and analyze
+    cout<<"analyse Result"<<endl;
+    analyseResult2(ncbiTaxonomy, sequences, matchFileName);
+
+
+    writeReadClassification(queryInfos,readClassificationFile);
+
+    ///TODO split count 고려할 것
+    cout<<"Sorting the 'queryfile_ReadClassification.tsv' file"<<endl;
+    string sortCall = "sort -t '\t' -k1 -n " + par.filenames[0] + "_ReadClassification_temp.tsv > "+par.filenames[0]+"_ReadClassification.tsv";
+    string rmCall = "rm " +par.filenames[0]+"_ReadClassification_temp.tsv";
+    system(sortCall.c_str());
+    system(rmCall.c_str());
+    readClassificationFile.close();
+
+    ///TODO: Merge ReportFiles
+
+    writeReportFile(par.filenames[0].c_str(), ncbiTaxonomy, numOfSeq);
+    performanceTest(ncbiTaxonomy);
+
+    cout<<"Number of query k-mer                : "<<queryCount<<endl;
+    cout<<"Number of total match                : "<<totalMatchCount <<endl;
+    cout<<"mutipleMatch in AA level             : "<<multipleMatchCount << endl;
+    cout<<"matches in DNA level                 : "<<perfectMatchCount<<endl;
+    cout << "number of closest matches            : " << matchedKmerList.size() << endl;
+
+    free(kmerBuffer.buffer);
+    munmap(queryFile.data, queryFile.fileSize + 1);
+    munmap(targetDiffIdxList.data, targetDiffIdxList.fileSize + 1);
+    munmap(targetInfoList.data, targetInfoList.fileSize + 1);
+}
 void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt) {
     bool hasOverflow = false;
     omp_set_num_threads(64);
@@ -243,6 +337,180 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
         {
             queryInfos.insert(queryInfos.end(), make_move_iterator(infos.begin()), make_move_iterator(infos.end()));
         }
+    }
+}
+
+void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList,
+                                      const MmapedData<TargetKmerInfo> & targetInfoList, const MmapedData<DiffIdxSplit> & diffIdxSplits,
+                                      Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank,
+                                      FILE * matchFile){
+
+    ///Find the first index of garbage k-mer (UINT64_MAX) and discard from there
+    for(size_t checkN = numOfQuery - 1; checkN >= 0; checkN--){
+        if(queryKmerList[checkN].ADkmer != UINT64_MAX){
+            numOfQuery = checkN + 1;
+            break;
+        }
+    }
+
+    ///
+    size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
+    size_t numOfDiffIdxSplits_use = numOfDiffIdxSplits;
+    for(size_t i = 1; i < numOfDiffIdxSplits; i++){
+        if(diffIdxSplits.data[i].ADkmer == 0 || diffIdxSplits.data[i].ADkmer == UINT64_MAX){
+            diffIdxSplits.data[i] = {UINT64_MAX, UINT64_MAX, UINT64_MAX};
+            numOfDiffIdxSplits_use--;
+        }
+    }
+
+    ///Devide query k-mer list into blocks for multi threading.
+    vector<QueryKmerSplit> splits;
+    int threadNum = 64;
+    size_t querySplitSize = numOfQuery / (threadNum - 1);
+    uint64_t queryKmerAA;
+    bool splitCheck = false;
+    splits.emplace_back(0, querySplitSize - 1, querySplitSize, 0, 0, 0);
+    for(int i = 1; i < threadNum; i++) {
+        queryKmerAA = AminoAcid(queryKmerList[querySplitSize * i].ADkmer);
+        splitCheck = false;
+        for(size_t j = 0; j < numOfDiffIdxSplits; j++){
+            if(queryKmerAA < AminoAcid(diffIdxSplits.data[j].ADkmer)){
+                if(i == threadNum - 1)
+                    splits.emplace_back(querySplitSize * i, numOfQuery - 1, querySplitSize, diffIdxSplits.data[numOfDiffIdxSplits_use - 1].ADkmer,
+                                        diffIdxSplits.data[numOfDiffIdxSplits_use - 1].diffIdxOffset,diffIdxSplits.data[numOfDiffIdxSplits_use - 1].infoIdxOffset);
+                else
+                    splits.emplace_back(querySplitSize * i, querySplitSize * (i + 1) - 1, querySplitSize, diffIdxSplits.data[j - 1].ADkmer,
+                                        diffIdxSplits.data[j - 1].diffIdxOffset,diffIdxSplits.data[j - 1].infoIdxOffset);
+                break;
+            }
+        }
+    }
+    bool * splitCheckList = (bool *)malloc(sizeof(bool)*threadNum);
+    int completedSplitCnt = 0;
+
+    ///taxonomical ID at the lowest rank? or at the rank of redundancy reduced
+    vector<const vector<int> *> taxID;
+    taxID.push_back(& taxIdList);
+    taxID.push_back(& taxIdListAtRank);
+    size_t numOfcall = 0;
+
+    size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
+    while( completedSplitCnt < threadNum) {
+        bool hasOverflow = false;
+#pragma omp parallel default(none), shared(splitCheckList, numOfTargetKmer, hasOverflow, numOfcall, splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout)
+        {
+            ///query variables
+            uint64_t currentQuery = UINT64_MAX;
+            uint64_t currentQueryAA = UINT64_MAX;
+
+            ///target variables
+            size_t diffIdxPos = 0;
+            size_t targetInfoIdx = 0;
+            vector<uint64_t> targetKmerCache; //vector for candidate target k-mer, some of which are selected after based on hamming distance
+            uint64_t currentTargetKmer;
+
+            ///vectors for selected target k-mers
+            vector<uint8_t> selectedHammings;
+            vector<size_t> selectedMatches;
+
+            size_t startIdxOfAAmatch = 0;
+            size_t posToWrite;
+            size_t range;
+#pragma omp for schedule(dynamic, 1)
+            for (size_t i = 0; i < splits.size(); i++){
+                if(hasOverflow || splitCheckList[i]) continue;
+
+                diffIdxPos = splits[i].diffIdxSplit.diffIdxOffset + 1; //overflow 되었을 당시의 값들을 저장하여, target split의 처음부터 다시 시작하는 걸 방지할 수 있음             targetInfoIdx = splits[i].diffIdxSplit.infoIdxOffset;
+                currentTargetKmer = splits[i].diffIdxSplit.ADkmer;
+                currentQuery = UINT64_MAX;
+                currentQueryAA = UINT64_MAX;
+
+                for(size_t j = splits[i].start; j < splits[i].end + 1; j ++){
+                    splits[i].start++;
+                    ///Reuse the comparison data if queries are exactly identical
+                    if(currentQuery == queryKmerList[j].ADkmer){
+                        posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
+                        if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
+                            hasOverflow = true;
+                            splits[i].start = j;
+                            break;
+                        } else{
+                            range = selectedMatches.size();
+                            for (size_t k = 0; k < range; k++) {
+                                matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[targetInfoList.data[selectedMatches[k]].redundancy]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
+                                                                  queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                                posToWrite ++;
+                            }
+                        }
+                        continue;
+                    }
+                    selectedMatches.clear();
+                    selectedHammings.clear();
+
+                    ///Reuse the candidate target k-mers to compare in DNA level if queries are the same only at amino acid level
+                    if(currentQueryAA == AminoAcid(queryKmerList[j].ADkmer)){
+                        compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
+                        posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
+                        if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
+                            hasOverflow = true;
+                            splits[i].start = j;
+                            break;
+                        } else{
+                            range = selectedMatches.size();
+                            for (size_t k = 0; k < range; k++) {
+                                matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[targetInfoList.data[selectedMatches[k]].redundancy]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
+                                                                  queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                                posToWrite ++;
+                            }
+                        }
+                        continue;
+                    }
+                    targetKmerCache.clear();
+
+                    ///Get next query and start to find
+                    currentQuery = queryKmerList[j].ADkmer;
+                    currentQueryAA = AminoAcid(currentQuery);
+
+                    ///Skip target k-mers that are not matched in amino acid level
+                    while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
+                        currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
+                        targetInfoIdx++;
+                    }
+
+                    startIdxOfAAmatch = targetInfoIdx; ///틀린거 같아
+                    ///Load target k-mers thatare matched in amino acid level
+                    while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
+                        targetKmerCache.push_back(currentTargetKmer);
+                        currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
+                        targetInfoIdx++;
+                    }
+
+                    ///Compare the current query and the loaded target k-mers and select
+                    compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
+                    posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
+                    if(posToWrite + selectedMatches.size() > matchBuffer.bufferSize){
+                        hasOverflow = true;
+                        splits[i].start = j;
+                        break;
+                    } else{
+                        range = selectedMatches.size();
+                        for (size_t k = 0; k < range; k++) {
+                            matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[targetInfoList.data[selectedMatches[k]].redundancy]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
+                                                              queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                            posToWrite ++;
+                        }
+                    }
+
+                }
+
+                ///Check whether current split is completed or not
+                if(splits[i].start - 1 == splits[i].end){
+                    splitCheckList[i] = true;
+                }
+            }
+        }
+        if(hasOverflow)
+            writeMatches(matchBuffer, matchFile);
     }
 }
 
@@ -325,7 +593,6 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
         targetKmerCache.push_back(currentTargetKmer);
         size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
 
-        cout<<"here "<<numOfTargetKmer<<endl;
         vector<uint8_t> selectedHammings;
         vector<size_t> selectedMatches;
         size_t startIdxOfAAmatch = 0;
@@ -397,8 +664,8 @@ int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, co
                     targetInfoIdx++;
                 }
 
-                startIdxOfAAmatch = targetInfoIdx;
-                ///Load target k-mers that are matched in amino acid level
+                startIdxOfAAmatch = targetInfoIdx; ///틀린거 같아
+                ///Load target k-mers thatare matched in amino acid level
                 while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
                     matchCnt ++;
                     cout<<j<<" "<<matchCnt<<" "<<queryKmerList[j].info.sequenceID<<endl;
@@ -441,6 +708,7 @@ void Classifier::writeMatches(Buffer<Match> & matchBuffer, FILE * matchFile){
     SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve, Classifier::compareForWritingMatches);
     bool endCheck = false;
     fwrite(matchBuffer.buffer, sizeof(Match), matchBuffer.startIndexOfReserve, matchFile);
+    matchBuffer.startIndexOfReserve = 0;
 }
 
 bool Classifier::compareForWritingMatches(const Match & a, const Match & b){
