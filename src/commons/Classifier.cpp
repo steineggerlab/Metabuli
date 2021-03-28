@@ -397,7 +397,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
     size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
     while( completedSplitCnt < threadNum) {
         bool hasOverflow = false;
-#pragma omp parallel default(none), shared(splitCheckList, numOfTargetKmer, hasOverflow, numOfcall, splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout)
+#pragma omp parallel default(none), shared(completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, numOfcall, splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout)
         {
             ///query variables
             uint64_t currentQuery = UINT64_MAX;
@@ -506,6 +506,8 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
                 ///Check whether current split is completed or not
                 if(splits[i].start - 1 == splits[i].end){
                     splitCheckList[i] = true;
+                    #pragma omp atomic
+                    completedSplitCnt ++;
                 }
             }
         }
