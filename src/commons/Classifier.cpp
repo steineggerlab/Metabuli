@@ -250,7 +250,7 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
     bool * processedSeqChecker = (bool *)malloc(numOfSeq);
     fill_n(processedSeqChecker, numOfSeq, false);
 
-    QueryKmerBuffer kmerBuffer(200000);
+    QueryKmerBuffer kmerBuffer(kmerBufSize);
     Buffer<Match> matchBuffer(kmerBufSize);
     size_t processedSeqCnt = 0;
     size_t processedKmerCnt = 0;
@@ -260,14 +260,17 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
     readClassificationFile.open(par.filenames[0]+"_ReadClassification_temp.tsv");
     time_t beforeSearch, afterSearch;
 
+    size_t numOfTatalQueryKmerCnt = 0;
     while(processedSeqCnt < numOfSeq){
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt);
+        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
         cout<<"buffer overflowed"<<endl;
         beforeSearch = time(NULL);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
         cout<<"buffer sorted"<<endl;
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer, taxIdList, taxIdListAtRank, matchFile);
     }
+    cout<<"total kmer count: "<<numOfTatalQueryKmerCnt<<endl;
     writeMatches(matchBuffer, matchFile);
     fclose(matchFile);
     afterSearch = time(NULL);
