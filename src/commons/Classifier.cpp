@@ -353,12 +353,14 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
         cout<<queryKmerList[i].ADkmer<<" "<<queryKmerList[i].info.sequenceID<<endl;
     }
     ///Find the first index of garbage k-mer (UINT64_MAX) and discard from there
+    cout<<"before"<<queryKmerCnt<<endl;
     for(size_t checkN = queryKmerCnt - 1; checkN >= 0; checkN--){
         if(queryKmerList[checkN].ADkmer != UINT64_MAX){
             queryKmerCnt = checkN + 1;
             break;
         }
     }
+    cout<<"after"<<queryKmerCnt<<endl;
 
     ///
     size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
