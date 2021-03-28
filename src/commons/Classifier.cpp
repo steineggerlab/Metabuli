@@ -251,9 +251,7 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
     fill_n(processedSeqChecker, numOfSeq, false);
 
     QueryKmerBuffer kmerBuffer(20000);
-    //Match * matchBuffer = (Match *)malloc(sizeof(Match) * 2000000000);
-    //MatchBuffer matchBuffer(2000000000);2000000000
-    Buffer<Match> matchBuffer2(20000);
+    Buffer<Match> matchBuffer(20000);
     size_t processedSeqCnt = 0;
     size_t processedKmerCnt = 0;
 
@@ -266,9 +264,9 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt);
         beforeSearch = time(NULL);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
-        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer2, taxIdList, taxIdListAtRank, matchFile);
+        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer, taxIdList, taxIdListAtRank, matchFile);
     }
-    writeMatches(matchBuffer2, matchFile);
+    writeMatches(matchBuffer, matchFile);
     fclose(matchFile);
     afterSearch = time(NULL);
     cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
@@ -300,7 +298,7 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
     cout << "number of closest matches            : " << matchedKmerList.size() << endl;
 
     free(kmerBuffer.buffer);
-    free(matchBuffer2.buffer);
+    free(matchBuffer.buffer);
     munmap(queryFile.data, queryFile.fileSize + 1);
     munmap(targetDiffIdxList.data, targetDiffIdxList.fileSize + 1);
     munmap(targetInfoList.data, targetInfoList.fileSize + 1);
@@ -329,6 +327,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                     #pragma omp atomic
                     processedSeqCnt ++;
                 } else{
+                    #pragma omp atomic
                     kmerBuffer.startIndexOfReserve -= kmerCnt;
                     hasOverflow = true;
                 }
@@ -342,15 +341,15 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
     }
 }
 
-void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList,
+void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryKmerCnt, const MmapedData<uint16_t> & targetDiffIdxList,
                                       const MmapedData<TargetKmerInfo> & targetInfoList, const MmapedData<DiffIdxSplit> & diffIdxSplits,
                                       Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank,
                                       FILE * matchFile){
 
     ///Find the first index of garbage k-mer (UINT64_MAX) and discard from there
-    for(size_t checkN = numOfQuery - 1; checkN >= 0; checkN--){
+    for(size_t checkN = queryKmerCnt - 1; checkN >= 0; checkN--){
         if(queryKmerList[checkN].ADkmer != UINT64_MAX){
-            numOfQuery = checkN + 1;
+            queryKmerCnt = checkN + 1;
             break;
         }
     }
@@ -368,7 +367,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
     ///Devide query k-mer list into blocks for multi threading.
     vector<QueryKmerSplit> splits;
     int threadNum = 64;
-    size_t querySplitSize = numOfQuery / (threadNum - 1);
+    size_t querySplitSize = queryKmerCnt / (threadNum - 1);
     uint64_t queryKmerAA;
     bool splitCheck = false;
     splits.emplace_back(0, querySplitSize - 1, querySplitSize, 0, 0, 0);
@@ -378,8 +377,8 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
         for(size_t j = 0; j < numOfDiffIdxSplits; j++){
             if(queryKmerAA < AminoAcid(diffIdxSplits.data[j].ADkmer)){
                 if(i == threadNum - 1)
-                    splits.emplace_back(querySplitSize * i, numOfQuery - 1, querySplitSize, diffIdxSplits.data[numOfDiffIdxSplits_use - 1].ADkmer,
-                                        diffIdxSplits.data[numOfDiffIdxSplits_use - 1].diffIdxOffset,diffIdxSplits.data[numOfDiffIdxSplits_use - 1].infoIdxOffset);
+                    splits.emplace_back(querySplitSize * i, queryKmerCnt - 1, querySplitSize, diffIdxSplits.data[numOfDiffIdxSplits_use - 1].ADkmer,
+                                        diffIdxSplits.data[numOfDiffIdxSplits_use - 1].diffIdxOffset, diffIdxSplits.data[numOfDiffIdxSplits_use - 1].infoIdxOffset);
                 else
                     splits.emplace_back(querySplitSize * i, querySplitSize * (i + 1) - 1, querySplitSize, diffIdxSplits.data[j - 1].ADkmer,
                                         diffIdxSplits.data[j - 1].diffIdxOffset,diffIdxSplits.data[j - 1].infoIdxOffset);
@@ -529,6 +528,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
             writeMatches(matchBuffer, matchFile);
     }
     free(splitCheckList);
+    queryKmerCnt = 0;
 }
 
 int Classifier::linearSearch3(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList,

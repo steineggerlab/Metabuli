@@ -184,7 +184,7 @@ private:
             {3, 2, 3, 3, 4, 4, 1, 0}}; /// 4 means that there is no case where that value is used.
     uint8_t getHammingDistance(uint64_t kmer1, uint64_t kmer2);
 
-    void linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQuery, const MmapedData<uint16_t> & targetDiffIdxList,
+    void linearSearchParallel(QueryKmer * queryKmerList, size_t & queryKmerCnt, const MmapedData<uint16_t> & targetDiffIdxList,
                               const MmapedData<TargetKmerInfo> & targetInfoList, const MmapedData<DiffIdxSplit> & diffIdxSplits,
                               Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank,
                               FILE * matchFile);
