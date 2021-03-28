@@ -268,6 +268,7 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer2, taxIdList, taxIdListAtRank, matchFile);
     }
+    writeMatches(matchBuffer2, matchFile);
     fclose(matchFile);
     afterSearch = time(NULL);
     cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
