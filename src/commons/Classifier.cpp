@@ -262,8 +262,10 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
 
     while(processedSeqCnt < numOfSeq){
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt);
+        cout<<"buffer overflowed"<<endl;
         beforeSearch = time(NULL);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
+        cout<<"buffer sorted"<<endl;
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer, taxIdList, taxIdListAtRank, matchFile);
     }
     writeMatches(matchBuffer, matchFile);
