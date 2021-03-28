@@ -231,7 +231,7 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
     vector<int> taxIdListAtRank;
     ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
     char matchFileName[300];
-    sprintf(matchFileName,"%s_matches", queryFileName);
+    sprintf(matchFileName,"%s_match", queryFileName);
     //const char * matchFileName = (string(queryFileName)+"_matches").c_str();
     FILE * matchFile = fopen(matchFileName, "wb");
 
