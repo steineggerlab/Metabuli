@@ -253,7 +253,7 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
     QueryKmerBuffer kmerBuffer(kmerBufSize);
     //Match * matchBuffer = (Match *)malloc(sizeof(Match) * 2000000000);
     //MatchBuffer matchBuffer(2000000000);2000000000
-    Buffer<Match> matchBuffer2(2000000000);
+    Buffer<Match> matchBuffer2(20000);
     size_t processedSeqCnt = 0;
     size_t processedKmerCnt = 0;
 
