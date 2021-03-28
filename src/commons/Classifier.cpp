@@ -514,12 +514,13 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
 
                 }
 
-                cout<<i<<" "<<splits[i].start - 1<<" "<<splits[i].end<<" "<<completedSplitCnt<<endl;
-                ///Check whether current split is completed or not
+               ///Check whether current split is completed or not
                 if(splits[i].start - 1 == splits[i].end){
+
                     splitCheckList[i] = true;
                     #pragma omp atomic
                     completedSplitCnt ++;
+                    cout<<i<<" "<<splits[i].start - 1<<" "<<splits[i].end<<" "<<completedSplitCnt<<endl;
                 }
             }
         }
