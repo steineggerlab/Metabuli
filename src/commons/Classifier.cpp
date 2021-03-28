@@ -426,6 +426,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & numOfQ
                     continue;
                 }
 
+                targetInfoIdx = splits[i].diffIdxSplit.infoIdxOffset;
                 diffIdxPos = splits[i].diffIdxSplit.diffIdxOffset + 1; //overflow 되었을 당시의 값들을 저장하여, target split의 처음부터 다시 시작하는 걸 방지할 수 있음             targetInfoIdx = splits[i].diffIdxSplit.infoIdxOffset;
                 currentTargetKmer = splits[i].diffIdxSplit.ADkmer;
                 currentQuery = UINT64_MAX;
