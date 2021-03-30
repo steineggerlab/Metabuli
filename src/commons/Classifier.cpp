@@ -417,7 +417,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 
     size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
 
-    omp_set_num_threads(1);
+    omp_set_num_threads(64);
     while( completedSplitCnt < threadNum) {
         cout<<completedSplitCnt<<endl;
         bool hasOverflow = false;
@@ -510,7 +510,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                     startIdxOfAAmatch = targetInfoIdx; ///틀린거 같아
                     ///Load target k-mers thatare matched in amino acid level
                     while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
-                        cout<<queryIdx++<<" "<<queryKmerList[j].ADkmer<<" "<<queryKmerList[j].info.sequenceID<<" "<<queryKmerList[j].info.frame<<" "<<queryKmerList[j].info.pos<<endl;
+                        //cout<<queryIdx++<<" "<<queryKmerList[j].ADkmer<<" "<<queryKmerList[j].info.sequenceID<<" "<<queryKmerList[j].info.frame<<" "<<queryKmerList[j].info.pos<<endl;
                         targetKmerCache.push_back(currentTargetKmer);
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                         targetInfoIdx++;
