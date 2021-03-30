@@ -380,7 +380,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 
     ///Devide query k-mer list into blocks for multi threading.
     vector<QueryKmerSplit> splits;
-    int threadNum = 64;
+    int threadNum = 32;
     size_t querySplitSize = queryKmerCnt / (threadNum - 1);
     uint64_t queryKmerAA;
     bool splitCheck = false;
@@ -417,7 +417,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 
     size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
 
-    omp_set_num_threads(64);
+    omp_set_num_threads(32);
     while( completedSplitCnt < threadNum) {
         cout<<completedSplitCnt<<endl;
         bool hasOverflow = false;
