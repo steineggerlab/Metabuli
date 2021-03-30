@@ -413,12 +413,15 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     taxID.push_back(& taxIdList);
     taxID.push_back(& taxIdListAtRank);
     size_t numOfcall = 0;
+    size_t queryIdx=0;
 
     size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
+
+    omp_set_num_threads(1);
     while( completedSplitCnt < threadNum) {
         cout<<completedSplitCnt<<endl;
         bool hasOverflow = false;
-#pragma omp parallel default(none), shared(completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, numOfcall, splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout)
+#pragma omp parallel default(none), shared(queryIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, numOfcall, splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout)
         {
             ///query variables
             uint64_t currentQuery = UINT64_MAX;
@@ -507,6 +510,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                     startIdxOfAAmatch = targetInfoIdx; ///틀린거 같아
                     ///Load target k-mers thatare matched in amino acid level
                     while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
+                        cout<<queryIdx<<" "<<queryKmerList[j].ADkmer<<" "<<queryKmerList[j].info.sequenceID<<" "<<queryKmerList[j].info.frame<<" "<<queryKmerList[j].info.pos<<endl;
                         targetKmerCache.push_back(currentTargetKmer);
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                         targetInfoIdx++;
