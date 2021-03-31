@@ -266,6 +266,7 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
         cout<<"buffer overflowed"<<endl;
         beforeSearch = time(NULL);
+        omp_set_num_threads(64);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
         cout<<"buffer sorted"<<endl;
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer, taxIdList, taxIdListAtRank, matchFile);

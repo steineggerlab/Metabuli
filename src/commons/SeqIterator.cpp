@@ -164,7 +164,7 @@ void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBu
                 } else{
                     kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, seqLen - ((frame%3) + (kmerCnt*3)) - 24 , frame};
                 }
-                if(frame == 0 && seqID == 12){
+                if(frame == 1 && seqID == 12){
                     printKmerInDNAsequence(tempKmer);
                 }
             }
