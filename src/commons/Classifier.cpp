@@ -493,7 +493,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                             }
                             cout<<endl;
                         }
-                        compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
+                        compareDna(queryKmerList[j].ADkmer, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
                         posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
                         if(posToWrite + selectedMatches.size() >= matchBuffer.bufferSize){
                             hasOverflow = true;
