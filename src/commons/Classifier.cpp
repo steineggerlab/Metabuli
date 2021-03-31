@@ -457,6 +457,13 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                     splits[i].start++;
                     ///Reuse the comparison data if queries are exactly identical
                     if(currentQuery == queryKmerList[j].ADkmer){
+                        if(queryKmerList[j].info.sequenceID == 12 && queryKmerList[j].info.frame == 0){
+                            cout<<"Position"<<queryKmerList[j].info.pos<<endl;
+                            for(size_t kk = 0 ; kk < targetKmerCache.size(); kk++){
+                                cout<<targetKmerCache[i]<<endl;
+                            }
+                            cout<<endl;
+                        }
                         posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
                         if(posToWrite + selectedMatches.size() >= matchBuffer.bufferSize){
                             hasOverflow = true;
