@@ -42,15 +42,5 @@ struct DiffIdxSplit{
     size_t infoIdxOffset;
 };
 
-typedef struct MatchedKmer{
-    MatchedKmer(int quID, int tarID, int taxID, uint32_t pos, uint8_t hamming, bool red, int queryStrand): queryID(quID), targetID(tarID), taxID(taxID), queryPos(pos), hammingDistance(hamming), redundancy(red), queryFrame(queryStrand) {}
-    int queryID;
-    int targetID;
-    int taxID;
-    uint32_t queryPos;
-    uint8_t hammingDistance;
-    bool redundancy;
-    int queryFrame;
-} __attribute__((packed)) matchedKmer;
 
 #endif //ADKMER3_KMER_H
