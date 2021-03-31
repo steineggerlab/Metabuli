@@ -250,7 +250,7 @@ void Classifier::startClassify3(const char * queryFileName, const char * targetD
     bool * processedSeqChecker = (bool *)malloc(numOfSeq);
     fill_n(processedSeqChecker, numOfSeq, false);
 
-    QueryKmerBuffer kmerBuffer(kmerBufSize);
+    QueryKmerBuffer kmerBuffer(200000);
     Buffer<Match> matchBuffer(kmerBufSize);
     size_t processedSeqCnt = 0;
     size_t processedKmerCnt = 0;
@@ -407,6 +407,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 
     for(int i = 0 ; i < splits.size(); i++){
         cout<<i<<" "<<splits[i].start<<"\t"<<splits[i].end<<"\t"<<splits[i].diffIdxSplit.ADkmer<<"\t"<<splits[i].diffIdxSplit.infoIdxOffset<<"\t"<<splits[i].diffIdxSplit.diffIdxOffset<<endl;
+        cout<<queryKmerList[splits[i].start].info.sequenceID<<"\t"<<queryKmerList[splits[i].start].info.frame<<"\t"<<queryKmerList[splits[i].start].info.pos<<endl;
     }
 
     ///taxonomical ID at the lowest rank? or at the rank of redundancy reduced
