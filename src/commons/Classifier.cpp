@@ -479,6 +479,13 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 
                     ///Reuse the candidate target k-mers to compare in DNA level if queries are the same only at amino acid level
                     if(currentQueryAA == AminoAcid(queryKmerList[j].ADkmer)){
+                        if(queryKmerList[j].info.sequenceID == 12 && queryKmerList[j].info.frame == 0){
+                            cout<<queryKmerList[j].info.pos<<endl;
+                            for(size_t kk = 0 ; kk < targetKmerCache.size(); kk++){
+                                cout<<targetKmerCache[i]<<endl;
+                            }
+                            cout<<endl;
+                        }
                         compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
                         posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
                         if(posToWrite + selectedMatches.size() >= matchBuffer.bufferSize){
