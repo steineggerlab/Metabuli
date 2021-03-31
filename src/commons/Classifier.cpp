@@ -532,6 +532,13 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                         targetInfoIdx++;
                     }
 
+                    if(queryKmerList[j].info.sequenceID == 12 && queryKmerList[j].info.frame == 0 && targetKmerCache.size() != 0){
+                        cout<<"Position"<<queryKmerList[j].info.pos<<endl;
+                        for(size_t kk = 0 ; kk < targetKmerCache.size(); kk++){
+                            cout<<targetKmerCache[i]<<endl;
+                        }
+                        cout<<endl;
+                    }
                     ///Compare the current query and the loaded target k-mers and select
                     compareDna(currentQuery, targetKmerCache, startIdxOfAAmatch, selectedMatches, selectedHammings);
                     posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
