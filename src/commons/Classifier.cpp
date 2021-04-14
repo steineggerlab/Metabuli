@@ -102,8 +102,8 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     //load matches and analyze
     cout<<"analyse Result"<<endl;
-    //analyseResult(ncbiTaxonomy, sequences, matchFileName, queryList);
-    analyseResultParallel(ncbiTaxonomy, sequences, matchFileName, numOfSeq);
+    analyseResult(ncbiTaxonomy, sequences, matchFileName, queryList);
+    //analyseResultParallel(ncbiTaxonomy, sequences, matchFileName, numOfSeq);
 
     writeReadClassification(queryInfos,readClassificationFile);
 
@@ -574,12 +574,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         for(size_t k = alignedCoMatches[cs].beginIdx ; k < alignedCoMatches[cs].endIdx + 1; k++ ){
             temp = matchList[k].taxID;
             taxIdList.push_back(temp);
-
-//            if(currentInfo->taxCnt.find(temp) == currentInfo->taxCnt.end()){
-//                currentInfo->taxCnt.insert(pair<TaxID, int>(temp, 1));
-//            } else{
-//                currentInfo->taxCnt[temp] ++;
-//            }
             currentInfo->taxCnt[temp] ++;
         }
     }

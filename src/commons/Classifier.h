@@ -62,21 +62,23 @@ private:
         size_t endIdx;
     }ConsecutiveMatches;
 
-    typedef struct QueryInfo{
+    struct QueryInfo{
         int queryId;
         bool isClassified;
         string name;
         int taxId;
         float coverage;
-        map<TaxID,int> taxCnt; ///how about using it for REPORTFILE? --> k-mer count
+        unordered_map<TaxID,int> taxCnt; ///how about using it for REPORTFILE? --> k-mer count
         size_t queryLength;
-        QueryInfo(int queryId, bool isClassified, string name, int taxId, float coverage, size_t queryLength): queryId(queryId), isClassified(isClassified), name(name), taxId(taxId), coverage(coverage), queryLength(queryLength) {}
+        QueryInfo(int queryId, bool isClassified, string name, int taxId, float coverage, size_t queryLength)
+        : queryId(queryId), isClassified(isClassified), name(name), taxId(taxId), coverage(coverage), queryLength(queryLength) {}
+        QueryInfo(){}
         bool operator == (const int Id) const{
             if(Id == queryId)
                 return true;
             return false;
         }
-    }QueryInfo;
+    };
 
     struct Match{ //16byte
         uint32_t queryId;
