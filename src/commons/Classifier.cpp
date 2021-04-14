@@ -153,7 +153,11 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                     checker[i] = true;
                     seqs[i].length = strlen(buffer.entry.sequence.s);
                     cout<<"before"<<endl;
-                    queryList[i] = Query(int(i), false, buffer.entry.name.s, 0, 0, seqs[i].length);
+                    //queryList[i] = Query(int(i), false, buffer.entry.name.s, 0, 0, seqs[i].length);
+                    queryList[i].queryLength = seqs[i].length;
+                    queryList[i].queryId = i;
+                    queryList[i].name = buffer.entry.sequence.s;
+
                     cout<<"after"<<endl;
 #pragma omp atomic
                     processedSeqCnt ++;

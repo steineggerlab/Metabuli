@@ -25,6 +25,7 @@ struct Query{
     bool operator==(int id) const { return queryId == id;}
     Query(int id, bool isClassified_, const string & name_, int classification_, float coverage_, uint32_t len)
     :queryId(id), isClassified(isClassified_), name(name_), classification(classification_), coverage(coverage_), queryLength(len) { }
+    Query():queryId(0), isClassified(false), name(""), classification(0), coverage(0.0f), queryLength(0) {}
 };
 
 
