@@ -68,8 +68,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
     size_t numOfSeq = sequences.size();
     Query * queryList = (Query *)malloc(sizeof(Query) * numOfSeq);
-
-    cout<<"here"<<endl;
+    cout<<"here"<<numOfSeq<<endl;
     //check for multi-threading
     bool * processedSeqChecker = (bool *)malloc(numOfSeq);
     fill_n(processedSeqChecker, numOfSeq, false);
