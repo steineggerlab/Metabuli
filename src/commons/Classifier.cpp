@@ -102,8 +102,8 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     //load matches and analyze
     cout<<"analyse Result"<<endl;
-    analyseResult(ncbiTaxonomy, sequences, matchFileName, queryList);
-
+    //analyseResult(ncbiTaxonomy, sequences, matchFileName, queryList);
+    analyseResultParallel(ncbiTaxonomy, sequences, matchFileName, numOfSeq);
 
     writeReadClassification(queryInfos,readClassificationFile);
 
@@ -427,24 +427,33 @@ void Classifier::analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & s
     }
     munmap(matchList.data, matchList.fileSize + 1);
 }
-void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName){
+void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum){
     struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
     size_t numOfMatches = matchList.fileSize / sizeof(Match);
     SORT_PARALLEL(matchList.data, matchList.data + numOfMatches , Classifier::compareForWritingMatches);
 
+    ///Get match blocks for multi threading
+    typedef Sequence Block;
+    Block * matchBlocks = new Block[seqNum];
+    size_t matchIdx = 0;
+    size_t blockIdx = 0;
     uint32_t currentQuery;
-    size_t i = 0;
-    size_t queryOffset;
-    size_t queryEnd;
-    while(i < numOfMatches) {
-        currentQuery = matchList.data[i].queryId;
-        queryOffset = i;
-        while((currentQuery == matchList.data[i].queryId) && (i < numOfMatches)) i++;
-        queryEnd = i - 1;
-        TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[currentQuery].length, currentQuery, queryOffset,
-                                            queryEnd, matchList.data);
+    while(matchIdx < numOfMatches){
+        currentQuery = matchList.data[matchIdx].queryId;
+        matchBlocks[blockIdx].start = matchIdx;
+        while((currentQuery == matchList.data[matchIdx].queryId) && (matchIdx < numOfMatches)) ++matchIdx;
+        matchBlocks[blockIdx].end = matchIdx - 1;
+    }
+
+#pragma omp parallel default(none), shared(matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy)
+{
+#pragma omp for schedule(dynamic, 1)
+    for(size_t i = 0; i < seqNum; ++ i ){
+        TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[i].length, i, matchBlocks[i].start,
+                                            matchBlocks[i].end, matchList.data);
         ++taxCounts[selectedLCA];
     }
+}
     munmap(matchList.data, matchList.fileSize + 1);
 }
 

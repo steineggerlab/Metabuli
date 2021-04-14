@@ -10,6 +10,7 @@
 #define AApart(x) x & ()
 struct Sequence{
     Sequence(size_t start, size_t end, size_t length) : start(start), end(end), length(length) { }
+    Sequence() : start(0), end(0), length(0) { }
     size_t start;
     size_t end;
     size_t length;
