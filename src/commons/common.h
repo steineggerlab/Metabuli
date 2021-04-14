@@ -15,6 +15,18 @@ struct Sequence{
     size_t length;
 };
 
+struct Query{
+    int queryId;
+    bool isClassified; //필요한가?
+    string name;
+    int classification;
+    float coverage;
+    uint32_t queryLength;
+    bool operator==(int id) const { return queryId == id;}
+    Query(int id, bool isClassified_, const string & name_, int classification_, float coverage_, uint32_t len)
+    :queryId(id), isClassified(isClassified_), name(name_), classification(classification_), coverage(coverage_), queryLength(len) { }
+};
+
 
 
 #endif //ADCLASSIFIER2_COMMON_H

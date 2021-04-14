@@ -95,14 +95,6 @@ private:
         DiffIdxSplit diffIdxSplit;
     };
 
-    struct MatchedQueryKmer{
-        size_t queryID;
-        uint32_t pos;
-        uint8_t frame;
-        size_t st;
-        size_t endl;
-    };
-
     template <typename T>
     struct Buffer{
         T * buffer;
@@ -119,11 +111,6 @@ private:
             size_t offsetToWrite = __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
             return offsetToWrite;
         };
-    };
-
-    struct MatchedTargetKmer{
-        int taxID;
-        uint8_t hamming;
     };
 
     struct MatchBuffer{
@@ -192,12 +179,14 @@ private:
                     size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent);
     static bool compareForLinearSearch(const QueryKmer & a, const QueryKmer & b);
     static bool compareConsecutiveMatches(const ConsecutiveMatches & a, const ConsecutiveMatches & b);
-    void fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt);
+    void fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt, Query * queryList);
     TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList);
     void writeReadClassification(vector<QueryInfo> & queryInfos, ofstream & readClassificationFile);
     void writeReportFile(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, const int numOfQuery);
 
     void analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName);
+    void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName);
+
     void writeReport(FILE * fp, const NcbiTaxonomy & ncbiTaxonomy, const unordered_map<TaxID, TaxonCounts> & cladeCounts, unsigned long totalReads,TaxID taxID = 0, int depth = 0);
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts>& map, TaxID key);
     void compareDna(uint64_t & query, vector<uint64_t> & targetList, const size_t & startIdx, vector<size_t> & selectedMatches, vector<uint8_t> & selectedHamming);
