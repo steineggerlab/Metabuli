@@ -575,11 +575,12 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
             temp = matchList[k].taxID;
             taxIdList.push_back(temp);
 
-            if(currentInfo->taxCnt.find(temp) == currentInfo->taxCnt.end()){
-                currentInfo->taxCnt.insert(pair<TaxID, int>(temp, 1));
-            } else{
-                currentInfo->taxCnt[temp] ++;
-            }
+//            if(currentInfo->taxCnt.find(temp) == currentInfo->taxCnt.end()){
+//                currentInfo->taxCnt.insert(pair<TaxID, int>(temp, 1));
+//            } else{
+//                currentInfo->taxCnt[temp] ++;
+//            }
+            currentInfo->taxCnt[temp] ++;
         }
     }
 

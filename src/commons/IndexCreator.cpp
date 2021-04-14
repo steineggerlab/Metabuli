@@ -260,18 +260,6 @@ int IndexCreator::getNumOfFlush()
     return numOfFlush;
 }
 
-//void IndexCreator::printOutTargetDB(char * diff, char * info){
-//    struct MmapedData<uint16_t> diffFile = mmapData<uint16_t>(diff);
-//    struct MmapedData<TargetKmerInfo> infoFile = mmapData<TargetKmerInfo>(info);
-//    Classifier classifier;
-//    size_t numOfkmer = infoFile.fileSize/sizeof(TargetKmerInfo);
-//    size_t diffIdxPos = 0;
-//    uint64_t nextTargetKmer = classifier.getNextTargetKmer(0, diffFile.data, diffIdxPos);
-//    for( size_t i = 0; i < numOfkmer; i++){
-//        cout<<infoFile.data[i].sequenceID<<endl;
-//    }
-//}
-
 inline bool IndexCreator::compareForDiffIdx(const TargetKmer & a, const TargetKmer & b){
     return a.ADkmer < b.ADkmer || (a.ADkmer == b.ADkmer && a.taxIdAtRank < b.taxIdAtRank);
 }
