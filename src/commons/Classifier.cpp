@@ -67,11 +67,8 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     vector<Sequence> sequences;
     IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
     size_t numOfSeq = sequences.size();
-    //Query * queryList = (Query *)malloc(sizeof(Query) * numOfSeq);
     Query * queryList = new Query[numOfSeq];
-    for(size_t i = 0 ; i < numOfSeq; i++){
-        cout<<queryList[i].queryId<<endl;
-    }
+
     //check for multi-threading
     bool * processedSeqChecker = (bool *)malloc(numOfSeq);
     fill_n(processedSeqChecker, numOfSeq, false);
@@ -140,6 +137,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
     omp_set_num_threads(64);
 #pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, queryInfos, cout, queryList)
     {
+        vector<QueryInfo> infos;
         SeqIterator seqIterator;
         size_t posToWrite;
 #pragma omp for schedule(dynamic, 1)
@@ -153,14 +151,11 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
                     seqIterator.fillQueryKmerBuffer(buffer.entry.sequence.s, kmerBuffer, posToWrite, i);
                     checker[i] = true;
+                    infos.emplace_back(int(i), false, buffer.entry.name.s, 0, 0, seqs[i].length);
                     seqs[i].length = strlen(buffer.entry.sequence.s);
-                    cout<<"before"<<endl;
-                    //queryList[i] = Query(int(i), false, buffer.entry.name.s, 0, 0, seqs[i].length);
                     queryList[i].queryLength = seqs[i].length;
                     queryList[i].queryId = i;
                     queryList[i].name = buffer.entry.sequence.s;
-
-                    cout<<"after"<<endl;
 #pragma omp atomic
                     processedSeqCnt ++;
                 } else{
@@ -170,6 +165,10 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                 }
             }
 
+        }
+#pragma omp critical
+        {
+            queryInfos.insert(queryInfos.end(), make_move_iterator(infos.begin()), make_move_iterator(infos.end()));
         }
     }
 }
@@ -408,7 +407,7 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetList, con
 }
 
 ///It analyses the result of linear search.
-void Classifier::analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName){
+void Classifier::analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, Query * queryList){
     struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
     size_t numOfMatches = matchList.fileSize / sizeof(Match);
     SORT_PARALLEL(matchList.data, matchList.data + numOfMatches , Classifier::compareForWritingMatches);
@@ -541,13 +540,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         }
     }
 
-//    for(size_t cs = 0; cs < alignedCoMatches.size(); cs++ ){
-//        for(size_t k = alignedCoMatches[cs].beginIdx ; k < alignedCoMatches[cs].endIdx + 1; k++ ){
-//            cout<<matchList[k].queryId<<" "<<matchList[k].frame<<" "<<matchList[k].position<<" "<<matchList[k].taxID<<" "<<int(matchList[k].hamming)<<" "<<endl;
-//        }
-//        cout<<(alignedCoMatches[cs].end - alignedCoMatches[cs].begin)/3 + 1<<endl;
-//    }
-
     ///Check a query coverage
     int maxNum = queryLength / 3 - kmerLength + 1;
     int matchedNum = 0;
@@ -559,9 +551,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     }
     coverage = float(matchedNum) / float(maxNum);
     cout<<"coverage: "<<coverage<<endl;
-
-
-
 
 
     ///TODO: how about considering hamming distance here?
