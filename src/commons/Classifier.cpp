@@ -102,7 +102,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     //load matches and analyze
     cout<<"analyse Result"<<endl;
-    analyseResult(ncbiTaxonomy, sequences, matchFileName);
+    analyseResult(ncbiTaxonomy, sequences, matchFileName, queryList);
 
 
     writeReadClassification(queryInfos,readClassificationFile);
