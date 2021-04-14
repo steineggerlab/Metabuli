@@ -69,6 +69,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     size_t numOfSeq = sequences.size();
     Query * queryList = (Query *)malloc(sizeof(Query) * numOfSeq);
 
+    cout<<"here"<<endl;
     //check for multi-threading
     bool * processedSeqChecker = (bool *)malloc(numOfSeq);
     fill_n(processedSeqChecker, numOfSeq, false);
@@ -151,7 +152,9 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                     seqIterator.fillQueryKmerBuffer(buffer.entry.sequence.s, kmerBuffer, posToWrite, i);
                     checker[i] = true;
                     seqs[i].length = strlen(buffer.entry.sequence.s);
+                    cout<<"before"<<endl;
                     queryList[i] = Query(int(i), false, buffer.entry.name.s, 0, 0, seqs[i].length);
+                    cout<<"after"<<endl;
 #pragma omp atomic
                     processedSeqCnt ++;
                 } else{
