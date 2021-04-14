@@ -443,6 +443,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
         matchBlocks[blockIdx].start = matchIdx;
         while((currentQuery == matchList.data[matchIdx].queryId) && (matchIdx < numOfMatches)) ++matchIdx;
         matchBlocks[blockIdx].end = matchIdx - 1;
+        blockIdx++;
     }
 
 #pragma omp parallel default(none), shared(matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy)
@@ -451,9 +452,11 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     for(size_t i = 0; i < seqNum; ++ i ){
         TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[i].length, i, matchBlocks[i].start,
                                             matchBlocks[i].end, matchList.data);
+#pragma omp atomic
         ++taxCounts[selectedLCA];
     }
 }
+    delete[] matchBlocks;
     munmap(matchList.data, matchList.fileSize + 1);
 }
 
