@@ -69,9 +69,11 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     size_t numOfSeq = sequences.size();
     Query * queryList = new Query[numOfSeq];
 
+    cout<<"1"<<endl;
     //check for multi-threading
-    bool * processedSeqChecker = (bool *)malloc(numOfSeq);
-    fill_n(processedSeqChecker, numOfSeq, false);
+    bool * processedSeqChecker = new bool[numOfSeq];
+    //bool * processedSeqChecker = (bool *)malloc(numOfSeq);
+    //fill_n(processedSeqChecker, numOfSeq, false);
 
     //allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
