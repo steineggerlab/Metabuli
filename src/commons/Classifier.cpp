@@ -465,6 +465,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     for(size_t i = 0; i < seqNum; ++ i ){
         TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy2, seqSegments[i].length, i, matchBlocks[i].start,
                                             matchBlocks[i].end, matchList.data);
+        cout<<"i"<<endl;
 #pragma omp atomic
         ++taxCounts[selectedLCA];
     }
