@@ -470,6 +470,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
        // ++taxCounts[selectedLCA];
     }
 }
+
     cout<<"here"<<endl;
     delete[] matchBlocks;
     munmap(matchList.data, matchList.fileSize + 1);
@@ -584,18 +585,18 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     ///Get a lowest common ancestor, and check whether strain taxIDs are existing
     vector<TaxID> taxIdList;
     TaxID temp;
-    //auto currentInfo = find(queryInfos.begin(), queryInfos.end(), currentQuery);
+    auto currentInfo = find(queryInfos.begin(), queryInfos.end(), currentQuery);
     for(size_t cs = 0; cs < alignedCoMatches.size(); cs++ ){
         for(size_t k = alignedCoMatches[cs].beginIdx ; k < alignedCoMatches[cs].endIdx + 1; k++ ){
             temp = matchList[k].taxID;
             taxIdList.push_back(temp);
-            //currentInfo->taxCnt[temp] ++;
+            currentInfo->taxCnt[temp] ++;
         }
     }
 
     ///No classification for low coverage.
     if(coverage < coverageThr){
-        //currentInfo->coverage = coverage;
+        currentInfo->coverage = coverage;
         //queryInfo[currentQuery].coverage = coverage;
         return 0;
     }
@@ -647,9 +648,9 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 //    }
 
     ///store classification results
-//    currentInfo->isClassified = true;
-//    currentInfo->taxId = selectedLCA;
-//    currentInfo->coverage = coverage;
+    currentInfo->isClassified = true;
+    currentInfo->taxId = selectedLCA;
+    currentInfo->coverage = coverage;
     return selectedLCA;
 }
 
