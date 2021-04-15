@@ -583,12 +583,12 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     ///Get a lowest common ancestor, and check whether strain taxIDs are existing
     vector<TaxID> taxIdList;
     TaxID temp;
-    auto currentInfo = find(queryInfos.begin(), queryInfos.end(), currentQuery);
+    //auto currentInfo = find(queryInfos.begin(), queryInfos.end(), currentQuery);
     for(size_t cs = 0; cs < alignedCoMatches.size(); cs++ ){
         for(size_t k = alignedCoMatches[cs].beginIdx ; k < alignedCoMatches[cs].endIdx + 1; k++ ){
             temp = matchList[k].taxID;
             taxIdList.push_back(temp);
-            currentInfo->taxCnt[temp] ++;
+            //currentInfo->taxCnt[temp] ++;
         }
     }
 
