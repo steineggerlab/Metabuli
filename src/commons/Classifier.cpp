@@ -161,7 +161,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                     seqs[i].length = strlen(buffer.entry.sequence.s);
                     queryList[i].queryLength = seqs[i].length;
                     queryList[i].queryId = i;
-                    queryList[i].name = buffer.entry.sequence.s;
+                    queryList[i].name = buffer.entry.name.s;
 #pragma omp atomic
                     processedSeqCnt ++;
                 } else{
