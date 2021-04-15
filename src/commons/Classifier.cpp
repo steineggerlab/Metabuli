@@ -62,7 +62,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName);
     cout<<"fileSize: "<<targetDiffIdxList.fileSize<<endl;
     cout<<targetDiffIdxList.data[targetDiffIdxList.fileSize / sizeof(uint16_t)]<<endl;
-    targetDiffIdxList.data[targetDiffIdxList.fileSize / sizeof(uint16_t)] = (uint16_t)32768; //1000000000000000
+    targetDiffIdxList.data[targetDiffIdxList.fileSize / sizeof(uint16_t)] = 32768; //1000000000000000
 
     cout<<"3"<<endl;
 
@@ -404,7 +404,7 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetList, con
         hammings.push_back(currentHamming);
     }
 
-    if(minHamming > 2) return;
+    //if(minHamming > 2) return;
 
     ///Select target k-mers that passed hamming criteria
     for(size_t h = 0; h < hammings.size(); h++){
