@@ -246,11 +246,12 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     size_t numOfcall = 0;
     size_t queryIdx=0;
     size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
+    size_t numOfDiffIdx = diffIdxSplits.fileSize / sizeof(uint16_t);
     cout<<"The number of target k-mers: "<<numOfTargetKmer<<endl;
     omp_set_num_threads(ThreadNum);
     while( completedSplitCnt < threadNum) {
         bool hasOverflow = false;
-#pragma omp parallel default(none), shared(queryIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, numOfcall, splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout)
+#pragma omp parallel default(none), shared(numOfDiffIdx, queryIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, numOfcall, splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout)
         {
             ///query variables
             uint64_t currentQuery = UINT64_MAX;
@@ -331,14 +332,14 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                     currentQueryAA = AminoAcid(currentQuery);
 
                     ///Skip target k-mers that are not matched in amino acid level
-                    while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
+                    while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                         targetInfoIdx++;
                     }
 
                     startIdxOfAAmatch = targetInfoIdx;
                     ///Load target k-mers thatare matched in amino acid level
-                    while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer)) {
+                    while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
                         targetKmerCache.push_back(currentTargetKmer);
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                         targetInfoIdx++;
