@@ -467,7 +467,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
                                             matchBlocks[i].end, matchList.data);
         cout<<i<<endl;
 #pragma omp atomic
-        ++taxCounts[selectedLCA];
+       // ++taxCounts[selectedLCA];
     }
 }
     cout<<"here"<<endl;
