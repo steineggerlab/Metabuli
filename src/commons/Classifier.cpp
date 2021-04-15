@@ -460,7 +460,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     omp_set_num_threads(ThreadNum);
 #pragma omp parallel default(none), shared(matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy)
 {
-    NcbiTaxonomy ncbiTaxonomy2("../../gtdb_taxdmp/names.dmp", "../../gtdb_taxdmp/nodes.dmp", "../../gtdb_taxdmp/merged.dmp");
+    //NcbiTaxonomy ncbiTaxonomy2("../../gtdb_taxdmp/names.dmp", "../../gtdb_taxdmp/nodes.dmp", "../../gtdb_taxdmp/merged.dmp");
 
 #pragma omp for schedule(dynamic, 1)
     for(size_t i = 0; i < seqNum; ++ i ){
