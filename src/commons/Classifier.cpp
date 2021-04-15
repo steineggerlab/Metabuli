@@ -599,7 +599,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.8, numAssignedSeqs,
                                   numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
                                   selectedPercent);
-    cout<<currentQuery<<endl;
+    cout<<"#"<<currentQuery<<endl;
     cout<<"coverage: "<<coverage<<endl;
     for(size_t k = 0; k < taxIdList.size(); k++){
         cout<<taxIdList[k]<<endl;
@@ -630,7 +630,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
             selectedLCA = strainTaxId;
         }
     }
-
+    cout<<"label: "<<selectedLCA<<endl<<endl;
 //    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
 //        cout<<"strain level classification: "<<selectedLCA<<endl;
 //    }else {
