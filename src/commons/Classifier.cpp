@@ -111,7 +111,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     //analyseResult(ncbiTaxonomy, sequences, matchFileName, queryList);
     analyseResultParallel(ncbiTaxonomy, sequences, matchFileName, numOfSeq, queryList);
     afterAnalyze = time(NULL);
-    cout<<"Time spent for searching: "<<double(afterAnalyze-afterSearch)<<endl;
+    cout<<"Time spent for analyzing: "<<double(afterAnalyze-afterSearch)<<endl;
     writeReadClassification(queryList,numOfSeq,readClassificationFile);
 
     ///TODO split count 고려할 것
@@ -454,9 +454,9 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
         blockIdx++;
     }
 
-    for(size_t i = 0; i < seqNum; i++){
-        cout<<i<<" "<<matchBlocks[i].start<<" "<<matchBlocks[i].end<<endl;
-    }
+//    for(size_t i = 0; i < seqNum; i++){
+//        cout<<i<<" "<<matchBlocks[i].start<<" "<<matchBlocks[i].end<<endl;
+//    }
 
     omp_set_num_threads(ThreadNum);
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList)
@@ -466,13 +466,14 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     for(size_t i = 0; i < seqNum; ++ i ){
         TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[i].length, i, matchBlocks[i].start,
                                             matchBlocks[i].end, matchList.data, queryList);
-        cout<<i<<endl;
 //#pragma omp atomic
        // ++taxCounts[selectedLCA];
     }
 }
 
-    cout<<"here"<<endl;
+    for(size_t i = 0 ; i < seqNum; i++){
+        ++ taxCounts[queryList[i].classification];
+    }
     delete[] matchBlocks;
     munmap(matchList.data, matchList.fileSize + 1);
 }
