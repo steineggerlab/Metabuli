@@ -452,6 +452,10 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
         blockIdx++;
     }
 
+    for(size_t i = 0; i < seqNum; i++){
+        cout<<i<<" "<<matchBlocks[i].start<<" "<<matchBlocks[i].end<<endl;
+    }
+
     omp_set_num_threads(ThreadNum);
 #pragma omp parallel default(none), shared(matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy)
 {
