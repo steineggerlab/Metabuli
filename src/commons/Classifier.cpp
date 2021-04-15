@@ -60,9 +60,9 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     cout<<"1"<<endl;
 
     struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName);
-//    cout<<"fileSize: "<<targetDiffIdxList.fileSize<<endl;
-//    cout<<targetDiffIdxList.data[targetDiffIdxList.fileSize / sizeof(uint16_t)]<<endl;
-    //targetDiffIdxList.data[targetDiffIdxList.fileSize / sizeof(uint16_t)] = 32768; //1000000000000000
+    cout<<"fileSize: "<<targetDiffIdxList.fileSize<<endl;
+    cout<<targetDiffIdxList.data[targetDiffIdxList.fileSize / sizeof(uint16_t)]<<endl;
+    targetDiffIdxList.data[targetDiffIdxList.fileSize / sizeof(uint16_t)] = 32768; //1000000000000000
 
     struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName);
     cout<<"4"<<endl;
@@ -76,7 +76,6 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     //check for multi-threading
     bool * processedSeqChecker = new bool[numOfSeq];
-    //bool * processedSeqChecker = (bool *)malloc(numOfSeq);
     fill_n(processedSeqChecker, numOfSeq, false);
 
     //allocate memory for buffers
