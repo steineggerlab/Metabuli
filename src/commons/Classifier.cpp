@@ -239,7 +239,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     size_t numOfcall = 0;
     size_t queryIdx=0;
     size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
-    omp_set_num_threads(64);
+    omp_set_num_threads(1);
     while( completedSplitCnt < threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(queryIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, numOfcall, splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout)
@@ -571,7 +571,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         coveredLen += alignedCoMatches[cm].end - alignedCoMatches[cm].begin + 24;
     }
     coverage = float(matchedNum) / float(maxNum);
-    cout<<"coverage: "<<coverage<<endl;
+
 
 
     ///TODO: how about considering hamming distance here?
@@ -602,7 +602,11 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.8, numAssignedSeqs,
                                   numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
                                   selectedPercent);
-
+    cout<<currentQuery<<endl;
+    cout<<"coverage: "<<coverage<<endl;
+    for(size_t k = 0; k < taxIdList.size(); k++){
+        cout<<taxIdList[k]<<endl;
+    }
 
     ///TODO optimize strain specific classification criteria
     ///Strain classification only for high coverage with LCA of species level
@@ -630,11 +634,11 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         }
     }
 
-    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
-        cout<<"strain level classification: "<<selectedLCA<<endl;
-    }else {
-        cout<<selectedLCA<<" "<<selectedPercent<<endl;
-    }
+//    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
+//        cout<<"strain level classification: "<<selectedLCA<<endl;
+//    }else {
+//        cout<<selectedLCA<<" "<<selectedPercent<<endl;
+//    }
 
     ///store classification results
     currentInfo->isClassified = true;
