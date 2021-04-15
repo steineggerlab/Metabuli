@@ -50,26 +50,33 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
     vector<int> taxIdListAtRank;
     ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
-    cout<<"4"<<endl;
+
     //output file
     char matchFileName[300];
     sprintf(matchFileName,"%s_match", queryFileName);
     FILE * matchFile = fopen(matchFileName, "wb");
-    cout<<"3"<<endl;
     //query & target
     struct MmapedData<char> queryFile = mmapData<char>(par.filenames[0].c_str());
+    cout<<"1"<<endl;
+
     struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName);
-    targetDiffIdxList.data[targetDiffIdxList.fileSize/sizeof(uint16_t)] = 32768; //1000000000000000
-    struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName);
-    struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName);
     cout<<"2"<<endl;
+
+    targetDiffIdxList.data[targetDiffIdxList.fileSize/sizeof(uint16_t)] = 32768; //1000000000000000
+
+    cout<<"3"<<endl;
+
+
+    struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName);
+    cout<<"4"<<endl;
+
+    struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName);
     //query sequences
     vector<Sequence> sequences;
     IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
     size_t numOfSeq = sequences.size();
     Query * queryList = new Query[numOfSeq];
 
-    cout<<"1"<<endl;
     //check for multi-threading
     bool * processedSeqChecker = new bool[numOfSeq];
     //bool * processedSeqChecker = (bool *)malloc(numOfSeq);
