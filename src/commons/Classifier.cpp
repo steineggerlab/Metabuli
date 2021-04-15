@@ -493,7 +493,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     ///gapThr decides the maximun gap
     int currentFrame;
     int gapThr = 0;
-    while(i < end) {
+    while(i < end + 1) {
         currentFrame = matchList[i].frame;
         while ((matchList[i + 1].frame == matchList[i].frame) && (i < end)) {
             if (matchList[i + 1].position <= matchList[i].position + (gapThr + 1) * 3) {
