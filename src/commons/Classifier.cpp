@@ -458,14 +458,14 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
 
     omp_set_num_threads(ThreadNum);
-#pragma omp parallel default(none), shared(matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy)
+#pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy)
 {
     NcbiTaxonomy ncbiTaxonomy2(ncbiTaxonomy);
 #pragma omp for schedule(dynamic, 1)
     for(size_t i = 0; i < seqNum; ++ i ){
         TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy2, seqSegments[i].length, i, matchBlocks[i].start,
                                             matchBlocks[i].end, matchList.data);
-        cout<<"i"<<endl;
+        cout<<i<<endl;
 #pragma omp atomic
         ++taxCounts[selectedLCA];
     }
