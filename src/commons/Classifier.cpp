@@ -246,7 +246,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     size_t numOfcall = 0;
     size_t queryIdx=0;
     size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
-    size_t numOfDiffIdx = diffIdxSplits.fileSize / sizeof(uint16_t);
+    size_t numOfDiffIdx = targetDiffIdxList.fileSize / sizeof(uint16_t);
     cout<<"The number of target k-mers: "<<numOfTargetKmer<<endl;
     omp_set_num_threads(ThreadNum);
     while( completedSplitCnt < threadNum) {
