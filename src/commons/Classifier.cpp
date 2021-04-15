@@ -48,7 +48,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     //taxonomical ID
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
-    NcbiTaxonomy ncbiTaxonomy2("../../gtdb_taxdmp/names.dmp", "../../gtdb_taxdmp/nodes.dmp", "../../gtdb_taxdmp/merged.dmp");
+    //NcbiTaxonomy ncbiTaxonomy2("../../gtdb_taxdmp/names.dmp", "../../gtdb_taxdmp/nodes.dmp", "../../gtdb_taxdmp/merged.dmp");
     vector<int> taxIdListAtRank;
     ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
 
@@ -460,11 +460,11 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     omp_set_num_threads(ThreadNum);
 #pragma omp parallel default(none), shared(matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy)
 {
-    //NcbiTaxonomy ncbiTaxonomy2("../../gtdb_taxdmp/names.dmp", "../../gtdb_taxdmp/nodes.dmp", "../../gtdb_taxdmp/merged.dmp");
+    NcbiTaxonomy ncbiTaxonomy2(ncbiTaxonomy);
 
 #pragma omp for schedule(dynamic, 1)
     for(size_t i = 0; i < seqNum; ++ i ){
-        TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[i].length, i, matchBlocks[i].start,
+        TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy2, seqSegments[i].length, i, matchBlocks[i].start,
                                             matchBlocks[i].end, matchList.data);
 #pragma omp atomic
         ++taxCounts[selectedLCA];
