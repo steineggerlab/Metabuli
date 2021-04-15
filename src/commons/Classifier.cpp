@@ -594,7 +594,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     ///No classification for low coverage.
     if(coverage < coverageThr){
-        currentInfo->coverage = coverage;
+        //currentInfo->coverage = coverage;
         //queryInfo[currentQuery].coverage = coverage;
         return 0;
     }
@@ -646,9 +646,9 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 //    }
 
     ///store classification results
-    currentInfo->isClassified = true;
-    currentInfo->taxId = selectedLCA;
-    currentInfo->coverage = coverage;
+//    currentInfo->isClassified = true;
+//    currentInfo->taxId = selectedLCA;
+//    currentInfo->coverage = coverage;
     return selectedLCA;
 }
 
