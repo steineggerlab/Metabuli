@@ -401,7 +401,7 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetList, con
         hammings.push_back(currentHamming);
     }
 
-    //if(minHamming > 2) return;
+    if(minHamming > 2) return;
 
     ///Select target k-mers that passed hamming criteria
     for(size_t h = 0; h < hammings.size(); h++){
@@ -451,7 +451,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
         matchBlocks[blockIdx].end = matchIdx - 1;
         blockIdx++;
     }
-    omp_set_num_threads(1);
+    omp_set_num_threads(64);
 #pragma omp parallel default(none), shared(matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy)
 {
 #pragma omp for schedule(dynamic, 1)
@@ -599,11 +599,11 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.8, numAssignedSeqs,
                                   numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
                                   selectedPercent);
-    cout<<"#"<<currentQuery<<endl;
-    cout<<"coverage: "<<coverage<<endl;
-    for(size_t k = 0; k < taxIdList.size(); k++){
-        cout<<taxIdList[k]<<endl;
-    }
+//    cout<<"#"<<currentQuery<<endl;
+//    cout<<"coverage: "<<coverage<<endl;
+//    for(size_t k = 0; k < taxIdList.size(); k++){
+//        cout<<taxIdList[k]<<endl;
+//    }
 
     ///TODO optimize strain specific classification criteria
     ///Strain classification only for high coverage with LCA of species level
@@ -630,7 +630,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
             selectedLCA = strainTaxId;
         }
     }
-    cout<<"label: "<<selectedLCA<<endl<<endl;
+//    cout<<"label: "<<selectedLCA<<endl<<endl;
 //    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
 //        cout<<"strain level classification: "<<selectedLCA<<endl;
 //    }else {
