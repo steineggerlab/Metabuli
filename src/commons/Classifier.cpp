@@ -61,7 +61,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName);
     cout<<"fileSize: "<<targetDiffIdxList.fileSize<<endl;
-    cout<<targetDiffIdxList.data[targetDiffIdxList.fileSize / sizeof(uint16_t)]<<endl;
+    cout<<targetDiffIdxList.data[targetDiffIdxList.fileSize / sizeof(uint16_t) - 1]<<endl;
     targetDiffIdxList.data[targetDiffIdxList.fileSize / sizeof(uint16_t)] = 32768; //1000000000000000
 
     struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName);
