@@ -401,7 +401,7 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetList, con
         hammings.push_back(currentHamming);
     }
 
-    if(minHamming > 2) return;
+    //if(minHamming > 2) return;
 
     ///Select target k-mers that passed hamming criteria
     for(size_t h = 0; h < hammings.size(); h++){
