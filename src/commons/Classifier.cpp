@@ -82,7 +82,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     ofstream readClassificationFile;
     readClassificationFile.open(par.filenames[0]+"_ReadClassification_temp.tsv");
     time_t beforeSearch, afterSearch;
-
+    cout<<"1"<<endl;
     size_t numOfTatalQueryKmerCnt = 0;
     while(processedSeqCnt < numOfSeq){
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryList);

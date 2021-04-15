@@ -54,12 +54,12 @@ private:
 
     typedef struct ConsecutiveMatches{
         ConsecutiveMatches(uint32_t begin, uint32_t end, uint32_t hamming, uint32_t gapCnt, size_t bi, size_t ei) : begin(begin), end(end), hamming(hamming), gapCnt(gapCnt), beginIdx(bi), endIdx(ei) {}
-        uint32_t begin;
-        uint32_t end;
-        uint32_t hamming;
-        uint32_t gapCnt;
-        size_t beginIdx;
-        size_t endIdx;
+        uint32_t begin; //start position on query sequence
+        uint32_t end; //end position on query sequence
+        uint32_t hamming; //hamming sum
+        uint32_t gapCnt; //gap sum
+        size_t beginIdx; //beginning index on matchList
+        size_t endIdx; //end index
     }ConsecutiveMatches;
 
     struct QueryInfo{
