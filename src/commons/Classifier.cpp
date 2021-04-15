@@ -87,7 +87,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     size_t processedKmerCnt = 0;
     ofstream readClassificationFile;
     readClassificationFile.open(par.filenames[0]+"_ReadClassification_temp.tsv");
-    time_t beforeSearch, afterSearch;
+    time_t beforeSearch, afterSearch, afterAnalyze;
     cout<<"1"<<endl;
     size_t numOfTatalQueryKmerCnt = 0;
     while(processedSeqCnt < numOfSeq){
@@ -110,7 +110,8 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     cout<<"analyse Result"<<endl;
     //analyseResult(ncbiTaxonomy, sequences, matchFileName, queryList);
     analyseResultParallel(ncbiTaxonomy, sequences, matchFileName, numOfSeq, queryList);
-
+    afterAnalyze = time(NULL);
+    cout<<"Time spent for searching: "<<double(afterAnalyze-afterSearch)<<endl;
     writeReadClassification(queryList,numOfSeq,readClassificationFile);
 
     ///TODO split count 고려할 것
