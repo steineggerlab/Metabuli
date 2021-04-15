@@ -140,7 +140,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
 void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt, Query * queryList) {
     bool hasOverflow = false;
-    omp_set_num_threads(64);
+    omp_set_num_threads(ThreadNum);
 #pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, queryInfos, cout, queryList)
     {
         vector<QueryInfo> infos;
@@ -203,7 +203,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 
     ///Devide query k-mer list into blocks for multi threading.
     vector<QueryKmerSplit> splits;
-    int threadNum = 64;
+    int threadNum = ThreadNum;
     size_t querySplitSize = queryKmerCnt / (threadNum - 1);
     uint64_t queryKmerAA;
     bool splitCheck = false;
@@ -236,7 +236,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     size_t numOfcall = 0;
     size_t queryIdx=0;
     size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
-    omp_set_num_threads(64);
+    omp_set_num_threads(ThreadNum);
     while( completedSplitCnt < threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(queryIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, numOfcall, splits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout)
@@ -451,7 +451,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
         matchBlocks[blockIdx].end = matchIdx - 1;
         blockIdx++;
     }
-    omp_set_num_threads(64);
+    omp_set_num_threads(ThreadNum);
 #pragma omp parallel default(none), shared(matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy)
 {
 #pragma omp for schedule(dynamic, 1)
