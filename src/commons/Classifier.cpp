@@ -184,6 +184,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                                       const MmapedData<TargetKmerInfo> & targetInfoList, const MmapedData<DiffIdxSplit> & diffIdxSplits,
                                       Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank,
                                       FILE * matchFile){
+    cout<<"linearSearch start..."<<endl;
     ///Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
     for(size_t checkN = queryKmerCnt - 1; checkN >= 0; checkN--){
         if(queryKmerList[checkN].ADkmer != UINT64_MAX){
@@ -201,6 +202,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
             numOfDiffIdxSplits_use--;
         }
     }
+    cout<<"Filtering out meaningless target splits ... done"<<endl;
 
     ///Devide query k-mer list into blocks for multi threading.
     vector<QueryKmerSplit> splits;
@@ -227,6 +229,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     bool * splitCheckList = (bool *)malloc(sizeof(bool)*threadNum);
     fill_n(splitCheckList, threadNum, false);
     int completedSplitCnt = 0;
+    cout<<"Deviding query k-mer list into blocks for multi threading... done"<<endl;
 
     ///taxonomical ID at the lowest rank? or at the rank of redundancy reduced
     vector<const vector<int> *> taxID;
