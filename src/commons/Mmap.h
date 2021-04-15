@@ -29,7 +29,7 @@ MmapedData<T> mmapData(const char* filename)
     int a;
     a = stat(filename, &stat1);
     mmapedData.fileSize = stat1.st_size;
-    mmapedData.data = static_cast<T*>(mmap(0, stat1.st_size + sizeof(T), PROT_WRITE|PROT_READ, MAP_SHARED, file, 0));
+    mmapedData.data = static_cast<T*>(mmap(0, stat1.st_size + sizeof(T)*2, PROT_WRITE|PROT_READ, MAP_SHARED, file, 0));
     if(a == -1){
         mmapedData.fileSize = 0;
     }
