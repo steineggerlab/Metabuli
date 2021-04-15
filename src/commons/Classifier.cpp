@@ -203,6 +203,9 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
         }
     }
     cout<<"Filtering out meaningless target splits ... done"<<endl;
+    for(int i = 0 ; i < numOfDiffIdxSplits; i++){
+        cout<<diffIdxSplits.data[i].infoIdxOffset<<" "<<diffIdxSplits.data[i].diffIdxOffset<<endl;
+    }
 
     ///Devide query k-mer list into blocks for multi threading.
     vector<QueryKmerSplit> splits;
@@ -226,6 +229,9 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
             }
         }
     }
+    for(int i = 0 ; i < threadNum; i++){
+        cout<<splits[i].diffIdxSplit.infoIdxOffset<<" "<<splits[i].diffIdxSplit.diffIdxOffset<<endl;
+    }
     bool * splitCheckList = (bool *)malloc(sizeof(bool)*threadNum);
     fill_n(splitCheckList, threadNum, false);
     int completedSplitCnt = 0;
@@ -240,6 +246,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     size_t numOfcall = 0;
     size_t queryIdx=0;
     size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
+    cout<<"The number of target k-mers: "<<numOfTargetKmer<<endl;
     omp_set_num_threads(ThreadNum);
     while( completedSplitCnt < threadNum) {
         bool hasOverflow = false;
