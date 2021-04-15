@@ -109,9 +109,9 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     //load matches and analyze
     cout<<"analyse Result"<<endl;
     //analyseResult(ncbiTaxonomy, sequences, matchFileName, queryList);
-    analyseResultParallel(ncbiTaxonomy, sequences, matchFileName, numOfSeq);
+    analyseResultParallel(ncbiTaxonomy, sequences, matchFileName, numOfSeq, queryList);
 
-    writeReadClassification(queryList,readClassificationFile);
+    writeReadClassification(queryList,numOfSeq,readClassificationFile);
 
     ///TODO split count 고려할 것
     cout<<"Sorting the 'queryfile_ReadClassification.tsv' file"<<endl;
@@ -124,7 +124,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     ///TODO: Merge ReportFiles
 
     writeReportFile(par.filenames[0].c_str(), ncbiTaxonomy, numOfSeq);
-    performanceTest(ncbiTaxonomy);
+    performanceTest(ncbiTaxonomy, queryList, numOfSeq);
 
     cout<<"Number of query k-mer                : "<<queryCount<<endl;
     cout<<"Number of total match                : "<<totalMatchCount <<endl;
