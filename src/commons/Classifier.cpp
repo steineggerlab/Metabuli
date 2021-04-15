@@ -914,6 +914,7 @@ void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy, Query * queryList,
         } else {
             classifiedCnt ++;
             queryName = queryList[i].name;
+            cout<<queryName<<endl;
             regex_search(queryName, assacc, regex1);
             if (assacc2taxid.count(assacc[0].str())) {
                 rightAnswer = assacc2taxid[assacc[0].str()];
