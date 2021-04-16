@@ -25,7 +25,7 @@
 #include "LocalParameters.h"
 
 
-#define AminoAcid(x) (size_t)((x) & (~0u & ~16777215u))
+#define AminoAcid(x) (size_t)((x) & (~0 & ~16777215))
 using namespace std;
 
 class Classifier
