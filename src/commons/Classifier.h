@@ -25,7 +25,7 @@
 #include "LocalParameters.h"
 
 
-#define AminoAcid(x) (size_t)(x & (~0 & ~16777215))
+#define AminoAcid(x) (size_t)((x) & (~0u & ~16777215u))
 using namespace std;
 
 class Classifier
@@ -209,4 +209,34 @@ public:
     void performanceTest(NcbiTaxonomy & ncbiTaxonomy, Query * queryList, int numOfquery);
     void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy);
 };
+
+inline uint8_t Classifier::getHammingDistance(uint64_t kmer1, uint64_t kmer2) {
+    uint8_t hammingDist = 0;
+    for(int i = 0; i < 8 ; i++){
+        hammingDist += hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
+        kmer1 >>= 3U;
+        kmer2 >>= 3U;
+    }
+    return hammingDist;
+}
+
+inline uint64_t Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t* targetDiffIdxList, size_t & diffIdxPos){
+    uint16_t fragment;
+    uint16_t check = (0x1u << 15u);
+    uint64_t diffIn64bit = 0;
+
+    fragment = targetDiffIdxList[diffIdxPos];
+    diffIdxPos++;
+    while (!(fragment & check)){
+        diffIn64bit |= fragment;
+        diffIn64bit <<= 15u;
+        fragment = targetDiffIdxList[diffIdxPos];
+        diffIdxPos++;
+    }
+    fragment &= ~check;
+    diffIn64bit |= fragment;
+
+    return diffIn64bit + lookingTarget;
+}
+
 #endif //ADKMER4_SEARCHER_H
