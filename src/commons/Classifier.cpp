@@ -583,6 +583,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     vector<TaxID> taxIdList;
     vector<uint32_t> pos;
     vector<uint8_t> frame;
+    vector<uint8_t> ham;
     TaxID temp;
     for(size_t cs = 0; cs < alignedCoMatches.size(); cs++ ){
         for(size_t k = alignedCoMatches[cs].beginIdx ; k < alignedCoMatches[cs].endIdx + 1; k++ ){
@@ -590,6 +591,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
             taxIdList.push_back(temp);
             pos.push_back(matchList[k].position);
             frame.push_back(matchList[k].frame);
+            ham.push_back(matchList[k].hamming);
             queryList[currentQuery].taxCnt[temp] ++;
         }
     }
@@ -636,7 +638,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     cout<<"# "<<currentQuery<<endl;
     for(size_t i = 0; i < taxIdList.size(); i++){
-        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<endl;
+        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<endl<<;
     }
     cout<<"coverage: "<<coverage<<"  "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
 
