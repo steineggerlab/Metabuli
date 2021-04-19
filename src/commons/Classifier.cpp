@@ -456,7 +456,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
         blockIdx++;
     }
 
-    omp_set_num_threads(ThreadNum);
+    omp_set_num_threads(1);
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList)
 {
 #pragma omp for schedule(dynamic, 1)
@@ -636,7 +636,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     cout<<"# "<<currentQuery<<endl;
     for(size_t i = 0; i < taxIdList.size(); i++){
-        cout<<i<<" "<<frame[i]<<" "<<pos[i]<<" "<<taxIdList[i]<<endl;
+        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<endl;
     }
     cout<<"coverage: "<<coverage<<"  "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
 
