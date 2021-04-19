@@ -197,15 +197,10 @@ private:
 
 public:
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par);
-
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);
-    static uint64_t getNextTargetKmer2(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);
-
     int getNumOfSplits() const;
     Classifier();
     ~Classifier();
-
-
     void performanceTest(NcbiTaxonomy & ncbiTaxonomy, Query * queryList, int numOfquery);
     void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy);
 };

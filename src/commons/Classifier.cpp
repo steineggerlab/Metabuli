@@ -581,11 +581,15 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     ///TODO: how about considering hamming distance here?
     ///Get a lowest common ancestor, and check whether strain taxIDs are existing
     vector<TaxID> taxIdList;
+    vector<uint32_t> pos;
+    vector<uint8_t> frame;
     TaxID temp;
     for(size_t cs = 0; cs < alignedCoMatches.size(); cs++ ){
         for(size_t k = alignedCoMatches[cs].beginIdx ; k < alignedCoMatches[cs].endIdx + 1; k++ ){
             temp = matchList[k].taxID;
             taxIdList.push_back(temp);
+            pos.push_back(matchList[k].position);
+            frame.push_back(matchList[k].frame);
             queryList[currentQuery].taxCnt[temp] ++;
         }
     }
@@ -628,6 +632,13 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
             selectedLCA = strainTaxId;
         }
     }
+
+
+    cout<<"# "<<currentQuery<<endl;
+    for(size_t i = 0; i < taxIdList.size(); i++){
+        cout<<i<<" "<<frame[i]<<" "<<pos[i]<<" "<<taxIdList[i]<<endl;
+    }
+    cout<<"coverage: "<<coverage<<"  "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
 
     ///store classification results
     queryList[currentQuery].isClassified = true;

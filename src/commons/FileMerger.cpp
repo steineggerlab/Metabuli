@@ -48,14 +48,14 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
 
     ///To make differential index splits
     uint64_t AAofTempSplitOffset = UINT64_MAX;
-    size_t sizeOfSplit = numOfKmerBeforeMerge / 1023;
-    size_t offsetList[1024];
+    size_t sizeOfSplit = numOfKmerBeforeMerge / (SplitNum - 1);
+    size_t offsetList[SplitNum];
     int offsetListIdx = 1;
-    for(size_t os = 0; os < 1024; os++){
+    for(size_t os = 0; os < SplitNum; os++){
         offsetList[os] = os * sizeOfSplit;
     }
 
-    DiffIdxSplit splitList[1024];
+    DiffIdxSplit splitList[SplitNum];
     memset(splitList, 0, sizeof(splitList));
     //splitList[0] = {0, 0 ,0};
     int splitListIdx = 1;
@@ -142,7 +142,7 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     cre->flushInfoBuf(infoBuffer, mergedInfoFile, infoBufferIdx);
     cre->flushKmerBuf(diffBuffer, mergedDiffFile, diffBufferIdx);
     fwrite(splitList, sizeof(DiffIdxSplit), 1024, diffIdxSplitFile);
-    for(int i = 0; i < 1024; i++){
+    for(int i = 0; i < SplitNum; i++){
         cout<<splitList[i].ADkmer<< " "<<splitList[i].diffIdxOffset<< " "<<splitList[i].infoIdxOffset<<endl;
     }
     free(diffBuffer);

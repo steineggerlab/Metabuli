@@ -12,6 +12,7 @@
 #include "printBinary.h"
 #include "common.h"
 
+#define SplitNum 4096
 
 using namespace std;
 
