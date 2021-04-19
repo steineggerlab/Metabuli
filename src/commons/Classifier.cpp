@@ -638,7 +638,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     cout<<"# "<<currentQuery<<endl;
     for(size_t i = 0; i < taxIdList.size(); i++){
-        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<endl<<;
+        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<endl;
     }
     cout<<"coverage: "<<coverage<<"  "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
 
