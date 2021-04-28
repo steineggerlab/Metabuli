@@ -526,7 +526,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     ///This routine is for getting consecutive matched k-mer
     ///gapThr decides the maximun gap
     uint8_t currentFrame;
-    int gapThr = 1;
+    int gapThr = 0;
 
     TaxID currentTaxID;
     while(i < end){
@@ -583,7 +583,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
         i++;
     }
 
-    scoreConsecutiveMatches(coMatches, queryLength);
+    //scoreConsecutiveMatches(coMatches, queryLength);
 
     if (coMatches.size() == 0) return 0;
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
