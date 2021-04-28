@@ -72,15 +72,15 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     }
     fclose(taxIdFile);
     taxIdList.pop_back();
-    vector<int> taxIdListAtRank;
-//
-    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtRank, "species");
-    for(int i = 0 ; i < taxIdListAtRank.size(); i++){
-        cout<<i<<" "<<taxIdList[i]<<" "<<taxIdListAtRank[i]<<endl;
-    }
+    vector<int> taxIdListAtSpecies;
+    vector<int> taxIdListAtGenus;
+
+    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtSpecies, "species");
+    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtSpecies, "genus");
+
 
     ///Make files of differential indexing and information of k-mers
-    idxCre.startIndexCreatingParallel(seqFileName,outputFileName,taxIdListAtRank, taxIdList);
+    idxCre.startIndexCreatingParallel(seqFileName,outputFileName, taxIdListAtSpecies, taxIdList);
 
     int numOfSplits = idxCre.getNumOfFlush();
     char suffixedDiffIdxFileName[numOfSplits][100];
@@ -113,7 +113,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     sprintf(mergedInfoFileName, "%s_info", outputFileName);
     sprintf(diffIdxSplitFileName, "%s_split", outputFileName);
     FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName);
-    merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtRank, taxIdList);
+    merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtSpecies, taxIdList);
    // makeDiffIdxLookup(suffixedDiffIdxFileName[0], suffixedInfoFileName[0]);
     cout<<"k-mer DB in: "<<endl;
     cout<<mergedDiffFileName<<" and"<<endl;

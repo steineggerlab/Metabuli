@@ -53,13 +53,18 @@ private:
     };
 
     typedef struct ConsecutiveMatches{
-        ConsecutiveMatches(uint32_t begin, uint32_t end, uint32_t hamming, uint32_t gapCnt, size_t bi, size_t ei) : begin(begin), end(end), hamming(hamming), gapCnt(gapCnt), beginIdx(bi), endIdx(ei) {}
+        ConsecutiveMatches(uint32_t begin, uint32_t end, uint32_t matchCnt_, uint32_t hamming,
+                           uint32_t gapCnt, size_t bi, size_t ei, uint8_t frame_, int score_ = 0)
+            : begin(begin), end(end), matchCnt(matchCnt_), hamming(hamming), gapCnt(gapCnt), beginIdx(bi), endIdx(ei), frame(frame_), score(score_) {}
         uint32_t begin; //start position on query sequence
         uint32_t end; //end position on query sequence
+        uint32_t matchCnt;
         uint32_t hamming; //hamming sum
         uint32_t gapCnt; //gap sum
         size_t beginIdx; //beginning index on matchList
         size_t endIdx; //end index
+        int score;
+        uint8_t frame;
     }ConsecutiveMatches;
 
     struct QueryInfo{
@@ -83,6 +88,7 @@ private:
     struct Match{ //16byte
         uint32_t queryId;
         int taxID;
+        int genusTaxID;
         uint16_t position;
         uint8_t frame;
         uint8_t hamming;
@@ -175,7 +181,7 @@ private:
     uint8_t getHammingDistance(uint64_t kmer1, uint64_t kmer2);
     void linearSearchParallel(QueryKmer * queryKmerList, size_t & queryKmerCnt, const MmapedData<uint16_t> & targetDiffIdxList,
                               const MmapedData<TargetKmerInfo> & targetInfoList, const MmapedData<DiffIdxSplit> & diffIdxSplits,
-                              Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & taxIdListAtRank,
+                              Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & speciesTaxIdList, const vector<TaxID> & genusTaxIdList,
                               FILE * matchFile);
     TaxID match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,
                     size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent);
@@ -183,17 +189,22 @@ private:
     static bool compareConsecutiveMatches(const ConsecutiveMatches & a, const ConsecutiveMatches & b);
     void fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt, Query * queryList);
     TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList);
+    TaxID chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList);
+
     void writeReadClassification(Query * queryList, int queryNum , ofstream & readClassificationFile);
     void writeReportFile(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, const int numOfQuery);
 
-    void analyseResult(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, Query * queryList);
     void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum, Query * queryList);
 
+
+    void analyseResultParallel2(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum, Query * queryList);
+    void scoreConsecutiveMatches(vector<ConsecutiveMatches> & coMatches, size_t queryLength);
     void writeReport(FILE * fp, const NcbiTaxonomy & ncbiTaxonomy, const unordered_map<TaxID, TaxonCounts> & cladeCounts, unsigned long totalReads,TaxID taxID = 0, int depth = 0);
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts>& map, TaxID key);
     void compareDna(uint64_t & query, vector<uint64_t> & targetList, const size_t & startIdx, vector<size_t> & selectedMatches, vector<uint8_t> & selectedHamming);
     void writeMatches(Buffer<Match> & matchBuffer, FILE * matchFile);
     static bool compareForWritingMatches(const Match & a, const Match & b);
+    static bool sortByTaxId(const Match & a, const Match & b);
 
 public:
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par);
