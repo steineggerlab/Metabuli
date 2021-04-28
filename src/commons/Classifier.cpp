@@ -102,7 +102,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     //load matches and analyze
     cout<<"analyse Result"<<endl;
     //analyseResult(ncbiTaxonomy, sequences, matchFileName, queryList);
-    analyseResultParallel(ncbiTaxonomy, sequences, matchFileName, numOfSeq, queryList);
+    analyseResultParallel2(ncbiTaxonomy, sequences, matchFileName, numOfSeq, queryList);
     afterAnalyze = time(NULL);
     cout<<"Time spent for analyzing: "<<double(afterAnalyze-afterSearch)<<endl;
 
