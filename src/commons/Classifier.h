@@ -53,13 +53,13 @@ private:
     };
 
     typedef struct ConsecutiveMatches{
-        ConsecutiveMatches(uint32_t begin, uint32_t end, int matchCnt_, uint32_t hamming,
+        ConsecutiveMatches(uint32_t begin, uint32_t end, int matchCnt_, int hamming,
                            uint32_t gapCnt, size_t bi, size_t ei, uint8_t frame_, int score_ = 0)
             : begin(begin), end(end), matchCnt(matchCnt_), hamming(hamming), gapCnt(gapCnt), beginIdx(bi), endIdx(ei), frame(frame_), score(score_) {}
         uint32_t begin; //start position on query sequence
         uint32_t end; //end position on query sequence
         int matchCnt;
-        uint32_t hamming; //hamming sum
+        int hamming; //hamming sum
         uint32_t gapCnt; //gap sum
         size_t beginIdx; //beginning index on matchList
         size_t endIdx; //end index
