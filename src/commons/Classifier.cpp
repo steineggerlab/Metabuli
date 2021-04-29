@@ -286,8 +286,15 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                         } else{
                             range = selectedMatches.size();
                             for (size_t k = 0; k < range; k++) {
-                                matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[targetInfoList.data[selectedMatches[k]].redundancy]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
-                                                                  genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                                if(targetInfoList.data[selectedMatches[k]].redundancy){
+                                    matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[1]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
+                                                                      genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                                } else{
+                                    matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[0]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
+                                                                      genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                                }
+//                                matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[targetInfoList.data[selectedMatches[k]].redundancy]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
+//                                                                  genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
                                 posToWrite ++;
                             }
                         }
@@ -309,8 +316,15 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                         } else{
                             range = selectedMatches.size();
                             for (size_t k = 0; k < range; k++) {
-                                matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[targetInfoList.data[selectedMatches[k]].redundancy]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
-                                                                  genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                                if(targetInfoList.data[selectedMatches[k]].redundancy){
+                                    matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[1]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
+                                                                      genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                                } else{
+                                    matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[0]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
+                                                                      genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                                }
+//                                matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[targetInfoList.data[selectedMatches[k]].redundancy]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
+//                                                                  genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
                                 posToWrite ++;
                             }
                         }
@@ -348,8 +362,14 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                     } else{
                         range = selectedMatches.size();
                         for (size_t k = 0; k < range; k++) {
-                            matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[targetInfoList.data[selectedMatches[k]].redundancy]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
-                                                              genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                            if(targetInfoList.data[selectedMatches[k]].redundancy){
+                                matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[1]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
+                                                                  genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                            } else{
+                                matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[0]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
+                                                                  genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                            }
+
                             posToWrite ++;
                         }
                     }
