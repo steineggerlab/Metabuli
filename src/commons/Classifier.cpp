@@ -501,8 +501,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     int conCnt = 0;
     uint32_t gapCnt = 0;
     uint32_t hammingSum = 0;
-    uint32_t conBegin = 0;
-    uint32_t conEnd = 0;
+
     size_t beginIdx = 0;
     size_t endIdx = 0;
 
@@ -512,8 +511,9 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     ///gapThr decides the maximun gap
     uint8_t currentFrame;
     int gapThr = 0;
-
     TaxID currentTaxID;
+    uint32_t conBegin = 0;
+    uint32_t conEnd = 0;
     while(i < end){
         currentTaxID = matchList[i].genusTaxID;
         currentFrame = matchList[i].frame;
@@ -534,8 +534,8 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
                     hammingSum += matchList[i].hamming;
                     conEnd = matchList[i].position;
                     endIdx = i;
-                    coMatches.emplace_back(conBegin, conEnd, conCnt, hammingSum, gapCnt, beginIdx, endIdx,
-                                           currentFrame);
+                    if(conBegin != conEnd)
+                        coMatches.emplace_back(conBegin, conEnd, conCnt, hammingSum, gapCnt, beginIdx, endIdx, currentFrame);
                     conCnt = 0;
                     gapCnt = 0;
                     hammingSum = 0;
@@ -548,7 +548,8 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
             hammingSum += matchList[i].hamming;
             conEnd = matchList[i].position;
             endIdx = i;
-            coMatches.emplace_back(conBegin, conEnd, conCnt, hammingSum, gapCnt, beginIdx, endIdx, currentFrame);
+            if(conBegin != conEnd)
+                coMatches.emplace_back(conBegin, conEnd, conCnt, hammingSum, gapCnt, beginIdx, endIdx, currentFrame);
             conCnt = 0;
             gapCnt = 0;
             hammingSum = 0;
