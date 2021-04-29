@@ -390,19 +390,7 @@ bool Classifier::compareForWritingMatches(const Match & a, const Match & b){
     return false;
 }
 
-bool Classifier::sortByTaxId(const Match & a, const Match & b){
-    if (a.queryId < b.queryId) return true;
-    else if (a.queryId == b.queryId) {
-        if(a.genusTaxID < b.genusTaxID) return true;
-        else if(a.genusTaxID == b.genusTaxID) {
-            if (a.frame < b.frame) return true;
-            else if (a.frame == b.frame) {
-                if (a.position < b.position) return true;
-            }
-        }
-    }
-    return false;
-}
+
 
 ///It compares query k-mers to target k-mers. If a query has matches, the matches with the smallest difference are selected.
 
@@ -583,7 +571,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     //scoreConsecutiveMatches(coMatches, queryLength);
 
     if (coMatches.size() == 0) return 0;
-    sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
+    sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches2);
 
     ///Align consecutive matches back to query.
     vector<ConsecutiveMatches> alignedCoMatches;
@@ -991,6 +979,28 @@ bool Classifier::compareConsecutiveMatches(const ConsecutiveMatches & a, const C
         return true;
     }else if((a.end - a.begin) == (b.end- b.begin)){
             return (a.endIdx - a.beginIdx + 1) * 2 / ((a.hamming+1)*(a.gapCnt+1)) > (b.endIdx - b.beginIdx +1) * 2 / ((b.hamming + 1) * (b.gapCnt + 1));
+    }
+    return false;
+}
+
+bool Classifier::compareConsecutiveMatches2(const ConsecutiveMatches & a, const ConsecutiveMatches & b){
+    if(a.matchCnt > b.matchCnt) return true;
+    else if(a.matchCnt == b.matchCnt){
+        if(a.hamming < b.hamming) return true;
+    }
+    return false;
+}
+
+bool Classifier::sortByTaxId(const Match & a, const Match & b){
+    if (a.queryId < b.queryId) return true;
+    else if (a.queryId == b.queryId) {
+        if(a.genusTaxID < b.genusTaxID) return true;
+        else if(a.genusTaxID == b.genusTaxID) {
+            if (a.frame < b.frame) return true;
+            else if (a.frame == b.frame) {
+                if (a.position < b.position) return true;
+            }
+        }
     }
     return false;
 }
