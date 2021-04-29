@@ -573,6 +573,9 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     if (coMatches.size() == 0) return 0;
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches2);
 
+    for(int i3 = 0; i3 < coMatches.size(); i++){
+        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt <<endl;
+    }
     ///Align consecutive matches back to query.
     vector<ConsecutiveMatches> alignedCoMatches;
 
@@ -580,9 +583,10 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     auto alignedBegin = alignedCoMatches.begin();
     int isOverlaped= 0;
     int overlappedIdx = 0;
+
     for(size_t i2 = 1; i2 < coMatches.size(); i2++){
 
-        cout<<coMatches[i2].begin<<" "<<coMatches[i2].end<<endl;
+
         isOverlaped = 0;
         overlappedIdx = 0;
         for(size_t j = 0; j < alignedCoMatches.size(); j++){
