@@ -82,7 +82,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     ///Make files of differential indexing and information of k-mers
     ////idxCre.startIndexCreatingParallel(seqFileName,outputFileName, taxIdListAtSpecies, taxIdList);
 
-    ////int numOfSplits = idxCre.getNumOfFlush();
+    //int numOfSplits = idxCre.getNumOfFlush();
     int numOfSplits = 3;
     char suffixedDiffIdxFileName[numOfSplits][100];
     char suffixedInfoFileName[numOfSplits][100];

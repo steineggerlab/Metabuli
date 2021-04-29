@@ -141,7 +141,7 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
 
     cre->flushInfoBuf(infoBuffer, mergedInfoFile, infoBufferIdx);
     cre->flushKmerBuf(diffBuffer, mergedDiffFile, diffBufferIdx);
-    fwrite(splitList, sizeof(DiffIdxSplit), 1024, diffIdxSplitFile);
+    fwrite(splitList, sizeof(DiffIdxSplit), SplitNum, diffIdxSplitFile);
     for(int i = 0; i < SplitNum; i++){
         cout<<splitList[i].ADkmer<< " "<<splitList[i].diffIdxOffset<< " "<<splitList[i].infoIdxOffset<<endl;
     }
