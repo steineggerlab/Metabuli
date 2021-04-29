@@ -592,6 +592,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
         }
 
         if(1 == isOverlaped){ ///TODO what to do when overlaps
+            cout<<coMatches[i2].begin<<" "<<coMatches[i2].end<<endl;
             continue;
         } else{
             alignedCoMatches.push_back(coMatches[i2]);
