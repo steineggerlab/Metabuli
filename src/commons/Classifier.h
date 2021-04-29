@@ -92,6 +92,7 @@ private:
         uint16_t position;
         uint8_t frame;
         uint8_t hamming;
+        int red; ///TODO remove it later
     };
 
     struct QueryKmerSplit{

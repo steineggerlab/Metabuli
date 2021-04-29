@@ -288,10 +288,10 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                             for (size_t k = 0; k < range; k++) {
                                 if(targetInfoList.data[selectedMatches[k]].redundancy){
                                     matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[1]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
-                                                                      genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                                                                      genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],1};
                                 } else{
                                     matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[0]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
-                                                                      genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                                                                      genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],0};
                                 }
 //                                matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[targetInfoList.data[selectedMatches[k]].redundancy]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
 //                                                                  genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
@@ -318,10 +318,10 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                             for (size_t k = 0; k < range; k++) {
                                 if(targetInfoList.data[selectedMatches[k]].redundancy){
                                     matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[1]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
-                                                                      genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                                                                      genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],1};
                                 } else{
                                     matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[0]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
-                                                                      genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                                                                      genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],0};
                                 }
 //                                matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[targetInfoList.data[selectedMatches[k]].redundancy]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
 //                                                                  genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
@@ -364,10 +364,10 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                         for (size_t k = 0; k < range; k++) {
                             if(targetInfoList.data[selectedMatches[k]].redundancy){
                                 matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[1]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
-                                                                  genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                                                                  genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],1};
                             } else{
                                 matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[0]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
-                                                                  genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k]};
+                                                                  genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],0};
                             }
 
                             posToWrite ++;
@@ -576,6 +576,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     vector<uint32_t> pos;
     vector<uint8_t> frame;
     vector<uint8_t> ham;
+    vector<int> redun;
     TaxID temp;
     for(size_t cs = 0; cs < alignedCoMatches.size(); cs++ ){
         for(size_t k = alignedCoMatches[cs].beginIdx ; k < alignedCoMatches[cs].endIdx + 1; k++ ){
@@ -584,6 +585,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
             pos.push_back(matchList[k].position);
             frame.push_back(matchList[k].frame);
             ham.push_back(matchList[k].hamming);
+            redun.push_back(matchList[k].red);
             queryList[currentQuery].taxCnt[temp] ++;
         }
     }
@@ -630,7 +632,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
 
     cout<<"# "<<currentQuery<<endl;
     for(size_t i = 0; i < taxIdList.size(); i++){
-        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<endl;
+        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
     }
     cout<<"coverage: "<<coverage<<"  "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
 
