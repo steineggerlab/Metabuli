@@ -395,12 +395,9 @@ bool Classifier::sortByTaxId(const Match & a, const Match & b){
     else if (a.queryId == b.queryId) {
         if(a.genusTaxID < b.genusTaxID) return true;
         else if(a.genusTaxID == b.genusTaxID) {
-            if (a.taxID < b.taxID) return true;
-            else if (a.taxID == b.taxID) {
-                if (a.frame < b.frame) return true;
-                else if (a.frame == b.frame) {
-                    if (a.position < b.position) return true;
-                }
+            if (a.frame < b.frame) return true;
+            else if (a.frame == b.frame) {
+                if (a.position < b.position) return true;
             }
         }
     }
