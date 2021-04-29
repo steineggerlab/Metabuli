@@ -516,42 +516,30 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     TaxID currentTaxID;
     while(i < end){
         currentTaxID = matchList[i].genusTaxID;
-        while(currentTaxID == matchList[i+1].genusTaxID && (i < end)){
-            currentFrame = matchList[i].frame;
-            while(currentFrame == matchList[i+1].frame && (i < end)){
-                if (matchList[i + 1].position <= matchList[i].position + (gapThr + 1) * 3) {
-                    if (conCnt == 0) {
-                        conBegin = matchList[i].position;
-                        beginIdx = i;
-                    }
-                    conCnt++;
-                    hammingSum += matchList[i].hamming;
-                    if (matchList[i + 1].position != matchList[i].position) {
-                        gapCnt += (matchList[i + 1].position - matchList[i].position) / 3 - 1;
-                    }
-                } else {
-                    if (conCnt > 1) {
-                        conCnt++;
-                        hammingSum += matchList[i].hamming;
-                        conEnd = matchList[i].position;
-                        endIdx = i;
-                        coMatches.emplace_back(conBegin, conEnd, conCnt, hammingSum, gapCnt, beginIdx, endIdx, currentFrame);
-                        conCnt = 0;
-                        gapCnt = 0;
-                        hammingSum = 0;
-                    }
+        currentFrame = matchList[i].frame;
+        while(currentFrame == matchList[i+1].frame && currentTaxID == matchList[i+1].genusTaxID && (i < end)) {
+            if (matchList[i + 1].position <= matchList[i].position + (gapThr + 1) * 3) {
+                if (conCnt == 0) {
+                    conBegin = matchList[i].position;
+                    beginIdx = i;
                 }
-                i++;
-            }
-            if (conCnt > 1) {
                 conCnt++;
                 hammingSum += matchList[i].hamming;
-                conEnd = matchList[i].position;
-                endIdx = i;
-                coMatches.emplace_back(conBegin, conEnd, conCnt, hammingSum, gapCnt, beginIdx, endIdx, currentFrame);
-                conCnt = 0;
-                gapCnt = 0;
-                hammingSum = 0;
+                if (matchList[i + 1].position != matchList[i].position) {
+                    gapCnt += (matchList[i + 1].position - matchList[i].position) / 3 - 1;
+                }
+            } else {
+                if (conCnt > 1) {
+                    conCnt++;
+                    hammingSum += matchList[i].hamming;
+                    conEnd = matchList[i].position;
+                    endIdx = i;
+                    coMatches.emplace_back(conBegin, conEnd, conCnt, hammingSum, gapCnt, beginIdx, endIdx,
+                                           currentFrame);
+                    conCnt = 0;
+                    gapCnt = 0;
+                    hammingSum = 0;
+                }
             }
             i++;
         }
