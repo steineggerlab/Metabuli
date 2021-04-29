@@ -979,10 +979,7 @@ bool Classifier::compareConsecutiveMatches(const ConsecutiveMatches & a, const C
 }
 
 bool Classifier::compareConsecutiveMatches2(const ConsecutiveMatches & a, const ConsecutiveMatches & b){
-    if(a.matchCnt > b.matchCnt) return true;
-    else if(a.matchCnt == b.matchCnt){
-        if(a.hamming < b.hamming) return true;
-    }
+    if(a.matchCnt - a.hamming > b.matchCnt - b.hamming) return true;
     return false;
 }
 
