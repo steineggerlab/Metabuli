@@ -116,10 +116,7 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
             idxOfMin = smallest(lookingKmers, lookingInfos, taxIdListAtRank, numOfSplitFiles);
         }
 
-
-
-
-        entryInfo.redundancy = (hasSeenOtherStrains > 0);
+        entryInfo.redundancy = (hasSeenOtherStrains > 0 || entryInfo.redundancy);
         getDiffIdx(lastWrittenKmer, entryKmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx);
         lastWrittenKmer = entryKmer;
         writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx);
