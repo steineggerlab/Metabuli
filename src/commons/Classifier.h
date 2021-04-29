@@ -206,6 +206,7 @@ private:
     void writeMatches(Buffer<Match> & matchBuffer, FILE * matchFile);
     static bool compareForWritingMatches(const Match & a, const Match & b);
     static bool sortByTaxId(const Match & a, const Match & b);
+    void findConsecutiveMatches(vector<ConsecutiveMatches> & list, Match * matchList, size_t end, size_t begin);
 
 public:
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par);

@@ -495,76 +495,19 @@ void Classifier::analyseResultParallel2(NcbiTaxonomy & ncbiTaxonomy, vector<Sequ
 ///For a query read, assign the best Taxon, using k-mer matches
 ///문제점 redundancy reduced reference k-mer 임을 고려해야 한다. block을 species level에서 해줘야하지 않나.. 그리고 오버랩도 좀 허용해줘야할껄?
 TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
+
     vector<ConsecutiveMatches> coMatches;
-
-    float coverageThr = 0.3;
-    int conCnt = 0;
-    uint32_t gapCnt = 0;
-    uint32_t hammingSum = 0;
-
-    size_t beginIdx = 0;
-    size_t endIdx = 0;
-
-    size_t i = offset;
-
-    ///This routine is for getting consecutive matched k-mer
-    ///gapThr decides the maximun gap
-    uint8_t currentFrame;
-    int gapThr = 0;
-    TaxID currentTaxID;
-    uint32_t conBegin = 0;
-    uint32_t conEnd = 0;
-    while(i < end){
-        currentTaxID = matchList[i].genusTaxID;
-        currentFrame = matchList[i].frame;
-        while(currentFrame == matchList[i+1].frame && currentTaxID == matchList[i+1].genusTaxID && (i < end)) {
-            if (matchList[i + 1].position <= matchList[i].position + (gapThr + 1) * 3) {
-                if (conCnt == 0) {
-                    conBegin = matchList[i].position;
-                    beginIdx = i;
-                }
-                conCnt++;
-                hammingSum += matchList[i].hamming;
-                if (matchList[i + 1].position != matchList[i].position) {
-                    gapCnt += (matchList[i + 1].position - matchList[i].position) / 3 - 1;
-                }
-            } else {
-                if (conCnt > 0) {
-                    conCnt++;
-                    hammingSum += matchList[i].hamming;
-                    conEnd = matchList[i].position;
-                    endIdx = i;
-                    //if(conBegin != conEnd)
-                        coMatches.emplace_back(conBegin, conEnd, conCnt, hammingSum, gapCnt, beginIdx, endIdx, currentFrame);
-                    conCnt = 0;
-                    gapCnt = 0;
-                    hammingSum = 0;
-                }
-            }
-            i++;
-        }
-        if (conCnt > 0) {
-            conCnt++;
-            hammingSum += matchList[i].hamming;
-            conEnd = matchList[i].position;
-            endIdx = i;
-            //if(conBegin != conEnd)
-                coMatches.emplace_back(conBegin, conEnd, conCnt, hammingSum, gapCnt, beginIdx, endIdx, currentFrame);
-            conCnt = 0;
-            gapCnt = 0;
-            hammingSum = 0;
-        }
-        i++;
-    }
+    findConsecutiveMatches(coMatches, matchList, end, offset);
 
     //scoreConsecutiveMatches(coMatches, queryLength);
 
-    if (coMatches.size() == 0) return 0;
+    if (coMatches.empty()) return 0;
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches2);
 
     for(int i3 = 0; i3 < coMatches.size(); i3++){
         cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt <<endl;
     }
+
     ///Align consecutive matches back to query.
     vector<ConsecutiveMatches> alignedCoMatches;
 
@@ -574,12 +517,10 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     int overlappedIdx = 0;
 
     for(size_t i2 = 1; i2 < coMatches.size(); i2++){
-
-
         isOverlaped = 0;
         overlappedIdx = 0;
         for(size_t j = 0; j < alignedCoMatches.size(); j++){
-            if((alignedCoMatches[j].begin < coMatches[i2].end) && (alignedCoMatches[j].end > coMatches[i2].begin)){ ///TODO check this condition
+            if((alignedCoMatches[j].begin <= coMatches[i2].end) && (alignedCoMatches[j].end >= coMatches[i2].begin)){ ///TODO check this condition
                 isOverlaped = 1;
                 overlappedIdx = j;
                 break;
@@ -594,6 +535,8 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
         }
     }
 
+
+    float coverageThr = 0.3;
     ///Check a query coverage
     int maxNum = queryLength / 3 - kmerLength + 1;
     int matchedNum = 0;
@@ -678,6 +621,66 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     return selectedLCA;
 }
 
+void Classifier::findConsecutiveMatches(vector<ConsecutiveMatches> & coMatches, Match * matchList, size_t end, size_t offset){
+    int conCnt = 0;
+    uint32_t gapCnt = 0;
+    uint32_t hammingSum = 0;
+
+    size_t beginIdx = 0;
+    size_t endIdx = 0;
+
+    size_t i = offset;
+
+    ///This routine is for getting consecutive matched k-mer
+    ///gapThr decides the maximun gap
+    uint8_t currentFrame;
+    int gapThr = 0;
+    TaxID currentTaxID;
+    uint32_t conBegin = 0;
+    uint32_t conEnd = 0;
+    while(i < end){
+        currentTaxID = matchList[i].genusTaxID;
+        currentFrame = matchList[i].frame;
+        while(currentFrame == matchList[i+1].frame && currentTaxID == matchList[i+1].genusTaxID && (i < end)) {
+            if (matchList[i + 1].position <= matchList[i].position + (gapThr + 1) * 3) {
+                if (conCnt == 0) {
+                    conBegin = matchList[i].position;
+                    beginIdx = i;
+                }
+                conCnt++;
+                hammingSum += matchList[i].hamming;
+                if (matchList[i + 1].position != matchList[i].position) {
+                    gapCnt += (matchList[i + 1].position - matchList[i].position) / 3 - 1;
+                }
+            } else {
+                if (conCnt > 0) {
+                    conCnt++;
+                    hammingSum += matchList[i].hamming;
+                    conEnd = matchList[i].position;
+                    endIdx = i;
+                    if(conBegin != conEnd)
+                        coMatches.emplace_back(conBegin, conEnd, conCnt, hammingSum, gapCnt, beginIdx, endIdx, currentFrame);
+                    conCnt = 0;
+                    gapCnt = 0;
+                    hammingSum = 0;
+                }
+            }
+            i++;
+        }
+        if (conCnt > 0) {
+            conCnt++;
+            hammingSum += matchList[i].hamming;
+            conEnd = matchList[i].position;
+            endIdx = i;
+            if(conBegin != conEnd)
+                coMatches.emplace_back(conBegin, conEnd, conCnt, hammingSum, gapCnt, beginIdx, endIdx, currentFrame);
+            conCnt = 0;
+            gapCnt = 0;
+            hammingSum = 0;
+        }
+        i++;
+    }
+}
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
     vector<ConsecutiveMatches> coMatches;
 
