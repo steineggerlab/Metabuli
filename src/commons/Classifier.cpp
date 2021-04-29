@@ -581,6 +581,8 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     int isOverlaped= 0;
     int overlappedIdx = 0;
     for(size_t i2 = 1; i2 < coMatches.size(); i2++){
+
+        cout<<coMatches[i2].begin<<" "<<coMatches[i2].end<<endl;
         isOverlaped = 0;
         overlappedIdx = 0;
         for(size_t j = 0; j < alignedCoMatches.size(); j++){
@@ -592,7 +594,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
         }
 
         if(1 == isOverlaped){ ///TODO what to do when overlaps
-            cout<<coMatches[i2].begin<<" "<<coMatches[i2].end<<endl;
+            cout<<"overlaped"<<coMatches[i2].begin<<" "<<coMatches[i2].end<<endl;
             continue;
         } else{
             alignedCoMatches.push_back(coMatches[i2]);
