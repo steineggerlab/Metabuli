@@ -259,7 +259,7 @@ void FileMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, std::
             idxOfMin = smallest(lookingKmers, lookingInfos, taxListAtRank, numOfSplitFiles);
         }
 
-        lastInfo.redundancy = (hasSeenOtherStrains > 0);
+        lastInfo.redundancy = (hasSeenOtherStrains > 0 || lastInfo.redundancy);
         cre->getDiffIdx(lastWrittenKmer, lastKmer, mergedDiffFile, diffBuffer, diffBufferIdx);
         lastWrittenKmer = lastKmer;
         cre->writeInfo(&lastInfo, mergedInfoFile, infoBuffer, infoBufferIdx);
