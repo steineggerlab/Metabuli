@@ -604,7 +604,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     int coveredLen = 0;
     float coverage;
     for(size_t cm = 0 ; cm < alignedCoMatches.size(); cm ++){
-        matchedNum += (alignedCoMatches[cm].end - alignedCoMatches[cm].begin)/3 + 1;
+        matchedNum += alignedCoMatches[cm].matchCnt;
         coveredLen += alignedCoMatches[cm].end - alignedCoMatches[cm].begin + 24;
     }
     coverage = float(matchedNum) / float(maxNum);
