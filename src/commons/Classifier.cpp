@@ -529,7 +529,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
                     gapCnt += (matchList[i + 1].position - matchList[i].position) / 3 - 1;
                 }
             } else {
-                if (conCnt > 1) {
+                if (conCnt > 0) {
                     conCnt++;
                     hammingSum += matchList[i].hamming;
                     conEnd = matchList[i].position;
@@ -543,7 +543,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
             }
             i++;
         }
-        if (conCnt > 1) {
+        if (conCnt > 0) {
             conCnt++;
             hammingSum += matchList[i].hamming;
             conEnd = matchList[i].position;
