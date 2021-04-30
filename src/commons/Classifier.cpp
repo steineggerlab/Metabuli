@@ -1043,10 +1043,27 @@ TaxID Classifier::match2LCA2(const std::vector<int> & taxIdList, NcbiTaxonomy co
         }
 
         if (it->second.weight > 25){
+//            TaxID currTaxId = it->first;
+//            TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
+//            currRank = NcbiTaxonomy::findRankIndex(node->rank);
+
+
             TaxID currTaxId = it->first;
             TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
-            currRank = NcbiTaxonomy::findRankIndex(node->rank);
-
+            int currMinRank = INT_MAX;
+            TaxID currParentTaxId = node->parentTaxId;
+            while (currParentTaxId != currTaxId) {
+                int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
+                if ((currRankInd > 0) && (currRankInd < currMinRank)) {
+                    currMinRank = currRankInd;
+                    // the rank can only go up on the way to the root, so we can break
+                    break;
+                }
+                // move up:
+                currTaxId = currParentTaxId;
+                node = taxonomy.taxonNode(currParentTaxId, false);
+                currParentTaxId = node->parentTaxId;
+            }
             if((currRank < minRank) || (currRank == minRank && it->second.weight > weightOfMinRank)){
                 minRank = currRank;
                 weightOfMinRank = it->second.weight;
