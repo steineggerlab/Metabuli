@@ -1038,9 +1038,9 @@ TaxID Classifier::match2LCA2(const std::vector<int> & taxIdList, NcbiTaxonomy co
 
     for (auto it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
         // consider only candidates:
-//        if (!(it->second.isCandidate)) {
-//            continue;
-//        }
+        if (!(it->second.isCandidate)) {
+            continue;
+        }
 
         if (it->second.weight > 25){
             TaxID currTaxId = it->first;
