@@ -37,15 +37,5 @@ std::vector<Command> commands = {
           {"targetDiffIdxSplit", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
           {"tmpDir", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
 
-//        {"classify", classify, &localPar.classify, COMMAND_MAIN,
-//         "It extracts k-mers from query sequences, and compares them to the target database",
-//         NULL,
-//         "Jaebeom Kim <jbeom0731@gmail.com>",
-//         "<i:queryFile[.fna]> <i:DB_name with path> <o:output_directory> <tmpDir>",
-//         CITATION_SPACEPHARER,
-//         {{"queryFile", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::flatfile},
-//          {"path and name of diff", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::empty},
-//          {"output directory", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory},
-//          {"tmpDir", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}}
 };
 

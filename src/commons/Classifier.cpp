@@ -467,7 +467,6 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
                                             matchBlocks[i].end, matchList.data, queryList);
     }
 }
-
     for(int i = 0 ; i < seqNum; i++){
         ++ taxCounts[queryList[i].classification];
     }
@@ -518,8 +517,6 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
 
     vector<ConsecutiveMatches> coMatches;
     findConsecutiveMatches(coMatches, matchList, end, offset);
-
-    //scoreConsecutiveMatches(coMatches, queryLength);
 
     if (coMatches.empty()) return 0;
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches2);
@@ -599,7 +596,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     size_t numSeqsAgreeWithSelectedTaxon = 0;
     double selectedPercent = 0;
 
-    TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.8, numAssignedSeqs,
+    TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
                                   numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
                                   selectedPercent);
 
