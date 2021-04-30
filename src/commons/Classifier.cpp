@@ -1194,7 +1194,7 @@ void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy, Query * queryList,
             }
             //cout<<"compareTaxon"<<" "<<i<<endl;
             compareTaxon(classificationResult, rightAnswer, ncbiTaxonomy);
-            cout<<rightAnswer<<" "<<classificationResult<<endl;
+
         }
     }
 
@@ -1215,22 +1215,26 @@ void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy, Query * queryList,
 void Classifier::compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy) { ///target: subspecies or species
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
     string shotRank = shotNode->rank;
-
+    cout<<shot<<" "<<target<<" "<<shotRank<<" ";
     if(NcbiTaxonomy::findRankIndex(shotRank) <= 3){
         //cout<<"subspecies"<<endl;
         if(shot == target){
+            cout<<"O"<<endl;
             subspCnt ++;
-        }
+        } else cout<<"X"<<endl;
+
     } else if(shotRank == "species") {
         //cout<<"species"<<endl;
         if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "species")){
             speciesCnt ++;
-        }
+            cout<<"O"<<endl;
+        }else cout<<"X"<<endl;
     } else if(shotRank == "genus"){
         //cout<<"genus"<<endl;
         if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "genus")){
             genusCnt ++;
-        }
+            cout<<"O"<<endl;
+        } else cout<<"X"<<endl;
     } else if(shotRank == "family"){
         //cout<<"family"<<endl;
         if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "family")) {
