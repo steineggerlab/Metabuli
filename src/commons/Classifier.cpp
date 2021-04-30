@@ -1194,6 +1194,7 @@ void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy, Query * queryList,
             }
             //cout<<"compareTaxon"<<" "<<i<<endl;
             compareTaxon(classificationResult, rightAnswer, ncbiTaxonomy);
+            cout<<rightAnswer<<" "<<classificationResult<<endl;
         }
     }
 
