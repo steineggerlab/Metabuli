@@ -1049,6 +1049,7 @@ TaxID Classifier::match2LCA2(const std::vector<int> & taxIdList, NcbiTaxonomy co
 
             if((currRank < minRank) || (currRank == minRank && it->second.weight > weightOfMinRank)){
                 minRank = currRank;
+                if(currRank == 0) cout<<"FUCK YOU"<<endl;
                 weightOfMinRank = it->second.weight;
                 selectedTaxon = it->first;
             }
