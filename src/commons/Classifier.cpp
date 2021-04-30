@@ -1046,7 +1046,7 @@ TaxID Classifier::match2LCA2(const std::vector<int> & taxIdList, NcbiTaxonomy co
             TaxID currTaxId = it->first;
             TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
             currRank = NcbiTaxonomy::findRankIndex(node->rank);
-            if(currRank == - 1) continue;
+            if(currRank == -1) continue;
             if((currRank < minRank) || (currRank == minRank && it->second.weight > weightOfMinRank)){
                 minRank = currRank;
                 weightOfMinRank = it->second.weight;
