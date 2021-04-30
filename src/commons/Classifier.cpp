@@ -1042,7 +1042,7 @@ TaxID Classifier::match2LCA2(const std::vector<int> & taxIdList, NcbiTaxonomy co
             continue;
         }
 
-        if (it->second.weight > 29){
+        if (it->second.weight > 25){
             TaxID currTaxId = it->first;
             TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
             currRank = NcbiTaxonomy::findRankIndex(node->rank);
