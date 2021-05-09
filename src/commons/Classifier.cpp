@@ -688,7 +688,7 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
 
     genus.push_back(alignedCoMatches);
 }
-void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> chosen){
+void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen){
     int chosenGenusIdx;
     int totalDiffPosCnt;
     int totalMatchCnt;
