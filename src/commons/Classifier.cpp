@@ -528,6 +528,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
         coveredKmerCnt += matchCombi[cm].diffPosCnt;
     }
     coverage = float(coveredKmerCnt) / float(maxNum);
+    cout<<"cov "<<coverage<<endl;
     queryList[currentQuery].coverage = coverage;
 
     ///Get a lowest common ancestor, and check whether strain taxIDs are existing
