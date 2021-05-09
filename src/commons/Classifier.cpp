@@ -609,22 +609,23 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
     uint32_t hammingSum = 0;
     size_t beginIdx = 0;
     size_t endIdx = 0;
-    size_t i = offset;
     uint32_t conBegin = 0;
     uint32_t conEnd = 0;
     uint32_t currentPos;
     uint8_t currentFrame;
     TaxID currentTaxID;
+
+    size_t i = offset;
     while(i < end + 1) {
         currentTaxID = matchList[i].genusTaxID;
         while (currentTaxID == matchList[i].genusTaxID && (i < end)) {
             currentFrame = matchList[i].frame;
-            while (currentFrame == matchList[i].frame && (i < end)){
+            while (currentFrame == matchList[i].frame && currentTaxID == matchList[i].genusTaxID && (i < end)){
                 currentPos = matchList[i].position;
                 hammingSum = 0;
                 conCnt = 0;
                 diffPosCnt = 0;
-                while(matchList[i].position <= currentPos + 3){
+                while(matchList[i].position <= currentPos + 3 && (i < end)){
                     if(conCnt == 0) {
                         conBegin = matchList[i].position;
                         beginIdx = i;
