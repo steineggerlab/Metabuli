@@ -55,12 +55,12 @@ private:
     typedef struct ConsecutiveMatches{
         ConsecutiveMatches(uint32_t begin, uint32_t end, int matchCnt_, int hamming,
                            uint32_t gapCnt, size_t bi, size_t ei, uint8_t frame_, int score_ = 0)
-            : begin(begin), end(end), matchCnt(matchCnt_), hamming(hamming), gapCnt(gapCnt), beginIdx(bi), endIdx(ei), frame(frame_), score(score_) {}
+            : begin(begin), end(end), matchCnt(matchCnt_), hamming(hamming), diffPosCnt(gapCnt), beginIdx(bi), endIdx(ei), frame(frame_), score(score_) {}
         uint32_t begin; //start position on query sequence
         uint32_t end; //end position on query sequence
         int matchCnt;
         int hamming; //hamming sum
-        uint32_t gapCnt; //gap sum
+        uint32_t diffPosCnt; //gap sum
         size_t beginIdx; //beginning index on matchList
         size_t endIdx; //end index
         int score;
@@ -192,6 +192,7 @@ private:
     static bool compareForLinearSearch(const QueryKmer & a, const QueryKmer & b);
     static bool compareConsecutiveMatches(const ConsecutiveMatches & a, const ConsecutiveMatches & b);
     static bool compareConsecutiveMatches2(const ConsecutiveMatches & a, const ConsecutiveMatches & b);
+    static bool compareConsecutiveMatches3(const ConsecutiveMatches & a, const ConsecutiveMatches & b);
     void fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt, Query * queryList);
     TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList);
     TaxID chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList);
@@ -211,7 +212,9 @@ private:
     static bool compareForWritingMatches(const Match & a, const Match & b);
     static bool sortByTaxId(const Match & a, const Match & b);
     void findConsecutiveMatches(vector<ConsecutiveMatches> & list, Match * matchList, size_t end, size_t begin);
-
+    void getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset);
+    void getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus);
+    void getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> choosed);
 public:
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par);
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);

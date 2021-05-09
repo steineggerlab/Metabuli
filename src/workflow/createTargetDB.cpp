@@ -76,7 +76,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     vector<int> taxIdListAtGenus;
 
     ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtSpecies, "species");
-    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtSpecies, "genus");
+    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtGenus, "genus");
 
 
     ///Make files of differential indexing and information of k-mers

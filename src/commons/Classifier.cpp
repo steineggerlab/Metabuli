@@ -514,60 +514,21 @@ void Classifier::analyseResultParallel2(NcbiTaxonomy & ncbiTaxonomy, vector<Sequ
 ///For a query read, assign the best Taxon, using k-mer matches
 ///문제점 redundancy reduced reference k-mer 임을 고려해야 한다. block을 species level에서 해줘야하지 않나.. 그리고 오버랩도 좀 허용해줘야할껄?
 TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
-
-    vector<ConsecutiveMatches> coMatches;
-    findConsecutiveMatches(coMatches, matchList, end, offset);
-
-    if (coMatches.empty()) return 0;
-    sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches2);
-
-    for(int i3 = 0; i3 < coMatches.size(); i3++){
-        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt <<endl;
-    }
-
-    ///Align consecutive matches back to query.
-    vector<ConsecutiveMatches> alignedCoMatches;
-
-    alignedCoMatches.push_back(coMatches[0]);
-    auto alignedBegin = alignedCoMatches.begin();
-    int isOverlaped= 0;
-    int overlappedIdx = 0;
-
-    for(size_t i2 = 1; i2 < coMatches.size(); i2++){
-        isOverlaped = 0;
-        overlappedIdx = 0;
-        for(size_t j = 0; j < alignedCoMatches.size(); j++){
-            if((alignedCoMatches[j].begin <= coMatches[i2].end) && (alignedCoMatches[j].end >= coMatches[i2].begin)){ ///TODO check this condition
-                isOverlaped = 1;
-                overlappedIdx = j;
-                break;
-            }
-        }
-
-        if(1 == isOverlaped){ ///TODO what to do when overlaps
-            cout<<"overlaped"<<coMatches[i2].begin<<" "<<coMatches[i2].end<<endl;
-            continue;
-        } else{
-            alignedCoMatches.push_back(coMatches[i2]);
-        }
-    }
-
+    vector<ConsecutiveMatches> matchCombi;
+    getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset);
+    if (matchCombi.empty()) return 0;
 
     float coverageThr = 0.3;
     ///Check a query coverage
     int maxNum = queryLength / 3 - kmerLength + 1;
-    int matchedNum = 0;
-    int coveredLen = 0;
+    int coveredKmerCnt = 0;
     float coverage;
-    for(size_t cm = 0 ; cm < alignedCoMatches.size(); cm ++){
-        matchedNum += alignedCoMatches[cm].matchCnt;
-        coveredLen += alignedCoMatches[cm].end - alignedCoMatches[cm].begin + 24;
+    for(size_t cm = 0 ; cm < matchCombi.size(); cm ++){
+        coveredKmerCnt += matchCombi[cm].diffPosCnt;
     }
-    coverage = float(matchedNum) / float(maxNum);
+    coverage = float(coveredKmerCnt) / float(maxNum);
     queryList[currentQuery].coverage = coverage;
 
-
-    ///TODO: how about considering hamming distance here?
     ///Get a lowest common ancestor, and check whether strain taxIDs are existing
     vector<TaxID> taxIdList;
     vector<uint32_t> pos;
@@ -575,8 +536,8 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     vector<uint8_t> ham;
     vector<int> redun;
     TaxID temp;
-    for(size_t cs = 0; cs < alignedCoMatches.size(); cs++ ){
-        for(size_t k = alignedCoMatches[cs].beginIdx ; k < alignedCoMatches[cs].endIdx + 1; k++ ){
+    for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
+        for(size_t k = matchCombi[cs].beginIdx ; k < matchCombi[cs].endIdx + 1; k++ ){
             temp = matchList[k].taxID;
             taxIdList.push_back(temp);
             pos.push_back(matchList[k].position);
@@ -602,13 +563,13 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
 
     ///TODO optimize strain specific classification criteria
     ///Strain classification only for high coverage with LCA of species level
-    if(coverage > 0.90 && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
+    if(coverage > 0.75 && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
         int strainCnt = 0;
         unordered_map<TaxID, int> strainMatchCnt;
         TaxID strainTaxId;
 
-        for(size_t cs = 0; cs < alignedCoMatches.size(); cs++ ){
-            for(size_t k = alignedCoMatches[cs].beginIdx ; k < alignedCoMatches[cs].endIdx + 1; k++ ){
+        for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
+            for(size_t k = matchCombi[cs].beginIdx ; k < matchCombi[cs].endIdx + 1; k++ ){
                 temp = matchList[k].taxID;
                 if(selectedLCA != temp && ncbiTaxonomy.IsAncestor(selectedLCA, temp)){
                     if(strainMatchCnt.find(temp) == strainMatchCnt.end()){
@@ -640,9 +601,121 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     return selectedLCA;
 }
 
+void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset){
+    vector<ConsecutiveMatches> coMatches;
+    vector<vector<ConsecutiveMatches>> genus;
+    int conCnt = 0;
+    uint32_t diffPosCnt = 0;
+    uint32_t hammingSum = 0;
+    size_t beginIdx = 0;
+    size_t endIdx = 0;
+    size_t i = offset;
+    uint32_t conBegin = 0;
+    uint32_t conEnd = 0;
+    uint32_t currentPos;
+    uint8_t currentFrame;
+    TaxID currentTaxID;
+    while(i < end + 1) {
+        currentTaxID = matchList[i].genusTaxID;
+        while (currentTaxID == matchList[i].genusTaxID && (i < end)) {
+            currentFrame = matchList[i].frame;
+            while (currentFrame == matchList[i].frame && (i < end)){
+                currentPos = matchList[i].position;
+                hammingSum = 0;
+                conCnt = 0;
+                diffPosCnt = 0;
+                while(matchList[i].position <= currentPos + 3){
+                    if(conCnt == 0) {
+                        conBegin = matchList[i].position;
+                        beginIdx = i;
+                    }
+                    if(matchList[i].position != currentPos) {
+                        diffPosCnt++;
+                        currentPos = matchList[i].position;
+                    }
+                    conCnt ++;
+                    hammingSum += matchList[i].hamming;
+                    i++;
+                }
+                if(diffPosCnt > 1){
+                    coMatches.emplace_back(conBegin, currentPos, conCnt, hammingSum, diffPosCnt, beginIdx, i-1, currentFrame);
+                }
+            }
+        }
+        //choose the best combination of consecutive matches of current genus
+        getMatchCombinationForCurGenus(coMatches, genus);
+        coMatches.empty();
+    }
+    //choose the best combination of consecutive-match among genus for current query
+    getTheBestGenus(genus, chosenMatchCombination);
+}
+void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus){
+    sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches3);
+
+    for(int i3 = 0; i3 < coMatches.size(); i3++){
+        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt <<endl;
+    }
+
+    vector<ConsecutiveMatches> alignedCoMatches;
+    alignedCoMatches.push_back(coMatches[0]);
+    auto alignedBegin = alignedCoMatches.begin();
+    int isOverlaped= 0;
+    int overlappedIdx = 0;
+
+    for(size_t i2 = 1; i2 < coMatches.size(); i2++){
+        isOverlaped = 0;
+        overlappedIdx = 0;
+        for(size_t j = 0; j < alignedCoMatches.size(); j++){
+            if((alignedCoMatches[j].begin <= coMatches[i2].end) && (alignedCoMatches[j].end >= coMatches[i2].begin)){ ///TODO check this condition
+                isOverlaped = 1;
+                overlappedIdx = j;
+                break;
+            }
+        }
+
+        if(1 == isOverlaped){ ///TODO what to do when overlaps
+            cout<<"overlaped"<<coMatches[i2].begin<<" "<<coMatches[i2].end<<endl;
+            continue;
+        } else{
+            alignedCoMatches.push_back(coMatches[i2]);
+        }
+    }
+
+    genus.push_back(alignedCoMatches);
+}
+void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> chosen){
+    int chosenGenusIdx;
+    int totalDiffPosCnt;
+    int totalMatchCnt;
+    int totalHamming;
+    float maxScore = FLT_MIN;
+    float currScore;
+
+    for(size_t i = 0; i < genus.size(); i++){
+        totalDiffPosCnt = 0;
+        totalMatchCnt = 0;
+        totalHamming = 0;
+        for(size_t j = 0; j < genus[i].size(); j++){
+            totalDiffPosCnt += genus[i][j].diffPosCnt;
+            totalMatchCnt += genus[i][j].matchCnt;
+            totalHamming += genus[i][j].hamming;
+        }
+        currScore = totalDiffPosCnt - float(totalHamming)/float(totalMatchCnt);
+        if(currScore > maxScore){
+            chosenGenusIdx = i;
+            maxScore = currScore;
+        }
+    }
+
+    for(size_t i = 0; i < genus[chosenGenusIdx].size(); i++){
+        chosen.push_back(genus[chosenGenusIdx][i]);
+    }
+}
+
+
 void Classifier::findConsecutiveMatches(vector<ConsecutiveMatches> & coMatches, Match * matchList, size_t end, size_t offset){
     int conCnt = 0;
-    uint32_t gapCnt = 0;
+
     uint32_t hammingSum = 0;
 
     size_t beginIdx = 0;
@@ -657,6 +730,7 @@ void Classifier::findConsecutiveMatches(vector<ConsecutiveMatches> & coMatches, 
     TaxID currentTaxID;
     uint32_t conBegin = 0;
     uint32_t conEnd = 0;
+    uint32_t gapCnt = 0;
     while(i < end){
         currentTaxID = matchList[i].genusTaxID;
         currentFrame = matchList[i].frame;
@@ -1073,17 +1147,22 @@ bool Classifier::compareForLinearSearch(const QueryKmer & a, const QueryKmer & b
 bool Classifier::compareConsecutiveMatches(const ConsecutiveMatches & a, const ConsecutiveMatches & b){
     if((a.end - a.begin) > (b.end- b.begin)){
         if((a.end - a.begin) == (b.end - b.begin + 1)){
-            return (a.endIdx - a.beginIdx + 1) * 2 / ((a.hamming+1)*(a.gapCnt+1)) > (b.endIdx - b.beginIdx +1) * 2 / ((b.hamming + 1) * (b.gapCnt + 1));
+            return (a.endIdx - a.beginIdx + 1) * 2 / ((a.hamming+1)*(a.diffPosCnt + 1)) > (b.endIdx - b.beginIdx + 1) * 2 / ((b.hamming + 1) * (b.diffPosCnt + 1));
         }
         return true;
     }else if((a.end - a.begin) == (b.end- b.begin)){
-            return (a.endIdx - a.beginIdx + 1) * 2 / ((a.hamming+1)*(a.gapCnt+1)) > (b.endIdx - b.beginIdx +1) * 2 / ((b.hamming + 1) * (b.gapCnt + 1));
+            return (a.endIdx - a.beginIdx + 1) * 2 / ((a.hamming+1)*(a.diffPosCnt + 1)) > (b.endIdx - b.beginIdx + 1) * 2 / ((b.hamming + 1) * (b.diffPosCnt + 1));
     }
     return false;
 }
 
 bool Classifier::compareConsecutiveMatches2(const ConsecutiveMatches & a, const ConsecutiveMatches & b){
     if(a.matchCnt - a.hamming > b.matchCnt - b.hamming) return true;
+    return false;
+}
+
+bool Classifier::compareConsecutiveMatches3(const ConsecutiveMatches & a, const ConsecutiveMatches & b){
+    if(a.diffPosCnt - a.hamming/a.matchCnt > b.diffPosCnt - b.hamming/b.matchCnt) return true;
     return false;
 }
 
