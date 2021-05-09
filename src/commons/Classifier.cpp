@@ -644,6 +644,7 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
             }
         }
         //choose the best combination of consecutive matches of current genus
+        cout<<"i "<<i<<endl;
         getMatchCombinationForCurGenus(coMatches, genus);
         coMatches.empty();
     }
