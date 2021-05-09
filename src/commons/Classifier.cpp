@@ -551,8 +551,10 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     }
 
     ///No classification for low coverage.
-    if(coverage < coverageThr) return 0;
-
+    if(coverage < coverageThr) {
+        cout<<"too low coverage"<<endl;
+        return 0;
+    }
 
     size_t numAssignedSeqs = 0;
     size_t numUnassignedSeqs = 0;
