@@ -515,6 +515,7 @@ void Classifier::analyseResultParallel2(NcbiTaxonomy & ncbiTaxonomy, vector<Sequ
 ///문제점 redundancy reduced reference k-mer 임을 고려해야 한다. block을 species level에서 해줘야하지 않나.. 그리고 오버랩도 좀 허용해줘야할껄?
 TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
     vector<ConsecutiveMatches> matchCombi;
+    cout<<"hi"<<endl;
     getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset);
     if (matchCombi.empty()) return 0;
 
