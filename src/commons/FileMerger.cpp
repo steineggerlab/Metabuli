@@ -396,7 +396,7 @@ void FileMerger::updateTargetDatabase(std::vector<char*> diffIdxFileNames, std::
 
         hasSeenOtherStrains = 0;
         hasSeenOtherGenus = 0;
-      
+
         while(taxListAtRank[lastInfo.sequenceID] == taxListAtRank[lookingInfos[idxOfMin].sequenceID]){
             if(lastKmer != lookingKmers[idxOfMin]) break;
 
