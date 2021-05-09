@@ -627,7 +627,7 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
                 hammingSum = 0;
                 conCnt = 0;
                 diffPosCnt = 0;
-                while(matchList[i].position <= currentPos + 3 && (i < end + 1)){
+                while(matchList[i].position <= currentPos + 3 && currentFrame == matchList[i].frame && (i < end + 1)){
                     if(conCnt == 0) {
                         conBegin = matchList[i].position;
                         beginIdx = i;
