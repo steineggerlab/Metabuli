@@ -1117,7 +1117,6 @@ TaxID Classifier::match2LCA2(const std::vector<int> & taxIdList, NcbiTaxonomy co
     int weightOfMinRank;
     int currRank;
     TaxID selectedTaxon = 0;
-    bool tieCheck = false;
 
     for (auto it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
         // consider only candidates:
@@ -1130,25 +1129,13 @@ TaxID Classifier::match2LCA2(const std::vector<int> & taxIdList, NcbiTaxonomy co
             TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
             currRank = NcbiTaxonomy::findRankIndex(node->rank);
             if(currRank == -1) continue;
-            if(currRank < minRank){
-                tieCheck = false;
+            if((currRank < minRank) || (currRank == minRank && it->second.weight > weightOfMinRank)){
                 minRank = currRank;
                 weightOfMinRank = it->second.weight;
                 selectedTaxon = it->first;
-//            } else if(currRank == minRank && it->second.weight > weightOfMinRank){
-//                tieCheck = false;
-//                weightOfMinRank = it->second.weight;
-//                selectedTaxon = it->first;
-            } else if(currRank == minRank){// && it->second.weight == weightOfMinRank){
-                tieCheck = true;
             }
         }
         double currPercent = float(it->second.weight) / totalAssignedSeqsWeights;
-    }
-    if(tieCheck){
-        TaxonNode const * child = taxonomy.taxonNode(selectedTaxon, false);
-        TaxonNode const * parent = taxonomy.taxonNode(child->parentTaxId, false);
-        selectedTaxon = taxonomy.findRankIndex(parent->rank);
     }
     return selectedTaxon;
 }

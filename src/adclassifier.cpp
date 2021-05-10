@@ -37,5 +37,14 @@ std::vector<Command> commands = {
           {"targetDiffIdxSplit", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
           {"tmpDir", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
 
+        {"krakenuniqetest", classify, &localPar.classify, COMMAND_MAIN,
+                "It extracts k-mers from query sequences, and compares them to the target database",
+                NULL,
+                "Jaebeom Kim <jbeom0731@gmail.com>",
+                "<i:queryFile> <i:krakenuniq result>",
+                CITATION_SPACEPHARER,
+                {{"queryFile", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::flatfile},
+                        {"krakenuniq_result", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}}
+
 };
 
