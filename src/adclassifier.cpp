@@ -45,7 +45,7 @@ std::vector<Command> commands = {
                 CITATION_SPACEPHARER,
                 {{"queryFile", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::flatfile},
                         {"krakenuniq_result", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-                        "krakenuniq_taxDB", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}}
+                        {"krakenuniq_taxDB", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}}
 
 };
 
