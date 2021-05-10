@@ -1135,11 +1135,11 @@ TaxID Classifier::match2LCA2(const std::vector<int> & taxIdList, NcbiTaxonomy co
                 minRank = currRank;
                 weightOfMinRank = it->second.weight;
                 selectedTaxon = it->first;
-            } else if(currRank == minRank && it->second.weight > weightOfMinRank){
-                tieCheck = false;
-                weightOfMinRank = it->second.weight;
-                selectedTaxon = it->first;
-            } else if(currRank == minRank && it->second.weight == weightOfMinRank){
+//            } else if(currRank == minRank && it->second.weight > weightOfMinRank){
+//                tieCheck = false;
+//                weightOfMinRank = it->second.weight;
+//                selectedTaxon = it->first;
+            } else if(currRank == minRank){// && it->second.weight == weightOfMinRank){
                 tieCheck = true;
             }
         }
