@@ -689,6 +689,10 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     vector<ConsecutiveMatches> alignedCoMatches;
 
     for(size_t i = 0; i < subsets[bestSubset].size(); i++){
+        cout<<subsets[bestSubset][i]<<endl;
+    }
+
+    for(size_t i = 0; i < subsets[bestSubset].size(); i++){
         alignedCoMatches.push_back(coMatches[subsets[bestSubset][i]]);
     }
 
