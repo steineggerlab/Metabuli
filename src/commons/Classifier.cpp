@@ -1146,7 +1146,8 @@ TaxID Classifier::match2LCA2(const std::vector<int> & taxIdList, NcbiTaxonomy co
         double currPercent = float(it->second.weight) / totalAssignedSeqsWeights;
     }
     if(tieCheck){
-        TaxonNode const * parent = taxonomy.taxonNode(selectedTaxon, false);
+        TaxonNode const * child = taxonomy.taxonNode(selectedTaxon, false);
+        TaxonNode const * parent = taxonomy.taxonNode(child->parentTaxId, false);
         selectedTaxon = taxonomy.findRankIndex(parent->rank);
     }
     return selectedTaxon;
