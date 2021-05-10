@@ -13,22 +13,48 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
 
     const string queryFileName = par.filenames[0];
     const string readClassificationFileName = par.filenames[1];
-    //const string krakenTaxId = par.filenames[2];
+    const string krakenTaxDB = par.filenames[2];
+
+    ///Load taxDB of kraken
+    unordered_map<int, int> child2parent;
+    string childString, parentString;
+    int childInt, parentInt;
+    ifstream taxDB;
+    taxDB.open(krakenTaxDB);
+    if(taxDB.is_open()){
+        while(getline(taxDB,childString,'\t')){
+            getline(taxDB, parentString, '\n');
+            childInt = stoi(childString);
+            parentInt = stoi(parentString);
+            if(childInt > 1000000000)
+                child2parent[childInt] = parentInt;
+        }
+    } else{
+        cout<<"Cannot open file for mappig from assemlby accession to tax ID"<<endl;
+    }
+    taxDB.close();
 
     ///read classification
     string classString;
     ifstream readClassification;
     readClassification.open(readClassificationFileName);
     vector<int> classList;
+    int classInt;
     while(getline(readClassification,classString,'\n')){
         cout<<classString<<endl;
-        classList.push_back(stoi(classString));
+        classInt = stoi(classString);
+        if(classInt > 1000000000){
+            classList.push_back(child2parent[classInt]);
+        } else{
+            classList.push_back(classInt);
+        }
+
     }
     cout<<"num of classification: "<< classList.size()<<endl;
     for(int i = 0 ; i<classList.size(); i++){
         cout<<i<< " "<<classList[i]<<endl;
     }
-
+    
     ///Load the mapping file (assacc to taxID)
     const char * mappingFile = "../../gtdb_taxdmp/assacc_to_taxid_gtdb.tsv";
     unordered_map<string, int> assacc2taxid;
