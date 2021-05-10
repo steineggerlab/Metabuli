@@ -21,6 +21,7 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
     readClassification.open(readClassificationFileName);
     vector<int> classList;
     while(getline(readClassification,classString,'\n')){
+        cout<<classString<<endl;
         classList.push_back(stoi(classString));
     }
     cout<<"num of classification: "<< classList.size()<<endl;
