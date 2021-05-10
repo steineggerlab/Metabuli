@@ -760,10 +760,12 @@ float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
             if((subset[i].begin <= subset[j].end) && (subset[i].end >= subset[j].begin)) overlapped = true;
         }
     }
+
     if(overlapped) return FLT_MIN;
 
     for(size_t i = 0; i < subset.size(); i++){
-        score += (subset[i].diffPosCnt - subset[i].hamming);
+        cout<<"hihi"<<endl;
+        score += float(subset[i].diffPosCnt) - float(subset[i].hamming);
     }
     return score;
 }
