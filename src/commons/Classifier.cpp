@@ -747,6 +747,11 @@ void Classifier::getSubsets(vector<int> & subset, vector<vector<int>> & uniqueSu
 
 float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
     cout<<"score"<<endl;
+    for(int i3 = 0; i3 < subset.size(); i3++){
+        cout<< subset[i3].begin << " " << subset[i3].end << " "<< subset[i3].matchCnt <<endl;
+    }
+
+
     float score;
     bool overlapped;
     //give bad score if overlapping
