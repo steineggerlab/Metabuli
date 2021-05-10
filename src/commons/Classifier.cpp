@@ -662,14 +662,25 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     int numOfSubsets = int(pow(2, coMatches.size()) - 1);
 
     vector<int> subset;
-    std::set<vector<int>> subsets;
+    vector<vector<int>> subsets;
+    size_t bestSubset;
+    float bestScore = FLT_MIN;
+    float currentScore = 0;
     getSubsets(subset, subsets, 0, coMatches.size() - 1);
-    for(auto it = subsets.begin(); it != subsets.end(); it++){
-        if(!it->empty()) {
-            for (size_t i = 0; i < it->size(); i++) {
-                cout << it->at(i) << " ";
+
+    vector<ConsecutiveMatches> matchesToScore;
+    for(size_t j = 0; j < subsets.size(); j++){
+        if(!subsets[j].empty()) {
+            for (size_t i = 0; i < subsets[j].size(); i++) {
+                matchesToScore.push_back(coMatches[subsets[j][i]]);
+                cout<<subsets[j][i]<<" ";
             }
-            cout << endl;
+            cout<<endl;
+            currentScore = scoreSubset(matchesToScore);
+            if(currentScore > bestScore){
+                bestScore = currentScore;
+                bestSubset = j;
+            }
         }
     }
     cout<<"here"<<coMatches.size()<<endl;
@@ -709,16 +720,21 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     genus.push_back(alignedCoMatches);
 }
 
-void Classifier::getSubsets(vector<int> & subset, std::set<vector<int>> & uniqueSubset, int k, int n){
+void Classifier::getSubsets(vector<int> & subset, vector<vector<int>> & uniqueSubset, int k, int n){
     cout<<"hi"<<endl;
     if(k == n + 1){
-        uniqueSubset.insert(subset);
+        uniqueSubset.push_back(subset);
     } else{
         subset.push_back(k);
         getSubsets(subset, uniqueSubset, k+1, n);
         subset.pop_back();
         getSubsets(subset, uniqueSubset, k+1, n);
     }
+}
+
+float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
+    float score;
+
 }
 void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen){
     int chosenGenusIdx;
