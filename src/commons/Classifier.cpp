@@ -561,7 +561,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     size_t numSeqsAgreeWithSelectedTaxon = 0;
     double selectedPercent = 0;
 
-    TaxID selectedLCA = match2LCA2(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
+    TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
                                   numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
                                   selectedPercent);
 
