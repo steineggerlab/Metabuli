@@ -561,7 +561,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     size_t numSeqsAgreeWithSelectedTaxon = 0;
     double selectedPercent = 0;
 
-    TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
+    TaxID selectedLCA = match2LCA2(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
                                   numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
                                   selectedPercent);
 
@@ -1117,6 +1117,7 @@ TaxID Classifier::match2LCA2(const std::vector<int> & taxIdList, NcbiTaxonomy co
     int weightOfMinRank;
     int currRank;
     TaxID selectedTaxon = 0;
+    bool tieCheck = false;
 
     for (auto it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
         // consider only candidates:
@@ -1129,14 +1130,24 @@ TaxID Classifier::match2LCA2(const std::vector<int> & taxIdList, NcbiTaxonomy co
             TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
             currRank = NcbiTaxonomy::findRankIndex(node->rank);
             if(currRank == -1) continue;
-            if((currRank < minRank) || (currRank == minRank && it->second.weight > weightOfMinRank)){
+            if(currRank < minRank){
+                tieCheck = false;
                 minRank = currRank;
                 weightOfMinRank = it->second.weight;
                 selectedTaxon = it->first;
+            } else if(currRank == minRank && it->second.weight > weightOfMinRank){
+                tieCheck = false;
+                weightOfMinRank = it->second.weight;
+                selectedTaxon = it->first;
+            } else if(currRank == minRank && it->second.weight == weightOfMinRank){
+                tieCheck = true;
             }
-
         }
         double currPercent = float(it->second.weight) / totalAssignedSeqsWeights;
+    }
+    if(tieCheck){
+        TaxonNode const * parent = taxonomy.taxonNode(selectedTaxon, false);
+        selectedTaxon = taxonomy.findRankIndex(parent->rank);
     }
     return selectedTaxon;
 }
