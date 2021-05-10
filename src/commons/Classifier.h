@@ -217,7 +217,7 @@ private:
     void getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset);
     void getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus);
     void getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & choosed);
-    void getSubsets(vector<int> & subset, set<vector<int>> & uniqueSubset, int k, int n);
+    void getSubsets(vector<int> & subset, std::set<vector<int>> & uniqueSubset, int k, int n);
 public:
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par);
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);
