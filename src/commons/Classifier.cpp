@@ -707,6 +707,7 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
 }
 
 void Classifier::getSubsets(vector<int> & subset, std::set<vector<int>> & uniqueSubset, int k, int n){
+    cout<<"hi"<<endl;
     if(k == n + 1){
         uniqueSubset.insert(subset);
     } else{
