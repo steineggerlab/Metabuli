@@ -686,9 +686,9 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
             }
         }
     }
-    cout<<"bye"<<endl;
-    cout<<bestScore<<endl;
-    cout<<bestSubset<<endl;
+
+    cout<<"bestScore "<<bestScore<<endl;
+    cout<<"bestSubset"<<bestSubset<<endl;
 
     vector<ConsecutiveMatches> alignedCoMatches;
 
