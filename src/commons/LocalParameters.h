@@ -26,6 +26,7 @@ public:
     std::vector<MMseqsParameter*> prepareForTargetDB_GTDB;
     std::vector<MMseqsParameter*> prepareForTargetDB;
     std::vector<MMseqsParameter*> classify;
+    std::vector<MMseqsParameter*> krakenuniq;
 
     PARAMETER(PARAM_GTDB_OR_NCBI)
 

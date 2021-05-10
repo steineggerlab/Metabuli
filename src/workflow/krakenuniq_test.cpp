@@ -42,5 +42,5 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
         cout<<"Cannot open file for mappig from assemlby accession to tax ID"<<endl;
     }
     map.close();
-    
+
 }
