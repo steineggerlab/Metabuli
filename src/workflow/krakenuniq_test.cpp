@@ -13,11 +13,12 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
 
     const string queryFileName = par.filenames[0];
     const string readClassificationFileName = par.filenames[1];
-    const string krakenTaxId = par.filenames[2];
+    //const string krakenTaxId = par.filenames[2];
 
     ///read classification
     string classString;
     ifstream readClassification;
+    readClassification.open(readClassificationFileName);
     vector<int> classList;
     while(getline(readClassification,classString,'\n')){
         classList.push_back(stoi(classString));
