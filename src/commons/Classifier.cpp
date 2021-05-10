@@ -657,10 +657,13 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
     getTheBestGenus(genus, chosenMatchCombination);
 }
 void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus){
-    sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches3);
+   // sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches3);
+
+    for(int i3 = 0; i3 < coMatches.size(); i3++){
+        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt <<endl;
+    }
 
     int numOfSubsets = int(pow(2, coMatches.size()) - 1);
-
     vector<int> subset;
     vector<vector<int>> subsets;
     size_t bestSubset;
@@ -673,9 +676,7 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
         if(!subsets[j].empty()) {
             for (size_t i = 0; i < subsets[j].size(); i++) {
                 matchesToScore.push_back(coMatches[subsets[j][i]]);
-                cout<<subsets[j][i]<<" ";
             }
-            cout<<endl;
             currentScore = scoreSubset(matchesToScore);
             if(currentScore > bestScore){
                 bestScore = currentScore;
@@ -683,45 +684,48 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
             }
         }
     }
-    cout<<"here"<<coMatches.size()<<endl;
-    for(int i3 = 0; i3 < coMatches.size(); i3++){
-        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt <<endl;
-    }
 
     vector<ConsecutiveMatches> alignedCoMatches;
+
+    for(size_t i = 0; i < subsets[bestSubset].size(); i++){
+        alignedCoMatches.push_back(coMatches[subsets[bestSubset][i]]);
+    }
+
+
+
+
 //    for(int i3 = 0; i3 < coMatches.size(); i3++){
 //        alignedCoMatches.push_back(coMatches[i3]);
 //    }
 
-    alignedCoMatches.push_back(coMatches[0]);
-    auto alignedBegin = alignedCoMatches.begin();
-    int isOverlaped= 0;
-    int overlappedIdx = 0;
-
-    for(size_t i2 = 1; i2 < coMatches.size(); i2++){
-        isOverlaped = 0;
-        overlappedIdx = 0;
-        for(size_t j = 0; j < alignedCoMatches.size(); j++){
-            if((alignedCoMatches[j].begin <= coMatches[i2].end) && (alignedCoMatches[j].end >= coMatches[i2].begin)){ ///TODO check this condition
-                isOverlaped = 1;
-                overlappedIdx = j;
-                break;
-            }
-        }
-
-        if(1 == isOverlaped){ ///TODO what to do when overlaps
-            cout<<"overlaped"<<coMatches[i2].begin<<" "<<coMatches[i2].end<<endl;
-            continue;
-        } else{
-            alignedCoMatches.push_back(coMatches[i2]);
-        }
-    }
+//    alignedCoMatches.push_back(coMatches[0]);
+//    auto alignedBegin = alignedCoMatches.begin();
+//    int isOverlaped= 0;
+//    int overlappedIdx = 0;
+//
+//    for(size_t i2 = 1; i2 < coMatches.size(); i2++){
+//        isOverlaped = 0;
+//        overlappedIdx = 0;
+//        for(size_t j = 0; j < alignedCoMatches.size(); j++){
+//            if((alignedCoMatches[j].begin <= coMatches[i2].end) && (alignedCoMatches[j].end >= coMatches[i2].begin)){ ///TODO check this condition
+//                isOverlaped = 1;
+//                overlappedIdx = j;
+//                break;
+//            }
+//        }
+//
+//        if(1 == isOverlaped){ ///TODO what to do when overlaps
+//            cout<<"overlaped"<<coMatches[i2].begin<<" "<<coMatches[i2].end<<endl;
+//            continue;
+//        } else{
+//            alignedCoMatches.push_back(coMatches[i2]);
+//        }
+//    }
 
     genus.push_back(alignedCoMatches);
 }
 
 void Classifier::getSubsets(vector<int> & subset, vector<vector<int>> & uniqueSubset, int k, int n){
-    cout<<"hi"<<endl;
     if(k == n + 1){
         uniqueSubset.push_back(subset);
     } else{
@@ -734,7 +738,19 @@ void Classifier::getSubsets(vector<int> & subset, vector<vector<int>> & uniqueSu
 
 float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
     float score;
+    bool overlapped;
+    //give bad score if overlapping
+    for(size_t i = 0; i + 1 < subset.size(); i++){
+        for(size_t j = i + 1; j < subset.size(); j++){
+            if((subset[i].begin <= subset[j].end) && (subset[i].end >= subset[j].begin)) overlapped = true;
+        }
+    }
+    if(overlapped) return FLT_MIN;
 
+    for(size_t i = 0; i < subset.size(); i++){
+        score += (subset[i].diffPosCnt - subset[i].hamming);
+    }
+    return score;
 }
 void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen){
     int chosenGenusIdx;
