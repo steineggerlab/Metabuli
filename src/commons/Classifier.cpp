@@ -561,7 +561,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     size_t numSeqsAgreeWithSelectedTaxon = 0;
     double selectedPercent = 0;
 
-    TaxID selectedLCA = match2LCA2(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
+    TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
                                   numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
                                   selectedPercent);
 
@@ -665,29 +665,33 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     }
 
     vector<ConsecutiveMatches> alignedCoMatches;
-    alignedCoMatches.push_back(coMatches[0]);
-    auto alignedBegin = alignedCoMatches.begin();
-    int isOverlaped= 0;
-    int overlappedIdx = 0;
-
-    for(size_t i2 = 1; i2 < coMatches.size(); i2++){
-        isOverlaped = 0;
-        overlappedIdx = 0;
-        for(size_t j = 0; j < alignedCoMatches.size(); j++){
-            if((alignedCoMatches[j].begin <= coMatches[i2].end) && (alignedCoMatches[j].end >= coMatches[i2].begin)){ ///TODO check this condition
-                isOverlaped = 1;
-                overlappedIdx = j;
-                break;
-            }
-        }
-
-        if(1 == isOverlaped){ ///TODO what to do when overlaps
-            cout<<"overlaped"<<coMatches[i2].begin<<" "<<coMatches[i2].end<<endl;
-            continue;
-        } else{
-            alignedCoMatches.push_back(coMatches[i2]);
-        }
+    for(int i3 = 0; i3 < coMatches.size(); i3++){
+        alignedCoMatches.push_back(coMatches[i3]);
     }
+
+//    alignedCoMatches.push_back(coMatches[0]);
+//    auto alignedBegin = alignedCoMatches.begin();
+//    int isOverlaped= 0;
+//    int overlappedIdx = 0;
+
+//    for(size_t i2 = 1; i2 < coMatches.size(); i2++){
+//        isOverlaped = 0;
+//        overlappedIdx = 0;
+//        for(size_t j = 0; j < alignedCoMatches.size(); j++){
+//            if((alignedCoMatches[j].begin <= coMatches[i2].end) && (alignedCoMatches[j].end >= coMatches[i2].begin)){ ///TODO check this condition
+//                isOverlaped = 1;
+//                overlappedIdx = j;
+//                break;
+//            }
+//        }
+//
+//        if(1 == isOverlaped){ ///TODO what to do when overlaps
+//            cout<<"overlaped"<<coMatches[i2].begin<<" "<<coMatches[i2].end<<endl;
+//            continue;
+//        } else{
+//            alignedCoMatches.push_back(coMatches[i2]);
+//        }
+//    }
 
     genus.push_back(alignedCoMatches);
 }
