@@ -515,7 +515,7 @@ void Classifier::analyseResultParallel2(NcbiTaxonomy & ncbiTaxonomy, vector<Sequ
 ///문제점 redundancy reduced reference k-mer 임을 고려해야 한다. block을 species level에서 해줘야하지 않나.. 그리고 오버랩도 좀 허용해줘야할껄?
 TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
     vector<ConsecutiveMatches> matchCombi;
-    cout<<"hi"<<endl;
+
     getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset);
     if (matchCombi.empty()) return 0;
 
@@ -659,41 +659,62 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
 void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus){
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches3);
 
+    int numOfSubsets = int(pow(2, coMatches.size()) - 1);
+
+    vector<int> subset;
+    std::set<vector<int>> subsets;
+    getSubsets(subset, subsets, 0, coMatches.size() - 1);
+    for(auto it = subsets.begin(); it != subsets.end(); it++){
+        for(size_t i = 0; i < it->size(); i++ ){
+            cout<<it->at(i)<<endl;
+        }
+    }
     cout<<"here"<<coMatches.size()<<endl;
     for(int i3 = 0; i3 < coMatches.size(); i3++){
         cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt <<endl;
     }
 
     vector<ConsecutiveMatches> alignedCoMatches;
-    for(int i3 = 0; i3 < coMatches.size(); i3++){
-        alignedCoMatches.push_back(coMatches[i3]);
-    }
-
-//    alignedCoMatches.push_back(coMatches[0]);
-//    auto alignedBegin = alignedCoMatches.begin();
-//    int isOverlaped= 0;
-//    int overlappedIdx = 0;
-
-//    for(size_t i2 = 1; i2 < coMatches.size(); i2++){
-//        isOverlaped = 0;
-//        overlappedIdx = 0;
-//        for(size_t j = 0; j < alignedCoMatches.size(); j++){
-//            if((alignedCoMatches[j].begin <= coMatches[i2].end) && (alignedCoMatches[j].end >= coMatches[i2].begin)){ ///TODO check this condition
-//                isOverlaped = 1;
-//                overlappedIdx = j;
-//                break;
-//            }
-//        }
-//
-//        if(1 == isOverlaped){ ///TODO what to do when overlaps
-//            cout<<"overlaped"<<coMatches[i2].begin<<" "<<coMatches[i2].end<<endl;
-//            continue;
-//        } else{
-//            alignedCoMatches.push_back(coMatches[i2]);
-//        }
+//    for(int i3 = 0; i3 < coMatches.size(); i3++){
+//        alignedCoMatches.push_back(coMatches[i3]);
 //    }
 
+    alignedCoMatches.push_back(coMatches[0]);
+    auto alignedBegin = alignedCoMatches.begin();
+    int isOverlaped= 0;
+    int overlappedIdx = 0;
+
+    for(size_t i2 = 1; i2 < coMatches.size(); i2++){
+        isOverlaped = 0;
+        overlappedIdx = 0;
+        for(size_t j = 0; j < alignedCoMatches.size(); j++){
+            if((alignedCoMatches[j].begin <= coMatches[i2].end) && (alignedCoMatches[j].end >= coMatches[i2].begin)){ ///TODO check this condition
+                isOverlaped = 1;
+                overlappedIdx = j;
+                break;
+            }
+        }
+
+        if(1 == isOverlaped){ ///TODO what to do when overlaps
+            cout<<"overlaped"<<coMatches[i2].begin<<" "<<coMatches[i2].end<<endl;
+            continue;
+        } else{
+            alignedCoMatches.push_back(coMatches[i2]);
+        }
+    }
+
     genus.push_back(alignedCoMatches);
+}
+
+void Classifier::getSubsets(vector<int> & subset, std::set<vector<int>> & uniqueSubset, int k, int n){
+    if(k == n + 1){
+        uniqueSubset.insert(subset);
+    } else{
+        subset.push_back(k);
+        getSubsets(subset, uniqueSubset, k+1, n);
+        subset.pop_back();
+        getSubsets(subset, uniqueSubset, k+1, n);
+    }
 }
 void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen){
     int chosenGenusIdx;
