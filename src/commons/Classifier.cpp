@@ -678,6 +678,7 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
                 matchesToScore.push_back(coMatches[subsets[j][i]]);
             }
             currentScore = scoreSubset(matchesToScore);
+            matchesToScore.clear();
             if(currentScore > bestScore){
                 bestScore = currentScore;
                 bestSubset = j;
