@@ -667,7 +667,7 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     vector<int> subset;
     vector<vector<int>> subsets;
     size_t bestSubset;
-    float bestScore = FLT_MIN;
+    float bestScore = -FLT_MAX;
     float currentScore = 0;
     getSubsets(subset, subsets, 0, coMatches.size() - 1);
     cout<<"hi"<<endl;
@@ -761,7 +761,7 @@ float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
         }
     }
 
-    if(overlapped) return FLT_MIN;
+    if(overlapped) return -FLT_MAX;
 
     for(size_t i = 0; i < subset.size(); i++){
         cout<<"hihi"<<endl;
