@@ -6,6 +6,21 @@
 #include "Parameters.h"
 #include "LocalParameters.h"
 
+struct Counts{
+    int classificationCnt;
+    int subspCnt;
+    int spCnt;
+    int genusCnt;
+    int familyCnt;
+    int orderCnt;
+    int classCnt;
+    int phylumCnt;
+};
+
+void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts);
+
+
+
 int krakenuniq_test(int argc, const char **argv, const Command &command){
 
     LocalParameters &par = LocalParameters::getLocalInstance();
@@ -14,6 +29,11 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
     const string queryFileName = par.filenames[0];
     const string readClassificationFileName = par.filenames[1];
     const string krakenTaxDB = par.filenames[2];
+
+    string names = "../../gtdb_taxdmp/names.dmp";
+    string nodes = "../../gtdb_taxdmp/nodes.dmp";
+    string merged = "../../gtdb_taxdmp/merged.dmp";
+    NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
 
     ///Load taxDB of kraken
     unordered_map<int, int> child2parent;
@@ -30,7 +50,7 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
                 child2parent[childInt] = parentInt;
         }
     } else{
-        cout<<"Cannot open file for mappig from assemlby accession to tax ID"<<endl;
+        cout<<"Cannot open taxDB"<<endl;
     }
     taxDB.close();
 
@@ -54,11 +74,10 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
         cout<<i<< " "<<classList[i]<<endl;
     }
 
-    ///Load query file
+    ///Load query file -> name
     regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
     smatch assacc;
     string queryName;
-
     ifstream query;
     query.open(queryFileName);
     string queryLine;
@@ -71,11 +90,6 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
             continue;
         }
     }
-
-    for(int i = 0 ; i<queryNameList.size(); i++){
-        cout<<i<< " "<<queryNameList[i]<<endl;
-    }
-
 
     ///Load the mapping file (assacc to taxID)
     const char * mappingFile = "../../gtdb_taxdmp/assacc_to_taxid_gtdb.tsv";
@@ -93,4 +107,84 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
     }
     map.close();
 
+    ///right answer list
+    vector<int> rightAnswers;
+    for(size_t i = 0; i < queryNameList.size(); i++){
+        if (assacc2taxid.count(queryNameList[i])) {
+            rightAnswers.push_back(assacc2taxid[queryNameList[i]]);
+        } else{
+            cout << queryNameList[i] << " is not in the mapping file" << endl;
+            rightAnswers.push_back(-1);
+            continue;
+        }
+    }
+
+    Counts counts = {0,0,0,0,0,0,0,0};
+    ///score the classification
+    for(size_t i = 0; i < queryNameList.size(); i++){
+        counts.classificationCnt ++;
+        compareTaxon(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
+    }
+
+    cout<<"Number of classification: "<< counts.classificationCnt << endl;
+    cout<<"classified / total =" << float(counts.classificationCnt)/float(queryNameList.size()) << endl;
+    //cout<<"Superkingdom: "<< counts.superCnt <<endl;
+    cout<<"Phylum: "<<counts.phylumCnt<<endl;
+    cout<<"Class: "<<counts.classCnt<<endl;
+    cout<<"Order: "<<counts.orderCnt<<endl;
+    cout<<"Family: "<<counts.familyCnt<<endl;
+    cout<<"Genus: "<< counts.genusCnt << endl;
+    cout<<"Species: "<<counts.spCnt<<endl;
+    cout<<"Subspecies: "<<counts.subspCnt<<endl;
+    cout<<"(subS + S + G) / all classification" << float(counts.genusCnt + counts.spCnt + counts.subspCnt) / float(counts.classificationCnt) <<endl;
+    cout<<"Num of queries: " << queryNameList.size() << endl;
+
+}
+
+void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts& counts) { ///target: subspecies or species
+    const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
+    string shotRank = shotNode->rank;
+    cout<<shot<<" "<<target<<" "<<shotRank<<" ";
+    if(NcbiTaxonomy::findRankIndex(shotRank) <= 3){
+        //cout<<"subspecies"<<endl;
+        if(shot == target){
+            cout<<"O"<<endl;
+            counts.subspCnt ++;
+        } else cout<<"X"<<endl;
+
+    } else if(shotRank == "species") {
+        //cout<<"species"<<endl;
+        if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "species")){
+            counts.spCnt ++;
+            cout<<"O"<<endl;
+        }else cout<<"X"<<endl;
+    } else if(shotRank == "genus"){
+        //cout<<"genus"<<endl;
+        if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "genus")){
+            counts.genusCnt ++;
+            cout<<"O"<<endl;
+        } else cout<<"X"<<endl;
+    } else if(shotRank == "family"){
+        //cout<<"family"<<endl;
+        if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "family")) {
+            counts.familyCnt++;
+        }
+    }else if(shotRank == "order") {
+        //cout<<"order"<<endl;
+        if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "order")) {
+            counts.orderCnt++;
+        }
+    }else if(shotRank == "class") {
+        //cout<<"class"<<endl;
+        if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "class")) {
+            counts.classCnt++;
+        }
+    } else if(shotRank == "phylum") {
+        //cout<<"phylum"<<endl;
+        if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "phylum")) {
+            counts.phylumCnt++;
+        }
+    } else {
+        return;
+    }
 }
