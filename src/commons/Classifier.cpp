@@ -670,7 +670,7 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     float bestScore = FLT_MIN;
     float currentScore = 0;
     getSubsets(subset, subsets, 0, coMatches.size() - 1);
-
+    cout<<"hi"<<endl;
     vector<ConsecutiveMatches> matchesToScore;
     for(size_t j = 0; j < subsets.size(); j++){
         if(!subsets[j].empty()) {
@@ -684,6 +684,7 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
             }
         }
     }
+    cout<<"bye"<<endl;
 
     vector<ConsecutiveMatches> alignedCoMatches;
 
