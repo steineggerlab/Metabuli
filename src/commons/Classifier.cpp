@@ -753,7 +753,7 @@ float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
 
 
     float score;
-    bool overlapped;
+    bool overlapped = false;
     //give bad score if overlapping
     for(size_t i = 0; i + 1 < subset.size(); i++){
         for(size_t j = i + 1; j < subset.size(); j++){
