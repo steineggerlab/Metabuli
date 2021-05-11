@@ -693,11 +693,12 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     }
 
     if(tiedScore == bestScore){
+        cout<<"tie"<<endl;
         for(size_t i = 0; i < subsets[tiedSubset].size(); i++){
             alignedCoMatches.push_back(coMatches[subsets[tiedSubset][i]]);
         }
     }
-        
+
     genus.push_back(alignedCoMatches);
 }
 
