@@ -665,6 +665,8 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     vector<vector<int>> subsets;
     size_t bestSubset;
     float bestScore = -FLT_MAX;
+    float tiedScore;
+    size_t tiedSubset;
     float currentScore = 0;
     getSubsets(subset, subsets, 0, coMatches.size() - 1);
     vector<ConsecutiveMatches> matchesToScore;
@@ -678,6 +680,9 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
             if(currentScore > bestScore){
                 bestScore = currentScore;
                 bestSubset = j;
+            } else if(currentScore == bestScore){
+                tiedScore = bestScore;
+                tiedSubset = j;
             }
         }
     }
@@ -686,6 +691,13 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     for(size_t i = 0; i < subsets[bestSubset].size(); i++){
         alignedCoMatches.push_back(coMatches[subsets[bestSubset][i]]);
     }
+
+    if(tiedScore == bestScore){
+        for(size_t i = 0; i < subsets[tiedSubset].size(); i++){
+            alignedCoMatches.push_back(coMatches[subsets[tiedSubset][i]]);
+        }
+    }
+        
     genus.push_back(alignedCoMatches);
 }
 
