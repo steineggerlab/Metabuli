@@ -657,9 +657,9 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
     getTheBestGenus(genus, chosenMatchCombination);
 }
 void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus){
-//    for(int i3 = 0; i3 < coMatches.size(); i3++){
-//        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt <<endl;
-//    }
+    for(int i3 = 0; i3 < coMatches.size(); i3++){
+        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt <<endl;
+    }
     int numOfSubsets = int(pow(2, coMatches.size()) - 1);
     vector<int> subset;
     vector<vector<int>> subsets;
@@ -703,7 +703,6 @@ void Classifier::getSubsets(vector<int> & subset, vector<vector<int>> & uniqueSu
 float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
     float score;
     bool overlapped = false;
-
     //give bad score if overlapping
     for(size_t i = 0; i + 1 < subset.size(); i++){
         for(size_t j = i + 1; j < subset.size(); j++){
@@ -756,7 +755,6 @@ void Classifier::findConsecutiveMatches(vector<ConsecutiveMatches> & coMatches, 
     size_t beginIdx = 0;
     size_t endIdx = 0;
 
-    size_t i = offset;
 
     ///This routine is for getting consecutive matched k-mer
     ///gapThr decides the maximun gap
@@ -766,6 +764,7 @@ void Classifier::findConsecutiveMatches(vector<ConsecutiveMatches> & coMatches, 
     uint32_t conBegin = 0;
     uint32_t conEnd = 0;
     uint32_t gapCnt = 0;
+    size_t i = offset;
     while(i < end){
         currentTaxID = matchList[i].genusTaxID;
         currentFrame = matchList[i].frame;
@@ -978,19 +977,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     queryList[currentQuery].classification = selectedLCA;
     queryList[currentQuery].coverage = coverage;
     return selectedLCA;
-}
-
-void Classifier::scoreConsecutiveMatches(vector<ConsecutiveMatches> & coMatches, size_t queryLength) {
-    size_t range = coMatches.size();
-    int numOfTotalKmer;
-    int minPerfectMatchCntWithOneAminoAcidChangingMutation = numOfTotalKmer - 8;
-    float coverage;
-    float score;
-    for(size_t i = 0; i < range; ++i){
-        numOfTotalKmer = int(queryLength - size_t(coMatches[i].frame)) / 3 - 7;
-        minPerfectMatchCntWithOneAminoAcidChangingMutation = numOfTotalKmer - 8;
-        coMatches[i].score = float(coMatches[i].matchCnt - coMatches[i].hamming)/float(numOfTotalKmer);
-    }
 }
 
 
