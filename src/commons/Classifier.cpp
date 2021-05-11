@@ -658,7 +658,8 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
 }
 void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus){
     for(int i3 = 0; i3 < coMatches.size(); i3++){
-        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt <<endl;
+        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt;
+        cout<<" "<<coMatches[i3].hamming << " "<<coMatches[i3].frame<<endl;
     }
     int numOfSubsets = int(pow(2, coMatches.size()) - 1);
     vector<int> subset;
