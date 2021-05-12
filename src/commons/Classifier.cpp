@@ -650,16 +650,18 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
             }
         }
         //choose the best combination of consecutive matches of current genus
-        if(!coMatches.empty()) getMatchCombinationForCurGenus(coMatches, genus);
+        if(!coMatches.empty()) getMatchCombinationForCurGenus(coMatches, genus, matchList);
         coMatches.clear();
     }
     //choose the best combination of consecutive-match among genus for current query
     getTheBestGenus(genus, chosenMatchCombination);
 }
-void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus){
+void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList){
     for(int i3 = 0; i3 < coMatches.size(); i3++){
         cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt;
         cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
+        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
+        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
     }
     int numOfSubsets = int(pow(2, coMatches.size()) - 1);
     vector<int> subset;
