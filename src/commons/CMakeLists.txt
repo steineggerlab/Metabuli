@@ -18,4 +18,6 @@ set(commons_source_files
         commons/LocalParameters.h
 		commons/ProdigalWrapper.h
 		commons/ProdigalWrapper.cpp
+		commons/ProdigalWrapper2.h
+		commons/ProdigalWrapper2.cpp
         PARENT_SCOPE)

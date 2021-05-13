@@ -34,7 +34,7 @@ int add_nodes(unsigned char *seq, unsigned char *rseq, int slen, struct _node
   /* Forward strand nodes */
   slmod = slen%3;
   for(i = 0; i < 3; i++) {
-    last[(i+slmod)%3] = slen+i; 
+    last[(i+slmod)%3] = slen+i;
     saw_start[i%3] = 0;
     min_dist[i%3] = MIN_EDGE_GENE;
     if(closed == 0) while(last[(i+slmod)%3]+2 > slen-1) last[(i+slmod)%3]-=3;
@@ -42,51 +42,49 @@ int add_nodes(unsigned char *seq, unsigned char *rseq, int slen, struct _node
   for(i = slen-3; i >= 0; i--) {
     if(is_stop(seq, i, tinf)==1) {
       if(saw_start[i%3] == 1) {
-        if(is_stop(seq, last[i%3], tinf) == 0) {
-            nodes[nn].edge = 1;
-        }
-        nodes[nn].ndx = last[i%3]; 
+        if(is_stop(seq, last[i%3], tinf) == 0) nodes[nn].edge = 1;
+        nodes[nn].ndx = last[i%3];
         nodes[nn].type = STOP;
-        nodes[nn].strand = 1; 
+        nodes[nn].strand = 1;
         nodes[nn++].stop_val = i;
       }
       min_dist[i%3] = MIN_GENE;
-      last[i%3]=i; 
+      last[i%3]=i;
       saw_start[i%3] = 0;
       continue;
     }
     if(last[i%3] >= slen) continue;
-     
+
     if(is_start(seq, i, tinf) == 1 && is_atg(seq, i)==1 && ((last[i%3]-i+3)
             >= min_dist[i%3]) && cross_mask(i, last[i%3], mlist, nm) == 0) {
-      nodes[nn].ndx = i; 
-      nodes[nn].type = ATG; 
+      nodes[nn].ndx = i;
+      nodes[nn].type = ATG;
       saw_start[i%3] = 1;
-      nodes[nn].stop_val = last[i%3]; 
+      nodes[nn].stop_val = last[i%3];
       nodes[nn++].strand = 1;
     }
     else if(is_start(seq, i, tinf) == 1 && is_gtg(seq, i)==1 && ((last[i%3]-i+3)
             >= min_dist[i%3]) && cross_mask(i, last[i%3], mlist, nm) == 0) {
-      nodes[nn].ndx = i; 
-      nodes[nn].type = GTG; 
+      nodes[nn].ndx = i;
+      nodes[nn].type = GTG;
       saw_start[i%3] = 1;
-      nodes[nn].stop_val = last[i%3]; 
+      nodes[nn].stop_val = last[i%3];
       nodes[nn++].strand = 1;
     }
     else if(is_start(seq, i, tinf) == 1 && is_ttg(seq, i)==1 && ((last[i%3]-i+3)
             >= min_dist[i%3]) && cross_mask(i, last[i%3], mlist, nm) == 0) {
-      nodes[nn].ndx = i; 
-      nodes[nn].type = TTG; 
+      nodes[nn].ndx = i;
+      nodes[nn].type = TTG;
       saw_start[i%3] = 1;
-      nodes[nn].stop_val = last[i%3]; 
+      nodes[nn].stop_val = last[i%3];
       nodes[nn++].strand = 1;
     }
     else if(i <= 2 && closed == 0 && ((last[i%3]-i) > MIN_EDGE_GENE) &&
             cross_mask(i, last[i%3], mlist, nm) == 0) {
-      nodes[nn].ndx = i; 
-      nodes[nn].type = ATG; 
+      nodes[nn].ndx = i;
+      nodes[nn].type = ATG;
       saw_start[i%3] = 1;
-      nodes[nn].edge = 1; 
+      nodes[nn].edge = 1;
       nodes[nn].stop_val = last[i%3];
       nodes[nn++].strand = 1;
     }
@@ -94,16 +92,16 @@ int add_nodes(unsigned char *seq, unsigned char *rseq, int slen, struct _node
   for(i = 0; i < 3; i++) {
     if(saw_start[i%3] == 1) {
       if(is_stop(seq, last[i%3], tinf) == 0) nodes[nn].edge = 1;
-      nodes[nn].ndx = last[i%3]; 
+      nodes[nn].ndx = last[i%3];
       nodes[nn].type = STOP;
-      nodes[nn].strand = 1; 
+      nodes[nn].strand = 1;
       nodes[nn++].stop_val = i-6;
     }
   }
 
   /* Reverse strand nodes */
   for(i = 0; i < 3; i++) {
-    last[(i+slmod)%3] = slen+i; 
+    last[(i+slmod)%3] = slen+i;
     saw_start[i%3] = 0;
     min_dist[i%3] = MIN_EDGE_GENE;
     if(closed == 0) while(last[(i+slmod)%3]+2 > slen-1) last[(i+slmod)%3]-=3;
@@ -112,13 +110,13 @@ int add_nodes(unsigned char *seq, unsigned char *rseq, int slen, struct _node
     if(is_stop(rseq, i, tinf)==1) {
       if(saw_start[i%3] == 1) {
         if(is_stop(rseq, last[i%3], tinf) == 0) nodes[nn].edge = 1;
-        nodes[nn].ndx = slen-last[i%3]-1; 
+        nodes[nn].ndx = slen-last[i%3]-1;
         nodes[nn].type = STOP;
-        nodes[nn].strand = -1; 
+        nodes[nn].strand = -1;
         nodes[nn++].stop_val = slen-i-1;
       }
       min_dist[i%3] = MIN_GENE;
-      last[i%3]=i; 
+      last[i%3]=i;
       saw_start[i%3] = 0;
       continue;
     }
@@ -127,36 +125,36 @@ int add_nodes(unsigned char *seq, unsigned char *rseq, int slen, struct _node
     if(is_start(rseq, i, tinf) == 1 && is_atg(rseq, i)==1 && ((last[i%3]-i+3)
        >= min_dist[i%3]) && cross_mask(slen-last[i%3]-1, slen-i-1, mlist, nm) ==
        0) {
-      nodes[nn].ndx = slen - i - 1; 
-      nodes[nn].type = ATG; 
+      nodes[nn].ndx = slen - i - 1;
+      nodes[nn].type = ATG;
       saw_start[i%3] = 1;
-      nodes[nn].stop_val = slen-last[i%3]-1; 
+      nodes[nn].stop_val = slen-last[i%3]-1;
       nodes[nn++].strand = -1;
     }
-    else if(is_start(rseq, i, tinf) == 1 && is_gtg(rseq, i)==1 && 
+    else if(is_start(rseq, i, tinf) == 1 && is_gtg(rseq, i)==1 &&
             ((last[i%3]-i+3) >= min_dist[i%3]) && cross_mask(slen-last[i%3]-1,
             slen-i-1, mlist, nm) == 0) {
-      nodes[nn].ndx = slen - i - 1; 
-      nodes[nn].type = GTG; 
+      nodes[nn].ndx = slen - i - 1;
+      nodes[nn].type = GTG;
       saw_start[i%3] = 1;
-      nodes[nn].stop_val = slen-last[i%3]-1; 
+      nodes[nn].stop_val = slen-last[i%3]-1;
       nodes[nn++].strand = -1;
     }
-    else if(is_start(rseq, i, tinf) == 1 && is_ttg(rseq, i)==1 && 
+    else if(is_start(rseq, i, tinf) == 1 && is_ttg(rseq, i)==1 &&
             ((last[i%3]-i+3) >= min_dist[i%3]) && cross_mask(slen-last[i%3]-1,
             slen-i-1, mlist, nm) == 0) {
-      nodes[nn].ndx = slen - i - 1; 
-      nodes[nn].type = TTG; 
+      nodes[nn].ndx = slen - i - 1;
+      nodes[nn].type = TTG;
       saw_start[i%3] = 1;
-      nodes[nn].stop_val = slen-last[i%3]-1; 
+      nodes[nn].stop_val = slen-last[i%3]-1;
       nodes[nn++].strand = -1;
     }
     else if(i <= 2 && closed == 0 && ((last[i%3]-i) > MIN_EDGE_GENE) &&
             cross_mask(slen-last[i%3]-1, slen-i-1, mlist, nm) == 0) {
-      nodes[nn].ndx = slen - i - 1; 
-      nodes[nn].type = ATG; 
+      nodes[nn].ndx = slen - i - 1;
+      nodes[nn].type = ATG;
       saw_start[i%3] = 1;
-      nodes[nn].edge = 1; 
+      nodes[nn].edge = 1;
       nodes[nn].stop_val = slen-last[i%3]-1;
       nodes[nn++].strand = -1;
     }
@@ -164,9 +162,9 @@ int add_nodes(unsigned char *seq, unsigned char *rseq, int slen, struct _node
   for(i = 0; i < 3; i++) {
     if(saw_start[i%3] == 1) {
       if(is_stop(rseq, last[i%3], tinf) == 0) nodes[nn].edge = 1;
-      nodes[nn].ndx = slen - last[i%3] - 1; 
+      nodes[nn].ndx = slen - last[i%3] - 1;
       nodes[nn].type = STOP;
-      nodes[nn].strand = -1; 
+      nodes[nn].strand = -1;
       nodes[nn++].stop_val = slen-i+5;
     }
   }
@@ -184,11 +182,11 @@ void reset_node_scores(struct _node *nod, int nn) {
     }
     for(j = 0; j < 2; j++) nod[i].rbs[j] = 0;
     nod[i].score = 0.0;
-    nod[i].cscore = 0.0; 
-    nod[i].sscore = 0.0; 
-    nod[i].rscore = 0.0; 
-    nod[i].tscore = 0.0; 
-    nod[i].uscore = 0.0; 
+    nod[i].cscore = 0.0;
+    nod[i].sscore = 0.0;
+    nod[i].rscore = 0.0;
+    nod[i].tscore = 0.0;
+    nod[i].uscore = 0.0;
     nod[i].traceb = -1;
     nod[i].tracef = -1;
     nod[i].ov_mark = -1;
@@ -221,7 +219,7 @@ void record_overlapping_starts(struct _node *nod, int nn, struct _training
         if(j >= nn || nod[j].ndx > nod[i].ndx+2) continue;
         if(nod[j].ndx + MAX_SAM_OVLP < nod[i].ndx) break;
         if(nod[j].strand == 1 && nod[j].type != STOP) {
-          if(nod[j].stop_val <= nod[i].ndx) continue; 
+          if(nod[j].stop_val <= nod[i].ndx) continue;
           if(flag == 0 && nod[i].star_ptr[(nod[j].ndx)%3] == -1)
             nod[i].star_ptr[(nod[j].ndx)%3] = j;
           else if(flag == 1 && (nod[j].cscore + nod[j].sscore +
@@ -239,7 +237,7 @@ void record_overlapping_starts(struct _node *nod, int nn, struct _training
         if(j < 0 || nod[j].ndx < nod[i].ndx-2) continue;
         if(nod[j].ndx - MAX_SAM_OVLP > nod[i].ndx) break;
         if(nod[j].strand == -1 && nod[j].type != STOP) {
-          if(nod[j].stop_val >= nod[i].ndx) continue; 
+          if(nod[j].stop_val >= nod[i].ndx) continue;
           if(flag == 0 && nod[i].star_ptr[(nod[j].ndx)%3] == -1)
             nod[i].star_ptr[(nod[j].ndx)%3] = j;
           else if(flag == 1 && (nod[j].cscore + nod[j].sscore +
@@ -428,7 +426,7 @@ void score_nodes(unsigned char *seq, unsigned char *rseq, int slen,
       }
 
       /* Upstream Score */
-      if(nod[i].strand == 1) 
+      if(nod[i].strand == 1)
         score_upstream_composition(seq, slen, &nod[i], tinf);
       else score_upstream_composition(rseq, slen, &nod[i], tinf);
 
@@ -436,21 +434,21 @@ void score_nodes(unsigned char *seq, unsigned char *rseq, int slen,
       ** Penalize upstream score if choosing this start would stop   **
       ** the gene from running off the edge.                         **
       ****************************************************************/
-      if(closed == 0 && nod[i].ndx <= 2 && nod[i].strand == 1) 
-        nod[i].uscore += EDGE_UPS*tinf->st_wt; 
+      if(closed == 0 && nod[i].ndx <= 2 && nod[i].strand == 1)
+        nod[i].uscore += EDGE_UPS*tinf->st_wt;
       else if(closed == 0 && nod[i].ndx >= slen-3 && nod[i].strand == -1)
-        nod[i].uscore += EDGE_UPS*tinf->st_wt; 
+        nod[i].uscore += EDGE_UPS*tinf->st_wt;
       else if(i < 500 && nod[i].strand == 1) {
         for(j = i-1; j >= 0; j--)
           if(nod[j].edge == 1 && nod[i].stop_val == nod[j].stop_val) {
-            nod[i].uscore += EDGE_UPS*tinf->st_wt; 
+            nod[i].uscore += EDGE_UPS*tinf->st_wt;
             break;
           }
       }
       else if(i >= nn-500 && nod[i].strand == -1) {
         for(j = i+1; j < nn; j++)
           if(nod[j].edge == 1 && nod[i].stop_val == nod[j].stop_val) {
-            nod[i].uscore += EDGE_UPS*tinf->st_wt; 
+            nod[i].uscore += EDGE_UPS*tinf->st_wt;
             break;
           }
       }
@@ -468,19 +466,19 @@ void score_nodes(unsigned char *seq, unsigned char *rseq, int slen,
     }
 
     /* Penalize starts with no stop codon */
-    if(nod[i].edge == 0 && edge_gene == 1) 
+    if(nod[i].edge == 0 && edge_gene == 1)
       nod[i].uscore -= 0.5*EDGE_BONUS*tinf->st_wt;
 
     /* Penalize non-edge genes < 250bp */
     if(edge_gene == 0 && abs(nod[i].ndx-nod[i].stop_val) < 250) {
       negf = 250.0/(float)abs(nod[i].ndx-nod[i].stop_val);
       posf = (float)abs(nod[i].ndx-nod[i].stop_val)/250.0;
-      if(nod[i].rscore < 0) nod[i].rscore *= negf; 
-      if(nod[i].uscore < 0) nod[i].uscore *= negf; 
-      if(nod[i].tscore < 0) nod[i].tscore *= negf; 
-      if(nod[i].rscore > 0) nod[i].rscore *= posf; 
-      if(nod[i].uscore > 0) nod[i].uscore *= posf; 
-      if(nod[i].tscore > 0) nod[i].tscore *= posf; 
+      if(nod[i].rscore < 0) nod[i].rscore *= negf;
+      if(nod[i].uscore < 0) nod[i].uscore *= negf;
+      if(nod[i].tscore < 0) nod[i].tscore *= negf;
+      if(nod[i].rscore > 0) nod[i].rscore *= posf;
+      if(nod[i].uscore > 0) nod[i].uscore *= posf;
+      if(nod[i].tscore > 0) nod[i].tscore *= posf;
     }
 
     /**************************************************************/
@@ -488,11 +486,11 @@ void score_nodes(unsigned char *seq, unsigned char *rseq, int slen,
     /* genes must have a score of 5.0 and be >= 120bp.  High GC   */
     /* genes are also penalized.                                  */
     /**************************************************************/
-    if(is_meta == 1 && slen < 3000 && edge_gene == 0 && 
+    if(is_meta == 1 && slen < 3000 && edge_gene == 0 &&
        (nod[i].cscore < 5.0 || abs(nod[i].ndx-nod[i].stop_val < 120))) {
       nod[i].cscore -= META_PEN*dmax(0, (3000-slen)/2700.0);
     }
- 
+
     /* Base Start Score */
     nod[i].sscore = nod[i].tscore + nod[i].rscore + nod[i].uscore;
 
@@ -510,15 +508,15 @@ void score_nodes(unsigned char *seq, unsigned char *rseq, int slen,
         min_meta_len = sqrt(slen)*5.0;
         if(abs(nod[i].ndx-nod[i].stop_val) >= min_meta_len) {
           if(nod[i].cscore >= 0) nod[i].cscore = -1.0;
-          nod[i].sscore = 0.0; 
-          nod[i].uscore = 0.0; 
+          nod[i].sscore = 0.0;
+          nod[i].uscore = 0.0;
         }
       }
       else nod[i].sscore -= 0.5;
     }
     else if(nod[i].cscore < 5.0 && is_meta == 1 && abs(nod[i].ndx-
             nod[i].stop_val < 120) && nod[i].sscore < 0.0)
-      nod[i].sscore -= tinf->st_wt; 
+      nod[i].sscore -= tinf->st_wt;
   }
 }
 
@@ -797,7 +795,7 @@ void train_starts_sd(unsigned char *seq, unsigned char *rseq, int slen,
           rreal[rbs[fr]] += 1.0;
           treal[type[fr]] += 1.0;
           if(i == 9) count_upstream_composition(seq, slen, 1,
-                      nod[bndx[fr]].ndx, tinf);          
+                      nod[bndx[fr]].ndx, tinf);
         }
         best[fr] = 0.0; bndx[fr] = -1; rbs[fr] = 0; type[fr] = 0;
       }
@@ -832,7 +830,7 @@ void train_starts_sd(unsigned char *seq, unsigned char *rseq, int slen,
           rreal[rbs[fr]] += 1.0;
           treal[type[fr]] += 1.0;
           if(i == 9) count_upstream_composition(rseq, slen, -1,
-                      nod[bndx[fr]].ndx, tinf);          
+                      nod[bndx[fr]].ndx, tinf);
         }
         best[fr] = 0.0; bndx[fr] = -1; rbs[fr] = 0; type[fr] = 0;
       }
@@ -897,20 +895,20 @@ for(i = 0; i < 32; i++) {
           tinf->ups_comp[i][j] = log(tinf->ups_comp[i][j]*2.0/tinf->gc);
       }
       else if(tinf->gc <= 0.1) {
-        if(j == 0 || j == 3) 
+        if(j == 0 || j == 3)
           tinf->ups_comp[i][j] = log(tinf->ups_comp[i][j]*2.0/0.90);
-        else 
+        else
           tinf->ups_comp[i][j] = log(tinf->ups_comp[i][j]*2.0/0.10);
       }
       else {
-        if(j == 0 || j == 3) 
+        if(j == 0 || j == 3)
           tinf->ups_comp[i][j] = log(tinf->ups_comp[i][j]*2.0/0.10);
-        else 
+        else
           tinf->ups_comp[i][j] = log(tinf->ups_comp[i][j]*2.0/0.90);
       }
       if(tinf->ups_comp[i][j] > 4.0) tinf->ups_comp[i][j] = 4.0;
       if(tinf->ups_comp[i][j] < -4.0) tinf->ups_comp[i][j] = -4.0;
-    }     
+    }
   }
 }
 
@@ -927,7 +925,7 @@ sum = 0.0;
 for(i = 0; i < 28; i++) { fprintf(stderr, "%f ", rreal[i]); sum+= rreal[i]; }
 fprintf(stderr, "sum is %f\n", sum);
 fprintf(stderr, "\n\nUPS COMP: ");
-for(i = 0; i < 32; i++) { fprintf(stderr, "%d", i); for(j = 0; j < 4; j++) { fprintf(stderr, "\t%.2f", tinf->ups_comp[i][j]); } fprintf(stderr, "\n"); } 
+for(i = 0; i < 32; i++) { fprintf(stderr, "%d", i); for(j = 0; j < 4; j++) { fprintf(stderr, "\t%.2f", tinf->ups_comp[i][j]); } fprintf(stderr, "\n"); }
 exit(0); */
 }
 
@@ -1004,7 +1002,7 @@ void train_starts_nonsd(unsigned char *seq, unsigned char *rseq, int slen,
           update_motif_counts(mreal, &zreal, seq, rseq, slen, &(nod[bndx[fr]]),
                               stage);
           if(i == 19) count_upstream_composition(seq, slen, 1,
-                      nod[bndx[fr]].ndx, tinf);          
+                      nod[bndx[fr]].ndx, tinf);
         }
         best[fr] = 0.0; bndx[fr] = -1;
       }
@@ -1030,7 +1028,7 @@ void train_starts_nonsd(unsigned char *seq, unsigned char *rseq, int slen,
           update_motif_counts(mreal, &zreal, seq, rseq, slen, &(nod[bndx[fr]]),
                               stage);
           if(i == 19) count_upstream_composition(rseq, slen, -1,
-                      nod[bndx[fr]].ndx, tinf);          
+                      nod[bndx[fr]].ndx, tinf);
         }
         best[fr] = 0.0; bndx[fr] = -1;
       }
@@ -1107,20 +1105,20 @@ for(i = 0; i < 32; i++) {
           tinf->ups_comp[i][j] = log(tinf->ups_comp[i][j]*2.0/tinf->gc);
       }
       else if(tinf->gc <= 0.1) {
-        if(j == 0 || j == 3) 
+        if(j == 0 || j == 3)
           tinf->ups_comp[i][j] = log(tinf->ups_comp[i][j]*2.0/0.90);
-        else 
+        else
           tinf->ups_comp[i][j] = log(tinf->ups_comp[i][j]*2.0/0.10);
       }
       else {
-        if(j == 0 || j == 3) 
+        if(j == 0 || j == 3)
           tinf->ups_comp[i][j] = log(tinf->ups_comp[i][j]*2.0/0.10);
-        else 
+        else
           tinf->ups_comp[i][j] = log(tinf->ups_comp[i][j]*2.0/0.90);
       }
       if(tinf->ups_comp[i][j] > 4.0) tinf->ups_comp[i][j] = 4.0;
       if(tinf->ups_comp[i][j] < -4.0) tinf->ups_comp[i][j] = -4.0;
-    }     
+    }
   }
 }
 
@@ -1152,11 +1150,11 @@ exit(0);
   positions -1 and -2 and -15 to -44.  This will be used to supplement the
   SD (or other) motif finder with additional information.
 *******************************************************************************/
-void count_upstream_composition(unsigned char *seq, int slen, int strand, 
+void count_upstream_composition(unsigned char *seq, int slen, int strand,
                                 int pos, struct _training *tinf) {
   int i, start, count = 0;
-  if(strand == 1) start = pos; 
-  else start = slen-1-pos; 
+  if(strand == 1) start = pos;
+  else start = slen-1-pos;
 
   for(i = 1; i < 45; i++) {
     if(i > 2 && i < 15) continue;
@@ -1164,7 +1162,7 @@ void count_upstream_composition(unsigned char *seq, int slen, int strand,
     count++;
   }
 }
-  
+
 /*******************************************************************************
   For a given start, score the base composition of the upstream region at
   positions -1 and -2 and -15 to -44.  This will be used to supplement the
@@ -1173,8 +1171,8 @@ void count_upstream_composition(unsigned char *seq, int slen, int strand,
 void score_upstream_composition(unsigned char *seq, int slen, struct _node *nod,
                                 struct _training *tinf) {
   int i, start, count = 0;
-  if(nod->strand == 1) start = nod->ndx; 
-  else start = slen-1-nod->ndx; 
+  if(nod->strand == 1) start = nod->ndx;
+  else start = slen-1-nod->ndx;
 
   nod->uscore = 0.0;
   for(i = 1; i < 45; i++) {
@@ -1205,7 +1203,7 @@ void find_best_upstream_motif(struct _training *tinf, unsigned char *seq,
   else { wseq = rseq; start = slen-1-nod->ndx; }
 
   for(i = 3; i >= 0; i--) {
-    for(j = start-18-i; j <= start-6-i; j++) { 
+    for(j = start-18-i; j <= start-6-i; j++) {
       if(j < 0) continue;
       spacer = start-j-i-3;
       if(j <= start-16-i) spacendx = 3;
@@ -1407,7 +1405,7 @@ double intergenic_mod(struct _node *n1, struct _node *n2, struct _training
   done at the user's request.
 *******************************************************************************/
 void write_start_file(FILE *fh, struct _node *nod, int nn, struct _training
-                      *tinf, int sctr, int slen, int is_meta, char *mdesc, 
+                      *tinf, int sctr, int slen, int is_meta, char *mdesc,
                       char *version, char *header) {
   int i, prev_stop = -1, prev_strand = 0, st_type;
   double rbs1, rbs2;
@@ -1432,7 +1430,7 @@ void write_start_file(FILE *fh, struct _node *nod, int nn, struct _training
   sprintf(buffer, "gc_cont=%.2f;transl_table=%d;uses_sd=%d",
           tinf->gc*100.0, tinf->trans_table, tinf->uses_sd);
   strcat(run_data, buffer);
- 
+
   strcpy(sd_string[0], "None");
   strcpy(sd_spacer[0], "None");
   strcpy(sd_string[1], "GGA/GAG/AGG");
@@ -1518,11 +1516,11 @@ void write_start_file(FILE *fh, struct _node *nod, int nn, struct _training
     rbs2 = tinf->rbs_wt[nod[i].rbs[1]]*tinf->st_wt;
     if(tinf->uses_sd == 1) {
       if(rbs1 > rbs2) {
-        fprintf(fh, "%s\t%s\t%.2f\t", sd_string[nod[i].rbs[0]], 
+        fprintf(fh, "%s\t%s\t%.2f\t", sd_string[nod[i].rbs[0]],
                 sd_spacer[nod[i].rbs[0]], nod[i].rscore);
       }
       else {
-        fprintf(fh, "%s\t%s\t%.2f\t", sd_string[nod[i].rbs[1]], 
+        fprintf(fh, "%s\t%s\t%.2f\t", sd_string[nod[i].rbs[1]],
                 sd_spacer[nod[i].rbs[1]], nod[i].rscore);
       }
     }
@@ -1530,18 +1528,18 @@ void write_start_file(FILE *fh, struct _node *nod, int nn, struct _training
       mer_text(qt, nod[i].mot.len, nod[i].mot.ndx);
       if(tinf->no_mot > -0.5 && rbs1 > rbs2 && rbs1 > nod[i].mot.score *
          tinf->st_wt) {
-        fprintf(fh, "%s\t%s\t%.2f\t", sd_string[nod[i].rbs[0]], 
+        fprintf(fh, "%s\t%s\t%.2f\t", sd_string[nod[i].rbs[0]],
                 sd_spacer[nod[i].rbs[0]], nod[i].rscore);
       }
       else if(tinf->no_mot > -0.5 && rbs2 >= rbs1 && rbs2 > nod[i].mot.score *
               tinf->st_wt) {
-        fprintf(fh, "%s\t%s\t%.2f\t", sd_string[nod[i].rbs[1]], 
+        fprintf(fh, "%s\t%s\t%.2f\t", sd_string[nod[i].rbs[1]],
                 sd_spacer[nod[i].rbs[1]], nod[i].rscore);
       }
       else {
-        if(nod[i].mot.len == 0) fprintf(fh, "None\tNone\t%.2f\t", 
+        if(nod[i].mot.len == 0) fprintf(fh, "None\tNone\t%.2f\t",
                                       nod[i].rscore);
-        else fprintf(fh, "%s\t%dbp\t%.2f\t", qt, nod[i].mot.spacer, 
+        else fprintf(fh, "%s\t%dbp\t%.2f\t", qt, nod[i].mot.spacer,
                      nod[i].rscore);
       }
     }

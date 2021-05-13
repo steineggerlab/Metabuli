@@ -1,9 +1,9 @@
 //
 // Created by 김재범 on 2020/11/10.
 //
-#include "ProdigalWrapper.h"
+#include "ProdigalWrapper2.h"
 #include <iostream>
-ProdigalWrapper::~ProdigalWrapper() {
+ProdigalWrapper2::~ProdigalWrapper2() {
     for(size_t i = 0; i < NUM_META; i++){
         delete meta[i].tinf;
     }
@@ -14,7 +14,7 @@ ProdigalWrapper::~ProdigalWrapper() {
     free(nodes);
     free(genes);
 }
-ProdigalWrapper::ProdigalWrapper() {
+ProdigalWrapper2::ProdigalWrapper2() {
     seq = (unsigned char *)malloc(MAX_SEQ/4*sizeof(unsigned char)); // 8 Mb
     rseq = (unsigned char *)malloc(MAX_SEQ/4*sizeof(unsigned char)); // 8 Mb
     useq = (unsigned char *)malloc(MAX_SEQ/8*sizeof(unsigned char)); // 4 Mb
@@ -32,14 +32,14 @@ ProdigalWrapper::ProdigalWrapper() {
     memset(&tinf, 0, sizeof(struct _training));
 
     nn = 0; slen = 0; ipath = 0; ng = 0; nmask = 0;
-    user_tt = 0; is_meta = 0; num_seq = 0; quiet = 0;
+    user_tt = 0; is_meta = 0; num_seq = 0; quiet = 1;
     max_phase = 0; max_score = -100.0;
     train_file = NULL;
     start_file = NULL; trans_file = NULL; nuc_file = NULL;
     start_ptr = stdout; trans_ptr = stdout; nuc_ptr = stdout;
     input_file = NULL; output_file = NULL;
     max_slen = 0;
-    output = 0; closed = 0; do_mask = 0; force_nonsd = 0;
+    output = 0; closed = 1; do_mask = 0; force_nonsd = 0;
 
     tinf.st_wt = 4.35;
     tinf.trans_table = 11;
@@ -51,8 +51,7 @@ ProdigalWrapper::ProdigalWrapper() {
 
 }
 
-void ProdigalWrapper::
-trainASpecies(char * genome){
+void ProdigalWrapper2::trainASpecies(char * genome){
 
     memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
     memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
@@ -60,8 +59,8 @@ trainASpecies(char * genome){
     memset(nodes, 0, nn*sizeof(struct _node));
     memset(&tinf, 0, sizeof(struct _training));
     nn = 0; slen = 0; ipath = 0; nmask = 0;
-    tinf.st_wt = 4.35;
-    tinf.trans_table = 11;
+    cout<<tinf.st_wt<<endl;
+
 
     fprintf(stderr, "Request:  Single Genome, Phase:  Training\n");
     fprintf(stderr, "Reading in the sequence(s) to train...\n");
@@ -176,7 +175,7 @@ trainASpecies(char * genome){
     }
 }
 
-void ProdigalWrapper::trainMeta(char *genome) {
+void ProdigalWrapper2::trainMeta(char *genome) {
 
     memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
     memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
@@ -244,13 +243,13 @@ void ProdigalWrapper::trainMeta(char *genome) {
         }
     }
 }
-void ProdigalWrapper::getPredictedFrames(char * genome){
+void ProdigalWrapper2::getPredictedFrames(char * genome){
 
     memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
     memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
     memset(useq, 0, (slen/8+1)*sizeof(unsigned char));
     memset(nodes, 0, nn*sizeof(struct _node));
-    nn = 0; slen = 0; nmask = 0; ipath=0;
+    nn = 0; slen = 0; nmask = 0;
 
     /* Initialize structure */
     slen = getNextSeq(genome, 0);
@@ -323,7 +322,7 @@ void ProdigalWrapper::getPredictedFrames(char * genome){
      }
 }
 
-int ProdigalWrapper::getNextSeq(char * line, int training) {
+int ProdigalWrapper2::getNextSeq(char * line, int training) {
     int bctr = 0, len = 0;
     int gc_cont = 0, mask_beg = -1;
     size_t lengthOfLine = strlen(line);
@@ -378,7 +377,7 @@ int ProdigalWrapper::getNextSeq(char * line, int training) {
     return len;
 }
 
-int ProdigalWrapper::getNumberOfPredictedGenes(){ return ng; }
+int ProdigalWrapper2::getNumberOfPredictedGenes(){ return ng; }
 
 
 
