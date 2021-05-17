@@ -18,7 +18,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
     const char * folder = par.filenames[0].c_str();
     const char * outputFileName = par.filenames[2].c_str();
-//
+
     string genome_fname;
     string taxIdList_fname;
     string names, nodes, merged;
@@ -83,14 +83,12 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     idxCre.startIndexCreatingParallel(seqFileName,outputFileName, taxIdListAtSpecies, taxIdList);
 
     int numOfSplits = idxCre.getNumOfFlush();
-    //int numOfSplits = 3;
     char suffixedDiffIdxFileName[numOfSplits][100];
     char suffixedInfoFileName[numOfSplits][100];
 
     if(numOfSplits == 1){
         sprintf(suffixedDiffIdxFileName[0], "%s_diffIdx", outputFileName);
         sprintf(suffixedInfoFileName[0], "%s_info", outputFileName);
-//        makeDiffIdxLookup(suffixedDiffIdxFileName[0], suffixedInfoFileName[0]);
         cout<<"k-mer DB in: "<<endl;
         cout<<suffixedDiffIdxFileName[0]<<"and"<<endl;
         cout<<suffixedInfoFileName[0]<<endl;
@@ -115,40 +113,13 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     sprintf(diffIdxSplitFileName, "%s_split", outputFileName);
     FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName);
     merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtSpecies, taxIdList);
-   // makeDiffIdxLookup(suffixedDiffIdxFileName[0], suffixedInfoFileName[0]);
+
+
     cout<<"k-mer DB in: "<<endl;
     cout<<mergedDiffFileName<<" and"<<endl;
     cout<<mergedInfoFileName<<endl;
-
-//    for(int split = 0; split < numOfSplits ; split++){
-//        sprintf(suffixedDiffIdxFileName[split], "%s_%d_diffIdx", outputFileName, split);
-//        sprintf(suffixedInfoFileName[split], "%s_%d_info", outputFileName, split);
-//        diffSplits.push_back(suffixedDiffIdxFileName[split]);
-//        infoSplits.push_back(suffixedInfoFileName[split]);
-//    }
-//    char mergedDiffFileName[100];
-//    char mergedInfoFileName[100];
-//    char diffIdxSplitFileName[100];
-//    sprintf(mergedDiffFileName, "%s_diffIdx_1", outputFileName);
-//    sprintf(mergedInfoFileName, "%s_info_1", outputFileName);
-//    sprintf(diffIdxSplitFileName, "%s_split_1", outputFileName);
-//    FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName);
-//    merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtRank, taxIdList);
-
-
     return 0;
 }
-
-//void makeDiffIdxLookup(char * diffIdxFileName, char * infoFileName){
-//    struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(diffIdxFileName);
-//    targetDiffIdxList.data[targetDiffIdxList.fileSize/sizeof(uint16_t)] = 32768; //1000000000000000
-//    struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(infoFileName);
-//    size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
-//    size_t diffIdxPos = 0;
-//    size_t targetInfoIdx = 0;
-//    size_t currentKmer = Classifier::getNextTargetKmer2(0,targetDiffIdxList.data, diffIdxPos);
-//
-//}
 
 void prepareForCreatingTargetDB(const LocalParameters & par){
     const char * folder = par.filenames[0].c_str();

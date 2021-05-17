@@ -105,12 +105,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     prodigal.trainASpecies(seq->seq.s);
                 }
 
-                ///malloc
                 prodigal.getPredictedFrames(seq->seq.s);
                 vector<PredictedBlock> blocks;
-                //PredictedBlock * blocks = (PredictedBlock*)malloc(((prodigal.getNumberOfPredictedGenes() + 1) * (splits[i].cnt + 1)) * 2 * sizeof(PredictedBlock));
-                numOfBlocks = 0;
 
+                numOfBlocks = 0;
                 ///Getting all the sequence blocks of current split. Each block will be translated later separately.
                 for(size_t p = 0; p < splits[i].cnt; p++ ) {
                     buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), seqs[splits[i].offset + p].length};
@@ -145,6 +143,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                         }
                         start = numOfBlocksList[seqIdx];
                     }
+                    cout<<posToWrite<<endl;
                     checker[i] = true;
                     #pragma omp atomic
                     processedSplitCnt ++;
@@ -152,6 +151,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     ///Withdraw the reservation if the buffer is full.
                     #pragma omp atomic
                     kmerBuffer.startIndexOfReserve -= totalKmerCntForOneTaxID;
+                    cout<<"buffer is full"<<endl;
                     hasOverflow = true;
                 }
                 free(numOfBlocksList);
