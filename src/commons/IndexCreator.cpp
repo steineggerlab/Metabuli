@@ -155,6 +155,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     hasOverflow = true;
                 }
                 free(numOfBlocksList);
+                blocks.clear();
                 //free(blocks);
             }
         }
