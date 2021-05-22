@@ -138,7 +138,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                         kseq_read(seq);
                         size_t end = numOfBlocksList[seqIdx];
                         for(size_t bl = start; bl < end ; bl++){
-                            if(!(seqIterator.translateBlock(seq->seq.s,blocks[bl])){
+                            if(!(seqIterator.translateBlock(seq->seq.s,blocks[bl]))){
                                 cout<<seq->name.s<<endl;
                             }
                             seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].offset + seqIdx, taxIdListAtRank[splits[i].offset + seqIdx]); //splits[i].offset + seqIdx
