@@ -190,11 +190,11 @@ void SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
     size_t blockLength = block.end - block.start + 1;
     aaFrames[0].reserve(blockLength / 3 + 1);
     if(block.strand == 1){
-        for(size_t i = 0; i < blockLength - 2; i = i + 3){
+        for(size_t i = 0; i < blockLength - 4; i = i + 3){
             aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[block.start + i]])][nuc2int(atcg[seq[block.start+i+1]])][nuc2int(atcg[seq[block.start+i+2]])]);
         }
     }else{
-        for(size_t i = 0; i < blockLength - 2; i = i + 3){
+        for(size_t i = 0; i < blockLength - 4; i = i + 3){
             aaFrames[0].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[block.end - i]]])][nuc2int(iRCT[atcg[seq[block.end-i-1]]])][nuc2int(iRCT[atcg[seq[block.end-i-2]]])]);
         }
     }
@@ -354,23 +354,18 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
 
     //for the first frame
     if(genes[0].begin > 23) {
-        blocks.emplace_back(0, genes[0].begin - 1, 1);
+        blocks.emplace_back(0, genes[0].begin + 22, 1);
         blockIdx++;
     }
 
     int frame;
     int rightEnd = 0;
+    bool lastContained;
 
     for (size_t geneIdx = 0 ; geneIdx < numOfGene - 1; geneIdx++) {
-        if(genes[geneIdx].end > genes[geneIdx + 1].end){ //one gene completely includes another gene
-            blocks.emplace_back(genes[geneIdx].begin, genes[geneIdx].end + 21, nodes[genes[geneIdx].start_ndx].strand);
-            geneIdx++;
-            blockIdx++;
-            continue;
-        }
-
+        lastContained = false;
         if(nodes[genes[geneIdx].start_ndx].strand == 1){ //forward
-            blocks.emplace_back(genes[geneIdx].begin, genes[geneIdx + 1].begin + 20, nodes[genes[geneIdx].start_ndx].strand);
+            blocks.emplace_back(genes[geneIdx].begin, genes[geneIdx + 1].begin + 22, nodes[genes[geneIdx].start_ndx].strand);
             blockIdx ++;
         } else { // reverse
             frame = genes[geneIdx].end % 3;
@@ -381,10 +376,19 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
             blocks.emplace_back(genes[geneIdx].begin, rightEnd + 21, nodes[genes[geneIdx].start_ndx].strand);
             blockIdx++;
         }
+
+        if(genes[geneIdx].end >= genes[geneIdx + 1].end){ //one gene completely includes another gene
+            //blocks.emplace_back(genes[geneIdx].begin, genes[geneIdx].end + 21, nodes[genes[geneIdx].start_ndx].strand);
+            geneIdx++;
+            lastContained = true;
+            //blockIdx++;
+            //continue;
+        }
     }
 
+    if(lastContained) return;
     //For the last block
-    if(nodes[genes[numOfGene - 1].start_ndx].strand == 1){ //forward
+    if(nodes[genes[numOfGene-1].start_ndx].strand == 1){ //forward
         blocks.emplace_back(genes[numOfGene - 1].begin, length -1, nodes[genes[numOfGene-1].start_ndx].strand);
         blockIdx ++;
     }else{ // reverse
