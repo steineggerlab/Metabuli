@@ -143,7 +143,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                         }
                         start = numOfBlocksList[seqIdx];
                     }
-                    cout<<posToWrite<<endl;
                     checker[i] = true;
                     #pragma omp atomic
                     processedSplitCnt ++;

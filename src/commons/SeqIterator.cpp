@@ -188,6 +188,7 @@ void SeqIterator::addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int fo
 void SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
     aaFrames[0].clear();
     size_t blockLength = block.end - block.start + 1;
+    cout<<"L: "<<blockLength<<endl;
     aaFrames[0].reserve(blockLength / 3 + 1);
     if(block.strand == 1){
         for(size_t i = 0; i < blockLength - 4; i = i + 3){
