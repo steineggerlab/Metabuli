@@ -156,7 +156,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                 }
                 free(numOfBlocksList);
                 blocks.clear();
-                //free(blocks);
             }
         }
     }

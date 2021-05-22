@@ -39,7 +39,7 @@ ProdigalWrapper::ProdigalWrapper() {
     start_ptr = stdout; trans_ptr = stdout; nuc_ptr = stdout;
     input_file = NULL; output_file = NULL;
     max_slen = 0;
-    output = 0; closed = 0; do_mask = 0; force_nonsd = 0;
+    output = 0; closed = 1; do_mask = 0; force_nonsd = 0;
 
     tinf.st_wt = 4.35;
     tinf.trans_table = 11;
