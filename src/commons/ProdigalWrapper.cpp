@@ -86,17 +86,17 @@ trainASpecies(char * genome){
         fprintf(stderr, "-p meta option.\n\n");
     }
     rcom_seq(seq, rseq, useq, slen);
-    if(quiet == 0) {
-        fprintf(stderr, "%d bp seq created, %.2f pct GC\n", slen, tinf.gc*100.0);
-    }
+//    if(quiet == 0) {
+//        fprintf(stderr, "%d bp seq created, %.2f pct GC\n", slen, tinf.gc*100.0);
+//    }
 
     /***********************************************************************
       Find all the potential starts and stops, sort them, and create a
       comprehensive list of nodes for dynamic programming.
     ***********************************************************************/
-    if(quiet == 0) {
-        fprintf(stderr, "Locating all potential starts and stops...");
-    }
+//    if(quiet == 0) {
+//        fprintf(stderr, "Locating all potential starts and stops...");
+//    }
     if(slen > max_slen && slen > STT_NOD*8) {
         nodes = (struct _node *)realloc(nodes, (int)(slen/8)*sizeof(struct _node));
         if(nodes == NULL) {
@@ -107,28 +107,28 @@ trainASpecies(char * genome){
     }
     nn = add_nodes(seq, rseq, slen, nodes, closed, mlist, nmask, &tinf);
     qsort(nodes, nn, sizeof(struct _node), &compare_nodes);
-    if(quiet == 0) {
-        fprintf(stderr, "%d nodes\n", nn);
-    }
+//    if(quiet == 0) {
+//        fprintf(stderr, "%d nodes\n", nn);
+//    }
 
     /***********************************************************************
       Scan all the ORFS looking for a potential GC bias in a particular
       codon position.  This information will be used to acquire a good
       initial set of genes.
     ***********************************************************************/
-    if(quiet == 0) {
-        fprintf(stderr, "Looking for GC bias in different frames...");
-    }
+//    if(quiet == 0) {
+//        fprintf(stderr, "Looking for GC bias in different frames...");
+//    }
     gc_frame = calc_most_gc_frame(seq, slen);
     if(gc_frame == NULL) {
         fprintf(stderr, "Malloc failed on gc frame plot\n\n");
         exit(11);
     }
     record_gc_bias(gc_frame, nodes, nn, &tinf);
-    if(quiet == 0) {
-        fprintf(stderr, "frame bias scores: %.2f %.2f %.2f\n", tinf.bias[0],
-                tinf.bias[1], tinf.bias[2]);
-    }
+//    if(quiet == 0) {
+//        fprintf(stderr, "frame bias scores: %.2f %.2f %.2f\n", tinf.bias[0],
+//                tinf.bias[1], tinf.bias[2]);
+//    }
     free(gc_frame);
 
     /***********************************************************************
@@ -136,23 +136,23 @@ trainASpecies(char * genome){
       bias used as a scoring function.  This will get an initial set of
       genes to train on.
     ***********************************************************************/
-    if(quiet == 0) {
-        fprintf(stderr, "Building initial set of genes to train from...");
-    }
+//    if(quiet == 0) {
+//        fprintf(stderr, "Building initial set of genes to train from...");
+//    }
     record_overlapping_starts(nodes, nn, &tinf, 0);
 
     ipath = dprog(nodes, nn, &tinf, 0);
-    if(quiet == 0) {
-        fprintf(stderr, "done!\n");
-    }
+//    if(quiet == 0) {
+//        fprintf(stderr, "done!\n");
+//    }
 
     /***********************************************************************
       Gather dicodon statistics for the training set.  Score the entire set
       of nodes.
     ***********************************************************************/
-    if(quiet == 0) {
-        fprintf(stderr, "Creating coding model and scoring nodes...");
-    }
+//    if(quiet == 0) {
+//        fprintf(stderr, "Creating coding model and scoring nodes...");
+//    }
     calc_dicodon_gene(&tinf, seq, rseq, slen, nodes, ipath);
     raw_coding_score(seq, rseq, slen, nodes, nn, &tinf);
     if(quiet == 0) {
@@ -163,17 +163,17 @@ trainASpecies(char * genome){
       Determine if this organism uses Shine-Dalgarno or not and score the
       nodes appropriately.
     ***********************************************************************/
-    if(quiet == 0) {
-        fprintf(stderr, "Examining upstream regions and training starts...");
-    }
+//    if(quiet == 0) {
+//        fprintf(stderr, "Examining upstream regions and training starts...");
+//    }
     rbs_score(seq, rseq, slen, nodes, nn, &tinf);
     train_starts_sd(seq, rseq, slen, nodes, nn, &tinf);
     determine_sd_usage(&tinf);
     if(force_nonsd == 1) tinf.uses_sd = 0;
     if(tinf.uses_sd == 0) train_starts_nonsd(seq, rseq, slen, nodes, nn, &tinf);
-    if(quiet == 0) {
-        fprintf(stderr, "done!\n");
-    }
+//    if(quiet == 0) {
+//        fprintf(stderr, "done!\n");
+//    }
 }
 
 void ProdigalWrapper::trainMeta(char *genome) {
@@ -261,9 +261,9 @@ void ProdigalWrapper::getPredictedFrames(char * genome){
         exit(14);
     }
 
-    if(1) {
-        fprintf(stderr, "Finding genes in sequence #%d (%d bp)...\n", num_seq, slen);
-    }
+//    if(1) {
+//        fprintf(stderr, "Finding genes in sequence #%d (%d bp)...\n", num_seq, slen);
+//    }
 
     /* Reallocate memory if this is the biggest sequence we've seen */
     if(slen > max_slen && slen > STT_NOD*8) {
@@ -318,9 +318,9 @@ void ProdigalWrapper::getPredictedFrames(char * genome){
         tweak_final_starts(genes, ng, nodes, nn, meta[max_phase].tinf);
         record_gene_data(genes, ng, nodes, meta[max_phase].tinf, num_seq);
     }
-     if(1) {
-         fprintf(stderr, "done! gene count: %d (%d bp)\n", ng, slen);
-     }
+//     if(1) {
+//         fprintf(stderr, "done! gene count: %d (%d bp)\n", ng, slen);
+//     }
 }
 
 int ProdigalWrapper::getNextSeq(char * line, int training) {
