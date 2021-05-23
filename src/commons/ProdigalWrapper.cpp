@@ -63,8 +63,8 @@ trainASpecies(char * genome){
     tinf.st_wt = 4.35;
     tinf.trans_table = 11;
 
-    fprintf(stderr, "Request:  Single Genome, Phase:  Training\n");
-    fprintf(stderr, "Reading in the sequence(s) to train...\n");
+//    fprintf(stderr, "Request:  Single Genome, Phase:  Training\n");
+//    fprintf(stderr, "Reading in the sequence(s) to train...\n");
 
     slen = getNextSeq(genome, 1);
     if(slen == 0) {
@@ -155,9 +155,9 @@ trainASpecies(char * genome){
 //    }
     calc_dicodon_gene(&tinf, seq, rseq, slen, nodes, ipath);
     raw_coding_score(seq, rseq, slen, nodes, nn, &tinf);
-    if(quiet == 0) {
-        fprintf(stderr, "done!\n");
-    }
+//    if(quiet == 0) {
+//        fprintf(stderr, "done!\n");
+//    }
 
     /***********************************************************************
       Determine if this organism uses Shine-Dalgarno or not and score the
