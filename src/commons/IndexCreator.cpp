@@ -418,7 +418,7 @@ void IndexCreator::getFastaSplits(const vector<int> & taxIdListAtRank, vector<Fa
         while(currentTaxId == taxIdListAtRank[idx] && idx < taxIdListAtRank.size()){
             cnt ++;
             idx ++;
-            if(cnt > 600){ //The largest number of consecutive plasmid is the smallest. The smaller, the more training and the less time of single threading
+            if(cnt > 100){ //The largest number of consecutive plasmid is the smallest. The smaller, the more training and the less time of single threading
                 theLargest = 0;
                 for(uint32_t i = 0; i < cnt - 1; i++){
                     if(seqs[offset + i].length > theLargest){
