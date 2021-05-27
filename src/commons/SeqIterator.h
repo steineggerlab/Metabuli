@@ -15,6 +15,9 @@
 #include "kseq.h"
 #include "KSeqBufferReader.h"
 #include "ProdigalWrapper.h"
+#include <functional>
+#include "xxh3.h"
+#include <queue>
 
 #ifdef OPENMP
 #include <omp.h>
@@ -35,6 +38,10 @@ typedef struct PredictedBlock {
     int strand; //true for forward
 }PredictedBlock;
 
+struct HashElement{
+    bool strand;
+
+};
 class SeqIterator
 {
 private:
@@ -53,10 +60,12 @@ public:
     string reverseCompliment(string & read) const ;
     void sixFrameTranslation(const char * seq);
     bool translateBlock(const char* seq, PredictedBlock & block);
-    void getTranslationBlocks(struct _gene * genes, struct _node * nodes, PredictedBlock * blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
-    void getTranslationBlocks2(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
 
+    void getTranslationBlocks(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
+    void getTranslationBlocksReverse(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
 
+    void getMinHashList(priority_queue<uint64_t> & sortedHashQue, const char * seq);
+    bool compareMinHashList(priority_queue<uint64_t> list1, priority_queue<uint64_t> & list2, size_t length1, size_t length2);
     size_t kmerNumOfSixFrameTranslation(const string & seq);
     size_t getNumOfKmerForBlock(const PredictedBlock & block);
     void fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const uint32_t & seqID, int taxIdAtRank);

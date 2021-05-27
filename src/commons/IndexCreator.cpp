@@ -73,7 +73,7 @@ void IndexCreator::startIndexCreatingParallel2(const char * seqFileName, const c
 
 size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSplitCnt, const vector<FastaSplit> & splits, const vector<int> & taxIdListAtRank) {
 #ifdef OPENMP
-   omp_set_num_threads(128);
+   omp_set_num_threads(1);
 #endif
     bool hasOverflow = false;
 
@@ -94,8 +94,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[splits[i].training].start]), seqs[splits[i].training].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
+                size_t lengthOfTrainingSeq = strlen(seq->seq.s);
                 prodigal.is_meta = 0;
                 string tmp = seq->name.s;
+                cout<<"traning seq: "<<tmp<<endl;
                 if(strlen(seq->seq.s) < 20000){
                     prodigal.is_meta = 1;
                     cout<<"train Meta: "<<splits[i].training<<" "<<seqs[splits[i].training].start<<" "<<i<<seq->headerOffset<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
@@ -105,21 +107,36 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     prodigal.trainASpecies(seq->seq.s);
                 }
 
-                prodigal.getPredictedFrames(seq->seq.s);
+                ///Get min k-mer hash list for determining strandness
+                priority_queue<uint64_t> standardList;
+                seqIterator.getMinHashList(standardList, seq->seq.s);
+
+                //prodigal.getPredictedFrames(seq->seq.s);
                 vector<PredictedBlock> blocks;
 
                 numOfBlocks = 0;
+
                 ///Getting all the sequence blocks of current split. Each block will be translated later separately.
+                priority_queue<uint64_t> currentList;
                 for(size_t p = 0; p < splits[i].cnt; p++ ) {
                     buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), seqs[splits[i].offset + p].length};
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
-
+                    seqIterator.getMinHashList(currentList, seq->seq.s);
                     prodigal.getPredictedFrames(seq->seq.s);
-                    seqIterator.getTranslationBlocks2(prodigal.genes, prodigal.nodes, blocks,
-                                                     prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
-                                                     numOfBlocks);
+
+                    if(seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, strlen(seq->seq.s))){
+                        seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks,
+                                                         prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
+                                                         numOfBlocks);
+
+                    } else {
+                        seqIterator.getTranslationBlocksReverse(prodigal.genes, prodigal.nodes, blocks,
+                                                         prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
+                                                         numOfBlocks);
+                    }
                     numOfBlocksList[p] = numOfBlocks;
+                    currentList = priority_queue<uint64_t>();
                 }
 
                 /// Calculate the number of k-mers to reserve memory of k-mer buffer
