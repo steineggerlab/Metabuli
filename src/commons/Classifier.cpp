@@ -102,7 +102,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     //load matches and analyze
     cout<<"analyse Result"<<endl;
     //analyseResult(ncbiTaxonomy, sequences, matchFileName, queryList);
-    analyseResultParallel2(ncbiTaxonomy, sequences, matchFileName, numOfSeq, queryList);
+    analyseResultParallel(ncbiTaxonomy, sequences, matchFileName, numOfSeq, queryList);
     afterAnalyze = time(NULL);
     cout<<"Time spent for analyzing: "<<double(afterAnalyze-afterSearch)<<endl;
 
@@ -441,42 +441,6 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetList, con
 void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum, Query * queryList){
     struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
     size_t numOfMatches = matchList.fileSize / sizeof(Match);
-    SORT_PARALLEL(matchList.data, matchList.data + numOfMatches , Classifier::compareForWritingMatches);
-    cout<<"num of matches"<<numOfMatches<<endl;
-    ///Get match blocks for multi threading
-    typedef Sequence Block;
-    Block * matchBlocks = new Block[seqNum];
-    cout<<seqNum<<endl;
-    size_t matchIdx = 0;
-    size_t blockIdx = 0;
-    uint32_t currentQuery;
-    while(matchIdx < numOfMatches){
-        currentQuery = matchList.data[matchIdx].queryId;
-        matchBlocks[blockIdx].start = matchIdx;
-        while((currentQuery == matchList.data[matchIdx].queryId) && (matchIdx < numOfMatches)) ++matchIdx;
-        matchBlocks[blockIdx].end = matchIdx - 1;
-        blockIdx++;
-    }
-
-    omp_set_num_threads(1);
-#pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList)
-{
-#pragma omp for schedule(dynamic, 1)
-    for(size_t i = 0; i < seqNum; ++ i ){
-        TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[i].length, i, matchBlocks[i].start,
-                                            matchBlocks[i].end, matchList.data, queryList);
-    }
-}
-    for(int i = 0 ; i < seqNum; i++){
-        ++ taxCounts[queryList[i].classification];
-    }
-    delete[] matchBlocks;
-    munmap(matchList.data, matchList.fileSize + 1);
-}
-
-void Classifier::analyseResultParallel2(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum, Query * queryList){
-    struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
-    size_t numOfMatches = matchList.fileSize / sizeof(Match);
     SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByTaxId);
     cout<<"num of matches"<<numOfMatches<<endl;
     ///Get match blocks for multi threading
@@ -499,7 +463,7 @@ void Classifier::analyseResultParallel2(NcbiTaxonomy & ncbiTaxonomy, vector<Sequ
     {
 #pragma omp for schedule(dynamic, 1)
         for(size_t i = 0; i < seqNum; ++ i ){
-            TaxID selectedLCA = chooseBestTaxon2(ncbiTaxonomy, seqSegments[i].length, i, matchBlocks[i].start,
+            TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[i].length, i, matchBlocks[i].start,
                                                 matchBlocks[i].end, matchList.data, queryList);
         }
     }
@@ -513,7 +477,7 @@ void Classifier::analyseResultParallel2(NcbiTaxonomy & ncbiTaxonomy, vector<Sequ
 
 ///For a query read, assign the best Taxon, using k-mer matches
 ///문제점 redundancy reduced reference k-mer 임을 고려해야 한다. block을 species level에서 해줘야하지 않나.. 그리고 오버랩도 좀 허용해줘야할껄?
-TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
+TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
     vector<ConsecutiveMatches> matchCombi;
 
     getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset);
