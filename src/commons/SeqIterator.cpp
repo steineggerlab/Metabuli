@@ -329,7 +329,7 @@ void SeqIterator::getTranslationBlocks(struct _gene * genes, struct _node * node
                         rightEnd--;
                     }
  //                   blocks.emplace_back(genes[currIdx].begin, rightEnd + 21, nodes[genes[geneIdx].start_ndx].strand);
-                    blocks.emplace_back(genes[currIdx].begin - 1, rightEnd + 21, nodes[genes[geneIdx].start_ndx].strand);
+                    blocks.emplace_back(genes[currIdx].begin - 1, rightEnd, nodes[genes[geneIdx].start_ndx].strand);
                     blockIdx++;
                 }
                 geneIdx++;
@@ -345,11 +345,11 @@ void SeqIterator::getTranslationBlocks(struct _gene * genes, struct _node * node
             blockIdx ++;
         } else { // reverse
             frame = (genes[geneIdx].end - 1) % 3;
-            rightEnd = genes[geneIdx+1].begin - 1 - 1;
+            rightEnd = genes[geneIdx+1].begin - 1 + 22;
             while(rightEnd%3 != frame){
                 rightEnd--;
             }
-            blocks.emplace_back(genes[currIdx].begin - 1, rightEnd + 21, nodes[genes[geneIdx].start_ndx].strand);
+            blocks.emplace_back(genes[currIdx].begin - 1, rightEnd, nodes[genes[geneIdx].start_ndx].strand);
             blockIdx++;
         }
     }

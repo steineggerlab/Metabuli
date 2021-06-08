@@ -73,7 +73,7 @@ void IndexCreator::startIndexCreatingParallel2(const char * seqFileName, const c
 
 size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSplitCnt, const vector<FastaSplit> & splits, const vector<int> & taxIdListAtRank) {
 #ifdef OPENMP
-   omp_set_num_threads(1);
+   omp_set_num_threads(128);
 #endif
     bool hasOverflow = false;
 
