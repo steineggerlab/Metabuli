@@ -10,7 +10,7 @@
 #include "Classifier.h"
 #include "omp.h"
 void prepareForCreatingTargetDB(const LocalParameters & par);
-//void makeDiffIdxLookup(char * diffIdxFileName, char * infoFileName);
+void makeDiffIdxLookup(char * diffIdxFileName, char * infoFileName);
 
 int createTargetDB(int argc, const char **argv, const Command &command)
 {
@@ -119,6 +119,10 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     cout<<mergedDiffFileName<<" and"<<endl;
     cout<<mergedInfoFileName<<endl;
     return 0;
+}
+
+void makeDiffIdxLookup(char * diffIdxFileName, char * infoFileName){
+
 }
 
 void prepareForCreatingTargetDB(const LocalParameters & par){
