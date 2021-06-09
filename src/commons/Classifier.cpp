@@ -582,7 +582,7 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
     uint32_t currentPos;
     uint8_t currentFrame;
     TaxID currentTaxID;
-    if(matchList[beginIdx].queryId == 2120) {
+    if(matchList[offset].queryId == 2120) {
         for (size_t i2 = offset; i2 < end + 1; i2++) {
             cout << matchList[i2].taxID << " " << matchList[i2].taxID << " "<<matchList[i2].position<<" "<<matchList[i2].frame<<"\n";
         }
