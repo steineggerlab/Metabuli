@@ -584,10 +584,10 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
     TaxID currentTaxID;
     if(matchList[offset].queryId == 2120) {
         for (size_t i2 = offset; i2 < end + 1; i2++) {
-            cout << matchList[i2].queryId << " " << matchList[i2].taxID << " "<<matchList[i2].position<<" "<<matchList[i2].frame<<"\n";
+            cout << matchList[i2].queryId << " " << matchList[i2].taxID << " "<<matchList[i2].position<<" "<<(int)matchList[i2].frame<<"\n";
         }
         cout<<"after"<<endl;
-        cout << matchList[end + 1].queryId << " " << matchList[end + 1].taxID << " "<<matchList[end + 1].position<<" "<<matchList[end + 1].frame<<"\n";
+        cout << matchList[end + 1].queryId << " " << matchList[end + 1].taxID << " "<<matchList[end + 1].position<<" "<<(int)matchList[end + 1].frame<<"\n";
     }
 
     size_t i = offset;
