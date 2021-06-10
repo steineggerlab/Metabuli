@@ -36,7 +36,7 @@ struct TargetKmer{
 
 struct DiffIdxSplit{
     DiffIdxSplit(uint64_t ADkmer, size_t diffIdxOffset, size_t infoIdxOffset) : ADkmer(ADkmer), diffIdxOffset(diffIdxOffset), infoIdxOffset(infoIdxOffset) { }
-    DiffIdxSplit(const DiffIdxSplit & copy) {ADkmer = copy.ADkmer, diffIdxOffset = copy.diffIdxOffset, infoIdxOffset=copy.infoIdxOffset}
+    DiffIdxSplit(const DiffIdxSplit & copy) {ADkmer = copy.ADkmer; diffIdxOffset = copy.diffIdxOffset; infoIdxOffset=copy.infoIdxOffset;}
     DiffIdxSplit() {};
     uint64_t ADkmer;
     size_t diffIdxOffset;
