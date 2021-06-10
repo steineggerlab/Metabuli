@@ -98,8 +98,8 @@ private:
     };
 
     struct QueryKmerSplit{
-        QueryKmerSplit(size_t start, size_t end, size_t length, uint64_t ADkmer, size_t diffIdxOffset, size_t infoIdxOffset)
-            : start(start), end(end), length(length), diffIdxSplit(ADkmer, diffIdxOffset, infoIdxOffset) { }
+        QueryKmerSplit(size_t start, size_t end, size_t length, DiffIdxSplit diffIdxSplit)
+            : start(start), end(end), length(length), diffIdxSplit(diffIdxSplit) { }
         size_t start;
         size_t end;
         size_t length;
@@ -213,6 +213,8 @@ private:
     void getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & choosed);
     void getSubsets(vector<int> & subset, vector<vector<int>> & uniqueSubset, int k, int n);
     float scoreSubset(vector<ConsecutiveMatches> & subset);
+
+    //void getQueryKmerSplits(int threadNum, )
 public:
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par);
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);

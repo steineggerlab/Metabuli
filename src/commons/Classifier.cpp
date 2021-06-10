@@ -192,32 +192,63 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
         }
     }
     cout<<"Filtering out meaningless target splits ... done"<<endl;
-    for(int i = 0 ; i < numOfDiffIdxSplits; i++){
-        cout<<diffIdxSplits.data[i].infoIdxOffset<<" "<<diffIdxSplits.data[i].diffIdxOffset<<endl;
-    }
 
     ///Devide query k-mer list into blocks for multi threading.
     vector<QueryKmerSplit> splits;
     int threadNum = ThreadNum;
-    size_t querySplitSize = queryKmerCnt / (threadNum - 1);
-    uint64_t queryKmerAA;
-    bool splitCheck = false;
-    splits.emplace_back(0, querySplitSize - 1, querySplitSize, 0, 0, 0);
-    for(int i = 1; i < threadNum; i++) {
-        queryKmerAA = AminoAcid(queryKmerList[querySplitSize * i].ADkmer);
-        splitCheck = false;
-        for(size_t j = 0; j < numOfDiffIdxSplits; j++){
-            if(queryKmerAA < AminoAcid(diffIdxSplits.data[j].ADkmer)){
-                if(i == threadNum - 1)
-                    splits.emplace_back(querySplitSize * i, queryKmerCnt - 1, querySplitSize, diffIdxSplits.data[numOfDiffIdxSplits_use - 1].ADkmer,
-                                        diffIdxSplits.data[numOfDiffIdxSplits_use - 1].diffIdxOffset, diffIdxSplits.data[numOfDiffIdxSplits_use - 1].infoIdxOffset);
-                else
-                    splits.emplace_back(querySplitSize * i, querySplitSize * (i + 1) - 1, querySplitSize, diffIdxSplits.data[j - 1].ADkmer,
-                                        diffIdxSplits.data[j - 1].diffIdxOffset,diffIdxSplits.data[j - 1].infoIdxOffset);
+    uint64_t queryAA;
+    if(threadNum == 1){
+        splits.emplace_back(0, queryKmerCnt -1, queryKmerCnt, diffIdxSplits.data[0]);
+    } else if(threadNum == 2){
+        size_t splitWidth = queryKmerCnt / 2;
+        splits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
+        for(size_t tSplitCnt = 0; tSplitCnt < numOfDiffIdxSplits_use; tSplitCnt++){
+            queryAA = AminoAcid(queryKmerList[splitWidth].ADkmer);
+            if(queryAA < AminoAcid(diffIdxSplits.data[tSplitCnt].ADkmer)){
+                tSplitCnt = tSplitCnt - (tSplitCnt != 0);
+                splits.emplace_back(splitWidth, queryKmerCnt - 1, queryKmerCnt - splitWidth, diffIdxSplits.data[tSplitCnt]);
                 break;
             }
         }
+    } else{
+        size_t splitWidth = queryKmerCnt / (threadNum - 1);
+        splits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
+        for(int i = 1; i < threadNum; i ++){
+            queryAA = AminoAcid(queryKmerList[splitWidth * i].ADkmer);
+            for(size_t j = 0; j < numOfDiffIdxSplits_use; j++){
+               if(queryAA < AminoAcid(diffIdxSplits.data[j].ADkmer)){
+                   j = j - (j!=0);
+                   if(i != threadNum - 1)
+                        splits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth, diffIdxSplits.data[j]);
+                   else
+                        splits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i, diffIdxSplits.data[j]);
+               }
+            }
+        }
     }
+
+//
+//    size_t querySplitSize = queryKmerCnt / (threadNum - 1);
+//    uint64_t queryKmerAA;
+//    bool splitCheck = false;
+//    splits.emplace_back(0, querySplitSize - 1, querySplitSize, queryKmerList[0].ADkmer, 0, 0);
+//    for(int i = 1; i < threadNum; i++) {
+//        queryKmerAA = AminoAcid(queryKmerList[querySplitSize * i].ADkmer);
+//        splitCheck = false;
+//        for(size_t j = 0; j < numOfDiffIdxSplits; j++){
+//            if(queryKmerAA < AminoAcid(diffIdxSplits.data[j].ADkmer)){
+//                if(i == threadNum - 1)
+//                    splits.emplace_back(querySplitSize * i, queryKmerCnt - 1, querySplitSize, diffIdxSplits.data[numOfDiffIdxSplits_use - 1].ADkmer,
+//                                        diffIdxSplits.data[numOfDiffIdxSplits_use - 1].diffIdxOffset, diffIdxSplits.data[numOfDiffIdxSplits_use - 1].infoIdxOffset);
+//                else
+//                    splits.emplace_back(querySplitSize * i, querySplitSize * (i + 1) - 1, querySplitSize, diffIdxSplits.data[j - 1].ADkmer,
+//                                        diffIdxSplits.data[j - 1].diffIdxOffset,diffIdxSplits.data[j - 1].infoIdxOffset);
+//                break;
+//            }
+//        }
+//    }
+//
+
 
     cout<<"Query"<<endl;
     for(int i = 0 ; i < threadNum; i++){
@@ -343,7 +374,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                     }
 
                     startIdxOfAAmatch = targetInfoIdx;
-                    ///Load target k-mers thatare matched in amino acid level
+                    ///Load target k-mers that are matched in amino acid level
                     while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
                         targetKmerCache.push_back(currentTargetKmer);
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
