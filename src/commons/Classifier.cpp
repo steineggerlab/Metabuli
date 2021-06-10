@@ -222,6 +222,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                         splits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth, diffIdxSplits.data[j]);
                    else
                         splits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i, diffIdxSplits.data[j]);
+                   break;
                }
             }
         }
