@@ -83,12 +83,15 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     time_t beforeSearch, afterSearch, afterAnalyze;
 
     size_t numOfTatalQueryKmerCnt = 0;
+
+    //extact k-mers from query sequences and compare them to target k-mer DB
+    ///TODO measure time for extract & sort & search separately
+    beforeSearch = time(NULL);
     while(processedSeqCnt < numOfSeq){
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryList);
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
         cout<<"buffer overflowed"<<endl;
-        beforeSearch = time(NULL);
-        omp_set_num_threads(64);
+        omp_set_num_threads(ThreadNum);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
         cout<<"buffer sorted"<<endl;
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile);
@@ -101,31 +104,16 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     //load matches and analyze
     cout<<"analyse Result"<<endl;
-    //analyseResult(ncbiTaxonomy, sequences, matchFileName, queryList);
     analyseResultParallel(ncbiTaxonomy, sequences, matchFileName, numOfSeq, queryList);
     afterAnalyze = time(NULL);
     cout<<"Time spent for analyzing: "<<double(afterAnalyze-afterSearch)<<endl;
 
+    //write report files
     ofstream readClassificationFile;
     readClassificationFile.open(par.filenames[0]+"_ReadClassification.tsv");
     writeReadClassification(queryList,numOfSeq,readClassificationFile);
-
-//    cout<<"Sorting the 'queryfile_ReadClassification.tsv' file"<<endl;
-//    string sortCall = "sort -t '\t' -k1 -n " + par.filenames[0] + "_ReadClassification_temp.tsv > "+par.filenames[0]+"_ReadClassification.tsv";
-//    string rmCall = "rm " +par.filenames[0]+"_ReadClassification_temp.tsv";
-//    system(sortCall.c_str());
-//    system(rmCall.c_str());
-//    readClassificationFile.close();
-
-    ///TODO: Merge ReportFiles
-
     writeReportFile(par.filenames[0].c_str(), ncbiTaxonomy, numOfSeq);
     performanceTest(ncbiTaxonomy, queryList, numOfSeq);
-
-    cout<<"Number of query k-mer                : "<<queryCount<<endl;
-    cout<<"Number of total match                : "<<totalMatchCount <<endl;
-    cout<<"mutipleMatch in AA level             : "<<multipleMatchCount << endl;
-    cout<<"matches in DNA level                 : "<<perfectMatchCount<<endl;
 
     free(kmerBuffer.buffer);
     free(matchBuffer.buffer);
@@ -227,29 +215,6 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
             }
         }
     }
-
-//
-//    size_t querySplitSize = queryKmerCnt / (threadNum - 1);
-//    uint64_t queryKmerAA;
-//    bool splitCheck = false;
-//    splits.emplace_back(0, querySplitSize - 1, querySplitSize, queryKmerList[0].ADkmer, 0, 0);
-//    for(int i = 1; i < threadNum; i++) {
-//        queryKmerAA = AminoAcid(queryKmerList[querySplitSize * i].ADkmer);
-//        splitCheck = false;
-//        for(size_t j = 0; j < numOfDiffIdxSplits; j++){
-//            if(queryKmerAA < AminoAcid(diffIdxSplits.data[j].ADkmer)){
-//                if(i == threadNum - 1)
-//                    splits.emplace_back(querySplitSize * i, queryKmerCnt - 1, querySplitSize, diffIdxSplits.data[numOfDiffIdxSplits_use - 1].ADkmer,
-//                                        diffIdxSplits.data[numOfDiffIdxSplits_use - 1].diffIdxOffset, diffIdxSplits.data[numOfDiffIdxSplits_use - 1].infoIdxOffset);
-//                else
-//                    splits.emplace_back(querySplitSize * i, querySplitSize * (i + 1) - 1, querySplitSize, diffIdxSplits.data[j - 1].ADkmer,
-//                                        diffIdxSplits.data[j - 1].diffIdxOffset,diffIdxSplits.data[j - 1].infoIdxOffset);
-//                break;
-//            }
-//        }
-//    }
-//
-
 
     cout<<"Query"<<endl;
     for(int i = 0 ; i < threadNum; i++){
@@ -458,7 +423,7 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetList, con
         hammings.push_back(currentHamming);
     }
 
-    if(minHamming > 2) return;
+//    if(minHamming > 2) return;
 
     ///Select target k-mers that passed hamming criteria
     for(size_t h = 0; h < hammings.size(); h++){
