@@ -53,7 +53,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     unordered_map<int,int> genus;
     for(size_t i = 0 ; i < ncbiTaxonomy.taxonNodes.size(); i++){
         if(ncbiTaxonomy.taxonNodes[i].rank == "species"){
-            genus[i]++;
+            genus[ncbiTaxonomy.taxonNodes[i].parentTaxId]++;
         }
     }
 
