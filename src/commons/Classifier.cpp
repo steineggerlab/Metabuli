@@ -670,7 +670,8 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
         }
     }
 
-    genus.push_back(alignedCoMatches);
+    ///Fix here
+    genus.push_back(coMatches);
 }
 
 void Classifier::getSubsets(vector<int> & subset, vector<vector<int>> & uniqueSubset, int k, int n){
