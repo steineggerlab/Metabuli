@@ -58,6 +58,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     }
 
     auto it = genus.begin();
+    size_t cnt = 0;
     int archeaCnt = 0;
     int bacteriaCnt = 0;
     for(auto it = genus.begin(); it != genus.end(); it++){
@@ -67,9 +68,10 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
             else
                 bacteriaCnt ++;
         }
+        cnt ++;
     }
 
-    cout<<archeaCnt<<" "<<bacteriaCnt<<endl;
+    cout<<archeaCnt<<" "<<bacteriaCnt<<" "<<cnt<<endl;
 
     vector<int> speciesTaxIdList;
     vector<TaxID> genusTaxIdList;
