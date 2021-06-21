@@ -48,6 +48,29 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     //taxonomical ID
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
+
+    //
+    unordered_map<int,int> genus;
+    for(size_t i = 0 ; i < ncbiTaxonomy.taxonNodes.size(); i++){
+        if(ncbiTaxonomy.taxonNodes[i].rank == "species"){
+            genus[i]++;
+        }
+    }
+
+    auto it = genus.begin();
+    int archeaCnt = 0;
+    int bacteriaCnt = 0;
+    for(auto it = genus.begin(); it != genus.end(); it++){
+        if(it->second == 1){
+            if(it->first < 5839)
+                archeaCnt ++;
+            else
+                bacteriaCnt ++;
+        }
+    }
+
+    cout<<archeaCnt<<" "<<bacteriaCnt<<endl;
+
     vector<int> speciesTaxIdList;
     vector<TaxID> genusTaxIdList;
     ncbiTaxonomy.createTaxIdListAtRank(taxIdList, speciesTaxIdList, "species");
@@ -522,7 +545,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     size_t numSeqsAgreeWithSelectedTaxon = 0;
     double selectedPercent = 0;
 
-    TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
+    TaxID selectedLCA = match2LCA2(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
                                   numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
                                   selectedPercent);
 
@@ -670,8 +693,8 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
         }
     }
 
-    ///Fix here
     genus.push_back(coMatches);
+    //genus.push_back(alignedCoMatches);
 }
 
 void Classifier::getSubsets(vector<int> & subset, vector<vector<int>> & uniqueSubset, int k, int n){
