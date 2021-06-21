@@ -31,12 +31,12 @@ Classifier::~Classifier() { delete seqIterator; }
 
 void Classifier::startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par) {
     string names, nodes, merged;
-    if(par.gtdbOrNcbi == 1 || par.gtdbOrNcbi == 0){
+    if(par.gtdbOrNcbi == 1 ){
         cout<<"Classifying query sequences based on taxonomy of GTDB"<<endl;
         names = "../../gtdb_taxdmp/names.dmp";
         nodes = "../../gtdb_taxdmp/nodes.dmp";
         merged = "../../gtdb_taxdmp/merged.dmp";
-    } else if(par.gtdbOrNcbi == 2){
+    } else if(par.gtdbOrNcbi == 2 || par.gtdbOrNcbi == 0 ){
         cout<<"Classifying query sequences based on taxonomy of NCBI"<<endl;
         names = "../../ncbi_taxdmp/names.dmp";
         nodes = "../../ncbi_taxdmp/nodes.dmp";
