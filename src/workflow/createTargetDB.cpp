@@ -9,7 +9,7 @@
 #include <regex>
 #include "Classifier.h"
 #include "omp.h"
-void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<string, int> & speciesCnt);
+void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<int, int> & speciesCnt);
 void makeDiffIdxLookup(char * diffIdxFileName, char * infoFileName);
 
 int createTargetDB(int argc, const char **argv, const Command &command)
@@ -24,11 +24,11 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     string names, nodes, merged;
 
     ///Remove here
-    unordered_map<string,int> assass2taxid;
+    unordered_map<int,int> speciesCnt;
 
     if(par.gtdbOrNcbi == 1 || par.gtdbOrNcbi == 0){
         cout<<"Creating target database based on taxonomy of GTDB"<<endl;
-        prepareForCreatingTargetDB(par, assass2taxid);
+        prepareForCreatingTargetDB(par, speciesCnt);
         genome_fname = string(folder) + "/concatenated_genome_GTDB";
         taxIdList_fname = string(outputFileName) +"_taxID_list_GTDB";
         names = "../../gtdb_taxdmp/names.dmp";
@@ -36,7 +36,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         merged = "../../gtdb_taxdmp/merged.dmp";
     } else if(par.gtdbOrNcbi == 2){
         cout<<"Creating target database based on taxonomy of NCBI"<<endl;
-        prepareForCreatingTargetDB(par, assass2taxid);
+        prepareForCreatingTargetDB(par, speciesCnt);
         genome_fname = string(folder) + "/concatenated_genome_NCBI";
         taxIdList_fname = string(outputFileName) +"_taxID_list_NCBI";
         names = "../../ncbi_taxdmp/names.dmp";
@@ -54,7 +54,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     cout<<"hi"<<endl;
     ///---------------------------------------
     unordered_map<int,int> speciesTaxIdCnt;
-    for(auto it = assass2taxid.begin(); it != assass2taxid.end(); it++){
+    for(auto it = speciesCnt.begin(); it != speciesCnt.end(); it++){
         cout<<it->first<<" "<<it->second<<" "<<ncbiTaxonomy.getTaxIdAtRank(it->second, "species")<<"\n";
         speciesTaxIdCnt[ncbiTaxonomy.getTaxIdAtRank(it->second, "species")] ++;
     }
@@ -140,7 +140,7 @@ void makeDiffIdxLookup(char * diffIdxFileName, char * infoFileName){
 
 }
 
-void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<string, int> & speciesCnt){
+void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<int, int> & speciesCnt){
     const char * folder = par.filenames[0].c_str();
     const char * mappingFile = par.filenames[1].c_str();
     const char * outputFileName = par.filenames[2].c_str();
@@ -200,7 +200,7 @@ void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<strin
             regex_search(fileName, assacc, regex1);
             if (assacc2taxid.count(assacc[0].str())) {
                 taxId = assacc2taxid[assacc[0].str()];
-                speciesCnt[assacc[0].str()] ++;
+                speciesCnt[taxId] ++;
                 taxID_fname << taxId << "\t" << fileName << endl;
             } else{
                 cout<<assacc[0].str()<<" is excluded in creating target DB because it is not mapped to taxonomical ID"<<endl;
