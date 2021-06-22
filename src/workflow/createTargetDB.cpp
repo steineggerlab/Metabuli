@@ -54,9 +54,9 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     cout<<"hi"<<endl;
 
     unordered_map<int,int> speciesTaxIdCnt;
-    for(auto it = speciesCnt.begin(); it != speciesCnt.end(); it++){
-        cout<<it->first<<" "<<it->second<<" "<<ncbiTaxonomy.getTaxIdAtRank(it->second, "species")<<endl;
-        speciesTaxIdCnt[ncbiTaxonomy.getTaxIdAtRank(it->second, "species")] ++;
+    for(auto it : speciesCnt){
+        cout<<it.first<<" "<<it.second<<" "<<ncbiTaxonomy.getTaxIdAtRank(it.second, "species")<<endl;
+        speciesTaxIdCnt[ncbiTaxonomy.getTaxIdAtRank(it.second, "species")] ++;
     }
     cout<<"number of species: "<< speciesTaxIdCnt.size()<<endl;
 
@@ -183,9 +183,6 @@ void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<int, 
     }
     map.close();
 
-
-    ///--------------
-   // unordered_map<int, int> speciesCnt;
     ifstream fastaList;
     ofstream taxID_fname;
     taxID_fname.open(taxid_fname_fname);
