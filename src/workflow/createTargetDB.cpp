@@ -65,6 +65,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         if(it->second > max){
             max = it->second;
         }
+        cout<<max<<" "<<it->second<<endl;
     }
 
     cout<<"Max "<< max<<endl;
