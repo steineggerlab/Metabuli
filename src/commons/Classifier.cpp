@@ -70,6 +70,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
         cnt ++;
     }
     cout<<archeaCnt<<" "<<bacteriaCnt<<" "<<cnt<<endl;
+    return;
     ///-------------------------------------------------------
     vector<int> speciesTaxIdList;
     vector<TaxID> genusTaxIdList;

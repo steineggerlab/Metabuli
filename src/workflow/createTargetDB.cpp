@@ -55,8 +55,8 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     cout<<speciesCnt.begin()->first<< " "<< speciesCnt.begin()->second<<" "<<speciesCnt.size()<<endl;
     unordered_map<int,int> speciesTaxIdCnt;
     for(auto it = speciesCnt.begin(); it != speciesCnt.end(); it++){
-        cout<<it->first<<" "<<it->second<<" "<<ncbiTaxonomy.getTaxIdAtRank(it->second, "species")<<endl;
-        speciesTaxIdCnt[ncbiTaxonomy.getTaxIdAtRank(it->second, "species")] ++;
+        cout<<it->first<<" "<<it->second<<" "<<ncbiTaxonomy.getTaxIdAtRank(it->first, "species")<<endl;
+        speciesTaxIdCnt[ncbiTaxonomy.getTaxIdAtRank(it->first, "species")] ++;
     }
     cout<<"number of species: "<< speciesTaxIdCnt.size()<<endl;
 
@@ -197,7 +197,7 @@ void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<int, 
             regex_search(fileName, assacc, regex1);
             if (assacc2taxid.count(assacc[0].str())) {
                 taxId = assacc2taxid[assacc[0].str()];
-                speciesCnt[taxId] ++;
+                speciesCnt[taxId] = 1;
                 taxID_fname << taxId << "\t" << fileName << endl;
             } else{
                 cout<<assacc[0].str()<<" is excluded in creating target DB because it is not mapped to taxonomical ID"<<endl;
@@ -205,7 +205,7 @@ void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<int, 
         }
     }
     taxID_fname.close();
-    cout<<"here"<<endl;
+
     return;
     system(("sort -k 1 -g "+taxid_fname_fname+" > "+taxid_fname_sorted_fname).c_str());
     system("chmod +x ./../../util/make_taxIdList_and_concatenatedGenome.sh");
