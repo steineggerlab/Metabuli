@@ -52,16 +52,16 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
     IndexCreator idxCre;
     cout<<"hi"<<endl;
-    ///---------------------------------------
+
     unordered_map<int,int> speciesTaxIdCnt;
     for(auto it = speciesCnt.begin(); it != speciesCnt.end(); it++){
-        cout<<it->first<<" "<<it->second<<" "<<ncbiTaxonomy.getTaxIdAtRank(it->second, "species")<<"\n";
+        cout<<it->first<<" "<<it->second<<" "<<ncbiTaxonomy.getTaxIdAtRank(it->second, "species")<<endl;
         speciesTaxIdCnt[ncbiTaxonomy.getTaxIdAtRank(it->second, "species")] ++;
     }
     cout<<"number of species: "<< speciesTaxIdCnt.size()<<endl;
 
     return 0;
-    ////............................
+
     const char * seqFileName = genome_fname.c_str();
     const char * taxIdFileName = taxIdList_fname.c_str();
 
