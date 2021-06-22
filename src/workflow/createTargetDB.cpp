@@ -51,7 +51,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
     IndexCreator idxCre;
-
+    cout<<"hi"<<endl;
     ///---------------------------------------
     unordered_map<int,int> speciesTaxIdCnt;
     for(auto it = assass2taxid.begin(); it != assass2taxid.end(); it++){
