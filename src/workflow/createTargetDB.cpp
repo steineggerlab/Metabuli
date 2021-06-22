@@ -52,7 +52,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
     IndexCreator idxCre;
     cout<<"hi"<<endl;
-
+    cout<<speciesCnt.begin()->first<< " "<< speciesCnt.begin()->second<<endl;
     unordered_map<int,int> speciesTaxIdCnt;
     for(auto it : speciesCnt){
         cout<<it.first<<" "<<it.second<<" "<<ncbiTaxonomy.getTaxIdAtRank(it.second, "species")<<endl;
