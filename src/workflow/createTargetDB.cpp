@@ -9,7 +9,7 @@
 #include <regex>
 #include "Classifier.h"
 #include "omp.h"
-void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<string, int> & assacc2taxid);
+void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<string, int> & speciesCnt);
 void makeDiffIdxLookup(char * diffIdxFileName, char * infoFileName);
 
 int createTargetDB(int argc, const char **argv, const Command &command)
