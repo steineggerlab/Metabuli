@@ -140,7 +140,7 @@ void makeDiffIdxLookup(char * diffIdxFileName, char * infoFileName){
 
 }
 
-void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<string, int> & assacc2taxid){
+void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<string, int> & speciesCnt){
     const char * folder = par.filenames[0].c_str();
     const char * mappingFile = par.filenames[1].c_str();
     const char * outputFileName = par.filenames[2].c_str();
@@ -169,7 +169,7 @@ void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<strin
 
     system(("./../../util/unzip_and_list.sh "+ string(folder)+" "+fastList_fname).c_str());
 
-    //unordered_map<string, int> assacc2taxid;
+    unordered_map<string, int> assacc2taxid;
     string key, value;
     ifstream map;
     map.open(mappingFile);
@@ -183,7 +183,9 @@ void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<strin
     }
     map.close();
 
-    return;
+
+    ///--------------
+   // unordered_map<int, int> speciesCnt;
     ifstream fastaList;
     ofstream taxID_fname;
     taxID_fname.open(taxid_fname_fname);
@@ -198,6 +200,7 @@ void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<strin
             regex_search(fileName, assacc, regex1);
             if (assacc2taxid.count(assacc[0].str())) {
                 taxId = assacc2taxid[assacc[0].str()];
+                speciesCnt[assacc[0].str()] ++;
                 taxID_fname << taxId << "\t" << fileName << endl;
             } else{
                 cout<<assacc[0].str()<<" is excluded in creating target DB because it is not mapped to taxonomical ID"<<endl;
