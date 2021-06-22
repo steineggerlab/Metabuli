@@ -208,6 +208,7 @@ void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<strin
         }
     }
     taxID_fname.close();
+    cout<<"here"<<endl;
     return;
     system(("sort -k 1 -g "+taxid_fname_fname+" > "+taxid_fname_sorted_fname).c_str());
     system("chmod +x ./../../util/make_taxIdList_and_concatenatedGenome.sh");
