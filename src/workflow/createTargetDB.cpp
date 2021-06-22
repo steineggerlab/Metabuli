@@ -60,6 +60,14 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     }
     cout<<"number of species: "<< speciesTaxIdCnt.size()<<endl;
 
+    int max = 0;
+    for(auto it = speciesTaxIdCnt.begin(); it != speciesTaxIdCnt.end(); it++){
+        if(it->second > max){
+            max = it->second;
+        }
+    }
+
+    cout<<"Max "<< max<<endl;
     return 0;
 
     const char * seqFileName = genome_fname.c_str();
