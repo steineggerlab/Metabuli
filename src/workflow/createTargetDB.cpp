@@ -61,13 +61,19 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     cout<<"number of species: "<< speciesTaxIdCnt.size()<<endl;
 
     int max = 0;
+    map<int,int> cntFre;
     for(auto it = speciesTaxIdCnt.begin(); it != speciesTaxIdCnt.end(); it++){
         if(it->second > max){
             max = it->second;
         }
         cout<<max<<" "<<it->second<<endl;
+        cntFre[it->second] ++;
     }
 
+    cout<<"start"<<endl;
+    for(auto it = cntFre.begin(); it != cntFre.end(); it ++){
+        cout<<it->first<<'\t'<<it->second<<endl;
+    }
     cout<<"Max "<< max<<endl;
     return 0;
 
