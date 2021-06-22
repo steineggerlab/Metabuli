@@ -49,7 +49,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     //taxonomical ID
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
 
-    //
+    ///-----------------------------------------------------
     unordered_map<int,int> genus;
     for(size_t i = 0 ; i < ncbiTaxonomy.taxonNodes.size(); i++){
         if(ncbiTaxonomy.taxonNodes[i].rank == "species"){
@@ -72,7 +72,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     }
 
     cout<<archeaCnt<<" "<<bacteriaCnt<<" "<<cnt<<endl;
-
+    ///-------------------------------------------------------
     vector<int> speciesTaxIdList;
     vector<TaxID> genusTaxIdList;
     ncbiTaxonomy.createTaxIdListAtRank(taxIdList, speciesTaxIdList, "species");
