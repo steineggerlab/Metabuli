@@ -56,7 +56,6 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
             genus[ncbiTaxonomy.taxonNodes[i].parentTaxId]++;
         }
     }
-
     auto it = genus.begin();
     size_t cnt = 0;
     int archeaCnt = 0;
@@ -70,7 +69,6 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
         }
         cnt ++;
     }
-
     cout<<archeaCnt<<" "<<bacteriaCnt<<" "<<cnt<<endl;
     ///-------------------------------------------------------
     vector<int> speciesTaxIdList;
