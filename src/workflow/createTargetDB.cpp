@@ -55,8 +55,8 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     cout<<speciesCnt.begin()->first<< " "<< speciesCnt.begin()->second<<" "<<speciesCnt.size()<<endl;
     unordered_map<int,int> speciesTaxIdCnt;
     for(auto it = speciesCnt.begin(); it != speciesCnt.end(); it++){
-        cout<<it->first<<" "<<it->second<<" "<<ncbiTaxonomy.getTaxIdAtRank(it->first, "species")<<endl;
-        speciesTaxIdCnt[ncbiTaxonomy.getTaxIdAtRank(it->first, "species")] ++;
+        cout<<it->first<<" "<<it->second<<" "<<ncbiTaxonomy.getTaxIdAtRank(it->first, "genus")<<endl;
+        speciesTaxIdCnt[ncbiTaxonomy.getTaxIdAtRank(it->first, "genus")] ++;
     }
     cout<<"number of species: "<< speciesTaxIdCnt.size()<<endl;
 
