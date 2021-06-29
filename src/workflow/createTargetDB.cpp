@@ -106,9 +106,19 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     }
 
     int iii = 0;
+    cout<<"Archaea"<<endl;
     for(auto it = subspeciesCnt.begin(); it != subspeciesCnt.end(); it++){
         if(speciesToBeExcluded.end() != find(speciesToBeExcluded.begin(), speciesToBeExcluded.end(), ncbiTaxonomy.getTaxIdAtRank(it->first, "species"))){
+            if(ncbiTaxonomy.getTaxIdAtRank(it->first, "species") == 2)
             cout<<iii++<<" "<<ncbiTaxonomy.taxonNode(it->first)->name<<endl;
+        }
+    }
+
+    cout<<"Bacteria"<<endl;
+    for(auto it = subspeciesCnt.begin(); it != subspeciesCnt.end(); it++){
+        if(speciesToBeExcluded.end() != find(speciesToBeExcluded.begin(), speciesToBeExcluded.end(), ncbiTaxonomy.getTaxIdAtRank(it->first, "species"))){
+            if(ncbiTaxonomy.getTaxIdAtRank(it->first, "species") == 8034)
+                cout<<iii++<<" "<<ncbiTaxonomy.taxonNode(it->first)->name<<endl;
         }
     }
 
