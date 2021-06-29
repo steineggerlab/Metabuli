@@ -53,10 +53,10 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     IndexCreator idxCre;
     cout<<"hi"<<endl;
     cout<<speciesCnt.begin()->first<< " "<< speciesCnt.begin()->second<<" "<<speciesCnt.size()<<endl;
-    unordered_map<int,int> speciesTaxIdCnt;
+    unordered_map<int,int> speciesTaxIdCnt; //<TAXid, cnt>
     for(auto it = speciesCnt.begin(); it != speciesCnt.end(); it++){
-        cout<<it->first<<" "<<it->second<<" "<<ncbiTaxonomy.getTaxIdAtRank(it->first, "family")<<endl;
-        speciesTaxIdCnt[ncbiTaxonomy.getTaxIdAtRank(it->first, "family")] ++;
+        cout<<it->first<<" "<<it->second<<" "<<ncbiTaxonomy.getTaxIdAtRank(it->first, "species")<<endl;
+        speciesTaxIdCnt[ncbiTaxonomy.getTaxIdAtRank(it->first, "species")] ++;
     }
     cout<<"number of species: "<< speciesTaxIdCnt.size()<<endl;
 
@@ -75,6 +75,28 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         cout<<it->first<<'\t'<<it->second<<endl;
     }
     cout<<"Max "<< max<<endl;
+
+    unordered_map<TaxID, int> genusCnt;
+    for(auto it = speciesTaxIdCnt.begin(); it != speciesTaxIdCnt.end(); it++){
+        genusCnt[ncbiTaxonomy.getTaxIdAtRank(it->first, "species")] ++;
+    }
+    map<int,int> cntFre2;
+    for(auto it = genusCnt.begin(); it != genusCnt.end(); it++){
+        cntFre2[it->second]++;
+    }
+
+    cout<<"# species"<<'\t'<<"count"<<endl;
+    for(auto it = cntFre2.begin(); it != cntFre2.end(); it ++){
+        cout<<it->first<<'\t'<<it->second<<endl;
+    }
+
+
+
+
+
+
+
+
     return 0;
 
     const char * seqFileName = genome_fname.c_str();
