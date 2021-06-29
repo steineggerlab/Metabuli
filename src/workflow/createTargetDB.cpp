@@ -9,6 +9,8 @@
 #include <regex>
 #include "Classifier.h"
 #include "omp.h"
+#include <random>
+
 void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<int, int> & speciesCnt);
 void makeDiffIdxLookup(char * diffIdxFileName, char * infoFileName);
 
@@ -24,11 +26,11 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     string names, nodes, merged;
 
     ///Remove here
-    unordered_map<int,int> speciesCnt;
+    unordered_map<int,int> subspeciesCnt; //(TaxID, 1)
 
     if(par.gtdbOrNcbi == 1 || par.gtdbOrNcbi == 0){
         cout<<"Creating target database based on taxonomy of GTDB"<<endl;
-        prepareForCreatingTargetDB(par, speciesCnt);
+        prepareForCreatingTargetDB(par, subspeciesCnt);
         genome_fname = string(folder) + "/concatenated_genome_GTDB";
         taxIdList_fname = string(outputFileName) +"_taxID_list_GTDB";
         names = "../../gtdb_taxdmp/names.dmp";
@@ -36,7 +38,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         merged = "../../gtdb_taxdmp/merged.dmp";
     } else if(par.gtdbOrNcbi == 2){
         cout<<"Creating target database based on taxonomy of NCBI"<<endl;
-        prepareForCreatingTargetDB(par, speciesCnt);
+        prepareForCreatingTargetDB(par, subspeciesCnt);
         genome_fname = string(folder) + "/concatenated_genome_NCBI";
         taxIdList_fname = string(outputFileName) +"_taxID_list_NCBI";
         names = "../../ncbi_taxdmp/names.dmp";
@@ -47,14 +49,18 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         return 0;
     }
 
+    vector<int> speciesList;
+//    for(auto it = subspeciesCnt.begin(); it != subspeciesCnt.end(); it ++){
+//
+//    }
 
 
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
     IndexCreator idxCre;
     cout<<"hi"<<endl;
-    cout<<speciesCnt.begin()->first<< " "<< speciesCnt.begin()->second<<" "<<speciesCnt.size()<<endl;
+    cout<<subspeciesCnt.begin()->first<< " "<< subspeciesCnt.begin()->second<<" "<<subspeciesCnt.size()<<endl;
     unordered_map<int,int> speciesTaxIdCnt; //<TAXid, cnt>
-    for(auto it = speciesCnt.begin(); it != speciesCnt.end(); it++){
+    for(auto it = subspeciesCnt.begin(); it != subspeciesCnt.end(); it++){
         cout<<it->first<<" "<<it->second<<" "<<ncbiTaxonomy.getTaxIdAtRank(it->first, "species")<<endl;
         speciesTaxIdCnt[ncbiTaxonomy.getTaxIdAtRank(it->first, "species")] ++;
     }
@@ -66,6 +72,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         if(it->second > max){
             max = it->second;
         }
+        speciesList.push_back(it->first);
         cout<<max<<" "<<it->second<<endl;
         cntFre[it->second] ++;
     }
@@ -76,21 +83,40 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     }
     cout<<"Max "<< max<<endl;
 
-    unordered_map<TaxID, int> genusCnt;
+    unordered_map<TaxID, int> familyCnt;
     for(auto it = speciesTaxIdCnt.begin(); it != speciesTaxIdCnt.end(); it++){
-        genusCnt[ncbiTaxonomy.getTaxIdAtRank(it->first, "family")] ++;
-    }
-    map<int,int> cntFre2;
-    for(auto it = genusCnt.begin(); it != genusCnt.end(); it++){
-        cntFre2[it->second]++;
-        if(it->second == 195)
-            cout<<"taxid "<<it->first<<endl;
+        familyCnt[ncbiTaxonomy.getTaxIdAtRank(it->first, "family")] = 0;
     }
 
-    cout<<"# species"<<'\t'<<"count"<<endl;
-    for(auto it = cntFre2.begin(); it != cntFre2.end(); it ++){
-        cout<<it->first<<'\t'<<it->second<<endl;
+    vector<TaxID> speciesToBeExcluded;
+    srand(time(NULL));
+    int cnt = 0;
+    int randomN;
+    while(cnt < familyCnt.size()){
+        randomN = rand() % speciesList.size();
+        if(familyCnt[ncbiTaxonomy.getTaxIdAtRank(speciesList[randomN], "family")] == 0){
+            familyCnt[ncbiTaxonomy.getTaxIdAtRank(speciesList[randomN], "family")] = 1;
+            speciesToBeExcluded.push_back(speciesList[randomN]);
+            cnt++;
+        }
     }
+
+    for(auto x : speciesToBeExcluded){
+        cout<<ncbiTaxonomy.taxonNode(x)->name<<endl;
+    }
+
+
+//    map<int,int> cntFre2;
+//    for(auto it = familyCnt.begin(); it != familyCnt.end(); it++){
+//        cntFre2[it->second]++;
+//        if(it->second == 195)
+//            cout<<"taxid "<<it->first<<endl;
+//    }
+//
+//    cout<<"# species"<<'\t'<<"count"<<endl;
+//    for(auto it = cntFre2.begin(); it != cntFre2.end(); it ++){
+//        cout<<it->first<<'\t'<<it->second<<endl;
+//    }
 
 
 
