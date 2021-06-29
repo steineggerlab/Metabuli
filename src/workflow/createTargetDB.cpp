@@ -105,9 +105,10 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         cout<<ncbiTaxonomy.taxonNode(x)->name<<endl;
     }
 
+    int iii = 0;
     for(auto it = subspeciesCnt.begin(); it != subspeciesCnt.end(); it++){
         if(speciesToBeExcluded.end() != find(speciesToBeExcluded.begin(), speciesToBeExcluded.end(), ncbiTaxonomy.getTaxIdAtRank(it->first, "species"))){
-            cout<<ncbiTaxonomy.taxonNode(it->first)->name<<endl;
+            cout<<iii++<<" "<<ncbiTaxonomy.taxonNode(it->first)->name<<endl;
         }
     }
 
