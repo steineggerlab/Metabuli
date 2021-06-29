@@ -83,6 +83,8 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     map<int,int> cntFre2;
     for(auto it = genusCnt.begin(); it != genusCnt.end(); it++){
         cntFre2[it->second]++;
+        if(it->second == 195)
+            cout<<"taxid "<<it->first<<endl;
     }
 
     cout<<"# species"<<'\t'<<"count"<<endl;
