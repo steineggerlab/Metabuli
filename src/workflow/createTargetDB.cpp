@@ -78,7 +78,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     unordered_map<TaxID, int> genusCnt;
     for(auto it = speciesTaxIdCnt.begin(); it != speciesTaxIdCnt.end(); it++){
-        genusCnt[ncbiTaxonomy.getTaxIdAtRank(it->first, "genus")] ++;
+        genusCnt[ncbiTaxonomy.getTaxIdAtRank(it->first, "family")] ++;
     }
     map<int,int> cntFre2;
     for(auto it = genusCnt.begin(); it != genusCnt.end(); it++){
