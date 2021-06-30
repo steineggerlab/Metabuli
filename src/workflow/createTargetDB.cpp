@@ -11,7 +11,7 @@
 #include "omp.h"
 #include <random>
 
-void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<int, int> & speciesCnt);
+void prepareForCreatingTargetDB(const LocalParameters & par);
 void makeDiffIdxLookup(char * diffIdxFileName, char * infoFileName);
 
 int createTargetDB(int argc, const char **argv, const Command &command)
@@ -26,11 +26,11 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     string names, nodes, merged;
 
     ///Remove here
-    unordered_map<int,int> subspeciesCnt; //(TaxID, 1)
+
 
     if(par.gtdbOrNcbi == 1 || par.gtdbOrNcbi == 0){
         cout<<"Creating target database based on taxonomy of GTDB"<<endl;
-        prepareForCreatingTargetDB(par, subspeciesCnt);
+        prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_GTDB";
         taxIdList_fname = string(outputFileName) +"_taxID_list_GTDB";
         names = "../../gtdb_taxdmp/names.dmp";
@@ -38,7 +38,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         merged = "../../gtdb_taxdmp/merged.dmp";
     } else if(par.gtdbOrNcbi == 2){
         cout<<"Creating target database based on taxonomy of NCBI"<<endl;
-        prepareForCreatingTargetDB(par, subspeciesCnt);
+        prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_NCBI";
         taxIdList_fname = string(outputFileName) +"_taxID_list_NCBI";
         names = "../../ncbi_taxdmp/names.dmp";
@@ -49,101 +49,9 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         return 0;
     }
 
-    vector<int> speciesList;
-//    for(auto it = subspeciesCnt.begin(); it != subspeciesCnt.end(); it ++){
-//
-//    }
-
-
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
     IndexCreator idxCre;
-    cout<<"hi"<<endl;
-    cout<<subspeciesCnt.begin()->first<< " "<< subspeciesCnt.begin()->second<<" "<<subspeciesCnt.size()<<endl;
-    unordered_map<int,int> speciesTaxIdCnt; //<TAXid, cnt>
-    for(auto it = subspeciesCnt.begin(); it != subspeciesCnt.end(); it++){
-        cout<<it->first<<" "<<it->second<<" "<<ncbiTaxonomy.getTaxIdAtRank(it->first, "species")<<endl;
-        speciesTaxIdCnt[ncbiTaxonomy.getTaxIdAtRank(it->first, "species")] ++;
-    }
-    cout<<"number of species: "<< speciesTaxIdCnt.size()<<endl;
 
-    int max = 0;
-    map<int,int> cntFre;
-    for(auto it = speciesTaxIdCnt.begin(); it != speciesTaxIdCnt.end(); it++){
-        if(it->second > max){
-            max = it->second;
-        }
-        speciesList.push_back(it->first);
-        cout<<max<<" "<<it->second<<endl;
-        cntFre[it->second] ++;
-    }
-
-    cout<<"start"<<endl;
-    for(auto it = cntFre.begin(); it != cntFre.end(); it ++){
-        cout<<it->first<<'\t'<<it->second<<endl;
-    }
-    cout<<"Max "<< max<<endl;
-
-    unordered_map<TaxID, int> familyCnt;
-    for(auto it = speciesTaxIdCnt.begin(); it != speciesTaxIdCnt.end(); it++){
-        familyCnt[ncbiTaxonomy.getTaxIdAtRank(it->first, "family")] = 0;
-    }
-
-    vector<TaxID> speciesToBeExcluded;
-    srand(time(NULL));
-    int cnt = 0;
-    int randomN;
-    while(cnt < familyCnt.size()){
-        randomN = rand() % speciesList.size();
-        if(familyCnt[ncbiTaxonomy.getTaxIdAtRank(speciesList[randomN], "family")] == 0){
-            familyCnt[ncbiTaxonomy.getTaxIdAtRank(speciesList[randomN], "family")] = 1;
-            speciesToBeExcluded.push_back(speciesList[randomN]);
-            cnt++;
-        }
-    }
-
-    for(auto x : speciesToBeExcluded){
-        cout<<ncbiTaxonomy.taxonNode(x)->name<<endl;
-    }
-
-    int iii = 0;
-    cout<<"Archaea"<<endl;
-    for(auto it = subspeciesCnt.begin(); it != subspeciesCnt.end(); it++){
-        if(speciesToBeExcluded.end() != find(speciesToBeExcluded.begin(), speciesToBeExcluded.end(), ncbiTaxonomy.getTaxIdAtRank(it->first, "species"))){
-           // if(ncbiTaxonomy.getTaxIdAtRank(it->first, "superkingdom") == 2) {
-                cout<< ncbiTaxonomy.taxonNode(it->first)->name << endl;
-            //}
-        }
-    }
-
-//    cout<<"Bacteria"<<endl;
-//    for(auto it = subspeciesCnt.begin(); it != subspeciesCnt.end(); it++){
-//        if(speciesToBeExcluded.end() != find(speciesToBeExcluded.begin(), speciesToBeExcluded.end(), ncbiTaxonomy.getTaxIdAtRank(it->first, "species"))){
-//            if(ncbiTaxonomy.getTaxIdAtRank(it->first, "superkingdom") == 8034) {
-//                cout << iii++ << " " << ncbiTaxonomy.taxonNode(it->first)->name << endl;
-//            }
-//        }
-//    }
-
-//    map<int,int> cntFre2;
-//    for(auto it = familyCnt.begin(); it != familyCnt.end(); it++){
-//        cntFre2[it->second]++;
-//        if(it->second == 195)
-//            cout<<"taxid "<<it->first<<endl;
-//    }
-//
-//    cout<<"# species"<<'\t'<<"count"<<endl;
-//    for(auto it = cntFre2.begin(); it != cntFre2.end(); it ++){
-//        cout<<it->first<<'\t'<<it->second<<endl;
-//    }
-
-
-
-
-
-
-
-
-    return 0;
 
     const char * seqFileName = genome_fname.c_str();
     const char * taxIdFileName = taxIdList_fname.c_str();
@@ -223,7 +131,7 @@ void makeDiffIdxLookup(char * diffIdxFileName, char * infoFileName){
 
 }
 
-void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<int, int> & speciesCnt){
+void prepareForCreatingTargetDB(const LocalParameters & par){
     const char * folder = par.filenames[0].c_str();
     const char * mappingFile = par.filenames[1].c_str();
     const char * outputFileName = par.filenames[2].c_str();
@@ -280,7 +188,6 @@ void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<int, 
             regex_search(fileName, assacc, regex1);
             if (assacc2taxid.count(assacc[0].str())) {
                 taxId = assacc2taxid[assacc[0].str()];
-                speciesCnt[taxId] = 1;
                 taxID_fname << taxId << "\t" << fileName << endl;
             } else{
                 cout<<assacc[0].str()<<" is excluded in creating target DB because it is not mapped to taxonomical ID"<<endl;
@@ -289,7 +196,6 @@ void prepareForCreatingTargetDB(const LocalParameters & par, unordered_map<int, 
     }
     taxID_fname.close();
 
-    return;
     system(("sort -k 1 -g "+taxid_fname_fname+" > "+taxid_fname_sorted_fname).c_str());
     system("chmod +x ./../../util/make_taxIdList_and_concatenatedGenome.sh");
     system(("./../../util/make_taxIdList_and_concatenatedGenome.sh "+taxidList_fname+" "+taxid_fname_sorted_fname+" "+genome_fname).c_str());
