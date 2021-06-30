@@ -110,7 +110,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     for(auto it = subspeciesCnt.begin(); it != subspeciesCnt.end(); it++){
         if(speciesToBeExcluded.end() != find(speciesToBeExcluded.begin(), speciesToBeExcluded.end(), ncbiTaxonomy.getTaxIdAtRank(it->first, "species"))){
            // if(ncbiTaxonomy.getTaxIdAtRank(it->first, "superkingdom") == 2) {
-                cout << iii++ << " " <<it->first<<" "<< ncbiTaxonomy.taxonNode(it->first)->name << endl;
+                cout<< ncbiTaxonomy.taxonNode(it->first)->name << endl;
             //}
         }
     }
