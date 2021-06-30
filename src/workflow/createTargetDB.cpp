@@ -109,20 +109,20 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     cout<<"Archaea"<<endl;
     for(auto it = subspeciesCnt.begin(); it != subspeciesCnt.end(); it++){
         if(speciesToBeExcluded.end() != find(speciesToBeExcluded.begin(), speciesToBeExcluded.end(), ncbiTaxonomy.getTaxIdAtRank(it->first, "species"))){
-            if(ncbiTaxonomy.getTaxIdAtRank(it->first, "superkingdom") == 2) {
-                cout << iii++ << " " << ncbiTaxonomy.taxonNode(it->first)->name << endl;
-            }
+           // if(ncbiTaxonomy.getTaxIdAtRank(it->first, "superkingdom") == 2) {
+                cout << iii++ << " " <<it->first<<" "<< ncbiTaxonomy.taxonNode(it->first)->name << endl;
+            //}
         }
     }
 
-    cout<<"Bacteria"<<endl;
-    for(auto it = subspeciesCnt.begin(); it != subspeciesCnt.end(); it++){
-        if(speciesToBeExcluded.end() != find(speciesToBeExcluded.begin(), speciesToBeExcluded.end(), ncbiTaxonomy.getTaxIdAtRank(it->first, "species"))){
-            if(ncbiTaxonomy.getTaxIdAtRank(it->first, "superkingdom") == 8034) {
-                cout << iii++ << " " << ncbiTaxonomy.taxonNode(it->first)->name << endl;
-            }
-        }
-    }
+//    cout<<"Bacteria"<<endl;
+//    for(auto it = subspeciesCnt.begin(); it != subspeciesCnt.end(); it++){
+//        if(speciesToBeExcluded.end() != find(speciesToBeExcluded.begin(), speciesToBeExcluded.end(), ncbiTaxonomy.getTaxIdAtRank(it->first, "species"))){
+//            if(ncbiTaxonomy.getTaxIdAtRank(it->first, "superkingdom") == 8034) {
+//                cout << iii++ << " " << ncbiTaxonomy.taxonNode(it->first)->name << endl;
+//            }
+//        }
+//    }
 
 //    map<int,int> cntFre2;
 //    for(auto it = familyCnt.begin(); it != familyCnt.end(); it++){
