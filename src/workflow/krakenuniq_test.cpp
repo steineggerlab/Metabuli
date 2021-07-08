@@ -46,9 +46,7 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
             getline(taxDB, parentString, '\t');
             getline(taxDB, throwaway,'\n');
             childInt = stoi(childString);
-            cout<<"hi"<<endl;
             parentInt = stoi(parentString);
-            cout<<"bye"<<endl;
             if(childInt > 1000000000)
                 child2parent[childInt] = parentInt;
         }
@@ -57,7 +55,6 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
     }
     taxDB.close();
 
-    cout<<"here"<<endl;
     ///read classification
     string classString;
     ifstream readClassification;
@@ -75,9 +72,9 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
     }
     cout<<"hi"<<endl;
     cout<<"num of classification: "<< classList.size()<<endl;
-    for(int i = 0 ; i<classList.size(); i++){
-        cout<<i<< " "<<classList[i]<<endl;
-    }
+//    for(int i = 0 ; i<classList.size(); i++){
+//        cout<<i<< " "<<classList[i]<<endl;
+//    }
 
     ///Load query file -> name
     regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
@@ -150,6 +147,9 @@ void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts&
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
     string shotRank = shotNode->rank;
     cout<<shot<<" "<<target<<" "<<shotRank<<" ";
+    if(shot == 0){
+        cout<<"X"<<endl;
+    }
     if(NcbiTaxonomy::findRankIndex(shotRank) <= 3){
         //cout<<"subspecies"<<endl;
         if(shot == target){
