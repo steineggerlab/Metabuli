@@ -46,7 +46,9 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
             getline(taxDB, parentString, '\t');
             getline(taxDB, throwaway,'\n');
             childInt = stoi(childString);
+            cout<<"hi"<<endl;
             parentInt = stoi(parentString);
+            cout<<"bye"<<endl;
             if(childInt > 1000000000)
                 child2parent[childInt] = parentInt;
         }
@@ -55,6 +57,7 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
     }
     taxDB.close();
 
+    cout<<"here"<<endl;
     ///read classification
     string classString;
     ifstream readClassification;
@@ -70,6 +73,7 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
         }
 
     }
+    cout<<"hi"<<endl;
     cout<<"num of classification: "<< classList.size()<<endl;
     for(int i = 0 ; i<classList.size(); i++){
         cout<<i<< " "<<classList[i]<<endl;
