@@ -37,13 +37,14 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
 
     ///Load taxDB of kraken
     unordered_map<int, int> child2parent;
-    string childString, parentString;
+    string childString, parentString, throwaway;
     int childInt, parentInt;
     ifstream taxDB;
     taxDB.open(krakenTaxDB);
     if(taxDB.is_open()){
         while(getline(taxDB,childString,'\t')){
-            getline(taxDB, parentString, '\n');
+            getline(taxDB, parentString, '\t');
+            getline(taxDB, throwaway,'\n');
             childInt = stoi(childString);
             parentInt = stoi(parentString);
             if(childInt > 1000000000)
