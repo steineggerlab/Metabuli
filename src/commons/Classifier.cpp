@@ -49,28 +49,28 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     //taxonomical ID
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
 
-    ///-----------------------------------------------------
-    unordered_map<int,int> genus;
-    for(size_t i = 0 ; i < ncbiTaxonomy.taxonNodes.size(); i++){
-        if(ncbiTaxonomy.taxonNodes[i].rank == "species"){
-            genus[ncbiTaxonomy.taxonNodes[i].parentTaxId]++;
-        }
-    }
-    auto it = genus.begin();
-    size_t cnt = 0;
-    int archeaCnt = 0;
-    int bacteriaCnt = 0;
-    for(auto it = genus.begin(); it != genus.end(); it++){
-        if(it->second == 1){
-            if(it->first < 5839)
-                archeaCnt ++;
-            else
-                bacteriaCnt ++;
-        }
-        cnt ++;
-    }
-    cout<<archeaCnt<<" "<<bacteriaCnt<<" "<<cnt<<endl;
-    return;
+//    ///-----------------------------------------------------
+//    unordered_map<int,int> genus;
+//    for(size_t i = 0 ; i < ncbiTaxonomy.taxonNodes.size(); i++){
+//        if(ncbiTaxonomy.taxonNodes[i].rank == "species"){
+//            genus[ncbiTaxonomy.taxonNodes[i].parentTaxId]++;
+//        }
+//    }
+//    auto it = genus.begin();
+//    size_t cnt = 0;
+//    int archeaCnt = 0;
+//    int bacteriaCnt = 0;
+//    for(auto it = genus.begin(); it != genus.end(); it++){
+//        if(it->second == 1){
+//            if(it->first < 5839)
+//                archeaCnt ++;
+//            else
+//                bacteriaCnt ++;
+//        }
+//        cnt ++;
+//    }
+//    cout<<archeaCnt<<" "<<bacteriaCnt<<" "<<cnt<<endl;
+//    return;
     ///-------------------------------------------------------
     vector<int> speciesTaxIdList;
     vector<TaxID> genusTaxIdList;
