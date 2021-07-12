@@ -205,7 +205,8 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     }
     cout<<"Filtering out meaningless target splits ... done"<<endl;
 
-    ///Devide query k-mer list into blocks for multi threading.
+    //Devide query k-mer list into blocks for multi threading.
+    //Each split has start and end points of query list + proper offset point of target k-mer list
     vector<QueryKmerSplit> splits;
     int threadNum = ThreadNum;
     uint64_t queryAA;
@@ -243,10 +244,10 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
             }
             if(needLastTargetBlock){
                 if(i != threadNum - 1)
-                    splits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth, diffIdxSplits.data[SplitNum-1]);
+                    splits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth, diffIdxSplits.data[numOfDiffIdxSplits_use-1]);
                 else {
                     splits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
-                                        diffIdxSplits.data[SplitNum-1]);
+                                        diffIdxSplits.data[numOfDiffIdxSplits_use-1]);
                 }
             }
         }
