@@ -235,7 +235,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                    else {
                        splits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
                                            diffIdxSplits.data[j]);
-                       cout<<"hi"<<endl;
+                       cout<<"j:"<<j<<endl;
                    }
                    break;
                }
