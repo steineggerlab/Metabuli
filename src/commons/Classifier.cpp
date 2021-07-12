@@ -111,20 +111,20 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     //extact k-mers from query sequences and compare them to target k-mer DB
     ///TODO measure time for extract & sort & search separately
     beforeSearch = time(NULL);
-//    while(processedSeqCnt < numOfSeq){
-//        fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryList);
-//        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
-//        cout<<"buffer overflowed"<<endl;
-//        omp_set_num_threads(ThreadNum);
-//        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
-//        cout<<"buffer sorted"<<endl;
-//        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile);
-//    }
-//    cout<<"total kmer count: "<<numOfTatalQueryKmerCnt<<endl;
-//    writeMatches(matchBuffer, matchFile);
-//    fclose(matchFile);
-//    afterSearch = time(NULL);
-//    cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
+    while(processedSeqCnt < numOfSeq){
+        fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryList);
+        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
+        cout<<"buffer overflowed"<<endl;
+        omp_set_num_threads(ThreadNum);
+        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
+        cout<<"buffer sorted"<<endl;
+        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile);
+    }
+    cout<<"total kmer count: "<<numOfTatalQueryKmerCnt<<endl;
+    writeMatches(matchBuffer, matchFile);
+    fclose(matchFile);
+    afterSearch = time(NULL);
+    cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
 
     //load matches and analyze
     cout<<"analyse Result"<<endl;
@@ -480,6 +480,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
         matchBlocks[blockIdx].end = matchIdx - 1;
         blockIdx++;
     }
+    cout<<"483"<<endl;
 
     omp_set_num_threads(1);
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList)
@@ -553,6 +554,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
                                   numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
                                   selectedPercent);
 
+    cout<<"557\n"<<endl;
     ///TODO optimize strain specific classification criteria
     ///Strain classification only for high coverage with LCA of species level
     if(coverage > 0.75 && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
@@ -585,11 +587,12 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
     }
     cout<<"coverage: "<<coverage<<"  "<<selectedLCA<<" "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
-
+    cout<<"589\n"<<endl;
     ///store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedLCA;
     queryList[currentQuery].coverage = coverage;
+    cout<<"end of choose best taxon\n";
     return selectedLCA;
 }
 
@@ -648,6 +651,7 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
     }
     //choose the best combination of consecutive-match among genus for current query
     getTheBestGenus(genus, chosenMatchCombination);
+    cout<<"654"<<endl;
 }
 void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList){
     for(int i3 = 0; i3 < coMatches.size(); i3++){
@@ -757,6 +761,7 @@ void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vec
     for(size_t i = 0; i < genus[chosenGenusIdx].size(); i++){
         chosen.push_back(genus[chosenGenusIdx][i]);
     }
+    cout<<"764"<<endl;
 }
 
 
