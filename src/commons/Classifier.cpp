@@ -230,12 +230,13 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
             for(size_t j = 0; j < numOfDiffIdxSplits_use; j++){
                if(queryAA < AminoAcid(diffIdxSplits.data[j].ADkmer)){
                    j = j - (j!=0);
+                   cout<<"j:"<<j<<endl;
                    if(i != threadNum - 1)
                         splits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth, diffIdxSplits.data[j]);
                    else {
                        splits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
                                            diffIdxSplits.data[j]);
-                       cout<<"j:"<<j<<endl;
+
                    }
                    break;
                }
