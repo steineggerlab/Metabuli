@@ -753,7 +753,7 @@ void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vec
     int totalDiffPosCnt;
     int totalMatchCnt;
     int totalHamming;
-    float maxScore = FLT_MIN;
+    float maxScore = -FLT_MAX;
     float currScore;
 
     for(size_t i = 0; i < genus.size(); i++){
@@ -771,7 +771,7 @@ void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vec
             maxScore = currScore;
         }
     }
-
+    cout<<"hi"<<endl;
 
     for (size_t i = 0; i < genus[chosenGenusIdx].size(); i++) {
         chosen.push_back(genus[chosenGenusIdx][i]);
