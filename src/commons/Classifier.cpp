@@ -111,20 +111,20 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     //extact k-mers from query sequences and compare them to target k-mer DB
     ///TODO measure time for extract & sort & search separately
     beforeSearch = time(NULL);
-    while(processedSeqCnt < numOfSeq){
-        fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryList);
-        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
-        cout<<"buffer overflowed"<<endl;
-        omp_set_num_threads(ThreadNum);
-        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
-        cout<<"buffer sorted"<<endl;
-        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile);
-    }
-    cout<<"total kmer count: "<<numOfTatalQueryKmerCnt<<endl;
-    writeMatches(matchBuffer, matchFile);
-    fclose(matchFile);
-    afterSearch = time(NULL);
-    cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
+//    while(processedSeqCnt < numOfSeq){
+//        fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryList);
+//        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
+//        cout<<"buffer overflowed"<<endl;
+//        omp_set_num_threads(ThreadNum);
+//        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
+//        cout<<"buffer sorted"<<endl;
+//        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile);
+//    }
+//    cout<<"total kmer count: "<<numOfTatalQueryKmerCnt<<endl;
+//    writeMatches(matchBuffer, matchFile);
+//    fclose(matchFile);
+//    afterSearch = time(NULL);
+//    cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
 
     //load matches and analyze
     cout<<"analyse Result"<<endl;
@@ -494,6 +494,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
     delete[] matchBlocks;
     munmap(matchList.data, matchList.fileSize + 1);
+    cout<<"end of analyseResultParallel"<<endl;
 }
 
 ///For a query read, assign the best Taxon, using k-mer matches
@@ -608,8 +609,10 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
     size_t i = offset;
     while(i < end + 1) {
         currentTaxID = matchList[i].genusTaxID;
+        //For current genus
         while (currentTaxID == matchList[i].genusTaxID && (i < end + 1)) {
             currentFrame = matchList[i].frame;
+            //For current frame
             while (currentFrame == matchList[i].frame && currentTaxID == matchList[i].genusTaxID && (i < end + 1)){
                 currentPos = matchList[i].position;
                 hammingSum = 0;
@@ -617,6 +620,8 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
                 diffPosCnt = 1;
                 conBegin = currentPos;
                 beginIdx = i;
+                //Find consecutive matches
+                //TODO: this can be faster
                 while(matchList[i].position <= currentPos + 3 && currentFrame == matchList[i].frame && currentTaxID == matchList[i].genusTaxID && (i < end + 1)){
 //                    if(conCnt == 0) {
 //                        conBegin = matchList[i].position;
@@ -635,7 +640,7 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
                 }
             }
         }
-        //choose the best combination of consecutive matches of current genus
+        //choose the best combination of consecutive matches for current genus
         if(!coMatches.empty()) getMatchCombinationForCurGenus(coMatches, genus, matchList);
         coMatches.clear();
     }
@@ -651,18 +656,19 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     }
     int numOfSubsets = int(pow(2, coMatches.size()) - 1);
     vector<int> subset;
-    vector<vector<int>> subsets;
+    vector<vector<int>> subsetList;
     size_t bestSubset;
     float bestScore = -FLT_MAX;
     float tiedScore;
     size_t tiedSubset;
     float currentScore = 0;
-    getSubsets(subset, subsets, 0, coMatches.size() - 1);
+    getSubsets(subset, subsetList, 0, coMatches.size() - 1);
+    cout<<"after getSubsets"<<endl;
     vector<ConsecutiveMatches> matchesToScore;
-    for(size_t j = 0; j < subsets.size(); j++){
-        if(!subsets[j].empty()) {
-            for (size_t i = 0; i < subsets[j].size(); i++) {
-                matchesToScore.push_back(coMatches[subsets[j][i]]);
+    for(size_t j = 0; j < subsetList.size(); j++){
+        if(!subsetList[j].empty()) {
+            for (size_t i = 0; i < subsetList[j].size(); i++) {
+                matchesToScore.push_back(coMatches[subsetList[j][i]]);
             }
             currentScore = scoreSubset(matchesToScore);
             matchesToScore.clear();
@@ -677,19 +683,20 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     }
 
     vector<ConsecutiveMatches> alignedCoMatches;
-    for(size_t i = 0; i < subsets[bestSubset].size(); i++){
-        alignedCoMatches.push_back(coMatches[subsets[bestSubset][i]]);
+    for(size_t i = 0; i < subsetList[bestSubset].size(); i++){
+        alignedCoMatches.push_back(coMatches[subsetList[bestSubset][i]]);
     }
 
     if(tiedScore == bestScore){
         cout<<"tie"<<endl;
-        for(size_t i = 0; i < subsets[tiedSubset].size(); i++){
-            alignedCoMatches.push_back(coMatches[subsets[tiedSubset][i]]);
+        for(size_t i = 0; i < subsetList[tiedSubset].size(); i++){
+            alignedCoMatches.push_back(coMatches[subsetList[tiedSubset][i]]);
         }
     }
 
     genus.push_back(coMatches);
     //genus.push_back(alignedCoMatches);
+    cout<<"end of getMatchCombinationForCurGenus"<<endl;
 }
 
 void Classifier::getSubsets(vector<int> & subset, vector<vector<int>> & uniqueSubset, int k, int n){
@@ -709,7 +716,8 @@ float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
     //give bad score if overlapping
     for(size_t i = 0; i + 1 < subset.size(); i++){
         for(size_t j = i + 1; j < subset.size(); j++){
-            if((subset[i].begin <= subset[j].end) && (subset[i].end >= subset[j].begin)) overlapped = true;
+            if((subset[i].begin <= subset[j].end) && (subset[i].end >= subset[j].begin))
+                overlapped = true;
         }
     }
 
