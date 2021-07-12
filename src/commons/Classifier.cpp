@@ -771,8 +771,10 @@ void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vec
         }
     }
 
-    for(size_t i = 0; i < genus[chosenGenusIdx].size(); i++){
-        chosen.push_back(genus[chosenGenusIdx][i]);
+    if(!genus.empty()) {
+        for (size_t i = 0; i < genus[chosenGenusIdx].size(); i++) {
+            chosen.push_back(genus[chosenGenusIdx][i]);
+        }
     }
     cout<<"764"<<endl;
 }
