@@ -79,7 +79,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     //output file
     char matchFileName[300];
     sprintf(matchFileName,"%s_match", queryFileName);
-    FILE * matchFile = fopen(matchFileName, "wb");
+   ///////// FILE * matchFile = fopen(matchFileName, "wb");
 
     //query & target
     struct MmapedData<char> queryFile = mmapData<char>(par.filenames[0].c_str());
@@ -111,20 +111,20 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     //extact k-mers from query sequences and compare them to target k-mer DB
     ///TODO measure time for extract & sort & search separately
     beforeSearch = time(NULL);
-    while(processedSeqCnt < numOfSeq){
-        fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryList);
-        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
-        cout<<"buffer overflowed"<<endl;
-        omp_set_num_threads(ThreadNum);
-        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
-        cout<<"buffer sorted"<<endl;
-        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile);
-    }
-    cout<<"total kmer count: "<<numOfTatalQueryKmerCnt<<endl;
-    writeMatches(matchBuffer, matchFile);
-    fclose(matchFile);
-    afterSearch = time(NULL);
-    cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
+//    while(processedSeqCnt < numOfSeq){
+//        fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryList);
+//        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
+//        cout<<"buffer overflowed"<<endl;
+//        omp_set_num_threads(ThreadNum);
+//        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
+//        cout<<"buffer sorted"<<endl;
+//        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile);
+//    }
+//    cout<<"total kmer count: "<<numOfTatalQueryKmerCnt<<endl;
+//    writeMatches(matchBuffer, matchFile);
+//    fclose(matchFile);
+//    afterSearch = time(NULL);
+//    cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
 
     //load matches and analyze
     cout<<"analyse Result"<<endl;
@@ -205,14 +205,14 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     }
     cout<<"Filtering out meaningless target splits ... done"<<endl;
 
-    //Devide query k-mer list into blocks for multi threading.
-    //Each split has start and end points of query list + proper offset point of target k-mer list
+    ///Devide query k-mer list into blocks for multi threading.
+    ///Each split has start and end points of query list + proper offset point of target k-mer list
     vector<QueryKmerSplit> splits;
     int threadNum = ThreadNum;
     uint64_t queryAA;
-    if(threadNum == 1){
+    if(threadNum == 1){ //Single thread
         splits.emplace_back(0, queryKmerCnt -1, queryKmerCnt, diffIdxSplits.data[0]);
-    } else if(threadNum == 2){
+    } else if(threadNum == 2){ //Two threads
         size_t splitWidth = queryKmerCnt / 2;
         splits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
         for(size_t tSplitCnt = 0; tSplitCnt < numOfDiffIdxSplits_use; tSplitCnt++){
@@ -223,7 +223,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                 break;
             }
         }
-    } else{
+    } else{ //More than two threads
         size_t splitWidth = queryKmerCnt / (threadNum - 1);
         splits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
         for(int i = 1; i < threadNum; i ++){
@@ -626,9 +626,11 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
 
     size_t i = offset;
     while(i < end + 1) {
+        cout<<"3"<<endl;
         currentTaxID = matchList[i].genusTaxID;
         //For current genus
         while (currentTaxID == matchList[i].genusTaxID && (i < end + 1)) {
+            cout<<"2"<<endl;
             currentFrame = matchList[i].frame;
             //For current frame
             while (currentFrame == matchList[i].frame && currentTaxID == matchList[i].genusTaxID && (i < end + 1)){
@@ -641,10 +643,6 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
                 //Find consecutive matches
                 //TODO: this can be faster
                 while(matchList[i].position <= currentPos + 3 && currentFrame == matchList[i].frame && currentTaxID == matchList[i].genusTaxID && (i < end + 1)){
-//                    if(conCnt == 0) {
-//                        conBegin = matchList[i].position;
-//                        beginIdx = i;
-//                    }
                     if(matchList[i].position != currentPos) {
                         diffPosCnt++;
                         currentPos = matchList[i].position;
@@ -662,6 +660,7 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
         if(!coMatches.empty()) getMatchCombinationForCurGenus(coMatches, genus, matchList);
         coMatches.clear();
     }
+
     //choose the best combination of consecutive-match among genus for current query
     getTheBestGenus(genus, chosenMatchCombination);
     cout<<"654"<<endl;
@@ -748,6 +747,7 @@ float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
     return score;
 }
 void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen){
+    cout<<"get the best genus"<<endl;
     int chosenGenusIdx;
     int totalDiffPosCnt;
     int totalMatchCnt;
