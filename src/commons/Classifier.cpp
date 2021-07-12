@@ -493,9 +493,8 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
         matchBlocks[blockIdx].end = matchIdx - 1;
         blockIdx++;
     }
-    cout<<"483"<<endl;
 
-    omp_set_num_threads(1);
+    omp_set_num_threads(ThreadNum);
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList)
     {
 #pragma omp for schedule(dynamic, 1)
@@ -530,7 +529,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         coveredKmerCnt += matchCombi[cm].diffPosCnt;
     }
     coverage = float(coveredKmerCnt) / float(maxNum);
-    cout<<"cov "<<coverage<<endl;
+//    cout<<"cov "<<coverage<<endl;
     queryList[currentQuery].coverage = coverage;
 
     ///Get a lowest common ancestor
@@ -567,7 +566,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
                                   numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
                                   selectedPercent);
 
-    cout<<"557\n"<<endl;
     ///TODO optimize strain specific classification criteria
     ///Strain classification only for high coverage with LCA of species level
     if(coverage > 0.75 && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
@@ -595,17 +593,15 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     }
 
 
-    cout<<"# "<<currentQuery<<endl;
-    for(size_t i = 0; i < taxIdList.size(); i++){
-        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
-    }
-    cout<<"coverage: "<<coverage<<"  "<<selectedLCA<<" "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
-    cout<<"589\n"<<endl;
+//    cout<<"# "<<currentQuery<<endl;
+//    for(size_t i = 0; i < taxIdList.size(); i++){
+//        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
+//    }
+//    cout<<"coverage: "<<coverage<<"  "<<selectedLCA<<" "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
     ///store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedLCA;
     queryList[currentQuery].coverage = coverage;
-    cout<<"end of choose best taxon\n";
     return selectedLCA;
 }
 
@@ -626,11 +622,9 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
 
     size_t i = offset;
     while(i < end + 1) {
-        cout<<"3"<<endl;
         currentTaxID = matchList[i].genusTaxID;
         //For current genus
         while (currentTaxID == matchList[i].genusTaxID && (i < end + 1)) {
-            cout<<"2"<<endl;
             currentFrame = matchList[i].frame;
             //For current frame
             while (currentFrame == matchList[i].frame && currentTaxID == matchList[i].genusTaxID && (i < end + 1)){
@@ -664,15 +658,14 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
     //choose the best combination of consecutive-match among genus for current query
     if(!genus.empty())
         getTheBestGenus(genus, chosenMatchCombination);
-    cout<<"654"<<endl;
 }
 void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList){
-    for(int i3 = 0; i3 < coMatches.size(); i3++){
-        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt;
-        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
-        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
-        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
-    }
+//    for(int i3 = 0; i3 < coMatches.size(); i3++){
+//        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt;
+//        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
+//        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
+//        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
+//    }
     int numOfSubsets = int(pow(2, coMatches.size()) - 1);
     vector<int> subset;
     vector<vector<int>> subsetList;
@@ -682,7 +675,6 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     size_t tiedSubset;
     float currentScore = 0;
     getSubsets(subset, subsetList, 0, coMatches.size() - 1);
-    cout<<"after getSubsets"<<endl;
     vector<ConsecutiveMatches> matchesToScore;
     for(size_t j = 0; j < subsetList.size(); j++){
         if(!subsetList[j].empty()) {
@@ -715,7 +707,6 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
 
     genus.push_back(coMatches);
     //genus.push_back(alignedCoMatches);
-    cout<<"end of getMatchCombinationForCurGenus"<<endl;
 }
 
 void Classifier::getSubsets(vector<int> & subset, vector<vector<int>> & uniqueSubset, int k, int n){
@@ -748,7 +739,7 @@ float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
     return score;
 }
 void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen){
-    cout<<"get the best genus"<<endl;
+
     int chosenGenusIdx = INT_MAX;
     int totalDiffPosCnt;
     int totalMatchCnt;
@@ -771,13 +762,10 @@ void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vec
             maxScore = currScore;
         }
     }
-    cout<<"hi"<<endl;
 
     for (size_t i = 0; i < genus[chosenGenusIdx].size(); i++) {
         chosen.push_back(genus[chosenGenusIdx][i]);
     }
-
-    cout<<"764"<<endl;
 }
 
 
