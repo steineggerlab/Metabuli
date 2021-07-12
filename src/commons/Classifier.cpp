@@ -662,7 +662,8 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
     }
 
     //choose the best combination of consecutive-match among genus for current query
-    getTheBestGenus(genus, chosenMatchCombination);
+    if(!genus.empty())
+        getTheBestGenus(genus, chosenMatchCombination);
     cout<<"654"<<endl;
 }
 void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList){
@@ -748,7 +749,7 @@ float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
 }
 void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen){
     cout<<"get the best genus"<<endl;
-    int chosenGenusIdx;
+    int chosenGenusIdx = INT_MAX;
     int totalDiffPosCnt;
     int totalMatchCnt;
     int totalHamming;
@@ -771,11 +772,11 @@ void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vec
         }
     }
 
-    if(!genus.empty()) {
-        for (size_t i = 0; i < genus[chosenGenusIdx].size(); i++) {
-            chosen.push_back(genus[chosenGenusIdx][i]);
-        }
+
+    for (size_t i = 0; i < genus[chosenGenusIdx].size(); i++) {
+        chosen.push_back(genus[chosenGenusIdx][i]);
     }
+
     cout<<"764"<<endl;
 }
 
