@@ -227,19 +227,27 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
         splits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
         for(int i = 1; i < threadNum; i ++){
             queryAA = AminoAcid(queryKmerList[splitWidth * i].ADkmer);
+            bool needLastTargetBlock = true;
             for(size_t j = 0; j < numOfDiffIdxSplits_use; j++){
-               if(queryAA < AminoAcid(diffIdxSplits.data[j].ADkmer)){
+               if(queryAA <= AminoAcid(diffIdxSplits.data[j].ADkmer)){
                    j = j - (j!=0);
-                   cout<<"j:"<<j<<endl;
                    if(i != threadNum - 1)
-                        splits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth, diffIdxSplits.data[j]);
+                       splits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth, diffIdxSplits.data[j]);
                    else {
                        splits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
                                            diffIdxSplits.data[j]);
-
                    }
+                   needLastTargetBlock = false;
                    break;
                }
+            }
+            if(needLastTargetBlock){
+                if(i != threadNum - 1)
+                    splits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth, diffIdxSplits.data[SplitNum-1]);
+                else {
+                    splits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
+                                        diffIdxSplits.data[SplitNum-1]);
+                }
             }
         }
     }

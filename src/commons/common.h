@@ -7,6 +7,7 @@
 #include "NcbiTaxonomy.h"
 #define kmerBufSize 10000000000 // 10,000,000,000
 #define ThreadNum 64
+#define SplitNum 4096
 //#define kmerBufSize 1000000000
 #define AApart(x) x & ()
 struct Sequence{
