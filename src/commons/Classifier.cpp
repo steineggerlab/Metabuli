@@ -461,6 +461,7 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetList, con
 ///It analyses the result of linear search.
 void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum, Query * queryList){
     struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
+    cout<<matchList.fileSize<<"!!"<<endl;
     size_t numOfMatches = matchList.fileSize / sizeof(Match);
     SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByTaxId);
     cout<<"num of matches"<<numOfMatches<<endl;
