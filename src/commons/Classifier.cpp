@@ -518,7 +518,11 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     vector<ConsecutiveMatches> matchCombi;
 
     getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset);
-    if (matchCombi.empty()) return 0;
+    cout<<"521"<<endl;
+    if (matchCombi.empty())
+    {   cout<<"523"<<endl;
+        return 0;
+    }
 
     float coverageThr = 0.3;
     ///Check a query coverage
@@ -656,7 +660,7 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
         if(!coMatches.empty()) getMatchCombinationForCurGenus(coMatches, genus, matchList);
         coMatches.clear();
     }
-
+    cout<<"659"<<endl;
     //choose the best combination of consecutive-match among genus for current query
     if(!genus.empty())
         getTheBestGenus(genus, chosenMatchCombination);
