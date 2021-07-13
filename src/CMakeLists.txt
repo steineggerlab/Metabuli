@@ -12,7 +12,7 @@ add_executable(adclassifier
         ${util_source_files}
         ${workflow_source_files}
         adclassifier.cpp
-        LocalCommandDeclarations.h workflow/krakenuniq_test.cpp)
+        LocalCommandDeclarations.h workflow/krakenuniq_test.cpp workflow/kaiju_scoring.cpp)
 
 mmseqs_setup_derived_target(adclassifier)
 target_link_libraries(adclassifier version)
