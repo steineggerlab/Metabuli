@@ -123,7 +123,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     for(size_t i = 0; i < queryNameList.size(); i++){
         if (assacc2taxid.count(queryNameList[i])) {
             taxid = assacc2taxid[queryNameList[i]];
-            while(cladeCnt[taxid] != 1)
+        
         } else{
             cout << queryNameList[i] << " is not in the mapping file" << endl;
             rightAnswers.push_back(-1);
