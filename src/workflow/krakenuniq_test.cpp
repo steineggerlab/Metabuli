@@ -35,9 +35,13 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
     string merged = "../../gtdb_taxdmp/merged.dmp";
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
 
-    for(int i = 0 ; i < 1000 ; i++) {
-        cout<<ncbiTaxonomy.taxonNodes[i].id<<ncbiTaxonomy.taxonNodes[i].taxId<<ncbiTaxonomy.taxonNodes[i].rank<<endl;
+    unordered_map<TaxID, unsigned int> taxCnt;
+    for(int i = 0 ; i < ncbiTaxonomy.taxonNodes.size() ; i++) {
+        taxCnt[ncbiTaxonomy.taxonNodes[i].taxId] = 1;
     }
+
+    unordered_map<TaxID, TaxonCounts> cladeCnt = ncbiTaxonomy.getCladeCounts(taxCnt);
+
 
     ///Load taxDB of kraken
     unordered_map<int, int> child2parent;

@@ -21,7 +21,7 @@ void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts
 
 
 
-int exclusionTestScoring(int argc, const char **argv, const Command &command){
+int exclusiontest(int argc, const char **argv, const Command &command){
 
     LocalParameters &par = LocalParameters::getLocalInstance();
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
@@ -34,8 +34,17 @@ int exclusionTestScoring(int argc, const char **argv, const Command &command){
     string nodes = "../../gtdb_taxdmp/nodes.dmp";
     string merged = "../../gtdb_taxdmp/merged.dmp";
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
-    for(int i = 0 ; i < 1000 ; i++) {
-        cout<<ncbiTaxonomy.taxonNodes[i].id<<ncbiTaxonomy.taxonNodes[i].taxId<<ncbiTaxonomy.taxonNodes[i].rank<<endl;
+
+    unordered_map<TaxID, unsigned int> taxCnt;
+    for(int i = 0 ; i < ncbiTaxonomy.taxonNodes.size() ; i++) {
+        taxCnt[ncbiTaxonomy.taxonNodes[i].taxId] = 1;
+    }
+
+    unordered_map<TaxID, TaxonCounts> cladeCnt = ncbiTaxonomy.getCladeCounts(taxCnt);
+    for(auto it = cladeCnt.begin(); it != cladeCnt.end(); it ++){
+        if(ncbiTaxonomy.taxonNode(it->first)->rank == "genus") {
+            cout << it->second.cladeCount << " " << it->second.taxCount << endl;
+        }
     }
 
     ///Load taxDB of kraken
@@ -110,9 +119,11 @@ int exclusionTestScoring(int argc, const char **argv, const Command &command){
 
     ///right answer list
     vector<int> rightAnswers;
+    int taxid;
     for(size_t i = 0; i < queryNameList.size(); i++){
         if (assacc2taxid.count(queryNameList[i])) {
-            rightAnswers.push_back(assacc2taxid[queryNameList[i]]);
+            taxid = assacc2taxid[queryNameList[i]];
+            while(cladeCnt[taxid] != 1)
         } else{
             cout << queryNameList[i] << " is not in the mapping file" << endl;
             rightAnswers.push_back(-1);

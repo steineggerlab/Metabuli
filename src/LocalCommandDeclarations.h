@@ -9,5 +9,5 @@
 extern int createTargetDB(int argc, const char **argv, const Command& command);
 extern int classify(int argc, const char **argv, const Command& command);
 extern int krakenuniq_test(int argc, const char **argv, const Command& command);
-
+extern int exclusiontest(int argc, const char **argv, const Command& command);
 #endif //ADCLASSIFIER2_LOCALCOMMANDDECLARATIONS_H
