@@ -169,10 +169,12 @@ int exclusiontest(int argc, const char **argv, const Command &command){
 void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts& counts) { ///target: subspecies or species
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
     string shotRank = shotNode->rank;
+    cout<<"1"<<endl;
     cout<<shot<<" "<<target<<" "<<shotRank<<" ";
     if(shot == 0){
         cout<<"X"<<endl;
     }
+    cout<<"2"<<endl;
     if(NcbiTaxonomy::findRankIndex(shotRank) <= 3){
         //cout<<"subspecies"<<endl;
         if(shot == target){
