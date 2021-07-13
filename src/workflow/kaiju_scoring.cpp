@@ -177,6 +177,7 @@ void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts
     }
     if(NcbiTaxonomy::findRankIndex(shotRank) < NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(target)->rank)){
         cout<<"X"<<endl;
+        return;
     }
     cout<<"2"<<endl;
     if(NcbiTaxonomy::findRankIndex(shotRank) <= 3){
