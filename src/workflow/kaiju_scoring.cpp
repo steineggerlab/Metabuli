@@ -17,11 +17,11 @@ struct Counts{
     int phylumCnt;
 };
 
-void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts);
+void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts);
 
 
 
-int krakenuniq_test(int argc, const char **argv, const Command &command){
+int exclusionTestScoring(int argc, const char **argv, const Command &command){
 
     LocalParameters &par = LocalParameters::getLocalInstance();
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
@@ -124,7 +124,7 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
     ///score the classification
     for(size_t i = 0; i < queryNameList.size(); i++){
         counts.classificationCnt ++;
-        compareTaxon(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
+        compareTaxon2(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
     }
 
     cout<<"Number of classification: "<< counts.classificationCnt << endl;
@@ -142,7 +142,7 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
 
 }
 
-void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts& counts) { ///target: subspecies or species
+void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts& counts) { ///target: subspecies or species
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
     string shotRank = shotNode->rank;
     cout<<shot<<" "<<target<<" "<<shotRank<<" ";
