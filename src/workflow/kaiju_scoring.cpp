@@ -170,7 +170,7 @@ void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
     string shotRank = shotNode->rank;
     cout<<"1"<<endl;
-    cout<<shot<<" "<<target<<" "<<shotRank<<" ";
+    cout<<shot<<" "<<target<<" "<<shotRank<<" "<<ncbiTaxonomy.taxonNode(target)->rank<<" ";
     if(shot == 0){
         cout<<"X"<<endl;
         return;
