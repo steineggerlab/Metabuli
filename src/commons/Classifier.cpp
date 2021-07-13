@@ -477,7 +477,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     cout<<matchList.fileSize<<"!!"<<endl;
     cout<<matchFileName<<endl;
     size_t numOfMatches = matchList.fileSize / sizeof(Match);
-    SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByTaxId);
+    //SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByTaxId);
     cout<<"num of matches"<<numOfMatches<<endl;
     ///Get match blocks for multi threading
     typedef Sequence Block;
