@@ -35,6 +35,10 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
     string merged = "../../gtdb_taxdmp/merged.dmp";
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
 
+    for(int i = 0 ; i < 1000 ; i++) {
+        cout<<ncbiTaxonomy.taxonNodes[i].id<<ncbiTaxonomy.taxonNodes[i].taxId<<ncbiTaxonomy.taxonNodes[i].rank<<endl;
+    }
+
     ///Load taxDB of kraken
     unordered_map<int, int> child2parent;
     string childString, parentString, throwaway;
