@@ -122,10 +122,21 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     ///right answer list
     vector<int> rightAnswers;
     int taxid;
+    int taxid_sp;
+    int cladeCnt_sp;
     for(size_t i = 0; i < queryNameList.size(); i++){
         if (assacc2taxid.count(queryNameList[i])) {
             taxid = assacc2taxid[queryNameList[i]];
-
+            taxid_sp = ncbiTaxonomy.getTaxIdAtRank(taxid, "species");
+            cladeCnt_sp = cladeCnt[taxid_sp].cladeCount;
+            const TaxonNode * ancestor = ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(taxid_sp, "genus"));
+            while(cladeCnt_sp != cladeCnt[ancestor->taxId].cladeCount){
+                ancestor = ncbiTaxonomy.taxonNode(ancestor->parentTaxId);
+                if(ancestor->rank == "superkingdom"){
+                    break;
+                }
+            }
+            rightAnswers.push_back(ancestor->taxId);
         } else{
             cout << queryNameList[i] << " is not in the mapping file" << endl;
             rightAnswers.push_back(-1);
