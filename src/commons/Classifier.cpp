@@ -707,7 +707,7 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     }
 
     if(tiedScore == bestScore){
-        cout<<"tie"<<endl;
+        cout<<"tie "<<tiedScore<<" "<<bestScore<<" "<<subsetList[tiedSubset].size()<<endl;
         for(size_t i = 0; i < subsetList[tiedSubset].size(); i++){
             alignedCoMatches.push_back(coMatches[subsetList[tiedSubset][i]]);
         }
