@@ -173,6 +173,10 @@ void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts
     cout<<shot<<" "<<target<<" "<<shotRank<<" ";
     if(shot == 0){
         cout<<"X"<<endl;
+        return;
+    }
+    if(NcbiTaxonomy::findRankIndex(shotRank) < NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(target)->rank)){
+        cout<<"X"<<endl;
     }
     cout<<"2"<<endl;
     if(NcbiTaxonomy::findRankIndex(shotRank) <= 3){
@@ -198,22 +202,26 @@ void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts
         //cout<<"family"<<endl;
         if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "family")) {
             counts.familyCnt++;
-        }
+            cout<<"O"<<endl;
+        } else cout<<"X"<<endl;
     }else if(shotRank == "order") {
         //cout<<"order"<<endl;
         if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "order")) {
             counts.orderCnt++;
-        }
+            cout<<"O"<<endl;
+        } else cout<<"X"<<endl;
     }else if(shotRank == "class") {
         //cout<<"class"<<endl;
         if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "class")) {
             counts.classCnt++;
-        }
+            cout<<"O"<<endl;
+        } else cout<<"X"<<endl;
     } else if(shotRank == "phylum") {
         //cout<<"phylum"<<endl;
         if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "phylum")) {
             counts.phylumCnt++;
-        }
+            cout<<"O"<<endl;
+        } else cout<<"X"<<endl;
     } else {
         return;
     }
