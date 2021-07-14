@@ -243,7 +243,9 @@ void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts
     }
 
     //count the number of classification at each rank
-    if(shotRank == "species") {
+    if(shotRank == "subspecies") {
+        counts.subspeciesCnt_try++;
+    } else if(shotRank == "species") {
         counts.speciesCnt_try ++;
     } else if(shotRank == "genus"){
         counts.genusCnt_try ++;
@@ -264,7 +266,7 @@ void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts
 
     //count the number of correct classification at each rank
     if(shotRank == "subspecies"){
-        counts.subspeciesCnt_try ++;
+        counts.subspeciesCnt_correct ++;
     } else if(shotRank == "species") {
         counts.speciesCnt_correct ++;
     } else if(shotRank == "genus"){
