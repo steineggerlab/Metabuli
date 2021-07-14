@@ -20,14 +20,23 @@ struct Counts{
     int phylumTargetNumber;
     int superkingdomTargetNumber;
 
+    //number of classification at each rank
+    int speciesCnt_try;
+    int genusCnt_try;
+    int familyCnt_try;
+    int orderCnt_try;
+    int classCnt_try;
+    int phylumCnt_try;
+    int superkingdomCnt_try;
+
     //number of correct classifications at each rank
-    int speciesCnt;
-    int genusCnt;
-    int familyCnt;
-    int orderCnt;
-    int classCnt;
-    int phylumCnt;
-    int superkingdomCnt;
+    int speciesCnt_correct;
+    int genusCnt_correct;
+    int familyCnt_correct;
+    int orderCnt_correct;
+    int classCnt_correct;
+    int phylumCnt_correct;
+    int superkingdomCnt_correct;
 };
 
 void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts);
@@ -173,7 +182,6 @@ int exclusiontest(int argc, const char **argv, const Command &command){
 
     ///score the classification
     for(size_t i = 0; i < queryNameList.size(); i++){
-
         compareTaxon2(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
     }
 
@@ -184,13 +192,13 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     cout<<"correct / classification = "<<float(counts.correct) / float(counts.classificationCnt) <<endl<<endl;
 
     cout<<"Number of targets at each rank / correct classification"<<endl;
-    cout<<"Superkingdom: "<< counts.superkingdomTargetNumber<<" / "<<counts.superkingdomCnt<<endl;
-    cout<<"Phylum: "<<counts.phylumTargetNumber<<" / "<<counts.phylumCnt<<endl;
-    cout<<"Class: "<<counts.classTargetNumber<<" / "<<counts.classCnt<<endl;
-    cout<<"Order: "<<counts.orderTargetNumber<<" / "<<counts.orderTargetNumber<<endl;
-    cout<<"Family: "<<counts.familyTargetNumber<<" / "<<counts.familyCnt<<endl;
-    cout<<"Genus: "<< counts.genusTargetNumber<<" / "<<counts.genusCnt<<endl;
-    cout<<"Species: "<<counts.speciesTargetNumber<<endl<<" / "<<counts.speciesCnt<<endl;
+    cout << "Superkingdom: " << counts.superkingdomTargetNumber << " / " << counts.superkingdomCnt_correct << " / "<<counts.superkingdomCnt_try<<endl;
+    cout << "Phylum: " << counts.phylumTargetNumber << " / " << counts.phylumCnt_correct << " / "<<counts.phylumCnt_try<<endl;
+    cout << "Class: " << counts.classTargetNumber << " / " << counts.classCnt_correct << " / "<<counts.classCnt_try<<endl;
+    cout<<"Order: "<<counts.orderTargetNumber<<" / "<<counts.orderTargetNumber<<" / "<<counts.orderCnt_try<<endl;
+    cout << "Family: " << counts.familyTargetNumber << " / " << counts.familyCnt_correct << " / "<<counts.familyCnt_try<<endl;
+    cout<<"Genus: "<< counts.genusTargetNumber<<" / "<<counts.genusCnt_correct<<" / "<<counts.genusCnt_try<<endl;
+    cout<<"Species: "<<counts.speciesTargetNumber<<endl<<" / "<<counts.speciesCnt_correct<<" / "<<counts.speciesCnt_try<<endl;
 
 
 }
@@ -225,22 +233,40 @@ void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts
         }
     }
 
+    //count the number of classification at each rank
+    if(shotRank == "species") {
+        counts.speciesCnt_try ++;
+    } else if(shotRank == "genus"){
+        counts.genusCnt_try ++;
+    } else if(shotRank == "family"){
+        counts.familyCnt_try++;
+    } else if(shotRank == "order") {
+        counts.orderCnt_try++;
+    } else if(shotRank == "class") {
+        counts.classCnt_try++;
+    } else if(shotRank == "phylum") {
+        counts.phylumCnt_try++;
+    } else if(shotRank == "superkingdom"){
+        counts.superkingdomCnt_try++;
+    }
+
 
     if(!isCorrect) return;
 
+    //count the number of correct classification at each rank
     if(shotRank == "species") {
-        counts.speciesCnt ++;
+        counts.speciesCnt_correct ++;
     } else if(shotRank == "genus"){
-        counts.genusCnt ++;
+        counts.genusCnt_correct ++;
     } else if(shotRank == "family"){
-        counts.familyCnt++;
+        counts.familyCnt_correct++;
     } else if(shotRank == "order") {
-        counts.orderCnt++;
+        counts.orderCnt_correct++;
     } else if(shotRank == "class") {
-        counts.classCnt++;
+        counts.classCnt_correct++;
     } else if(shotRank == "phylum") {
-        counts.phylumCnt++;
+        counts.phylumCnt_correct++;
     } else if(shotRank == "superkingdom"){
-        counts.superkingdomCnt++;
+        counts.superkingdomCnt_correct++;
     }
 }

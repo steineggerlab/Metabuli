@@ -11,10 +11,10 @@ struct Counts{
     int subspCnt;
     int spCnt;
     int genusCnt;
-    int familyCnt;
-    int orderCnt;
-    int classCnt;
-    int phylumCnt;
+    int familyCnt_correct;
+    int orderCnt_correct;
+    int classCnt_correct;
+    int phylumCnt_correct;
 };
 
 void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts);
@@ -139,10 +139,10 @@ int krakenuniq_test(int argc, const char **argv, const Command &command){
     cout<<"Number of classification: "<< counts.classificationCnt << endl;
     cout<<"classified / total =" << float(counts.classificationCnt)/float(queryNameList.size()) << endl;
     //cout<<"Superkingdom: "<< counts.superCnt <<endl;
-    cout<<"Phylum: "<<counts.phylumCnt<<endl;
-    cout<<"Class: "<<counts.classCnt<<endl;
-    cout<<"Order: "<<counts.orderCnt<<endl;
-    cout<<"Family: "<<counts.familyCnt<<endl;
+    cout << "Phylum: " << counts.phylumCnt_correct << endl;
+    cout << "Class: " << counts.classCnt_correct << endl;
+    cout << "Order: " << counts.orderCnt_correct << endl;
+    cout << "Family: " << counts.familyCnt_correct << endl;
     cout<<"Genus: "<< counts.genusCnt << endl;
     cout<<"Species: "<<counts.spCnt<<endl;
     cout<<"Subspecies: "<<counts.subspCnt<<endl;
@@ -180,22 +180,22 @@ void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts&
     } else if(shotRank == "family"){
         //cout<<"family"<<endl;
         if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "family")) {
-            counts.familyCnt++;
+            counts.familyCnt_correct++;
         }
     }else if(shotRank == "order") {
         //cout<<"order"<<endl;
         if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "order")) {
-            counts.orderCnt++;
+            counts.orderCnt_correct++;
         }
     }else if(shotRank == "class") {
         //cout<<"class"<<endl;
         if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "class")) {
-            counts.classCnt++;
+            counts.classCnt_correct++;
         }
     } else if(shotRank == "phylum") {
         //cout<<"phylum"<<endl;
         if(shot == ncbiTaxonomy.getTaxIdAtRank(target, "phylum")) {
-            counts.phylumCnt++;
+            counts.phylumCnt_correct++;
         }
     } else {
         return;
