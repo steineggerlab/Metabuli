@@ -232,7 +232,9 @@ void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts
     } else if(NcbiTaxonomy::findRankIndex(shotRank) <= NcbiTaxonomy::findRankIndex(targetRank)){ //classified into wrong taxon or too specifically
         cout<<"X"<<endl;
     } else { // classified at higher rank (too safe classification)
-        if(shot == ncbiTaxonomy.getTaxIdAtRank(target, shotRank)){ //on right branch
+        if(shotRank == "superkingdom"){
+            cout<<"X"<<endl;
+        } else if(shot == ncbiTaxonomy.getTaxIdAtRank(target, shotRank)){ //on right branch
             counts.highRank ++;
             cout<<"U"<<endl;
         } else{ //on wrong branch
