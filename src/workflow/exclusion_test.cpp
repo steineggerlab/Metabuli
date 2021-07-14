@@ -137,7 +137,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     vector<int> rightAnswers;
     int taxid;
     int taxid_sp;
-    int cladeCnt_sp;
+    unsigned int cladeCnt_sp;
     for(size_t i = 0; i < queryNameList.size(); i++){
         if (assacc2taxid.count(queryNameList[i])) {
             taxid = assacc2taxid[queryNameList[i]];
