@@ -740,7 +740,7 @@ float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
                 overlapped = true;
         }
     }
-
+    cout<<"743"<<endl;
     if(overlapped) return -FLT_MAX;
 
     for(size_t i = 0; i < subset.size(); i++)
