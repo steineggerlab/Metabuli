@@ -206,7 +206,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     cout<<"Family      : " << counts.familyTargetNumber << " / " << counts.familyCnt_correct << " / "<<counts.familyCnt_try<<endl;
     cout<<"Genus       : " << counts.genusTargetNumber<<" / "<<counts.genusCnt_correct<<" / "<<counts.genusCnt_try<<endl;
     cout<<"Species     : " << counts.speciesTargetNumber<<" / "<<counts.speciesCnt_correct<<" / "<<counts.speciesCnt_try<<endl;
-    cout<<"Subspecies  : " << counts.subspeciesTargetNumber<<" / "<<counts.speciesCnt_correct<<" / "<<counts.speciesCnt_try<<endl;
+    cout<<"Subspecies  : " << counts.subspeciesTargetNumber<<" / "<<counts.subspeciesCnt_correct<<" / "<<counts.subspeciesCnt_try<<endl;
 
 }
 
@@ -214,7 +214,7 @@ void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
     string shotRank = shotNode->rank;
-    string targetRank = shotNode->rank;
+    string targetRank = targetNode->rank;
     cout<<shot<<" "<<target<<" "<<shotRank<<" "<<targetRank<<" ";
 
     if(shot == 0){
@@ -229,7 +229,7 @@ void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts
         counts.correct ++;
         isCorrect = true;
         cout<<"O"<<endl;
-    } else if(NcbiTaxonomy::findRankIndex(shotRank) <= NcbiTaxonomy::findRankIndex(shotRank)){ //classified into wrong taxon or too specifically
+    } else if(NcbiTaxonomy::findRankIndex(shotRank) <= NcbiTaxonomy::findRankIndex(targetRank)){ //classified into wrong taxon or too specifically
         cout<<"X"<<endl;
     } else { // classified at higher rank (too safe classification)
         if(shot == ncbiTaxonomy.getTaxIdAtRank(target, shotRank)){ //on right branch
