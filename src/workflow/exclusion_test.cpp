@@ -12,6 +12,7 @@ struct Counts{
     int highRank;
 
     //number of targets at each rank
+    int subspeciesTargetNumber;
     int speciesTargetNumber;
     int genusTargetNumber;
     int familyTargetNumber;
@@ -21,6 +22,7 @@ struct Counts{
     int superkingdomTargetNumber;
 
     //number of classification at each rank
+    int subspeciesCnt_try;
     int speciesCnt_try;
     int genusCnt_try;
     int familyCnt_try;
@@ -29,7 +31,9 @@ struct Counts{
     int phylumCnt_try;
     int superkingdomCnt_try;
 
+
     //number of correct classifications at each rank
+    int subspeciesCnt_correct;
     int speciesCnt_correct;
     int genusCnt_correct;
     int familyCnt_correct;
@@ -186,20 +190,23 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     }
 
     cout<<"Num of queries: " << queryNameList.size() << endl;
-    cout<<"Number of classification: "<< counts.classificationCnt << endl;
+    cout<<"Number of classifications: "<< counts.classificationCnt << endl;
+    cout<<"Number of correct classifications: "<<counts.correct<<endl;
+    cout<<"Number of correct but too broad classifications: "<<counts.highRank<<endl;
     cout<<"classified / total = " << float(counts.classificationCnt)/float(queryNameList.size()) << endl;
     cout<<"correct / total = "<< float(counts.correct) / float(queryNameList.size())<<endl;
-    cout<<"correct / classification = "<<float(counts.correct) / float(counts.classificationCnt) <<endl<<endl;
+    cout<<"correct / classifications = "<<float(counts.correct) / float(counts.classificationCnt) <<endl;
+    cout<<"high rank / classifications = "<<float(counts.highRank) / float(counts.classificationCnt) <<endl;
 
     cout<<"Number of targets at each rank / correct classification"<<endl;
-    cout << "Superkingdom: " << counts.superkingdomTargetNumber << " / " << counts.superkingdomCnt_correct << " / "<<counts.superkingdomCnt_try<<endl;
-    cout << "Phylum: " << counts.phylumTargetNumber << " / " << counts.phylumCnt_correct << " / "<<counts.phylumCnt_try<<endl;
-    cout << "Class: " << counts.classTargetNumber << " / " << counts.classCnt_correct << " / "<<counts.classCnt_try<<endl;
-    cout<<"Order: "<<counts.orderTargetNumber<<" / "<<counts.orderTargetNumber<<" / "<<counts.orderCnt_try<<endl;
-    cout << "Family: " << counts.familyTargetNumber << " / " << counts.familyCnt_correct << " / "<<counts.familyCnt_try<<endl;
-    cout<<"Genus: "<< counts.genusTargetNumber<<" / "<<counts.genusCnt_correct<<" / "<<counts.genusCnt_try<<endl;
-    cout<<"Species: "<<counts.speciesTargetNumber<<endl<<" / "<<counts.speciesCnt_correct<<" / "<<counts.speciesCnt_try<<endl;
-
+    cout<<"Superkingdom: " << counts.superkingdomTargetNumber << " / " << counts.superkingdomCnt_correct << " / "<<counts.superkingdomCnt_try<<endl;
+    cout<<"Phylum      : " << counts.phylumTargetNumber << " / " << counts.phylumCnt_correct << " / "<<counts.phylumCnt_try<<endl;
+    cout<<"Class       : " << counts.classTargetNumber << " / " << counts.classCnt_correct << " / "<<counts.classCnt_try<<endl;
+    cout<<"Order       : " << counts.orderTargetNumber<<" / "<<counts.orderCnt_correct<<" / "<<counts.orderCnt_try<<endl;
+    cout<<"Family      : " << counts.familyTargetNumber << " / " << counts.familyCnt_correct << " / "<<counts.familyCnt_try<<endl;
+    cout<<"Genus       : " << counts.genusTargetNumber<<" / "<<counts.genusCnt_correct<<" / "<<counts.genusCnt_try<<endl;
+    cout<<"Species     : " << counts.speciesTargetNumber<<" / "<<counts.speciesCnt_correct<<" / "<<counts.speciesCnt_try<<endl;
+    cout<<"Subspecies  : " << counts.subspeciesTargetNumber<<" / "<<counts.speciesCnt_correct<<" / "<<counts.speciesCnt_try<<endl;
 
 }
 
@@ -254,7 +261,9 @@ void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts
     if(!isCorrect) return;
 
     //count the number of correct classification at each rank
-    if(shotRank == "species") {
+    if(shotRank == "subspecies"){
+        counts.subspeciesCnt_try ++;
+    } else if(shotRank == "species") {
         counts.speciesCnt_correct ++;
     } else if(shotRank == "genus"){
         counts.genusCnt_correct ++;
