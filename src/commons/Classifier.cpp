@@ -658,21 +658,21 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
                 if(diffPosCnt > 1){
                     coMatches.emplace_back(conBegin, currentPos, conCnt, hammingSum, diffPosCnt, beginIdx, i-1, currentFrame);
                 }
-                cout<<"651"<<endl;
+                //cout<<"651"<<endl;
             }
         }
-        cout<<"654"<<endl;
+        //cout<<"654"<<endl;
         //choose the best combination of consecutive matches for current genus
         if(!coMatches.empty()) getMatchCombinationForCurGenus2(coMatches, genus, matchList);
         coMatches.clear();
     }
-    cout<<"659"<<endl;
+    //cout<<"659"<<endl;
     //choose the best combination of consecutive-match among genus for current query
     if(!genus.empty())
         getTheBestGenus(genus, chosenMatchCombination);
 }
 void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList){
-    cout<<"663"<<endl;
+    //cout<<"663"<<endl;
     //    for(int i3 = 0; i3 < coMatches.size(); i3++){
 //        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt;
 //        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
@@ -688,7 +688,7 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     size_t tiedSubset;
     float currentScore = 0;
     getSubsets(subset, subsetList, 0, coMatches.size() - 1);
-    cout<<"678"<<endl;
+    //cout<<"678"<<endl;
     vector<ConsecutiveMatches> matchesToScore;
     ///-------------------------------------------
     for(size_t j = 0; j < subsetList.size(); j++){
@@ -708,7 +708,7 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
         }
     }
     ///-------------------------------------------
-    cout<<"703"<<endl;
+    //cout<<"703"<<endl;
     vector<ConsecutiveMatches> alignedCoMatches;
     for(size_t i = 0; i < subsetList[bestSubset].size(); i++){
         alignedCoMatches.push_back(coMatches[subsetList[bestSubset][i]]);
@@ -723,7 +723,7 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
 
     //genus.push_back(coMatches);
     genus.push_back(alignedCoMatches);
-    cout<<"711"<<endl;
+    ///cout<<"711"<<endl;
 }
 
 void Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList){
@@ -787,7 +787,7 @@ float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
     return score;
 }
 void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen){
-    cout<<"742"<<endl;
+   // cout<<"742"<<endl;
     int chosenGenusIdx = INT_MAX;
     int totalDiffPosCnt;
     int totalMatchCnt;
@@ -814,7 +814,7 @@ void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vec
     for (size_t i = 0; i < genus[chosenGenusIdx].size(); i++) {
         chosen.push_back(genus[chosenGenusIdx][i]);
     }
-    cout<<"769"<<endl;
+   // cout<<"769"<<endl;
 }
 
 
