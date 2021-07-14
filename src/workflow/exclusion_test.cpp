@@ -144,7 +144,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
             taxid_sp = ncbiTaxonomy.getTaxIdAtRank(taxid, "species");
             cladeCnt_sp = cladeCnt[taxid_sp].cladeCount;
             const TaxonNode * ancestor = ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(taxid_sp, "genus"));
-            while(cladeCnt_sp != cladeCnt[ancestor->taxId].cladeCount){
+            while(cladeCnt_sp == cladeCnt[ancestor->taxId].cladeCount){
                 ancestor = ncbiTaxonomy.taxonNode(ancestor->parentTaxId);
                 if(ancestor->rank == "superkingdom"){
                     break;
