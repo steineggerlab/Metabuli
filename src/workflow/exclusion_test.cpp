@@ -183,14 +183,14 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     cout<<"correct / total = "<< float(counts.correct) / float(queryNameList.size())<<endl;
     cout<<"correct / classification = "<<float(counts.correct) / float(counts.classificationCnt) <<endl<<endl;
 
-    cout<<"Number of targets at each rank"<<endl;
-    cout<<"Superkingdom: "<< counts.superkingdomTargetNumber<<endl;
-    cout<<"Phylum: "<<counts.phylumTargetNumber<<endl;
-    cout<<"Class: "<<counts.classTargetNumber<<endl;
-    cout<<"Order: "<<counts.orderTargetNumber<<endl;
-    cout<<"Family: "<<counts.familyTargetNumber<<endl;
-    cout<<"Genus: "<< counts.genusTargetNumber<< endl;
-    cout<<"Species: "<<counts.speciesTargetNumber<<endl<<endl;
+    cout<<"Number of targets at each rank / correct classification"<<endl;
+    cout<<"Superkingdom: "<< counts.superkingdomTargetNumber<<" / "<<counts.superkingdomCnt<<endl;
+    cout<<"Phylum: "<<counts.phylumTargetNumber<<" / "<<counts.phylumCnt<<endl;
+    cout<<"Class: "<<counts.classTargetNumber<<" / "<<counts.classCnt<<endl;
+    cout<<"Order: "<<counts.orderTargetNumber<<" / "<<counts.orderTargetNumber<<endl;
+    cout<<"Family: "<<counts.familyTargetNumber<<" / "<<counts.familyCnt<<endl;
+    cout<<"Genus: "<< counts.genusTargetNumber<<" / "<<counts.genusCnt<<endl;
+    cout<<"Species: "<<counts.speciesTargetNumber<<endl<<" / "<<counts.speciesCnt<<endl;
 
 
 }
