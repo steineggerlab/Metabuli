@@ -78,8 +78,8 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     ncbiTaxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "genus");
     //output file
     char matchFileName[300];
-    sprintf(matchFileName,"%s_match", queryFileName);
-   ///////// FILE * matchFile = fopen(matchFileName, "wb");
+    sprintf(matchFileName,"%s_match2", queryFileName);
+    FILE * matchFile = fopen(matchFileName, "wb");
 
     //query & target
     struct MmapedData<char> queryFile = mmapData<char>(par.filenames[0].c_str());
@@ -111,20 +111,20 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     //extact k-mers from query sequences and compare them to target k-mer DB
     ///TODO measure time for extract & sort & search separately
     beforeSearch = time(NULL);
-//    while(processedSeqCnt < numOfSeq){
-//        fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryList);
-//        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
-//        cout<<"buffer overflowed"<<endl;
-//        omp_set_num_threads(ThreadNum);
-//        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
-//        cout<<"buffer sorted"<<endl;
-//        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile);
-//    }
-//    cout<<"total kmer count: "<<numOfTatalQueryKmerCnt<<endl;
-//    writeMatches(matchBuffer, matchFile);
-//    fclose(matchFile);
-//    afterSearch = time(NULL);
-//    cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
+    while(processedSeqCnt < numOfSeq){
+        fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryList);
+        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
+        cout<<"buffer overflowed"<<endl;
+        omp_set_num_threads(ThreadNum);
+        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
+        cout<<"buffer sorted"<<endl;
+        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile);
+    }
+    cout<<"total kmer count: "<<numOfTatalQueryKmerCnt<<endl;
+    writeMatches(matchBuffer, matchFile);
+    fclose(matchFile);
+    afterSearch = time(NULL);
+    cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
 
     //load matches and analyze
     cout<<"analyse Result"<<endl;
@@ -460,7 +460,7 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetList, con
         hammings.push_back(currentHamming);
     }
 
-//    if(minHamming > 2) return;
+    if(minHamming > 5) return;
 
     ///Select target k-mers that passed hamming criteria
     for(size_t h = 0; h < hammings.size(); h++){
@@ -566,7 +566,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     size_t numSeqsAgreeWithSelectedTaxon = 0;
     double selectedPercent = 0;
 
-    TaxID selectedLCA = match2LCA2(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
+    TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
                                   numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
                                   selectedPercent);
 
@@ -615,6 +615,7 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
     int conCnt = 0;
     uint32_t diffPosCnt = 0;
     uint32_t hammingSum = 0;
+    float hammingMean = 0.0;
     size_t beginIdx = 0;
     size_t endIdx = 0;
     uint32_t conBegin = 0;
@@ -634,19 +635,24 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
             while (currentFrame == matchList[i].frame && currentTaxID == matchList[i].genusTaxID && (i < end + 1)){
                 currentPos = matchList[i].position;
                 hammingSum = 0;
+                hammingMean = 0.0;
                 conCnt = 0;
                 diffPosCnt = 1;
                 conBegin = currentPos;
                 beginIdx = i;
                 //Find consecutive matches
                 //TODO: this can be faster
-                while(matchList[i].position <= currentPos + 3 && currentFrame == matchList[i].frame && currentTaxID == matchList[i].genusTaxID && (i < end + 1)){
+                while(matchList[i].position <= currentPos + 3 &&
+                    (conCnt == 0 || matchList[i].hamming <= hammingMean + 3) && ///TODO: Is it okay?
+                    currentFrame == matchList[i].frame &&
+                    currentTaxID == matchList[i].genusTaxID && (i < end + 1)){
                     if(matchList[i].position != currentPos) {
                         diffPosCnt++;
                         currentPos = matchList[i].position;
                     }
                     conCnt ++;
                     hammingSum += matchList[i].hamming;
+                    hammingMean = float(hammingSum) / float(conCnt);
                     i++;
                 }
                 if(diffPosCnt > 1){
@@ -657,7 +663,7 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
         }
         cout<<"654"<<endl;
         //choose the best combination of consecutive matches for current genus
-        if(!coMatches.empty()) getMatchCombinationForCurGenus(coMatches, genus, matchList);
+        if(!coMatches.empty()) getMatchCombinationForCurGenus2(coMatches, genus, matchList);
         coMatches.clear();
     }
     cout<<"659"<<endl;
@@ -718,6 +724,36 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     //genus.push_back(coMatches);
     genus.push_back(alignedCoMatches);
     cout<<"711"<<endl;
+}
+
+void Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList){
+    //sort consecutive match blocks
+    sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
+
+    //container to store match blocks to be used.
+    vector<ConsecutiveMatches> alignedCoMatches;
+
+    //store the best one anyway
+    alignedCoMatches.push_back(coMatches[0]);
+    bool overlap = false;
+
+    //TODO: Fix here to accept slight overlaps
+    for(size_t i = 1; i < coMatches.size(); i++){
+        overlap = false;
+        for(size_t j = 0; j < alignedCoMatches.size(); j++){
+            if((alignedCoMatches[j].begin < coMatches[j].end) && (alignedCoMatches[j].end > coMatches[j].begin)){ ///TODO check this condition
+                overlap = true;
+                break;
+            }
+        }
+
+        if(overlap) continue;
+        else{
+            alignedCoMatches.push_back(coMatches[i]);
+        }
+    }
+
+    genus.push_back(alignedCoMatches);
 }
 
 void Classifier::getSubsets(vector<int> & subset, vector<vector<int>> & uniqueSubset, int k, int n){
@@ -1201,8 +1237,8 @@ bool Classifier::compareForLinearSearch(const QueryKmer & a, const QueryKmer & b
 }
 
 bool Classifier::compareConsecutiveMatches(const ConsecutiveMatches & a, const ConsecutiveMatches & b){
-    if((a.end - a.begin) > (b.end- b.begin)){
-        if((a.end - a.begin) == (b.end - b.begin + 1)){
+    if((a.end - a.begin) > (b.end - b.begin)){ // compare query coverage fisrt
+        if((a.end - a.begin) == (b.end - b.begin + 1)){ //
             return (a.endIdx - a.beginIdx + 1) * 2 / ((a.hamming+1)*(a.diffPosCnt + 1)) > (b.endIdx - b.beginIdx + 1) * 2 / ((b.hamming + 1) * (b.diffPosCnt + 1));
         }
         return true;

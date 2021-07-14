@@ -190,15 +190,15 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     }
 
     cout<<"Num of queries: " << queryNameList.size() << endl;
-    cout<<"Number of classifications: "<< counts.classificationCnt << endl;
-    cout<<"Number of correct classifications: "<<counts.correct<<endl;
-    cout<<"Number of correct but too broad classifications: "<<counts.highRank<<endl;
-    cout<<"classified / total = " << float(counts.classificationCnt)/float(queryNameList.size()) << endl;
-    cout<<"correct / total = "<< float(counts.correct) / float(queryNameList.size())<<endl;
-    cout<<"correct / classifications = "<<float(counts.correct) / float(counts.classificationCnt) <<endl;
-    cout<<"high rank / classifications = "<<float(counts.highRank) / float(counts.classificationCnt) <<endl;
+    cout<<"Num of classifications: "<< counts.classificationCnt << endl;
+    cout<<"Num of correct classifications: "<<counts.correct<<endl;
+    cout<<"Num of correct but too broad classifications: "<<counts.highRank<<endl;
+    cout<<"classified/total = " << float(counts.classificationCnt)/float(queryNameList.size()) << endl;
+    cout<<"correct   /total = "<< float(counts.correct) / float(queryNameList.size())<<endl;
+    cout<<"correct   /classifications = "<<float(counts.correct) / float(counts.classificationCnt) <<endl;
+    cout<<"high rank /classifications = "<<float(counts.highRank) / float(counts.classificationCnt) <<endl << endl;
 
-    cout<<"Number of targets at each rank / correct classification"<<endl;
+    cout<<"Number of targets at each rank / correct classification / tries"<<endl;
     cout<<"Superkingdom: " << counts.superkingdomTargetNumber << " / " << counts.superkingdomCnt_correct << " / "<<counts.superkingdomCnt_try<<endl;
     cout<<"Phylum      : " << counts.phylumTargetNumber << " / " << counts.phylumCnt_correct << " / "<<counts.phylumCnt_try<<endl;
     cout<<"Class       : " << counts.classTargetNumber << " / " << counts.classCnt_correct << " / "<<counts.classCnt_try<<endl;
@@ -260,7 +260,6 @@ void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts
     } else if(shotRank == "superkingdom"){
         counts.superkingdomCnt_try++;
     }
-
 
     if(!isCorrect) return;
 
