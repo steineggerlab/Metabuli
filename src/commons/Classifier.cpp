@@ -338,11 +338,11 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                             range = selectedMatches.size();
                             for (size_t k = 0; k < range; k++) {
                                 if(targetInfoList.data[selectedMatches[k]].redundancy){
-                                    cout<<"1"<<k<<" "<<selectedMatches[k]<<endl;
+                                    cout<<"3 "<<k<<" "<<selectedMatches[k]<<" "<<targetInfoList.data[selectedMatches[k]].sequenceID<<endl;
                                     matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[1]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
                                                                       genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],1};
                                 } else{
-                                    cout<<"2"<<k<<" "<<selectedMatches[k]<<endl;
+                                    cout<<"2 "<<k<<" "<<selectedMatches[k]<<" "<<targetInfoList.data[selectedMatches[k]].sequenceID<<endl;
                                     matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[0]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
                                                                       genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],0};
                                 }
@@ -368,11 +368,11 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                             range = selectedMatches.size();
                             for (size_t k = 0; k < range; k++) {
                                 if(targetInfoList.data[selectedMatches[k]].redundancy){
-                                    cout<<"3"<<k<<" "<<selectedMatches[k]<<endl;;
+                                    cout<<"3 "<<k<<" "<<selectedMatches[k]<<" "<<targetInfoList.data[selectedMatches[k]].sequenceID<<endl;
                                     matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[1]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
                                                                       genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],1};
                                 } else{
-                                    cout<<"4 "<<k<<" "<<selectedMatches[k]<<endl;
+                                    cout<<"4 "<<k<<" "<<selectedMatches[k]<<" "<<targetInfoList.data[selectedMatches[k]].sequenceID<<endl;
                                     matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[0]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
                                                                       genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],0};
                                 }
