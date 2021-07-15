@@ -204,6 +204,11 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
             numOfDiffIdxSplits_use--;
         }
     }
+
+    for(int i = 0 ; i < numOfDiffIdxSplits; i++){
+        cout<<diffIdxSplits.data[i].infoIdxOffset<<" "<<diffIdxSplits.data[i].diffIdxOffset<<endl;
+    }
+
     cout<<"Filtering out meaningless target splits ... done"<<endl;
 
     //Devide query k-mer list into blocks for multi threading.
@@ -324,7 +329,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                         posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
                         if(posToWrite + selectedMatches.size() >= matchBuffer.bufferSize){
                             hasOverflow = true;
-                            querySplits[i].start = j;
+                            querySplits[i].start = j; ///TODO why??
 #pragma omp atomic
                             matchBuffer.startIndexOfReserve -= selectedMatches.size();
                             break;
@@ -383,7 +388,11 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                         targetInfoIdx++;
                     }
 
-                    startIdxOfAAmatch = targetInfoIdx;
+                    if(AminoAcid(currentQuery) != AminoAcid(currentTargetKmer)) ///Move to next query k-mer if there isn't any match.
+                        continue;
+                    else
+                        startIdxOfAAmatch = targetInfoIdx;
+
                     ///Load target k-mers that are matched in amino acid level
                     while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
                         candidateTargetKmers.push_back(currentTargetKmer);
