@@ -83,6 +83,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     struct MmapedData<TargetKmerInfo> testInfo = mmapData<TargetKmerInfo>("/data3/jaebeom/onegenome/0716test_info");
     int testNum = testInfo.fileSize/sizeof(TargetKmerInfo);
+    cout<<"hi231"<<endl;
     for(int i = 0; i < testNum; i++ ){
         cout<<testInfo.data[i].sequenceID<<endl;
     }
