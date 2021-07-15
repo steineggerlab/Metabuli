@@ -286,7 +286,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 
 
     ///-----------------------------------------------------------------------------
-    omp_set_num_threads(threadNum);
+    omp_set_num_threads(1);
     while(completedSplitCnt < threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(numOfDiffIdx, queryIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, numOfcall, querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout, genusTaxIdList)
