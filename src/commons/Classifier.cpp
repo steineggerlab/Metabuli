@@ -109,6 +109,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     size_t numOfTatalQueryKmerCnt = 0;
 
     //extact k-mers from query sequences and compare them to target k-mer DB
+    cout<<"hi"<<endl;
     ///TODO measure time for extract & sort & search separately
     beforeSearch = time(NULL);
     while(processedSeqCnt < numOfSeq){
