@@ -81,6 +81,12 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     sprintf(matchFileName,"%s_match2", queryFileName);
     FILE * matchFile = fopen(matchFileName, "wb");
 
+    struct MmapedData<TargetKmerInfo> testInfo = mmapData<TargetKmerInfo>("/data3/jaebeom/onegenome/0716test_info");
+    int testNum = testInfo.fileSize/sizeof(TargetKmerInfo);
+    for(int i = 0; i < testNum; i++ ){
+        cout<<testInfo.data[i].sequenceID<<endl;
+    }
+
     //query & target
     struct MmapedData<char> queryFile = mmapData<char>(par.filenames[0].c_str());
     struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName);
