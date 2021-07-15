@@ -100,10 +100,10 @@ private:
     struct QueryKmerSplit{
         QueryKmerSplit(size_t start, size_t end, size_t length, DiffIdxSplit diffIdxSplit)
             : start(start), end(end), length(length), diffIdxSplit(diffIdxSplit) { }
-        size_t start;
-        size_t end;
+        size_t start; // start idx in query k-mer list
+        size_t end; // end idx in query k-mer list
         size_t length;
-        DiffIdxSplit diffIdxSplit;
+        DiffIdxSplit diffIdxSplit; // index in target k-mer list from where the search begins.
     };
 
     template <typename T>
@@ -203,7 +203,7 @@ private:
     void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum, Query * queryList);
     void writeReport(FILE * fp, const NcbiTaxonomy & ncbiTaxonomy, const unordered_map<TaxID, TaxonCounts> & cladeCounts, unsigned long totalReads,TaxID taxID = 0, int depth = 0);
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts>& map, TaxID key);
-    void compareDna(uint64_t & query, vector<uint64_t> & targetList, const size_t & startIdx, vector<size_t> & selectedMatches, vector<uint8_t> & selectedHamming);
+    void compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCompare, const size_t & startIdx, vector<size_t> & selectedMatches, vector<uint8_t> & selectedHamming);
     void writeMatches(Buffer<Match> & matchBuffer, FILE * matchFile);
     static bool compareForWritingMatches(const Match & a, const Match & b);
     static bool sortByTaxId(const Match & a, const Match & b);
