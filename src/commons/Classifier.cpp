@@ -94,6 +94,10 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName);
     struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName);
 
+    int testNum2 = targetInfoList.fileSize/sizeof(TargetKmerInfo);
+    for(int i = 0 ; i < 1000; i++){
+        cout<<i<<" "<<targetInfoList.data[i].sequenceID<<endl;
+    }
     //query sequences
     vector<Sequence> sequences;
     IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
