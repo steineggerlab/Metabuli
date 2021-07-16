@@ -5,7 +5,7 @@
 #ifndef ADCLASSIFIER2_COMMON_H
 #define ADCLASSIFIER2_COMMON_H
 #include "NcbiTaxonomy.h"
-#define kmerBufSize 10000000 // 10,000,000,000
+#define kmerBufSize 55000000 // 10,000,000,000
 #define ThreadNum 2
 #define SplitNum 4096
 //#define kmerBufSize 1000000000
