@@ -81,12 +81,12 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     sprintf(matchFileName,"%s_match2", queryFileName);
     FILE * matchFile = fopen(matchFileName, "wb");
 
-    struct MmapedData<TargetKmerInfo> testInfo = mmapData<TargetKmerInfo>("/data3/jaebeom/onegenome/0716test_0_info");
-    int testNum = testInfo.fileSize/sizeof(TargetKmerInfo);
-    cout<<"hi231"<<endl;
-    for(int i = 0; i < testNum; i++ ){
-        cout<<testInfo.data[i].sequenceID<<endl;
-    }
+//    struct MmapedData<TargetKmerInfo> testInfo = mmapData<TargetKmerInfo>("/data3/jaebeom/onegenome/0716test_0_info");
+//    int testNum = testInfo.fileSize/sizeof(TargetKmerInfo);
+//    cout<<"hi231"<<endl;
+//    for(int i = 0; i < testNum; i++ ){
+//        cout<<testInfo.data[i].sequenceID<<endl;
+//    }
 
     //query & target
     struct MmapedData<char> queryFile = mmapData<char>(par.filenames[0].c_str());
@@ -328,19 +328,19 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
             for (size_t i = 0; i < querySplits.size(); i++){
                 if(hasOverflow || splitCheckList[i])
                     continue;
-                cout<<"309"<<endl;
+           //     cout<<"309"<<endl;
                 targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset;
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset + 1; //overflow 되었을 당시의 값들을 저장하여, target split의 처음부터 다시 시작하는 걸 방지할 수 있음
                 // targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset;
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 currentQuery = UINT64_MAX;
                 currentQueryAA = UINT64_MAX;
-                cout<<"316"<<endl;
+           //     cout<<"316"<<endl;
 
                 for(size_t j = querySplits[i].start; j < querySplits[i].end + 1; j ++){
-                    cout<<"319"<<endl;
+            //        cout<<"319"<<endl;
                     querySplits[i].start++;
-                    cout<<"320"<<endl;
+            //        cout<<"320"<<endl;
                     ///Reuse the comparison data if queries are exactly identical
                     if(currentQuery == queryKmerList[j].ADkmer){
                         posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
@@ -354,11 +354,11 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                             range = selectedMatches.size();
                             for (size_t k = 0; k < range; k++) {
                                 if(targetInfoList.data[selectedMatches[k]].redundancy){
-                                    cout<<"3 "<<k<<" "<<selectedMatches[k]<<" "<<targetInfoList.data[selectedMatches[k]].sequenceID<<endl;
+        //                            cout<<"3 "<<k<<" "<<selectedMatches[k]<<" "<<targetInfoList.data[selectedMatches[k]].sequenceID<<endl;
                                     matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[1]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
                                                                       genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],1};
                                 } else{
-                                    cout<<"2 "<<k<<" "<<selectedMatches[k]<<" "<<targetInfoList.data[selectedMatches[k]].sequenceID<<endl;
+         //                           cout<<"2 "<<k<<" "<<selectedMatches[k]<<" "<<targetInfoList.data[selectedMatches[k]].sequenceID<<endl;
                                     matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[0]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
                                                                       genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],0};
                                 }
@@ -384,11 +384,11 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                             range = selectedMatches.size();
                             for (size_t k = 0; k < range; k++) {
                                 if(targetInfoList.data[selectedMatches[k]].redundancy){
-                                    cout<<"3 "<<k<<" "<<selectedMatches[k]<<" "<<targetInfoList.data[selectedMatches[k]].sequenceID<<endl;
+    //                                cout<<"3 "<<k<<" "<<selectedMatches[k]<<" "<<targetInfoList.data[selectedMatches[k]].sequenceID<<endl;
                                     matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[1]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
                                                                       genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],1};
                                 } else{
-                                    cout<<"4 "<<k<<" "<<selectedMatches[k]<<" "<<targetInfoList.data[selectedMatches[k]].sequenceID<<endl;
+      //                              cout<<"4 "<<k<<" "<<selectedMatches[k]<<" "<<targetInfoList.data[selectedMatches[k]].sequenceID<<endl;
                                     matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[0]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
                                                                       genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],0};
                                 }
@@ -484,7 +484,7 @@ bool Classifier::compareForWritingMatches(const Match & a, const Match & b){
 
 ///It compares query k-mers to target k-mers. If a query has matches, the matches with the smallest difference are selected.
 void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCompare, const size_t & startIdx, vector<size_t> & selectedMatches, vector<uint8_t> & selectedHamming) {
-    cout<<"start of compare DNA"<<endl;
+//    cout<<"start of compare DNA"<<endl;
     vector<uint8_t> hammings;
     uint8_t currentHamming;
     uint8_t minHamming = UINT8_MAX;
@@ -508,7 +508,7 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCo
             selectedHamming.push_back(hammings[h]);
         }
     }
-    cout<<"end of compare DNA"<<endl;
+    //   cout<<"end of compare DNA"<<endl;
 
 }
 

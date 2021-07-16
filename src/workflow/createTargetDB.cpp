@@ -122,12 +122,12 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
 
     //Check the info file
-    struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(mergedInfoFileName);
-    int maxNum = targetInfoList.fileSize/ sizeof(TargetKmerInfo);
-    for(int i = 0;  i < maxNum ; i++){
-        cout<<targetInfoList.data[i].sequenceID<<" "<<targetInfoList.data[i].redundancy<<endl;
-    }
-    munmap(targetInfoList.data, targetInfoList.fileSize + 1);
+//    struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(mergedInfoFileName);
+//    int maxNum = targetInfoList.fileSize/ sizeof(TargetKmerInfo);
+//    for(int i = 0;  i < maxNum ; i++){
+//        cout<<targetInfoList.data[i].sequenceID<<" "<<targetInfoList.data[i].redundancy<<endl;
+//    }
+//    munmap(targetInfoList.data, targetInfoList.fileSize + 1);
 
     cout<<"k-mer DB in: "<<endl;
     cout<<mergedDiffFileName<<" and"<<endl;
