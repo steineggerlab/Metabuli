@@ -302,7 +302,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 
 
     ///-----------------------------------------------------------------------------
-    omp_set_num_threads(1);
+    omp_set_num_threads(threadNum);
     while(completedSplitCnt < threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(numOfDiffIdx, queryIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, numOfcall, querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout, genusTaxIdList)
@@ -497,7 +497,7 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCo
     }
 
     if(minHamming > 5) {
-        cout<<"too high hamming"<<endl;
+       //cout<<"too high hamming"<<endl;
         return;
     }
 
@@ -559,9 +559,9 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     vector<ConsecutiveMatches> matchCombi;
 
     getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset);
-    cout<<"521"<<endl;
+    //cout<<"521"<<endl;
     if (matchCombi.empty())
-    {   cout<<"523"<<endl;
+    {   //cout<<"523"<<endl;
         return 0;
     }
 
@@ -598,7 +598,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     ///No classification for low coverage.
     if(coverage < coverageThr) {
-        cout<<"too low coverage"<<endl;
+        //cout<<"too low coverage"<<endl;
         return 0;
     }
 
@@ -861,13 +861,9 @@ void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vec
 
 void Classifier::findConsecutiveMatches(vector<ConsecutiveMatches> & coMatches, Match * matchList, size_t end, size_t offset){
     int conCnt = 0;
-
     uint32_t hammingSum = 0;
-
     size_t beginIdx = 0;
     size_t endIdx = 0;
-
-
     ///This routine is for getting consecutive matched k-mer
     ///gapThr decides the maximun gap
     uint8_t currentFrame;
