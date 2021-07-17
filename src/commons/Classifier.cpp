@@ -294,10 +294,10 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     size_t numOfDiffIdx = targetDiffIdxList.fileSize / sizeof(uint16_t);
     cout<<"The number of target k-mers: "<<numOfTargetKmer<<endl;
 
-    for(size_t i = 0; i < numOfTargetKmer; i++){
-        cout<<targetInfoList.data[i].sequenceID<<"\n";
-    }
-    cout<<"hello"<<endl;
+//    for(size_t i = 0; i < numOfTargetKmer; i++){
+//        cout<<targetInfoList.data[i].sequenceID<<"\n";
+//    }
+//    cout<<"hello"<<endl;
 
 
 
