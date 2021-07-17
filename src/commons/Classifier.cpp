@@ -484,7 +484,6 @@ bool Classifier::compareForWritingMatches(const Match & a, const Match & b){
 
 ///It compares query k-mers to target k-mers. If a query has matches, the matches with the smallest difference are selected.
 void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCompare, const size_t & startIdx, vector<size_t> & selectedMatches, vector<uint8_t> & selectedHamming) {
-//    cout<<"start of compare DNA"<<endl;
     vector<uint8_t> hammings;
     uint8_t currentHamming;
     uint8_t minHamming = UINT8_MAX;
@@ -497,8 +496,7 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCo
     }
 
     if(minHamming > 5) {
-       //cout<<"too high hamming"<<endl;
-        return;
+       return;
     }
 
     ///Select target k-mers that passed hamming criteria
@@ -508,19 +506,22 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCo
             selectedHamming.push_back(hammings[h]);
         }
     }
-    //   cout<<"end of compare DNA"<<endl;
-
 }
 
 ///It analyses the result of linear search.
 void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum, Query * queryList){
+    ///Mmap the file of matches
     struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
     cout<<matchList.fileSize<<"!!"<<endl;
     cout<<matchFileName<<endl;
     size_t numOfMatches = matchList.fileSize / sizeof(Match);
-    //SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByTaxId);
     cout<<"num of matches"<<numOfMatches<<endl;
-    ///Get match blocks for multi threading
+
+    ///Sort matches in order to analyze
+    SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByTaxId);
+
+
+    ///Devide matches into blocks for multi threading
     typedef Sequence Block;
     Block * matchBlocks = new Block[seqNum];
     cout<<seqNum<<endl;
@@ -535,6 +536,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
         blockIdx++;
     }
 
+    ///Process each blocks
     omp_set_num_threads(ThreadNum);
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList)
     {
@@ -544,6 +546,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
                                                 matchBlocks[i].end, matchList.data, queryList);
         }
     }
+
 
     for(int i = 0 ; i < seqNum; i++){
         ++ taxCounts[queryList[i].classification];
@@ -557,16 +560,16 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
 ///문제점 redundancy reduced reference k-mer 임을 고려해야 한다. block을 species level에서 해줘야하지 않나.. 그리고 오버랩도 좀 허용해줘야할껄?
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
     vector<ConsecutiveMatches> matchCombi;
-
     getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset);
-    //cout<<"521"<<endl;
-    if (matchCombi.empty())
-    {   //cout<<"523"<<endl;
+
+    //un-classified
+    if(matchCombi.empty()){
         return 0;
     }
 
-    float coverageThr = 0.3;
+
     ///Check a query coverage
+    float coverageThr = 0.3;
     int maxNum = queryLength / 3 - kmerLength + 1;
     int coveredKmerCnt = 0;
     float coverage;
@@ -574,32 +577,30 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         coveredKmerCnt += matchCombi[cm].diffPosCnt;
     }
     coverage = float(coveredKmerCnt) / float(maxNum);
-//    cout<<"cov "<<coverage<<endl;
     queryList[currentQuery].coverage = coverage;
 
-    ///Get a lowest common ancestor
+
     vector<TaxID> taxIdList;
-    vector<uint32_t> pos;
-    vector<uint8_t> frame;
-    vector<uint8_t> ham;
-    vector<int> redun;
+//    vector<uint32_t> pos;
+//    vector<uint8_t> frame;
+//    vector<uint8_t> ham;
+//    vector<int> redun;
     TaxID temp;
     for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
         for(size_t k = matchCombi[cs].beginIdx ; k < matchCombi[cs].endIdx + 1; k++ ){
             temp = matchList[k].taxID;
             taxIdList.push_back(temp);
-            pos.push_back(matchList[k].position);
-            frame.push_back(matchList[k].frame);
-            ham.push_back(matchList[k].hamming);
-            redun.push_back(matchList[k].red);
+//            pos.push_back(matchList[k].position);
+//            frame.push_back(matchList[k].frame);
+//            ham.push_back(matchList[k].hamming);
+//            redun.push_back(matchList[k].red);
             queryList[currentQuery].taxCnt[temp] ++;
         }
     }
 
-    ///No classification for low coverage.
+    ///No classification for low query coverage.
     if(coverage < coverageThr) {
-        //cout<<"too low coverage"<<endl;
-        return 0;
+       return 0;
     }
 
     size_t numAssignedSeqs = 0;
@@ -699,15 +700,12 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
                 if(diffPosCnt > 1){
                     coMatches.emplace_back(conBegin, currentPos, conCnt, hammingSum, diffPosCnt, beginIdx, i-1, currentFrame);
                 }
-                //cout<<"651"<<endl;
             }
         }
-        //cout<<"654"<<endl;
         //choose the best combination of consecutive matches for current genus
         if(!coMatches.empty()) getMatchCombinationForCurGenus2(coMatches, genus, matchList);
         coMatches.clear();
     }
-    //cout<<"659"<<endl;
     //choose the best combination of consecutive-match among genus for current query
     if(!genus.empty())
         getTheBestGenus(genus, chosenMatchCombination);
@@ -729,9 +727,7 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     size_t tiedSubset;
     float currentScore = 0;
     getSubsets(subset, subsetList, 0, coMatches.size() - 1);
-    //cout<<"678"<<endl;
     vector<ConsecutiveMatches> matchesToScore;
-    ///-------------------------------------------
     for(size_t j = 0; j < subsetList.size(); j++){
         if(!subsetList[j].empty()) {
             for (size_t i = 0; i < subsetList[j].size(); i++) {
@@ -748,8 +744,6 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
             }
         }
     }
-    ///-------------------------------------------
-    //cout<<"703"<<endl;
     vector<ConsecutiveMatches> alignedCoMatches;
     for(size_t i = 0; i < subsetList[bestSubset].size(); i++){
         alignedCoMatches.push_back(coMatches[subsetList[bestSubset][i]]);
@@ -764,7 +758,6 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
 
     //genus.push_back(coMatches);
     genus.push_back(alignedCoMatches);
-    ///cout<<"711"<<endl;
 }
 
 void Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList){
@@ -809,7 +802,6 @@ void Classifier::getSubsets(vector<int> & subset, vector<vector<int>> & uniqueSu
 }
 
 float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
-    cout<<"724"<<endl;
     float score;
     bool overlapped = false;
     //give bad score if overlapping
@@ -819,16 +811,13 @@ float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
                 overlapped = true;
         }
     }
-    cout<<"743"<<endl;
     if(overlapped) return -FLT_MAX;
 
     for(size_t i = 0; i < subset.size(); i++)
         score += float(subset[i].diffPosCnt) - float(subset[i].hamming);
-    cout<<"748"<<endl;
     return score;
 }
 void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen){
-   // cout<<"742"<<endl;
     int chosenGenusIdx = INT_MAX;
     int totalDiffPosCnt;
     int totalMatchCnt;
@@ -855,7 +844,6 @@ void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vec
     for (size_t i = 0; i < genus[chosenGenusIdx].size(); i++) {
         chosen.push_back(genus[chosenGenusIdx][i]);
     }
-   // cout<<"769"<<endl;
 }
 
 
