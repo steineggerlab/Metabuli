@@ -569,7 +569,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
 
     ///Check a query coverage
-    float coverageThr = 0.3;
+    float coverageThr = 0.2;
     int maxNum = queryLength / 3 - kmerLength + 1;
     int coveredKmerCnt = 0;
     float coverage;
