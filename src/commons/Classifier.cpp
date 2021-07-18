@@ -819,6 +819,7 @@ float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
 }
 void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen){
     int chosenGenusIdx = INT_MAX;
+    vector<TaxID> selecetedGenusList;
     int totalDiffPosCnt;
     int totalMatchCnt;
     int totalHamming;
@@ -837,12 +838,18 @@ void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vec
         currScore = totalDiffPosCnt - float(totalHamming)/float(totalMatchCnt);
         if(currScore > maxScore){
             chosenGenusIdx = i;
+            selecetedGenusList.clear();
+            selecetedGenusList.push_back(i);
             maxScore = currScore;
+        } else if (currScore == maxScore){
+            selecetedGenusList.push_back(i);
         }
     }
 
-    for (size_t i = 0; i < genus[chosenGenusIdx].size(); i++) {
-        chosen.push_back(genus[chosenGenusIdx][i]);
+    for(size_t g = 0; g < selecetedGenusList.size(); g++) {
+        for (size_t i = 0; i < genus[selecetedGenusList[g]].size(); i++) {
+            chosen.push_back(genus[selecetedGenusList[g]][i]);
+        }
     }
 }
 
