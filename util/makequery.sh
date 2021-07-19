@@ -21,7 +21,7 @@ find "${genomes}" -name "*.fna" > "${FASTAFILES}"
 num=0
 awk -F '/' '{print $0,$7}' "${FASTAFILES}" | while read -r fasta assacc; do
   outname="${fname}_${num}"
-  ~/miniconda3/bin/randomreads.sh ref="${fasta}" out="${outname}" length=150 reads=17391 prefix="${assacc}" maxsnps=0 maxinss=0 maxdels=0 maxsubs=0 maxns=0
+  ~/miniconda3/bin/randomreads.sh ref="${fasta}" out="${outname}" length=150 reads=876 prefix="${assacc}" maxsnps=0 maxinss=0 maxdels=0 maxsubs=0 maxns=0
   num=$((num+1))
 done
 
