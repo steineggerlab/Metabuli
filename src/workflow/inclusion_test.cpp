@@ -5,6 +5,7 @@
 #include "Classifier.h"
 #include "Parameters.h"
 #include "LocalParameters.h"
+#include <sstream>
 
 struct Counts{
     int classificationCnt;
@@ -67,63 +68,25 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     unordered_map<TaxID, TaxonCounts> cladeCnt = ncbiTaxonomy.getCladeCounts(taxCnt);
 
 
-    ///Load taxDB of kraken
-    unordered_map<int, int> child2parent;
-    string childString, parentString, throwaway;
-    int childInt, parentInt;
-    ifstream taxDB;
-    taxDB.open(krakenTaxDB);
-    if(taxDB.is_open()){
-        while(getline(taxDB,childString,'\t')){
-            getline(taxDB, parentString, '\t');
-            getline(taxDB, throwaway,'\n');
-            childInt = stoi(childString);
-            parentInt = stoi(parentString);
-            if(childInt > 1000000000)
-                child2parent[childInt] = parentInt;
-        }
-    } else{
-        cout<<"Cannot open taxDB"<<endl;
-    }
-    taxDB.close();
-
-    ///read classification
-    string classString;
-    ifstream readClassification;
-    readClassification.open(readClassificationFileName);
-    vector<int> classList;
-    int classInt;
-    while(getline(readClassification,classString,'\n')){
-        classInt = stoi(classString);
-        if(classInt > 1000000000){
-            classList.push_back(child2parent[classInt]);
-        } else{
-            classList.push_back(classInt);
-        }
-
-    }
-    cout<<"hi"<<endl;
-    cout<<"num of classification: "<< classList.size()<<endl;
-//    for(int i = 0 ; i<classList.size(); i++){
-//        cout<<i<< " "<<classList[i]<<endl;
+//    ///Load taxDB of kraken
+//    unordered_map<int, int> child2parent;
+//    string childString, parentString, throwaway;
+//    int childInt, parentInt;
+//    ifstream taxDB;
+//    taxDB.open(krakenTaxDB);
+//    if(taxDB.is_open()){
+//        while(getline(taxDB,childString,'\t')){
+//            getline(taxDB, parentString, '\t');
+//            getline(taxDB, throwaway,'\n');
+//            childInt = stoi(childString);
+//            parentInt = stoi(parentString);
+//            if(childInt > 1000000000)
+//                child2parent[childInt] = parentInt;
+//        }
+//    } else{
+//        cout<<"Cannot open taxDB"<<endl;
 //    }
-
-    ///Load query file -> name
-    regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
-    smatch assacc;
-    string queryName;
-    ifstream query;
-    query.open(queryFileName);
-    string queryLine;
-    vector<string> queryNameList;
-    while(getline(query,queryLine,'\n')){
-        if(queryLine[0] == '>'){
-            regex_search(queryLine, assacc, regex1);
-            queryNameList.push_back(assacc[0]);
-        }else{
-            continue;
-        }
-    }
+//    taxDB.close();
 
     ///Load the mapping file (assacc to taxID)
     const char * mappingFile = "../../gtdb_taxdmp/assacc_to_taxid_gtdb.tsv";
@@ -141,31 +104,79 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     }
     map.close();
 
-    ///right answer list
+
+    ///read classification
     vector<int> rightAnswers;
-    for(size_t i = 0; i < queryNameList.size(); i++){
-        if (assacc2taxid.count(queryNameList[i])) {
-            rightAnswers.push_back(assacc2taxid[queryNameList[i]]);
-        } else{
-            cout << queryNameList[i] << " is not in the mapping file" << endl;
-            rightAnswers.push_back(-1);
-            continue;
+    vector<int> classList;
+
+    string classString;
+    ifstream readClassification;
+    readClassification.open(readClassificationFileName);
+    vector<string> fields;
+    string field;
+    int classInt;
+
+    regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
+    smatch assacc;
+
+    while(getline(readClassification,classString,'\n')){
+        istringstream lineStream(classString);
+        while(getline(lineStream, field, '\t')){
+            fields.push_back(field);
         }
+        classInt = stoi(fields[2]);
+        classList.push_back(classInt);
+
+        regex_search(fields[1], assacc, regex1);
+        rightAnswers.push_back(assacc2taxid[assacc[0]]);
     }
+    cout<<"hi"<<endl;
+    cout<<"num of classification: "<< classList.size()<<endl;
+
+    ///Load query file -> name
+    //regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
+    //
+//    string queryName;
+//    ifstream query;
+//    query.open(queryFileName);
+//    string queryLine;
+//    vector<string> queryNameList;
+//    while(getline(query,queryLine,'\n')){
+//        if(queryLine[0] == '>'){
+//            regex_search(queryLine, assacc, regex1);
+//            queryNameList.push_back(assacc[0]);
+//        }else{
+//            continue;
+//        }
+//    }
+
+
+
+//    ///right answer list
+//    vector<int> rightAnswers;
+//    for(size_t i = 0; i < queryNameList.size(); i++){
+//        if (assacc2taxid.count(queryNameList[i])) {
+//            rightAnswers.push_back(assacc2taxid[queryNameList[i]]);
+//        } else{
+//            cout << queryNameList[i] << " is not in the mapping file" << endl;
+//            rightAnswers.push_back(-1);
+//            continue;
+//        }
+//    }
 
     Counts counts = {0,0,0,0,0,0,0,0};
     ///score the classification
-    for(size_t i = 0; i < queryNameList.size(); i++){
+    for(size_t i = 0; i < classList.size(); i++){
 //        counts.classificationCnt ++;
         compareTaxon(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
     }
 
-    cout<<"Num of queries: " << queryNameList.size() << endl;
+    cout<<"Num of queries: " << classList.size() << endl;
     cout<<"Num of classifications: "<< counts.classificationCnt << endl;
     cout<<"Num of correct classifications: "<<counts.correct<<endl;
     cout<<"Num of correct but too broad classifications: "<<counts.highRank<<endl;
-    cout<<"classified/total = " << float(counts.classificationCnt)/float(queryNameList.size()) << endl;
-    cout<<"correct   /total = "<< float(counts.correct) / float(queryNameList.size())<<endl;
+    cout<<"classified/total = " << float(counts.classificationCnt)/float(classList.size()) << endl;
+    cout<<"correct   /total = "<< float(counts.correct) / float(classList.size())<<endl;
     cout<<"correct   /classifications = "<<float(counts.correct) / float(counts.classificationCnt) <<endl;
     cout<<"high rank /classifications = "<<float(counts.highRank) / float(counts.classificationCnt) <<endl << endl;
 
