@@ -51,9 +51,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     LocalParameters &par = LocalParameters::getLocalInstance();
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
 
-    const string queryFileName = par.filenames[0];
-    const string readClassificationFileName = par.filenames[1];
-    const string krakenTaxDB = par.filenames[2];
+    const string readClassificationFileName = par.filenames[0];
 
     string names = "../../gtdb_taxdmp/names.dmp";
     string nodes = "../../gtdb_taxdmp/nodes.dmp";
@@ -127,7 +125,6 @@ int inclusiontest(int argc, const char **argv, const Command &command){
         }
         classInt = stoi(fields[2]);
         classList.push_back(classInt);
-
 
         regex_search(fields[1], assacc, regex1);
         rightAnswers.push_back(assacc2taxid[assacc[0]]);

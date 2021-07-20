@@ -52,9 +52,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     LocalParameters &par = LocalParameters::getLocalInstance();
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
 
-    const string queryFileName = par.filenames[0];
-    const string readClassificationFileName = par.filenames[1];
-    const string krakenTaxDB = par.filenames[2];
+    const string readClassificationFileName = par.filenames[0];
 
     string names = "../../gtdb_taxdmp/names.dmp";
     string nodes = "../../gtdb_taxdmp/nodes.dmp";
@@ -75,59 +73,8 @@ int exclusiontest(int argc, const char **argv, const Command &command){
         }
     }
 
-    ///Load taxDB of kraken
-    unordered_map<int, int> child2parent;
-    string childString, parentString, throwaway;
-    int childInt, parentInt;
-    ifstream taxDB;
-    taxDB.open(krakenTaxDB);
-    if(taxDB.is_open()){
-        while(getline(taxDB,childString,'\t')){
-            getline(taxDB, parentString, '\t');
-            getline(taxDB, throwaway,'\n');
-            childInt = stoi(childString);
-            parentInt = stoi(parentString);
-            if(childInt > 1000000000)
-                child2parent[childInt] = parentInt;
-        }
-    } else{
-        cout<<"Cannot open taxDB"<<endl;
-    }
-    taxDB.close();
+    Counts counts = {0,0,0,0,0,0,0,0};
 
-    ///read classification
-    string classString;
-    ifstream readClassification;
-    readClassification.open(readClassificationFileName);
-    vector<int> classList;
-    int classInt;
-    while(getline(readClassification,classString,'\n')){
-        classInt = stoi(classString);
-        if(classInt > 1000000000){
-            classList.push_back(child2parent[classInt]);
-        } else{
-            classList.push_back(classInt);
-        }
-
-    }
-    cout<<"num of classification: "<< classList.size()<<endl;
-
-    ///Load query file -> name
-    regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
-    smatch assacc;
-    string queryName;
-    ifstream query;
-    query.open(queryFileName);
-    string queryLine;
-    vector<string> queryNameList;
-    while(getline(query,queryLine,'\n')){
-        if(queryLine[0] == '>'){
-            regex_search(queryLine, assacc, regex1);
-            queryNameList.push_back(assacc[0]);
-        }else{
-            continue;
-        }
-    }
 
     ///Load the mapping file (assacc to taxID)
     const char * mappingFile = "../../gtdb_taxdmp/assacc_to_taxid_gtdb.tsv";
@@ -145,56 +92,134 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     }
     map.close();
 
-    Counts counts = {0,0,0,0,0,0,0,0};
-    ///right answer list
+    ///read classification
     vector<int> rightAnswers;
-    int taxid;
-    int taxid_sp;
+    vector<int> classList;
+
+    string classString;
+    ifstream readClassification;
+    readClassification.open(readClassificationFileName);
+    vector<string> fields;
+    string field;
+    int classInt;
+    int rightAnswer;
+    int rightAnswer_sp;
     unsigned int cladeCnt_sp;
-    for(size_t i = 0; i < queryNameList.size(); i++){
-        if (assacc2taxid.count(queryNameList[i])) {
-            taxid = assacc2taxid[queryNameList[i]];
-            taxid_sp = ncbiTaxonomy.getTaxIdAtRank(taxid, "species");
-            cladeCnt_sp = cladeCnt[taxid_sp].cladeCount;
-            const TaxonNode * ancestor = ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(taxid_sp, "genus"));
-            while(cladeCnt_sp == cladeCnt[ancestor->taxId].cladeCount){
-                ancestor = ncbiTaxonomy.taxonNode(ancestor->parentTaxId);
-                if(ancestor->rank == "superkingdom"){
-                    break;
-                }
-            }
-            rightAnswers.push_back(ancestor->taxId);
+    regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
+    smatch assacc;
+
+    while(getline(readClassification,classString,'\n')){
+        istringstream lineStream(classString);
+        fields.clear();
+        //3rd field -> classification
+        while(getline(lineStream, field, '\t')){
+            fields.push_back(field);
+        }
+        classInt = stoi(fields[2]);
+        classList.push_back(classInt);
+
+        //2nd field -> assacc
+        regex_search(fields[1], assacc, regex1);
+        //assacc to right answer
+        rightAnswer = assacc2taxid[assacc[0]];
+        rightAnswer_sp = ncbiTaxonomy.getTaxIdAtRank(rightAnswer, "species");
+        cladeCnt_sp = cladeCnt[rightAnswer_sp].cladeCount;
+
+        //get the lowest ancestor that have different branch
+        const TaxonNode * ancestor = ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(rightAnswer_sp, "genus"));
+        while(cladeCnt_sp == cladeCnt[ancestor->taxId].cladeCount){
+            ancestor = ncbiTaxonomy.taxonNode(ancestor->parentTaxId);
             if(ancestor->rank == "superkingdom"){
-                counts.superkingdomTargetNumber ++;
-            } else if(ancestor->rank == "phylum"){
-                counts.phylumTargetNumber ++;
-            } else if(ancestor->rank == "order"){
-                counts.orderTargetNumber ++;
-            } else if(ancestor->rank == "class"){
-                counts.classTargetNumber ++;
-            } else if(ancestor->rank == "family"){
-                counts.familyTargetNumber ++;
-            } else if(ancestor->rank == "genus"){
-                counts.genusTargetNumber ++;
+                break;
             }
-        } else{
-            cout << queryNameList[i] << " is not in the mapping file" << endl;
-            rightAnswers.push_back(-1);
-            continue;
+        }
+        rightAnswers.push_back(ancestor->taxId);
+
+        if(ancestor->rank == "superkingdom"){
+            counts.superkingdomTargetNumber ++;
+        } else if(ancestor->rank == "phylum"){
+            counts.phylumTargetNumber ++;
+        } else if(ancestor->rank == "order"){
+            counts.orderTargetNumber ++;
+        } else if(ancestor->rank == "class"){
+            counts.classTargetNumber ++;
+        } else if(ancestor->rank == "family"){
+            counts.familyTargetNumber ++;
+        } else if(ancestor->rank == "genus"){
+            counts.genusTargetNumber ++;
         }
     }
+    cout<<"hi"<<endl;
+    cout<<"num of classification: "<< classList.size()<<endl;
+
+//    ///Load query file -> name
+//    regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
+//    smatch assacc;
+//    string queryName;
+//    ifstream query;
+//    query.open(queryFileName);
+//    string queryLine;
+//    vector<string> queryNameList;
+//    while(getline(query,queryLine,'\n')){
+//        if(queryLine[0] == '>'){
+//            regex_search(queryLine, assacc, regex1);
+//            queryNameList.push_back(assacc[0]);
+//        }else{
+//            continue;
+//        }
+//    }
+
+
+
+    ///right answer list
+//    vector<int> rightAnswers;
+//    int taxid;
+//    int taxid_sp;
+//    unsigned int cladeCnt_sp;
+//    for(size_t i = 0; i < queryNameList.size(); i++){
+//        if (assacc2taxid.count(queryNameList[i])) {
+//            taxid = assacc2taxid[queryNameList[i]];
+//            taxid_sp = ncbiTaxonomy.getTaxIdAtRank(taxid, "species");
+//            cladeCnt_sp = cladeCnt[taxid_sp].cladeCount;
+//            const TaxonNode * ancestor = ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(taxid_sp, "genus"));
+//            while(cladeCnt_sp == cladeCnt[ancestor->taxId].cladeCount){
+//                ancestor = ncbiTaxonomy.taxonNode(ancestor->parentTaxId);
+//                if(ancestor->rank == "superkingdom"){
+//                    break;
+//                }
+//            }
+//            rightAnswers.push_back(ancestor->taxId);
+//            if(ancestor->rank == "superkingdom"){
+//                counts.superkingdomTargetNumber ++;
+//            } else if(ancestor->rank == "phylum"){
+//                counts.phylumTargetNumber ++;
+//            } else if(ancestor->rank == "order"){
+//                counts.orderTargetNumber ++;
+//            } else if(ancestor->rank == "class"){
+//                counts.classTargetNumber ++;
+//            } else if(ancestor->rank == "family"){
+//                counts.familyTargetNumber ++;
+//            } else if(ancestor->rank == "genus"){
+//                counts.genusTargetNumber ++;
+//            }
+//        } else{
+//            cout << queryNameList[i] << " is not in the mapping file" << endl;
+//            rightAnswers.push_back(-1);
+//            continue;
+//        }
+//    }
 
     ///score the classification
-    for(size_t i = 0; i < queryNameList.size(); i++){
+    for(size_t i = 0; i < classList.size(); i++){
         compareTaxon2(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
     }
 
-    cout<<"Num of queries: " << queryNameList.size() << endl;
+    cout<<"Num of queries: " << classList.size() << endl;
     cout<<"Num of classifications: "<< counts.classificationCnt << endl;
     cout<<"Num of correct classifications: "<<counts.correct<<endl;
     cout<<"Num of correct but too broad classifications: "<<counts.highRank<<endl;
-    cout<<"classified/total = " << float(counts.classificationCnt)/float(queryNameList.size()) << endl;
-    cout<<"correct   /total = "<< float(counts.correct) / float(queryNameList.size())<<endl;
+    cout<<"classified/total = " << float(counts.classificationCnt)/float(classList.size()) << endl;
+    cout<<"correct   /total = "<< float(counts.correct) / float(classList.size())<<endl;
     cout<<"correct   /classifications = "<<float(counts.correct) / float(counts.classificationCnt) <<endl;
     cout<<"high rank /classifications = "<<float(counts.highRank) / float(counts.classificationCnt) <<endl << endl;
 
