@@ -593,7 +593,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
                                   numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
-                                  selectedPercent);
+                                  selectedPercent, queryLength);
 
     ///TODO optimize strain specific classification criteria
     ///Strain classification only for high coverage with LCA of species level
@@ -896,7 +896,7 @@ void Classifier::findConsecutiveMatches(vector<ConsecutiveMatches> & coMatches, 
 }
 
 TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,
-                            size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent){
+                            size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent, uint32_t queryLength){
     std::map<TaxID,taxNode> ancTaxIdsCounts;
 
     numAssignedSeqs = 0;
@@ -950,6 +950,11 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
     // select the lowest ancestor that meets the cutoff
     int minRank = INT_MAX;
     TaxID selctedTaxon = 0;
+    float coverageThreshold = 0.7;
+    float curCoverage;
+    float maxCoverage = -FLT_MAX;
+    int maximumKmerNum = queryLength / 3 - kmerLength + 1;
+    bool haveMetCovThr = false;
 
     for (std::map<TaxID,taxNode>::iterator it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
         // consider only candidates:
@@ -958,15 +963,28 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
         }
 
         double currPercent = float(it->second.weight) / totalAssignedSeqsWeights;
-        if (currPercent >= majorityCutoff) {
+        curCoverage = float(it->second.weight) / maximumKmerNum;
+
+        if(curCoverage > coverageThreshold){
+            haveMetCovThr = true;
+            TaxID currTaxId = it->first;
+            TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
+            int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
+            if(currRankInd < minRank || (currRankInd == minRank && curCoverage > maxCoverage)){
+                maxCoverage = curCoverage;
+                minRank = currRankInd;
+                selctedTaxon = it->first;
+            }
+        } else if (currPercent >= majorityCutoff && (!haveMetCovThr)) {
             // iterate all ancestors to find lineage min rank (the candidate is a descendant of a node with this rank)
             TaxID currTaxId = it->first;
             TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
-           // int currMinRank = INT_MAX;
-          //  TaxID currParentTaxId = node->parentTaxId;
+            // int currMinRank = INT_MAX;
+            // TaxID currParentTaxId = node->parentTaxId;
             int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
+
+
 //            while (currParentTaxId != currTaxId) {
-//
 //                if ((currRankInd > 0) && (currRankInd < currMinRank)) {
 //                    currMinRank = currRankInd;
 //                    // the rank can only go up on the way to the root, so we can break
@@ -977,7 +995,6 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
 //                node = taxonomy.taxonNode(currParentTaxId, false);
 //                currParentTaxId = node->parentTaxId;
 //            }
-
             if ((currRankInd < minRank) || ((currRankInd == minRank) && (currPercent > selectedPercent))) {
                 selctedTaxon = it->first;
                 minRank = currRankInd;
