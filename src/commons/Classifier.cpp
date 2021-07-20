@@ -591,9 +591,9 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     size_t numSeqsAgreeWithSelectedTaxon = 0;
     double selectedPercent = 0;
 
-    TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
+    TaxID selectedLCA = match2LCA2(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
                                   numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
-                                  selectedPercent, queryLength);
+                                  selectedPercent);
 
     ///TODO optimize strain specific classification criteria
     ///Strain classification only for high coverage with LCA of species level
@@ -949,7 +949,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
 
     // select the lowest ancestor that meets the cutoff
     int minRank = INT_MAX;
-    TaxID selctedTaxon = 0;
+    TaxID selectedTaxon = 0;
     float coverageThreshold = 0.7;
     float curCoverage;
     float maxCoverage = -FLT_MAX;
@@ -973,7 +973,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
             if(currRankInd < minRank || (currRankInd == minRank && curCoverage > maxCoverage)){
                 maxCoverage = curCoverage;
                 minRank = currRankInd;
-                selctedTaxon = it->first;
+                selectedTaxon = it->first;
             }
         } else if (currPercent >= majorityCutoff && (!haveMetCovThr)) {
             // iterate all ancestors to find lineage min rank (the candidate is a descendant of a node with this rank)
@@ -996,14 +996,14 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
 //                currParentTaxId = node->parentTaxId;
 //            }
             if ((currRankInd < minRank) || ((currRankInd == minRank) && (currPercent > selectedPercent))) {
-                selctedTaxon = it->first;
+                selectedTaxon = it->first;
                 minRank = currRankInd;
                 selectedPercent = currPercent;
             }
         }
     }
 
-    return selctedTaxon;
+    return selectedTaxon;
 }
 
 TaxID Classifier::match2LCA2(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,
