@@ -121,11 +121,13 @@ int inclusiontest(int argc, const char **argv, const Command &command){
 
     while(getline(readClassification,classString,'\n')){
         istringstream lineStream(classString);
+        fields.clear();
         while(getline(lineStream, field, '\t')){
             fields.push_back(field);
         }
         classInt = stoi(fields[2]);
         classList.push_back(classInt);
+
 
         regex_search(fields[1], assacc, regex1);
         rightAnswers.push_back(assacc2taxid[assacc[0]]);
