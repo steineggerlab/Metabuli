@@ -156,7 +156,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     Counts counts = {0,0,0,0,0,0,0,0};
     ///score the classification
     for(size_t i = 0; i < queryNameList.size(); i++){
-        counts.classificationCnt ++;
+//        counts.classificationCnt ++;
         compareTaxon(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
     }
 
@@ -206,8 +206,9 @@ void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts&
         if(shotRank == "superkingdom"){
             cout<<"X"<<endl;
         } else if(shot == ncbiTaxonomy.getTaxIdAtRank(target, shotRank)){ //on right branch
-            counts.highRank ++;
-            cout<<"U"<<endl;
+            counts.correct ++;
+            cout<<"0"<<endl;
+            isCorrect = true;
         } else{ //on wrong branch
             cout<<"X"<<endl;
         }
