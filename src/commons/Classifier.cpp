@@ -294,14 +294,6 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     size_t numOfDiffIdx = targetDiffIdxList.fileSize / sizeof(uint16_t);
     cout<<"The number of target k-mers: "<<numOfTargetKmer<<endl;
 
-//    for(size_t i = 0; i < numOfTargetKmer; i++){
-//        cout<<targetInfoList.data[i].sequenceID<<"\n";
-//    }
-//    cout<<"hello"<<endl;
-
-
-
-    ///-----------------------------------------------------------------------------
     omp_set_num_threads(threadNum);
     while(completedSplitCnt < threadNum) {
         bool hasOverflow = false;
@@ -328,19 +320,14 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
             for (size_t i = 0; i < querySplits.size(); i++){
                 if(hasOverflow || splitCheckList[i])
                     continue;
-           //     cout<<"309"<<endl;
                 targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset;
-                diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset + 1; //overflow 되었을 당시의 값들을 저장하여, target split의 처음부터 다시 시작하는 걸 방지할 수 있음
-                // targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset;
+                diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset + 1;
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 currentQuery = UINT64_MAX;
                 currentQueryAA = UINT64_MAX;
-           //     cout<<"316"<<endl;
 
                 for(size_t j = querySplits[i].start; j < querySplits[i].end + 1; j ++){
-            //        cout<<"319"<<endl;
                     querySplits[i].start++;
-            //        cout<<"320"<<endl;
                     ///Reuse the comparison data if queries are exactly identical
                     if(currentQuery == queryKmerList[j].ADkmer){
                         posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
@@ -354,11 +341,9 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                             range = selectedMatches.size();
                             for (size_t k = 0; k < range; k++) {
                                 if(targetInfoList.data[selectedMatches[k]].redundancy){
-        //                            cout<<"3 "<<k<<" "<<selectedMatches[k]<<" "<<targetInfoList.data[selectedMatches[k]].sequenceID<<endl;
                                     matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[1]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
                                                                       genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],1};
                                 } else{
-         //                           cout<<"2 "<<k<<" "<<selectedMatches[k]<<" "<<targetInfoList.data[selectedMatches[k]].sequenceID<<endl;
                                     matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[0]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
                                                                       genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],0};
                                 }
@@ -384,11 +369,9 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                             range = selectedMatches.size();
                             for (size_t k = 0; k < range; k++) {
                                 if(targetInfoList.data[selectedMatches[k]].redundancy){
-    //                                cout<<"3 "<<k<<" "<<selectedMatches[k]<<" "<<targetInfoList.data[selectedMatches[k]].sequenceID<<endl;
                                     matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[1]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
                                                                       genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],1};
                                 } else{
-      //                              cout<<"4 "<<k<<" "<<selectedMatches[k]<<" "<<targetInfoList.data[selectedMatches[k]].sequenceID<<endl;
                                     matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID, taxID[0]->at(targetInfoList.data[selectedMatches[k]].sequenceID),
                                                                       genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID], queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammings[k],0};
                                 }
@@ -979,24 +962,25 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
             // iterate all ancestors to find lineage min rank (the candidate is a descendant of a node with this rank)
             TaxID currTaxId = it->first;
             TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
-            int currMinRank = INT_MAX;
-            TaxID currParentTaxId = node->parentTaxId;
-            while (currParentTaxId != currTaxId) {
-                int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
-                if ((currRankInd > 0) && (currRankInd < currMinRank)) {
-                    currMinRank = currRankInd;
-                    // the rank can only go up on the way to the root, so we can break
-                    break;
-                }
-                // move up:
-                currTaxId = currParentTaxId;
-                node = taxonomy.taxonNode(currParentTaxId, false);
-                currParentTaxId = node->parentTaxId;
-            }
+           // int currMinRank = INT_MAX;
+          //  TaxID currParentTaxId = node->parentTaxId;
+            int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
+//            while (currParentTaxId != currTaxId) {
+//
+//                if ((currRankInd > 0) && (currRankInd < currMinRank)) {
+//                    currMinRank = currRankInd;
+//                    // the rank can only go up on the way to the root, so we can break
+//                    break;
+//                }
+//                // move up:
+//                currTaxId = currParentTaxId;
+//                node = taxonomy.taxonNode(currParentTaxId, false);
+//                currParentTaxId = node->parentTaxId;
+//            }
 
-            if ((currMinRank < minRank) || ((currMinRank == minRank) && (currPercent > selectedPercent))) {
+            if ((currRankInd < minRank) || ((currRankInd == minRank) && (currPercent > selectedPercent))) {
                 selctedTaxon = it->first;
-                minRank = currMinRank;
+                minRank = currRankInd;
                 selectedPercent = currPercent;
             }
         }
