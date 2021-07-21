@@ -953,6 +953,8 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
     float coverageThreshold = 0.8;
     float curCoverage;
     float maxCoverage = -FLT_MAX;
+    float spMaxCoverage = -FLT_MAX;
+
     int maximumKmerNum = queryLength / 3 - kmerLength + 1;
     bool haveMetCovThr = false;
 
@@ -966,28 +968,25 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
         double currPercent = float(it->second.weight) / totalAssignedSeqsWeights;
         curCoverage = float(it->second.weight) / float(maximumKmerNum);
 
-        if(curCoverage > coverageThreshold){
-
-            TaxID currTaxId = it->first;
-            TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
-            int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
-            if(currRankInd <= 4 || (currRankInd <= minRank && minRank <=4 && curCoverage > maxCoverage)){
+        TaxID currTaxId = it->first;
+        TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
+        int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
+        if(curCoverage > coverageThreshold && currRankInd <= 4){
+            if(!haveMetCovThr){
                 haveMetCovThr = true;
-                maxCoverage = curCoverage;
                 minRank = currRankInd;
+                spMaxCoverage = curCoverage;
+                selectedTaxon = it->first;
+            } else if(currRankInd < minRank || (currRankInd == minRank && curCoverage > spMaxCoverage)){
+                minRank = currRankInd;
+                spMaxCoverage = curCoverage;
                 selectedTaxon = it->first;
             }
-
-            
         } else if (currPercent >= majorityCutoff && (!haveMetCovThr)) {
             // iterate all ancestors to find lineage min rank (the candidate is a descendant of a node with this rank)
-            TaxID currTaxId = it->first;
-            TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
+
             // int currMinRank = INT_MAX;
             // TaxID currParentTaxId = node->parentTaxId;
-            int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
-
-
 //            while (currParentTaxId != currTaxId) {
 //                if ((currRankInd > 0) && (currRankInd < currMinRank)) {
 //                    currMinRank = currRankInd;
