@@ -971,7 +971,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
             TaxID currTaxId = it->first;
             TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
             int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
-            if(currRankInd <= 4 || (currRankInd == minRank && minRank <=4 && curCoverage > maxCoverage)){
+            if(currRankInd <= 4 || (currRankInd <= minRank && minRank <=4 && curCoverage > maxCoverage)){
                 haveMetCovThr = true;
                 maxCoverage = curCoverage;
                 minRank = currRankInd;
