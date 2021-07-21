@@ -591,9 +591,9 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     size_t numSeqsAgreeWithSelectedTaxon = 0;
     double selectedPercent = 0;
 
-    TaxID selectedLCA = match2LCA2(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
+    TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
                                   numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
-                                  selectedPercent);
+                                  selectedPercent, queryLength);
 
     ///TODO optimize strain specific classification criteria
     ///Strain classification only for high coverage with LCA of species level
@@ -956,6 +956,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
     int maximumKmerNum = queryLength / 3 - kmerLength + 1;
     bool haveMetCovThr = false;
 
+    //한 위치에 중복되는 매치가 있다! 잘 생각해봅시다...
     for (std::map<TaxID,taxNode>::iterator it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
         // consider only candidates:
         if (!(it->second.isCandidate)) {
@@ -966,11 +967,12 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
         curCoverage = float(it->second.weight) / float(maximumKmerNum);
 
         if(curCoverage > coverageThreshold){
-            haveMetCovThr = true;
+
             TaxID currTaxId = it->first;
             TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
             int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
-            if(currRankInd < minRank || (currRankInd == minRank && curCoverage > maxCoverage)){
+            if(currRankInd <= 4 || (currRankInd == minRank && minRank <=4 && curCoverage > maxCoverage)){
+                haveMetCovThr = true;
                 maxCoverage = curCoverage;
                 minRank = currRankInd;
                 selectedTaxon = it->first;
@@ -1084,6 +1086,99 @@ TaxID Classifier::match2LCA2(const std::vector<int> & taxIdList, NcbiTaxonomy co
         double currPercent = float(it->second.weight) / totalAssignedSeqsWeights;
     }
     return selectedTaxon;
+}
+
+TaxID Classifier::match2LCA3(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,
+                            size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent){
+    std::map<TaxID,taxNode> ancTaxIdsCounts;
+
+    numAssignedSeqs = 0;
+    numUnassignedSeqs = 0;
+    numSeqsAgreeWithSelectedTaxon = 0;
+    selectedPercent = 0;
+    double totalAssignedSeqsWeights = 0.0;
+
+    for (size_t i = 0; i < taxIdList.size(); ++i) {
+        TaxID currTaxId = taxIdList[i];
+        double currWeight = 1;
+        // ignore unassigned sequences
+        if (currTaxId == 0) {
+            numUnassignedSeqs++;
+            continue;
+        }
+        TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
+        if (node == NULL) {
+            Debug(Debug::ERROR) << "taxonid: " << currTaxId << " does not match a legal taxonomy node.\n";
+            EXIT(EXIT_FAILURE);
+        }
+        totalAssignedSeqsWeights += currWeight;
+        numAssignedSeqs++;
+
+        // each start of a path due to an orf is a candidate
+        if (ancTaxIdsCounts.find(currTaxId) != ancTaxIdsCounts.end()) { //원소가 있다면
+            ancTaxIdsCounts[currTaxId].update(currWeight, 0);
+        } else {
+            taxNode currNode;
+            currNode.set(currWeight, true, 0);
+            ancTaxIdsCounts.insert(std::pair<TaxID,taxNode>(currTaxId, currNode));
+        }
+
+        // iterate all ancestors up to root (including). add currWeight and candidate status to each
+        TaxID currParentTaxId = node->parentTaxId;
+        while (currParentTaxId != currTaxId) {
+            if (ancTaxIdsCounts.find(currParentTaxId) != ancTaxIdsCounts.end()) {
+                ancTaxIdsCounts[currParentTaxId].update(currWeight, currTaxId);
+            } else {
+                taxNode currParentNode;
+                currParentNode.set(currWeight, false, currTaxId);
+                ancTaxIdsCounts.insert(std::pair<TaxID,taxNode>(currParentTaxId, currParentNode));
+            }
+            // move up:
+            currTaxId = currParentTaxId;
+            node = taxonomy.taxonNode(currParentTaxId, false);
+            currParentTaxId = node->parentTaxId;
+        }
+    }
+
+    // select the lowest ancestor that meets the cutoff
+    int minRank = INT_MAX;
+    TaxID selctedTaxon = 0;
+
+    for (std::map<TaxID,taxNode>::iterator it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
+        // consider only candidates:
+        if (!(it->second.isCandidate)) {
+            continue;
+        }
+
+        double currPercent = float(it->second.weight) / totalAssignedSeqsWeights;
+        if (currPercent >= majorityCutoff) {
+            // iterate all ancestors to find lineage min rank (the candidate is a descendant of a node with this rank)
+            TaxID currTaxId = it->first;
+            TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
+            int currMinRank = INT_MAX;
+            TaxID currParentTaxId = node->parentTaxId;
+            while (currParentTaxId != currTaxId) {
+                int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
+                if ((currRankInd > 0) && (currRankInd < currMinRank)) {
+                    currMinRank = currRankInd;
+                    // the rank can only go up on the way to the root, so we can break
+                    break;
+                }
+                // move up:
+                currTaxId = currParentTaxId;
+                node = taxonomy.taxonNode(currParentTaxId, false);
+                currParentTaxId = node->parentTaxId;
+            }
+
+            if ((currMinRank < minRank) || ((currMinRank == minRank) && (currPercent > selectedPercent))) {
+                selctedTaxon = it->first;
+                minRank = currMinRank;
+                selectedPercent = currPercent;
+            }
+        }
+    }
+
+    return selctedTaxon;
 }
 
 int Classifier::getNumOfSplits() const { return this->numOfSplit; }
