@@ -977,6 +977,8 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
                 minRank = currRankInd;
                 selectedTaxon = it->first;
             }
+
+            
         } else if (currPercent >= majorityCutoff && (!haveMetCovThr)) {
             // iterate all ancestors to find lineage min rank (the candidate is a descendant of a node with this rank)
             TaxID currTaxId = it->first;
