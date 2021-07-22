@@ -208,6 +208,7 @@ private:
 
     //performance test
     Counts counts;
+
     const static uint64_t MARKER = ~0 & ~16777215;
     uint8_t hammingLookup[8][8]= {
             {0, 1, 1, 1, 2, 1, 3, 3},
