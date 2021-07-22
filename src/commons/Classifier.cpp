@@ -960,6 +960,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     int maximumKmerNum = queryLength / 3 - kmerLength + 1;
     bool haveMetCovThr = false;
     bool tied = false;
+    vector<int> ties;
 
     //한 위치에 중복되는 매치가 있다! 잘 생각해봅시다...
     for (std::map<TaxID,taxNode>::iterator it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
@@ -975,20 +976,27 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
         int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
         if(curCoverage > coverageThreshold && currRankInd <= 4){
-            if(curCoverage == spMaxCoverage) {
-                tied = true;
-                tiedCoverage = curCoverage;
-            }
+
+
             if(!haveMetCovThr){
                 haveMetCovThr = true;
                 minRank = currRankInd;
                 spMaxCoverage = curCoverage;
                 selectedTaxon = it->first;
-            } else if(currRankInd < minRank || (currRankInd == minRank && curCoverage > spMaxCoverage)){
-                minRank = currRankInd;
+                ties.push_back(it->first);
+            } else if(curCoverage > spMaxCoverage){
+                ties.clear();
                 spMaxCoverage = curCoverage;
-                selectedTaxon = it->first;
             }
+            if(curCoverage == spMaxCoverage){
+                ties.push_back(it->first);
+            }
+//            else if(currRankInd < minRank || (currRankInd == minRank && curCoverage > spMaxCoverage)){
+//                minRank = currRankInd;
+//                spMaxCoverage = curCoverage;
+//                selectedTaxon = it->first;
+//                ties.push_back(it->first);
+//            }
 
 
         } else if (currPercent >= majorityCutoff && (!haveMetCovThr)) {
@@ -1016,6 +1024,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     }
     if(tiedCoverage == spMaxCoverage && tied)
         return taxonomy.getTaxIdAtRank(selectedTaxon, "genus");
+    taxonomy.LCA(ties);
 
     return selectedTaxon;
 }
@@ -1433,7 +1442,7 @@ void Classifier::compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxon
             cout<<"X"<<endl;
         } else if(shot == ncbiTaxonomy.getTaxIdAtRank(target, shotRank)){ //on right branch
             counts.correct ++;
-            cout<<"0"<<endl;
+            cout<<"O"<<endl;
             isCorrect = true;
         } else{ //on wrong branch
             cout<<"X"<<endl;
