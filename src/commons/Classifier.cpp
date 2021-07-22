@@ -1026,7 +1026,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     if(haveMetCovThr)
         return taxonomy.LCA(ties)->taxId;
     else
-        return selectedTaxon
+        return selectedTaxon;
 //    cout<<"1025"<<endl;
 //    cout<<ties.size()<<endl;
 //    return
