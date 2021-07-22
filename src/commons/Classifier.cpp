@@ -520,7 +520,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
 
     ///Process each blocks
-    omp_set_num_threads(ThreadNum);
+    omp_set_num_threads(1);
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList)
     {
 #pragma omp for schedule(dynamic, 1)
@@ -960,7 +960,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     int maximumKmerNum = queryLength / 3 - kmerLength + 1;
     bool haveMetCovThr = false;
     bool tied = false;
-    vector<int> ties;
+    vector<TaxID> ties;
 
     //한 위치에 중복되는 매치가 있다! 잘 생각해봅시다...
     for (std::map<TaxID,taxNode>::iterator it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
@@ -976,8 +976,6 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
         int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
         if(curCoverage > coverageThreshold && currRankInd <= 4){
-
-
             if(!haveMetCovThr){
                 haveMetCovThr = true;
                 minRank = currRankInd;
