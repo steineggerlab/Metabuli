@@ -173,7 +173,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     Counts counts = {0,0,0,0,0,0,0,0};
     ///score the classification
     for(size_t i = 0; i < classList.size(); i++){
-//        counts.classificationCnt ++;
+        cout<<i<<" ";
         compareTaxon(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
     }
 
