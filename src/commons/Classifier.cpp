@@ -520,7 +520,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
 
     ///Process each blocks
-    omp_set_num_threads(1);
+    omp_set_num_threads(ThreadNum);
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList)
     {
 #pragma omp for schedule(dynamic, 1)
@@ -1023,9 +1023,13 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         }
     }
     //if(tiedCoverage == spMaxCoverage && tied)
-    cout<<"1025"<<endl;
-    cout<<ties.size()<<endl;
-    return taxonomy.LCA(ties)->taxId;
+    if(haveMetCovThr)
+        return taxonomy.LCA(ties)->taxId;
+    else
+        return selectedTaxon
+//    cout<<"1025"<<endl;
+//    cout<<ties.size()<<endl;
+//    return
    // return selectedTaxon;
 }
 
