@@ -897,6 +897,7 @@ void Classifier::findConsecutiveMatches(vector<ConsecutiveMatches> & coMatches, 
 
 TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & taxonomy, const float majorityCutoff,
                             size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent, uint32_t queryLength){
+    cout<<"HI"<<endl;
     std::map<TaxID,taxNode> ancTaxIdsCounts;
 
     numAssignedSeqs = 0;
@@ -963,6 +964,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     vector<TaxID> ties;
 
     //한 위치에 중복되는 매치가 있다! 잘 생각해봅시다...
+    cout<<"967"<<endl;
     for (std::map<TaxID,taxNode>::iterator it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
         // consider only candidates:
         if (!(it->second.isCandidate)) {
@@ -1021,6 +1023,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         }
     }
     //if(tiedCoverage == spMaxCoverage && tied)
+    cout<<"1025"<<endl;
     return taxonomy.LCA(ties)->taxId;
    // return selectedTaxon;
 }
