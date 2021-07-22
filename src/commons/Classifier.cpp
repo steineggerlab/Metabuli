@@ -895,7 +895,7 @@ void Classifier::findConsecutiveMatches(vector<ConsecutiveMatches> & coMatches, 
     }
 }
 
-TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,
+TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & taxonomy, const float majorityCutoff,
                             size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent, uint32_t queryLength){
     std::map<TaxID,taxNode> ancTaxIdsCounts;
 
@@ -951,12 +951,15 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
     int minRank = INT_MAX;
     TaxID selectedTaxon = 0;
     float coverageThreshold = 0.8;
+
     float curCoverage;
     float maxCoverage = -FLT_MAX;
     float spMaxCoverage = -FLT_MAX;
+    float tiedCoverage;
 
     int maximumKmerNum = queryLength / 3 - kmerLength + 1;
     bool haveMetCovThr = false;
+    bool tied = false;
 
     //한 위치에 중복되는 매치가 있다! 잘 생각해봅시다...
     for (std::map<TaxID,taxNode>::iterator it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
@@ -972,6 +975,10 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
         TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
         int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
         if(curCoverage > coverageThreshold && currRankInd <= 4){
+            if(curCoverage == spMaxCoverage) {
+                tied = true;
+                tiedCoverage = curCoverage;
+            }
             if(!haveMetCovThr){
                 haveMetCovThr = true;
                 minRank = currRankInd;
@@ -982,6 +989,8 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
                 spMaxCoverage = curCoverage;
                 selectedTaxon = it->first;
             }
+
+
         } else if (currPercent >= majorityCutoff && (!haveMetCovThr)) {
             // iterate all ancestors to find lineage min rank (the candidate is a descendant of a node with this rank)
 
@@ -1005,6 +1014,8 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy con
             }
         }
     }
+    if(tiedCoverage == spMaxCoverage && tied)
+        return taxonomy.getTaxIdAtRank(selectedTaxon, "genus");
 
     return selectedTaxon;
 }
