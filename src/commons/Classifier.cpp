@@ -986,9 +986,9 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
                 ties.push_back(it->first);
             } else if(curCoverage > spMaxCoverage){
                 ties.clear();
+                ties.push_back(it->first);
                 spMaxCoverage = curCoverage;
-            }
-            if(curCoverage == spMaxCoverage){
+            } else if(curCoverage == spMaxCoverage){
                 ties.push_back(it->first);
             }
 //            else if(currRankInd < minRank || (currRankInd == minRank && curCoverage > spMaxCoverage)){
@@ -1023,8 +1023,8 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         }
     }
     if(tiedCoverage == spMaxCoverage && tied)
-        return taxonomy.getTaxIdAtRank(selectedTaxon, "genus");
-    taxonomy.LCA(ties);
+        return taxonomy.LCA(ties)->taxId;
+
 
     return selectedTaxon;
 }
