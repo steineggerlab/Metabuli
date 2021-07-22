@@ -1024,6 +1024,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     }
     //if(tiedCoverage == spMaxCoverage && tied)
     cout<<"1025"<<endl;
+    cout<<ties.size()<<endl;
     return taxonomy.LCA(ties)->taxId;
    // return selectedTaxon;
 }
