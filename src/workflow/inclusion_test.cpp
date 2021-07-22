@@ -2,10 +2,15 @@
 // Created by 김재범 on 2021/05/10.
 //
 
-#include "Classifier.h"
+//#include "Classifier.h"
+#include "NcbiTaxonomy.h"
 #include "Parameters.h"
 #include "LocalParameters.h"
+#include <string>
 #include <sstream>
+#include <fstream>
+#include <iostream>
+#include <regex>
 
 struct Counts{
     int classificationCnt;
@@ -45,6 +50,8 @@ struct Counts{
 };
 
 void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts);
+
+using namespace std;
 
 int inclusiontest(int argc, const char **argv, const Command &command){
 
@@ -192,6 +199,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
 }
 
 void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts& counts) { ///target: subspecies or species
+
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
     string shotRank = shotNode->rank;

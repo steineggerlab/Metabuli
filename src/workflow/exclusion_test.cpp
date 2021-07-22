@@ -172,42 +172,42 @@ int exclusiontest(int argc, const char **argv, const Command &command){
 
 
     ///right answer list
-//    vector<int> rightAnswers;
-//    int taxid;
-//    int taxid_sp;
-//    unsigned int cladeCnt_sp;
-//    for(size_t i = 0; i < queryNameList.size(); i++){
-//        if (assacc2taxid.count(queryNameList[i])) {
-//            taxid = assacc2taxid[queryNameList[i]];
-//            taxid_sp = ncbiTaxonomy.getTaxIdAtRank(taxid, "species");
-//            cladeCnt_sp = cladeCnt[taxid_sp].cladeCount;
-//            const TaxonNode * ancestor = ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(taxid_sp, "genus"));
-//            while(cladeCnt_sp == cladeCnt[ancestor->taxId].cladeCount){
-//                ancestor = ncbiTaxonomy.taxonNode(ancestor->parentTaxId);
-//                if(ancestor->rank == "superkingdom"){
-//                    break;
-//                }
-//            }
-//            rightAnswers.push_back(ancestor->taxId);
-//            if(ancestor->rank == "superkingdom"){
-//                counts.superkingdomTargetNumber ++;
-//            } else if(ancestor->rank == "phylum"){
-//                counts.phylumTargetNumber ++;
-//            } else if(ancestor->rank == "order"){
-//                counts.orderTargetNumber ++;
-//            } else if(ancestor->rank == "class"){
-//                counts.classTargetNumber ++;
-//            } else if(ancestor->rank == "family"){
-//                counts.familyTargetNumber ++;
-//            } else if(ancestor->rank == "genus"){
-//                counts.genusTargetNumber ++;
-//            }
-//        } else{
-//            cout << queryNameList[i] << " is not in the mapping file" << endl;
-//            rightAnswers.push_back(-1);
-//            continue;
-//        }
-//    }
+    vector<int> rightAnswers;
+    int taxid;
+    int taxid_sp;
+    unsigned int cladeCnt_sp;
+    for(size_t i = 0; i < queryNameList.size(); i++){
+        if (assacc2taxid.count(queryNameList[i])) {
+            taxid = assacc2taxid[queryNameList[i]];
+            taxid_sp = ncbiTaxonomy.getTaxIdAtRank(taxid, "species");
+            cladeCnt_sp = cladeCnt[taxid_sp].cladeCount;
+            const TaxonNode * ancestor = ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(taxid_sp, "genus"));
+            while(cladeCnt_sp == cladeCnt[ancestor->taxId].cladeCount){
+                ancestor = ncbiTaxonomy.taxonNode(ancestor->parentTaxId);
+                if(ancestor->rank == "superkingdom"){
+                    break;
+                }
+            }
+            rightAnswers.push_back(ancestor->taxId);
+            if(ancestor->rank == "superkingdom"){
+                counts.superkingdomTargetNumber ++;
+            } else if(ancestor->rank == "phylum"){
+                counts.phylumTargetNumber ++;
+            } else if(ancestor->rank == "order"){
+                counts.orderTargetNumber ++;
+            } else if(ancestor->rank == "class"){
+                counts.classTargetNumber ++;
+            } else if(ancestor->rank == "family"){
+                counts.familyTargetNumber ++;
+            } else if(ancestor->rank == "genus"){
+                counts.genusTargetNumber ++;
+            }
+        } else{
+            cout << classList[i] << " is not in the mapping file" << endl;
+            rightAnswers.push_back(-1);
+            continue;
+        }
+    }
 
     ///score the classification
     for(size_t i = 0; i < classList.size(); i++){

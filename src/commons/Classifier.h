@@ -30,6 +30,43 @@
 #define AminoAcid(x) (size_t)((x) & (~0 & ~16777215))
 using namespace std;
 
+struct Counts{
+    int classificationCnt;
+    int correct;
+    int highRank;
+
+    //number of targets at each rank
+    int subspeciesTargetNumber;
+    int speciesTargetNumber;
+    int genusTargetNumber;
+    int familyTargetNumber;
+    int orderTargetNumber;
+    int classTargetNumber;
+    int phylumTargetNumber;
+    int superkingdomTargetNumber;
+
+    //number of classification at each rank
+    int subspeciesCnt_try;
+    int speciesCnt_try;
+    int genusCnt_try;
+    int familyCnt_try;
+    int orderCnt_try;
+    int classCnt_try;
+    int phylumCnt_try;
+    int superkingdomCnt_try;
+
+
+    //number of correct classifications at each rank
+    int subspeciesCnt_correct;
+    int speciesCnt_correct;
+    int genusCnt_correct;
+    int familyCnt_correct;
+    int orderCnt_correct;
+    int classCnt_correct;
+    int phylumCnt_correct;
+    int superkingdomCnt_correct;
+};
+
 class Classifier
 {
 private:
@@ -169,6 +206,8 @@ private:
     unordered_map<TaxID, unsigned int> taxCounts;
 
 
+    //performance test
+    Counts counts;
     const static uint64_t MARKER = ~0 & ~16777215;
     uint8_t hammingLookup[8][8]= {
             {0, 1, 1, 1, 2, 1, 3, 3},
