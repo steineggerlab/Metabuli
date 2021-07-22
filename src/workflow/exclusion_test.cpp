@@ -216,6 +216,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
 
     ///score the classification
     for(size_t i = 0; i < classList.size(); i++){
+        cout<<"i"<<" ";
         compareTaxon2(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
     }
 
