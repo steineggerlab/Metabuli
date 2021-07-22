@@ -597,29 +597,29 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     ///TODO optimize strain specific classification criteria
     ///Strain classification only for high coverage with LCA of species level
-    if(coverage > 0.75 && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
-        int strainCnt = 0;
-        unordered_map<TaxID, int> strainMatchCnt;
-        TaxID strainTaxId;
-
-        for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
-            for(size_t k = matchCombi[cs].beginIdx ; k < matchCombi[cs].endIdx + 1; k++ ){
-                temp = matchList[k].taxID;
-                if(selectedLCA != temp && ncbiTaxonomy.IsAncestor(selectedLCA, temp)){
-                    if(strainMatchCnt.find(temp) == strainMatchCnt.end()){
-                        strainCnt ++;
-                        strainTaxId = temp;
-                        strainMatchCnt.insert(pair<TaxID, int>(temp, 1));
-                    } else {
-                        strainMatchCnt[temp] ++;
-                    }
-                }
-            }
-        }
-        if(strainCnt == 1){
-            selectedLCA = strainTaxId;
-        }
-    }
+//    if(coverage > 0.75 && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
+//        int strainCnt = 0;
+//        unordered_map<TaxID, int> strainMatchCnt;
+//        TaxID strainTaxId;
+//
+//        for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
+//            for(size_t k = matchCombi[cs].beginIdx ; k < matchCombi[cs].endIdx + 1; k++ ){
+//                temp = matchList[k].taxID;
+//                if(selectedLCA != temp && ncbiTaxonomy.IsAncestor(selectedLCA, temp)){
+//                    if(strainMatchCnt.find(temp) == strainMatchCnt.end()){
+//                        strainCnt ++;
+//                        strainTaxId = temp;
+//                        strainMatchCnt.insert(pair<TaxID, int>(temp, 1));
+//                    } else {
+//                        strainMatchCnt[temp] ++;
+//                    }
+//                }
+//            }
+//        }
+//        if(strainCnt == 1){
+//            selectedLCA = strainTaxId;
+//        }
+//    }
 
 
     cout<<"# "<<currentQuery<<endl;
