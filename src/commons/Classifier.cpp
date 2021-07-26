@@ -618,7 +618,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
             }
         }
         if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 1){
-            selectedLCA = strainTaxId;
+            selectedLCA = strainMatchCnt.begin()->first;
         }
     }
 
