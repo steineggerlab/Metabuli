@@ -150,7 +150,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     readClassificationFile.open(par.filenames[0]+"_ReadClassification.tsv");
     writeReadClassification(queryList,numOfSeq,readClassificationFile);
     writeReportFile(par.filenames[0].c_str(), ncbiTaxonomy, numOfSeq);
-    performanceTest(ncbiTaxonomy, queryList, numOfSeq);
+    //performanceTest(ncbiTaxonomy, queryList, numOfSeq);
 
     free(kmerBuffer.buffer);
     free(matchBuffer.buffer);
@@ -695,7 +695,6 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
         getTheBestGenus(genus, chosenMatchCombination);
 }
 void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList){
-    //cout<<"663"<<endl;
     //    for(int i3 = 0; i3 < coMatches.size(); i3++){
 //        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt;
 //        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
