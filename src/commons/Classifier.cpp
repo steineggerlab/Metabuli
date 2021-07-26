@@ -606,17 +606,18 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
             for(size_t k = matchCombi[cs].beginIdx ; k < matchCombi[cs].endIdx + 1; k++ ){
                 temp = matchList[k].taxID;
                 if(selectedLCA != temp && ncbiTaxonomy.IsAncestor(selectedLCA, temp)){
-                    if(strainMatchCnt.find(temp) == strainMatchCnt.end()){
-                        strainCnt ++;
-                        strainTaxId = temp;
-                        strainMatchCnt.insert(pair<TaxID, int>(temp, 1));
-                    } else {
-                        strainMatchCnt[temp] ++;
-                    }
+                    strainMatchCnt[temp] ++;
+//                    if(strainMatchCnt.find(temp) == strainMatchCnt.end()){
+//                        strainCnt ++;
+//                        strainTaxId = temp;
+//                        strainMatchCnt.insert(pair<TaxID, int>(temp, 1));
+//                    } else {
+//
+//                    }
                 }
             }
         }
-        if(strainCnt == 1){
+        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 1){
             selectedLCA = strainTaxId;
         }
     }
