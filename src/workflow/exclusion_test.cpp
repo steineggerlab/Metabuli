@@ -78,9 +78,9 @@ int exclusiontest(int argc, const char **argv, const Command &command){
         }
     }
 
-    Counts3 counts = {0,0,0,0,0,0,0,0};
-
-
+//    Counts3 counts = {0,0,0,0,0,0,0,0};
+    Counts3 counts;
+    cout<<"hi"<<endl;
     ///Load the mapping file (assacc to taxID)
     const char * mappingFile = "../../gtdb_taxdmp/assacc_to_taxid_gtdb.tsv";
     unordered_map<string, int> assacc2taxid;
