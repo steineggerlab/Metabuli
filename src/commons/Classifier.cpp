@@ -150,7 +150,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     readClassificationFile.open(par.filenames[0]+"_ReadClassification.tsv");
     writeReadClassification(queryList,numOfSeq,readClassificationFile);
     writeReportFile(par.filenames[0].c_str(), ncbiTaxonomy, numOfSeq);
-    //performanceTest(ncbiTaxonomy, queryList, numOfSeq);
+    performanceTest(ncbiTaxonomy, queryList, numOfSeq);
 
     free(kmerBuffer.buffer);
     free(matchBuffer.buffer);
