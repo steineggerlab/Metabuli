@@ -550,18 +550,29 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         return 0;
     }
 
-
-    ///Check a query coverage
+    //Check a query coverage
     float coverageThr = 0.2;
     int maxNum = queryLength / 3 - kmerLength + 1;
     int coveredKmerCnt = 0;
     float coverage;
     for(size_t cm = 0 ; cm < matchCombi.size(); cm ++){
-        coveredKmerCnt += matchCombi[cm].diffPosCnt;
+        coveredKmerCnt += matchCombi[cm].diffPosCnt; //It is valid only if overlapping is not allowed
     }
     coverage = float(coveredKmerCnt) / float(maxNum);
     queryList[currentQuery].coverage = coverage;
 
+    //Calculate average hamming distance
+    float hammingThr = 2.0f;
+    bool lowerHamming = false;
+    float hammingSum = 0.0f;
+    float totalNumberOfMatches = 0.0f;
+    for(size_t cm = 0; cm < matchCombi.size(); cm ++){
+        hammingSum += matchCombi[cm].hamming;
+        totalNumberOfMatches += matchCombi[cm].matchCnt;
+    }
+    float hammingAverage = hammingSum/totalNumberOfMatches; //There is no case where totalNumberOfMatches is equal to 0
+    if(hammingAverage < 2)
+        lowerHamming = true;
 
     vector<TaxID> taxIdList;
     vector<uint32_t> pos;
@@ -573,10 +584,12 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         for(size_t k = matchCombi[cs].beginIdx ; k < matchCombi[cs].endIdx + 1; k++ ){
             temp = matchList[k].taxID;
             taxIdList.push_back(temp);
+
             pos.push_back(matchList[k].position);
             frame.push_back(matchList[k].frame);
             ham.push_back(matchList[k].hamming);
             redun.push_back(matchList[k].red);
+
             queryList[currentQuery].taxCnt[temp] ++;
         }
     }
@@ -591,9 +604,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     size_t numSeqsAgreeWithSelectedTaxon = 0;
     double selectedPercent = 0;
 
-    TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.7, numAssignedSeqs,
-                                  numUnassignedSeqs, numSeqsAgreeWithSelectedTaxon,
-                                  selectedPercent, queryLength);
+    TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.7, selectedPercent, queryLength, hammingAverage);
 
     ///TODO optimize strain specific classification criteria
     ///Strain classification only for high coverage with LCA of species level
@@ -758,7 +769,7 @@ void Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
     for(size_t i = 1; i < coMatches.size(); i++){
         overlap = false;
         for(size_t j = 0; j < alignedCoMatches.size(); j++){
-            if((alignedCoMatches[j].begin < coMatches[j].end) && (alignedCoMatches[j].end > coMatches[j].begin)){ ///TODO check this condition
+            if((alignedCoMatches[j].begin < coMatches[j].end) && (alignedCoMatches[j].end > coMatches[j].begin)){
                 overlap = true;
                 break;
             }
@@ -895,14 +906,10 @@ void Classifier::findConsecutiveMatches(vector<ConsecutiveMatches> & coMatches, 
     }
 }
 
-TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & taxonomy, const float majorityCutoff,
-                            size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent, uint32_t queryLength){
+TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & taxonomy, const float majorityCutoff, double &selectedPercent, uint32_t queryLength, float hammingAverage){
 
     std::map<TaxID,taxNode> ancTaxIdsCounts;
 
-    numAssignedSeqs = 0;
-    numUnassignedSeqs = 0;
-    numSeqsAgreeWithSelectedTaxon = 0;
     selectedPercent = 0;
     double totalAssignedSeqsWeights = 0.0;
 
@@ -911,7 +918,6 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         double currWeight = 1;
         // ignore unassigned sequences
         if (currTaxId == 0) {
-            numUnassignedSeqs++;
             continue;
         }
         TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
@@ -920,7 +926,6 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
             EXIT(EXIT_FAILURE);
         }
         totalAssignedSeqsWeights += currWeight;
-        numAssignedSeqs++;
 
         // each start of a path due to an orf is a candidate
         if (ancTaxIdsCounts.find(currTaxId) != ancTaxIdsCounts.end()) { //원소가 있다면
@@ -951,7 +956,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     // select the lowest ancestor that meets the cutoff
     int minRank = INT_MAX;
     TaxID selectedTaxon = 0;
-    float coverageThreshold = 0.8;
+    float coverageThreshold = 0.7;
 
     float curCoverage;
     float maxCoverage = -FLT_MAX;
@@ -964,9 +969,8 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     vector<TaxID> ties;
 
     //한 위치에 중복되는 매치가 있다! 잘 생각해봅시다...
-//    cout<<"967"<<endl;
     for (std::map<TaxID,taxNode>::iterator it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
-        // consider only candidates:
+        // consider only candidates
         if (!(it->second.isCandidate)) {
             continue;
         }
@@ -977,7 +981,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         TaxID currTaxId = it->first;
         TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
         int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
-        if(curCoverage > coverageThreshold && currRankInd <= 4){
+        if(curCoverage > coverageThreshold && currRankInd <= 4 && hammingAverage < 2.0f){
             if(!haveMetCovThr){
                 haveMetCovThr = true;
                 minRank = currRankInd;
@@ -1027,10 +1031,6 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         return taxonomy.LCA(ties)->taxId;
     else
         return selectedTaxon;
-//    cout<<"1025"<<endl;
-//    cout<<ties.size()<<endl;
-//    return
-   // return selectedTaxon;
 }
 
 TaxID Classifier::match2LCA2(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,
