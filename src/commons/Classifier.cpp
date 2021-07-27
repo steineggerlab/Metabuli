@@ -525,7 +525,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     {
 #pragma omp for schedule(dynamic, 1)
         for(size_t i = 0; i < seqNum; ++ i ){
-            TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[i].length, i, matchBlocks[i].start,
+            TaxID selectedLCA = chooseBestTaxon2(ncbiTaxonomy, seqSegments[i].length, i, matchBlocks[i].start,
                                                 matchBlocks[i].end, matchList.data, queryList);
         }
     }
@@ -547,7 +547,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     //get the best genus for current query
     vector<ConsecutiveMatches> matchCombi;
     int numberOfGenus = 0;
-    numberOfGenus = getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset);
+    numberOfGenus = getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset, queryLength);
 
     if(matchCombi.empty() || numberOfGenus == 0) return 0;
 
@@ -655,7 +655,6 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
 
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
     vector<ConsecutiveMatches> matchCombi;
-
     getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset, queryLength);
 
     //un-classified
