@@ -549,7 +549,12 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     int numberOfGenus = 0;
     numberOfGenus = getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset, queryLength);
 
-    if(matchCombi.empty() || numberOfGenus == 0) return 0;
+    if(matchCombi.empty() || numberOfGenus == 0){
+        queryList[currentQuery].isClassified = false;
+        queryList[currentQuery].classification = 0;
+        queryList[currentQuery].coverage = 0;
+        return 0;
+    }
 
     vector<TaxID> taxIdList;
     vector<uint32_t> pos;
@@ -586,11 +591,11 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
         queryList[currentQuery].coverage = 0;
-        cout<<"# "<<currentQuery<<endl;
-        for(size_t i = 0; i < taxIdList.size(); i++){
-            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
-        }
-        cout<<"coverage: NA"<<"  "<<selectedTaxon<<" "<<ncbiTaxonomy.taxonNode(selectedTaxon)->rank<<endl;
+//        cout<<"# "<<currentQuery<<endl;
+//        for(size_t i = 0; i < taxIdList.size(); i++){
+//            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
+//        }
+//        cout<<"coverage: NA"<<"  "<<selectedTaxon<<" "<<ncbiTaxonomy.taxonNode(selectedTaxon)->rank<<endl;
         return selectedTaxon;
     }
 
@@ -609,11 +614,11 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
         selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchList[matchCombi[0].beginIdx].taxID,"genus");
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
-        cout<<"# "<<currentQuery<<"HH"<<endl;
-        for(size_t i = 0; i < taxIdList.size(); i++){
-            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
-        }
-        cout<<"coverage: "<<coverage<<"  "<<selectedTaxon<<" "<<ncbiTaxonomy.taxonNode(selectedTaxon)->rank<<endl;
+//        cout<<"# "<<currentQuery<<"HH"<<endl;
+//        for(size_t i = 0; i < taxIdList.size(); i++){
+//            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
+//        }
+//        cout<<"coverage: "<<coverage<<"  "<<selectedTaxon<<" "<<ncbiTaxonomy.taxonNode(selectedTaxon)->rank<<endl;
         return selectedTaxon;
     }
 
@@ -641,11 +646,11 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
         }
     }
 
-    cout<<"# "<<currentQuery<<endl;
-    for(size_t i = 0; i < taxIdList.size(); i++){
-        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
-    }
-    cout<<"coverage: "<<coverage<<"  "<<selectedLCA<<" "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
+//    cout<<"# "<<currentQuery<<endl;
+//    for(size_t i = 0; i < taxIdList.size(); i++){
+//        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
+//    }
+//    cout<<"coverage: "<<coverage<<"  "<<selectedLCA<<" "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
     ///store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedLCA;
