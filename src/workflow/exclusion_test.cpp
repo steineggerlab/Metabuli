@@ -11,7 +11,7 @@
 #include <regex>
 
 using namespace std;
-struct Counts{
+struct Counts3{
     int classificationCnt;
     int correct;
     int highRank;
@@ -48,7 +48,7 @@ struct Counts{
     int superkingdomCnt_correct;
 };
 
-void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts);
+void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts3 & counts);
 
 
 
@@ -78,7 +78,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
         }
     }
 
-    Counts counts = {0,0,0,0,0,0,0,0};
+    Counts3 counts = {0,0,0,0,0,0,0,0};
 
 
     ///Load the mapping file (assacc to taxID)
@@ -241,7 +241,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
 
 }
 
-void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts& counts) { ///target: subspecies or species
+void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts3 & counts) { ///target: subspecies or species
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
     string shotRank = shotNode->rank;
