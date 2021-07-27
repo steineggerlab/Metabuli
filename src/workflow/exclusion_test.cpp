@@ -79,7 +79,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     }
 
 //    Counts3 counts = {0,0,0,0,0,0,0,0};
-    Counts3 counts;
+    Counts3 counts = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     cout<<"hi"<<endl;
     ///Load the mapping file (assacc to taxID)
     const char * mappingFile = "../../gtdb_taxdmp/assacc_to_taxid_gtdb.tsv";
@@ -215,44 +215,11 @@ int exclusiontest(int argc, const char **argv, const Command &command){
 //    }
 
 
-    counts.classificationCnt=0;
-    counts.correct=0;
-    counts.highRank=0;
-
-    //number of targets at each rank
-    counts.subspeciesTargetNumber=0;
-    counts.speciesTargetNumber=0;
-    counts.genusTargetNumber=0;
-    counts.familyTargetNumber=0;
-    counts.orderTargetNumber=0;
-    counts.classTargetNumber=0;
-    counts.phylumTargetNumber=0;
-    counts.superkingdomTargetNumber=0;
-
-    //number of classification at each rank
-    counts.subspeciesCnt_try=0;
-    counts.speciesCnt_try=0;
-    counts.genusCnt_try=0;
-    counts.familyCnt_try=0;
-    counts.orderCnt_try=0;
-    counts.classCnt_try=0;
-    counts.phylumCnt_try=0;
-    counts.superkingdomCnt_try=0;
 
 
-    //number of correct classifications at each rank
-    counts.subspeciesCnt_correct=0;
-    counts.speciesCnt_correct=0;
-    counts.genusCnt_correct=0;
-    counts.familyCnt_correct=0;
-    counts.orderCnt_correct=0;
-    counts.classCnt_correct=0;
-    counts.phylumCnt_correct=0;
-    counts.superkingdomCnt_correct=0;
-    
     ///score the classification
     for(size_t i = 0; i < classList.size(); i++){
-        cout<<"i"<<" ";
+        cout<<i<<" ";
         compareTaxon2(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
     }
 

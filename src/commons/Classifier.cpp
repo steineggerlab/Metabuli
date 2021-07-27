@@ -951,7 +951,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     // select the lowest ancestor that meets the cutoff
     int minRank = INT_MAX;
     TaxID selectedTaxon = 0;
-    float coverageThreshold = 0.7;
+    float coverageThreshold = 0.8;
 
     float curCoverage;
     float maxCoverage = -FLT_MAX;
