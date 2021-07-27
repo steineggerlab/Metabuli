@@ -638,6 +638,9 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         }
     }
 
+    if(hammingAverage > 1 && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) <= 4){
+        selectedLCA = ncbiTaxonomy.getTaxIdAtRank(selectedLCA, "genus");
+    }
 
     cout<<"# "<<currentQuery<<endl;
     for(size_t i = 0; i < taxIdList.size(); i++){
