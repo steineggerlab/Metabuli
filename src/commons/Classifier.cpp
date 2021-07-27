@@ -544,7 +544,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
     vector<ConsecutiveMatches> matchCombi;
 
-    bool singleGenus = getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset);
+    getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset);
 
     //un-classified
     if(matchCombi.empty()){
@@ -563,6 +563,8 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     queryList[currentQuery].coverage = coverage;
 
     //Calculate average hamming distance
+
+
     float hammingSum = 0.0f;
     float totalNumberOfMatches = 0.0f;
     for(size_t cm = 0; cm < matchCombi.size(); cm ++){
@@ -571,10 +573,10 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     }
     float hammingAverage = hammingSum/totalNumberOfMatches; //There is no case where totalNumberOfMatches is equal to 0
 
-    //Genus level classification for high hamming
-    if(singleGenus && (hammingAverage > 1.0f)){
-        return ncbiTaxonomy.getTaxIdAtRank(matchList[matchCombi[0].beginIdx].taxID, "genus");
-    }
+//    //Genus level classification for high hamming
+//    if(singleGenus && (hammingAverage > 1.0f)){
+//        return ncbiTaxonomy.getTaxIdAtRank(matchList[matchCombi[0].beginIdx].taxID, "genus");
+//    }
 
 
     vector<TaxID> taxIdList;
@@ -649,7 +651,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     return selectedLCA;
 }
 
-bool Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset){
+void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset){
     vector<ConsecutiveMatches> coMatches;
     vector<vector<ConsecutiveMatches>> genus;
     int conCnt = 0;
@@ -706,7 +708,7 @@ bool Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
     }
     //choose the best combination of consecutive-match among genus for current query
     if(!genus.empty())
-        return getTheBestGenus(genus, chosenMatchCombination);
+        getTheBestGenus(genus, chosenMatchCombination);
 }
 void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList){
     //    for(int i3 = 0; i3 < coMatches.size(); i3++){
