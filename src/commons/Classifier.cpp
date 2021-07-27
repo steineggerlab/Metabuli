@@ -543,7 +543,8 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
 ///문제점 redundancy reduced reference k-mer 임을 고려해야 한다. block을 species level에서 해줘야하지 않나.. 그리고 오버랩도 좀 허용해줘야할껄?
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
     vector<ConsecutiveMatches> matchCombi;
-    getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset);
+
+    bool singleGenus = getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset);
 
     //un-classified
     if(matchCombi.empty()){
@@ -562,8 +563,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     queryList[currentQuery].coverage = coverage;
 
     //Calculate average hamming distance
-    float hammingThr = 2.0f;
-    bool lowerHamming = false;
     float hammingSum = 0.0f;
     float totalNumberOfMatches = 0.0f;
     for(size_t cm = 0; cm < matchCombi.size(); cm ++){
@@ -571,8 +570,12 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         totalNumberOfMatches += matchCombi[cm].matchCnt;
     }
     float hammingAverage = hammingSum/totalNumberOfMatches; //There is no case where totalNumberOfMatches is equal to 0
-    if(hammingAverage < 2)
-        lowerHamming = true;
+
+    //Genus level classification for high hamming
+    if(singleGenus && (hammingAverage > 1.0f)){
+        return ncbiTaxonomy.getTaxIdAtRank(matchList[matchCombi[0].beginIdx].taxID, "genus");
+    }
+
 
     vector<TaxID> taxIdList;
     vector<uint32_t> pos;
@@ -646,7 +649,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     return selectedLCA;
 }
 
-void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset){
+bool Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset){
     vector<ConsecutiveMatches> coMatches;
     vector<vector<ConsecutiveMatches>> genus;
     int conCnt = 0;
@@ -703,7 +706,7 @@ void Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & 
     }
     //choose the best combination of consecutive-match among genus for current query
     if(!genus.empty())
-        getTheBestGenus(genus, chosenMatchCombination);
+        return getTheBestGenus(genus, chosenMatchCombination);
 }
 void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList){
     //    for(int i3 = 0; i3 < coMatches.size(); i3++){
@@ -811,7 +814,7 @@ float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
         score += float(subset[i].diffPosCnt) - float(subset[i].hamming);
     return score;
 }
-void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen){
+bool Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen){
     int chosenGenusIdx = INT_MAX;
     vector<TaxID> selecetedGenusList;
     int totalDiffPosCnt;
@@ -845,6 +848,10 @@ void Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vec
             chosen.push_back(genus[selecetedGenusList[g]][i]);
         }
     }
+    if(selecetedGenusList.size() == 1)
+        return true;
+    else
+        return false;
 }
 
 
