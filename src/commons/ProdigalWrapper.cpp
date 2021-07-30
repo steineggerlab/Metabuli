@@ -380,6 +380,10 @@ int ProdigalWrapper::getNextSeq(char * line, int training) {
 
 int ProdigalWrapper::getNumberOfPredictedGenes(){ return ng; }
 
+void ProdigalWrapper::updateDicodonFrequency() {
+
+}
+
 
 
 

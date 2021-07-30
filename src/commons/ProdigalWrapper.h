@@ -41,7 +41,8 @@ private:
     mask mlist[MAX_MASKS];
     struct _metagenomic_bin * meta;
 
-    void getTranslationFrames( struct _gene * genes);
+    void updateDicodonFrequency();
+
 public:
     int is_meta;
     int nn, max_phase;

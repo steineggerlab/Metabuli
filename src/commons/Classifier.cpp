@@ -88,23 +88,19 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 //        cout<<testInfo.data[i].sequenceID<<endl;
 //    }
 
-    //query & target
+    //Load query file & database
     struct MmapedData<char> queryFile = mmapData<char>(par.filenames[0].c_str());
     struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName);
     struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName);
     struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName);
 
-    int testNum2 = targetInfoList.fileSize/sizeof(TargetKmerInfo);
-    for(int i = 0 ; i < 1000; i++){
-        cout<<i<<" "<<targetInfoList.data[i].sequenceID<<endl;
-    }
-    //query sequences
+    //Query sequences
     vector<Sequence> sequences;
     IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
     size_t numOfSeq = sequences.size();
     Query * queryList = new Query[numOfSeq];
 
-    //check for multi-threading
+    //Checker for multi-threading
     bool * processedSeqChecker = new bool[numOfSeq];
     fill_n(processedSeqChecker, numOfSeq, false);
 
@@ -112,9 +108,11 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     QueryKmerBuffer kmerBuffer(kmerBufSize);
     Buffer<Match> matchBuffer(kmerBufSize);
 
+    //Progress checker
     size_t processedSeqCnt = 0;
     size_t processedKmerCnt = 0;
 
+    //Timer
     time_t beforeSearch, afterSearch, afterAnalyze;
 
     size_t numOfTatalQueryKmerCnt = 0;
@@ -493,18 +491,17 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCo
 
 ///It analyses the result of linear search.
 void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum, Query * queryList){
-    ///Mmap the file of matches
+    //Mmap the file of matches
     struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
     cout<<matchList.fileSize<<"!!"<<endl;
     cout<<matchFileName<<endl;
     size_t numOfMatches = matchList.fileSize / sizeof(Match);
     cout<<"num of matches"<<numOfMatches<<endl;
 
-    ///Sort matches in order to analyze
+    //Sort matches in order to analyze
     SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByTaxId);
 
-
-    ///Devide matches into blocks for multi threading
+    //Devide matches into blocks for multi threading
     typedef Sequence Block;
     Block * matchBlocks = new Block[seqNum];
     cout<<seqNum<<endl;
@@ -519,17 +516,16 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
         blockIdx++;
     }
 
-    ///Process each blocks
+    //Process each blocks
     omp_set_num_threads(ThreadNum);
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList)
     {
 #pragma omp for schedule(dynamic, 1)
         for(size_t i = 0; i < seqNum; ++ i ){
-            TaxID selectedLCA = chooseBestTaxon2(ncbiTaxonomy, seqSegments[i].length, i, matchBlocks[i].start,
+            TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[i].length, i, matchBlocks[i].start,
                                                 matchBlocks[i].end, matchList.data, queryList);
         }
     }
-
 
     for(int i = 0 ; i < seqNum; i++){
         ++ taxCounts[queryList[i].classification];
@@ -541,18 +537,21 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
 
 ///For a query read, assign the best Taxon, using k-mer matches
 ///문제점 redundancy reduced reference k-mer 임을 고려해야 한다. block을 species level에서 해줘야하지 않나.. 그리고 오버랩도 좀 허용해줘야할껄?
-TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
+TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
 
     TaxID selectedTaxon;
+
     //get the best genus for current query
     vector<ConsecutiveMatches> matchCombi;
     int numberOfGenus = 0;
     numberOfGenus = getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset, queryLength);
 
+    //If there is no proper genus for current query, it is un-classified.
     if(matchCombi.empty() || numberOfGenus == 0){
         queryList[currentQuery].isClassified = false;
         queryList[currentQuery].classification = 0;
         queryList[currentQuery].coverage = 0;
+        queryList[currentQuery].newSpecies = false;
         return 0;
     }
 
@@ -585,12 +584,14 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     }
     float hammingAverage = hammingSum/totalNumberOfMatches; //There is no case where totalNumberOfMatches is equal to 0
 
+
     //If there are two or more good genus level candidates, find the LCA.
     if(numberOfGenus > 1){
         selectedTaxon = ncbiTaxonomy.LCA(taxIdList)->taxId;
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
         queryList[currentQuery].coverage = 0;
+        if(hammingAverage > 1.0f) queryList[currentQuery].newSpecies = true;
 //        cout<<"# "<<currentQuery<<endl;
 //        for(size_t i = 0; i < taxIdList.size(); i++){
 //            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
@@ -614,6 +615,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
         selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchList[matchCombi[0].beginIdx].taxID,"genus");
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
+        queryList[currentQuery].newSpecies = true;
 //        cout<<"# "<<currentQuery<<"HH"<<endl;
 //        for(size_t i = 0; i < taxIdList.size(); i++){
 //            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
@@ -655,118 +657,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & q
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedLCA;
     queryList[currentQuery].coverage = coverage;
-    return selectedLCA;
-}
-
-TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
-    vector<ConsecutiveMatches> matchCombi;
-    getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset, queryLength);
-
-    //un-classified
-    if(matchCombi.empty()){
-        return 0;
-    }
-
-    //Check a query coverage
-    float coverageThr = 0.2;
-    int maxNum = queryLength / 3 - kmerLength + 1;
-    int coveredKmerCnt = 0;
-    float coverage;
-    for(size_t cm = 0 ; cm < matchCombi.size(); cm ++){
-        coveredKmerCnt += matchCombi[cm].diffPosCnt; //It is valid only if overlapping is not allowed
-    }
-    coverage = float(coveredKmerCnt) / float(maxNum);
-    queryList[currentQuery].coverage = coverage;
-
-    //Calculate average hamming distance
-
-
-    float hammingSum = 0.0f;
-    float totalNumberOfMatches = 0.0f;
-    for(size_t cm = 0; cm < matchCombi.size(); cm ++){
-        hammingSum += matchCombi[cm].hamming;
-        totalNumberOfMatches += matchCombi[cm].matchCnt;
-    }
-    float hammingAverage = hammingSum/totalNumberOfMatches; //There is no case where totalNumberOfMatches is equal to 0
-
-//    //Genus level classification for high hamming
-//    if(singleGenus && (hammingAverage > 1.0f)){
-//        return ncbiTaxonomy.getTaxIdAtRank(matchList[matchCombi[0].beginIdx].taxID, "genus");
-//    }
-
-
-    vector<TaxID> taxIdList;
-    vector<uint32_t> pos;
-    vector<uint8_t> frame;
-    vector<uint8_t> ham;
-    vector<int> redun;
-    TaxID temp;
-    for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
-        for(size_t k = matchCombi[cs].beginIdx ; k < matchCombi[cs].endIdx + 1; k++ ){
-            temp = matchList[k].taxID;
-            taxIdList.push_back(temp);
-
-            pos.push_back(matchList[k].position);
-            frame.push_back(matchList[k].frame);
-            ham.push_back(matchList[k].hamming);
-            redun.push_back(matchList[k].red);
-
-            queryList[currentQuery].taxCnt[temp] ++;
-        }
-    }
-
-    ///No classification for low query coverage.
-    if(coverage < coverageThr) {
-        return 0;
-    }
-
-    size_t numAssignedSeqs = 0;
-    size_t numUnassignedSeqs = 0;
-    size_t numSeqsAgreeWithSelectedTaxon = 0;
-    double selectedPercent = 0;
-
-    TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.7, selectedPercent, queryLength, hammingAverage);
-
-    ///TODO optimize strain specific classification criteria
-    ///Strain classification only for high coverage with LCA of species level
-    if(coverage > 0.8 && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
-        int strainCnt = 0;
-        unordered_map<TaxID, int> strainMatchCnt;
-        TaxID strainTaxId;
-
-        for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
-            for(size_t k = matchCombi[cs].beginIdx ; k < matchCombi[cs].endIdx + 1; k++ ){
-                temp = matchList[k].taxID;
-                if(selectedLCA != temp && ncbiTaxonomy.IsAncestor(selectedLCA, temp)){
-                    strainMatchCnt[temp] ++;
-//                    if(strainMatchCnt.find(temp) == strainMatchCnt.end()){
-//                        strainCnt ++;
-//                        strainTaxId = temp;
-//                        strainMatchCnt.insert(pair<TaxID, int>(temp, 1));
-//                    } else {
-//
-//                    }
-                }
-            }
-        }
-        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 1){
-            selectedLCA = strainMatchCnt.begin()->first;
-        }
-    }
-
-    if(hammingAverage > 1 && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) <= 4){
-        selectedLCA = ncbiTaxonomy.getTaxIdAtRank(selectedLCA, "genus");
-    }
-
-    cout<<"# "<<currentQuery<<endl;
-    for(size_t i = 0; i < taxIdList.size(); i++){
-        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
-    }
-    cout<<"coverage: "<<coverage<<"  "<<selectedLCA<<" "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
-    ///store classification results
-    queryList[currentQuery].isClassified = true;
-    queryList[currentQuery].classification = selectedLCA;
-    queryList[currentQuery].coverage = coverage;
+    queryList[currentQuery].newSpecies = false;
     return selectedLCA;
 }
 
@@ -947,7 +838,6 @@ int Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vect
     float maxScore = -FLT_MAX;
     float currScore;
     float coverage = 0.0f;
-//    coverage = float(coveredKmerCnt) / float(maxNum);
 
     for(size_t i = 0; i < genus.size(); i++){
         totalDiffPosCnt = 0;

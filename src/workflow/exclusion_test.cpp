@@ -78,7 +78,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
         }
     }
 
-//    Counts3 counts = {0,0,0,0,0,0,0,0};
+
     Counts3 counts = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     cout<<"hi"<<endl;
     ///Load the mapping file (assacc to taxID)

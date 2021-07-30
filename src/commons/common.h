@@ -20,12 +20,14 @@ struct Sequence{
 
 struct Query{
     int queryId;
-    bool isClassified; //필요한가?
-    string name;
     int classification;
     float coverage;
+    bool isClassified;
+    bool newSpecies;
     uint32_t queryLength;
+    string name;
     unordered_map<TaxID,int> taxCnt;
+
     bool operator==(int id) const { return queryId == id;}
     Query(int id, bool isClassified_, const string & name_, int classification_, float coverage_, uint32_t len)
     :queryId(id), isClassified(isClassified_), name(name_), classification(classification_), coverage(coverage_), queryLength(len) { }

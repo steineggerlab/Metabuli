@@ -103,6 +103,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     cout<<"train Meta: "<<splits[i].training<<" "<<seqs[splits[i].training].start<<" "<<i<<seq->headerOffset<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
                     cout<<tmp<<endl;
                     prodigal.trainMeta(seq->seq.s);
+                    cout<<"after train meta"<<endl;
                 }else{
                     prodigal.trainASpecies(seq->seq.s);
                 }
