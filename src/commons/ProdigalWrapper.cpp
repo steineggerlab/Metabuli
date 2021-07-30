@@ -239,9 +239,14 @@ void ProdigalWrapper::trainMeta(char *genome) {
         cout<<"239"<<endl;
         ipath = dprog(nodes, nn, meta[i].tinf, 1);
         cout<<"241"<<endl;
+        cout<<ipath<<endl;
+        cout<<nn<<endl;
+        cout<<nodes[ipath].score<<endl;
+        cout<<"2455"<<endl;
         if (nodes[ipath].score > max_score) {
             max_phase = i;
             max_score = nodes[ipath].score;
+            cout<<"245"<<endl;
 //            eliminate_bad_genes(nodes, ipath, meta[i].tinf);
 //            ng = add_genes(genes, nodes, ipath);
 //            tweak_final_starts(genes, ng, nodes, nn, meta[i].tinf);
