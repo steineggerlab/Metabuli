@@ -13,19 +13,17 @@ int classify(int argc, const char **argv, const Command& command)
 
     Classifier classifier;
     const char * queryFileName = par.filenames[0].c_str();
-    //const string dbName = par.filenames[1];
-    //const string outputDirectory = par.filenames[2];
-    const string databaseDirectory = par.filenames[1];
 
-    const string targetDiffIdxFileName = databaseDirectory+"/diffIdx";
-    const string targetInfoFileName = databaseDirectory+"/info";
-    string taxIdFileName = databaseDirectory+"/taxID";;
-    const string diffIdxSplitFileName = databaseDirectory+"/split";;
+//    const string databaseDirectory = par.filenames[1];
+//    const string targetDiffIdxFileName = databaseDirectory+"/diffIdx";
+//    const string targetInfoFileName = databaseDirectory+"/info";
+//    string taxIdFileName = databaseDirectory+"/taxID";;
+//    const string diffIdxSplitFileName = databaseDirectory+"/split";;
 
-//    const string targetDiffIdxFileName = par.filenames[1];
-//    const string targetInfoFileName = par.filenames[2];
-//    string taxIdFileName = par.filenames[3];
-//    const string diffIdxSplitFileName = par.filenames[4];
+    const string targetDiffIdxFileName = par.filenames[1];
+    const string targetInfoFileName = par.filenames[2];
+    string taxIdFileName = par.filenames[3];
+    const string diffIdxSplitFileName = par.filenames[4];
 
 
 
