@@ -241,6 +241,7 @@ void ProdigalWrapper::trainMeta(char *genome) {
         record_overlapping_starts(nodes, nn, meta[i].tinf, 1);
         cout<<"239"<<endl;
         ipath = dprog(nodes, nn, meta[i].tinf, 1);
+        if(ipath == -1) continue;
         cout<<"241"<<endl;
         cout<<ipath<<endl;
         cout<<nn<<endl;
