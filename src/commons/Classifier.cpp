@@ -541,7 +541,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     TaxID selectedTaxon;
     for(int i = 0; i < 110; i++){
-        cout<<matchList[i].frame<<" "<<matchList[i].position<<" "<<matchList[i].taxID<<endl;
+        cout<<int(matchList[i].frame)<<" "<<matchList[i].position<<" "<<matchList[i].taxID<<endl;
     }
     //get the best genus for current query
     vector<ConsecutiveMatches> matchCombi;
