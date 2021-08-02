@@ -32,7 +32,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         cout<<"Creating target database based on taxonomy of GTDB"<<endl;
         prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_GTDB";
-        taxIdList_fname = string(outputFileName) +"_taxID_list_GTDB";
+        taxIdList_fname = string(outputFileName) +"taxID";
         names = "../../gtdb_taxdmp/names.dmp";
         nodes = "../../gtdb_taxdmp/nodes.dmp";
         merged = "../../gtdb_taxdmp/merged.dmp";
@@ -40,7 +40,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         cout<<"Creating target database based on taxonomy of NCBI"<<endl;
         prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_NCBI";
-        taxIdList_fname = string(outputFileName) +"_taxID_list_NCBI";
+        taxIdList_fname = string(outputFileName) +"taxID";
         names = "../../ncbi_taxdmp/names.dmp";
         nodes = "../../ncbi_taxdmp/nodes.dmp";
         merged = "../../ncbi_taxdmp/merged.dmp";
@@ -114,9 +114,9 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     char mergedDiffFileName[100];
     char mergedInfoFileName[100];
     char diffIdxSplitFileName[100];
-    sprintf(mergedDiffFileName, "%s_diffIdx", outputFileName);
-    sprintf(mergedInfoFileName, "%s_info", outputFileName);
-    sprintf(diffIdxSplitFileName, "%s_split", outputFileName);
+    sprintf(mergedDiffFileName, "%s/diffIdx", outputFileName);
+    sprintf(mergedInfoFileName, "%s/info", outputFileName);
+    sprintf(diffIdxSplitFileName, "%s/split", outputFileName);
     FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName);
     merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtSpecies, taxIdList);
 

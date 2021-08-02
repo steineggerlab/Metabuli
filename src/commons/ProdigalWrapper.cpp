@@ -182,6 +182,9 @@ void ProdigalWrapper::trainMeta(char *genome) {
     memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
     memset(useq, 0, (slen/8+1)*sizeof(unsigned char));
     memset(nodes, 0, nn*sizeof(struct _node));
+    memset(&tinf, 0, sizeof(struct _training));
+    tinf.st_wt = 4.35;
+    tinf.trans_table = 11;
     nn = 0; slen = 0; ipath = 0; nmask = 0;
 
     if(1) {
@@ -306,7 +309,6 @@ void ProdigalWrapper::getPredictedFrames(char * genome){
         eliminate_bad_genes(nodes, ipath, &tinf);
         ng = add_genes(genes, nodes, ipath);
 
-
         tweak_final_starts(genes, ng, nodes, nn, &tinf);
         record_gene_data(genes, ng, nodes, &tinf, num_seq);
     }
@@ -332,6 +334,9 @@ void ProdigalWrapper::getPredictedFrames(char * genome){
      if(1) {
          fprintf(stderr, "done! gene count: %d (%d bp)\n", ng, slen);
      }
+
+     //TODO update dicodon statistics using predicted genes
+     updateDicodonFrequency();
 }
 
 int ProdigalWrapper::getNextSeq(char * line, int training) {
@@ -392,7 +397,63 @@ int ProdigalWrapper::getNextSeq(char * line, int training) {
 int ProdigalWrapper::getNumberOfPredictedGenes(){ return ng; }
 
 void ProdigalWrapper::updateDicodonFrequency() {
+    int i, path, counts[4096], glob = 0;
+    int left, right, in_gene;
+    double prob[4096], bg[4096];
 
+    for(i = 0; i < 4096; i++) { counts[i] = 0; prob[i] = 0.0; bg[i] = 0.0; }
+    left = -1; right = -1;
+    calc_mer_bg(6, seq, rseq, slen, bg);
+    path = ipath; in_gene = 0;
+
+    //TODO check here
+    for(int g = 0 ; g < ng ; ++ g){
+        if(nodes[genes[g].start_ndx].strand == 1){ //forward
+           left = genes[g].begin-1;
+           right = genes[g].end-1;
+           for(i = left; i < right-5; i+=3){
+               counts[mer_ndx(6, seq, i)]++; glob++;
+           }
+        } else { // reverse
+            left = slen - genes[g].end;
+            right = slen - genes[g].begin;
+            for(i = left; i < right-5; i+=3){
+                counts[mer_ndx(6, rseq, i)]++; glob++;
+            }
+        }
+    }
+//    while(path != -1) {
+//        if(nodes[path].strand == -1 && nodes[path].type != STOP) {
+//            in_gene = -1;
+//            left = slen-nodes[path].ndx-1;
+//        }
+//        if(nodes[path].strand == 1 && nodes[path].type == STOP) {
+//            in_gene = 1;
+//            right = nodes[path].ndx+2;
+//        }
+//        if(in_gene == -1 && nodes[path].strand == -1 && nodes[path].type == STOP) {
+//            right = slen-nodes[path].ndx+1;
+//            for(i = left; i < right-5; i+=3) {
+//                counts[mer_ndx(6, rseq, i)]++;
+//                glob++;
+//            }
+//            in_gene = 0;
+//        }
+//        if(in_gene == 1 && nodes[path].strand == 1 && nodes[path].type != STOP) {
+//            left = nodes[path].ndx;
+//            for(i = left; i < right-5; i+=3) { counts[mer_ndx(6, seq, i)]++; glob++; }
+//            in_gene = 0;
+//        }
+//        path = nodes[path].traceb;
+//    }
+    for(i = 0; i < 4096; i++) {
+        prob[i] = (counts[i]*1.0)/(glob*1.0);
+        if(prob[i] == 0 && bg[i] != 0) tinf.gene_dc[i] = -5.0;
+        else if(bg[i] == 0) tinf.gene_dc[i] = 0.0;
+        else tinf.gene_dc[i] = log(prob[i]/bg[i]);
+        if(tinf.gene_dc[i] > 5.0) tinf.gene_dc[i] = 5.0;
+        if(tinf.gene_dc[i] < -5.0) tinf.gene_dc[i] = -5.0;
+    }
 }
 
 
