@@ -457,6 +457,10 @@ void ProdigalWrapper::updateDicodonFrequency() {
     }
 }
 
-
+void ProdigalWrapper::printGenes() {
+    for(int i = 0 ; i < ng; i++){
+        cout<<i<<" "<<genes[i].begin<<" "<<genes[i].end<<" "<<nodes[genes[i].start_ndx].strand<<endl;
+    }
+}
 
 

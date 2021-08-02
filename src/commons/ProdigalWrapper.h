@@ -55,6 +55,7 @@ public:
     void trainMeta(char * genome);
     int getNextSeq(char * seq, int training);
     void updateDicodonFrequency();
+    void printGenes();
     ProdigalWrapper();
     ~ProdigalWrapper();
 
