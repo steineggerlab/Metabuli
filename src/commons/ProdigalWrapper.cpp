@@ -336,7 +336,7 @@ void ProdigalWrapper::getPredictedFrames(char * genome){
      }
 
      //TODO update dicodon statistics using predicted genes
-     updateDicodonFrequency();
+//     updateDicodonFrequency();
 }
 
 int ProdigalWrapper::getNextSeq(char * line, int training) {

@@ -125,6 +125,9 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     kseq_read(seq);
                     seqIterator.getMinHashList(currentList, seq->seq.s);
                     prodigal.getPredictedFrames(seq->seq.s);
+                    if(p == 0){
+                        prodigal.updateDicodonFrequency();
+                    }
 
                     if(seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, strlen(seq->seq.s))){
                         seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks,

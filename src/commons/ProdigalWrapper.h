@@ -41,7 +41,7 @@ private:
     mask mlist[MAX_MASKS];
     struct _metagenomic_bin * meta;
 
-    void updateDicodonFrequency();
+
 
 public:
     int is_meta;
@@ -54,6 +54,7 @@ public:
     void trainASpecies(char * genome);
     void trainMeta(char * genome);
     int getNextSeq(char * seq, int training);
+    void updateDicodonFrequency();
     ProdigalWrapper();
     ~ProdigalWrapper();
 
