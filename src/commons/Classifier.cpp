@@ -1007,7 +1007,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     int spSecondMaxWeight = 0;
     float tiedCoverage;
     TaxID first;
-    TaxID second;
+    TaxID second = 0;
     int maximunPossibleKmerNum = queryLength / 3 - kmerLength + 1;
     bool haveMetCovThr = false;
     bool tied = false;
@@ -1100,9 +1100,13 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     }
 
     if(haveMetCovThr) {
-        ties.push_back(first);
-        ties.push_back(second);
-        return taxonomy.LCA(ties)->taxId;
+        if(second != 0) {
+            ties.push_back(first);
+            ties.push_back(second);
+            return taxonomy.LCA(ties)->taxId;
+        } else
+            return first;
+
     }else
         return selectedTaxon;
 }
