@@ -540,7 +540,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
 
     TaxID selectedTaxon;
-    for(int i = 0; i < end-offset; i++){
+    for(int i = offset; i < end + 1; i++){
         cout<<int(matchList[i].frame)<<" "<<matchList[i].position<<" "<<matchList[i].taxID<<endl;
     }
     //get the best genus for current query
