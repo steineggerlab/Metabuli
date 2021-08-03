@@ -453,7 +453,7 @@ void SeqIterator::getMinHashList(priority_queue<uint64_t> & sortedHashQue, const
     char * kmer = (char*)malloc(sizeof(char) * (kmerLegnth+1));
     kmer[kmerLegnth] = '\0';
     size_t queLength = 0;
-    size_t maxLength = 1000;
+    size_t maxLength = 3000;
     size_t currHash;
     sortedHashQue.push(UINT64_MAX);
 
@@ -490,8 +490,8 @@ bool SeqIterator::compareMinHashList(priority_queue<uint64_t> list1, priority_qu
             list2.pop();
         }
     }
-
-    if(identicalCount > list1Size * lengthRatio * 0.8){
+    cout<<"identical count "<<identicalCount<<endl;
+    if(identicalCount > list1Size * lengthRatio * 0.7){
         return true;
     } else{
         return false;
