@@ -1003,14 +1003,25 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     float curCoverage;
     float maxCoverage = -FLT_MAX;
     float spMaxCoverage = -FLT_MAX;
+    int spFisrtMaxWeight = 0;
+    int spSecondMaxWeight = 0;
     float tiedCoverage;
-
-    int maximumKmerNum = queryLength / 3 - kmerLength + 1;
+    TaxID first;
+    TaxID second;
+    int maximunPossibleKmerNum = queryLength / 3 - kmerLength + 1;
     bool haveMetCovThr = false;
     bool tied = false;
     vector<TaxID> ties;
+    vector<map<TaxID,taxNode>::iterator> ties2;
 
     //한 위치에 중복되는 매치가 있다! 잘 생각해봅시다...
+
+//    for (std::map<TaxID,taxNode>::iterator it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
+//        if(!(it->second.isCandidate)) continue;
+//        curCoverage = float(it->second.weight) / float(maximunPossibleKmerNum);
+//        TaxonNode const * node = taxonomy.taxonNode(it->first, false);
+//        int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
+//    }
     for (std::map<TaxID,taxNode>::iterator it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
         // consider only candidates
         if (!(it->second.isCandidate)) {
@@ -1018,25 +1029,43 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         }
 
         double currPercent = float(it->second.weight) / totalAssignedSeqsWeights;
-        curCoverage = float(it->second.weight) / float(maximumKmerNum);
+        curCoverage = float(it->second.weight) / float(maximunPossibleKmerNum);
         TaxID currTaxId = it->first;
         TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
         int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
-        if(currPercent > 0.7 && curCoverage > coverageThreshold && currRankInd <= 4){
+        if(curCoverage > coverageThreshold && currRankInd <= 4){
             if(!haveMetCovThr){
                 haveMetCovThr = true;
                // minRank = currRankInd;
-                spMaxCoverage = curCoverage;
-                //selectedTaxon = it->first;
+                //spMaxCoverage = curCoverage;
+                spFisrtMaxWeight = it->second.weight;
+                spSecondMaxWeight = spFisrtMaxWeight - 1;
+                first = it->first;
                 selectedPercent = currPercent;
-                ties.push_back(it->first);
-            } else if(curCoverage > spMaxCoverage){
-                ties.clear();
-                ties.push_back(it->first);
-                spMaxCoverage = curCoverage;
-                selectedPercent = currPercent;
-            } else if(curCoverage == spMaxCoverage){
-                ties.push_back(it->first);
+                //ties.push_back(it->first);
+            } else if(it->second.weight > spFisrtMaxWeight + 1){
+                first = it->first;
+                second = 0;
+                //ties.clear();
+                //ties.push_back(it->first);
+                spFisrtMaxWeight = it->second.weight;
+                spSecondMaxWeight = spFisrtMaxWeight - 1;
+            } else if(it->second.weight > spFisrtMaxWeight){
+                second = first;
+                first = it->first;
+                //ties.insert(ties.begin(),it->first);
+                //spMaxCoverage = curCoverage;
+                spSecondMaxWeight = spFisrtMaxWeight;
+                spFisrtMaxWeight = it->second.weight;
+            } else if(it->second.weight == spFisrtMaxWeight){
+                second = first;
+                first = it->first;
+                //ties.insert(ties.begin(),it->first);
+                spSecondMaxWeight = spFisrtMaxWeight;
+                //ties.push_back(it->first);
+            } else if(it->second.weight == spSecondMaxWeight){
+                second = it->first;
+                //ties.push_back(it->first);
             }
 //            else if(currRankInd < minRank || (currRankInd == minRank && curCoverage > spMaxCoverage)){
 //                minRank = currRankInd;
@@ -1070,9 +1099,11 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         }
     }
 
-    if(haveMetCovThr)
+    if(haveMetCovThr) {
+        ties.push_back(first);
+        ties.push_back(second);
         return taxonomy.LCA(ties)->taxId;
-    else
+    }else
         return selectedTaxon;
 }
 
