@@ -795,6 +795,7 @@ void Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
     if(coMatches.size() > 1){
         if((coMatches[1].diffPosCnt > coMatches[0].diffPosCnt - 2) && float(coMatches[1].diffPosCnt)/float(maxiumPossibleMatchCnt) > 0.9){
             alignedCoMatches.push_back(coMatches[1]);
+            genus.push_back(alignedCoMatches);
             return;
         }
     }
