@@ -716,7 +716,7 @@ int Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & c
             }
         }
         //choose the best combination of consecutive matches for current genus
-        if(!coMatches.empty()) getMatchCombinationForCurGenus2(coMatches, genus, matchList);
+        if(!coMatches.empty()) getMatchCombinationForCurGenus2(coMatches, genus, matchList, maxNum);
         coMatches.clear();
     }
     //choose the best combination of consecutive-match among genus for current query
@@ -772,7 +772,7 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     genus.push_back(alignedCoMatches);
 }
 
-void Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList){
+void Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList, int maxiumPossibleMatchCnt){
     for(int i3 = 0; i3 < coMatches.size(); i3++){
         cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt;
         cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
@@ -790,6 +790,14 @@ void Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
     alignedCoMatches.push_back(coMatches[0]);
     bool overlap = false;
 
+    //Similarily good match but different frame
+    if(coMatches.size() > 1){
+        if((coMatches[1].diffPosCnt > coMatches[0].diffPosCnt - 2) && float(coMatches[1].diffPosCnt)/float(maxiumPossibleMatchCnt) > 0.9){
+            alignedCoMatches.push_back(coMatches[1]);
+            return;
+        }
+    }
+    
     //TODO: Fix here to accept slight overlaps
     for(size_t i = 1; i < coMatches.size(); i++){
         overlap = false;
