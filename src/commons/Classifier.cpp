@@ -1103,15 +1103,15 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         if (second != 0) {
             ties.push_back(first);
             ties.push_back(second);
-            cout << "1" << endl;
+//            cout << "1" << endl;
             return taxonomy.LCA(ties)->taxId;
         } else {
-            cout << "2" << endl;
+//            cout << "2" << endl;
             return first;
         }
     } else {
 
-        cout<<"3"<<endl;
+//        cout<<"3"<<endl;
         return selectedTaxon;
     }
 }
