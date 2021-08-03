@@ -554,6 +554,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         queryList[currentQuery].classification = 0;
         queryList[currentQuery].coverage = 0;
         queryList[currentQuery].newSpecies = false;
+        cout<<"here??"<<endl;
         return 0;
     }
 
@@ -797,7 +798,7 @@ void Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
             return;
         }
     }
-    
+
     //TODO: Fix here to accept slight overlaps
     for(size_t i = 1; i < coMatches.size(); i++){
         overlap = false;
