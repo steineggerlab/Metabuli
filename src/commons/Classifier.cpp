@@ -633,7 +633,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     ///TODO optimize strain specific classification criteria
     //Strain classification only for high coverage with LCA of species level
-    if(coverage > 0.8 && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
+    if(selectedPercent > 0.8 && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
         int strainCnt = 0;
         unordered_map<TaxID, int> strainMatchCnt;
         TaxID strainTaxId;
@@ -1019,21 +1019,22 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
 
         double currPercent = float(it->second.weight) / totalAssignedSeqsWeights;
         curCoverage = float(it->second.weight) / float(maximumKmerNum);
-
         TaxID currTaxId = it->first;
         TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
         int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
         if(curCoverage > coverageThreshold && currRankInd <= 4){
             if(!haveMetCovThr){
                 haveMetCovThr = true;
-                minRank = currRankInd;
+               // minRank = currRankInd;
                 spMaxCoverage = curCoverage;
-                selectedTaxon = it->first;
+                //selectedTaxon = it->first;
+                selectedPercent = currPercent;
                 ties.push_back(it->first);
             } else if(curCoverage > spMaxCoverage){
                 ties.clear();
                 ties.push_back(it->first);
                 spMaxCoverage = curCoverage;
+                selectedPercent = currPercent;
             } else if(curCoverage == spMaxCoverage){
                 ties.push_back(it->first);
             }
