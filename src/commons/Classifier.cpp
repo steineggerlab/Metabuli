@@ -1022,7 +1022,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         TaxID currTaxId = it->first;
         TaxonNode const * node = taxonomy.taxonNode(currTaxId, false);
         int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
-        if(curCoverage > coverageThreshold && currRankInd <= 4){
+        if(currPercent > 0.7 && curCoverage > coverageThreshold && currRankInd <= 4){
             if(!haveMetCovThr){
                 haveMetCovThr = true;
                // minRank = currRankInd;
