@@ -98,15 +98,15 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                 prodigal.is_meta = 0;
                 string tmp = seq->name.s;
                 cout<<"traning seq: "<<tmp<<endl;
-                if(strlen(seq->seq.s) < 20000){
-                    prodigal.is_meta = 1;
-                    cout<<"train Meta: "<<splits[i].training<<" "<<seqs[splits[i].training].start<<" "<<i<<seq->headerOffset<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
-                    cout<<tmp<<endl;
-                    prodigal.trainMeta(seq->seq.s);
-                    cout<<"after train meta"<<endl;
-                }else{
-                    prodigal.trainASpecies(seq->seq.s);
-                }
+//                if(strlen(seq->seq.s) < 20000){
+//                    prodigal.is_meta = 1;
+//                    cout<<"train Meta: "<<splits[i].training<<" "<<seqs[splits[i].training].start<<" "<<i<<seq->headerOffset<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
+//                    cout<<tmp<<endl;
+//                    prodigal.trainMeta(seq->seq.s);
+//                    cout<<"after train meta"<<endl;
+//                }else{
+//                    prodigal.trainASpecies(seq->seq.s);
+//                }
 
                 ///Get min k-mer hash list for determining strandness
                 priority_queue<uint64_t> standardList;
@@ -124,6 +124,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
                     seqIterator.getMinHashList(currentList, seq->seq.s);
+                    prodigal.trainASpecies(seq->seq.s);
                     prodigal.getPredictedFrames(seq->seq.s);
 //                    if(p == 0){
 //                        prodigal.updateDicodonFrequency();
