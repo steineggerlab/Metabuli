@@ -413,13 +413,13 @@ void ProdigalWrapper::updateDicodonFrequency() {
            left = genes[g].begin-1;
            right = genes[g].end-1;
            for(i = left; i < right-5; i+=3){
-               counts[mer_ndx(6, seq, i)]++; glob++;
+               counts[mer_ndx(6, seq, i)] += 1; glob++;
            }
         } else { // reverse
             left = slen - genes[g].end;
             right = slen - genes[g].begin;
             for(i = left; i < right-5; i+=3){
-                counts[mer_ndx(6, rseq, i)]++; glob++;
+                counts[mer_ndx(6, rseq, i)] += 1; glob++;
             }
         }
     }
@@ -452,6 +452,7 @@ void ProdigalWrapper::updateDicodonFrequency() {
         if(prob[i] == 0 && bg[i] != 0) tinf.gene_dc[i] = -5.0;
         else if(bg[i] == 0) tinf.gene_dc[i] = 0.0;
         else tinf.gene_dc[i] = log(prob[i]/bg[i]);
+
         if(tinf.gene_dc[i] > 5.0) tinf.gene_dc[i] = 5.0;
         if(tinf.gene_dc[i] < -5.0) tinf.gene_dc[i] = -5.0;
     }
