@@ -227,8 +227,8 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                 }
 
                 ///Get min k-mer hash list for determining strandness
-                priority_queue<uint64_t> standardList;
-                seqIterator.getMinHashList(standardList, seq->seq.s);
+               // priority_queue<uint64_t> standardList;
+               // seqIterator.getMinHashList(standardList, seq->seq.s);
 
                 ///Generate intergenic k-mer list
                 vector<uint64_t> intergenicKmerList;
@@ -244,11 +244,11 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), seqs[splits[i].offset + p].length};
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
-                    seqIterator.getMinHashList(currentList, seq->seq.s);
+                    //seqIterator.getMinHashList(currentList, seq->seq.s);
                     prodigal.getPredictedGenes(seq->seq.s);
                     seqIterator.getTranslationBlocks2(prodigal.genes, prodigal.nodes, blocks,
                                                      prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
-                                                     numOfBlocks);
+                                                     numOfBlocks, intergenicKmerList, seq->seq.s);
                     numOfBlocksList[p] = numOfBlocks;
                     currentList = priority_queue<uint64_t>();
                 }
