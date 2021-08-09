@@ -13,6 +13,7 @@ ProdigalWrapper::~ProdigalWrapper() {
     free(useq);
     free(nodes);
     free(genes);
+    free(finalGenes);
 }
 ProdigalWrapper::ProdigalWrapper() {
     seq = (unsigned char *)malloc(MAX_SEQ/4*sizeof(unsigned char)); // 8 Mb
@@ -467,6 +468,7 @@ void ProdigalWrapper::printGenes() {
 
 void ProdigalWrapper::removeCompletelyOverlappingGenes() {
     finalGenes = (struct _gene *)malloc(ng*sizeof(struct _gene));
+    fng = 0;
     for(int i = 0; i < ng - 1; i++){
         if(genes[i].begin >= genes[i+1].begin) continue;
         finalGenes[fng++] = genes[i];
