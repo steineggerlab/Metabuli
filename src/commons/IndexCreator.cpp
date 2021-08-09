@@ -128,19 +128,20 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     kseq_read(seq);
                     seqIterator.getMinHashList(currentList, seq->seq.s);
                     prodigal.getPredictedGenes(seq->seq.s);
-                    if(p == 0){
-                        prodigal.updateDicodonFrequency();
-                    }
+                    prodigal.removeCompletelyOverlappingGenes();
+//                    if(p == 0){
+//                        prodigal.updateDicodonFrequency();
+//                    }
                     prodigal.printGenes();
                     if(seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, strlen(seq->seq.s))){
                         cout<<seq->name.s<<" forward"<<endl;
-                        seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks,
+                        seqIterator.getTranslationBlocks(prodigal.finalGenes, prodigal.nodes, blocks,
                                                          prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
                                                          numOfBlocks);
 
                     } else {
                         cout<<seq->name.s<<" reverse"<<endl;
-                        seqIterator.getTranslationBlocksReverse(prodigal.genes, prodigal.nodes, blocks,
+                        seqIterator.getTranslationBlocksReverse(prodigal.finalGenes, prodigal.nodes, blocks,
                                                          prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
                                                          numOfBlocks);
                     }
@@ -249,7 +250,8 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     kseq_read(seq);
                     //seqIterator.getMinHashList(currentList, seq->seq.s);
                     prodigal.getPredictedGenes(seq->seq.s);
-                    seqIterator.getTranslationBlocks2(prodigal.genes, prodigal.nodes, blocks,
+                    prodigal.removeCompletelyOverlappingGenes();
+                    seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                      prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
                                                      numOfBlocks, intergenicKmerList, seq->seq.s);
                     cout<<numOfBlocks<<endl;

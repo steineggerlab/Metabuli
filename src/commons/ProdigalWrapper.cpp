@@ -20,6 +20,7 @@ ProdigalWrapper::ProdigalWrapper() {
     useq = (unsigned char *)malloc(MAX_SEQ/8*sizeof(unsigned char)); // 4 Mb
     nodes = (struct _node *)malloc(STT_NOD*sizeof(struct _node)); // 13.6 Mb
     genes = (struct _gene *)malloc(MAX_GENES*sizeof(struct _gene)); // 30 Mb
+
     if(seq == NULL || rseq == NULL || nodes == NULL || genes == NULL) {
         fprintf(stderr, "\nError: Malloc failed on sequence/orfs\n\n"); exit(1);
     }
@@ -31,7 +32,7 @@ ProdigalWrapper::ProdigalWrapper() {
     memset(genes, 0, MAX_GENES*sizeof(struct _gene));
     memset(&tinf, 0, sizeof(struct _training));
 
-    nn = 0; slen = 0; ipath = 0; ng = 0; nmask = 0;
+    nn = 0; slen = 0; ipath = 0; ng = 0; nmask = 0; fng = 0;
     user_tt = 0; is_meta = 0; num_seq = 0; quiet = 0;
     max_phase = 0; max_score = -100.0;
     train_file = NULL;
@@ -464,4 +465,13 @@ void ProdigalWrapper::printGenes() {
     }
 }
 
+void ProdigalWrapper::removeCompletelyOverlappingGenes() {
+    finalGenes = (struct _gene *)malloc(ng*sizeof(struct _gene));
+    for(int i = 0; i < ng - 1; i++){
+        if(genes[i].begin >= genes[i+1].begin) continue;
+        finalGenes[fng++] = genes[i];
+    }
+    if(genes[ng-1].begin <= genes[ng-2].end)
+        finalGenes[fng++] = genes[ng-1];
+}
 

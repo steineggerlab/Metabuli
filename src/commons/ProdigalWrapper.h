@@ -24,7 +24,7 @@
 
 class ProdigalWrapper{
 private:
-    int rv, slen, ng, ipath, *gc_frame, output;
+    int rv, slen, ng, fng, ipath, *gc_frame, output;
     int closed, do_mask, nmask, force_nonsd, user_tt, num_seq, quiet;
     int max_slen, fnum;
     double gc, low, high;
@@ -49,8 +49,10 @@ public:
     double max_score;
     struct _node *nodes;
     struct _gene *genes;
+    struct _gene *finalGenes;
     int getNumberOfPredictedGenes();
     void getPredictedGenes(char * genome);
+    void removeCompletelyOverlappingGenes();
     void trainASpecies(char * genome);
     void trainMeta(char * genome);
     int getNextSeq(char * seq, int training);
