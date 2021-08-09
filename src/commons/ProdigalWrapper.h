@@ -50,7 +50,7 @@ public:
     struct _node *nodes;
     struct _gene *genes;
     int getNumberOfPredictedGenes();
-    void getPredictedFrames(char * genome);
+    void getPredictedGenes(char * genome);
     void trainASpecies(char * genome);
     void trainMeta(char * genome);
     int getNextSeq(char * seq, int training);

@@ -259,7 +259,7 @@ void ProdigalWrapper::trainMeta(char *genome) {
     }
     cout<<"251"<<endl;
 }
-void ProdigalWrapper::getPredictedFrames(char * genome){
+void ProdigalWrapper::getPredictedGenes(char * genome){
 
     memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
     memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));

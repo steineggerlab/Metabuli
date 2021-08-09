@@ -58,11 +58,16 @@ private:
 public:
     void fillQueryKmerBuffer(const char * seq , QueryKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID);
     string reverseCompliment(string & read) const ;
+    string reverseCompliment(char * read, int length) const ;
     void sixFrameTranslation(const char * seq);
     bool translateBlock(const char* seq, PredictedBlock & block);
 
+    void generateIntergenicKmerList(struct _gene * genes, struct _node * nodes, int numberOfGenes, vector<uint64_t> & intergenicKmerList, const char * seq);
+    size_t kmer2number(const char * kmer, int k);
     void getTranslationBlocks(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
     void getTranslationBlocksReverse(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
+    void getTranslationBlocks2(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene,
+                size_t length, size_t & numOfBlocks, vector<uint64_t> & intergenicKmerList, const char * seq);
 
     void getMinHashList(priority_queue<uint64_t> & sortedHashQue, const char * seq);
     bool compareMinHashList(priority_queue<uint64_t> list1, priority_queue<uint64_t> & list2, size_t length1, size_t length2);

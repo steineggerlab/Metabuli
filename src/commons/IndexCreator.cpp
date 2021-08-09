@@ -35,7 +35,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     TargetKmerBuffer kmerBuffer(kmerBufSize);
     size_t processedSplitCnt = 0;
     while(processedSplitCnt < numOfSplits){ ///check this condition
-        fillTargetKmerBuffer(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank);
+        fillTargetKmerBuffer2(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank);
        	writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdList);
     }
 
@@ -112,7 +112,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                 priority_queue<uint64_t> standardList;
                 seqIterator.getMinHashList(standardList, seq->seq.s);
 
-                //prodigal.getPredictedFrames(seq->seq.s);
+                //prodigal.getPredictedGenes(seq->seq.s);
                 vector<PredictedBlock> blocks;
 
                 numOfBlocks = 0;
@@ -124,14 +124,12 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
                     seqIterator.getMinHashList(currentList, seq->seq.s);
-//                    prodigal.trainASpecies(seq->seq.s);
-                    prodigal.getPredictedFrames(seq->seq.s);
+                    prodigal.getPredictedGenes(seq->seq.s);
                     if(p == 0){
                         prodigal.updateDicodonFrequency();
                     }
                     prodigal.printGenes();
                     if(seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, strlen(seq->seq.s))){
-
                         cout<<seq->name.s<<" forward"<<endl;
                         seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks,
                                                          prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
@@ -177,6 +175,114 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                 }else {
                     ///Withdraw the reservation if the buffer is full.
                     #pragma omp atomic
+                    kmerBuffer.startIndexOfReserve -= totalKmerCntForOneTaxID;
+                    cout<<"buffer is full"<<endl;
+                    hasOverflow = true;
+                }
+                free(numOfBlocksList);
+                blocks.clear();
+            }
+        }
+    }
+    cout<<"before return: "<<kmerBuffer.startIndexOfReserve<<endl;
+    return 0;
+}
+
+
+size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSplitCnt, const vector<FastaSplit> & splits, const vector<int> & taxIdListAtRank) {
+#ifdef OPENMP
+    omp_set_num_threads(ThreadNum);
+#endif
+    bool hasOverflow = false;
+
+#pragma omp parallel default(none), shared(checker, hasOverflow, splits, seqFile, seqs, kmerBuffer, processedSplitCnt, cout, taxIdListAtRank)
+    {
+        ProdigalWrapper prodigal;
+        SeqIterator seqIterator;
+        size_t posToWrite;
+        size_t numOfBlocks;
+        size_t totalKmerCntForOneTaxID = 0;
+
+#pragma omp for schedule(dynamic, 1)
+        for (size_t i = 0; i < splits.size() ; i++) {
+            if((checker[i] == false) && (!hasOverflow)) {
+                size_t * numOfBlocksList = (size_t*)malloc(splits[i].cnt * sizeof(size_t));
+
+                ///Train Prodigal with a training sequence of i th split
+                kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[splits[i].training].start]), seqs[splits[i].training].length);
+                kseq_t *seq = kseq_init(&buffer);
+                kseq_read(seq);
+                size_t lengthOfTrainingSeq = strlen(seq->seq.s);
+                prodigal.is_meta = 0;
+
+                cout<<"Traning sequence: "<<seq->name.s<<endl;
+                if(strlen(seq->seq.s) < 20000){
+                    prodigal.is_meta = 1;
+                    cout<<"Training with metagenomic version: "<<splits[i].training<<" "<<seqs[splits[i].training].start<<" "<<i<<seq->headerOffset<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
+                    cout<<seq->name.s<<endl;
+                    prodigal.trainMeta(seq->seq.s);
+                    cout<<"after train meta"<<endl;
+                }else{
+                    prodigal.trainASpecies(seq->seq.s);
+                }
+
+                ///Get min k-mer hash list for determining strandness
+                priority_queue<uint64_t> standardList;
+                seqIterator.getMinHashList(standardList, seq->seq.s);
+
+                ///Generate intergenic k-mer list
+                vector<uint64_t> intergenicKmerList;
+                prodigal.getPredictedGenes(seq->seq.s);
+                seqIterator.generateIntergenicKmerList(prodigal.genes, prodigal.nodes, prodigal.getNumberOfPredictedGenes(), intergenicKmerList, seq->seq.s);
+
+
+                ///Getting all the sequence blocks of current split. Each block will be translated later separately.
+                vector<PredictedBlock> blocks;
+                numOfBlocks = 0;
+                priority_queue<uint64_t> currentList;
+                for(size_t p = 0; p < splits[i].cnt; p++ ) {
+                    buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), seqs[splits[i].offset + p].length};
+                    seq = kseq_init(&buffer);
+                    kseq_read(seq);
+                    seqIterator.getMinHashList(currentList, seq->seq.s);
+                    prodigal.getPredictedGenes(seq->seq.s);
+                    seqIterator.getTranslationBlocks2(prodigal.genes, prodigal.nodes, blocks,
+                                                     prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
+                                                     numOfBlocks);
+                    numOfBlocksList[p] = numOfBlocks;
+                    currentList = priority_queue<uint64_t>();
+                }
+
+                /// Calculate the number of k-mers to reserve memory of k-mer buffer
+                totalKmerCntForOneTaxID = 0;
+                for(size_t block = 0; block < numOfBlocks; block++){
+                    totalKmerCntForOneTaxID += seqIterator.getNumOfKmerForBlock(blocks[block]);
+                }
+
+                /// Fill k-mer buffer with k-mers of current split if the buffer has enough space
+                posToWrite = kmerBuffer.reserveMemory(totalKmerCntForOneTaxID);
+                if(posToWrite + totalKmerCntForOneTaxID < kmerBuffer.bufferSize){
+                    size_t start = 0;
+                    for(size_t seqIdx = 0; seqIdx < splits[i].cnt; seqIdx++){
+                        buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + seqIdx].start]), seqs[splits[i].offset + seqIdx].length};
+                        seq = kseq_init(&buffer);
+                        kseq_read(seq);
+                        size_t end = numOfBlocksList[seqIdx];
+                        for(size_t bl = start; bl < end ; bl++){
+//                            if(!(seqIterator.translateBlock(seq->seq.s,blocks[bl]))){
+//                                cout<<seq->name.s<<endl;
+//                            }
+                            seqIterator.translateBlock(seq->seq.s,blocks[bl]);
+                            seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].offset + seqIdx, taxIdListAtRank[splits[i].offset + seqIdx]); //splits[i].offset + seqIdx
+                        }
+                        start = numOfBlocksList[seqIdx];
+                    }
+                    checker[i] = true;
+#pragma omp atomic
+                    processedSplitCnt ++;
+                }else {
+                    ///Withdraw the reservation if the buffer is full.
+#pragma omp atomic
                     kmerBuffer.startIndexOfReserve -= totalKmerCntForOneTaxID;
                     cout<<"buffer is full"<<endl;
                     hasOverflow = true;
