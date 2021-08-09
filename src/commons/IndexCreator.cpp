@@ -135,14 +135,14 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     prodigal.printGenes();
                     if(seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, strlen(seq->seq.s))){
                         cout<<seq->name.s<<" forward"<<endl;
-                        seqIterator.getTranslationBlocks(prodigal.finalGenes, prodigal.nodes, blocks,
-                                                         prodigal.fng, strlen(seq->seq.s),
+                        seqIterator.getTranslationBlocks(prodigal.genes, prodigal.nodes, blocks,
+                                                         prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
                                                          numOfBlocks);
 
                     } else {
                         cout<<seq->name.s<<" reverse"<<endl;
-                        seqIterator.getTranslationBlocksReverse(prodigal.finalGenes, prodigal.nodes, blocks,
-                                                                prodigal.fng, strlen(seq->seq.s),
+                        seqIterator.getTranslationBlocksReverse(prodigal.genes, prodigal.nodes, blocks,
+                                                                prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
                                                          numOfBlocks);
                     }
                     numOfBlocksList[p] = numOfBlocks;
