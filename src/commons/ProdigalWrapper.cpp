@@ -472,7 +472,7 @@ void ProdigalWrapper::removeCompletelyOverlappingGenes() {
         if(genes[i].begin >= genes[i+1].begin) continue;
         finalGenes[fng++] = genes[i];
     }
-    if(genes[ng-1].begin <= genes[ng-2].begin)
-        finalGenes[fng++] = genes[ng-1];
+//    if(genes[ng-1].begin <= genes[ng-2].begin)
+    finalGenes[fng++] = genes[ng-1];
 }
 
