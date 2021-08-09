@@ -128,7 +128,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     kseq_read(seq);
                     seqIterator.getMinHashList(currentList, seq->seq.s);
                     prodigal.getPredictedGenes(seq->seq.s);
-                    prodigal.removeCompletelyOverlappingGenes();
+                   // prodigal.removeCompletelyOverlappingGenes();
 //                    if(p == 0){
 //                        prodigal.updateDicodonFrequency();
 //                    }
