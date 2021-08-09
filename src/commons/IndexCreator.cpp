@@ -29,6 +29,8 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     getFastaSplits(taxIdListAtRank, splits, sequences);
 
     size_t numOfSplits = splits.size();
+    cout<<"numOfSplits "<<numOfSplits<<endl;
+
     bool splitChecker[numOfSplits];
     fill_n(splitChecker, numOfSplits, false);
 
@@ -36,7 +38,8 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     size_t processedSplitCnt = 0;
     while(processedSplitCnt < numOfSplits){ ///check this condition
         fillTargetKmerBuffer2(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank);
-       	writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdList);
+       	cout<<"processedSplitCnt "<<processedSplitCnt<<endl;
+        writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdList);
     }
 
     free(kmerBuffer.buffer);
