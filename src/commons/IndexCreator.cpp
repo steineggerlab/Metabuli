@@ -216,7 +216,6 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
             if((checker[i] == false) && (!hasOverflow)) {
                 size_t * numOfBlocksList = (size_t*)malloc(splits[i].cnt * sizeof(size_t));
                 intergenicKmerList.clear();
-                blocks.clear();
 
                 ///Train Prodigal with a training sequence of i th split
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[splits[i].training].start]), seqs[splits[i].training].length);
@@ -263,17 +262,19 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                 posToWrite = kmerBuffer.reserveMemory(totalKmerCntForOneTaxID);
                 if(posToWrite + totalKmerCntForOneTaxID < kmerBuffer.bufferSize){
                     size_t start = 0;
+                    cout<<"here"<<endl;
                     for(size_t seqIdx = 0; seqIdx < splits[i].cnt; seqIdx++){
+
                         buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + seqIdx].start]), seqs[splits[i].offset + seqIdx].length};
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
                         size_t end = numOfBlocksList[seqIdx];
+                        cout<<"seqIdx "<<seqIdx<<" "<<start<<" "<<end<<endl;
                         for(size_t bl = start; bl < end ; bl++){
-//                            if(!(seqIterator.translateBlock(seq->seq.s,blocks[bl]))){
-//                                cout<<seq->name.s<<endl;
-//                            }
+                            cout<<"bl "<<bl;
                             seqIterator.translateBlock(seq->seq.s,blocks[bl]);
                             seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].offset + seqIdx, taxIdListAtRank[splits[i].offset + seqIdx]); //splits[i].offset + seqIdx
+                            cout<<" done"<<endl;
                         }
                         start = numOfBlocksList[seqIdx];
                     }
