@@ -192,7 +192,7 @@ bool SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
     aaFrames[0].clear();
     size_t blockLength = block.end - block.start + 1;
     cout<<"L: "<<blockLength<<endl;
-    aaFrames[0].reserve(blockLength / 3 + 1);
+  //  aaFrames[0].reserve(blockLength / 3 + 1);
 
     if(block.strand == 1){
         for(size_t i = block.start ; i + 2 <= block.end ; i = i + 3){
