@@ -273,6 +273,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         for(size_t bl = start; bl < end ; bl++){
                             cout<<"bl "<<bl<<endl;
                             seqIterator.translateBlock(seq->seq.s,blocks[bl]);
+                            cout<<"igo"<<endl;
                             seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].offset + seqIdx, taxIdListAtRank[splits[i].offset + seqIdx]); //splits[i].offset + seqIdx
                             cout<<" done"<<endl;
                         }
