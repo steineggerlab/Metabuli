@@ -224,7 +224,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                 size_t lengthOfTrainingSeq = strlen(seq->seq.s);
                 prodigal.is_meta = 0;
 
-                cout<<"Traning sequence: "<<seq->name.s<<endl;
+              //  cout<<"Traning sequence: "<<seq->name.s<<endl;
                 if(strlen(seq->seq.s) < 20000){
                     prodigal.is_meta = 1;
                     cout<<"Training with metagenomic version: "<<splits[i].training<<" "<<seqs[splits[i].training].start<<" "<<i<<seq->headerOffset<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
@@ -257,7 +257,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                 for(size_t block = 0; block < numOfBlocks; block++){
                     totalKmerCntForOneTaxID += seqIterator.getNumOfKmerForBlock(blocks[block]);
                 }
-                cout<<"totalKmerCntForOneTaxID "<<totalKmerCntForOneTaxID<<endl;
+             //   cout<<"totalKmerCntForOneTaxID "<<totalKmerCntForOneTaxID<<endl;
                 /// Fill k-mer buffer with k-mers of current split if the buffer has enough space
                 posToWrite = kmerBuffer.reserveMemory(totalKmerCntForOneTaxID);
                 if(posToWrite + totalKmerCntForOneTaxID < kmerBuffer.bufferSize){
@@ -267,13 +267,13 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
                         size_t end = numOfBlocksList[seqIdx];
-                        cout<<"seqIdx "<<seqIdx<<" "<<start<<" "<<end<<endl;
+                      //  cout<<"seqIdx "<<seqIdx<<" "<<start<<" "<<end<<endl;
                         for(size_t bl = start; bl < end ; bl++){
-                            cout<<"bl "<<bl<<endl;
+                        //    cout<<"bl "<<bl<<endl;
                             seqIterator.translateBlock(seq->seq.s,blocks[bl]);
-                            cout<<"igo"<<endl;
+                          //  cout<<"igo"<<endl;
                             seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].offset + seqIdx, taxIdListAtRank[splits[i].offset + seqIdx]); //splits[i].offset + seqIdx
-                            cout<<" done"<<endl;
+                            //cout<<" done"<<endl;
                         }
                         start = numOfBlocksList[seqIdx];
                     }
