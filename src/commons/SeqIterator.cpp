@@ -299,8 +299,12 @@ size_t SeqIterator::kmerNumOfSixFrameTranslation(const string & seq){
 }
 
 size_t SeqIterator::getNumOfKmerForBlock(const PredictedBlock & block){
-    if(block.end < (block.start - 1))
+    if(block.end < (block.start - 1)){
         cout<<"NONO"<<endl;
+        cout<<block.start<<endl;
+        cout<<block.end<<endl;
+        cout<<block.strand<<endl;
+    }
     size_t len = block.end - block.start + 1;
     return len/3 - 7;
 }
@@ -402,8 +406,7 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
     int frame;
     int rightEnd = 0;
     int leftEnd = 0;
-    bool lastContained = false;
-    //size_t currIdx;
+
 
     int k = 23;
     char * leftKmer = (char*)malloc(sizeof(char) * (k+1));
@@ -524,7 +527,6 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
     }
 
     //For the last gene
-
     if(find(intergenicKmerList.begin(), intergenicKmerList.end(), rightKmerHash) != intergenicKmerList.end()){ //extension to right
         if(!isReverse){
                 blocks.emplace_back(genes[numOfGene - 1].begin, length - 1, 1);
@@ -551,64 +553,6 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
         }
     }
 
-
-
-
-//    for (size_t geneIdx = 0 ; geneIdx < numOfGene - 1; geneIdx++) {
-//        currIdx = geneIdx;
-//        if((genes[geneIdx].begin - genes[geneIdx+1].begin) * (genes[geneIdx].end - genes[geneIdx+1].end) < 0){
-//            if((geneIdx + 1) == numOfGene - 1){
-//                if(nodes[genes[geneIdx].start_ndx].strand == 1){ //forward
-//                    // blocks.emplace_back(genes[currIdx].begin, length -1, nodes[genes[geneIdx].start_ndx].strand);
-//                    blocks.emplace_back(genes[currIdx].begin - 1, length -1, nodes[genes[geneIdx].start_ndx].strand);
-//                    blockIdx ++;
-//                } else { // reverse
-//                    frame = (genes[geneIdx].end - 1) % 3;
-//                    rightEnd = length - 1;
-//                    while(rightEnd%3 != frame){
-//                        rightEnd--;
-//                    }
-//                    //                   blocks.emplace_back(genes[currIdx].begin, rightEnd + 21, nodes[genes[geneIdx].start_ndx].strand);
-//                    blocks.emplace_back(genes[currIdx].begin - 1, rightEnd, nodes[genes[geneIdx].start_ndx].strand);
-//                    blockIdx++;
-//                }
-//                geneIdx++;
-//                lastContained = true;
-//                continue;
-//            }else{
-//                geneIdx++;
-//            }
-//        }
-//
-//        if(nodes[genes[geneIdx].start_ndx].strand == 1){ //forward
-//            blocks.emplace_back(genes[currIdx].begin - 1, genes[geneIdx + 1].begin - 1 + 22, nodes[genes[geneIdx].start_ndx].strand);
-//            blockIdx ++;
-//        } else { // reverse
-//            frame = (genes[geneIdx].end - 1) % 3;
-//            rightEnd = genes[geneIdx+1].begin - 1 + 22;
-//            while(rightEnd%3 != frame){
-//                rightEnd--;
-//            }
-//            blocks.emplace_back(genes[currIdx].begin - 1, rightEnd, nodes[genes[geneIdx].start_ndx].strand);
-//            blockIdx++;
-//        }
-//    }
-//
-//
-//    if(!lastContained){
-//        if(nodes[genes[numOfGene-1].start_ndx].strand == 1){ //forward
-//            blocks.emplace_back(genes[numOfGene - 1].begin - 1, length -1, nodes[genes[numOfGene-1].start_ndx].strand);
-//            blockIdx ++;
-//        }else{ // reverse
-//            frame = (genes[numOfGene-1].end - 1) % 3;
-//            rightEnd = length - 1;
-//            while(rightEnd%3 != frame){
-//                rightEnd--;
-//            }
-//            blocks.emplace_back(genes[numOfGene - 1].begin - 1, rightEnd, nodes[genes[numOfGene-1].start_ndx].strand);
-//            blockIdx ++;
-//        }
-//    }
     free(leftKmer);
     free(rightKmer);
     free(leftKmerReverse);
