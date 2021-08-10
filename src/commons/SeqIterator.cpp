@@ -191,9 +191,9 @@ void SeqIterator::addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int fo
 bool SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
     aaFrames[0].clear();
     cout<<block.start<<" "<<block.end<<" "<<block.strand<<endl;
-//    size_t blockLength = block.end - block.start + 1;
+    size_t blockLength = block.end - block.start + 1;
 //    cout<<"L: "<<blockLength<<endl;
-//  //  aaFrames[0].reserve(blockLength / 3 + 1);
+    aaFrames[0].reserve(blockLength / 3 + 1);
 
     if(block.strand == 1){
         for(size_t i = block.start ; i + 2 <= block.end ; i = i + 3){
@@ -600,6 +600,7 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
                 rightEnd = length - 1;
                 while(rightEnd%3 != frame) rightEnd--;
                 blocks.emplace_back(genes[numOfGene-1].begin - 1, rightEnd, -1);
+                blockIdx++;
         }
 
         //If current intergenic sequences is new, update intergenicKmerList.
