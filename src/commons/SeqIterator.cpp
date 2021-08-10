@@ -193,9 +193,10 @@ bool SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
     size_t blockLength = block.end - block.start + 1;
     cout<<"L: "<<blockLength<<endl;
     aaFrames[0].reserve(blockLength / 3 + 1);
+    cout<<"hi"<<endl;
     if(block.strand == 1){
         for(size_t i = 0; i < blockLength - 2; i = i + 3){
-            if(block.start+i+2 > strlen(seq) - 1){
+            if(block.start+i > strlen(seq) - 1){
                 cout<<"over flow 1"<<endl;
                 cout<<"last index of seq: "<<strlen(seq) - 1 <<endl;
                 cout<<"block.start: "<<block.start<<endl;
