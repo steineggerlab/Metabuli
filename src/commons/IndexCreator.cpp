@@ -262,7 +262,6 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                 posToWrite = kmerBuffer.reserveMemory(totalKmerCntForOneTaxID);
                 if(posToWrite + totalKmerCntForOneTaxID < kmerBuffer.bufferSize){
                     size_t start = 0;
-                    cout<<"here"<<endl;
                     for(size_t seqIdx = 0; seqIdx < splits[i].cnt; seqIdx++){
 
                         buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + seqIdx].start]), seqs[splits[i].offset + seqIdx].length};
