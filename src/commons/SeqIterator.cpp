@@ -190,33 +190,33 @@ void SeqIterator::addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int fo
 
 bool SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
     aaFrames[0].clear();
-    size_t blockLength = block.end - block.start + 1;
-    cout<<"L: "<<blockLength<<endl;
-  //  aaFrames[0].reserve(blockLength / 3 + 1);
+//    size_t blockLength = block.end - block.start + 1;
+//    cout<<"L: "<<blockLength<<endl;
+//  //  aaFrames[0].reserve(blockLength / 3 + 1);
 
     if(block.strand == 1){
         for(size_t i = block.start ; i + 2 <= block.end ; i = i + 3){
-            if( i + 2 > strlen(seq) - 1){
-                cout<<"over flow 1"<<endl;
-                cout<<"last index of seq: "<<strlen(seq) - 1 <<endl;
-                cout<<"block.start: "<<block.start<<endl;
-                cout<<"bloc.end: "<<block.end<<endl;
-                cout<<"i :"<<i<<endl;
-                cout<<"L :"<<blockLength<<endl;
-                return false;
-            }
+//            if( i + 2 > strlen(seq) - 1){
+//                cout<<"over flow 1"<<endl;
+//                cout<<"last index of seq: "<<strlen(seq) - 1 <<endl;
+//                cout<<"block.start: "<<block.start<<endl;
+//                cout<<"bloc.end: "<<block.end<<endl;
+//                cout<<"i :"<<i<<endl;
+//                cout<<"L :"<<blockLength<<endl;
+//                return false;
+//            }
             aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[i]])][nuc2int(atcg[seq[i+1]])][nuc2int(atcg[seq[i+2]])]);
         }
     }else{
         for(size_t i = block.end; i - 2 >= block.start; i = i - 3){
-            if( i - 2 < 0){
-                cout<<"over flow 2"<<endl;
-                cout<<"last index of seq: "<<strlen(seq) - 1 <<endl;
-                cout<<"block.start: "<<block.start<<endl;
-                cout<<"i :"<<i<<endl;
-                cout<<"L :"<<blockLength<<endl;
-                return false;
-            }
+//            if( i - 2 < 0){
+//                cout<<"over flow 2"<<endl;
+//                cout<<"last index of seq: "<<strlen(seq) - 1 <<endl;
+//                cout<<"block.start: "<<block.start<<endl;
+//                cout<<"i :"<<i<<endl;
+//                cout<<"L :"<<blockLength<<endl;
+//                return false;
+//            }
             aaFrames[0].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[i]]])][nuc2int(iRCT[atcg[seq[i-1]]])][nuc2int(iRCT[atcg[seq[i-2]]])]);
         }
     }
