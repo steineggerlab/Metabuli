@@ -37,7 +37,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     TargetKmerBuffer kmerBuffer(kmerBufSize);
     size_t processedSplitCnt = 0;
     while(processedSplitCnt < numOfSplits){ ///check this condition
-        fillTargetKmerBuffer(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank);
+        fillTargetKmerBuffer2(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank);
        	cout<<"processedSplitCnt "<<processedSplitCnt<<endl;
         writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdList);
     }
@@ -146,6 +146,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                                                                 prodigal.fng, strlen(seq->seq.s),
                                                          numOfBlocks);
                     }
+                    cout<<numOfBlocks<<endl;
                     numOfBlocksList[p] = numOfBlocks;
                     currentList = priority_queue<uint64_t>();
                 }
