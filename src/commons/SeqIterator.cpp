@@ -191,9 +191,9 @@ void SeqIterator::addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int fo
 bool SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
     aaFrames[0].clear();
     cout<<block.start<<" "<<block.end<<" "<<block.strand<<endl;
-    size_t blockLength = block.end - block.start + 1;
+ //   size_t blockLength = block.end - block.start + 1;
 //    cout<<"L: "<<blockLength<<endl;
-    aaFrames[0].reserve(blockLength / 3 + 1);
+ //   aaFrames[0].reserve(blockLength / 3 + 1);
 
     if(block.strand == 1){
         for(size_t i = block.start ; i + 2 <= block.end ; i = i + 3){
@@ -209,7 +209,7 @@ bool SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
             aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[i]])][nuc2int(atcg[seq[i+1]])][nuc2int(atcg[seq[i+2]])]);
         }
     }else{
-        for(size_t i = block.end; i - 2 >= block.start; i = i - 3){
+        for(int i = block.end; i >= (int)block.start + 2; i = i - 3){
 //            if( i - 2 < 0){
 //                cout<<"over flow 2"<<endl;
 //                cout<<"last index of seq: "<<strlen(seq) - 1 <<endl;
