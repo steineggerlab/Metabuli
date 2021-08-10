@@ -208,11 +208,15 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
         size_t posToWrite;
         size_t numOfBlocks;
         size_t totalKmerCntForOneTaxID = 0;
+        vector<uint64_t> intergenicKmerList;
+        vector<PredictedBlock> blocks;
 
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < splits.size() ; i++) {
             if((checker[i] == false) && (!hasOverflow)) {
                 size_t * numOfBlocksList = (size_t*)malloc(splits[i].cnt * sizeof(size_t));
+                intergenicKmerList.clear();
+                blocks.clear();
 
                 ///Train Prodigal with a training sequence of i th split
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[splits[i].training].start]), seqs[splits[i].training].length);
@@ -227,38 +231,26 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     cout<<"Training with metagenomic version: "<<splits[i].training<<" "<<seqs[splits[i].training].start<<" "<<i<<seq->headerOffset<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
                     cout<<seq->name.s<<endl;
                     prodigal.trainMeta(seq->seq.s);
-                    cout<<"after train meta"<<endl;
                 }else{
                     prodigal.trainASpecies(seq->seq.s);
                 }
 
-                ///Get min k-mer hash list for determining strandness
-               // priority_queue<uint64_t> standardList;
-               // seqIterator.getMinHashList(standardList, seq->seq.s);
-
-                ///Generate intergenic k-mer list
-                vector<uint64_t> intergenicKmerList;
+                //Generate intergenic k-mer list
                 prodigal.getPredictedGenes(seq->seq.s);
                 seqIterator.generateIntergenicKmerList(prodigal.genes, prodigal.nodes, prodigal.getNumberOfPredictedGenes(), intergenicKmerList, seq->seq.s);
 
-
-                ///Getting all the sequence blocks of current split. Each block will be translated later separately.
-                vector<PredictedBlock> blocks;
+                //Getting all the sequence blocks of current split. Each block will be translated later separately.
                 numOfBlocks = 0;
-                priority_queue<uint64_t> currentList;
                 for(size_t p = 0; p < splits[i].cnt; p++ ) {
                     buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), seqs[splits[i].offset + p].length};
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
-                    //seqIterator.getMinHashList(currentList, seq->seq.s);
                     prodigal.getPredictedGenes(seq->seq.s);
                     prodigal.removeCompletelyOverlappingGenes();
                     seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                      prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
                                                      numOfBlocks, intergenicKmerList, seq->seq.s);
-                    cout<<numOfBlocks<<endl;
                     numOfBlocksList[p] = numOfBlocks;
-                    currentList = priority_queue<uint64_t>();
                 }
 
                 /// Calculate the number of k-mers to reserve memory of k-mer buffer

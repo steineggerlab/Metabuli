@@ -299,7 +299,7 @@ size_t SeqIterator::kmerNumOfSixFrameTranslation(const string & seq){
 }
 
 size_t SeqIterator::getNumOfKmerForBlock(const PredictedBlock & block){
-    cout<<block.start<<" "<<block.end<<" "<<block.strand<<endl;
+    //cout<<block.start<<" "<<block.end<<" "<<block.strand<<endl;
     if(block.end <= block.start){
         cout<<"NONO"<<endl;
         cout<<block.start<<endl;
@@ -454,13 +454,16 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
             if(genes[0].end - 1<leftEnd){
                 cout<<"3!"<<endl;
             }
-            blocks.emplace_back(leftEnd, genes[0].end - 1, 1);
+            blocks.emplace_back(leftEnd, genes[1].begin - 1 + 22, 1);
             blockIdx ++;
         } else { // reverse
+            frame = (genes[0].end - 1) % 3;
+            rightEnd = genes[1].begin - 1 + 22;
+            while(rightEnd%3 != frame) rightEnd--;
             if(genes[0].end - 1<0){
                 cout<<"4!"<<endl;
             }
-            blocks.emplace_back(0, genes[0].end - 1, -1);
+            blocks.emplace_back(0, rightEnd, -1);
             blockIdx++;
         }
 
