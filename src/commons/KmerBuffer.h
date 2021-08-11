@@ -40,7 +40,7 @@ public:
             buffer = (TargetKmer *)malloc(sizeof(TargetKmer) * getTargetKmerBufferSize());
             bufferSize = getTargetKmerBufferSize();
             cout<<bufferSize<<endl;
-        }else {
+        } else {
             buffer = (TargetKmer *) malloc(sizeof(TargetKmer) * sizeOfBuffer);
             bufferSize = sizeOfBuffer;
         }
@@ -53,8 +53,9 @@ public:
     };
 
     size_t getTargetKmerBufferSize(){
-        size_t memLimit = Util::getTotalSystemMemory() * 0.9;
+        size_t memLimit = Util::getTotalSystemMemory() * 0.5;
         size_t bufferSize = memLimit / sizeof(TargetKmer);
+        cout<<Util::getTotalSystemMemory()<<endl;
         if(bufferSize > 10000000000){
             bufferSize = 10000000000;
         }

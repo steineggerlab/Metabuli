@@ -31,7 +31,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     fill_n(splitChecker, numOfSplits, false);
     cout<<"32!"<<endl;
     size_t bufferSize = kmerBufSize;
-    TargetKmerBuffer kmerBuffer(bufferSize);
+    TargetKmerBuffer kmerBuffer(0);
     cout<<"34!"<<endl;
     size_t processedSplitCnt = 0;
     while(processedSplitCnt < numOfSplits){ ///check this condition

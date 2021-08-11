@@ -8,7 +8,7 @@
 #include <Command.h>
 #include <regex>
 #include "Classifier.h"
-#include "omp.h"
+#//include "omp.h"
 #include <random>
 
 void prepareForCreatingTargetDB(const LocalParameters & par);
@@ -81,9 +81,11 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     vector<int> taxIdListAtSpecies;
     vector<int> taxIdListAtGenus;
 
+    cout<<"Create taxonomical ID list at species rank"<<endl;
     ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtSpecies, "species");
-    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtGenus, "genus");
 
+    cout<<"Create taxonomical ID list at genus rank"<<endl;
+    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtGenus, "genus");
 
     ///Make files of differential indexing and information of k-mers
     idxCre.startIndexCreatingParallel(seqFileName,outputFileName, taxIdListAtSpecies, taxIdList);
