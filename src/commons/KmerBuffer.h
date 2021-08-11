@@ -15,12 +15,15 @@ public:
     QueryKmer * buffer;
     size_t startIndexOfReserve;
     size_t bufferSize;
-    QueryKmerBuffer(size_t sizeOfBuffer){
-        buffer = (QueryKmer *) malloc(sizeof(QueryKmer) * sizeOfBuffer);
+    explicit QueryKmerBuffer(size_t sizeOfBuffer){
+        buffer = new QueryKmer[sizeof(QueryKmer) * sizeOfBuffer];
+        //buffer = (QueryKmer *) malloc(sizeof(QueryKmer) * sizeOfBuffer);
         bufferSize = sizeOfBuffer;
         startIndexOfReserve = 0;
     };
-
+    ~QueryKmerBuffer(){
+        delete[] buffer;
+    }
     size_t reserveMemory(size_t numOfKmer){
         size_t offsetToWrite = __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
         return offsetToWrite;
@@ -35,13 +38,14 @@ public:
     TargetKmer * buffer;
     size_t startIndexOfReserve;
     size_t bufferSize;
-    TargetKmerBuffer(size_t sizeOfBuffer){
+    explicit TargetKmerBuffer(size_t sizeOfBuffer){
         if(sizeOfBuffer == 0){
-            buffer = (TargetKmer *)malloc(sizeof(TargetKmer) * getTargetKmerBufferSize());
+            buffer = new TargetKmer[sizeof(TargetKmer) * getTargetKmerBufferSize()];
             bufferSize = getTargetKmerBufferSize();
             cout<<bufferSize<<endl;
         } else {
-            buffer = (TargetKmer *) malloc(size_t(sizeof(TargetKmer) * sizeOfBuffer));
+            buffer = new TargetKmer[sizeof(TargetKmer) * sizeOfBuffer];
+            //buffer = (TargetKmer *) malloc(size_t(sizeof(TargetKmer) * sizeOfBuffer));
             bufferSize = sizeOfBuffer;
         }
         startIndexOfReserve = 0;
@@ -51,8 +55,11 @@ public:
         size_t offsetToWrite = __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
         return offsetToWrite;
     };
+    ~TargetKmerBuffer(){
+        delete[] buffer;
+    }
 
-    size_t getTargetKmerBufferSize(){
+    static size_t getTargetKmerBufferSize(){
         size_t memLimit = Util::getTotalSystemMemory() * 0.5;
         size_t bufferSize = memLimit / sizeof(TargetKmer);
         cout<<Util::getTotalSystemMemory()<<endl;

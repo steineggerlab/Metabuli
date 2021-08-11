@@ -16,6 +16,7 @@ typedef struct QueryKmerInfo {
 
 typedef struct QueryKmer {
     QueryKmer(uint64_t ADkmer, int seqID, uint32_t pos, uint32_t isReverse) : ADkmer(ADkmer), info(seqID, pos, isReverse) {}
+    QueryKmer():ADkmer(0), info(0,0,0){}
     uint64_t ADkmer;
     QueryKmerInfo info;
 } QueryKmer;
@@ -28,6 +29,7 @@ struct TargetKmerInfo{
 };
 
 struct TargetKmer{
+    TargetKmer():ADkmer(0), taxIdAtRank(0), info(0, false){};
     TargetKmer(uint64_t ADkmer, TaxID taxIdAtRank, uint32_t seqID, bool redundacy) : ADkmer(ADkmer), taxIdAtRank(taxIdAtRank),info(seqID, redundacy) {}
     uint64_t ADkmer;
     TaxID taxIdAtRank;
