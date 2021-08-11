@@ -267,13 +267,13 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
                         size_t end = numOfBlocksList[seqIdx];
-                      //  cout<<"seqIdx "<<seqIdx<<" "<<start<<" "<<end<<endl;
+                        cout<<"seqIdx "<<seqIdx<<" "<<start<<" "<<end<<endl;
                         for(size_t bl = start; bl < end ; bl++){
-                        //    cout<<"bl "<<bl<<endl;
+                            cout<<"bl "<<bl<<endl;
                             seqIterator.translateBlock(seq->seq.s,blocks[bl]);
-                          //  cout<<"igo"<<endl;
+                            cout<<"igo"<<endl;
                             seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].offset + seqIdx, taxIdListAtRank[splits[i].offset + seqIdx]); //splits[i].offset + seqIdx
-                            //cout<<" done"<<endl;
+                            cout<<" done"<<endl;
                         }
                         start = numOfBlocksList[seqIdx];
                     }
