@@ -109,12 +109,10 @@ void SeqIterator::sixFrameTranslation(const char * seq){
     int len = strlen(seq);
     size_t end = len - 1;
     ///translation from DNA to AA. in each frame
-    for(int i = 0; i < len - 4; i = i+3 )
-    {
+    for(int i = 0; i < len - 4; i = i+3 ){
         aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[i    ]])][nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])]);
         aaFrames[1].push_back(nuc2aa[nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])][nuc2int(atcg[seq[i + 3]])]);
         aaFrames[2].push_back(nuc2aa[nuc2int(atcg[seq[i + 2]])][nuc2int(atcg[seq[i + 3]])][nuc2int(atcg[seq[i + 4]])]);
-
         aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 0)]]])][nuc2int(iRCT[atcg[seq[end - (i + 1)]]])][nuc2int(iRCT[atcg[seq[end - (i + 2)]]])]);
         aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 1)]]])][nuc2int(iRCT[atcg[seq[end - (i + 2)]]])][nuc2int(iRCT[atcg[seq[end - (i + 3)]]])]);
         aaFrames[5].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 2)]]])][nuc2int(iRCT[atcg[seq[end - (i + 3)]]])][nuc2int(iRCT[atcg[seq[end - (i + 4)]]])]);
@@ -133,7 +131,6 @@ void SeqIterator::sixFrameTranslation(const char * seq){
 
 
 void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID) {
-
     uint32_t forOrRev;
     uint64_t tempKmer = 0;
     uint32_t seqLen = strlen(seq);
@@ -157,16 +154,11 @@ void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBu
                 kmerBuffer.buffer[posToWrite] = {UINT64_MAX, 0, 0, frame};
             }else{
                 addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame);
-               // cout<<frame<<endl;
                 if(forOrRev == 0) {
                     kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3), frame};
-                 //   cout<<(frame % 3) + (kmerCnt * 3)<<endl;
                 } else{
                     kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, seqLen - ((frame%3) + (kmerCnt*3)) - 24 , frame};
-                   // cout<<seqLen - ((frame%3) + (kmerCnt*3)) - 24<<endl;
                 }
-
-                //printKmerInDNAsequence(tempKmer);
             }
             posToWrite++;
         }
@@ -436,7 +428,7 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
         if(nodes[genes[0].start_ndx].strand == 1){ //forward
             frame = (genes[0].begin - 1) % 3;
             leftEnd = 0;
-            while(leftEnd%3 != frame) leftEnd++;
+            while(leftEnd%3 != frame) leftEnd++; // y - (y - x) % 3 .. which would be faster?
             blocks.emplace_back(leftEnd, length-1, 1);
             blockIdx ++;
         } else{ //reverse
@@ -479,7 +471,6 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
         frame = (genes[0].begin - 1) % 3;
         leftEnd = 0;
         while (leftEnd % 3 != frame) leftEnd++;
-
         blocks.emplace_back(leftEnd, genes[1].begin - 1 + 22, 1);
         blockIdx++;
     } else {
@@ -568,32 +559,20 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
                 frame = (genes[geneIdx].begin - 1) % 3;
                 leftEnd = genes[geneIdx-1].end - 1- 22;
                 while(leftEnd%3 != frame) leftEnd++;
-                if(genes[geneIdx].end - 1<leftEnd){
-                    cout<<"7"<<endl;
-                }
                 blocks.emplace_back(leftEnd, genes[geneIdx].end - 1, 1);
                 blockIdx ++;
             } else { // reverse
-                if(genes[geneIdx].end - 1<genes[geneIdx-1].end - 22 - 1){
-                    cout<<"8"<<endl;
-                }
                 blocks.emplace_back(genes[geneIdx-1].end - 22 - 1, genes[geneIdx].end - 1, -1);
                 blockIdx++;
             }
         } else { // Extension to right
             if(!isReverse){ //forward
-                if(genes[geneIdx + 1].begin - 1 + 22<genes[geneIdx].begin - 1){
-                    cout<<"6"<<endl;
-                }
                 blocks.emplace_back(genes[geneIdx].begin - 1, genes[geneIdx + 1].begin - 1 + 22, 1);
                 blockIdx ++;
             } else{
                 frame = (genes[geneIdx].end - 1) % 3;
                 rightEnd = genes[geneIdx+1].begin - 1 + 22;
                 while(rightEnd%3 != frame) rightEnd--;
-                if(rightEnd<genes[geneIdx].begin - 1){
-                    cout<<"5"<<endl;
-                }
                 blocks.emplace_back(genes[geneIdx].begin - 1, rightEnd, -1);
                 blockIdx++;
             }

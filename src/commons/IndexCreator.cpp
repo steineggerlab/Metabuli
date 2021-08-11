@@ -1,7 +1,3 @@
-//
-// Created by KJB on 01/09/2020.
-//
-
 #include "IndexCreator.h"
 
 IndexCreator::IndexCreator()
@@ -33,8 +29,9 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 
     bool splitChecker[numOfSplits];
     fill_n(splitChecker, numOfSplits, false);
-
+    cout<<"32!"<<endl;
     TargetKmerBuffer kmerBuffer(kmerBufSize);
+    cout<<"34!"<<endl;
     size_t processedSplitCnt = 0;
     while(processedSplitCnt < numOfSplits){ ///check this condition
         fillTargetKmerBuffer2(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank);
@@ -196,7 +193,6 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                 size_t lengthOfTrainingSeq = strlen(seq->seq.s);
                 prodigal.is_meta = 0;
 
-              //  cout<<"Traning sequence: "<<seq->name.s<<endl;
                 if(strlen(seq->seq.s) < 20000){
                     prodigal.is_meta = 1;
                     cout<<"Training with metagenomic version: "<<splits[i].training<<" "<<seqs[splits[i].training].start<<" "<<i<<seq->headerOffset<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
