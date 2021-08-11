@@ -41,7 +41,7 @@ public:
             bufferSize = getTargetKmerBufferSize();
             cout<<bufferSize<<endl;
         } else {
-            buffer = (TargetKmer *) malloc(sizeof(TargetKmer) * sizeOfBuffer);
+            buffer = (TargetKmer *) malloc(size_t(sizeof(TargetKmer) * sizeOfBuffer));
             bufferSize = sizeOfBuffer;
         }
         startIndexOfReserve = 0;

@@ -31,7 +31,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     fill_n(splitChecker, numOfSplits, false);
     cout<<"32!"<<endl;
     size_t bufferSize = kmerBufSize;
-    TargetKmerBuffer kmerBuffer(0);
+    TargetKmerBuffer kmerBuffer(bufferSize);
     cout<<"34!"<<endl;
     size_t processedSplitCnt = 0;
     while(processedSplitCnt < numOfSplits){ ///check this condition
@@ -40,7 +40,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
         writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdList);
     }
 
-    free(kmerBuffer.buffer);
+    //free(kmerBuffer.buffer);
     munmap(seqFile.data, seqFile.fileSize + 1);
 }
 
