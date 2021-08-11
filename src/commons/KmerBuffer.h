@@ -16,7 +16,7 @@ public:
     size_t startIndexOfReserve;
     size_t bufferSize;
     explicit QueryKmerBuffer(size_t sizeOfBuffer){
-        buffer = new QueryKmer[sizeof(QueryKmer) * sizeOfBuffer];
+        buffer = new QueryKmer[sizeOfBuffer];
         //buffer = (QueryKmer *) malloc(sizeof(QueryKmer) * sizeOfBuffer);
         bufferSize = sizeOfBuffer;
         startIndexOfReserve = 0;
@@ -40,11 +40,11 @@ public:
     size_t bufferSize;
     explicit TargetKmerBuffer(size_t sizeOfBuffer){
         if(sizeOfBuffer == 0){
-            buffer = new TargetKmer[sizeof(TargetKmer) * getTargetKmerBufferSize()];
+            buffer = new TargetKmer[getTargetKmerBufferSize()];
             bufferSize = getTargetKmerBufferSize();
             cout<<bufferSize<<endl;
         } else {
-            buffer = new TargetKmer[sizeof(TargetKmer) * sizeOfBuffer];
+            buffer = new TargetKmer[sizeOfBuffer];
             //buffer = (TargetKmer *) malloc(size_t(sizeof(TargetKmer) * sizeOfBuffer));
             bufferSize = sizeOfBuffer;
         }
