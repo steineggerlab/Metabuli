@@ -268,9 +268,9 @@ string SeqIterator::reverseCompliment(char * read, int length) const {
 ///It extracts kmers from amino acid sequence with DNA information and fill the kmerBuffer with them.
 void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const uint32_t & seqID, int taxIdAtRank) {
     uint64_t tempKmer = 0;
-    uint32_t len = aaFrames[0].size();
+    int len = aaFrames[0].size();
     int checkN;
-    for (uint32_t kmerCnt = 0 ; kmerCnt < len - kmerLength + 1 ; kmerCnt++){
+    for (int kmerCnt = 0 ; kmerCnt < len - kmerLength + 1 ; kmerCnt++){
         ///Amino acid 2 number
         tempKmer = 0;
         checkN = 0;
@@ -284,9 +284,7 @@ void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, cons
         if(checkN == 1){
             kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0,false};
         }else{
-            if(!addDNAInfo_TargetKmer(tempKmer, seq, block, kmerCnt)){
-                cout<<"seqID "<<seqID<<endl;
-            }
+            addDNAInfo_TargetKmer(tempKmer, seq, block, kmerCnt);
             kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, false};
         }
         posToWrite++;
@@ -294,31 +292,26 @@ void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, cons
 }
 
 ///It adds DNA information to kmers referring the original DNA sequence.
-bool SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, const int & kmerCnt) {
-    bool re = true;
+void SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, const int & kmerCnt) {
     kmer <<= 25;
     int seqLength = strlen(seq);
-    if(block.strand == 1){
+    if (block.strand == 1) {
         int start = block.start + (kmerCnt * 3);
-        for( int i = 0; i < kmerLength * 3; i += 3) {
-            kmer |= nuc2num[nuc2int(atcg[seq[start + i]])][nuc2int(atcg[seq[start + i + 1]])][nuc2int(atcg[seq[start + i + 2]])] << i;
+        for (int i = 0; i < kmerLength * 3; i += 3) {
+            kmer |= nuc2num[nuc2int(atcg[seq[start + i]])][nuc2int(atcg[seq[start + i + 1]])][
+                    nuc2int(atcg[seq[start + i + 2]])] << i;
         }
-    } else{
+    } else {
         int start = block.end - (kmerCnt * 3);
-        if(start > seqLength - 1){
-            cout<<"pls"<<endl;
-            cout<<start<<" "<<block.end<<" "<<kmerCnt<<" "<<seqLength<<endl;
-            re=false;
-        }
-        for( int i = 0; i < kmerLength * 3; i += 3) {
-            if(start - i - 2 < 0){
-                cout<<"negative index"<<endl;
-                re=false;
-            }
-            kmer |= nuc2num[nuc2int(iRCT[atcg[seq[start - i]]])][nuc2int(iRCT[atcg[seq[start - i - 1]]])][nuc2int(iRCT[atcg[seq[start - i - 2]]])] << i; //seg fault here
+//        if(start > seqLength - 1){
+//            cout<<"pls"<<endl;
+//            cout<<start<<" "<<block.end<<" "<<kmerCnt<<" "<<seqLength<<endl;
+//        }
+        for (int i = 0; i < kmerLength * 3; i += 3) {
+            kmer |= nuc2num[nuc2int(iRCT[atcg[seq[start - i]]])][nuc2int(iRCT[atcg[seq[start - i - 1]]])][
+                    nuc2int(iRCT[atcg[seq[start - i - 2]]])] << i; //seg fault here
         }
     }
-    return re;
 }
 
 size_t SeqIterator::kmerNumOfSixFrameTranslation(const string & seq){

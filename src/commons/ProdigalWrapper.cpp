@@ -203,10 +203,10 @@ void ProdigalWrapper::trainMeta(char *genome) {
 
     slen = getNextSeq(genome, 1);
 
-    cout<<"gc"<<gc<<" "<<tinf.gc<<endl;
+//    cout<<"gc"<<gc<<" "<<tinf.gc<<endl;
 
     rcom_seq(seq, rseq, useq, slen);
-    cout<<"hi"<<endl;
+
     if(slen == 0) {
         fprintf(stderr, "\nSequence read failed (file must be Fasta, ");
         fprintf(stderr, "Genbank, or EMBL format).\n\n");
@@ -225,7 +225,7 @@ void ProdigalWrapper::trainMeta(char *genome) {
     if(low > 0.65) low = 0.65;
     high = 0.86596*tinf.gc + .1131991;
     if(high < 0.35) high = 0.35;
-    cout<<"223"<<endl;
+//    cout<<"223"<<endl;
     max_score = -100.0;
     for(int i = 0; i < NUM_META; i++) {
         if (i == 0 || meta[i].tinf->trans_table !=
@@ -237,22 +237,16 @@ void ProdigalWrapper::trainMeta(char *genome) {
         }
         if (meta[i].tinf->gc < low || meta[i].tinf->gc > high) continue;
         reset_node_scores(nodes, nn);
-        cout<<"235"<<endl;
         score_nodes(seq, rseq, slen, nodes, nn, meta[i].tinf, closed, is_meta);
-        cout<<"237"<<endl;
         record_overlapping_starts(nodes, nn, meta[i].tinf, 1);
-        cout<<"239"<<endl;
         ipath = dprog(nodes, nn, meta[i].tinf, 1);
         if(ipath == -1) continue;
-        cout<<"241"<<endl;
         cout<<ipath<<endl;
         cout<<nn<<endl;
         cout<<nodes[ipath].score<<endl;
-        cout<<"2455"<<endl;
         if (nodes[ipath].score > max_score) {
             max_phase = i;
             max_score = nodes[ipath].score;
-            cout<<"245"<<endl;
 //            eliminate_bad_genes(nodes, ipath, meta[i].tinf);
 //            ng = add_genes(genes, nodes, ipath);
 //            tweak_final_starts(genes, ng, nodes, nn, meta[i].tinf);
