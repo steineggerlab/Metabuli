@@ -194,7 +194,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                 size_t lengthOfTrainingSeq = strlen(seq->seq.s);
                 prodigal.is_meta = 0;
 
-                if(strlen(seq->seq.s) < 20000){
+                if(strlen(seq->seq.s) < 100000){
                     prodigal.is_meta = 1;
                     cout<<"Training with metagenomic version: "<<splits[i].training<<" "<<seqs[splits[i].training].start<<" "<<i<<seq->headerOffset<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
                     cout<<seq->name.s<<endl;
