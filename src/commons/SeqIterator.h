@@ -23,7 +23,7 @@
 #include <omp.h>
 #endif
 
-KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
+//KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
 
 #define kmerLength 8
 
