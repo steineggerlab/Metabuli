@@ -255,6 +255,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     cout<<"buffer is full"<<endl;
                     hasOverflow = true;
                 }
+                kseq_destroy(seq);
                 free(numOfBlocksList);
                 blocks.clear();
             }
