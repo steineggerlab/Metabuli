@@ -2,12 +2,10 @@
 
 IndexCreator::IndexCreator()
 {
-    //seqIterator = new SeqIterator();
 
 }
 
 IndexCreator::~IndexCreator() {
-    //delete seqIterator;
 }
 
 ///It reads a reference sequence file and write a differential index file and target k-mer info file.
