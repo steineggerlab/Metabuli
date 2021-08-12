@@ -270,21 +270,21 @@ void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, cons
     uint64_t tempKmer = 0;
     uint32_t len = aaFrames[0].size();
     int checkN;
-    for (uint32_t startOfKmer = 0 ; startOfKmer < len - kmerLength + 1 ; startOfKmer++){
+    for (uint32_t kmerCnt = 0 ; kmerCnt < len - kmerLength + 1 ; kmerCnt++){
         ///Amino acid 2 number
         tempKmer = 0;
         checkN = 0;
         for (size_t i = 0; i < kmerLength; i++){
-            if(-1 == aaFrames[0][startOfKmer + i]){
+            if(-1 == aaFrames[0][kmerCnt + i]){
                 checkN = 1;
                 break;
             }
-            tempKmer += aaFrames[0][startOfKmer + i] * powers[i];
+            tempKmer += aaFrames[0][kmerCnt + i] * powers[i];
         }
         if(checkN == 1){
             kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0,false};
         }else{
-            addDNAInfo_TargetKmer(tempKmer, seq, block, startOfKmer);
+            addDNAInfo_TargetKmer(tempKmer, seq, block, kmerCnt);
             kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, false};
         }
         posToWrite++;
@@ -292,15 +292,15 @@ void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, cons
 }
 
 ///It adds DNA information to kmers referring the original DNA sequence.
-void SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, const int & startOfKmer) {
+void SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, const int & kmerCnt) {
     kmer <<= 25;
     if(block.strand == 1){
-        int start = block.start + (startOfKmer * 3);
+        int start = block.start + (kmerCnt * 3);
         for( int i = 0; i < kmerLength * 3; i += 3) {
             kmer |= nuc2num[nuc2int(atcg[seq[start + i]])][nuc2int(atcg[seq[start + i + 1]])][nuc2int(atcg[seq[start + i + 2]])] << i;
         }
     } else{
-        int start = block.end - (startOfKmer * 3);
+        int start = block.end - (kmerCnt * 3);
         for( int i = 0; i < kmerLength * 3; i += 3) {
             kmer |= nuc2num[nuc2int(iRCT[atcg[seq[start - i]]])][nuc2int(iRCT[atcg[seq[start - i - 1]]])][nuc2int(iRCT[atcg[seq[start - i - 2]]])] << i;
         }
