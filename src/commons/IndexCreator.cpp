@@ -213,6 +213,9 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), seqs[splits[i].offset + p].length};
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
+                    if(strlen(seq->seq.s) < 1000){
+                        cout<<"short seqeunce: "<<seq->name.s<<endl;
+                    }
                     prodigal.getPredictedGenes(seq->seq.s);
                     prodigal.removeCompletelyOverlappingGenes();
                     seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,

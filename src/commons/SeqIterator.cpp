@@ -284,7 +284,9 @@ void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, cons
         if(checkN == 1){
             kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0,false};
         }else{
-            addDNAInfo_TargetKmer(tempKmer, seq, block, kmerCnt);
+            if(!addDNAInfo_TargetKmer(tempKmer, seq, block, kmerCnt)){
+                cout<<"seqID "<<seqID<<endl;
+            }
             kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, false};
         }
         posToWrite++;
@@ -292,7 +294,8 @@ void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, cons
 }
 
 ///It adds DNA information to kmers referring the original DNA sequence.
-void SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, const int & kmerCnt) {
+bool SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, const int & kmerCnt) {
+    bool re = true;
     kmer <<= 25;
     int seqLength = strlen(seq);
     if(block.strand == 1){
@@ -304,14 +307,18 @@ void SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const
         int start = block.end - (kmerCnt * 3);
         if(start > seqLength - 1){
             cout<<"hi"<<endl;
+            cout<<start<<" "<<block.end<<" "<<kmerCnt<<" "<<seqLength<<endl;
+            re=false;
         }
         for( int i = 0; i < kmerLength * 3; i += 3) {
             if(start - i - 2 < 0){
                 cout<<"negative index"<<endl;
+                re=false;
             }
-            kmer |= nuc2num[nuc2int(iRCT[atcg[seq[start - i]]])][nuc2int(iRCT[atcg[seq[start - i - 1]]])][nuc2int(iRCT[atcg[seq[start - i - 2]]])] << i;
+            kmer |= nuc2num[nuc2int(iRCT[atcg[seq[start - i]]])][nuc2int(iRCT[atcg[seq[start - i - 1]]])][nuc2int(iRCT[atcg[seq[start - i - 2]]])] << i; //seg fault here
         }
     }
+    return re;
 }
 
 size_t SeqIterator::kmerNumOfSixFrameTranslation(const string & seq){
