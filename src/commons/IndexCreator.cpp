@@ -112,7 +112,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
 
                     } else {
                         cout<<seq->name.s<<" reverse"<<endl;
-                        seqIterator.getTranslationBlocksReverse(prodigal.finalGenes, prodigal.nodes, blocks,
+                        SeqIterator::getTranslationBlocksReverse(prodigal.finalGenes, prodigal.nodes, blocks,
                                                                 prodigal.fng, strlen(seq->seq.s),
                                                          numOfBlocks);
                     }
@@ -192,7 +192,6 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[splits[i].training].start]), seqs[splits[i].training].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
-                size_t lengthOfTrainingSeq = strlen(seq->seq.s);
                 prodigal.is_meta = 0;
 
                 if(strlen(seq->seq.s) < 100000){
