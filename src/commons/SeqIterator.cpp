@@ -294,6 +294,7 @@ void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, cons
 ///It adds DNA information to kmers referring the original DNA sequence.
 void SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, const int & kmerCnt) {
     kmer <<= 25;
+    int seqLength = strlen(seq);
     if(block.strand == 1){
         int start = block.start + (kmerCnt * 3);
         for( int i = 0; i < kmerLength * 3; i += 3) {
@@ -301,7 +302,13 @@ void SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const
         }
     } else{
         int start = block.end - (kmerCnt * 3);
+        if(start > seqLength - 1){
+            cout<<"hi"<<endl;
+        }
         for( int i = 0; i < kmerLength * 3; i += 3) {
+            if(start - i - 2 < 0){
+                cout<<"negative index"<<endl;
+            }
             kmer |= nuc2num[nuc2int(iRCT[atcg[seq[start - i]]])][nuc2int(iRCT[atcg[seq[start - i - 1]]])][nuc2int(iRCT[atcg[seq[start - i - 2]]])] << i;
         }
     }
