@@ -29,10 +29,8 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 
     bool splitChecker[numOfSplits];
     fill_n(splitChecker, numOfSplits, false);
-    cout<<"32!"<<endl;
     size_t bufferSize = kmerBufSize;
     TargetKmerBuffer kmerBuffer(bufferSize);
-    cout<<"34!"<<endl;
     size_t processedSplitCnt = 0;
     while(processedSplitCnt < numOfSplits){ ///check this condition
         fillTargetKmerBuffer2(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank);
@@ -213,9 +211,6 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), seqs[splits[i].offset + p].length};
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
-                    if(strlen(seq->seq.s) < 1000){
-                        cout<<"short seqeunce: "<<seq->name.s<<strlen(seq->seq.s)<<endl;
-                    }
                     prodigal.getPredictedGenes(seq->seq.s);
                     prodigal.removeCompletelyOverlappingGenes();
                     seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,

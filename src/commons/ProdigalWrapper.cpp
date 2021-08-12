@@ -241,9 +241,9 @@ void ProdigalWrapper::trainMeta(char *genome) {
         record_overlapping_starts(nodes, nn, meta[i].tinf, 1);
         ipath = dprog(nodes, nn, meta[i].tinf, 1);
         if(ipath == -1) continue;
-        cout<<ipath<<endl;
-        cout<<nn<<endl;
-        cout<<nodes[ipath].score<<endl;
+//        cout<<ipath<<endl;
+//        cout<<nn<<endl;
+//        cout<<nodes[ipath].score<<endl;
         if (nodes[ipath].score > max_score) {
             max_phase = i;
             max_score = nodes[ipath].score;
@@ -253,7 +253,7 @@ void ProdigalWrapper::trainMeta(char *genome) {
 //            record_gene_data(genes, ng, nodes, meta[i].tinf, num_seq);
         }
     }
-    cout<<"251"<<endl;
+//    cout<<"251"<<endl;
 }
 void ProdigalWrapper::getPredictedGenes(char * genome){
 
@@ -324,16 +324,12 @@ void ProdigalWrapper::getPredictedGenes(char * genome){
         ipath = dprog(nodes, nn, meta[max_phase].tinf, 1);
         eliminate_bad_genes(nodes, ipath, meta[max_phase].tinf);
         ng = add_genes(genes, nodes, ipath);
-        fprintf(stderr, "done! gene count: %d (%d bp)\n", ng, slen);
         tweak_final_starts(genes, ng, nodes, nn, meta[max_phase].tinf);
         record_gene_data(genes, ng, nodes, meta[max_phase].tinf, num_seq);
     }
      if(1) {
          fprintf(stderr, "done! gene count: %d (%d bp)\n", ng, slen);
      }
-
-     //TODO update dicodon statistics using predicted genes
-//     updateDicodonFrequency();
 }
 
 int ProdigalWrapper::getNextSeq(char * line, int training) {

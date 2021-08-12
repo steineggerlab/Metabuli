@@ -16,13 +16,12 @@ public:
     size_t startIndexOfReserve;
     size_t bufferSize;
     explicit QueryKmerBuffer(size_t sizeOfBuffer){
-        buffer = new QueryKmer[sizeOfBuffer];
-        //buffer = (QueryKmer *) malloc(sizeof(QueryKmer) * sizeOfBuffer);
+        buffer = (QueryKmer *) malloc(sizeof(QueryKmer) * sizeOfBuffer);
         bufferSize = sizeOfBuffer;
         startIndexOfReserve = 0;
     };
     ~QueryKmerBuffer(){
-        delete[] buffer;
+        free(buffer);
     }
     size_t reserveMemory(size_t numOfKmer){
         size_t offsetToWrite = __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
@@ -40,12 +39,10 @@ public:
     size_t bufferSize;
     explicit TargetKmerBuffer(size_t sizeOfBuffer){
         if(sizeOfBuffer == 0){
-            buffer = new TargetKmer[getTargetKmerBufferSize()];
+            buffer = (TargetKmer *) malloc(sizeof(TargetKmer) * getTargetKmerBufferSize());
             bufferSize = getTargetKmerBufferSize();
-            cout<<bufferSize<<endl;
         } else {
-            buffer = new TargetKmer[sizeOfBuffer];
-            //buffer = (TargetKmer *) malloc(size_t(sizeof(TargetKmer) * sizeOfBuffer));
+            buffer = (TargetKmer *) malloc(sizeof(TargetKmer) * sizeOfBuffer);
             bufferSize = sizeOfBuffer;
         }
         startIndexOfReserve = 0;
@@ -55,8 +52,9 @@ public:
         size_t offsetToWrite = __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
         return offsetToWrite;
     };
+
     ~TargetKmerBuffer(){
-        delete[] buffer;
+        free(buffer);
     }
 
     static size_t getTargetKmerBufferSize(){

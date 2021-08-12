@@ -182,64 +182,15 @@ void SeqIterator::addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int fo
 
 bool SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
     aaFrames[0].clear();
-   // cout<<block.start<<" "<<block.end<<" "<<block.strand<<endl;
- //   size_t blockLength = block.end - block.start + 1;
-//    cout<<"L: "<<blockLength<<endl;
- //   aaFrames[0].reserve(blockLength / 3 + 1);
-
     if(block.strand == 1){
         for(size_t i = block.start ; i + 2 <= block.end ; i = i + 3){
-//            if( i + 2 > strlen(seq) - 1){
-//                cout<<"over flow 1"<<endl;
-//                cout<<"last index of seq: "<<strlen(seq) - 1 <<endl;
-//                cout<<"block.start: "<<block.start<<endl;
-//                cout<<"bloc.end: "<<block.end<<endl;
-//                cout<<"i :"<<i<<endl;
-//                cout<<"L :"<<blockLength<<endl;
-//                return false;
-//            }
             aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[i]])][nuc2int(atcg[seq[i+1]])][nuc2int(atcg[seq[i+2]])]);
         }
     }else{
         for(int i = block.end; i >= (int)block.start + 2; i = i - 3){
-//            if( i - 2 < 0){
-//                cout<<"over flow 2"<<endl;
-//                cout<<"last index of seq: "<<strlen(seq) - 1 <<endl;
-//                cout<<"block.start: "<<block.start<<endl;
-//                cout<<"i :"<<i<<endl;
-//                cout<<"L :"<<blockLength<<endl;
-//                return false;
-//            }
             aaFrames[0].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[i]]])][nuc2int(iRCT[atcg[seq[i-1]]])][nuc2int(iRCT[atcg[seq[i-2]]])]);
         }
     }
-
-//    if(block.strand == 1){
-//        for(size_t i = 0; i < blockLength - 2; i = i + 3){
-//            if(block.start+i > strlen(seq) - 1){
-//                cout<<"over flow 1"<<endl;
-//                cout<<"last index of seq: "<<strlen(seq) - 1 <<endl;
-//                cout<<"block.start: "<<block.start<<endl;
-//                cout<<"bloc.end: "<<block.end<<endl;
-//                cout<<"i :"<<i<<endl;
-//                cout<<"L :"<<blockLength<<endl;
-//                return false;
-//            }
-//            aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[block.start + i]])][nuc2int(atcg[seq[block.start+i+1]])][nuc2int(atcg[seq[block.start+i+2]])]);
-//        }
-//    }else{
-//        for(size_t i = 0; i < blockLength - 2; i = i + 3){
-//            if(block.end-i-2 < 0){
-//                cout<<"over flow 2"<<endl;
-//                cout<<"last index of seq: "<<strlen(seq) - 1 <<endl;
-//                cout<<"block.start: "<<block.start<<endl;
-//                cout<<"i :"<<i<<endl;
-//                cout<<"L :"<<blockLength<<endl;
-//                return false;
-//            }
-//            aaFrames[0].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[block.end - i]]])][nuc2int(iRCT[atcg[seq[block.end-i-1]]])][nuc2int(iRCT[atcg[seq[block.end-i-2]]])]);
-//        }
-//    }
     return true;
 }
 
@@ -294,7 +245,6 @@ void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, cons
 ///It adds DNA information to kmers referring the original DNA sequence.
 void SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, const int & kmerCnt) {
     kmer <<= 25;
-    int seqLength = strlen(seq);
     if (block.strand == 1) {
         int start = block.start + (kmerCnt * 3);
         for (int i = 0; i < kmerLength * 3; i += 3) {
@@ -303,13 +253,8 @@ void SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const
         }
     } else {
         int start = block.end - (kmerCnt * 3);
-//        if(start > seqLength - 1){
-//            cout<<"pls"<<endl;
-//            cout<<start<<" "<<block.end<<" "<<kmerCnt<<" "<<seqLength<<endl;
-//        }
         for (int i = 0; i < kmerLength * 3; i += 3) {
-            kmer |= nuc2num[nuc2int(iRCT[atcg[seq[start - i]]])][nuc2int(iRCT[atcg[seq[start - i - 1]]])][
-                    nuc2int(iRCT[atcg[seq[start - i - 2]]])] << i; //seg fault here
+            kmer |= nuc2num[nuc2int(iRCT[atcg[seq[start - i]]])][nuc2int(iRCT[atcg[seq[start - i - 1]]])][nuc2int(iRCT[atcg[seq[start - i - 2]]])] << i; //seg fault here
         }
     }
 }
