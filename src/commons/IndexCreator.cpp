@@ -2,12 +2,12 @@
 
 IndexCreator::IndexCreator()
 {
-    seqIterator = new SeqIterator();
+    //seqIterator = new SeqIterator();
 
 }
 
 IndexCreator::~IndexCreator() {
-    delete seqIterator;
+    //delete seqIterator;
 }
 
 ///It reads a reference sequence file and write a differential index file and target k-mer info file.
@@ -27,7 +27,8 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     size_t numOfSplits = splits.size();
     cout<<"numOfSplits "<<numOfSplits<<endl;
 
-    bool splitChecker[numOfSplits];
+    bool * splitChecker = new bool[numOfSplits];
+  //  bool splitChecker[numOfSplits];
     fill_n(splitChecker, numOfSplits, false);
     size_t bufferSize = kmerBufSize;
     TargetKmerBuffer kmerBuffer(bufferSize);
@@ -39,6 +40,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     }
 
     //free(kmerBuffer.buffer);
+    delete[] splitChecker;
     munmap(seqFile.data, seqFile.fileSize + 1);
 }
 
@@ -54,7 +56,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
         SeqIterator seqIterator;
         size_t posToWrite;
         size_t numOfBlocks;
-        size_t totalKmerCntForOneTaxID = 0;
+        size_t totalKmerCntForOneTaxID;
 
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < splits.size() ; i++) {
@@ -153,6 +155,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     cout<<"buffer is full"<<endl;
                     hasOverflow = true;
                 }
+                kseq_destroy(seq);
                 free(numOfBlocksList);
                 blocks.clear();
             }
@@ -175,7 +178,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
         SeqIterator seqIterator;
         size_t posToWrite;
         size_t numOfBlocks;
-        size_t totalKmerCntForOneTaxID = 0;
+        size_t totalKmerCntForOneTaxID;
         vector<uint64_t> intergenicKmerList;
         vector<PredictedBlock> blocks;
 
@@ -271,7 +274,7 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
     sprintf(suffixedInfoFileName,"%s_%zu_info", outputFileName, numOfFlush);
     FILE * diffIdxFile = fopen(suffixedDiffIdxFileName, "wb");
     FILE * infoFile = fopen(suffixedInfoFileName, "wb");
-    if (diffIdxFile == NULL || infoFile == NULL){
+    if (diffIdxFile == nullptr || infoFile == nullptr){
         cout<<"Cannot open the file for writing target DB"<<endl;
         return;
     }
@@ -407,7 +410,6 @@ void IndexCreator::getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, Mma
 void IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile) {
     size_t start = 0;
     size_t numOfChar = seqFile.fileSize / sizeof(char);
-    size_t numOfSeq = 0;
     for(size_t i = 1; i < numOfChar; i++){
         if(seqFile.data[i] == '>'){
             seqSegments.emplace_back(start, i-2, i - start - 1);
@@ -422,7 +424,7 @@ void IndexCreator::getFastaSplits(const vector<int> & taxIdListAtRank, vector<Fa
     size_t idx = 0;
     uint32_t offset = 0;
     uint32_t cnt = 0;
-    size_t theLargest = 0;
+    size_t theLargest;
     int isLeftover;
 
     int currentTaxId;

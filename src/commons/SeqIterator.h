@@ -23,7 +23,7 @@
 #include <omp.h>
 #endif
 
-//KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
+KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
 
 #define kmerLength 8
 
@@ -32,9 +32,9 @@
 using namespace std;
 
 typedef struct PredictedBlock {
-    PredictedBlock(uint32_t start, uint32_t end, int strand) : start(start), end(end), strand(strand) { }
-    uint32_t start;
-    uint32_t end;
+    PredictedBlock(int start, int end, int strand) : start(start), end(end), strand(strand) { }
+    int start;
+    int end;
     int strand; //true for forward
 }PredictedBlock;
 
@@ -65,7 +65,7 @@ public:
     void generateIntergenicKmerList(struct _gene * genes, struct _node * nodes, int numberOfGenes, vector<uint64_t> & intergenicKmerList, const char * seq);
     size_t kmer2number(const char * kmer, int k);
     void getTranslationBlocks(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
-    void getTranslationBlocksReverse(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
+    static void getTranslationBlocksReverse(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
     void getTranslationBlocks2(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene,
                 size_t length, size_t & numOfBlocks, vector<uint64_t> & intergenicKmerList, const char * seq);
 
