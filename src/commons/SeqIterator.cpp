@@ -306,7 +306,7 @@ bool SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const
     } else{
         int start = block.end - (kmerCnt * 3);
         if(start > seqLength - 1){
-            cout<<"hi"<<endl;
+            cout<<"pls"<<endl;
             cout<<start<<" "<<block.end<<" "<<kmerCnt<<" "<<seqLength<<endl;
             re=false;
         }
