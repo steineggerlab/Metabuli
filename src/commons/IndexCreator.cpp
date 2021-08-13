@@ -26,10 +26,8 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     cout<<"numOfSplits "<<numOfSplits<<endl;
 
     bool * splitChecker = new bool[numOfSplits];
-  //  bool splitChecker[numOfSplits];
     fill_n(splitChecker, numOfSplits, false);
-    size_t bufferSize = kmerBufSize;
-    TargetKmerBuffer kmerBuffer(bufferSize);
+    TargetKmerBuffer kmerBuffer(kmerBufSize);
     size_t processedSplitCnt = 0;
     while(processedSplitCnt < numOfSplits){ ///check this condition
         fillTargetKmerBuffer2(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank);
@@ -220,13 +218,13 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     numOfBlocksList[p] = numOfBlocks;
                 }
 
-                /// Calculate the number of k-mers to reserve memory of k-mer buffer
+                // Calculate the number of k-mers to reserve memory of k-mer buffer
                 totalKmerCntForOneTaxID = 0;
                 for(size_t block = 0; block < numOfBlocks; block++){
                     totalKmerCntForOneTaxID += seqIterator.getNumOfKmerForBlock(blocks[block]);
                 }
-             //   cout<<"totalKmerCntForOneTaxID "<<totalKmerCntForOneTaxID<<endl;
-                /// Fill k-mer buffer with k-mers of current split if the buffer has enough space
+
+                // Fill k-mer buffer with k-mers of current split if the buffer has enough space
                 posToWrite = kmerBuffer.reserveMemory(totalKmerCntForOneTaxID);
                 if(posToWrite + totalKmerCntForOneTaxID < kmerBuffer.bufferSize){
                     size_t start = 0;
@@ -248,7 +246,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
 #pragma omp atomic
                     processedSplitCnt ++;
                 }else {
-                    ///Withdraw the reservation if the buffer is full.
+                    // Withdraw the reservation if the buffer is full.
 #pragma omp atomic
                     kmerBuffer.startIndexOfReserve -= totalKmerCntForOneTaxID;
                     cout<<"buffer is full"<<endl;
@@ -267,11 +265,12 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
 ///This function sort the TargetKmerBuffer, do redundancy reducing task, write the differential index of them
 void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName, const vector<int> & taxIdList)
 {
-    ///open a split file, which will be merged later.
-    char suffixedDiffIdxFileName[100];
-    char suffixedInfoFileName[100];
-    sprintf(suffixedDiffIdxFileName,"%s_%zu_diffIdx", outputFileName, numOfFlush);
-    sprintf(suffixedInfoFileName,"%s_%zu_info", outputFileName, numOfFlush);
+    // Write a split file, which will be merged later.
+    char suffixedDiffIdxFileName[300];
+    char suffixedInfoFileName[300];
+    sprintf(suffixedDiffIdxFileName, "%s/%zu_diffIdx", outputFileName, numOfFlush);
+    sprintf(suffixedInfoFileName, "%s/%zu_info", outputFileName, numOfFlush);
+
     FILE * diffIdxFile = fopen(suffixedDiffIdxFileName, "wb");
     FILE * infoFile = fopen(suffixedInfoFileName, "wb");
     if (diffIdxFile == nullptr || infoFile == nullptr){
