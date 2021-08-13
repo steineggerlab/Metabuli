@@ -29,7 +29,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         cout<<"Creating target database based on taxonomy of GTDB"<<endl;
         prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_GTDB";
-        taxIdList_fname = string(outputFileName) +"_taxID_list_GTDB";
+        taxIdList_fname = string(outputFileName) +"taxID_list";
         names = "../../gtdb_taxdmp/names.dmp";
         nodes = "../../gtdb_taxdmp/nodes.dmp";
         merged = "../../gtdb_taxdmp/merged.dmp";
@@ -37,7 +37,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         cout<<"Creating target database based on taxonomy of NCBI"<<endl;
         prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_NCBI";
-        taxIdList_fname = string(outputFileName) +"_taxID_list_NCBI";
+        taxIdList_fname = string(outputFileName) +"taxID_list";
         names = "../../ncbi_taxdmp/names.dmp";
         nodes = "../../ncbi_taxdmp/nodes.dmp";
         merged = "../../ncbi_taxdmp/merged.dmp";
@@ -93,50 +93,48 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     idxCre.startIndexCreatingParallel(seqFileName,outputFileName, taxIdListAtSpecies, taxIdList);
     cout<<"done"<<endl;
 
+
+
     int numOfSplits = idxCre.getNumOfFlush();
     char suffixedDiffIdxFileName[300];
     char suffixedInfoFileName[300];
     char diffIdxSplitFileName[300];
 
-    //There is only one split.
-    if(numOfSplits == 1){
-        sprintf(suffixedDiffIdxFileName, "%s/0_diffIdx", outputFileName);
-        sprintf(suffixedInfoFileName, "%s/0_info", outputFileName);
 
-        //system(("./../../util/unzip_and_list.sh "+ string(folder)+" "+fastList_fname).c_str());
-        system(("mv " + string(suffixedDiffIdxFileName)+" "+string(outputFileName)+"/diffIdx").c_str());
-        system(("mv " + string(suffixedInfoFileName)+" "+string(outputFileName)+"/info").c_str());
-        //TODO diff idx split
-        cout<<"Reference DB files you need are as below"<<endl;
-        cout<<suffixedDiffIdxFileName<<endl;
-        cout<<suffixedInfoFileName<<endl;
-        cout<<taxIdFileName<<endl;
-        cout<<diffIdxSplitFileName<<endl;
-        return 0;
-    }
+    //There is only one split.
+//    if(numOfSplits == 1){
+//        sprintf(suffixedDiffIdxFileName, "%s/0_diffIdx", outputFileName);
+//        sprintf(suffixedInfoFileName, "%s/0_info", outputFileName);
+//
+//
+//        system(("mv " + string(suffixedDiffIdxFileName)+" "+string(outputFileName)+"/diffIdx").c_str());
+//        system(("mv " + string(suffixedInfoFileName)+" "+string(outputFileName)+"/info").c_str());
+//        //TODO diff idx split
+//        cout<<"Reference DB files you need are as below"<<endl;
+//        cout<<suffixedDiffIdxFileName<<endl;
+//        cout<<suffixedInfoFileName<<endl;
+//        cout<<taxIdFileName<<endl;
+//        cout<<diffIdxSplitFileName<<endl;
+//        return 0;
+//    }
 
     //Merge files
     cout<<"Merge reference DB files ... ";
     vector<char *> diffSplits;
     vector<char *> infoSplits;
     for(int split = 0; split < numOfSplits ; split++){
-        if(split == 0){
-            sprintf(suffixedDiffIdxFileName, "%s_diffIdx", outputFileName);
-            sprintf(suffixedInfoFileName, "%s_info", outputFileName);
-        } else {
-            sprintf(suffixedDiffIdxFileName, "%s_%d_diffIdx", outputFileName, split);
-            sprintf(suffixedInfoFileName, "%s_%d_info", outputFileName, split);
-        }
+        sprintf(suffixedDiffIdxFileName, "%s_%d_diffIdx", outputFileName, split);
+        sprintf(suffixedInfoFileName, "%s_%d_info", outputFileName, split);
         diffSplits.push_back(suffixedDiffIdxFileName);
         infoSplits.push_back(suffixedInfoFileName);
     }
 
     char mergedDiffFileName[100];
     char mergedInfoFileName[100];
-
     sprintf(mergedDiffFileName, "%s/diffIdx", outputFileName);
     sprintf(mergedInfoFileName, "%s/info", outputFileName);
     sprintf(diffIdxSplitFileName, "%s/split", outputFileName);
+
     FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName);
     merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtSpecies, taxIdList);
     cout<<"done"<<endl;
@@ -175,14 +173,14 @@ void prepareForCreatingTargetDB(const LocalParameters & par){
         taxid_fname_fname = string(folder) + "/taxid_filename_GTDB";
         taxid_fname_sorted_fname = string(folder) + "/taxid_filename_sorted_GTDB";
         fastList_fname = string(folder) + "/fasta_list_GTDB";
-        taxidList_fname = string(outputFileName) + "_taxID_list_GTDB";
+        taxidList_fname = string(outputFileName) + "taxID_list";
         genome_fname = string(folder) + "/concatenated_genome_GTDB";
         system("echo \"\t|\t\t|\" > ../../gtdb_taxdmp/merged.dmp");
     }else{
         taxid_fname_fname = string(folder) + "/taxid_filename_NCBI";
         taxid_fname_sorted_fname = string(folder) + "/taxid_filename_sorted_NCBI";
         fastList_fname = string(folder) + "/fasta_list_NCBI";
-        taxidList_fname = string(outputFileName) + "_taxID_list_NCBI";
+        taxidList_fname = string(outputFileName) + "taxID_list";
         genome_fname = string(folder) + "/concatenated_genome_NCBI";
     }
 
