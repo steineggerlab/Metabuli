@@ -457,10 +457,9 @@ void ProdigalWrapper::printGenes() {
 }
 
 void ProdigalWrapper::removeCompletelyOverlappingGenes() {
+    fng = 0;
     if(ng == 0)
         return;
-
-    fng = 0;
     for(int i = 0; i < ng - 1; i++){
         if(genes[i].begin >= genes[i+1].begin) continue;
         finalGenes[fng++] = genes[i];
