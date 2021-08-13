@@ -209,7 +209,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                 numOfBlocks = 0;
                 for(size_t p = 0; p < splits[i].cnt; p++ ) {
                     buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), seqs[splits[i].offset + p].length};
-                    //seq = kseq_init(&buffer);
+                    seq = kseq_init(&buffer);
                     kseq_read(seq);
                     prodigal.getPredictedGenes(seq->seq.s);
                     prodigal.removeCompletelyOverlappingGenes();
@@ -231,7 +231,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     size_t start = 0;
                     for(size_t seqIdx = 0; seqIdx < splits[i].cnt; seqIdx++){
                         buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + seqIdx].start]), seqs[splits[i].offset + seqIdx].length};
-                        //seq = kseq_init(&buffer);
+                        seq = kseq_init(&buffer);
                         kseq_read(seq);
                         size_t end = numOfBlocksList[seqIdx];
                         cout<<"seqIdx "<<seqIdx<<" "<<start<<" "<<end<<endl;
