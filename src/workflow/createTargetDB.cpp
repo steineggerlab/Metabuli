@@ -83,11 +83,10 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     //Make files of differential indexing and information of k-mers
     cout<<"Start to creat reference DB file(s) ... ";
-  //  idxCre.startIndexCreatingParallel(seqFileName,outputFileName, taxIdListAtSpecies, taxIdList);
+    idxCre.startIndexCreatingParallel(seqFileName,outputFileName, taxIdListAtSpecies, taxIdList);
     cout<<"done"<<endl;
 
-   // int numOfSplits = idxCre.getNumOfFlush();
-    int numOfSplits = 1;
+    int numOfSplits = idxCre.getNumOfFlush();
     char suffixedDiffIdxFileName[300];
     char suffixedInfoFileName[300];
     char diffIdxSplitFileName[300];
