@@ -272,7 +272,6 @@ size_t SeqIterator::kmerNumOfSixFrameTranslation(const string & seq){
 }
 
 size_t SeqIterator::getNumOfKmerForBlock(const PredictedBlock & block){
-    //cout<<block.start<<" "<<block.end<<" "<<block.strand<<endl;
     if(block.end <= block.start){
         cout<<"NONO"<<endl;
         cout<<block.start<<endl;

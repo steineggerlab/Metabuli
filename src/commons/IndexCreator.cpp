@@ -214,7 +214,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     prodigal.getPredictedGenes(seq->seq.s);
                     prodigal.removeCompletelyOverlappingGenes();
                     seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
-                                                     prodigal.getNumberOfPredictedGenes(), strlen(seq->seq.s),
+                                                     prodigal.fng, strlen(seq->seq.s),
                                                      numOfBlocks, intergenicKmerList, seq->seq.s);
                     numOfBlocksList[p] = numOfBlocks;
                 }
