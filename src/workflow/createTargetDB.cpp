@@ -1,18 +1,11 @@
-//
-// Created by KJB on 10/09/2020.
-//
-//#include "createTargetDB.h"
 #include "IndexCreator.h"
 #include "FileMerger.h"
 #include "LocalParameters.h"
 #include <Command.h>
 #include <regex>
-#include "Classifier.h"
-#//include "omp.h"
 #include <random>
 
 void prepareForCreatingTargetDB(const LocalParameters & par);
-void makeDiffIdxLookup(char * diffIdxFileName, char * infoFileName);
 
 int createTargetDB(int argc, const char **argv, const Command &command)
 {
@@ -90,12 +83,11 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     //Make files of differential indexing and information of k-mers
     cout<<"Start to creat reference DB file(s) ... ";
-    idxCre.startIndexCreatingParallel(seqFileName,outputFileName, taxIdListAtSpecies, taxIdList);
+  //  idxCre.startIndexCreatingParallel(seqFileName,outputFileName, taxIdListAtSpecies, taxIdList);
     cout<<"done"<<endl;
 
-
-
-    int numOfSplits = idxCre.getNumOfFlush();
+   // int numOfSplits = idxCre.getNumOfFlush();
+    int numOfSplits = 1;
     char suffixedDiffIdxFileName[300];
     char suffixedInfoFileName[300];
     char diffIdxSplitFileName[300];
@@ -119,12 +111,12 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 //    }
 
     //Merge files
-    cout<<"Merge reference DB files ... ";
+    cout<<"Merge reference DB files ... "<<endl;
     vector<char *> diffSplits;
     vector<char *> infoSplits;
     for(int split = 0; split < numOfSplits ; split++){
-        sprintf(suffixedDiffIdxFileName, "%s_%d_diffIdx", outputFileName, split);
-        sprintf(suffixedInfoFileName, "%s_%d_info", outputFileName, split);
+        sprintf(suffixedDiffIdxFileName, "%s/%d_diffIdx", outputFileName, split);
+        sprintf(suffixedInfoFileName, "%s/%d_info", outputFileName, split);
         diffSplits.push_back(suffixedDiffIdxFileName);
         infoSplits.push_back(suffixedInfoFileName);
     }
@@ -139,22 +131,13 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtSpecies, taxIdList);
     cout<<"done"<<endl;
 
-    //Check the info file
-//    struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(mergedInfoFileName);
-//    int maxNum = targetInfoList.fileSize/ sizeof(TargetKmerInfo);
-//    for(int i = 0;  i < maxNum ; i++){
-//        cout<<targetInfoList.data[i].sequenceID<<" "<<targetInfoList.data[i].redundancy<<endl;
-//    }
-//    munmap(targetInfoList.data, targetInfoList.fileSize + 1);
-
-    cout<<"k-mer DB in: "<<endl;
-    cout<<mergedDiffFileName<<" and"<<endl;
+    cout<<"Reference DB files you need are as below"<<endl;
+    cout<<mergedDiffFileName<<endl;
     cout<<mergedInfoFileName<<endl;
+    cout<<taxIdFileName<<endl;
+    cout<<diffIdxSplitFileName<<endl;
+
     return 0;
-}
-
-void makeDiffIdxLookup(char * diffIdxFileName, char * infoFileName){
-
 }
 
 void prepareForCreatingTargetDB(const LocalParameters & par){
