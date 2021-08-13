@@ -10,6 +10,10 @@ FileMerger::FileMerger(char* mergedDiffFileName, char * mergedInfoFileNmae, char
     cre = new IndexCreator();
 }
 
+FileMerger::~FileMerger() {
+    delete cre;
+}
+
 ///Merge differential index and k-mer information files, reducing redundancy
 void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & taxIdListAtRank, vector<int> & taxIdList) {
     size_t writtenKmerCnt = 0;
@@ -155,6 +159,9 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     cout<<"Creating target DB is done"<<endl;
     cout<<"Total k-mer count    : " << numOfKmerBeforeMerge <<endl;
     cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
+
+    delete[] diffFileList;
+    delete[] infoFileList;
 }
 
 

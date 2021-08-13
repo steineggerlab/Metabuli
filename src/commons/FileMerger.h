@@ -31,6 +31,7 @@ private:
 
 public:
     FileMerger(char* mergedDiffFileName, char * mergedInfoFileNmae, char * diffIdxSplitFileName);
+    ~FileMerger();
     void mergeTargetFiles(std::vector<char *> diffIdxFileNames, std::vector<char *> infoFileNames, std::vector<int> & taxIdListAtRank, std::vector<int> & taxIdList);
     void mergeTargetFiles2(std::vector<char *> diffIdxFileNames, std::vector<char *> infoFileNames, std::vector<int> & genusTaxIdList,std::vector<int> & speciesTaxIdList, std::vector<int> & taxIdList);
 
