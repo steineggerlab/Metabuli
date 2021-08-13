@@ -30,7 +30,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     if(par.gtdbOrNcbi == 1 || par.gtdbOrNcbi == 0){
         cout<<"Creating target database based on taxonomy of GTDB"<<endl;
-       //prepareForCreatingTargetDB(par);
+       prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_GTDB";
         taxIdList_fname = string(outputFileName) +"_taxID_list_GTDB";
         names = "../../gtdb_taxdmp/names.dmp";
@@ -38,7 +38,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         merged = "../../gtdb_taxdmp/merged.dmp";
     } else if(par.gtdbOrNcbi == 2){
         cout<<"Creating target database based on taxonomy of NCBI"<<endl;
-        //prepareForCreatingTargetDB(par);
+        prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_NCBI";
         taxIdList_fname = string(outputFileName) +"_taxID_list_NCBI";
         names = "../../ncbi_taxdmp/names.dmp";
