@@ -20,7 +20,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     if(par.gtdbOrNcbi == 1 || par.gtdbOrNcbi == 0){
         cout<<"Creating target database based on taxonomy of GTDB"<<endl;
-        prepareForCreatingTargetDB(par);
+      //  prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_GTDB";
         taxIdList_fname = string(outputFileName) +"taxID_list";
         names = "../../gtdb_taxdmp/names.dmp";
@@ -28,7 +28,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         merged = "../../gtdb_taxdmp/merged.dmp";
     } else if(par.gtdbOrNcbi == 2){
         cout<<"Creating target database based on taxonomy of NCBI"<<endl;
-        prepareForCreatingTargetDB(par);
+      //  prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_NCBI";
         taxIdList_fname = string(outputFileName) +"taxID_list";
         names = "../../ncbi_taxdmp/names.dmp";
@@ -41,7 +41,6 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
     IndexCreator idxCre;
-
 
     const char * seqFileName = genome_fname.c_str();
     const char * taxIdFileName = taxIdList_fname.c_str();
@@ -83,37 +82,18 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     //Make files of differential indexing and information of k-mers
     cout<<"Start to creat reference DB file(s) ... ";
-    idxCre.startIndexCreatingParallel(seqFileName,outputFileName, taxIdListAtSpecies, taxIdList);
+ //   idxCre.startIndexCreatingParallel(seqFileName,outputFileName, taxIdListAtSpecies, taxIdList);
     cout<<"done"<<endl;
-
-    int numOfSplits = idxCre.getNumOfFlush();
-    char suffixedDiffIdxFileName[300];
-    char suffixedInfoFileName[300];
-    char diffIdxSplitFileName[300];
-
-
-    //There is only one split.
-//    if(numOfSplits == 1){
-//        sprintf(suffixedDiffIdxFileName, "%s/0_diffIdx", outputFileName);
-//        sprintf(suffixedInfoFileName, "%s/0_info", outputFileName);
-//
-//
-//        system(("mv " + string(suffixedDiffIdxFileName)+" "+string(outputFileName)+"/diffIdx").c_str());
-//        system(("mv " + string(suffixedInfoFileName)+" "+string(outputFileName)+"/info").c_str());
-//        //TODO diff idx split
-//        cout<<"Reference DB files you need are as below"<<endl;
-//        cout<<suffixedDiffIdxFileName<<endl;
-//        cout<<suffixedInfoFileName<<endl;
-//        cout<<taxIdFileName<<endl;
-//        cout<<diffIdxSplitFileName<<endl;
-//        return 0;
-//    }
 
     //Merge files
     cout<<"Merge reference DB files ... "<<endl;
+    int numOfSplits = 11;
+    char diffIdxSplitFileName[300];
     vector<char *> diffSplits;
     vector<char *> infoSplits;
     for(int split = 0; split < numOfSplits ; split++){
+        char * suffixedDiffIdxFileName = new char[300];
+        char * suffixedInfoFileName = new char[300];
         sprintf(suffixedDiffIdxFileName, "%s/%d_diffIdx", outputFileName, split);
         sprintf(suffixedInfoFileName, "%s/%d_info", outputFileName, split);
         diffSplits.push_back(suffixedDiffIdxFileName);
@@ -128,6 +108,11 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName);
     merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtSpecies, taxIdList);
+
+    for(int split = 0; split < numOfSplits ; split++){
+        delete[] diffSplits[split];
+        delete[] infoSplits[split];
+    }
     cout<<"done"<<endl;
 
     cout<<"Reference DB files you need are as below"<<endl;

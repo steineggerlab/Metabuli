@@ -518,7 +518,6 @@ void SeqIterator::getTranslationBlocksReverse(struct _gene * genes, struct _node
         return;
     }
 
-    //size_t stIdx = blockIdx;
     //for the first frame
     if(length - genes[numOfGene-1].end > 1) {
         //blocks.emplace_back(0, genes[0].begin + 22, 1);
@@ -529,32 +528,10 @@ void SeqIterator::getTranslationBlocksReverse(struct _gene * genes, struct _node
     int frame;
     int rightEnd = 0;
     int leftEnd = 0;
-    bool lastContained = false;
     size_t currIdx;
     for (int geneIdx = numOfGene - 1 ; geneIdx - 1 >= 0 ; geneIdx--) {
         currIdx = geneIdx;
-//        if((genes[geneIdx].begin - genes[geneIdx-1].begin) * (genes[geneIdx].end - genes[geneIdx-1].end) < 0){
-//            if((geneIdx - 1) == 0){
-//                if(nodes[genes[geneIdx-1].start_ndx].strand == 1){ //forward
-//                    frame = (genes[geneIdx-1].begin - 1) % 3;
-//                    leftEnd = 0;
-//                    while(leftEnd%3 != frame) leftEnd++;
-//                    blocks.emplace_back(leftEnd, genes[currIdx].end - 1, nodes[genes[geneIdx].start_ndx].strand);
-//                    blockIdx ++;
-//                } else { // reverse
-//                    blocks.emplace_back(0, genes[currIdx].end - 1, nodes[genes[geneIdx].start_ndx].strand);
-//                    blockIdx++;
-//                }
-//                geneIdx--;
-//                lastContained = true;
-//                continue;
-//            }else{
-//                geneIdx--;
-//            }
-//        }
-
         if(nodes[genes[currIdx].start_ndx].strand == 1){ //forward
-            //blocks.emplace_back(genes[currIdx].begin, genes[geneIdx + 1].begin + 22, nodes[genes[geneIdx].start_ndx].strand);
             frame = (genes[currIdx].begin - 1) % 3;
             leftEnd = genes[geneIdx-1].end - 1- 22;
             while(leftEnd%3 != frame) leftEnd++;
@@ -567,18 +544,17 @@ void SeqIterator::getTranslationBlocksReverse(struct _gene * genes, struct _node
     }
 
 
-  //  if(!lastContained){
-        if(nodes[genes[0].start_ndx].strand == 1){ //forward
-            frame = (genes[0].begin - 1) % 3;
-            leftEnd = 0;
-            while(leftEnd%3 != frame) leftEnd++;
-            blocks.emplace_back(leftEnd, genes[0].end - 1, nodes[genes[0].start_ndx].strand);
-            blockIdx ++;
-        }else{ // reverse
-            blocks.emplace_back(0, genes[0].end - 1, nodes[genes[0].start_ndx].strand);
-            blockIdx ++;
-        }
-  //  }
+
+    if(nodes[genes[0].start_ndx].strand == 1) { //forward
+        frame = (genes[0].begin - 1) % 3;
+        leftEnd = 0;
+        while (leftEnd % 3 != frame) leftEnd++;
+        blocks.emplace_back(leftEnd, genes[0].end - 1, nodes[genes[0].start_ndx].strand);
+        blockIdx++;
+    } else { // reverse
+        blocks.emplace_back(0, genes[0].end - 1, nodes[genes[0].start_ndx].strand);
+        blockIdx++;
+    }
 }
 
 bool SeqIterator::compareMinHashList(priority_queue<uint64_t> list1, priority_queue<uint64_t> & list2, size_t length1,
@@ -587,7 +563,6 @@ bool SeqIterator::compareMinHashList(priority_queue<uint64_t> list1, priority_qu
     float identicalCount = 0;
     float list1Size = list1.size();
     while(!list1.empty() && !list2.empty()){
-       //cout<<list1.top()<< " "<<list2.top()<<endl;
         if(list1.top() == list2.top()){
             identicalCount++;
             list1.pop();
@@ -598,7 +573,6 @@ bool SeqIterator::compareMinHashList(priority_queue<uint64_t> list1, priority_qu
             list2.pop();
         }
     }
-    cout<<"identical count "<<identicalCount<<endl;
     if(identicalCount > list1Size * lengthRatio * 0.7){
         return true;
     } else{
@@ -671,9 +645,6 @@ void SeqIterator::generateIntergenicKmerList(_gene *genes, _node *nodes, int num
     free(kmer);
 }
 
-size_t SeqIterator::kmer2number(const char * seq, int k){
-
-}
 void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
     uint64_t copy = kmer;
     kmer >>= 25;

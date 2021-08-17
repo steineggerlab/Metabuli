@@ -38,10 +38,6 @@ typedef struct PredictedBlock {
     int strand; //true for forward
 }PredictedBlock;
 
-struct HashElement{
-    bool strand;
-
-};
 class SeqIterator
 {
 private:
@@ -63,15 +59,14 @@ public:
     bool translateBlock(const char* seq, PredictedBlock & block);
 
     void generateIntergenicKmerList(struct _gene * genes, struct _node * nodes, int numberOfGenes, vector<uint64_t> & intergenicKmerList, const char * seq);
-    size_t kmer2number(const char * kmer, int k);
-    void getTranslationBlocks(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
+    static void getTranslationBlocks(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
     static void getTranslationBlocksReverse(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
     void getTranslationBlocks2(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene,
                 size_t length, size_t & numOfBlocks, vector<uint64_t> & intergenicKmerList, const char * seq);
 
     void getMinHashList(priority_queue<uint64_t> & sortedHashQue, const char * seq);
     bool compareMinHashList(priority_queue<uint64_t> list1, priority_queue<uint64_t> & list2, size_t length1, size_t length2);
-    size_t kmerNumOfSixFrameTranslation(const string & seq);
+    static size_t kmerNumOfSixFrameTranslation(const string & seq);
     size_t getNumOfKmerForBlock(const PredictedBlock & block);
     void fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const uint32_t & seqID, int taxIdAtRank);
     void printKmerInDNAsequence(uint64_t kmer);
