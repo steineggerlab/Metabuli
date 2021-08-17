@@ -66,7 +66,7 @@ public:
 
     void getMinHashList(priority_queue<uint64_t> & sortedHashQue, const char * seq);
     bool compareMinHashList(priority_queue<uint64_t> list1, priority_queue<uint64_t> & list2, size_t length1, size_t length2);
-    static size_t kmerNumOfSixFrameTranslation(const string & seq);
+    static size_t kmerNumOfSixFrameTranslation(const char * seq);
     size_t getNumOfKmerForBlock(const PredictedBlock & block);
     void fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const uint32_t & seqID, int taxIdAtRank);
     void printKmerInDNAsequence(uint64_t kmer);

@@ -167,18 +167,22 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < seqs.size(); i++) {
             if(checker[i] == false && !hasOverflow) {
-                KSeqBuffer buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
-                buffer.ReadEntry();
-                seqIterator.sixFrameTranslation(buffer.entry.sequence.s);
-                size_t kmerCnt = seqIterator.kmerNumOfSixFrameTranslation(buffer.entry.sequence.s);
+                kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
+                kseq_t *seq = kseq_init(&buffer);
+                kseq_read(seq);
+//                KSeqBuffer buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
+//                buffer.ReadEntry();
+                seqIterator.sixFrameTranslation(seq->seq.s);
+                size_t kmerCnt = SeqIterator::kmerNumOfSixFrameTranslation(seq->seq.s);
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt);
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
-                    seqIterator.fillQueryKmerBuffer(buffer.entry.sequence.s, kmerBuffer, posToWrite, i);
+                    seqIterator.fillQueryKmerBuffer(seq->seq.s, kmerBuffer, posToWrite, i);
                     checker[i] = true;
-                    seqs[i].length = strlen(buffer.entry.sequence.s);
+                    seqs[i].length = strlen(seq->seq.s);
                     queryList[i].queryLength = seqs[i].length;
                     queryList[i].queryId = i;
-                    queryList[i].name = buffer.entry.name.s;
+                    queryList[i].name = string(seq->name.s);
+                            //buffer.entry.name.s;
 #pragma omp atomic
                     processedSeqCnt ++;
                 } else{
@@ -186,6 +190,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                     kmerBuffer.startIndexOfReserve -= kmerCnt;
                     hasOverflow = true;
                 }
+                kseq_destroy(seq);
             }
 
         }
