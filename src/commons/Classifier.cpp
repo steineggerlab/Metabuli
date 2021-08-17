@@ -540,7 +540,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
 
     TaxID selectedTaxon;
-    for(int i = offset; i < end + 1; i++){
+//    for(int i = offset; i < end + 1; i++){
 //        cout<<int(matchList[i].frame)<<" "<<matchList[i].position<<" "<<matchList[i].taxID<<endl;
 //    }
 
@@ -595,9 +595,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         queryList[currentQuery].classification = selectedTaxon;
         queryList[currentQuery].coverage = 0;
         if(hammingAverage > 1.0f) queryList[currentQuery].newSpecies = true;
-//
-//
-//        <<"# "<<currentQuery<<endl;
+//        cout<<"# "<<currentQuery<<endl;
 //        for(size_t i = 0; i < taxIdList.size(); i++){
 //            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
 //        }
@@ -652,7 +650,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
             selectedLCA = strainMatchCnt.begin()->first;
         }
     }
-//
+
 //    cout<<"# "<<currentQuery<<endl;
 //    for(size_t i = 0; i < taxIdList.size(); i++){
 //        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
