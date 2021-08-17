@@ -20,9 +20,9 @@ public:
         bufferSize = sizeOfBuffer;
         startIndexOfReserve = 0;
     };
-    ~QueryKmerBuffer(){
-        free(buffer);
-    }
+//    ~QueryKmerBuffer(){
+//        free(buffer);
+//    }
     size_t reserveMemory(size_t numOfKmer){
         size_t offsetToWrite = __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
         return offsetToWrite;
