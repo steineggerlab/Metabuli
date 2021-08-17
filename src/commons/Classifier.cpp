@@ -541,8 +541,8 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     TaxID selectedTaxon;
     for(int i = offset; i < end + 1; i++){
-        cout<<int(matchList[i].frame)<<" "<<matchList[i].position<<" "<<matchList[i].taxID<<endl;
-    }
+//        cout<<int(matchList[i].frame)<<" "<<matchList[i].position<<" "<<matchList[i].taxID<<endl;
+//    }
 
     //get the best genus for current query
     vector<ConsecutiveMatches> matchCombi;
@@ -595,7 +595,9 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         queryList[currentQuery].classification = selectedTaxon;
         queryList[currentQuery].coverage = 0;
         if(hammingAverage > 1.0f) queryList[currentQuery].newSpecies = true;
-//        cout<<"# "<<currentQuery<<endl;
+//
+//
+//        <<"# "<<currentQuery<<endl;
 //        for(size_t i = 0; i < taxIdList.size(); i++){
 //            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
 //        }
@@ -650,12 +652,12 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
             selectedLCA = strainMatchCnt.begin()->first;
         }
     }
-
-    cout<<"# "<<currentQuery<<endl;
-    for(size_t i = 0; i < taxIdList.size(); i++){
-        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
-    }
-    cout<<"coverage: "<<coverage<<"  "<<selectedLCA<<" "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
+//
+//    cout<<"# "<<currentQuery<<endl;
+//    for(size_t i = 0; i < taxIdList.size(); i++){
+//        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
+//    }
+//    cout<<"coverage: "<<coverage<<"  "<<selectedLCA<<" "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
     ///store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedLCA;

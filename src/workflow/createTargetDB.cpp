@@ -12,7 +12,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     LocalParameters &par = LocalParameters::getLocalInstance();
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
     const char * folder = par.filenames[0].c_str();
-    const char * outputFileName = par.filenames[2].c_str();
+    const char * dbDirectory = par.filenames[2].c_str();
 
     string genome_fname;
     string taxIdList_fname;
@@ -22,7 +22,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         cout<<"Creating target database based on taxonomy of GTDB"<<endl;
       //  prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_GTDB";
-        taxIdList_fname = string(outputFileName) +"/taxID_list";
+        taxIdList_fname = string(dbDirectory) + "/taxID_list";
         names = "../../gtdb_taxdmp/names.dmp";
         nodes = "../../gtdb_taxdmp/nodes.dmp";
         merged = "../../gtdb_taxdmp/merged.dmp";
@@ -30,7 +30,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         cout<<"Creating target database based on taxonomy of NCBI"<<endl;
       //  prepareForCreatingTargetDB(par);
         genome_fname = string(folder) + "/concatenated_genome_NCBI";
-        taxIdList_fname = string(outputFileName) +"/taxID_list";
+        taxIdList_fname = string(dbDirectory) + "/taxID_list";
         names = "../../ncbi_taxdmp/names.dmp";
         nodes = "../../ncbi_taxdmp/nodes.dmp";
         merged = "../../ncbi_taxdmp/merged.dmp";
@@ -94,17 +94,17 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     for(int split = 0; split < numOfSplits ; split++){
         char * suffixedDiffIdxFileName = new char[300];
         char * suffixedInfoFileName = new char[300];
-        sprintf(suffixedDiffIdxFileName, "%s/%d_diffIdx", outputFileName, split);
-        sprintf(suffixedInfoFileName, "%s/%d_info", outputFileName, split);
+        sprintf(suffixedDiffIdxFileName, "%s/%d_diffIdx", dbDirectory, split);
+        sprintf(suffixedInfoFileName, "%s/%d_info", dbDirectory, split);
         diffSplits.push_back(suffixedDiffIdxFileName);
         infoSplits.push_back(suffixedInfoFileName);
     }
 
     char mergedDiffFileName[100];
     char mergedInfoFileName[100];
-    sprintf(mergedDiffFileName, "%s/diffIdx", outputFileName);
-    sprintf(mergedInfoFileName, "%s/info", outputFileName);
-    sprintf(diffIdxSplitFileName, "%s/split", outputFileName);
+    sprintf(mergedDiffFileName, "%s/diffIdx", dbDirectory);
+    sprintf(mergedInfoFileName, "%s/info", dbDirectory);
+    sprintf(diffIdxSplitFileName, "%s/split", dbDirectory);
 
     FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName);
     merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtSpecies, taxIdList);
