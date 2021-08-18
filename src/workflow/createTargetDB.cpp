@@ -82,7 +82,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     //Make files of differential indexing and information of k-mers
     cout<<"Start to creat reference DB file(s) ... ";
-    idxCre.startIndexCreatingParallel(seqFileName,outputFileName, taxIdListAtSpecies, taxIdList);
+    idxCre.startIndexCreatingParallel(seqFileName, dbDirectory, taxIdListAtSpecies, taxIdList);
     cout<<"done"<<endl;
 
     //Merge files
@@ -140,14 +140,14 @@ void prepareForCreatingTargetDB(const LocalParameters & par){
         taxid_fname_fname = string(folder) + "/taxid_filename_GTDB";
         taxid_fname_sorted_fname = string(folder) + "/taxid_filename_sorted_GTDB";
         fastList_fname = string(folder) + "/fasta_list_GTDB";
-        taxidList_fname = string(outputFileName) + "taxID_list";
+        taxidList_fname = string(outputFileName) + "/taxID_list";
         genome_fname = string(folder) + "/concatenated_genome_GTDB";
         system("echo \"\t|\t\t|\" > ../../gtdb_taxdmp/merged.dmp");
     }else{
         taxid_fname_fname = string(folder) + "/taxid_filename_NCBI";
         taxid_fname_sorted_fname = string(folder) + "/taxid_filename_sorted_NCBI";
         fastList_fname = string(folder) + "/fasta_list_NCBI";
-        taxidList_fname = string(outputFileName) + "taxID_list";
+        taxidList_fname = string(outputFileName) + "/taxID_list";
         genome_fname = string(folder) + "/concatenated_genome_NCBI";
     }
 
