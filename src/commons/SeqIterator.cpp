@@ -205,14 +205,12 @@ string SeqIterator::reverseCompliment(string & read) const {
     return out;
 }
 
-string SeqIterator::reverseCompliment(char * read, int length) const {
-    string out;
-    for(int i = 0; i < length; i++)
-    {
-        out.push_back(iRCT[read[i]]);
+char * SeqIterator::reverseCompliment(char * read, int length) const {
+    char * revCom = (char*)malloc(sizeof(char) * (length+1));
+    for(int i = 0; i < length; i++){
+        revCom[length - i - 1] = iRCT[read[i]];
     }
-    reverse(out.begin(),out.end());
-    return out;
+    return revCom;
 }
 
 

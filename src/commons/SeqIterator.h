@@ -54,7 +54,7 @@ private:
 public:
     void fillQueryKmerBuffer(const char * seq , QueryKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID);
     string reverseCompliment(string & read) const ;
-    string reverseCompliment(char * read, int length) const ;
+    char * reverseCompliment(char * read, int length) const ;
     void sixFrameTranslation(const char * seq);
     bool translateBlock(const char* seq, PredictedBlock & block);
 

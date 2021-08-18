@@ -1455,7 +1455,7 @@ void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy, Query * queryList,
     counts.phylumCnt_correct=0;
     counts.superkingdomCnt_correct=0;
 
-    for(size_t i = 0; i < numOfquery; i++) {
+    for(int i = 0; i < numOfquery; i++) {
         classificationResult = queryList[i].classification;
         if (classificationResult == 0) {
             continue;
@@ -1475,19 +1475,6 @@ void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy, Query * queryList,
 
         }
     }
-
-//    cout<<"Number of classification: "<< classifiedCnt << endl;
-//    cout<<"classified / total =" << float(classifiedCnt)/float(queryInfos.size()) << endl;
-//    cout<<"Superkingdom: "<< superCnt <<endl;
-//    cout<<"Phylum: "<<phylumCnt<<endl;
-//    cout<<"Class: "<<classCnt<<endl;
-//    cout<<"Order: "<<orderCnt<<endl;
-//    cout<<"Family: "<<familyCnt<<endl;
-//    cout<<"Genus: "<< genusCnt << endl;
-//    cout<<"Species: "<<speciesCnt<<endl;
-//    cout<<"Subspecies: "<<subspCnt<<endl;
-//    cout<<"(subS + S + G) / all classification" << float(genusCnt + speciesCnt + subspCnt) / float(classifiedCnt) <<endl;
-//    cout<<"Num of queries: " << queryInfos.size() << endl;
 
     cout<<"Num of queries: " << queryInfos.size()  << endl;
     cout<<"Num of classifications: "<< counts.classificationCnt << endl;
