@@ -181,12 +181,14 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
         priority_queue<uint64_t> currentList;
         size_t lengthOfTrainingSeq;
         char * reverseCompliment;
+        vector<bool> strandness;
 
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < splits.size() ; i++) {
             if((checker[i] == false) && (!hasOverflow)) {
                 size_t * numOfBlocksList = (size_t*)malloc(splits[i].cnt * sizeof(size_t));
                 intergenicKmerList.clear();
+                strandness.clear();
                 standardList = priority_queue<uint64_t>();
 
                 //Train Prodigal with a training sequence of i th split
@@ -228,6 +230,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                           prodigal.fng, strlen(seq->seq.s),
                                                           numOfBlocks, intergenicKmerList, seq->seq.s);
+                        strandness.push_back(true);
                     } else{
                         reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, strlen(seq->seq.s));
                         prodigal.getPredictedGenes(reverseCompliment);
@@ -236,6 +239,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                                                           prodigal.fng, strlen(reverseCompliment),
                                                           numOfBlocks, intergenicKmerList, reverseCompliment);
                         free(reverseCompliment);
+                        strandness.push_back(false);
                     }
                     numOfBlocksList[p] = numOfBlocks;
                     currentList = priority_queue<uint64_t>();
@@ -257,10 +261,23 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
                         size_t end = numOfBlocksList[seqIdx];
-                        for(size_t bl = start; bl < end ; bl++){
-                            seqIterator.translateBlock(seq->seq.s,blocks[bl]);
-                            seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].offset + seqIdx, taxIdListAtRank[splits[i].offset + seqIdx]); //splits[i].offset + seqIdx
+                        if(strandness[seqIdx]){
+                            for(size_t bl = start; bl < end ; bl++){
+                                seqIterator.translateBlock(seq->seq.s,blocks[bl]);
+                                seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].offset + seqIdx, taxIdListAtRank[splits[i].offset + seqIdx]); //splits[i].offset + seqIdx
+                            }
+                        } else{
+                            reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, strlen(seq->seq.s));
+                            for(size_t bl = start; bl < end ; bl++){
+                                seqIterator.translateBlock(reverseCompliment,blocks[bl]);
+                                seqIterator.fillBufferWithKmerFromBlock(blocks[bl], reverseCompliment, kmerBuffer, posToWrite, splits[i].offset + seqIdx, taxIdListAtRank[splits[i].offset + seqIdx]); //splits[i].offset + seqIdx
+                            }
+                            free(reverseCompliment);
                         }
+//                        for(size_t bl = start; bl < end ; bl++){
+//                            seqIterator.translateBlock(seq->seq.s,blocks[bl]);
+//                            seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].offset + seqIdx, taxIdListAtRank[splits[i].offset + seqIdx]); //splits[i].offset + seqIdx
+//                        }
                         start = numOfBlocksList[seqIdx];
                     }
                     checker[i] = true;
