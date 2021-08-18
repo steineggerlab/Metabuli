@@ -87,7 +87,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
 
     //Merge files
     cout<<"Merge reference DB files ... "<<endl;
-    int numOfSplits = 11;
+    int numOfSplits = idxCre.getNumOfFlush();
     char diffIdxSplitFileName[300];
     vector<char *> diffSplits;
     vector<char *> infoSplits;

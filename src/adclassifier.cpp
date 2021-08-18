@@ -31,10 +31,7 @@ std::vector<Command> commands = {
          "<i:queryFile> <i:targetDiffIdx> <i:targetInfo> <i:targetTaxIdList> <i:target_diff_idx_split> <o:output[.txt]> <tmpDir>",
          CITATION_SPACEPHARER,
          {{"queryFile", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::flatfile},
-          {"targetDiffIdx", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-          {"targetInfo", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-          {"targetTaxIdList", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-          {"targetDiffIdxSplit", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+          {"DB directory", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::directory},
           {"tmpDir", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
 
         {"inclusiontest", inclusiontest, &localPar.classify, COMMAND_MAIN,
