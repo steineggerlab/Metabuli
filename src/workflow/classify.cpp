@@ -31,7 +31,7 @@ int classify(int argc, const char **argv, const Command& command)
         taxIdList.push_back(atol(taxID));
     }
     fclose(taxIdFile);
-    
+
     Classifier classifier;
     classifier.startClassify(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(), diffIdxSplitFileName.c_str(), taxIdList, par);
 
