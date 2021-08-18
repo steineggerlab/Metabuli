@@ -207,8 +207,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
 
                 //Generate intergenic k-mer list
                 prodigal.getPredictedGenes(seq->seq.s);
-                seqIterator.
-                (prodigal.genes, prodigal.nodes, prodigal.getNumberOfPredictedGenes(), intergenicKmerList, seq->seq.s);
+                seqIterator.generateIntergenicKmerList(prodigal.genes, prodigal.nodes, prodigal.getNumberOfPredictedGenes(), intergenicKmerList, seq->seq.s);
 
                 //Get min k-mer hash list for determining strandness
                 seqIterator.getMinHashList(standardList, seq->seq.s);
