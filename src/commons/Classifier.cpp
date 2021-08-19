@@ -166,7 +166,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
             kseq_destroy(seq);
     }
 
-    wr.close()
+    wr.close();
     free(kmerBuffer.buffer);
     free(matchBuffer.buffer);
     munmap(queryFile.data, queryFile.fileSize + 1);
