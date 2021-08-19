@@ -269,8 +269,8 @@ public:
     int getNumOfSplits() const;
     Classifier();
     ~Classifier();
-    void performanceTest(NcbiTaxonomy & ncbiTaxonomy, Query * queryList, int numOfquery);
-    void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy);
+    void performanceTest(NcbiTaxonomy & ncbiTaxonomy, Query * queryList, int numOfquery, vector<int> & wrongs);
+    void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, vector<int> & wrongs, int i);
 };
 
 inline uint8_t Classifier::getHammingDistance(uint64_t kmer1, uint64_t kmer2) {

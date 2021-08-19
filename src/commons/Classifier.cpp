@@ -148,8 +148,25 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     readClassificationFile.open(par.filenames[0]+"_ReadClassification.tsv");
     writeReadClassification(queryList,numOfSeq,readClassificationFile);
     writeReportFile(par.filenames[0].c_str(), ncbiTaxonomy, numOfSeq);
-    performanceTest(ncbiTaxonomy, queryList, numOfSeq);
 
+    //
+    vector<int> wrongClassifications;
+    sequences.clear();
+    IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
+    performanceTest(ncbiTaxonomy, queryList, numOfSeq, wrongClassifications);
+    ofstream wr;
+    wr.open(par.filenames[0]+"_wrong");
+
+    for (size_t i = 0; i < wrongClassifications.size(); i++) {
+            kseq_buffer_t buffer(const_cast<char *>(&queryFile.data[sequences[wrongClassifications[i]].start]), sequences[wrongClassifications[i]].length);
+            kseq_t *seq = kseq_init(&buffer);
+            kseq_read(seq);
+            wr<<">"<<seq->name.s<<endl;
+            wr<<seq->seq.s<<endl;
+            kseq_destroy(seq);
+    }
+
+    wr.close()
     free(kmerBuffer.buffer);
     free(matchBuffer.buffer);
     munmap(queryFile.data, queryFile.fileSize + 1);
@@ -1395,7 +1412,7 @@ unsigned int Classifier::cladeCountVal(const std::unordered_map<TaxID, TaxonCoun
     }
 }
 
-void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy, Query * queryList, int numOfquery){
+void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy, Query * queryList, int numOfquery, vector<int>& wrongs){
 
     ///Load the mapping file
     const char * mappingFile = "../../gtdb_taxdmp/assacc_to_taxid_gtdb.tsv";
@@ -1471,7 +1488,7 @@ void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy, Query * queryList,
             }
             //cout<<"compareTaxon"<<" "<<i<<endl;
             cout<<i<<" ";
-            compareTaxon(classificationResult, rightAnswer, ncbiTaxonomy);
+            compareTaxon(classificationResult, rightAnswer, ncbiTaxonomy, wrongs, i);
 
         }
     }
@@ -1480,8 +1497,8 @@ void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy, Query * queryList,
     cout<<"Num of classifications: "<< counts.classificationCnt << endl;
     cout<<"Num of correct classifications: "<<counts.correct<<endl;
     cout<<"Num of correct but too broad classifications: "<<counts.highRank<<endl;
-    cout<<"classified/total = " << float(counts.classificationCnt)/float(classifiedCnt) << endl;
-    cout<<"correct   /total = "<< float(counts.correct) / float(classifiedCnt)<<endl;
+    cout<<"classified/total = " << float(counts.classificationCnt)/float(queryInfos.size()) << endl;
+    cout<<"correct   /total = "<< float(counts.correct) / float(queryInfos.size())<<endl;
     cout<<"correct   /classifications = "<<float(counts.correct) / float(counts.classificationCnt) <<endl;
     cout<<"high rank /classifications = "<<float(counts.highRank) / float(counts.classificationCnt) <<endl << endl;
 
@@ -1496,7 +1513,7 @@ void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy, Query * queryList,
     cout<<"Subspecies  : " << counts.subspeciesTargetNumber<<" / "<<counts.subspeciesCnt_correct<<" / "<<counts.subspeciesCnt_try<<endl;
 }
 
-void Classifier::compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy) { ///target: subspecies or species
+void Classifier::compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, vector<int> & wrongs, int i) { ///target: subspecies or species
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
     string shotRank = shotNode->rank;
@@ -1504,6 +1521,7 @@ void Classifier::compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxon
     cout<<shot<<" "<<target<<" "<<shotRank<<" "<<targetRank<<" ";
 
     if(shot == 0){
+        wrongs.push_back(i);
         cout<<"X"<<endl;
         return;
     } else{
@@ -1516,15 +1534,18 @@ void Classifier::compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxon
         isCorrect = true;
         cout<<"O"<<endl;
     } else if(NcbiTaxonomy::findRankIndex(shotRank) <= NcbiTaxonomy::findRankIndex(targetRank)){ //classified into wrong taxon or too specifically
+        wrongs.push_back(i);
         cout<<"X"<<endl;
     } else { // classified at higher rank (too safe classification)
         if(shotRank == "superkingdom"){
+            wrongs.push_back(i);
             cout<<"X"<<endl;
         } else if(shot == ncbiTaxonomy.getTaxIdAtRank(target, shotRank)){ //on right branch
             counts.correct ++;
             cout<<"O"<<endl;
             isCorrect = true;
         } else{ //on wrong branch
+            wrongs.push_back(i);
             cout<<"X"<<endl;
         }
     }
