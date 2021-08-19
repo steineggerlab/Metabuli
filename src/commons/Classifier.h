@@ -99,7 +99,7 @@ private:
         uint32_t end; //end position on query sequence
         int matchCnt;
         int hamming; //hamming sum
-        int diffPosCnt; //gap sum
+        int diffPosCnt; //
         size_t beginIdx; //beginning index on matchList
         size_t endIdx; //end index
         int score;

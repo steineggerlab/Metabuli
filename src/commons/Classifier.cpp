@@ -826,7 +826,7 @@ void Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
     for(size_t i = 1; i < coMatches.size(); i++){
         overlap = false;
         for(size_t j = 0; j < alignedCoMatches.size(); j++){
-            if((alignedCoMatches[j].begin < coMatches[j].end) && (alignedCoMatches[j].end > coMatches[j].begin)){
+            if((alignedCoMatches[j].begin < coMatches[i].end) && (alignedCoMatches[j].end > coMatches[i].begin)){
                 overlap = true;
                 break;
             }
