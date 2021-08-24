@@ -602,6 +602,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     }
 
     //Calculate average hamming distance
+    float maxNum = queryLength / 3 - kmerLength + 1;
     float hammingSum = 0.0f;
     float totalNumberOfMatches = 0.0f;
     for(size_t cm = 0; cm < matchCombi.size(); cm ++){
@@ -612,13 +613,14 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
 
     //If there are two or more good genus level candidates, find the LCA.
-    if(numberOfGenus > 1){
+    //
+    if(numberOfGenus > 1 || (totalNumberOfMatches > maxNum && hammingSum == 0) ){
         selectedTaxon = ncbiTaxonomy.LCA(taxIdList)->taxId;
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
         queryList[currentQuery].coverage = 0;
         if(hammingAverage > 1.0f) queryList[currentQuery].newSpecies = true;
-        cout<<"# "<<currentQuery<<endl;
+        cout<<"# "<<currentQuery<<" "<<numberOfGenus<<endl;
         for(size_t i = 0; i < taxIdList.size(); i++){
             cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
         }
@@ -627,13 +629,12 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     }
 
     //Calculate coverage
-    int maxNum = queryLength / 3 - kmerLength + 1;
     int coveredKmerCnt = 0;
     float coverage;
     for(size_t cm = 0 ; cm < matchCombi.size(); cm ++){
         coveredKmerCnt += matchCombi[cm].diffPosCnt; //It is valid only if overlapping is not allowed, thus only in species or lower rank.
     }
-    coverage = float(coveredKmerCnt) / float(maxNum);
+    coverage = float(coveredKmerCnt) / maxNum;
     queryList[currentQuery].coverage = coverage;
 
     //Classify in genus level for highly diverged queries
@@ -814,6 +815,7 @@ void Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
     bool overlap = false;
 
     //Similarily good match but different frame
+    //TODO -> must find LCA
     if(coMatches.size() > 1){
         if((coMatches[1].diffPosCnt > coMatches[0].diffPosCnt - 2) && float(coMatches[1].diffPosCnt)/float(maxiumPossibleMatchCnt) > 0.9){
             alignedCoMatches.push_back(coMatches[1]);
