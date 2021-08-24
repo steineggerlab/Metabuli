@@ -614,7 +614,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     //If there are two or more good genus level candidates, find the LCA.
     //
-    if(numberOfGenus > 1 || (totalNumberOfMatches > maxNum && hammingSum == 0) ){
+    if(numberOfGenus > 1 || (totalNumberOfMatches > (2*maxNum) && hammingSum == 0) ){
         selectedTaxon = ncbiTaxonomy.LCA(taxIdList)->taxId;
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
