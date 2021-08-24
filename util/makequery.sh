@@ -19,13 +19,13 @@ echo "Writing a list of FASTA files"
 find "${genomes}" -name "*.fna" > "${FASTAFILES}"
 
 num=0
-awk -F '/' '{print $0,$7}' "${FASTAFILES}" | while read -r fasta assacc; do
+awk -F '/' '{print $0,$8}' "${FASTAFILES}" | while read -r fasta assacc; do
   outname="${fname}_${num}"
-  ~/miniconda3/bin/randomreads.sh ref="${fasta}" out="${outname}" length=150 reads=876 prefix="${assacc}" maxsnps=0 maxinss=0 maxdels=0 maxsubs=0 maxns=0
+  ~/miniconda3/bin/randomreads.sh ref="${fasta}" out="${outname}" length=150 reads=100 prefix="${assacc}" maxsnps=0 maxinss=0 maxdels=0 maxsubs=0 maxns=0 snprate=0 insrate=0 delrate=0 subrate=0 nrate=0
   num=$((num+1))
 done
 
-cat ${fname}* > "${outdir}/randomreads.fastq"
+cat ${fname}* > "${outdir}/randomreads0824.fastq"
 find "${outdir}" -name "temp_*" | while read -d $'\0' gz; do
   rm "${gz}"
 done
