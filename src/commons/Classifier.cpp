@@ -569,7 +569,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     //get the best genus for current query
     vector<ConsecutiveMatches> matchCombi;
     int numberOfGenus = 0;
-    cout<<"getBestGenusLevelMatchCombination"<<endl;
+    //cout<<"getBestGenusLevelMatchCombination"<<endl;
     numberOfGenus = getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset, queryLength);
 
     //If there is no proper genus for current query, it is un-classified.
@@ -740,7 +740,7 @@ int Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & c
             }
         }
         //choose the best combination of consecutive matches for current genus
-        if(!coMatches.empty()) getMatchCombinationForCurGenus(coMatches, genus, matchList);
+        if(!coMatches.empty()) getMatchCombinationForCurGenus2(coMatches, genus, matchList);
         coMatches.clear();
     }
     //choose the best combination of consecutive-match among genus for current query
@@ -797,12 +797,7 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
 }
 
 void Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList, int maxiumPossibleMatchCnt){
-    for(int i3 = 0; i3 < coMatches.size(); i3++){
-        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt;
-        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
-        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
-        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
-    }
+//c
 
     //sort consecutive match blocks
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);

@@ -28,7 +28,7 @@ std::vector<Command> commands = {
          "It extracts k-mers from query sequences, and compares them to the target database",
          NULL,
          "Jaebeom Kim <jbeom0731@gmail.com>",
-         "<i:queryFile> <i:targetDiffIdx> <i:targetInfo> <i:targetTaxIdList> <i:target_diff_idx_split> <o:output[.txt]> <tmpDir>",
+         "<i:queryFile> <i:DB directory> <tmpDir>",
          CITATION_SPACEPHARER,
          {{"queryFile", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::flatfile},
           {"DB directory", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::directory},
