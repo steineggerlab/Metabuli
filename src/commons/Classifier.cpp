@@ -1370,12 +1370,12 @@ bool Classifier::compareForLinearSearch(const QueryKmer & a, const QueryKmer & b
 }
 
 bool Classifier::compareConsecutiveMatches(const ConsecutiveMatches & a, const ConsecutiveMatches & b){
-    if((a.end - a.begin) > (b.end - b.begin)){ // compare query coverage fisrt
-        if((a.end - a.begin) == (b.end - b.begin + 1)){ //
-            return (a.endIdx - a.beginIdx + 1) * 2 / ((a.hamming+1)*(a.diffPosCnt + 1)) > (b.endIdx - b.beginIdx + 1) * 2 / ((b.hamming + 1) * (b.diffPosCnt + 1));
-        }
+    if(a.diffPosCnt > b.diffPosCnt){ // compare query coverage fisrt
+//        if((a.end - a.begin) == (b.end - b.begin + 1)){ //
+//            return (a.endIdx - a.beginIdx + 1) * 2 / ((a.hamming+1)*(a.diffPosCnt + 1)) > (b.endIdx - b.beginIdx + 1) * 2 / ((b.hamming + 1) * (b.diffPosCnt + 1));
+//        }
         return true;
-    }else if((a.end - a.begin) == (b.end- b.begin)){
+    }else if(a.diffPosCnt == b.diffPosCnt){
             return (a.endIdx - a.beginIdx + 1) * 2 / ((a.hamming+1)*(a.diffPosCnt + 1)) > (b.endIdx - b.beginIdx + 1) * 2 / ((b.hamming + 1) * (b.diffPosCnt + 1));
     }
     return false;
