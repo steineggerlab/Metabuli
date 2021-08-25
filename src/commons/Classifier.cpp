@@ -694,7 +694,7 @@ int Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & c
     vector<vector<ConsecutiveMatches>> matchCombinationsForEachGenus;
     vector<bool> conservedWithinGenus;
     int conCnt = 0;
-    uint32_t diffPosCnt = 0;
+    int diffPosCnt = 0;
     uint32_t hammingSum = 0;
     float hammingMean = 0.0;
     size_t beginIdx = 0;
@@ -738,6 +738,7 @@ int Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & c
                     i++;
                 }
                 if(diffPosCnt > 1){
+                    if(diffPosCnt == maxNum) diffPosCnt--;
                     coMatches.emplace_back(conBegin, currentPos, conCnt, hammingSum, diffPosCnt, beginIdx, i-1, currentFrame);
                 }
             }
