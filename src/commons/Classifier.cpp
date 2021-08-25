@@ -747,7 +747,7 @@ int Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & c
     //choose the best combination of consecutive-match among genus for current query
 
     if(!matchCombinationsForEachGenus.empty()){
-        int r = getTheBestGenus(matchCombinationsForEachGenus, chosenMatchCombination, maxNum);
+        int r = getTheBestGenus(matchCombinationsForEachGenus, chosenMatchCombination, maxNum, conservedWithinGenus);
         if(r == -1){  // more than one genus
             return -1;
         } else{
