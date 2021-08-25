@@ -742,7 +742,7 @@ int Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & c
             }
         }
         //choose the best combination of consecutive matches for current genus
-        if(!coMatches.empty()) getMatchCombinationForCurGenus2(coMatches, matchCombinationsForEachGenus, matchList, maxNum);
+        if(!coMatches.empty()) conservedWithinGenus.push_back(getMatchCombinationForCurGenus2(coMatches, matchCombinationsForEachGenus, matchList, maxNum));
         coMatches.clear();
     }
     //choose the best combination of consecutive-match among genus for current query
