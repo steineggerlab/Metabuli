@@ -539,7 +539,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
 
     //Process each blocks
-    omp_set_num_threads(ThreadNum);
+    omp_set_num_threads(1);
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList)
     {
 #pragma omp for schedule(dynamic, 1)
@@ -561,12 +561,13 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
 ///문제점 redundancy reduced reference k-mer 임을 고려해야 한다. block을 species level에서 해줘야하지 않나.. 그리고 오버랩도 좀 허용해줘야할껄?
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
 
-    //cout<<"# "<<currentQuery<<endl;
-
     TaxID selectedTaxon;
-//    for(int i = offset; i < end + 1; i++){
-//        cout<<int(matchList[i].frame)<<" "<<matchList[i].position<<" "<<matchList[i].taxID<<" "<<int(matchList[i].hamming)<<endl;
-//    }
+    cout<<"# "<<currentQuery<<endl;
+
+
+    for(int i = offset; i < end + 1; i++){
+        cout<<int(matchList[i].frame)<<" "<<matchList[i].position<<" "<<matchList[i].taxID<<" "<<int(matchList[i].hamming)<<endl;
+    }
 
     //get the best genus for current query
     vector<ConsecutiveMatches> matchCombi;
@@ -621,11 +622,11 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         queryList[currentQuery].classification = selectedTaxon;
         queryList[currentQuery].coverage = 0;
         if(hammingAverage > 1.0f) queryList[currentQuery].newSpecies = true;
-//        cout << "# " << currentQuery << " " << res << endl;
-//        for(size_t i = 0; i < taxIdList.size(); i++){
-//            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
-//        }
-//        cout<<"coverage: NA"<<"  "<<selectedTaxon<<" "<<ncbiTaxonomy.taxonNode(selectedTaxon)->rank<<endl;
+        cout << "# " << currentQuery << " " << res << endl;
+        for(size_t i = 0; i < taxIdList.size(); i++){
+            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
+        }
+        cout<<"coverage: NA"<<"  "<<selectedTaxon<<" "<<ncbiTaxonomy.taxonNode(selectedTaxon)->rank<<endl;
         return selectedTaxon;
     }
 
@@ -644,11 +645,11 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
         queryList[currentQuery].newSpecies = true;
-//        cout<<"# "<<currentQuery<<"HH"<<endl;
-//        for(size_t i = 0; i < taxIdList.size(); i++){
-//            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
-//        }
-//        cout<<"coverage: "<<coverage<<"  "<<selectedTaxon<<" "<<ncbiTaxonomy.taxonNode(selectedTaxon)->rank<<endl;
+        cout<<"# "<<currentQuery<<"HH"<<endl;
+        for(size_t i = 0; i < taxIdList.size(); i++){
+            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
+        }
+        cout<<"coverage: "<<coverage<<"  "<<selectedTaxon<<" "<<ncbiTaxonomy.taxonNode(selectedTaxon)->rank<<endl;
         return selectedTaxon;
     }
 
@@ -676,11 +677,11 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 //        }
 //    }
 //
-//    cout<<"# "<<currentQuery<<endl;
-//    for(size_t i = 0; i < taxIdList.size(); i++){
-//        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
-//    }
-//    cout<<"coverage: "<<coverage<<"  "<<selectedLCA<<" "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
+    cout<<"# "<<currentQuery<<endl;
+    for(size_t i = 0; i < taxIdList.size(); i++){
+        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
+    }
+    cout<<"coverage: "<<coverage<<"  "<<selectedLCA<<" "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
     ///store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedLCA;
@@ -819,13 +820,13 @@ bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
     //sort consecutive match blocks
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
 
-//    for(int i3 = 0; i3 < coMatches.size(); i3++){
-//        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt;
-//        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
-//        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
-//        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
-//    }
-//    cout<<endl;
+    for(int i3 = 0; i3 < coMatches.size(); i3++){
+        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt;
+        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
+        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
+        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
+    }
+    cout<<endl;
 
     //container to store match blocks to be used.
     vector<ConsecutiveMatches> alignedCoMatches;
