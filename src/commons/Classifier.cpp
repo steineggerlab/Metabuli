@@ -561,12 +561,12 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
 ///문제점 redundancy reduced reference k-mer 임을 고려해야 한다. block을 species level에서 해줘야하지 않나.. 그리고 오버랩도 좀 허용해줘야할껄?
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList){
 
-    cout<<"# "<<currentQuery<<endl;
+    //cout<<"# "<<currentQuery<<endl;
 
     TaxID selectedTaxon;
-    for(int i = offset; i < end + 1; i++){
-        cout<<int(matchList[i].frame)<<" "<<matchList[i].position<<" "<<matchList[i].taxID<<" "<<int(matchList[i].hamming)<<endl;
-    }
+//    for(int i = offset; i < end + 1; i++){
+//        cout<<int(matchList[i].frame)<<" "<<matchList[i].position<<" "<<matchList[i].taxID<<" "<<int(matchList[i].hamming)<<endl;
+//    }
 
     //get the best genus for current query
     vector<ConsecutiveMatches> matchCombi;
@@ -621,11 +621,11 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         queryList[currentQuery].classification = selectedTaxon;
         queryList[currentQuery].coverage = 0;
         if(hammingAverage > 1.0f) queryList[currentQuery].newSpecies = true;
-        cout << "# " << currentQuery << " " << res << endl;
-        for(size_t i = 0; i < taxIdList.size(); i++){
-            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
-        }
-        cout<<"coverage: NA"<<"  "<<selectedTaxon<<" "<<ncbiTaxonomy.taxonNode(selectedTaxon)->rank<<endl;
+//        cout << "# " << currentQuery << " " << res << endl;
+//        for(size_t i = 0; i < taxIdList.size(); i++){
+//            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
+//        }
+//        cout<<"coverage: NA"<<"  "<<selectedTaxon<<" "<<ncbiTaxonomy.taxonNode(selectedTaxon)->rank<<endl;
         return selectedTaxon;
     }
 
@@ -644,11 +644,11 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
         queryList[currentQuery].newSpecies = true;
-        cout<<"# "<<currentQuery<<"HH"<<endl;
-        for(size_t i = 0; i < taxIdList.size(); i++){
-            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
-        }
-        cout<<"coverage: "<<coverage<<"  "<<selectedTaxon<<" "<<ncbiTaxonomy.taxonNode(selectedTaxon)->rank<<endl;
+//        cout<<"# "<<currentQuery<<"HH"<<endl;
+//        for(size_t i = 0; i < taxIdList.size(); i++){
+//            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
+//        }
+//        cout<<"coverage: "<<coverage<<"  "<<selectedTaxon<<" "<<ncbiTaxonomy.taxonNode(selectedTaxon)->rank<<endl;
         return selectedTaxon;
     }
 
@@ -675,12 +675,12 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 //            selectedLCA = strainMatchCnt.begin()->first;
 //        }
 //    }
-
-    cout<<"# "<<currentQuery<<endl;
-    for(size_t i = 0; i < taxIdList.size(); i++){
-        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
-    }
-    cout<<"coverage: "<<coverage<<"  "<<selectedLCA<<" "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
+//
+//    cout<<"# "<<currentQuery<<endl;
+//    for(size_t i = 0; i < taxIdList.size(); i++){
+//        cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
+//    }
+//    cout<<"coverage: "<<coverage<<"  "<<selectedLCA<<" "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
     ///store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedLCA;
@@ -814,17 +814,18 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
 }
 
 bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList, int maxiumPossibleMatchCnt){
-    cout<<endl;
+
 
     //sort consecutive match blocks
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
 
-    for(int i3 = 0; i3 < coMatches.size(); i3++){
-        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt;
-        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
-        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
-        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
-    }
+//    for(int i3 = 0; i3 < coMatches.size(); i3++){
+//        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt;
+//        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
+//        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
+//        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
+//    }
+//    cout<<endl;
 
     //container to store match blocks to be used.
     vector<ConsecutiveMatches> alignedCoMatches;
@@ -919,7 +920,7 @@ int Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vect
             totalDiffPosCnt += genus[i][0].diffPosCnt;
             totalMatchCnt += genus[i][0].matchCnt;
             totalHamming += genus[i][0].hamming;
-            cout<<"conserved "<<i<<endl;
+//            cout<<"conserved "<<i<<endl;
         } else {
             for (size_t j = 0; j < genus[i].size(); j++) {
                 totalDiffPosCnt += genus[i][j].diffPosCnt;
@@ -931,7 +932,7 @@ int Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vect
             totalDiffPosCnt = maxKmerNum - 1;
         }
         currScore = totalDiffPosCnt - float(totalHamming)/float(totalMatchCnt);
-        cout<<i<<" "<<currScore<<endl;
+//        cout<<i<<" "<<currScore<<endl;
         coverage = float(totalDiffPosCnt) / float(maxKmerNum);
         if(currScore > maxScore && coverage > 0.2){
             chosenGenusIdx = i;
