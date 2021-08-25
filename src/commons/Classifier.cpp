@@ -831,8 +831,13 @@ bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
     //Similarily good match but different frame
     //TODO -> must find LCA
     if(coMatches.size() > 1){
-        if((coMatches[1].diffPosCnt > coMatches[0].diffPosCnt - 2) && float(coMatches[1].diffPosCnt)/float(maxiumPossibleMatchCnt) > 0.9){
-            alignedCoMatches.push_back(coMatches[1]);
+        int i = 1;
+        bool check = false;
+        while((coMatches[i].diffPosCnt > coMatches[0].diffPosCnt - 2) && float(coMatches[i].diffPosCnt)/float(maxiumPossibleMatchCnt) > 0.9){
+            alignedCoMatches.push_back(coMatches[i]);
+            check = true;
+        }
+        if(check){
             genus.push_back(alignedCoMatches);
             return true;
         }
