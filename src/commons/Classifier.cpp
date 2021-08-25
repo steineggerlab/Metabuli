@@ -830,10 +830,10 @@ bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
     //Similarily good match but different frame
     //TODO -> must find LCA
     size_t numberOfConsecutiveMatches = coMatches.size();
-    if(numberOfConsecutiveMatches > 1){
+    if(numberOfConsecutiveMatches > 1 && coMatches[0].diffPosCnt >= maxiumPossibleMatchCnt - 1){
         size_t i = 1;
         bool check = false;
-        while((coMatches[i].diffPosCnt > coMatches[0].diffPosCnt - 2) && float(coMatches[i].diffPosCnt)/float(maxiumPossibleMatchCnt) > 0.9 && i < numberOfConsecutiveMatches){
+        while((coMatches[i].diffPosCnt > coMatches[0].diffPosCnt - 2) && float(coMatches[i].diffPosCnt)/float(maxiumPossibleMatchCnt) > 0.8 && i < numberOfConsecutiveMatches){
             alignedCoMatches.push_back(coMatches[i]);
             check = true;
             i++;
@@ -893,7 +893,7 @@ float Classifier::scoreSubset(vector<ConsecutiveMatches> & subset){
     return score;
 }
 
-int Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen, int maxKmerNum){
+int Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen, int maxKmerNum, vector<bool> & conservationCheck){
     int numberOfGenus = 0;
     int chosenGenusIdx = INT_MAX;
     vector<TaxID> selecetedGenusList;
@@ -908,10 +908,20 @@ int Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vect
         totalDiffPosCnt = 0;
         totalMatchCnt = 0;
         totalHamming = 0;
-        for(size_t j = 0; j < genus[i].size(); j++){
-            totalDiffPosCnt += genus[i][j].diffPosCnt;
-            totalMatchCnt += genus[i][j].matchCnt;
-            totalHamming += genus[i][j].hamming;
+
+        if(conservationCheck[i]){
+            totalDiffPosCnt += genus[i][0].diffPosCnt;
+            totalMatchCnt += genus[i][0].matchCnt;
+            totalHamming += genus[i][0].hamming;
+        } else {
+            for (size_t j = 0; j < genus[i].size(); j++) {
+                totalDiffPosCnt += genus[i][j].diffPosCnt;
+                totalMatchCnt += genus[i][j].matchCnt;
+                totalHamming += genus[i][j].hamming;
+            }
+        }
+        if(totalDiffPosCnt == maxKmerNum){
+            totalDiffPosCnt = maxKmerNum - 1;
         }
         currScore = totalDiffPosCnt - float(totalHamming)/float(totalMatchCnt);
         coverage = float(totalDiffPosCnt) / float(maxKmerNum);
