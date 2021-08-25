@@ -814,14 +814,16 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
 
 bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList, int maxiumPossibleMatchCnt){
     cout<<"new genus"<<endl;
+
+    //sort consecutive match blocks
+    sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
+
     for(int i3 = 0; i3 < coMatches.size(); i3++){
         cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt;
         cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
         cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
         cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
     }
-    //sort consecutive match blocks
-    sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
 
     //container to store match blocks to be used.
     vector<ConsecutiveMatches> alignedCoMatches;
