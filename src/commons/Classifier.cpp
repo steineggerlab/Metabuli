@@ -919,6 +919,7 @@ int Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vect
             totalDiffPosCnt += genus[i][0].diffPosCnt;
             totalMatchCnt += genus[i][0].matchCnt;
             totalHamming += genus[i][0].hamming;
+            cout<<"conserved "<<i<<endl;
         } else {
             for (size_t j = 0; j < genus[i].size(); j++) {
                 totalDiffPosCnt += genus[i][j].diffPosCnt;
@@ -930,6 +931,7 @@ int Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vect
             totalDiffPosCnt = maxKmerNum - 1;
         }
         currScore = totalDiffPosCnt - float(totalHamming)/float(totalMatchCnt);
+        cout<<i<<" "<<currScore<<endl;
         coverage = float(totalDiffPosCnt) / float(maxKmerNum);
         if(currScore > maxScore && coverage > 0.2){
             chosenGenusIdx = i;
