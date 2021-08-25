@@ -836,6 +836,7 @@ bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
         while((coMatches[i].diffPosCnt > coMatches[0].diffPosCnt - 2) && float(coMatches[i].diffPosCnt)/float(maxiumPossibleMatchCnt) > 0.9){
             alignedCoMatches.push_back(coMatches[i]);
             check = true;
+            i++;
         }
         if(check){
             genus.push_back(alignedCoMatches);
