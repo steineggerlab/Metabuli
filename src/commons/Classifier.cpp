@@ -568,12 +568,12 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     //get the best genus for current query
     vector<ConsecutiveMatches> matchCombi;
-    int numberOfGenus = 0;
+
     //cout<<"getBestGenusLevelMatchCombination"<<endl;
-    numberOfGenus = getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset, queryLength);
+    int res = getBestGenusLevelMatchCombination(matchCombi, matchList, end, offset, queryLength);
 
     //If there is no proper genus for current query, it is un-classified.
-    if(matchCombi.empty() || numberOfGenus == 0){
+    if(matchCombi.empty() || res == 3){
         queryList[currentQuery].isClassified = false;
         queryList[currentQuery].classification = 0;
         queryList[currentQuery].coverage = 0;
@@ -614,13 +614,13 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     //If there are two or more good genus level candidates, find the LCA.
     //
-    if(numberOfGenus > 1 || (totalNumberOfMatches > (3*maxNum) && hammingSum == 0) ){
+    if(res == -1 || res == 1){ //(totalNumberOfMatches > (3 * maxNum) && hammingSum == 0)
         selectedTaxon = ncbiTaxonomy.LCA(taxIdList)->taxId;
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
         queryList[currentQuery].coverage = 0;
         if(hammingAverage > 1.0f) queryList[currentQuery].newSpecies = true;
-        cout<<"# "<<currentQuery<<" "<<numberOfGenus<<endl;
+        cout << "# " << currentQuery << " " << res << endl;
         for(size_t i = 0; i < taxIdList.size(); i++){
             cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
         }
@@ -690,7 +690,8 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
 int Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset, size_t queryLength){
     vector<ConsecutiveMatches> coMatches;
-    vector<vector<ConsecutiveMatches>> genus;
+    vector<vector<ConsecutiveMatches>> matchCombinationsForEachGenus;
+    vector<bool> conservedWithinGenus;
     int conCnt = 0;
     uint32_t diffPosCnt = 0;
     uint32_t hammingSum = 0;
@@ -741,12 +742,25 @@ int Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & c
             }
         }
         //choose the best combination of consecutive matches for current genus
-        if(!coMatches.empty()) getMatchCombinationForCurGenus2(coMatches, genus, matchList, maxNum);
+        if(!coMatches.empty()) getMatchCombinationForCurGenus2(coMatches, matchCombinationsForEachGenus, matchList, maxNum);
         coMatches.clear();
     }
     //choose the best combination of consecutive-match among genus for current query
-    if(!genus.empty())
-        return getTheBestGenus(genus, chosenMatchCombination, maxNum);
+
+    if(!matchCombinationsForEachGenus.empty()){
+        int r = getTheBestGenus(matchCombinationsForEachGenus, chosenMatchCombination, maxNum);
+        if(r == -1){  // more than one genus
+            return -1;
+        } else{
+            if(conservedWithinGenus[r]){ // one genus and conserved
+                return 1;
+            } else{ // one genus and not conserved
+                return 2;
+            }
+        }
+    }
+
+    return 3;
 }
 void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList){
 //        for(int i3 = 0; i3 < coMatches.size(); i3++){
@@ -797,8 +811,8 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     genus.push_back(alignedCoMatches);
 }
 
-void Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList, int maxiumPossibleMatchCnt){
-        for(int i3 = 0; i3 < coMatches.size(); i3++){
+bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList, int maxiumPossibleMatchCnt){
+    for(int i3 = 0; i3 < coMatches.size(); i3++){
         cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt;
         cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
         cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
@@ -820,7 +834,7 @@ void Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
         if((coMatches[1].diffPosCnt > coMatches[0].diffPosCnt - 2) && float(coMatches[1].diffPosCnt)/float(maxiumPossibleMatchCnt) > 0.9){
             alignedCoMatches.push_back(coMatches[1]);
             genus.push_back(alignedCoMatches);
-            return;
+            return true;
         }
     }
 
@@ -841,15 +855,9 @@ void Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
     }
 
     genus.push_back(alignedCoMatches);
+    return false;
 }
 
-void Classifier::getMatchCombinationForCurGenus3(vector<ConsecutiveMatches> &coMatches,
-                                                 vector<vector<ConsecutiveMatches>> &genus,
-                                                 Classifier::Match *matchList, int maximumPossibleMatchNum) {
-
-
-
-}
 
 void Classifier::getSubsets(vector<int> & subset, vector<vector<int>> & uniqueSubset, int k, int n){
     if(k == n + 1){
@@ -918,7 +926,13 @@ int Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vect
             chosen.push_back(genus[selecetedGenusList[g]][i]);
         }
     }
-    return numberOfGenus;
+
+    if(numberOfGenus == 1){
+        return chosenGenusIdx;
+    } else {
+        return -1; // more than one genus
+    }
+
 }
 
 
