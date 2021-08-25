@@ -814,7 +814,7 @@ void Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
 }
 
 bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList, int maxiumPossibleMatchCnt){
-    cout<<"new genus"<<endl;
+    cout<<endl;
 
     //sort consecutive match blocks
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
@@ -926,7 +926,7 @@ int Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vect
                 totalHamming += genus[i][j].hamming;
             }
         }
-        if(totalDiffPosCnt == maxKmerNum){
+        if(totalDiffPosCnt >= maxKmerNum){
             totalDiffPosCnt = maxKmerNum - 1;
         }
         currScore = totalDiffPosCnt - float(totalHamming)/float(totalMatchCnt);
