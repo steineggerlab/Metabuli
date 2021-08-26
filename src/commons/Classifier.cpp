@@ -717,7 +717,7 @@ int Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & c
             //For current frame
             while (currentFrame == matchList[i].frame && currentTaxID == matchList[i].genusTaxID && (i < end + 1)){
                 currentPos = matchList[i].position;
-                hammingSum = 0;
+                hammingSum = matchList[i].hamming;
                 hammingMean = 0.0;
                 conCnt = 0;
                 diffPosCnt = 1;
@@ -732,13 +732,26 @@ int Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & c
                     if(matchList[i].position != currentPos) {
                         diffPosCnt++;
                         currentPos = matchList[i].position;
+                        hammingSum += matchList[i].hamming;
+                        hammingMean = float(hammingSum) / float(diffPosCnt);
                     }
                     conCnt ++;
-                    hammingSum += matchList[i].hamming;
-                    hammingMean = float(hammingSum) / float(conCnt);
+//                    hammingSum += matchList[i].hamming;
+//                    hammingMean = float(hammingSum) / float(conCnt);
                     i++;
                 }
                 if(diffPosCnt > 1){
+
+                    while(matchList[beginIdx].hamming > hammingMean + 3 && (beginIdx < i-1)) {
+                        hammingSum -= matchList[beginIdx].hamming;
+                        conCnt --;
+                        if(matchList[beginIdx].position !=  matchList[beginIdx + 1].position){ //range error?
+                            diffPosCnt --;
+                            conBegin += 3;
+                        }
+                        beginIdx++;
+                    }
+
                     if(diffPosCnt == maxNum) diffPosCnt--;
                     coMatches.emplace_back(conBegin, currentPos, conCnt, hammingSum, diffPosCnt, beginIdx, i-1, currentFrame);
                 }
