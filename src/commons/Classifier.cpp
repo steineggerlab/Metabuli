@@ -881,7 +881,7 @@ bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
         }
     }
 
-    genus.push_back(alignedCoMatches);
+    genus.push_back(coMatches);
     return false;
 }
 
