@@ -1115,7 +1115,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
 
         double currPercent = float(it->second.weight) / totalAssignedSeqsWeights;
 
-        if(it->second.weight == maximunPossibleKmerNum) it->second.weight = maximunPossibleKmerNum - 1;
+        if(it->second.weight >= maximunPossibleKmerNum) it->second.weight = maximunPossibleKmerNum - 1;
 
         curCoverage = float(it->second.weight) / float(maximunPossibleKmerNum);
         TaxID currTaxId = it->first;
