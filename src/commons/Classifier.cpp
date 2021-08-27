@@ -839,7 +839,7 @@ bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
 //        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
 //        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
 //    }
-    cout<<endl;
+//    cout<<endl;
 
     //container to store match blocks to be used.
     vector<ConsecutiveMatches> alignedCoMatches;
@@ -881,7 +881,7 @@ bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
         }
     }
 
-    genus.push_back(coMatches);
+    genus.push_back(alignedCoMatches);
     return false;
 }
 
