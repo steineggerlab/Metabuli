@@ -830,6 +830,9 @@ bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
 
     //sort consecutive match blocks
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
+
+    genus.push_back(coMatches);
+    return false;
 //
 //    for(int i3 = 0; i3 < coMatches.size(); i3++){
 //        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt;
@@ -839,48 +842,47 @@ bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
 //    }
 //    cout<<endl;
 
-    //container to store match blocks to be used.
-    vector<ConsecutiveMatches> alignedCoMatches;
+//    //container to store match blocks to be used.
+//    vector<ConsecutiveMatches> alignedCoMatches;
+//
+//    //store the best one anyway
+//    alignedCoMatches.push_back(coMatches[0]);
+//    bool overlap = false;
+//
+//    //Similarily good match but different frame
+//    //TODO -> must find LCA
+//    size_t numberOfConsecutiveMatches = coMatches.size();
+//    if(numberOfConsecutiveMatches > 1 && coMatches[0].diffPosCnt >= maxiumPossibleMatchCnt - 1){
+//        size_t i = 1;
+//        bool check = false;
+//        while((coMatches[i].diffPosCnt > coMatches[0].diffPosCnt - 2) && float(coMatches[i].diffPosCnt)/float(maxiumPossibleMatchCnt) > 0.8 && i < numberOfConsecutiveMatches){
+//            alignedCoMatches.push_back(coMatches[i]);
+//            check = true;
+//            i++;
+//        }
+//        if(check){
+//            genus.push_back(alignedCoMatches);
+//            return true;
+//        }
+//    }
+//
+//    //TODO: Fix here to accept slight overlaps
+//    for(size_t i = 1; i < coMatches.size(); i++){
+//        overlap = false;
+//        for(size_t j = 0; j < alignedCoMatches.size(); j++){
+//            if((alignedCoMatches[j].begin < coMatches[i].end) && (alignedCoMatches[j].end > coMatches[i].begin)){
+//                overlap = true;
+//                break;
+//            }
+//        }
+//
+//        if(overlap) continue;
+//        else{
+//            alignedCoMatches.push_back(coMatches[i]);
+//        }
+//    }
 
-    //store the best one anyway
-    alignedCoMatches.push_back(coMatches[0]);
-    bool overlap = false;
 
-    //Similarily good match but different frame
-    //TODO -> must find LCA
-    size_t numberOfConsecutiveMatches = coMatches.size();
-    if(numberOfConsecutiveMatches > 1 && coMatches[0].diffPosCnt >= maxiumPossibleMatchCnt - 1){
-        size_t i = 1;
-        bool check = false;
-        while((coMatches[i].diffPosCnt > coMatches[0].diffPosCnt - 2) && float(coMatches[i].diffPosCnt)/float(maxiumPossibleMatchCnt) > 0.8 && i < numberOfConsecutiveMatches){
-            alignedCoMatches.push_back(coMatches[i]);
-            check = true;
-            i++;
-        }
-        if(check){
-            genus.push_back(alignedCoMatches);
-            return true;
-        }
-    }
-
-    //TODO: Fix here to accept slight overlaps
-    for(size_t i = 1; i < coMatches.size(); i++){
-        overlap = false;
-        for(size_t j = 0; j < alignedCoMatches.size(); j++){
-            if((alignedCoMatches[j].begin < coMatches[i].end) && (alignedCoMatches[j].end > coMatches[i].begin)){
-                overlap = true;
-                break;
-            }
-        }
-
-        if(overlap) continue;
-        else{
-            alignedCoMatches.push_back(coMatches[i]);
-        }
-    }
-
-    genus.push_back(alignedCoMatches);
-    return false;
 }
 
 
@@ -922,17 +924,17 @@ int Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vect
     float maxScore = -FLT_MAX;
     float currScore;
     float coverage = 0.0f;
+    float averageHamming;
 
     for(size_t i = 0; i < genus.size(); i++){
         totalDiffPosCnt = 0;
         totalMatchCnt = 0;
         totalHamming = 0;
-
+        averageHamming = 0;
         if(conservationCheck[i]){
             totalDiffPosCnt += genus[i][0].diffPosCnt;
             totalMatchCnt += genus[i][0].matchCnt;
             totalHamming += genus[i][0].hamming;
-//            cout<<"conserved "<<i<<endl;
         } else {
             for (size_t j = 0; j < genus[i].size(); j++) {
                 totalDiffPosCnt += genus[i][j].diffPosCnt;
@@ -940,11 +942,11 @@ int Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vect
                 totalHamming += genus[i][j].hamming;
             }
         }
-        if(totalDiffPosCnt >= maxKmerNum){
-            totalDiffPosCnt = maxKmerNum - 1;
-        }
-        currScore = totalDiffPosCnt - float(totalHamming)/float(totalMatchCnt);
-//        cout<<i<<" "<<currScore<<endl;
+        averageHamming = float(totalDiffPosCnt) / float(totalHamming);
+
+        if(totalDiffPosCnt >= maxKmerNum) totalDiffPosCnt = maxKmerNum - 1;
+
+        currScore = totalDiffPosCnt - averageHamming;
         coverage = float(totalDiffPosCnt) / float(maxKmerNum);
         if(currScore > maxScore && coverage > 0.2){
             chosenGenusIdx = i;
