@@ -539,7 +539,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
 
     //Process each blocks
-    omp_set_num_threads(ThreadNum);
+    omp_set_num_threads(1);
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList)
     {
 #pragma omp for schedule(dynamic, 1)
@@ -1114,6 +1114,9 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         }
 
         double currPercent = float(it->second.weight) / totalAssignedSeqsWeights;
+
+        if(it->second.weight == maximunPossibleKmerNum) it->second.weight = maximunPossibleKmerNum - 1;
+
         curCoverage = float(it->second.weight) / float(maximunPossibleKmerNum);
         TaxID currTaxId = it->first;
         TaxonNode const *node = taxonomy.taxonNode(currTaxId, false);
