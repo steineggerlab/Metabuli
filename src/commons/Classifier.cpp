@@ -614,7 +614,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     //If there are two or more good genus level candidates, find the LCA.
     //
-    if(res == -1 || res == 1){ //(totalNumberOfMatches > (3 * maxNum) && hammingSum == 0)
+    if(res == -1 || res == 1){ // -1; more than one genus. 1; conserved in one genus
         selectedTaxon = ncbiTaxonomy.LCA(taxIdList)->taxId;
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
@@ -796,7 +796,6 @@ bool Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     bool overlap = false;
 
     //Similarily good match but different frame
-    //TODO -> must find LCA
     size_t numberOfConsecutiveMatches = coMatches.size();
     if(numberOfConsecutiveMatches > 1 && coMatches[0].diffPosCnt >= maxiumPossibleMatchCnt - 1){
         size_t i = 1;
@@ -828,7 +827,7 @@ bool Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
         }
     }
 
-    genus.push_back(coMatches);
+    genus.push_back(alignedCoMatches);
     return false;
 }
 
