@@ -246,7 +246,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     //Devide query k-mer list into blocks for multi threading.
     //Each split has start and end points of query list + proper offset point of target k-mer list
     vector<QueryKmerSplit> querySplits;
-    int threadNum = 1;
+    int threadNum = ThreadNum;
     uint64_t queryAA;
     if(threadNum == 1){ //Single thread
         querySplits.emplace_back(0, queryKmerCnt - 1, queryKmerCnt, diffIdxSplits.data[0]);
@@ -539,7 +539,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
 
     //Process each blocks
-    omp_set_num_threads(1);
+    omp_set_num_threads(ThreadNum);
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList, blockIdx)
     {
 #pragma omp for schedule(dynamic, 1)
