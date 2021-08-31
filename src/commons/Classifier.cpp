@@ -317,7 +317,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     size_t tempPos = 0;
 
     for(size_t z = 0 ; z < numOfTargetKmer ; z++){
-        tempKmer = getNextTargetKmer(getNextTargetKmer(tempKmer, targetDiffIdxList.data, tempPos);
+        tempKmer = getNextTargetKmer(tempKmer, targetDiffIdxList.data, tempPos);
         seqIterator->printKmerInDNAsequence(tempKmer);
     }
 
