@@ -321,7 +321,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 //        seqIterator->printKmerInDNAsequence(tempKmer);
 //    }
 
-    omp_set_num_threads(1);
+    omp_set_num_threads(ThreadNum);
     while(completedSplitCnt < threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(numOfDiffIdx, queryIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, numOfcall, querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout, genusTaxIdList)
