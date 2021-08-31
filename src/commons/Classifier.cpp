@@ -524,14 +524,14 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByTaxId);
 
     //Devide matches into blocks for multi threading
-    typedef Sequence Block;
-    Block * matchBlocks = new Block[seqNum];
+    MatchBlock * matchBlocks = new MatchBlock[seqNum];
     cout<<seqNum<<endl;
     size_t matchIdx = 0;
     size_t blockIdx = 0;
     uint32_t currentQuery;
     while(matchIdx < numOfMatches){
         currentQuery = matchList.data[matchIdx].queryId;
+        matchBlocks[blockIdx].id = currentQuery;
         matchBlocks[blockIdx].start = matchIdx;
         while((currentQuery == matchList.data[matchIdx].queryId) && (matchIdx < numOfMatches)) ++matchIdx;
         matchBlocks[blockIdx].end = matchIdx - 1;
@@ -543,8 +543,8 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList)
     {
 #pragma omp for schedule(dynamic, 1)
-        for(size_t i = 0; i < seqNum; ++ i ){
-            TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[i].length, i, matchBlocks[i].start,
+        for(size_t i = 0; i < blockIdx; ++ i ){
+            TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[matchBlocks[i].id].length, matchBlocks[i].id, matchBlocks[i].start,
                                                 matchBlocks[i].end, matchList.data, queryList);
         }
     }

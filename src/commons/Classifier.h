@@ -134,6 +134,14 @@ private:
         int red; ///TODO remove it later
     };
 
+    struct MatchBlock{
+        MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) { }
+        MatchBlock() : start(0), end(0), id(0) { }
+        size_t start;
+        size_t end;
+        int id;
+    };
+
     struct QueryKmerSplit{
         QueryKmerSplit(size_t start, size_t end, size_t length, DiffIdxSplit diffIdxSplit)
             : start(start), end(end), length(length), diffIdxSplit(diffIdxSplit) { }

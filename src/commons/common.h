@@ -15,7 +15,7 @@ struct Sequence{
     Sequence() : start(0), end(0), length(0) { }
     size_t start;
     size_t end;
-    size_t length;
+    int length;
 };
 
 struct Query{
