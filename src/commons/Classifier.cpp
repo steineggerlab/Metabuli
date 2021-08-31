@@ -237,9 +237,9 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
         }
     }
 
-//    for(int i = 0 ; i < numOfDiffIdxSplits; i++){
-//        cout<<diffIdxSplits.data[i].infoIdxOffset<<" "<<diffIdxSplits.data[i].diffIdxOffset<<endl;
-//    }
+    for(int i = 0 ; i < numOfDiffIdxSplits; i++){
+        cout<<diffIdxSplits.data[i].infoIdxOffset<<" "<<diffIdxSplits.data[i].diffIdxOffset<<endl;
+    }
 
     cout<<"Filtering out meaningless target splits ... done"<<endl;
 
@@ -291,10 +291,10 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
         }
     }
 
-//    cout<<"Query"<<endl;
-//    for(int i = 0 ; i < threadNum; i++){
-//        cout << querySplits[i].diffIdxSplit.infoIdxOffset << " " << querySplits[i].diffIdxSplit.diffIdxOffset << endl;
-//    }
+    cout<<"Query"<<endl;
+    for(int i = 0 ; i < threadNum; i++){
+        cout << querySplits[i].diffIdxSplit.infoIdxOffset << " " << querySplits[i].diffIdxSplit.diffIdxOffset << endl;
+    }
 
 
     bool * splitCheckList = (bool *)malloc(sizeof(bool)*threadNum);
