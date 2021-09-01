@@ -351,7 +351,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                     continue;
                 targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
                 //diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
-                diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset - (i != 0);
+                diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 currentQuery = UINT64_MAX;
                 currentQueryAA = UINT64_MAX;
