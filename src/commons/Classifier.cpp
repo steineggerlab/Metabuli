@@ -425,7 +425,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                     if(AminoAcid(currentQuery) != AminoAcid(currentTargetKmer)) ///Move to next query k-mer if there isn't any match.
                         continue;
                     else
-                        startIdxOfAAmatch = targetInfoIdx; // - (i == 0);
+                        startIdxOfAAmatch = targetInfoIdx - (i == 0);
                     //startIdxOfAAmatch = targetInfoIdx - 1;
 
                     ///Load target k-mers that are matched in amino acid level
