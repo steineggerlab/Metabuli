@@ -349,8 +349,8 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                 if(hasOverflow || splitCheckList[i])
                     continue;
                 targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset;
-                //diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
-                diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset + (i != 0);
+                diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
+                //diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset + (i != 0);
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 currentQuery = UINT64_MAX;
                 currentQueryAA = UINT64_MAX;
