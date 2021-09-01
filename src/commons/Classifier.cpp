@@ -349,9 +349,9 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
             for (size_t i = 0; i < querySplits.size(); i++){
                 if(hasOverflow || splitCheckList[i])
                     continue;
-                targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset;
-                //diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
-                diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset + (i != 0);
+                targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
+                diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
+//                diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset + (i != 0);
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 currentQuery = UINT64_MAX;
                 currentQueryAA = UINT64_MAX;
@@ -425,7 +425,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                     if(AminoAcid(currentQuery) != AminoAcid(currentTargetKmer)) ///Move to next query k-mer if there isn't any match.
                         continue;
                     else
-                        startIdxOfAAmatch = targetInfoIdx - (i == 0);
+                        startIdxOfAAmatch = targetInfoIdx; // - (i == 0);
                     //startIdxOfAAmatch = targetInfoIdx - 1;
 
                     ///Load target k-mers that are matched in amino acid level
