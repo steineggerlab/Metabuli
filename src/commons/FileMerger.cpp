@@ -77,9 +77,9 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     TargetKmerInfo entryInfo = lookingInfos[idxOfMin];
 
     ///write first k-mer
-    cre->getDiffIdx(0, entryKmer, mergedDiffFile, diffBuffer, diffBufferIdx);
+    getDiffIdx(lastWrittenKmer, entryKmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx);
     lastWrittenKmer = entryKmer;
-    cre->writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx);;
+    writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx);
     writtenKmerCnt++;
     int splitCheck = 0;
     int endFlag = 0;
