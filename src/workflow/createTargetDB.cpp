@@ -85,6 +85,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     idxCre.startIndexCreatingParallel(seqFileName, dbDirectory, taxIdListAtSpecies, taxIdList);
     cout<<"done"<<endl;
 
+    return 0;
     //Merge files
     cout<<"Merge reference DB files ... "<<endl;
     int numOfSplits = idxCre.getNumOfFlush();

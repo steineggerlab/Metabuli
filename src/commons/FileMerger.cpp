@@ -168,7 +168,7 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     fclose(mergedInfoFile);
     fclose(diffIdxSplitFile);
 
-    cout<<"171"<<endl; 
+    cout<<"171"<<endl;
     for(size_t file = 0; file < numOfSplitFiles; file++){
         munmap(diffFileList[file].data, diffFileList[file].fileSize + 1);
         munmap(infoFileList[file].data, infoFileList[file].fileSize + 1);
