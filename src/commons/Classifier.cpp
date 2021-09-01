@@ -255,7 +255,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
         querySplits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
         for(size_t tSplitCnt = 0; tSplitCnt < numOfDiffIdxSplits_use; tSplitCnt++){
             queryAA = AminoAcid(queryKmerList[splitWidth].ADkmer);
-            if(queryAA < AminoAcid(diffIdxSplits.data[tSplitCnt].ADkmer)){
+            if(queryAA <= AminoAcid(diffIdxSplits.data[tSplitCnt].ADkmer)){
                 tSplitCnt = tSplitCnt - (tSplitCnt != 0);
                 querySplits.emplace_back(splitWidth, queryKmerCnt - 1, queryKmerCnt - splitWidth, diffIdxSplits.data[tSplitCnt]);
                 break;
@@ -349,8 +349,8 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                 if(hasOverflow || splitCheckList[i])
                     continue;
                 targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset;
-                diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
-                //diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset + (i != 0);
+                //diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
+                diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset + (i != 0);
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 currentQuery = UINT64_MAX;
                 currentQueryAA = UINT64_MAX;
@@ -424,7 +424,8 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                     if(AminoAcid(currentQuery) != AminoAcid(currentTargetKmer)) ///Move to next query k-mer if there isn't any match.
                         continue;
                     else
-                        startIdxOfAAmatch = targetInfoIdx - (i == 0);
+                      //  startIdxOfAAmatch = targetInfoIdx - (i == 0);
+                    startIdxOfAAmatch = targetInfoIdx - 1;
 
                     ///Load target k-mers that are matched in amino acid level
                     while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
