@@ -18,6 +18,8 @@ FileMerger::~FileMerger() {
 void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & taxIdListAtRank, vector<int> & taxIdList) {
     size_t writtenKmerCnt = 0;
 
+    cout<<"21"<<endl;
+
     ///Files to write on & buffers to fill them
     FILE * mergedDiffFile = fopen(mergedDiffFileName, "wb");
     FILE * mergedInfoFile = fopen(mergedInfoFileName, "wb");
@@ -30,16 +32,21 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     size_t totalInfoIdx = 0;
 
 
+    cout<<"35"<<endl;
     ///Prepare files to merge
     size_t numOfSplitFiles = diffIdxFileNames.size();
     size_t numOfincompletedFiles = numOfSplitFiles;
     size_t numOfKmerBeforeMerge = 0;
-    uint64_t lookingKmers[numOfSplitFiles];
-    TargetKmerInfo lookingInfos[numOfSplitFiles];
-    size_t diffFileIdx[numOfSplitFiles];
-    memset(diffFileIdx, 0, sizeof(diffFileIdx));
-    size_t infoFileIdx[numOfSplitFiles];
-    memset(infoFileIdx, 0, sizeof(infoFileIdx));
+    uint64_t * lookingKmers = new uint64_t[numOfSplitFiles];
+//    uint64_t lookingKmers[numOfSplitFiles];
+//    TargetKmerInfo lookingInfos[numOfSplitFiles];
+    auto * lookingInfos = new TargetKmerInfo[numOfSplitFiles];
+    //size_t diffFileIdx[numOfSplitFiles];
+    auto * diffFileIdx = new size_t[numOfSplitFiles];
+    memset(diffFileIdx, 0, numOfSplitFiles * sizeof(size_t));
+    auto * infoFileIdx = new size_t[numOfSplitFiles];
+//    size_t infoFileIdx[numOfSplitFiles];
+    memset(infoFileIdx, 0, numOfSplitFiles * sizeof(size_t));
     size_t maxIdxOfEachFiles[numOfSplitFiles];
     struct MmapedData<uint16_t> *diffFileList = new struct MmapedData<uint16_t>[numOfSplitFiles];
     struct MmapedData<TargetKmerInfo> *infoFileList = new struct MmapedData<TargetKmerInfo>[numOfSplitFiles];
@@ -49,6 +56,8 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
         maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
         numOfKmerBeforeMerge += infoFileList[file].fileSize / sizeof(TargetKmerInfo);
     }
+
+    cout<<"60"<<endl;
 
     ///To make differential index splits
     uint64_t AAofTempSplitOffset = UINT64_MAX;
@@ -61,9 +70,10 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     offsetList[SplitNum] = UINT64_MAX;
 
     DiffIdxSplit splitList[SplitNum];
-    memset(splitList, 0, sizeof(splitList));
+    memset(splitList, 0, sizeof(DiffIdxSplit) * SplitNum);
     int splitListIdx = 1;
 
+    cout<<"76"<<endl;
     /// get the first k-mer to write
     for(size_t file = 0; file < numOfSplitFiles; file++){
         lookingKmers[file] = getNextKmer(0, diffFileList[file], diffFileIdx[file]);
@@ -76,6 +86,8 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     uint64_t entryKmer = lookingKmers[idxOfMin];
     TargetKmerInfo entryInfo = lookingInfos[idxOfMin];
 
+    cout<<"89"<<endl;
+
     ///write first k-mer
     getDiffIdx(lastWrittenKmer, entryKmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx);
     lastWrittenKmer = entryKmer;
@@ -83,6 +95,8 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     writtenKmerCnt++;
     int splitCheck = 0;
     int endFlag = 0;
+
+    cout<<"99"<<endl;
     while(true){
         ///update entry k-mer
         entryKmer = lookingKmers[idxOfMin];
@@ -140,6 +154,8 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
         if(endFlag == 1) break;
     }
 
+    cout<<"157"<<endl;
+
     cre->flushInfoBuf(infoBuffer, mergedInfoFile, infoBufferIdx);
     cre->flushKmerBuf(diffBuffer, mergedDiffFile, diffBufferIdx);
     fwrite(splitList, sizeof(DiffIdxSplit), SplitNum, diffIdxSplitFile);
@@ -152,6 +168,7 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     fclose(mergedInfoFile);
     fclose(diffIdxSplitFile);
 
+    cout<<"171"<<endl; 
     for(size_t file = 0; file < numOfSplitFiles; file++){
         munmap(diffFileList[file].data, diffFileList[file].fileSize + 1);
         munmap(infoFileList[file].data, infoFileList[file].fileSize + 1);
@@ -160,8 +177,14 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     cout<<"Total k-mer count    : " << numOfKmerBeforeMerge <<endl;
     cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
 
+    cout<<"179"<<endl;
+
     delete[] diffFileList;
     delete[] infoFileList;
+    delete[] lookingInfos;
+    delete[] lookingKmers;
+    delete[] diffFileIdx;
+    delete[] infoFileIdx;
 }
 
 
