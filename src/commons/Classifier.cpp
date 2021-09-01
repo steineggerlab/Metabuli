@@ -281,6 +281,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                }
             }
             if(needLastTargetBlock){
+                cout<<"needLastTargetBlock"<<endl;
                 if(i != threadNum - 1)
                     querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth, diffIdxSplits.data[numOfDiffIdxSplits_use - 1]);
                 else {
