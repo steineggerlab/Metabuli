@@ -100,8 +100,8 @@ int createTargetDB(int argc, const char **argv, const Command &command)
         infoSplits.push_back(suffixedInfoFileName);
     }
 
-    char mergedDiffFileName[100];
-    char mergedInfoFileName[100];
+    char mergedDiffFileName[300];
+    char mergedInfoFileName[300];
     sprintf(mergedDiffFileName, "%s/diffIdx", dbDirectory);
     sprintf(mergedInfoFileName, "%s/info", dbDirectory);
     sprintf(diffIdxSplitFileName, "%s/split", dbDirectory);
