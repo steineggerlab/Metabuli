@@ -322,6 +322,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 //        seqIterator->printKmerInDNAsequence(tempKmer);
 //    }
 
+    cout<<"Hi"<<querySplits.size()<<endl;
     omp_set_num_threads(ThreadNum);
     while(completedSplitCnt < threadNum) {
         bool hasOverflow = false;
