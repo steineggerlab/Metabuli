@@ -344,7 +344,7 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
             if (lookingKmer.ADkmer != kmerBuffer[i].ADkmer) {
                 break;
             }
-            hasSeenOtherStrains = (taxIdList[lookingKmer.info.sequenceID] != taxIdList[kmerBuffer[i].info.sequenceID]);
+            hasSeenOtherStrains += (taxIdList[lookingKmer.info.sequenceID] != taxIdList[kmerBuffer[i].info.sequenceID]);
             i++;
             if(i == kmerNum){
                 endFlag = 1;
