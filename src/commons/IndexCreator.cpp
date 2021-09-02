@@ -89,7 +89,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                 ///Getting all the sequence blocks of current split. Each block will be translated later separately.
                 priority_queue<uint64_t> currentList;
                 for(size_t p = 0; p < splits[i].cnt; p++ ) {
-                    buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), seqs[splits[i].offset + p].length};
+                    buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), static_cast<size_t>(seqs[splits[i].offset + p].length)};
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
                     seqIterator.getMinHashList(currentList, seq->seq.s);
@@ -128,7 +128,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                 if(posToWrite + totalKmerCntForOneTaxID < kmerBuffer.bufferSize){
                     size_t start = 0;
                     for(size_t seqIdx = 0; seqIdx < splits[i].cnt; seqIdx++){
-                        buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + seqIdx].start]), seqs[splits[i].offset + seqIdx].length};
+                        buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + seqIdx].start]), static_cast<size_t>(seqs[splits[i].offset + seqIdx].length)};
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
                         size_t end = numOfBlocksList[seqIdx];
@@ -218,7 +218,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                 //Getting all the sequence blocks of current split. Each block will be translated later separately.
                 numOfBlocks = 0;
                 for(size_t p = 0; p < splits[i].cnt; p++ ) {
-                    buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), seqs[splits[i].offset + p].length};
+                    buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), static_cast<size_t>(seqs[splits[i].offset + p].length)};
                     kseq_destroy(seq);
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
@@ -256,7 +256,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                 if(posToWrite + totalKmerCntForOneTaxID < kmerBuffer.bufferSize){
                     size_t start = 0;
                     for(size_t seqIdx = 0; seqIdx < splits[i].cnt; seqIdx++){
-                        buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + seqIdx].start]), seqs[splits[i].offset + seqIdx].length};
+                        buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + seqIdx].start]), static_cast<size_t>(seqs[splits[i].offset + seqIdx].length)};
                         kseq_destroy(seq);
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
