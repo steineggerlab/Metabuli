@@ -461,7 +461,7 @@ void IndexCreator::getFastaSplits(const vector<int> & taxIdListAtRank, vector<Fa
     size_t idx = 0;
     uint32_t offset = 0;
     uint32_t cnt = 0;
-    size_t theLargest;
+    int theLargest;
     int isLeftover;
 
     int currentTaxId;
