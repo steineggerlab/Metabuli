@@ -312,7 +312,6 @@ void ProdigalWrapper::getPredictedGenes(char * genome){
     else{
 
     ///metagenomic version
-        //trainMeta(genome);
         fprintf(stderr, "Request:  Metagenomic, Phase:  Gene Finding\n");
 
         nn = add_nodes(seq, rseq, slen, nodes, closed, mlist, nmask,

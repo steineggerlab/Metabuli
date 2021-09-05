@@ -203,12 +203,15 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     cout<<"Training with metagenomic version: "<<splits[i].training<<" "<<seqs[splits[i].training].start<<" "<<i<<seq->headerOffset<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
                     cout<<seq->name.s<<endl;
                     prodigal.trainMeta(seq->seq.s);
+                    cout<<"Max: "<<i<<" "<<prodigal.max_phase<<" "<<prodigal.max_score<<endl;
+
                 }else{
                     prodigal.trainASpecies(seq->seq.s);
                 }
 
                 //Generate intergenic k-mer list
                 prodigal.getPredictedGenes(seq->seq.s);
+                cout<<i<<"- ng of t: "<<prodigal.ng<<endl;
                 seqIterator.generateIntergenicKmerList(prodigal.genes, prodigal.nodes, prodigal.getNumberOfPredictedGenes(), intergenicKmerList, seq->seq.s);
 
                 //Get min k-mer hash list for determining strandness
@@ -241,6 +244,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         free(reverseCompliment);
                         strandness.push_back(false);
                     }
+                    cout<<i<<" "<<p<<" "<<prodigal.fng<<endl;
                     numOfBlocksList[p] = numOfBlocks;
                     currentList = priority_queue<uint64_t>();
                 }
@@ -250,9 +254,10 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                 for(size_t block = 0; block < numOfBlocks; block++){
                     totalKmerCntForOneTaxID += seqIterator.getNumOfKmerForBlock(blocks[block]);
                 }
-
+                cout<<totalKmerCntForOneTaxID<<endl;
                 // Fill k-mer buffer with k-mers of current split if the buffer has enough space
                 posToWrite = kmerBuffer.reserveMemory(totalKmerCntForOneTaxID);
+                cout<<posToWrite<<endl;
                 if(posToWrite + totalKmerCntForOneTaxID < kmerBuffer.bufferSize){
                     size_t start = 0;
                     for(size_t seqIdx = 0; seqIdx < splits[i].cnt; seqIdx++){

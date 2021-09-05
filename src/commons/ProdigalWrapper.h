@@ -24,7 +24,7 @@
 
 class ProdigalWrapper{
 private:
-    int rv, slen, ng, ipath, *gc_frame, output;
+    int rv, slen, ipath, *gc_frame, output;
     int closed, do_mask, nmask, force_nonsd, user_tt, num_seq, quiet;
     int max_slen, fnum;
     double gc, low, high;
@@ -44,7 +44,7 @@ private:
 
 
 public:
-    int fng;
+    int fng, ng;
     int is_meta;
     int nn, max_phase;
     double max_score;
