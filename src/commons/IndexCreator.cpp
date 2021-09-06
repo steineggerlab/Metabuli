@@ -234,6 +234,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                           prodigal.fng, strlen(seq->seq.s),
                                                           numOfBlocks, intergenicKmerList, seq->seq.s);
+                        cout<<i<<" "<<p<<" forward"<<endl;
                         strandness.push_back(true);
                     } else{
                         reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, strlen(seq->seq.s));
@@ -242,6 +243,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                           prodigal.fng, strlen(reverseCompliment),
                                                           numOfBlocks, intergenicKmerList, reverseCompliment);
+                        cout<<i<<" "<<p<<" reverse"<<endl;
                         free(reverseCompliment);
                         strandness.push_back(false);
                     }
