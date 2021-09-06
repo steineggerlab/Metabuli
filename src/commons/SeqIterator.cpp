@@ -185,7 +185,7 @@ bool SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
     if(block.strand == 1){
         for(int i = block.start ; i + 2 <= block.end ; i = i + 3){
             aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[i]])][nuc2int(atcg[seq[i+1]])][nuc2int(atcg[seq[i+2]])]);
-            if(!(aaFrames[0].back() == 1 ||aaFrames[0].back()==2||aaFrames[0].back()==3)){
+            if(!(aaFrames[0].back() == - 1 || (aaFrames[0].back()>0 && aaFrames[0].back() < 21))){
                 cout<<"NF**"<<endl;
                 cout<<block.start<<" "<<block.end<<endl;
                 cout<<seq[i]<<seq[i+1]<<seq[i+2]<<endl;
@@ -196,7 +196,7 @@ bool SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
     }else{
         for(int i = block.end; i >= (int)block.start + 2; i = i - 3){
             aaFrames[0].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[i]]])][nuc2int(iRCT[atcg[seq[i-1]]])][nuc2int(iRCT[atcg[seq[i-2]]])]);
-            if(!(aaFrames[0].back() == 1 ||aaFrames[0].back()==2||aaFrames[0].back()==3)){
+            if(!(aaFrames[0].back() == - 1 || (aaFrames[0].back()>0 && aaFrames[0].back() < 21))){
                 cout<<"NR**"<<endl;
                 cout<<block.start<<" "<<block.end<<endl;
                 cout<<seq[i]<<seq[i-1]<<seq[i-2]<<endl;
