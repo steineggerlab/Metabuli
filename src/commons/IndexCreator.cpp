@@ -225,16 +225,19 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), static_cast<size_t>(seqs[splits[i].offset + p].length)};
                     kseq_destroy(seq);
                     seq = kseq_init(&buffer);
-                    kseq_read(seq);
+                    int kseqL = kseq_read(seq);
+                    if(size_t(kseqL) != strlen(seq->seq.s)){
+                        cout<<"DIFF"<<endl;
+                        cout<<kseqL<<" "<<strlen(seq->seq.s)<<endl;
+                    }
                     seqIterator.getMinHashList(currentList, seq->seq.s);
-
                     if(seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, strlen(seq->seq.s))){
                         prodigal.getPredictedGenes(seq->seq.s);
                         prodigal.removeCompletelyOverlappingGenes();
                         seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                           prodigal.fng, strlen(seq->seq.s),
                                                           numOfBlocks, intergenicKmerList, seq->seq.s);
-                        cout<<i<<" "<<p<<" forward"<<endl;
+                        cout<<i<<" "<<p<<" forward "<<strlen(seq->seq.s)<<endl;
                         strandness.push_back(true);
                     } else{
                         reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, strlen(seq->seq.s));
@@ -243,7 +246,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                           prodigal.fng, strlen(reverseCompliment),
                                                           numOfBlocks, intergenicKmerList, reverseCompliment);
-                        cout<<i<<" "<<p<<" reverse"<<endl;
+                        cout<<i<<" "<<p<<" reverse "<<strlen(seq->seq.s)<<endl;
                         free(reverseCompliment);
                         strandness.push_back(false);
                     }
