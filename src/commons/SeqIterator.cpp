@@ -190,10 +190,6 @@ bool SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
                 cout<<seq[i]<<seq[i+1]<<seq[i+2]<<endl;
                 cout<<atcg[seq[i]]<<atcg[seq[i+1]]<<atcg[seq[i+2]]<<endl;
                 cout<<int(nuc2int(atcg[seq[i]]))<<int(nuc2int(atcg[seq[i+1]]))<<int(nuc2int(atcg[seq[i+2]]))<<endl;
-            }else{
-                cout<<seq[i]<<seq[i+1]<<seq[i+2]<<endl;
-                cout<<atcg[seq[i]]<<atcg[seq[i+1]]<<atcg[seq[i+2]]<<endl;
-                cout<<int(nuc2int(atcg[seq[i]]))<<int(nuc2int(atcg[seq[i+1]]))<<int(nuc2int(atcg[seq[i+2]]))<<endl;
             }
         }
     }else{
@@ -204,10 +200,6 @@ bool SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
                 cout<<seq[i]<<seq[i-1]<<seq[i-2]<<endl;
                 cout<<atcg[seq[i]]<<atcg[seq[i-1]]<<atcg[seq[i-2]]<<endl;
                 cout<<int(nuc2int(atcg[seq[i]]))<<int(nuc2int(atcg[seq[i-1]]))<<int(nuc2int(atcg[seq[i-2]]))<<endl;
-            }else{
-                cout<<seq[i]<<seq[i+1]<<seq[i+2]<<endl;
-                cout<<atcg[seq[i]]<<atcg[seq[i+1]]<<atcg[seq[i+2]]<<endl;
-                cout<<int(nuc2int(atcg[seq[i]]))<<int(nuc2int(atcg[seq[i+1]]))<<int(nuc2int(atcg[seq[i+2]]))<<endl;
             }
         }
     }
