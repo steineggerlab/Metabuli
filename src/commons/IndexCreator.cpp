@@ -32,6 +32,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     while(processedSplitCnt < numOfSplits){ ///check this condition
         fillTargetKmerBuffer2(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank);
        	cout<<"processedSplitCnt "<<processedSplitCnt<<endl;
+       	cout<<kmerBuffer.startIndexOfReserve<<endl;
         writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdList);
     }
 
