@@ -237,7 +237,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                           prodigal.fng, strlen(seq->seq.s),
                                                           numOfBlocks, intergenicKmerList, seq->seq.s);
-                        cout<<i<<" "<<p<<" forward "<<strlen(seq->seq.s)<<endl;
+                        cout<<i<<" "<<splits[i].offset+p<<" forward "<<strlen(seq->seq.s)<<endl;
                         strandness.push_back(true);
                     } else{
                         reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, strlen(seq->seq.s));
@@ -246,7 +246,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                           prodigal.fng, strlen(reverseCompliment),
                                                           numOfBlocks, intergenicKmerList, reverseCompliment);
-                        cout<<i<<" "<<p<<" reverse "<<strlen(seq->seq.s)<<endl;
+                        cout<<i<<" "<<splits[i].offset+p<<" reverse "<<strlen(seq->seq.s)<<endl;
                         free(reverseCompliment);
                         strandness.push_back(false);
                     }
@@ -273,13 +273,13 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         kseq_read(seq);
                         size_t end = numOfBlocksList[seqIdx];
                         if(strandness[seqIdx]){
-                            cout<<splits[i].offset + seqIdx<<endl;
+                            cout<<splits[i].offset + seqIdx<<strlen(seq->seq.s)<<endl;
                             for(size_t bl = start; bl < end ; bl++){
                                 seqIterator.translateBlock(seq->seq.s,blocks[bl]);
                                 seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].offset + seqIdx, taxIdListAtRank[splits[i].offset + seqIdx]); //splits[i].offset + seqIdx
                             }
                         } else{
-                            cout<<splits[i].offset + seqIdx<<endl;
+                            cout<<splits[i].offset + seqIdx<<strlen(seq->seq.s)<<endl;
                             reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, strlen(seq->seq.s));
                             for(size_t bl = start; bl < end ; bl++){
                                 seqIterator.translateBlock(reverseCompliment,blocks[bl]);
