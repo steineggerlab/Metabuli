@@ -224,6 +224,7 @@ char * SeqIterator::reverseCompliment(char * read, int length) const {
     for(int i = 0; i < length; i++){
         revCom[length - i - 1] = iRCT[read[i]];
     }
+    revCom[length] = '\0';
     return revCom;
 }
 
