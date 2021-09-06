@@ -231,6 +231,7 @@ void SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock & block, cons
             tempKmer += aaFrames[0][kmerCnt + i] * powers[i];
         }
         if(checkN == 1){
+            cout<<"N! "<<seqID<<" "<<posToWrite<<" "<<kmerCnt<<" "<<taxIdAtRank<<endl;
             kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0,false};
         }else{
             addDNAInfo_TargetKmer(tempKmer, seq, block, kmerCnt);
