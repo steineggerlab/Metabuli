@@ -186,8 +186,8 @@ bool SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
         for(int i = block.start ; i + 2 <= block.end ; i = i + 3){
             aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[i]])][nuc2int(atcg[seq[i+1]])][nuc2int(atcg[seq[i+2]])]);
             if(aaFrames[0].back() == - 1){
-                cout<<seq<<endl;
                 cout<<"NF**"<<endl;
+                cout<<block.start<<" "<<block.end<<endl;
                 cout<<seq[i]<<seq[i+1]<<seq[i+2]<<endl;
                 cout<<atcg[seq[i]]<<atcg[seq[i+1]]<<atcg[seq[i+2]]<<endl;
                 cout<<int(nuc2int(atcg[seq[i]]))<<int(nuc2int(atcg[seq[i+1]]))<<int(nuc2int(atcg[seq[i+2]]))<<endl;
@@ -197,8 +197,8 @@ bool SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
         for(int i = block.end; i >= (int)block.start + 2; i = i - 3){
             aaFrames[0].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[i]]])][nuc2int(iRCT[atcg[seq[i-1]]])][nuc2int(iRCT[atcg[seq[i-2]]])]);
             if(aaFrames[0].back() == - 1){
-                cout<<seq<<endl;
                 cout<<"NR**"<<endl;
+                cout<<block.start<<" "<<block.end<<endl;
                 cout<<seq[i]<<seq[i-1]<<seq[i-2]<<endl;
                 cout<<atcg[seq[i]]<<atcg[seq[i-1]]<<atcg[seq[i-2]]<<endl;
                 cout<<int(nuc2int(atcg[seq[i]]))<<int(nuc2int(atcg[seq[i-1]]))<<int(nuc2int(atcg[seq[i-2]]))<<endl;
