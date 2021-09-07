@@ -286,12 +286,12 @@ size_t SeqIterator::kmerNumOfSixFrameTranslation(const char * seq){
 }
 
 size_t SeqIterator::getNumOfKmerForBlock(const PredictedBlock & block){
-    if(block.end <= block.start){
-        cout<<"NONO"<<endl;
-        cout<<block.start<<endl;
-        cout<<block.end<<endl;
-        cout<<block.strand<<endl;
-    }
+//    if(block.end <= block.start){
+//        cout<<"NONO"<<endl;
+//        cout<<block.start<<endl;
+//        cout<<block.end<<endl;
+//        cout<<block.strand<<endl;
+//    }
     size_t len = block.end - block.start + 1;
     return len/3 - 7;
 }
@@ -377,7 +377,7 @@ void SeqIterator::getTranslationBlocks(struct _gene * genes, struct _node * node
 
 void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length,
                                     size_t & blockIdx, vector<uint64_t> & intergenicKmerList, const char * seq){
-    cout<<length<<endl;
+//    cout<<length<<endl;
     //Exceptional case 1: 0 prdicted gene
     if(numOfGene == 0){
         blocks.emplace_back(0, length - 1, 1);
@@ -466,15 +466,9 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
                 leftEnd = genes[geneIdx-1].end - 1- 22;
                 while(leftEnd%3 != frame) leftEnd++;
                 blocks.emplace_back(leftEnd, genes[geneIdx].end - 1, 1);
-                if(genes[geneIdx].end - 1 > (int)length){
-                    cout<<"1"<<endl;
-                }
                 blockIdx ++;
             } else { // reverse
                 blocks.emplace_back(genes[geneIdx-1].end - 22 - 1, genes[geneIdx].end - 1, -1);
-                if(genes[geneIdx].end - 1 > (int)length){
-                    cout<<"2"<<endl;
-                }
                 blockIdx++;
             }
             hasBeenExtendedToLeft = true;
@@ -485,35 +479,23 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
                     leftEnd = genes[geneIdx-1].end - 1 - 22;
                     while(leftEnd%3 != frame) leftEnd++;
                     blocks.emplace_back(leftEnd, genes[geneIdx + 1].begin - 1 + 22, 1);
-                    if(genes[geneIdx + 1].begin - 1 + 22> (int)length){
-                        cout<<"2"<<endl;
-                    }
                     blockIdx ++;
                 } else{
                     frame = (genes[geneIdx].end - 1) % 3;
                     rightEnd = genes[geneIdx+1].begin - 1 + 22;
                     while(rightEnd%3 != frame) rightEnd--;
                     blocks.emplace_back(genes[geneIdx-1].end - 1 - 22, rightEnd, -1);
-                    if(rightEnd> (int)length){
-                        cout<<"3"<<endl;
-                    }
                     blockIdx++;
                 }
             } else{
                 if(!isReverse){ //forward
                     blocks.emplace_back(genes[geneIdx].begin - 1, genes[geneIdx + 1].begin - 1 + 22, 1);
-                    if(genes[geneIdx + 1].begin - 1 + 22> (int)length){
-                        cout<<"4"<<endl;
-                    }
                     blockIdx ++;
                 } else{
                     frame = (genes[geneIdx].end - 1) % 3;
                     rightEnd = genes[geneIdx+1].begin - 1 + 22;
                     while(rightEnd%3 != frame) rightEnd--;
                     blocks.emplace_back(genes[geneIdx].begin - 1, rightEnd, -1);
-                    if(rightEnd> (int)length){
-                        cout<<"5"<<endl;
-                    }
                     blockIdx++;
                 }
             }
@@ -539,9 +521,6 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
             rightEnd = length - 1;
             while (rightEnd % 3 != frame) rightEnd--;
             blocks.emplace_back(genes[numOfGene - 2].end - 22 - 1, rightEnd, -1);
-            if(rightEnd> (int)length){
-                cout<<"6"<<endl;
-            }
             blockIdx++;
         }
     } else { //extension to right
@@ -557,9 +536,6 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
                 rightEnd = length - 1;
                 while(rightEnd%3 != frame) rightEnd--;
                 blocks.emplace_back(genes[numOfGene - 2].end - 22 - 1, rightEnd, -1);
-                if(rightEnd> (int)length){
-                    cout<<"7"<<endl;
-                }
                 blockIdx++;
             }
         } else{
@@ -571,9 +547,6 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
                 rightEnd = length - 1;
                 while(rightEnd%3 != frame) rightEnd--;
                 blocks.emplace_back(genes[numOfGene-1].begin - 1, rightEnd, -1);
-                if(rightEnd> (int)length){
-                    cout<<"8"<<endl;
-                }
                 blockIdx++;
             }
         }

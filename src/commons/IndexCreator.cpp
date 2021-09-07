@@ -67,7 +67,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                 size_t lengthOfTrainingSeq = strlen(seq->seq.s);
                 prodigal.is_meta = 0;
                 string tmp = seq->name.s;
-                cout<<"traning seq: "<<tmp<<endl;
                 if(strlen(seq->seq.s) < 20000){
                     prodigal.is_meta = 1;
                     cout<<"train Meta: "<<splits[i].training<<" "<<seqs[splits[i].training].start<<" "<<i<<seq->headerOffset<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
@@ -96,24 +95,19 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
                     seqIterator.getMinHashList(currentList, seq->seq.s);
                     prodigal.getPredictedGenes(seq->seq.s);
                     prodigal.removeCompletelyOverlappingGenes();
-                    cout<<prodigal.getNumberOfPredictedGenes()<<" 1 "<<prodigal.fng<<endl;
 //                    if(p == 0){
 //                        prodigal.updateDicodonFrequency();
 //                    }
                     prodigal.printGenes();
                     if(seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, strlen(seq->seq.s))){
-                        cout<<seq->name.s<<" forward"<<endl;
                         seqIterator.getTranslationBlocks(prodigal.finalGenes, prodigal.nodes, blocks,
                                                          prodigal.fng, strlen(seq->seq.s),
                                                          numOfBlocks);
-
                     } else {
-                        cout<<seq->name.s<<" reverse"<<endl;
                         SeqIterator::getTranslationBlocksReverse(prodigal.finalGenes, prodigal.nodes, blocks,
                                                                 prodigal.fng, strlen(seq->seq.s),
                                                          numOfBlocks);
                     }
-                    cout<<numOfBlocks<<endl;
                     numOfBlocksList[p] = numOfBlocks;
                     currentList = priority_queue<uint64_t>();
                 }
