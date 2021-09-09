@@ -811,10 +811,10 @@ bool Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
 
     //Similarily good match but different frame
     size_t numberOfConsecutiveMatches = coMatches.size();
-    if(numberOfConsecutiveMatches > 1 && coMatches[0].diffPosCnt >= maxiumPossibleMatchCnt - 1){
+    if(numberOfConsecutiveMatches > 1 && coMatches[0].diffPosCnt >= maxiumPossibleMatchCnt){
         size_t i = 1;
         bool check = false;
-        while((coMatches[i].diffPosCnt > coMatches[0].diffPosCnt - 2) && float(coMatches[i].diffPosCnt)/float(maxiumPossibleMatchCnt) > 0.8 && i < numberOfConsecutiveMatches){
+        while((coMatches[i].diffPosCnt == coMatches[0].diffPosCnt) && i < numberOfConsecutiveMatches){
             alignedCoMatches.push_back(coMatches[i]);
             check = true;
             i++;
