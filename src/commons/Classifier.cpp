@@ -763,7 +763,7 @@ int Classifier::getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & c
                         beginIdx++;
                     }
 
-                    if(diffPosCnt == maxNum) diffPosCnt--;
+                    if(diffPosCnt >= maxNum) diffPosCnt = maxNum - 1;
                     coMatches.emplace_back(conBegin, currentPos, conCnt, hammingSum, diffPosCnt, beginIdx, i-1, currentFrame);
                 }
             }
@@ -795,7 +795,7 @@ bool Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
 
     for(int i3 = 0; i3 < coMatches.size(); i3++){
-        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt;
+        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt<< " "<<coMatches[i3].diffPosCnt;
         cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
         cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
         cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
