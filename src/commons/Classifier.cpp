@@ -809,21 +809,23 @@ bool Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     alignedCoMatches.push_back(coMatches[0]);
     bool overlap = false;
 
-    //Similarily good match but different frame
-    size_t numberOfConsecutiveMatches = coMatches.size();
-    if(numberOfConsecutiveMatches > 1 && coMatches[0].diffPosCnt >= maxiumPossibleMatchCnt - 1){
-        size_t i = 1;
-        bool check = false;
-        while((coMatches[i].diffPosCnt == coMatches[0].diffPosCnt) && i < numberOfConsecutiveMatches){
-            alignedCoMatches.push_back(coMatches[i]);
-            check = true;
-            i++;
-        }
-        if(check){
-            genus.push_back(alignedCoMatches);
-            return true;
-        }
-    }
+//    //Similarily good match but different frame
+//    size_t numberOfConsecutiveMatches = coMatches.size();
+//    if(numberOfConsecutiveMatches > 1 && coMatches[0].diffPosCnt >= maxiumPossibleMatchCnt - 1){
+//        size_t i = 1;
+//        bool check = false;
+//        while((coMatches[i].diffPosCnt == coMatches[0].diffPosCnt) && i < numberOfConsecutiveMatches){
+//            alignedCoMatches.push_back(coMatches[i]);
+//            check = true;
+//            i++;
+//        }
+//        if(check){
+//            genus.push_back(alignedCoMatches);
+//            return true;
+//        }
+//    }
+
+
 
     //TODO: Fix here to accept slight overlaps
     for(size_t i = 1; i < coMatches.size(); i++){
@@ -838,6 +840,24 @@ bool Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
         if(overlap) continue;
         else{
             alignedCoMatches.push_back(coMatches[i]);
+        }
+    }
+
+    //Similarily good match but different frame
+    if(alignedCoMatches.size() == 1) {
+        size_t numberOfConsecutiveMatches = coMatches.size();
+        if (numberOfConsecutiveMatches > 1) {
+            size_t i = 1;
+            bool check = false;
+            while ((coMatches[i].diffPosCnt == coMatches[0].diffPosCnt) && i < numberOfConsecutiveMatches) {
+                alignedCoMatches.push_back(coMatches[i]);
+                check = true;
+                i++;
+            }
+            if (check) {
+                genus.push_back(alignedCoMatches);
+                return true;
+            }
         }
     }
 
