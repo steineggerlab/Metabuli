@@ -677,41 +677,41 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
     uint32_t rightEndPos = 0;
     size_t rightEndIdx = 0;
     int endCheck = 0;
-    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4 && coverage > 0.8){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
-        int strainCnt = 0;
-        unordered_map<TaxID, int> strainMatchCnt;
-        TaxID strainTaxId;
-
-        for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
-            for(size_t k = matchCombi[cs].beginIdx ; k < matchCombi[cs].endIdx + 1; k++ ){
-                temp = matchList[k].taxID;
-                if(selectedLCA != temp && ncbiTaxonomy.IsAncestor(selectedLCA, temp)){
-                    strainMatchCnt[temp] ++;
-                }
-            }
-        }
-
-        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 1) {
-            subSpeciesID = strainMatchCnt.begin()->first;
-            for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
-                leftEndPos = matchCombi[cs].begin;
-                leftEndIdx = matchCombi[cs].beginIdx;
-                while(leftEndPos == matchList[leftEndIdx].position){
-                    endCheck += matchList[leftEndIdx].taxID == subSpeciesID;
-                    leftEndIdx ++;
-                }
-                rightEndPos = matchCombi[cs].end;
-                rightEndIdx = matchCombi[cs].endIdx;
-                while(rightEndPos == matchList[rightEndIdx].position){
-                    endCheck += matchList[rightEndIdx].taxID == subSpeciesID;
-                    rightEndIdx --;
-                }
-            }
-            if (!endCheck) {
-                selectedLCA = subSpeciesID;
-            }
-        }
-    }
+//    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4 && coverage > 0.8){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
+//        int strainCnt = 0;
+//        unordered_map<TaxID, int> strainMatchCnt;
+//        TaxID strainTaxId;
+//
+//        for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
+//            for(size_t k = matchCombi[cs].beginIdx ; k < matchCombi[cs].endIdx + 1; k++ ){
+//                temp = matchList[k].taxID;
+//                if(selectedLCA != temp && ncbiTaxonomy.IsAncestor(selectedLCA, temp)){
+//                    strainMatchCnt[temp] ++;
+//                }
+//            }
+//        }
+//
+//        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 1) {
+//            subSpeciesID = strainMatchCnt.begin()->first;
+//            for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
+//                leftEndPos = matchCombi[cs].begin;
+//                leftEndIdx = matchCombi[cs].beginIdx;
+//                while(leftEndPos == matchList[leftEndIdx].position){
+//                    endCheck += matchList[leftEndIdx].taxID == subSpeciesID;
+//                    leftEndIdx ++;
+//                }
+//                rightEndPos = matchCombi[cs].end;
+//                rightEndIdx = matchCombi[cs].endIdx;
+//                while(rightEndPos == matchList[rightEndIdx].position){
+//                    endCheck += matchList[rightEndIdx].taxID == subSpeciesID;
+//                    rightEndIdx --;
+//                }
+//            }
+//            if (!endCheck) {
+//                selectedLCA = subSpeciesID;
+//            }
+//        }
+//    }
 
 //    cout<<"# "<<currentQuery<<endl;
 //    for(size_t i = 0; i < taxIdList.size(); i++){
