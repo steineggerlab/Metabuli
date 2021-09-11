@@ -949,7 +949,7 @@ int Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus,
     }
 
     for(size_t g = 0; g < selecetedGenusList.size(); g++) {
-        for (size_t i = 0; i < genus[selecetedGenusList[g]].size(); i++) {
+        for (size_t i = 0; i < genus2[selecetedGenusList[g]].size(); i++) {
             chosen.push_back(genus2[selecetedGenusList[g]][i]);
         }
     }
