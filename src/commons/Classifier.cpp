@@ -890,6 +890,7 @@ bool Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
             }
             if (check) {
                 genus.push_back(alignedCoMatches);
+                genus2.push_back(coMatches);
                 return true;
             }
         }
