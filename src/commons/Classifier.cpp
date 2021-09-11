@@ -671,6 +671,12 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 
     ///TODO optimize strain specific classification criteria
     //Strain classification only for high coverage with LCA of species level
+    TaxID subSpeciesID;
+    uint32_t leftEndPos = 0;
+    size_t leftEndIdx = 0;
+    uint32_t rightEndPos = 0;
+    size_t rightEndIdx = 0;
+    int endCheck = 0;
     if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4 && coverage > 0.8){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
         int strainCnt = 0;
         unordered_map<TaxID, int> strainMatchCnt;
@@ -684,8 +690,26 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
                 }
             }
         }
-        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 1){
-            selectedLCA = strainMatchCnt.begin()->first;
+
+        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 1) {
+            subSpeciesID = strainMatchCnt.begin()->first;
+            for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
+                leftEndPos = matchCombi[cs].begin;
+                leftEndIdx = matchCombi[cs].beginIdx;
+                while(leftEndPos == matchList[leftEndIdx].position){
+                    endCheck += matchList[leftEndIdx].taxID == subSpeciesID;
+                    leftEndIdx ++;
+                }
+                rightEndPos = matchCombi[cs].end;
+                rightEndIdx = matchCombi[cs].endIdx;
+                while(rightEndPos == matchList[rightEndIdx].position){
+                    endCheck += matchList[rightEndIdx].taxID == subSpeciesID;
+                    rightEndIdx --;
+                }
+            }
+            if (!endCheck) {
+                selectedLCA = subSpeciesID;
+            }
         }
     }
 
@@ -846,10 +870,13 @@ bool Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
     //Similarily good match but different frame
     if(alignedCoMatches.size() == 1) {
         size_t numberOfConsecutiveMatches = coMatches.size();
+        float mean_hamming = float(coMatches[0].hamming) / float(coMatches[0].matchCnt);
         if (numberOfConsecutiveMatches > 1) {
             size_t i = 1;
             bool check = false;
-            while ((coMatches[i].diffPosCnt == coMatches[0].diffPosCnt) && i < numberOfConsecutiveMatches) {
+            while ((coMatches[i].diffPosCnt == coMatches[0].diffPosCnt) &&
+            float(coMatches[0].hamming) / float(coMatches[0].matchCnt) == mean_hamming &&
+            i < numberOfConsecutiveMatches) {
                 alignedCoMatches.push_back(coMatches[i]);
                 check = true;
                 i++;
@@ -1329,10 +1356,10 @@ bool Classifier::compareForLinearSearch(const QueryKmer & a, const QueryKmer & b
 }
 
 bool Classifier::compareConsecutiveMatches(const ConsecutiveMatches & a, const ConsecutiveMatches & b){
-    if(a.diffPosCnt > b.diffPosCnt){ // compare query coverage fisrt
+    if(a.diffPosCnt > b.diffPosCnt){ // compare query coverage first
         return true;
     }else if(a.diffPosCnt == b.diffPosCnt){
-        return a.hamming < b.hamming;
+        return float(a.hamming) / float(a.matchCnt) < (b.hamming) / float(b.matchCnt);
 //            return (a.endIdx - a.beginIdx + 1) * 2 / ((a.hamming+1)*(a.diffPosCnt + 1)) > (b.endIdx - b.beginIdx + 1) * 2 / ((b.hamming + 1) * (b.diffPosCnt + 1));
     }
     return false;
