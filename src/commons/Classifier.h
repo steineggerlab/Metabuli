@@ -262,10 +262,14 @@ private:
     int getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset, size_t queryLength);
 
 
-    bool getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList, int maximumPossibleMatchNum);
+    bool getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus,
+                                        vector<vector<ConsecutiveMatches>> & genus2,
+                                        Match * matchList, int maximumPossibleMatchNum);
 
 
-    int getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & choosed, int maxKmerNum, vector<bool> & conservationCheck);
+    int getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<vector<ConsecutiveMatches>> & genus2,
+                        vector<ConsecutiveMatches> & choosed,
+                        int maxKmerNum, vector<bool> & conservationCheck);
     void getSubsets(vector<int> & subset, vector<vector<int>> & uniqueSubset, int k, int n);
     float scoreSubset(vector<ConsecutiveMatches> & subset);
 
