@@ -557,11 +557,12 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
 
     //Process each blocks
-    omp_set_num_threads(ThreadNum);
+    omp_set_num_threads(1);
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList, blockIdx)
     {
 #pragma omp for schedule(dynamic, 1)
         for(size_t i = 0; i < blockIdx; ++ i ){
+            cout<<"here "<<i<<endl;
             TaxID selectedLCA = chooseBestTaxon2(ncbiTaxonomy, seqSegments[matchBlocks[i].id].length, matchBlocks[i].id, matchBlocks[i].start,
                                                 matchBlocks[i].end, matchList.data, queryList);
         }
@@ -1001,10 +1002,10 @@ int Classifier::getBestGenusLevelMatchCombination2(vector<ConsecutiveMatches> & 
         while (currentGenus == matchList[i].genusTaxID && (i < end + 1)) {
             currentSpecies = matchList[i].speciesTaxID;
             //For current species
-            while(currentGenus == matchList[i].speciesTaxID && (i < end + 1)){
+            while(currentSpecies == matchList[i].speciesTaxID && (i < end + 1)){
                 currentFrame = matchList[i].frame;
                 //For current frame
-                while (currentFrame == matchList[i].frame && currentGenus == matchList[i].genusTaxID && (i < end + 1)){
+                while (currentFrame == matchList[i].frame && currentSpecies == matchList[i].speciesTaxID && (i < end + 1)){
                     currentPos = matchList[i].position;
                     hammingSum = matchList[i].hamming;
                     hammingMean = 0.0;
