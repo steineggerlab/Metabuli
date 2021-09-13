@@ -1151,7 +1151,6 @@ bool Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
 
 bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches,
                                                 vector<vector<ConsecutiveMatches>> & genus, Match * matchList){
-    cout<<"getMatchCombinationForCurGenus2"<<endl;
     //sort consecutive match blocks
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
 
@@ -1255,7 +1254,7 @@ int Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus,
 
 int Classifier::getTheBestGenus2(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen,
                                 int maxKmerNum, size_t queryLength){
-   cout<<"getTheBestGenus2"<<endl;
+
     int numberOfGenus = 0;
     int chosenGenusIdx = INT_MAX;
     vector<TaxID> selecetedGenusList;
@@ -1272,7 +1271,6 @@ int Classifier::getTheBestGenus2(vector<vector<ConsecutiveMatches>> & genus, vec
     bool * posCheckList = new bool[queryLength/3+1];
     memset(posCheckList, 0, queryLength/3 + 1);
 
-    cout<<"1281"<<endl;
     for(size_t i = 0; i < genus.size(); i++){
         totalDiffPosCnt = 0;
         totalMatchCnt = 0;
@@ -1283,7 +1281,6 @@ int Classifier::getTheBestGenus2(vector<vector<ConsecutiveMatches>> & genus, vec
             startPos = genus[i][j].begin;
             endPos = genus[i][j].end;
             for(uint32_t k = startPos; k <= endPos; k += 3){
-                cout<<k<<endl;
                 if(!posCheckList[k/3]){
                     totalDiffPosCnt ++;
                     posCheckList[k/3] = true;
@@ -1311,13 +1308,8 @@ int Classifier::getTheBestGenus2(vector<vector<ConsecutiveMatches>> & genus, vec
         }
     }
 
-    cout<<"1319"<<endl;
     for(size_t g = 0; g < selecetedGenusList.size(); g++) {
-        cout<<"g: "<<g<<endl;
-        cout<<genus[selecetedGenusList[g]].size()<<endl;
-        for (size_t i = 0; i < genus[selecetedGenusList[g]].size(); i++) {
-            cout<<"i: "<<i<<endl;
-            cout<<selecetedGenusList[g]<<endl;
+       for (size_t i = 0; i < genus[selecetedGenusList[g]].size(); i++) {
             chosen.push_back(genus[selecetedGenusList[g]][i]);
         }
     }
