@@ -93,7 +93,7 @@ private:
 
     typedef struct ConsecutiveMatches{
         ConsecutiveMatches(uint32_t begin, uint32_t end, int matchCnt_, int hamming,
-                           int diffPosCnt, size_t bi, size_t ei, uint8_t frame_, int score_ = 0)
+                           int diffPosCnt, size_t bi, size_t ei, uint8_t frame_, TaxID speciesID, int score_ = 0)
             : begin(begin), end(end), matchCnt(matchCnt_), hamming(hamming), diffPosCnt(diffPosCnt), beginIdx(bi), endIdx(ei), frame(frame_), score(score_) {}
         uint32_t begin; //start position on query sequence
         uint32_t end; //end position on query sequence
@@ -103,6 +103,7 @@ private:
         size_t beginIdx; //beginning index on matchList
         size_t endIdx; //end index
         int score;
+        TaxID speciesID;
         uint8_t frame;
     }ConsecutiveMatches;
 
@@ -127,6 +128,7 @@ private:
     struct Match{ //16byte
         uint32_t queryId;
         int taxID;
+        int speciesTaxID;
         int genusTaxID;
         uint16_t position;
         uint8_t frame;
@@ -248,7 +250,7 @@ private:
 
     void fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt, Query * queryList);
     TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList);
-
+    TaxID chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList);
     void writeReadClassification(Query * queryList, int queryNum , ofstream & readClassificationFile);
     void writeReportFile(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, const int numOfQuery);
     void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum, Query * queryList);
@@ -258,18 +260,25 @@ private:
     void writeMatches(Buffer<Match> & matchBuffer, FILE * matchFile);
     static bool compareForWritingMatches(const Match & a, const Match & b);
     static bool sortByTaxId(const Match & a, const Match & b);
+    static bool sortByGenusAndSpecies(const Match & a, const Match & b);
     void findConsecutiveMatches(vector<ConsecutiveMatches> & list, Match * matchList, size_t end, size_t begin);
     int getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset, size_t queryLength);
+    int getBestGenusLevelMatchCombination2(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset, size_t queryLength);
 
 
     bool getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus,
                                         vector<vector<ConsecutiveMatches>> & genus2,
                                         Match * matchList, int maximumPossibleMatchNum);
+    bool getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus);
 
 
     int getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<vector<ConsecutiveMatches>> & genus2,
                         vector<ConsecutiveMatches> & choosed,
                         int maxKmerNum, vector<bool> & conservationCheck);
+
+    int getTheBestGenus2(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & choosed,
+                        int maxKmerNum, size_t queryLength);
+
     void getSubsets(vector<int> & subset, vector<vector<int>> & uniqueSubset, int k, int n);
     float scoreSubset(vector<ConsecutiveMatches> & subset);
 
