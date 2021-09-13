@@ -1020,7 +1020,7 @@ int Classifier::getBestGenusLevelMatchCombination2(vector<ConsecutiveMatches> & 
                     while(matchList[i].position <= currentPos + 3 &&
                           (conCnt == 0 || matchList[i].hamming <= hammingMean + 3) && ///TODO: Is it okay?
                           currentFrame == matchList[i].frame &&
-                          currentGenus == matchList[i].genusTaxID && (i < end + 1)){
+                          currentSpecies == matchList[i].speciesTaxID && (i < end + 1)){
                         if(matchList[i].position != currentPos) {
                             diffPosCnt++;
                             currentPos = matchList[i].position;
