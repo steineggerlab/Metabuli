@@ -1322,6 +1322,7 @@ int Classifier::getTheBestGenus2(vector<vector<ConsecutiveMatches>> & genus, vec
         cout<<genus[selecetedGenusList[g]].size()<<endl;
         for (size_t i = 0; i < genus[selecetedGenusList[g]].size(); i++) {
             cout<<"i: "<<i<<endl;
+            cout<<selecetedGenusList[g]<<endl;
             chosen.push_back(genus[selecetedGenusList[g]][i]);
         }
     }
