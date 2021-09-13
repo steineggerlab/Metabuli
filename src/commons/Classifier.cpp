@@ -1318,7 +1318,10 @@ int Classifier::getTheBestGenus2(vector<vector<ConsecutiveMatches>> & genus, vec
 
     cout<<"1319"<<endl;
     for(size_t g = 0; g < selecetedGenusList.size(); g++) {
+        cout<<"g: "<<g<<endl;
+        cout<<genus[selecetedGenusList[g]].size()<<endl;
         for (size_t i = 0; i < genus[selecetedGenusList[g]].size(); i++) {
+            cout<<"i: "<<i<<endl;
             chosen.push_back(genus[selecetedGenusList[g]][i]);
         }
     }
