@@ -562,7 +562,6 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     {
 #pragma omp for schedule(dynamic, 1)
         for(size_t i = 0; i < blockIdx; ++ i ){
-            cout<<"here "<<i<<endl;
             TaxID selectedLCA = chooseBestTaxon2(ncbiTaxonomy, seqSegments[matchBlocks[i].id].length, matchBlocks[i].id, matchBlocks[i].start,
                                                 matchBlocks[i].end, matchList.data, queryList);
         }
@@ -734,10 +733,10 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & qu
 TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &queryLength, const int &currentQuery,
                                    const size_t &offset, const size_t &end, Match *matchList, Query *queryList) {
     TaxID selectedTaxon;
-    cout<<"# "<<currentQuery<<endl;
-    for(int i = offset; i < end + 1; i++){
-        cout<<matchList[i].speciesTaxID<<" "<<int(matchList[i].frame)<<" "<<matchList[i].position<<" "<<matchList[i].taxID<<" "<<int(matchList[i].hamming)<<endl;
-    }
+//    cout<<"# "<<currentQuery<<endl;
+//    for(int i = offset; i < end + 1; i++){
+//        cout<<matchList[i].speciesTaxID<<" "<<int(matchList[i].frame)<<" "<<matchList[i].position<<" "<<matchList[i].taxID<<" "<<int(matchList[i].hamming)<<endl;
+//    }
 
     //get the best genus for current query
     vector<ConsecutiveMatches> matchCombi;
@@ -1156,13 +1155,13 @@ bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
     //sort consecutive match blocks
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
 
-    for(int i3 = 0; i3 < coMatches.size(); i3++){
-        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt<< " "<<coMatches[i3].diffPosCnt;
-        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
-        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
-        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
-    }
-    cout<<endl;
+//    for(int i3 = 0; i3 < coMatches.size(); i3++){
+//        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt<< " "<<coMatches[i3].diffPosCnt;
+//        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
+//        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
+//        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
+//    }
+//    cout<<endl;
 
     //container to store match blocks to be used.
     vector<ConsecutiveMatches> alignedCoMatches;
