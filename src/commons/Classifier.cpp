@@ -1269,14 +1269,14 @@ int Classifier::getTheBestGenus2(vector<vector<ConsecutiveMatches>> & genus, vec
     uint32_t endPos;
 
     bool * posCheckList = new bool[queryLength/3+1];
-    memset(posCheckList, 0, queryLength/3 + 1);
+
 
     for(size_t i = 0; i < genus.size(); i++){
         totalDiffPosCnt = 0;
         totalMatchCnt = 0;
         totalHamming = 0;
         averageHamming = 0;
-
+        memset(posCheckList, false, queryLength/3 + 1);
         for (size_t j = 0; j < genus[i].size(); j++) {
             startPos = genus[i][j].begin;
             endPos = genus[i][j].end;
