@@ -557,7 +557,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
 
     //Process each blocks
-    omp_set_num_threads(1);
+    omp_set_num_threads(64);
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList, blockIdx)
     {
 #pragma omp for schedule(dynamic, 1)
