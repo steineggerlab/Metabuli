@@ -1278,6 +1278,7 @@ int Classifier::getTheBestGenus2(vector<vector<ConsecutiveMatches>> & genus, vec
     bool * posCheckList = new bool[queryLength/3+1];
     memset(posCheckList, 0, queryLength/3 + 1);
 
+    cout<<"1281"<<endl;
     for(size_t i = 0; i < genus.size(); i++){
         totalDiffPosCnt = 0;
         totalMatchCnt = 0;
@@ -1288,6 +1289,7 @@ int Classifier::getTheBestGenus2(vector<vector<ConsecutiveMatches>> & genus, vec
             startPos = genus[i][j].begin;
             endPos = genus[i][j].end;
             for(uint32_t k = startPos; k <= endPos; k += 3){
+                cout<<k<<endl;
                 if(!posCheckList[k/3]){
                     totalDiffPosCnt ++;
                     posCheckList[k/3] = true;
@@ -1315,18 +1317,19 @@ int Classifier::getTheBestGenus2(vector<vector<ConsecutiveMatches>> & genus, vec
         }
     }
 
+    cout<<"1319"<<endl;
     for(size_t g = 0; g < selecetedGenusList.size(); g++) {
         for (size_t i = 0; i < genus[selecetedGenusList[g]].size(); i++) {
             chosen.push_back(genus[selecetedGenusList[g]][i]);
         }
     }
 
+    delete[] posCheckList;
     if(numberOfGenus == 1){
         return chosenGenusIdx;
     } else {
         return -1; // more than one genus
     }
-
 }
 
 
