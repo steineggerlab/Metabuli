@@ -786,7 +786,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &que
 
     //If there are two or more good genus level candidates, find the LCA.
     //
-    if(res == -1 || res == 1){ // -1; more than one genus. 1; conserved in one genus
+    if(res == -1){ // -1; more than one genus. 1; conserved in one genus
         selectedTaxon = ncbiTaxonomy.LCA(taxIdList)->taxId;
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
@@ -1059,11 +1059,7 @@ int Classifier::getBestGenusLevelMatchCombination2(vector<ConsecutiveMatches> & 
         if(r == -1){  // more than one genus
             return -1;
         } else{
-            if(conservedWithinGenus[r]){ // one genus and conserved
-                return 1;
-            } else{ // one genus and not conserved
-                return 2;
-            }
+            return 1;
         }
     }
 
