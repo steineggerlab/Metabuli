@@ -744,6 +744,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &que
 
     int res = getBestGenusLevelMatchCombination2(matchCombi, matchList, end, offset, queryLength);
 
+    cout<<"747"<<endl;
     //If there is no proper genus for current query, it is un-classified.
     if(matchCombi.empty() || res == 3){
         queryList[currentQuery].isClassified = false;
