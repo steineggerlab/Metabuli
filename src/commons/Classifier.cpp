@@ -1155,7 +1155,7 @@ bool Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
 }
 
 bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches,
-                                                vector<vector<ConsecutiveMatches>> & genus){
+                                                vector<vector<ConsecutiveMatches>> & genus, Match * matchList){
     cout<<"getMatchCombinationForCurGenus2"<<endl;
     //sort consecutive match blocks
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
