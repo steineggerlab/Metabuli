@@ -1157,6 +1157,7 @@ bool Classifier::getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coM
 
 bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches,
                                                 vector<vector<ConsecutiveMatches>> & genus){
+    cout<<"getMatchCombinationForCurGenus2"<<endl;
     //sort consecutive match blocks
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
 
@@ -1260,6 +1261,7 @@ int Classifier::getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus,
 
 int Classifier::getTheBestGenus2(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen,
                                 int maxKmerNum, size_t queryLength){
+   cout<<"getTheBestGenus2"<<endl;
     int numberOfGenus = 0;
     int chosenGenusIdx = INT_MAX;
     vector<TaxID> selecetedGenusList;
