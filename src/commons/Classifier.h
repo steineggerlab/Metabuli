@@ -270,7 +270,8 @@ private:
     bool getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus,
                                         vector<vector<ConsecutiveMatches>> & genus2,
                                         Match * matchList, int maximumPossibleMatchNum);
-    bool getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus, Match * matchList);
+    bool getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus,
+                                         Match * matchList, int maxNum);
 
 
     int getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<vector<ConsecutiveMatches>> & genus2,
