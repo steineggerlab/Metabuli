@@ -237,9 +237,9 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
         }
     }
 
-    for(int i = 0 ; i < numOfDiffIdxSplits; i++){
-        cout<<diffIdxSplits.data[i].infoIdxOffset<<" "<<diffIdxSplits.data[i].diffIdxOffset<<" "<<diffIdxSplits.data[i].ADkmer<<endl;
-    }
+//    for(int i = 0 ; i < numOfDiffIdxSplits; i++){
+//        cout<<diffIdxSplits.data[i].infoIdxOffset<<" "<<diffIdxSplits.data[i].diffIdxOffset<<" "<<diffIdxSplits.data[i].ADkmer<<endl;
+//    }
 
     cout<<"Filtering out meaningless target splits ... done"<<endl;
 
