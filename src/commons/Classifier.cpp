@@ -1174,12 +1174,13 @@ bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
     alignedCoMatches.push_back(coMatches[0]);
     bool overlap = false;
 
-    //Similarly good match but different frame
+    //Similarly good match but different frame  TODO Hamming distance도 따질것!!
     size_t numberOfConsecutiveMatches = coMatches.size();
     if(numberOfConsecutiveMatches > 1 && coMatches[0].diffPosCnt >= maxiumPossibleMatchCnt - 1){
         size_t i = 1;
         bool check = false;
-        while((coMatches[i].diffPosCnt == coMatches[0].diffPosCnt) && i < numberOfConsecutiveMatches){
+        while((coMatches[i].diffPosCnt == coMatches[0].diffPosCnt) && i < numberOfConsecutiveMatches
+                && coMatches[i].hamming == coMatches[0].hamming){
             alignedCoMatches.push_back(coMatches[i]);
             check = true;
             i++;
