@@ -11,8 +11,6 @@ Classifier::Classifier() {
     selectedMatchCount = 0;
     queryCount = 0;
     perfectMatchCount = 0;
-    totalMatchCount = 0;
-    multipleMatchCount = 0;
 
     correctCnt = 0;
     perfectCnt = 0;
@@ -1152,20 +1150,6 @@ bool Classifier::compareConsecutiveMatches(const ConsecutiveMatches & a, const C
     }else if(a.diffPosCnt == b.diffPosCnt){
         return float(a.hamming) / float(a.matchCnt) < (b.hamming) / float(b.matchCnt);
 //            return (a.endIdx - a.beginIdx + 1) * 2 / ((a.hamming+1)*(a.diffPosCnt + 1)) > (b.endIdx - b.beginIdx + 1) * 2 / ((b.hamming + 1) * (b.diffPosCnt + 1));
-    }
-    return false;
-}
-
-bool Classifier::sortByTaxId(const Match & a, const Match & b){
-    if (a.queryId < b.queryId) return true;
-    else if (a.queryId == b.queryId) {
-        if(a.genusTaxID < b.genusTaxID) return true;
-        else if(a.genusTaxID == b.genusTaxID) {
-            if (a.frame < b.frame) return true;
-            else if (a.frame == b.frame) {
-                if (a.position < b.position) return true;
-            }
-        }
     }
     return false;
 }
