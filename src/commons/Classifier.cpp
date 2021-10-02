@@ -1022,7 +1022,6 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     bool haveMetCovThr = false;
     bool tied = false;
     vector<TaxID> ties;
-    vector<map<TaxID, taxNode>::iterator> ties2;
 
     //한 위치에 중복되는 매치가 있다! 잘 생각해봅시다...
 
@@ -1051,14 +1050,16 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
             if(!haveMetCovThr){
                 haveMetCovThr = true;
                 spFisrtMaxWeight = it->second.weight;
-                first = it->first;
+                first = currTaxId;
+                ties.push_back(currTaxId);
             } else if(it->second.weight == spFisrtMaxWeight){
                 tied = true;
-                ties.push_back(it->first);
+                ties.push_back(currTaxId);
             } else if(it->second.weight > spFisrtMaxWeight){
                 ties.clear();
+                ties.push_back(currTaxId);
                 tied = false;
-                first = it -> first;
+                first = currTaxId;
                 spFisrtMaxWeight = it->second.weight;
             }
         }
