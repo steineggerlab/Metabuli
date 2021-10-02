@@ -79,7 +79,7 @@ private:
         }
 
         void update(const double weightToAdd, const TaxID & childTaxonInput) {
-            if (childTaxon != childTaxonInput) { /
+            if (childTaxon != childTaxonInput) {
                 isCandidate = true;
                 childTaxon = childTaxonInput;
             }
