@@ -1061,6 +1061,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
                 tied = false;
                 first = currTaxId;
                 spFisrtMaxWeight = it->second.weight;
+                cout<<"ji"<<endl;
             }
         }
 
