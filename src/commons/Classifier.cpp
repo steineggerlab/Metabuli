@@ -637,6 +637,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
         return selectedTaxon;
     }
 
+    //TODO FIX here; calculating in match2LCA is better
     //Calculate coverage
     int coveredKmerCnt = 0;
     float coverage;
@@ -666,47 +667,47 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
 
     ///TODO optimize strain specific classification criteria
     //Strain classification only for high coverage with LCA of species level
-    TaxID subSpeciesID;
-    uint32_t leftEndPos = 0;
-    size_t leftEndIdx = 0;
-    uint32_t rightEndPos = 0;
-    size_t rightEndIdx = 0;
-    int endCheck = 0;
-    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4 && coverage > 0.8){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
-        int strainCnt = 0;
-        unordered_map<TaxID, int> strainMatchCnt;
-        TaxID strainTaxId;
-
-        for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
-            for(size_t k = matchCombi[cs].beginIdx ; k < matchCombi[cs].endIdx + 1; k++ ){
-                temp = matchList[k].taxID;
-                if(selectedLCA != temp && ncbiTaxonomy.IsAncestor(selectedLCA, temp)){
-                    strainMatchCnt[temp] ++;
-                }
-            }
-        }
-
-        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 7) {
-            subSpeciesID = strainMatchCnt.begin()->first;
-            for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
-                leftEndPos = matchCombi[cs].begin;
-                leftEndIdx = matchCombi[cs].beginIdx;
-                while(leftEndPos == matchList[leftEndIdx].position){
-                    endCheck += matchList[leftEndIdx].taxID == subSpeciesID;
-                    leftEndIdx ++;
-                }
-                rightEndPos = matchCombi[cs].end;
-                rightEndIdx = matchCombi[cs].endIdx;
-                while(rightEndPos == matchList[rightEndIdx].position){
-                    endCheck += matchList[rightEndIdx].taxID == subSpeciesID;
-                    rightEndIdx --;
-                }
-            }
-            if (!endCheck) {
-                selectedLCA = subSpeciesID;
-            }
-        }
-    }
+//    TaxID subSpeciesID;
+//    uint32_t leftEndPos = 0;
+//    size_t leftEndIdx = 0;
+//    uint32_t rightEndPos = 0;
+//    size_t rightEndIdx = 0;
+//    int endCheck = 0;
+//    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4 && coverage > 0.8){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
+//        int strainCnt = 0;
+//        unordered_map<TaxID, int> strainMatchCnt;
+//        TaxID strainTaxId;
+//
+//        for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
+//            for(size_t k = matchCombi[cs].beginIdx ; k < matchCombi[cs].endIdx + 1; k++ ){
+//                temp = matchList[k].taxID;
+//                if(selectedLCA != temp && ncbiTaxonomy.IsAncestor(selectedLCA, temp)){
+//                    strainMatchCnt[temp] ++;
+//                }
+//            }
+//        }
+//
+//        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 7) {
+//            subSpeciesID = strainMatchCnt.begin()->first;
+//            for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
+//                leftEndPos = matchCombi[cs].begin;
+//                leftEndIdx = matchCombi[cs].beginIdx;
+//                while(leftEndPos == matchList[leftEndIdx].position){
+//                    endCheck += matchList[leftEndIdx].taxID == subSpeciesID;
+//                    leftEndIdx ++;
+//                }
+//                rightEndPos = matchCombi[cs].end;
+//                rightEndIdx = matchCombi[cs].endIdx;
+//                while(rightEndPos == matchList[rightEndIdx].position){
+//                    endCheck += matchList[rightEndIdx].taxID == subSpeciesID;
+//                    rightEndIdx --;
+//                }
+//            }
+//            if (!endCheck) {
+//                selectedLCA = subSpeciesID;
+//            }
+//        }
+//    }
 
 //    cout<<"# "<<currentQuery<<endl;
 //    for(size_t i = 0; i < taxIdList.size(); i++){
@@ -1036,10 +1037,10 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         if (!(it->second.isCandidate)) {
             continue;
         }
-
         double currPercent = float(it->second.weight) / totalAssignedSeqsWeights;
-
-        if(it->second.weight >= maximunPossibleKmerNum) it->second.weight = maximunPossibleKmerNum - 1;
+        if(it->second.weight >= maximunPossibleKmerNum) {
+            it->second.weight = maximunPossibleKmerNum - 1;
+        }
         curCoverage = float(it->second.weight) / float(maximunPossibleKmerNum);
 
         TaxID currTaxId = it->first;
@@ -1064,52 +1065,39 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
             }
         }
 
-//        if (curCoverage > coverageThreshold && currRankIdx <= 4) {
-//            if (!haveMetCovThr) {
-//                haveMetCovThr = true;
-//                // minRank = currRankIdx;
-//                //spMaxCoverage = curCoverage;
-//                spFisrtMaxWeight = it->second.weight;
-//                spSecondMaxWeight = spFisrtMaxWeight - 1;
-//                first = it->first;
-//                selectedPercent = currPercent;
-//                //ties.push_back(it->first);
-//            } else if (it->second.weight > spFisrtMaxWeight + 1) {
-//                first = it->first;
-//                second = 0;
-//                //ties.clear();
-//                //ties.push_back(it->first);
-//                spFisrtMaxWeight = it->second.weight;
-//                spSecondMaxWeight = spFisrtMaxWeight - 1;
-//            } else if (it->second.weight > spFisrtMaxWeight) {
-//                second = first;
-//                first = it->first;
-//                //ties.insert(ties.begin(),it->first);
-//                //spMaxCoverage = curCoverage;
-//                spSecondMaxWeight = spFisrtMaxWeight;
-//                spFisrtMaxWeight = it->second.weight;
-//            } else if (it->second.weight == spFisrtMaxWeight) {
-//                second = first;
-//                first = it->first;
-//                //ties.insert(ties.begin(),it->first);
-//                spSecondMaxWeight = spFisrtMaxWeight;
-//                //ties.push_back(it->first);
-//            } else if (it->second.weight == spSecondMaxWeight) {
-//                second = it->first;
-//                //ties.push_back(it->first);
-//            }
-//
-//        }
+        if (curCoverage > coverageThreshold && currRankIdx <= 4) {
+            if (!haveMetCovThr) {
+                haveMetCovThr = true;
+                spFisrtMaxWeight = it->second.weight;
+                spSecondMaxWeight = spFisrtMaxWeight - 1;
+                first = it->first;
+                selectedPercent = currPercent;
+            } else if (it->second.weight > spFisrtMaxWeight + 1) {
+                first = it->first;
+                second = 0;
+                spFisrtMaxWeight = it->second.weight;
+                spSecondMaxWeight = spFisrtMaxWeight - 1;
+            } else if (it->second.weight > spFisrtMaxWeight) {
+                second = first;
+                first = it->first;
+                spSecondMaxWeight = spFisrtMaxWeight;
+                spFisrtMaxWeight = it->second.weight;
+            } else if (it->second.weight == spFisrtMaxWeight) {
+                second = first;
+                first = it->first;
+                spSecondMaxWeight = spFisrtMaxWeight;
+            } else if (it->second.weight == spSecondMaxWeight) {
+                second = it->first;
+            }
+
+        }
+
         else if (currPercent >= majorityCutoff && (!haveMetCovThr)) {
-            // iterate all ancestors to find lineage min rank (the candidate is a descendant of a node with this rank)
-
-            // int currMinRank = INT_MAX;
             // TaxID currParentTaxId = node->parentTaxId;
-
             if ((currRankIdx < minRank) || ((currRankIdx == minRank) && (currPercent > selectedPercent))) {
                 selectedTaxon = it->first;
                 minRank = currRankIdx;
-               // selectedPercent = currPercent;
+                selectedPercent = currPercent;
             }
         }
     }
@@ -1129,7 +1117,6 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
 //            return first;
 //        }
     } else {
-        selectedPercent = 1;
         return selectedTaxon;
     }
 }
