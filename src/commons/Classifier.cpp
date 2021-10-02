@@ -187,8 +187,6 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
-//                KSeqBuffer buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
-//                buffer.ReadEntry();
                 seqIterator.sixFrameTranslation(seq->seq.s);
                 size_t kmerCnt = SeqIterator::kmerNumOfSixFrameTranslation(seq->seq.s);
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt);
@@ -237,9 +235,6 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
         }
     }
 
-//    for(int i = 0 ; i < numOfDiffIdxSplits; i++){
-//        cout<<diffIdxSplits.data[i].infoIdxOffset<<" "<<diffIdxSplits.data[i].diffIdxOffset<<" "<<diffIdxSplits.data[i].ADkmer<<endl;
-//    }
 
     cout<<"Filtering out meaningless target splits ... done"<<endl;
 
@@ -539,7 +534,6 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     cout<<"num of matches"<<numOfMatches<<endl;
 
     //Sort matches in order to analyze
-//    SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByTaxId);
     SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies);
     //Devide matches into blocks for multi threading
     MatchBlock * matchBlocks = new MatchBlock[seqNum];
@@ -562,7 +556,8 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     {
 #pragma omp for schedule(dynamic, 1)
         for(size_t i = 0; i < blockIdx; ++ i ){
-            TaxID selectedLCA = chooseBestTaxon2(ncbiTaxonomy, seqSegments[matchBlocks[i].id].length, matchBlocks[i].id, matchBlocks[i].start,
+            TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[matchBlocks[i].id].length, matchBlocks[i].id,
+                                                matchBlocks[i].start,
                                                 matchBlocks[i].end, matchList.data, queryList);
         }
     }
@@ -575,8 +570,8 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     cout<<"end of analyseResultParallel"<<endl;
 }
 
-TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &queryLength, const int &currentQuery,
-                                   const size_t &offset, const size_t &end, Match *matchList, Query *queryList) {
+TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &queryLength, const int &currentQuery,
+                                  const size_t &offset, const size_t &end, Match *matchList, Query *queryList) {
     TaxID selectedTaxon;
 //    cout<<"# "<<currentQuery<<endl;
 //    for(int i = offset; i < end + 1; i++){
@@ -586,7 +581,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &que
     //get the best genus for current query
     vector<ConsecutiveMatches> matchCombi;
 
-    int res = getBestGenusLevelMatchCombination2(matchCombi, matchList, end, offset, queryLength);
+    int res = getMatchesOfTheBestGenus(matchCombi, matchList, end, offset, queryLength);
    // cout<<"# "<<currentQuery<<" "<<res<<endl;
     //If there is no proper genus for current query, it is un-classified.
     if(matchCombi.empty() || res == 3){
@@ -730,7 +725,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &que
 }
 
 
-int Classifier::getBestGenusLevelMatchCombination2(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset, size_t queryLength){
+int Classifier::getMatchesOfTheBestGenus(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset, size_t queryLength){
     vector<ConsecutiveMatches> coMatches;
     vector<vector<ConsecutiveMatches>> matchCombinationsForEachGenus;
     vector<vector<ConsecutiveMatches>> genus2;
@@ -804,13 +799,14 @@ int Classifier::getBestGenusLevelMatchCombination2(vector<ConsecutiveMatches> & 
         }
         //choose the best combination of consecutive matches for current genus
         if(!coMatches.empty())
-            conservedWithinGenus.push_back(getMatchCombinationForCurGenus2(coMatches,matchCombinationsForEachGenus, matchList, maxNum));
+            conservedWithinGenus.push_back(
+                    constructMatchCombination(coMatches, matchCombinationsForEachGenus, matchList, maxNum));
         coMatches.clear();
     }
     //choose the best combination of consecutive-match among genus for current query
 
     if(!matchCombinationsForEachGenus.empty()){
-        int r = getTheBestGenus2(matchCombinationsForEachGenus, chosenMatchCombination, maxNum, queryLength);
+        int r = selectTheBestGenus(matchCombinationsForEachGenus, chosenMatchCombination, maxNum, queryLength);
         if(r == -1){  // more than one genus
             return -1;
         } else{
@@ -826,9 +822,9 @@ int Classifier::getBestGenusLevelMatchCombination2(vector<ConsecutiveMatches> & 
 }
 
 
-bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches,
-                                                vector<vector<ConsecutiveMatches>> & genus, Match * matchList,
-                                                int maxiumPossibleMatchCnt ){
+bool Classifier::constructMatchCombination(vector<ConsecutiveMatches> & coMatches,
+                                           vector<vector<ConsecutiveMatches>> & genus, Match * matchList,
+                                           int maxNum ){
     //sort consecutive match blocks
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
 
@@ -851,7 +847,7 @@ bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
 
     //Similarly good match but different frame
     size_t numberOfConsecutiveMatches = coMatches.size();
-    if(numberOfConsecutiveMatches > 1 && coMatches[0].diffPosCnt >= maxiumPossibleMatchCnt - 1){
+    if(numberOfConsecutiveMatches > 1 && coMatches[0].diffPosCnt >= maxNum - 1){
         size_t i = 1;
         bool check = false;
         while((coMatches[i].diffPosCnt == coMatches[0].diffPosCnt) && i < numberOfConsecutiveMatches
@@ -896,79 +892,8 @@ bool Classifier::getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & co
     return false;
 }
 
-bool Classifier::getMatchCombinationForCurGenus3(vector<ConsecutiveMatches> & coMatches,
-                                                 vector<vector<ConsecutiveMatches>> & genus, Match * matchList,
-                                                 int maxiumPossibleMatchCnt ){
-    //sort consecutive match blocks
-    sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
-
-    cout<<endl;
-    cout<<"All"<<endl;
-    for(int i3 = 0; i3 < coMatches.size(); i3++){
-        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt<< " "<<coMatches[i3].diffPosCnt;
-        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
-        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
-        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
-    }
-
-
-    //container to store match blocks to be used.
-    vector<ConsecutiveMatches> alignedCoMatches;
-
-    //store the best one anyway
-    alignedCoMatches.push_back(coMatches[0]);
-    bool overlap = false;
-
-    //Similarly good match but different frame
-    size_t numberOfConsecutiveMatches = coMatches.size();
-    if(numberOfConsecutiveMatches > 1 && coMatches[0].diffPosCnt >= maxiumPossibleMatchCnt - 1){
-        size_t i = 1;
-        bool check = false;
-        while((coMatches[i].diffPosCnt == coMatches[0].diffPosCnt) && i < numberOfConsecutiveMatches
-              && coMatches[i].hamming == coMatches[0].hamming){
-            alignedCoMatches.push_back(coMatches[i]);
-            check = true;
-            i++;
-        }
-        if(check){
-            genus.push_back(alignedCoMatches);
-            return true;
-        }
-    }
-
-
-    for(size_t i = 1; i < coMatches.size(); i++){
-        overlap = false;
-        for(size_t j = 0; j < alignedCoMatches.size(); j++){
-            if((alignedCoMatches[j].begin < coMatches[i].end) && (alignedCoMatches[j].end > coMatches[i].begin) &&
-               (coMatches[i].speciesID == alignedCoMatches[j].speciesID)){
-                overlap = true;
-                break;
-            }
-        }
-
-        if(overlap) continue;
-        else{
-            alignedCoMatches.push_back(coMatches[i]);
-        }
-    }
-
-    cout<<"aligned"<<endl;
-    for(int i3 = 0; i3 < alignedCoMatches.size(); i3++){
-        cout<< alignedCoMatches[i3].begin << " " << alignedCoMatches[i3].end << " "<< alignedCoMatches[i3].matchCnt<< " "<<alignedCoMatches[i3].diffPosCnt;
-        cout<<" "<<alignedCoMatches[i3].hamming << " "<<int(alignedCoMatches[i3].frame)<<endl;
-        cout<<matchList[alignedCoMatches[i3].beginIdx].taxID<<endl;
-        cout<<matchList[alignedCoMatches[i3].endIdx].taxID<<endl;
-    }
-    cout<<endl;
-
-    genus.push_back(alignedCoMatches);
-    return false;
-}
-
-int Classifier::getTheBestGenus2(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & chosen,
-                                int maxKmerNum, size_t queryLength){
-
+int Classifier::selectTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & choosed,
+                                   int maxKmerNum, size_t queryLength){
     int numberOfGenus = 0;
     int chosenGenusIdx = INT_MAX;
     vector<TaxID> selecetedGenusList;
@@ -981,9 +906,7 @@ int Classifier::getTheBestGenus2(vector<vector<ConsecutiveMatches>> & genus, vec
     float averageHamming;
     uint32_t startPos;
     uint32_t endPos;
-
     bool * posCheckList = new bool[queryLength/3+1];
-
 
     for(size_t i = 0; i < genus.size(); i++){
         totalDiffPosCnt = 0;
@@ -1024,7 +947,7 @@ int Classifier::getTheBestGenus2(vector<vector<ConsecutiveMatches>> & genus, vec
 
     for(size_t g = 0; g < selecetedGenusList.size(); g++) {
        for (size_t i = 0; i < genus[selecetedGenusList[g]].size(); i++) {
-            chosen.push_back(genus[selecetedGenusList[g]][i]);
+            choosed.push_back(genus[selecetedGenusList[g]][i]);
         }
     }
 
@@ -1126,42 +1049,59 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         TaxonNode const *node = taxonomy.taxonNode(currTaxId, false);
         int currRankIdx = NcbiTaxonomy::findRankIndex(node->rank);
 
-        if (curCoverage > coverageThreshold && currRankIdx <= 4) {
-            if (!haveMetCovThr) {
+        if (curCoverage > coverageThreshold && currRankIdx <= 4){
+            if(!haveMetCovThr){
                 haveMetCovThr = true;
-                // minRank = currRankIdx;
-                //spMaxCoverage = curCoverage;
                 spFisrtMaxWeight = it->second.weight;
-                spSecondMaxWeight = spFisrtMaxWeight - 1;
                 first = it->first;
-                selectedPercent = currPercent;
-                //ties.push_back(it->first);
-            } else if (it->second.weight > spFisrtMaxWeight + 1) {
-                first = it->first;
-                second = 0;
-                //ties.clear();
-                //ties.push_back(it->first);
+            } else if(it->second.weight == spFisrtMaxWeight){
+                tied = true;
+                ties.push_back(it->first);
+            } else if(it->second.weight > spFisrtMaxWeight){
+                ties.clear();
+                tied = false;
+                first = it -> first;
                 spFisrtMaxWeight = it->second.weight;
-                spSecondMaxWeight = spFisrtMaxWeight - 1;
-            } else if (it->second.weight > spFisrtMaxWeight) {
-                second = first;
-                first = it->first;
-                //ties.insert(ties.begin(),it->first);
-                //spMaxCoverage = curCoverage;
-                spSecondMaxWeight = spFisrtMaxWeight;
-                spFisrtMaxWeight = it->second.weight;
-            } else if (it->second.weight == spFisrtMaxWeight) {
-                second = first;
-                first = it->first;
-                //ties.insert(ties.begin(),it->first);
-                spSecondMaxWeight = spFisrtMaxWeight;
-                //ties.push_back(it->first);
-            } else if (it->second.weight == spSecondMaxWeight) {
-                second = it->first;
-                //ties.push_back(it->first);
             }
+        }
 
-        } else if (currPercent >= majorityCutoff && (!haveMetCovThr)) {
+//        if (curCoverage > coverageThreshold && currRankIdx <= 4) {
+//            if (!haveMetCovThr) {
+//                haveMetCovThr = true;
+//                // minRank = currRankIdx;
+//                //spMaxCoverage = curCoverage;
+//                spFisrtMaxWeight = it->second.weight;
+//                spSecondMaxWeight = spFisrtMaxWeight - 1;
+//                first = it->first;
+//                selectedPercent = currPercent;
+//                //ties.push_back(it->first);
+//            } else if (it->second.weight > spFisrtMaxWeight + 1) {
+//                first = it->first;
+//                second = 0;
+//                //ties.clear();
+//                //ties.push_back(it->first);
+//                spFisrtMaxWeight = it->second.weight;
+//                spSecondMaxWeight = spFisrtMaxWeight - 1;
+//            } else if (it->second.weight > spFisrtMaxWeight) {
+//                second = first;
+//                first = it->first;
+//                //ties.insert(ties.begin(),it->first);
+//                //spMaxCoverage = curCoverage;
+//                spSecondMaxWeight = spFisrtMaxWeight;
+//                spFisrtMaxWeight = it->second.weight;
+//            } else if (it->second.weight == spFisrtMaxWeight) {
+//                second = first;
+//                first = it->first;
+//                //ties.insert(ties.begin(),it->first);
+//                spSecondMaxWeight = spFisrtMaxWeight;
+//                //ties.push_back(it->first);
+//            } else if (it->second.weight == spSecondMaxWeight) {
+//                second = it->first;
+//                //ties.push_back(it->first);
+//            }
+//
+//        }
+        else if (currPercent >= majorityCutoff && (!haveMetCovThr)) {
             // iterate all ancestors to find lineage min rank (the candidate is a descendant of a node with this rank)
 
             // int currMinRank = INT_MAX;
@@ -1176,14 +1116,19 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     }
 
     if (haveMetCovThr) {
-        if (second != 0) {
-            ties.push_back(first);
-            ties.push_back(second);
+        if(tied){
             return taxonomy.LCA(ties)->taxId;
-        } else {
-            selectedPercent = 1;
+        } else{
             return first;
         }
+//        if (second != 0) {
+//            ties.push_back(first);
+//            ties.push_back(second);
+//            return taxonomy.LCA(ties)->taxId;
+//        } else {
+//            selectedPercent = 1;
+//            return first;
+//        }
     } else {
         selectedPercent = 1;
         return selectedTaxon;
