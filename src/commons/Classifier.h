@@ -237,23 +237,15 @@ private:
                               const MmapedData<TargetKmerInfo> & targetInfoList, const MmapedData<DiffIdxSplit> & diffIdxSplits,
                               Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & speciesTaxIdList, const vector<TaxID> & genusTaxIdList,
                               FILE * matchFile);
-    TaxID match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & taxonomy, const float majorityCutoff, double &selectedPercent, uint32_t queryLength, float hammingAverage);
-
-    TaxID match2LCA2(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,
-                    size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent);
-
-    TaxID match2LCA3(const std::vector<int> & taxIdList, NcbiTaxonomy const & taxonomy, const float majorityCutoff,
-                     size_t &numAssignedSeqs, size_t &numUnassignedSeqs, size_t &numSeqsAgreeWithSelectedTaxon, double &selectedPercent);
-
+    TaxID match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & taxonomy, float majorityCutoff, double &selectedPercent, uint32_t queryLength, float hammingAverage);
 
     static bool compareForLinearSearch(const QueryKmer & a, const QueryKmer & b);
     static bool compareConsecutiveMatches(const ConsecutiveMatches & a, const ConsecutiveMatches & b);
 
     void fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt, Query * queryList);
-    TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList);
     TaxID chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery, const size_t & offset, const size_t & end, Match * matchList, Query * queryList);
     void writeReadClassification(Query * queryList, int queryNum , ofstream & readClassificationFile);
-    void writeReportFile(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, const int numOfQuery);
+    void writeReportFile(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, int numOfQuery);
     void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum, Query * queryList);
     void writeReport(FILE * fp, const NcbiTaxonomy & ncbiTaxonomy, const unordered_map<TaxID, TaxonCounts> & cladeCounts, unsigned long totalReads,TaxID taxID = 0, int depth = 0);
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts>& map, TaxID key);
@@ -262,22 +254,14 @@ private:
     static bool compareForWritingMatches(const Match & a, const Match & b);
     static bool sortByTaxId(const Match & a, const Match & b);
     static bool sortByGenusAndSpecies(const Match & a, const Match & b);
-    void findConsecutiveMatches(vector<ConsecutiveMatches> & list, Match * matchList, size_t end, size_t begin);
-    int getBestGenusLevelMatchCombination(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset, size_t queryLength);
+
+
     int getBestGenusLevelMatchCombination2(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset, size_t queryLength);
 
-
-    bool getMatchCombinationForCurGenus(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus,
-                                        vector<vector<ConsecutiveMatches>> & genus2,
-                                        Match * matchList, int maximumPossibleMatchNum);
     bool getMatchCombinationForCurGenus2(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus,
                                          Match * matchList, int maxNum);
-
-
-    int getTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<vector<ConsecutiveMatches>> & genus2,
-                        vector<ConsecutiveMatches> & choosed,
-                        int maxKmerNum, vector<bool> & conservationCheck);
-
+    bool getMatchCombinationForCurGenus3(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus,
+                                         Match * matchList, int maxNum);
     int getTheBestGenus2(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & choosed,
                         int maxKmerNum, size_t queryLength);
 
