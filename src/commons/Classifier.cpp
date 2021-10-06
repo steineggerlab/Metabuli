@@ -116,27 +116,23 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     size_t numOfTatalQueryKmerCnt = 0;
 
     //extact k-mers from query sequences and compare them to target k-mer DB
-    cout<<"hi"<<endl;
     ///TODO measure time for extract & sort & search separately
     beforeSearch = time(NULL);
     while(processedSeqCnt < numOfSeq){
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryList);
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
-        cout<<"buffer overflowed"<<endl;
         omp_set_num_threads(ThreadNum);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
-        cout<<"buffer sorted"<<endl;
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile);
-        cout<<"after linear search parallel"<<endl;
     }
-    cout<<"total kmer count: "<<numOfTatalQueryKmerCnt<<endl;
+    cout<<"Number of query k-mers: "<<numOfTatalQueryKmerCnt<<endl;
     writeMatches(matchBuffer, matchFile);
     fclose(matchFile);
     afterSearch = time(NULL);
     cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
 
     //load matches and analyze
-    cout<<"analyse Result"<<endl;
+    cout<<"Analyse Result ... "<<endl;
     analyseResultParallel(ncbiTaxonomy, sequences, matchFileName, numOfSeq, queryList);
     afterAnalyze = time(NULL);
     cout<<"Time spent for analyzing: "<<double(afterAnalyze-afterSearch)<<endl;
@@ -549,7 +545,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
 
     //Process each blocks
-    omp_set_num_threads(1);
+    omp_set_num_threads(ThreadNum);
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList, blockIdx)
     {
 #pragma omp for schedule(dynamic, 1)
@@ -572,9 +568,10 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
                                   const size_t &offset, const size_t &end, Match *matchList, Query *queryList) {
     bool print = false;
     TaxID selectedTaxon;
-    cout<<"# "<<currentQuery<<endl;
+
 
     if(print) {
+        cout<<"# "<<currentQuery<<endl;
         for (int i = offset; i < end + 1; i++) {
             cout << matchList[i].speciesTaxID << " " << int(matchList[i].frame) << " " << matchList[i].position << " "
                  << matchList[i].taxID << " " << int(matchList[i].hamming) << endl;
@@ -1062,48 +1059,49 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         TaxonNode const *node = taxonomy.taxonNode(currTaxId, false);
         int currRankIdx = NcbiTaxonomy::findRankIndex(node->rank);
 
-        if (curCoverage > coverageThreshold && currRankIdx <= 4){
-            if(!haveMetCovThr){
-                haveMetCovThr = true;
-                spFisrtMaxWeight = it->second.weight;
-                first = currTaxId;
-                ties.push_back(currTaxId);
-            } else if(it->second.weight == spFisrtMaxWeight){
-                tied = true;
-                ties.push_back(currTaxId);
-            } else if(it->second.weight > spFisrtMaxWeight){
-                ties.clear();
-                ties.push_back(currTaxId);
-                tied = false;
-                first = currTaxId;
-                spFisrtMaxWeight = it->second.weight;
-            }
-        }
-
-//        if (curCoverage > coverageThreshold && currRankIdx <= 4) {
-//            if (!haveMetCovThr) {
+//        if (curCoverage > coverageThreshold && currRankIdx <= 4){
+//            if(!haveMetCovThr){
 //                haveMetCovThr = true;
 //                spFisrtMaxWeight = it->second.weight;
-//                spSecondMaxWeight = spFisrtMaxWeight - 1;
-//                first = it->first;
-//                selectedPercent = currPercent;
-//            } else if (it->second.weight > spFisrtMaxWeight + 1) {
-//                first = it->first;
-//                second = 0;
+//                first = currTaxId;
+//                ties.push_back(currTaxId);
+//            } else if(it->second.weight == spFisrtMaxWeight){
+//                tied = true;
+//                ties.push_back(currTaxId);
+//            } else if(it->second.weight > spFisrtMaxWeight){
+//                ties.clear();
+//                ties.push_back(currTaxId);
+//                tied = false;
+//                first = currTaxId;
 //                spFisrtMaxWeight = it->second.weight;
-//                spSecondMaxWeight = spFisrtMaxWeight - 1;
-//            } else if (it->second.weight > spFisrtMaxWeight) {
-//                second = first;
-//                first = it->first;
-//                spSecondMaxWeight = spFisrtMaxWeight;
-//                spFisrtMaxWeight = it->second.weight;
-//            } else if (it->second.weight == spFisrtMaxWeight) {
-//                second = first;
-//                first = it->first;
-//                spSecondMaxWeight = spFisrtMaxWeight;
-//            } else if (it->second.weight == spSecondMaxWeight) {
-//                second = it->first;
 //            }
+//        }
+
+        if (curCoverage > coverageThreshold && currRankIdx <= 4) {
+            if (!haveMetCovThr) {
+                haveMetCovThr = true;
+                spFisrtMaxWeight = it->second.weight;
+                spSecondMaxWeight = spFisrtMaxWeight - 1;
+                first = it->first;
+                selectedPercent = currPercent;
+            } else if (it->second.weight > spFisrtMaxWeight + 1) {
+                first = it->first;
+                second = 0;
+                spFisrtMaxWeight = it->second.weight;
+                spSecondMaxWeight = spFisrtMaxWeight - 1;
+            } else if (it->second.weight > spFisrtMaxWeight) {
+                second = first;
+                first = it->first;
+                spSecondMaxWeight = spFisrtMaxWeight;
+                spFisrtMaxWeight = it->second.weight;
+            } else if (it->second.weight == spFisrtMaxWeight) {
+                second = first;
+                first = it->first;
+                spSecondMaxWeight = spFisrtMaxWeight;
+            } else if (it->second.weight == spSecondMaxWeight) {
+                second = it->first;
+            }
+        }
 
         else if (currPercent >= majorityCutoff && (!haveMetCovThr)) {
             // TaxID currParentTaxId = node->parentTaxId;
