@@ -545,7 +545,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
 
     //Process each blocks
-    omp_set_num_threads(ThreadNum);
+    omp_set_num_threads(1);
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList, blockIdx)
     {
 #pragma omp for schedule(dynamic, 1)
@@ -566,7 +566,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
 
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &queryLength, const int &currentQuery,
                                   const size_t &offset, const size_t &end, Match *matchList, Query *queryList) {
-    bool print = false;
+    bool print = true;
     TaxID selectedTaxon;
 
 
@@ -845,14 +845,14 @@ bool Classifier::constructMatchCombination(vector<ConsecutiveMatches> & coMatche
     //sort consecutive match blocks
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
 
-//    cout<<endl;
-//    cout<<"All"<<endl;
-//    for(int i3 = 0; i3 < coMatches.size(); i3++){
-//        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt<< " "<<coMatches[i3].diffPosCnt;
-//        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
-//        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
-//        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
-//    }
+    cout<<endl;
+    cout<<"All"<<endl;
+    for(int i3 = 0; i3 < coMatches.size(); i3++){
+        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt<< " "<<coMatches[i3].diffPosCnt;
+        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
+        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
+        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
+    }
 
 
     //container to store match blocks to be used.
@@ -896,14 +896,14 @@ bool Classifier::constructMatchCombination(vector<ConsecutiveMatches> & coMatche
         }
     }
 
-//    cout<<"aligned"<<endl;
-//    for(int i3 = 0; i3 < alignedCoMatches.size(); i3++){
-//        cout<< alignedCoMatches[i3].begin << " " << alignedCoMatches[i3].end << " "<< alignedCoMatches[i3].matchCnt<< " "<<alignedCoMatches[i3].diffPosCnt;
-//        cout<<" "<<alignedCoMatches[i3].hamming << " "<<int(alignedCoMatches[i3].frame)<<endl;
-//        cout<<matchList[alignedCoMatches[i3].beginIdx].taxID<<endl;
-//        cout<<matchList[alignedCoMatches[i3].endIdx].taxID<<endl;
-//    }
-//    cout<<endl;
+    cout<<"aligned"<<endl;
+    for(int i3 = 0; i3 < alignedCoMatches.size(); i3++){
+        cout<< alignedCoMatches[i3].begin << " " << alignedCoMatches[i3].end << " "<< alignedCoMatches[i3].matchCnt<< " "<<alignedCoMatches[i3].diffPosCnt;
+        cout<<" "<<alignedCoMatches[i3].hamming << " "<<int(alignedCoMatches[i3].frame)<<endl;
+        cout<<matchList[alignedCoMatches[i3].beginIdx].taxID<<endl;
+        cout<<matchList[alignedCoMatches[i3].endIdx].taxID<<endl;
+    }
+    cout<<endl;
 
     genus.push_back(alignedCoMatches);
     return false;
@@ -1059,25 +1059,25 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
         TaxonNode const *node = taxonomy.taxonNode(currTaxId, false);
         int currRankIdx = NcbiTaxonomy::findRankIndex(node->rank);
 
-//        if (curCoverage > coverageThreshold && currRankIdx <= 4){
-//            if(!haveMetCovThr){
-//                haveMetCovThr = true;
-//                spFisrtMaxWeight = it->second.weight;
-//                first = currTaxId;
-//                ties.push_back(currTaxId);
-//            } else if(it->second.weight == spFisrtMaxWeight){
-//                tied = true;
-//                ties.push_back(currTaxId);
-//            } else if(it->second.weight > spFisrtMaxWeight){
-//                ties.clear();
-//                ties.push_back(currTaxId);
-//                tied = false;
-//                first = currTaxId;
-//                spFisrtMaxWeight = it->second.weight;
-//            }
-//        }
+        if (curCoverage > coverageThreshold && currRankIdx <= 4){
+            if(!haveMetCovThr){
+                haveMetCovThr = true;
+                spFisrtMaxWeight = it->second.weight;
+                first = currTaxId;
+                ties.push_back(currTaxId);
+            } else if(it->second.weight == spFisrtMaxWeight){
+                tied = true;
+                ties.push_back(currTaxId);
+            } else if(it->second.weight > spFisrtMaxWeight){
+                ties.clear();
+                ties.push_back(currTaxId);
+                tied = false;
+                first = currTaxId;
+                spFisrtMaxWeight = it->second.weight;
+            }
+        }
 
-        if (curCoverage > coverageThreshold && currRankIdx <= 4) {
+        /*if (curCoverage > coverageThreshold && currRankIdx <= 4) {
             if (!haveMetCovThr) {
                 haveMetCovThr = true;
                 spFisrtMaxWeight = it->second.weight;
@@ -1101,7 +1101,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
             } else if (it->second.weight == spSecondMaxWeight) {
                 second = it->first;
             }
-        }
+        }*/
 
         else if (currPercent >= majorityCutoff && (!haveMetCovThr)) {
             // TaxID currParentTaxId = node->parentTaxId;
@@ -1114,19 +1114,19 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     }
 
     if (haveMetCovThr) {
-//        if(tied){
-//            return taxonomy.LCA(ties)->taxId;
-//        } else{
-//            return first;
-//        }
-        if (second != 0) {
-            ties.push_back(first);
-            ties.push_back(second);
+        if(tied){
             return taxonomy.LCA(ties)->taxId;
-        } else {
-            selectedPercent = 1;
+        } else{
             return first;
         }
+//        if (second != 0) {
+//            ties.push_back(first);
+//            ties.push_back(second);
+//            return taxonomy.LCA(ties)->taxId;
+//        } else {
+//            selectedPercent = 1;
+//            return first;
+//        }
     } else {
         return selectedTaxon;
     }
