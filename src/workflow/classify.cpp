@@ -13,6 +13,7 @@ int classify(int argc, const char **argv, const Command& command)
 
     const char * queryFileName = par.filenames[0].c_str();
     const string databaseDirectory = par.filenames[1];
+
     const string targetDiffIdxFileName = databaseDirectory+"/diffIdx";
     const string targetInfoFileName = databaseDirectory+"/info";
     string taxIdFileName = databaseDirectory+"/taxID_list";;
