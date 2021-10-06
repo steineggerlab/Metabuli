@@ -13,6 +13,7 @@ int createTargetDB(int argc, const char **argv, const Command &command)
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
     const char * folder = par.filenames[0].c_str();
     const char * dbDirectory = par.filenames[2].c_str();
+   //const char * taxonomyDirectory = par.filenames[3].c_str();
 
     string genome_fname;
     string taxIdList_fname;

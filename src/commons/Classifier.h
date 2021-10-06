@@ -237,13 +237,14 @@ private:
     TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery,
                           const size_t & offset, const size_t & end, Match * matchList, Query * queryList);
 
-    int getMatchesOfTheBestGenus(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset, size_t queryLength);
+    int getMatchesOfTheBestGenus(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end,
+                                 size_t offset, size_t queryLength, float & bestScore);
 
     bool constructMatchCombination(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus,
                                    Match * matchList, int maxNum);
 
     int selectTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & choosed,
-                           int maxKmerNum, size_t queryLength);
+                           int maxKmerNum, size_t queryLength, float & bestScore);
 
     TaxID match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & taxonomy, float majorityCutoff,
                     double &selectedPercent, uint32_t queryLength, float hammingAverage);

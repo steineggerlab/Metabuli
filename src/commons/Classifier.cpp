@@ -579,13 +579,16 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
     //get the best genus for current query
     vector<ConsecutiveMatches> matchCombi;
 
-    int res = getMatchesOfTheBestGenus(matchCombi, matchList, end, offset, queryLength);
-   // cout<<"# "<<currentQuery<<" "<<res<<endl;
+    float maxScore;
+    int res = getMatchesOfTheBestGenus(matchCombi, matchList, end, offset, queryLength, maxScore);
+    float maxNum = queryLength / 3 - kmerLength + 1;
+    float normalizedScore = maxScore / maxNum;
+
     //If there is no proper genus for current query, it is un-classified.
     if(matchCombi.empty() || res == 3){
         queryList[currentQuery].isClassified = false;
         queryList[currentQuery].classification = 0;
-        queryList[currentQuery].coverage = 0;
+        queryList[currentQuery].score = 0;
         queryList[currentQuery].newSpecies = false;
         return 0;
     }
@@ -611,7 +614,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
     }
 
     //Calculate average hamming distance
-    float maxNum = queryLength / 3 - kmerLength + 1;
+
     float hammingSum = 0.0f;
     float totalNumberOfMatches = 0.0f;
     for(size_t cm = 0; cm < matchCombi.size(); cm ++){
@@ -627,25 +630,25 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
         selectedTaxon = ncbiTaxonomy.LCA(taxIdList)->taxId;
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
-        queryList[currentQuery].coverage = 0;
+        queryList[currentQuery].score = normalizedScore;
         if(hammingAverage > 1.0f) queryList[currentQuery].newSpecies = true;
-//        cout << "# " << currentQuery << " " << res << endl;
-//        for(size_t i = 0; i < taxIdList.size(); i++){
-//            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
-//        }
-//        cout<<"coverage: NA"<<"  "<<selectedTaxon<<" "<<ncbiTaxonomy.taxonNode(selectedTaxon)->rank<<endl;
+        cout << "# " << currentQuery << " " << res << endl;
+        for(size_t i = 0; i < taxIdList.size(); i++){
+            cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
+        }
+        cout<<"Score: "<<normalizedScore<<" "<<selectedTaxon<<" "<<ncbiTaxonomy.taxonNode(selectedTaxon)->rank<<endl;
         return selectedTaxon;
     }
 
     //TODO FIX here; calculating in match2LCA is better
     //Calculate coverage
-    int coveredKmerCnt = 0;
-    float coverage;
-    for(size_t cm = 0 ; cm < matchCombi.size(); cm ++){
-        coveredKmerCnt += matchCombi[cm].diffPosCnt; //It is valid only if overlapping is not allowed, thus only in species or lower rank.
-    }
-    coverage = float(coveredKmerCnt) / maxNum;
-    queryList[currentQuery].coverage = coverage;
+//    int coveredKmerCnt = 0;
+//    float coverage;
+//    for(size_t cm = 0 ; cm < matchCombi.size(); cm ++){
+//        coveredKmerCnt += matchCombi[cm].diffPosCnt; //It is valid only if overlapping is not allowed, thus only in species or lower rank.
+//    }
+//    coverage = float(coveredKmerCnt) / maxNum;
+    queryList[currentQuery].score = normalizedScore;
 
     //Classify in genus level for highly diverged queries
     if(hammingAverage > 1.0f){
@@ -657,7 +660,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
         for(size_t i = 0; i < taxIdList.size(); i++){
             cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
         }
-        cout<<"coverage: "<<coverage<<"  "<<selectedTaxon<<" "<<ncbiTaxonomy.taxonNode(selectedTaxon)->rank<<endl;
+        cout<<"Score: "<<normalizedScore<<"  "<<selectedTaxon<<" "<<ncbiTaxonomy.taxonNode(selectedTaxon)->rank<<endl;
         return selectedTaxon;
     }
 
@@ -667,64 +670,65 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
 
     ///TODO optimize strain specific classification criteria
     //Strain classification only for high coverage with LCA of species level
-//    TaxID subSpeciesID;
-//    uint32_t leftEndPos = 0;
-//    size_t leftEndIdx = 0;
-//    uint32_t rightEndPos = 0;
-//    size_t rightEndIdx = 0;
-//    int endCheck = 0;
-//    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4 && coverage > 0.8){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
-//        int strainCnt = 0;
-//        unordered_map<TaxID, int> strainMatchCnt;
-//        TaxID strainTaxId;
-//
-//        for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
-//            for(size_t k = matchCombi[cs].beginIdx ; k < matchCombi[cs].endIdx + 1; k++ ){
-//                temp = matchList[k].taxID;
-//                if(selectedLCA != temp && ncbiTaxonomy.IsAncestor(selectedLCA, temp)){
-//                    strainMatchCnt[temp] ++;
-//                }
-//            }
-//        }
-//
-//        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 7) {
-//            subSpeciesID = strainMatchCnt.begin()->first;
-//            for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
-//                leftEndPos = matchCombi[cs].begin;
-//                leftEndIdx = matchCombi[cs].beginIdx;
-//                while(leftEndPos == matchList[leftEndIdx].position){
-//                    endCheck += matchList[leftEndIdx].taxID == subSpeciesID;
-//                    leftEndIdx ++;
-//                }
-//                rightEndPos = matchCombi[cs].end;
-//                rightEndIdx = matchCombi[cs].endIdx;
-//                while(rightEndPos == matchList[rightEndIdx].position){
-//                    endCheck += matchList[rightEndIdx].taxID == subSpeciesID;
-//                    rightEndIdx --;
-//                }
-//            }
-//            if (!endCheck) {
-//                selectedLCA = subSpeciesID;
-//            }
-//        }
-//    }
+    TaxID subSpeciesID;
+    uint32_t leftEndPos = 0;
+    size_t leftEndIdx = 0;
+    uint32_t rightEndPos = 0;
+    size_t rightEndIdx = 0;
+    int endCheck = 0;
+    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
+        int strainCnt = 0;
+        unordered_map<TaxID, int> strainMatchCnt;
+        TaxID strainTaxId;
+
+        for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
+            for(size_t k = matchCombi[cs].beginIdx ; k < matchCombi[cs].endIdx + 1; k++ ){
+                temp = matchList[k].taxID;
+                if(selectedLCA != temp && ncbiTaxonomy.IsAncestor(selectedLCA, temp)){
+                    strainMatchCnt[temp] ++;
+                }
+            }
+        }
+
+        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 7) {
+            subSpeciesID = strainMatchCnt.begin()->first;
+            for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
+                leftEndPos = matchCombi[cs].begin;
+                leftEndIdx = matchCombi[cs].beginIdx;
+                while(leftEndPos == matchList[leftEndIdx].position){
+                    endCheck += matchList[leftEndIdx].taxID == subSpeciesID;
+                    leftEndIdx ++;
+                }
+                rightEndPos = matchCombi[cs].end;
+                rightEndIdx = matchCombi[cs].endIdx;
+                while(rightEndPos == matchList[rightEndIdx].position){
+                    endCheck += matchList[rightEndIdx].taxID == subSpeciesID;
+                    rightEndIdx --;
+                }
+            }
+            if (!endCheck) {
+                selectedLCA = subSpeciesID;
+            }
+        }
+    }
 
     cout<<"# "<<currentQuery<<endl;
     for(size_t i = 0; i < taxIdList.size(); i++){
         cout<<i<<" "<<int(frame[i])<<" "<<pos[i]<<" "<<taxIdList[i]<<" "<<int(ham[i])<<" "<<redun[i]<<endl;
     }
-    cout<<"coverage: "<<coverage<<"  "<<selectedLCA<<" "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
+    cout<<"Score: "<<normalizedScore<<"  "<<selectedLCA<<" "<<ncbiTaxonomy.taxonNode(selectedLCA)->rank<<endl;
     ///store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedLCA;
-    queryList[currentQuery].coverage = coverage;
+    queryList[currentQuery].score = normalizedScore;
     queryList[currentQuery].newSpecies = false;
     return selectedLCA;
 
 }
 
 
-int Classifier::getMatchesOfTheBestGenus(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end, size_t offset, size_t queryLength){
+int Classifier::getMatchesOfTheBestGenus(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end,
+                                         size_t offset, size_t queryLength, float & bestScore){
     vector<ConsecutiveMatches> coMatches;
     vector<vector<ConsecutiveMatches>> matchCombinationsForEachGenus;
     vector<vector<ConsecutiveMatches>> genus2;
@@ -805,7 +809,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<ConsecutiveMatches> & chosenMatc
     //choose the best combination of consecutive-match among genus for current query
 
     if(!matchCombinationsForEachGenus.empty()){
-        int r = selectTheBestGenus(matchCombinationsForEachGenus, chosenMatchCombination, maxNum, queryLength);
+        int r = selectTheBestGenus(matchCombinationsForEachGenus, chosenMatchCombination, maxNum, queryLength, bestScore);
         if(r == -1){  // more than one genus
             return -1;
         } else{
@@ -892,7 +896,7 @@ bool Classifier::constructMatchCombination(vector<ConsecutiveMatches> & coMatche
 }
 
 int Classifier::selectTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & choosed,
-                                   int maxKmerNum, size_t queryLength){
+                                   int maxKmerNum, size_t queryLength, float & bestScore){
     int numberOfGenus = 0;
     int chosenGenusIdx = INT_MAX;
     vector<TaxID> selecetedGenusList;
@@ -950,6 +954,7 @@ int Classifier::selectTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, v
         }
     }
 
+    bestScore = maxScore;
     delete[] posCheckList;
     if(numberOfGenus == 1){
         return chosenGenusIdx;
@@ -1024,15 +1029,8 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     bool tied = false;
     vector<TaxID> ties;
 
-    //한 위치에 중복되는 매치가 있다! 잘 생각해봅시다...
 
-//    for (std::map<TaxID,taxNode>::iterator it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
-//        if(!(it->second.isCandidate)) continue;
-//        curCoverage = float(it->second.weight) / float(maximunPossibleKmerNum);
-//        TaxonNode const * node = taxonomy.taxonNode(it->first, false);
-//        int currRankInd = NcbiTaxonomy::findRankIndex(node->rank);
-//    }
-    for (std::map<TaxID, taxNode>::iterator it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
+    for (auto it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); it++) {
         // consider only candidates
         if (!(it->second.isCandidate)) {
             continue;
@@ -1065,32 +1063,30 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
             }
         }
 
-        if (curCoverage > coverageThreshold && currRankIdx <= 4) {
-            if (!haveMetCovThr) {
-                haveMetCovThr = true;
-                spFisrtMaxWeight = it->second.weight;
-                spSecondMaxWeight = spFisrtMaxWeight - 1;
-                first = it->first;
-                selectedPercent = currPercent;
-            } else if (it->second.weight > spFisrtMaxWeight + 1) {
-                first = it->first;
-                second = 0;
-                spFisrtMaxWeight = it->second.weight;
-                spSecondMaxWeight = spFisrtMaxWeight - 1;
-            } else if (it->second.weight > spFisrtMaxWeight) {
-                second = first;
-                first = it->first;
-                spSecondMaxWeight = spFisrtMaxWeight;
-                spFisrtMaxWeight = it->second.weight;
-            } else if (it->second.weight == spFisrtMaxWeight) {
-                second = first;
-                first = it->first;
-                spSecondMaxWeight = spFisrtMaxWeight;
-            } else if (it->second.weight == spSecondMaxWeight) {
-                second = it->first;
-            }
-
-        }
+//        if (curCoverage > coverageThreshold && currRankIdx <= 4) {
+//            if (!haveMetCovThr) {
+//                haveMetCovThr = true;
+//                spFisrtMaxWeight = it->second.weight;
+//                spSecondMaxWeight = spFisrtMaxWeight - 1;
+//                first = it->first;
+//                selectedPercent = currPercent;
+//            } else if (it->second.weight > spFisrtMaxWeight + 1) {
+//                first = it->first;
+//                second = 0;
+//                spFisrtMaxWeight = it->second.weight;
+//                spSecondMaxWeight = spFisrtMaxWeight - 1;
+//            } else if (it->second.weight > spFisrtMaxWeight) {
+//                second = first;
+//                first = it->first;
+//                spSecondMaxWeight = spFisrtMaxWeight;
+//                spFisrtMaxWeight = it->second.weight;
+//            } else if (it->second.weight == spFisrtMaxWeight) {
+//                second = first;
+//                first = it->first;
+//                spSecondMaxWeight = spFisrtMaxWeight;
+//            } else if (it->second.weight == spSecondMaxWeight) {
+//                second = it->first;
+//            }
 
         else if (currPercent >= majorityCutoff && (!haveMetCovThr)) {
             // TaxID currParentTaxId = node->parentTaxId;
@@ -1161,7 +1157,7 @@ bool Classifier::sortByGenusAndSpecies(const Match & a, const Match & b) {
 
 void Classifier::writeReadClassification(Query * queryList, int queryNum, ofstream & readClassificationFile){
     for(int i = 0; i < queryNum; i++){
-        readClassificationFile <<i<< "\t" << queryList[i].isClassified << "\t" << queryList[i].name << "\t" << queryList[i].classification << "\t" << queryList[i].queryLength << "\t" << queryList[i].coverage << "\t";
+        readClassificationFile <<i<< "\t" << queryList[i].isClassified << "\t" << queryList[i].name << "\t" << queryList[i].classification << "\t" << queryList[i].queryLength << "\t" << queryList[i].score << "\t";
         for(auto it = queryList[i].taxCnt.begin(); it != queryList[i].taxCnt.end(); ++it){
             readClassificationFile<<it->first<<":"<<it->second<<" ";
         }

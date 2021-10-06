@@ -21,7 +21,7 @@ struct Sequence{
 struct Query{
     int queryId;
     int classification;
-    float coverage;
+    float score;
     bool isClassified;
     bool newSpecies;
     uint32_t queryLength;
