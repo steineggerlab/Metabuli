@@ -569,7 +569,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
     bool print = true;
     TaxID selectedTaxon;
 
-
     if(print) {
         cout<<"# "<<currentQuery<<endl;
         for (int i = offset; i < end + 1; i++) {
@@ -950,7 +949,7 @@ int Classifier::selectTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, v
 
         currScore = totalDiffPosCnt - averageHamming;
         coverage = float(totalDiffPosCnt) / float(maxKmerNum);
-        if(currScore > maxScore && coverage > 0.2){
+        if(currScore > maxScore){// && coverage > 0.2){
             chosenGenusIdx = i;
             selecetedGenusList.clear();
             selecetedGenusList.push_back(i);
