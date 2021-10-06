@@ -1114,19 +1114,19 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     }
 
     if (haveMetCovThr) {
-        if(tied){
-            return taxonomy.LCA(ties)->taxId;
-        } else{
-            return first;
-        }
-//        if (second != 0) {
-//            ties.push_back(first);
-//            ties.push_back(second);
+//        if(tied){
 //            return taxonomy.LCA(ties)->taxId;
-//        } else {
-//            selectedPercent = 1;
+//        } else{
 //            return first;
 //        }
+        if (second != 0) {
+            ties.push_back(first);
+            ties.push_back(second);
+            return taxonomy.LCA(ties)->taxId;
+        } else {
+            selectedPercent = 1;
+            return first;
+        }
     } else {
         return selectedTaxon;
     }
