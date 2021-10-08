@@ -18,6 +18,7 @@ int build_fasta(int argc, const char **argv, const Command &command)
     string taxIdList_fname;
 
     // Taxonomy
+    cout<<"Loading Taxonomy"<<endl;
     const string names = taxonomyDirectory + "/names.dmp";
     const string nodes = taxonomyDirectory + "/nodes.dmp";
     const string merged = taxonomyDirectory + "/merged.dmp";
@@ -86,6 +87,7 @@ int build_fasta(int argc, const char **argv, const Command &command)
     } else{
         cout<<"Cannot open a file for writing taxonomy ID list."<<endl;
     }
+    taxIdFile.close();
 
     //Create lists of species taxonomical IDs of each sequences.
     cout<<"Create taxonomical ID list at species rank ... ";
