@@ -26,13 +26,20 @@ int build_fasta(int argc, const char **argv, const Command &command)
     // Make a tax ID list using mapping file (acc2taxID)
     // 1) Load mapping file
     unordered_map<string, int> acc2taxid;
-    string key, value;
+    string eachLine;
+    string eachItem;
     ifstream map;
     map.open(acc2taxidFile);
+    vector<string> items;
     if(map.is_open()){
-        while(getline(map,key,'\t')){
-            getline(map, value, '\n');
-            acc2taxid[key] = stoi(value);
+        getline(map,eachLine,'\n');
+        while(getline(map,eachLine,'\n')){
+            istringstream ss(eachLine);
+            while (getline(ss, eachItem, '\t')){
+                items.push_back(eachItem);
+            }
+            acc2taxid[items[1]] = stoi(items[2]);
+            items.clear();
         }
     } else{
         cout<<"Cannot open file for mapping from accession to tax ID"<<endl;
@@ -42,7 +49,6 @@ int build_fasta(int argc, const char **argv, const Command &command)
     // 2) Make a tax ID list
     ifstream seqFile;
     seqFile.open(fastaName);
-    string eachLine;
     string accessionID;
     vector<TaxID> taxIDs;
     if (seqFile.is_open()){
