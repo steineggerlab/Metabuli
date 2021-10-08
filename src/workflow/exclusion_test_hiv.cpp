@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <regex>
+#include <sstream>
 
 using namespace std;
 struct Counts13{
@@ -48,20 +49,20 @@ struct Counts13{
     int superkingdomCnt_correct;
 };
 
-void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts13 & counts);
+void compareTaxon112(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts13 & counts);
 
 
 
-int exclusiontest(int argc, const char **argv, const Command &command){
+int exclusiontest_hiv(int argc, const char **argv, const Command &command){
 
     LocalParameters &par = LocalParameters::getLocalInstance();
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
 
     const string readClassificationFileName = par.filenames[0];
 
-    string names = "../../gtdb_taxdmp/names.dmp";
-    string nodes = "../../gtdb_taxdmp/nodes.dmp";
-    string merged = "../../gtdb_taxdmp/merged.dmp";
+    string names = "../../hiv_taxdmp/names.dmp";
+    string nodes = "../../hiv_taxdmp/nodes.dmp";
+    string merged = "../../hiv_taxdmp/merged.dmp";
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
 
     unordered_map<TaxID, unsigned int> taxCnt;
@@ -80,20 +81,27 @@ int exclusiontest(int argc, const char **argv, const Command &command){
 
 
     Counts13 counts = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    cout<<"hi"<<endl;
-    ///Load the mapping file (assacc to taxID)
-    const char * mappingFile = "../../gtdb_taxdmp/assacc_to_taxid_gtdb.tsv";
-    unordered_map<string, int> assacc2taxid;
-    string key, value;
+
+    // 1) Load mapping file
+    cout<<"Load mapping from accession ID to taxonomy ID"<<endl;
+    const char * mappingFile = "/home/jaebeom/hiv_acc2taxid.tsv";
+    unordered_map<string, int> acc2taxid;
+    string eachLine;
+    string eachItem;
     ifstream map;
     map.open(mappingFile);
+    vector<string> items;
     if(map.is_open()){
-        while(getline(map,key,'\t')){
-            getline(map, value, '\n');
-            assacc2taxid[key] = stoi(value);
+        while(getline(map,eachLine,'\n')){
+            istringstream ss(eachLine);
+            while (getline(ss, eachItem, '\t')){
+                items.push_back(eachItem);
+            }
+            acc2taxid[items[0]] = stoi(items[1]);
+            items.clear();
         }
     } else{
-        cout<<"Cannot open file for mappig from assemlby accession to tax ID"<<endl;
+        cout<<"Cannot open file for mapping from accession to tax ID"<<endl;
     }
     map.close();
 
@@ -110,7 +118,8 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     int rightAnswer;
     int rightAnswer_sp;
     unsigned int cladeCnt_sp;
-    regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
+    string seqID;
+
     smatch assacc;
 
     while(getline(readClassification,classString,'\n')){
@@ -122,11 +131,10 @@ int exclusiontest(int argc, const char **argv, const Command &command){
         }
         classInt = stoi(fields[3]);
         classList.push_back(classInt);
+        seqID = fields[2];
 
-        //2nd field -> assacc
-        regex_search(fields[2], assacc, regex1);
         //assacc to right answer
-        rightAnswer = assacc2taxid[assacc[0]];
+        rightAnswer = acc2taxid[seqID];
         rightAnswer_sp = ncbiTaxonomy.getTaxIdAtRank(rightAnswer, "species");
         cladeCnt_sp = cladeCnt[rightAnswer_sp].cladeCount;
 
@@ -220,7 +228,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     ///score the classification
     for(size_t i = 0; i < classList.size(); i++){
         cout<<i<<" ";
-        compareTaxon2(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
+        compareTaxon112(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
     }
 
     cout<<"Num of queries: " << classList.size() << endl;
@@ -244,7 +252,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
 
 }
 
-void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts13 & counts) { ///target: subspecies or species
+void compareTaxon112(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts13 & counts) { ///target: subspecies or species
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
     string shotRank = shotNode->rank;
@@ -316,3 +324,4 @@ void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts
         counts.superkingdomCnt_correct++;
     }
 }
+
