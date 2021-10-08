@@ -39,6 +39,7 @@ int build_fasta(int argc, const char **argv, const Command &command)
                 items.push_back(eachItem);
             }
             acc2taxid[items[1]] = stoi(items[2]);
+            cout<<items[1]<<" "<<items[2]<<"\n";
             items.clear();
         }
     } else{
