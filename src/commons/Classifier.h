@@ -265,7 +265,9 @@ private:
 
 
 public:
-    void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par);
+    void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName,
+                       const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par,
+                       NcbiTaxonomy & taxonomy);
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t * targetDiffIdxList, size_t & diffIdxPos);
     int getNumOfSplits() const;
     Classifier();

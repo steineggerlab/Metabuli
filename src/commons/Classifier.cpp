@@ -27,26 +27,9 @@ Classifier::Classifier() {
 
 Classifier::~Classifier() { delete seqIterator; }
 
-void Classifier::startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName, const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par) {
-    string names, nodes, merged;
-    if(par.gtdbOrNcbi == 1 || par.gtdbOrNcbi == 0 ){
-        cout<<"Classifying query sequences based on taxonomy of GTDB"<<endl;
-        names = "../../gtdb_taxdmp/names.dmp";
-        nodes = "../../gtdb_taxdmp/nodes.dmp";
-        merged = "../../gtdb_taxdmp/merged.dmp";
-    } else if(par.gtdbOrNcbi == 2 ){
-        cout<<"Classifying query sequences based on taxonomy of NCBI"<<endl;
-        names = "../../ncbi_taxdmp/names.dmp";
-        nodes = "../../ncbi_taxdmp/nodes.dmp";
-        merged = "../../ncbi_taxdmp/merged.dmp";
-    } else{
-        cout<<"ERROR"<<endl;
-        return;
-    }
-
-    //taxonomical ID
-    NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
-
+void Classifier::startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName,
+                               const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par,
+                               NcbiTaxonomy & taxonomy) {
 //    ///-----------------------------------------------------
 //    unordered_map<int,int> genus;
 //    for(size_t i = 0 ; i < ncbiTaxonomy.taxonNodes.size(); i++){
@@ -72,8 +55,8 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     ///-------------------------------------------------------
     vector<int> speciesTaxIdList;
     vector<TaxID> genusTaxIdList;
-    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, speciesTaxIdList, "species");
-    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "genus");
+    taxonomy.createTaxIdListAtRank(taxIdList, speciesTaxIdList, "species");
+    taxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "genus");
     //output file
     char matchFileName[300];
     sprintf(matchFileName,"%s_match2", queryFileName);
@@ -133,7 +116,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     //load matches and analyze
     cout<<"Analyse Result ... "<<endl;
-    analyseResultParallel(ncbiTaxonomy, sequences, matchFileName, numOfSeq, queryList);
+    analyseResultParallel(taxonomy, sequences, matchFileName, numOfSeq, queryList);
     afterAnalyze = time(NULL);
     cout<<"Time spent for analyzing: "<<double(afterAnalyze-afterSearch)<<endl;
 
@@ -141,13 +124,13 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     ofstream readClassificationFile;
     readClassificationFile.open(par.filenames[0]+"_ReadClassification.tsv");
     writeReadClassification(queryList,numOfSeq,readClassificationFile);
-    writeReportFile(par.filenames[0].c_str(), ncbiTaxonomy, numOfSeq);
+    writeReportFile(par.filenames[0].c_str(), taxonomy, numOfSeq);
 
     //
     vector<int> wrongClassifications;
     sequences.clear();
     IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
-    performanceTest(ncbiTaxonomy, queryList, numOfSeq, wrongClassifications);
+    performanceTest(taxonomy, queryList, numOfSeq, wrongClassifications);
     ofstream wr;
     wr.open(par.filenames[0]+"_wrong");
 

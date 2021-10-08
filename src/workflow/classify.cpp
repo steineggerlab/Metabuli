@@ -5,6 +5,7 @@
 #include "Classifier.h"
 #include "Parameters.h"
 #include "LocalParameters.h"
+#include "NcbiTaxonomy.h"
 
 int classify(int argc, const char **argv, const Command& command)
 {
@@ -13,6 +14,13 @@ int classify(int argc, const char **argv, const Command& command)
 
     const char * queryFileName = par.filenames[0].c_str();
     const string databaseDirectory = par.filenames[1];
+    const string taxonomyDirectory = par.filenames[2];
+
+    const string names = taxonomyDirectory + "/names.dmp";
+    const string nodes = taxonomyDirectory + "/nodes.dmp";
+    const string merged = taxonomyDirectory + "/merged.dmp";
+    NcbiTaxonomy taxonomy(names, nodes, merged);
+
 
     const string targetDiffIdxFileName = databaseDirectory+"/diffIdx";
     const string targetInfoFileName = databaseDirectory+"/info";
@@ -34,7 +42,8 @@ int classify(int argc, const char **argv, const Command& command)
     fclose(taxIdFile);
 
     Classifier classifier;
-    classifier.startClassify(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(), diffIdxSplitFileName.c_str(), taxIdList, par);
+    classifier.startClassify(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(),
+                             diffIdxSplitFileName.c_str(), taxIdList, par, taxonomy);
 
     return 0;
 }
