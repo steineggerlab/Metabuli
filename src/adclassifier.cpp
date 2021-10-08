@@ -24,7 +24,7 @@ std::vector<Command> commands = {
           {"name of output target database with path", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty},
           {"tmpDir", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
 
-          {"build_fasta", createTargetDB, &localPar.createTargetDB, COMMAND_MAIN,
+          {"build_fasta", build_fasta, &localPar.createTargetDB, COMMAND_MAIN,
                 "It extracts k-mers from sequecne file to make a target database",
                 NULL,
                 "Jaebeom Kim <jbeom0731@gmail.com>",

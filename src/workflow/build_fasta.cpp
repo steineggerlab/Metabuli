@@ -5,7 +5,7 @@
 #include <sstream>
 
 
-int createTargetDB(int argc, const char **argv, const Command &command)
+int build_fasta(int argc, const char **argv, const Command &command)
 {
     LocalParameters &par = LocalParameters::getLocalInstance();
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);

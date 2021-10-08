@@ -7,6 +7,7 @@
 #include "Command.h"
 
 extern int createTargetDB(int argc, const char **argv, const Command& command);
+extern int build_fasta(int argc, const char **argv, const Command& command);
 extern int classify(int argc, const char **argv, const Command& command);
 extern int inclusiontest(int argc, const char **argv, const Command& command);
 extern int exclusiontest(int argc, const char **argv, const Command& command);
