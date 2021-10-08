@@ -22,6 +22,10 @@ int build_fasta(int argc, const char **argv, const Command &command)
     const string names = taxonomyDirectory + "/names.dmp";
     const string nodes = taxonomyDirectory + "/nodes.dmp";
     const string merged = taxonomyDirectory + "/merged.dmp";
+    cout<<names<<endl;
+    cout<<nodes<<endl;
+    cout<<merged<<endl;
+
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
 
     // Make a tax ID list using mapping file (acc2taxID)
