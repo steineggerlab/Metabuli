@@ -40,6 +40,7 @@ int build_fasta(int argc, const char **argv, const Command &command)
                 items.push_back(eachItem);
             }
             acc2taxid[items[1]] = stoi(items[2]);
+            cout<<
             items.clear();
         }
     } else{
@@ -52,16 +53,18 @@ int build_fasta(int argc, const char **argv, const Command &command)
     ifstream seqFile;
     seqFile.open(fastaName);
     string accessionID;
+    string accessionID2;
     vector<TaxID> taxIDs;
     if (seqFile.is_open()){
         while(getline(seqFile, eachLine, '\n')){
             if(eachLine[0] == '>'){
                 istringstream ss(eachLine);
                 getline(ss, accessionID, ' ');
-                if(acc2taxid.find(accessionID) != acc2taxid.end()){
-                    taxIDs.push_back(acc2taxid[accessionID.substr(1)]);
+                accessionID2 = accessionID.substr(1);
+                if(acc2taxid.find(accessionID2) != acc2taxid.end()){
+                    taxIDs.push_back(acc2taxid[accessionID2]);
                 } else {
-                    cout<<accessionID.substr(1)<<" is not in the mapping file"<<endl;
+                    cout<<accessionID2<<" is not in the mapping file"<<endl;
                     taxIDs.push_back(0);
                 }
             }
