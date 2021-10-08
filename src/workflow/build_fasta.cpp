@@ -59,7 +59,12 @@ int build_fasta(int argc, const char **argv, const Command &command)
             if(eachLine[0] == '>'){
                 istringstream ss(eachLine);
                 getline(ss, accessionID, ' ');
-                taxIDs.push_back(acc2taxid[accessionID]);
+                if(acc2taxid.find(accessionID) != acc2taxid.end()){
+                    taxIDs.push_back(acc2taxid[accessionID]);
+                } else {
+                    cout<<accessionID<<" is not in the mapping file"<<endl;
+                    taxIDs.push_back(0);
+                }
             }
         }
     } else{
