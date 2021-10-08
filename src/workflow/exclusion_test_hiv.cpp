@@ -146,7 +146,7 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
                 break;
             }
         }
-        rightAnswers.push_back(ancestor->taxId);
+        rightAnswers.push_back(11676);
 
         if(ancestor->rank == "superkingdom"){
             counts.superkingdomTargetNumber ++;
@@ -249,7 +249,7 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
     cout<<"Genus       : " << counts.genusTargetNumber<<" / "<<counts.genusCnt_correct<<" / "<<counts.genusCnt_try<<endl;
     cout<<"Species     : " << counts.speciesTargetNumber<<" / "<<counts.speciesCnt_correct<<" / "<<counts.speciesCnt_try<<endl;
     cout<<"Subspecies  : " << counts.subspeciesTargetNumber<<" / "<<counts.subspeciesCnt_correct<<" / "<<counts.subspeciesCnt_try<<endl;
-
+    return 0;
 }
 
 void compareTaxon112(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts13 & counts) { ///target: subspecies or species
