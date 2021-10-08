@@ -4,4 +4,5 @@ set(workflow_source_files
         workflow/updateTargetDB.cpp
         workflow/prepareForTargetDB_GTDB.cpp
         workflow/prepareForTargetDB.cpp
+        workflow/build_fasta.cpp
         PARENT_SCOPE)

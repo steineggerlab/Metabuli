@@ -24,6 +24,17 @@ std::vector<Command> commands = {
           {"name of output target database with path", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty},
           {"tmpDir", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
 
+          {"build_fasta", createTargetDB, &localPar.createTargetDB, COMMAND_MAIN,
+                "It extracts k-mers from sequecne file to make a target database",
+                NULL,
+                "Jaebeom Kim <jbeom0731@gmail.com>",
+                "<i:directory of FASTA files> <i:mapping> <o:output> <tmpDir> <num of treads>",
+                CITATION_SPACEPHARER,
+                {{"A FASTA file", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::flatfile},
+                        {"Mapping file (accession to tax ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                        {"Directory where the DB will be generated", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty},
+                        {"tmpDir", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
+
         {"classify", classify, &localPar.classify, COMMAND_MAIN,
          "It extracts k-mers from query sequences, and compares them to the target database",
          NULL,
