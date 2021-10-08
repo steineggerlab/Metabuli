@@ -38,7 +38,6 @@ int build_fasta(int argc, const char **argv, const Command &command)
     map.open(acc2taxidFile);
     vector<string> items;
     if(map.is_open()){
-        getline(map,eachLine,'\n');
         while(getline(map,eachLine,'\n')){
             istringstream ss(eachLine);
             while (getline(ss, eachItem, '\t')){
