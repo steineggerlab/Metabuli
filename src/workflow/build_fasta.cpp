@@ -44,7 +44,7 @@ int build_fasta(int argc, const char **argv, const Command &command)
             while (getline(ss, eachItem, '\t')){
                 items.push_back(eachItem);
             }
-            acc2taxid[items[1]] = stoi(items[2]);
+            acc2taxid[items[0]] = stoi(items[1]);
             items.clear();
         }
     } else{
