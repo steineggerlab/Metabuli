@@ -139,7 +139,7 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
         cladeCnt_sp = cladeCnt[rightAnswer_sp].cladeCount;
 
         //get the lowest ancestor that have different branch
-        const TaxonNode * ancestor = ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(rightAnswer_sp, "genus"));
+        const TaxonNode * ancestor = ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(rightAnswer_sp, "species"));
         while(cladeCnt_sp == cladeCnt[ancestor->taxId].cladeCount){
             ancestor = ncbiTaxonomy.taxonNode(ancestor->parentTaxId);
             if(ancestor->rank == "superkingdom"){
