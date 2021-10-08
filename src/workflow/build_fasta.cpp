@@ -25,6 +25,7 @@ int build_fasta(int argc, const char **argv, const Command &command)
 
     // Make a tax ID list using mapping file (acc2taxID)
     // 1) Load mapping file
+    cout<<"Load mapping from accession ID to taxonomy ID"<<endl;
     unordered_map<string, int> acc2taxid;
     string eachLine;
     string eachItem;
@@ -48,6 +49,7 @@ int build_fasta(int argc, const char **argv, const Command &command)
     map.close();
 
     // 2) Make a tax ID list
+    cout<<"<Make a taxonomy ID list"<<endl;
     ifstream seqFile;
     seqFile.open(fastaName);
     string accessionID;
@@ -67,6 +69,7 @@ int build_fasta(int argc, const char **argv, const Command &command)
     seqFile.close();
 
     // 3) Write the list into a file
+    cout<<"Write the taxonomy list into a file"<<endl;
     const string taxIdFileName = string(dbDirectory) + "/taxID_list";
     ofstream taxIdFile;
     taxIdFile.open(taxIdFileName);
