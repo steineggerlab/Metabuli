@@ -45,7 +45,7 @@ struct Counts{
     int superkingdomCnt_correct;
 };
 
-void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts);
+void compareTaxon_hiv(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts);
 
 using namespace std;
 
@@ -157,7 +157,7 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
     ///score the classification
     for(size_t i = 0; i < classList.size(); i++){
         cout<<i<<" ";
-        compareTaxon(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
+        compareTaxon_hiv(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
     }
 
     cout<<"Num of queries: " << classList.size() << endl;
@@ -181,7 +181,7 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
 
 }
 
-void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts& counts) { ///target: subspecies or species
+void compareTaxon_hiv(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts& counts) { ///target: subspecies or species
 
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
