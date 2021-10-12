@@ -84,7 +84,7 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
 
     // 1) Load mapping file
     cout<<"Load mapping from accession ID to taxonomy ID"<<endl;
-    const char * mappingFile = "/home/jaebeom/hivdata/hiv_acc2taxid.tsv";
+    const char * mappingFile = "/data3/jaebeom/hivdata/hiv_acc2taxid.tsv";
     unordered_map<string, int> acc2taxid;
     string eachLine;
     string eachItem;
