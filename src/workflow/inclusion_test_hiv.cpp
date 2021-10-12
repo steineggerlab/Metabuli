@@ -112,8 +112,8 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
         while(getline(lineStream, field, '\t')){
             fields.push_back(field);
         }
-        classInt = stoi(fields[3]);
-        seqID = fields[2];
+        classInt = stoi(fields[2]);
+        seqID = fields[1];
         classList.push_back(classInt);
 
         //regex_search(fields[1], assacc, regex1);

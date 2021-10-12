@@ -129,9 +129,9 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
         while(getline(lineStream, field, '\t')){
             fields.push_back(field);
         }
-        classInt = stoi(fields[3]);
+        classInt = stoi(fields[2]);
         classList.push_back(classInt);
-        seqID = fields[2];
+        seqID = fields[1];
 
         //assacc to right answer
         rightAnswer = acc2taxid[seqID];
