@@ -72,9 +72,10 @@ std::vector<Command> commands = {
                 "It extracts k-mers from query sequences, and compares them to the target database",
                 NULL,
                 "Jaebeom Kim <jbeom0731@gmail.com>",
-                "<i:read-classification>",
+                "<i:read-classification> <i:mapping>",
                 CITATION_SPACEPHARER,
-                {{"read-classification", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}}
+                {{"read-classification", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                        {"Mapping file (accession to tax ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}}
 
 };
 
