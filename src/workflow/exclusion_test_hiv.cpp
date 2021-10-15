@@ -105,6 +105,7 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
         cout<<"Cannot open file for mapping from accession to tax ID"<<endl;
     }
     map.close();
+    cout<<"Here"<<endl;
 
     ///read classification
     vector<int> rightAnswers;
