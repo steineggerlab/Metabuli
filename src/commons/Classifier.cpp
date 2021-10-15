@@ -1154,7 +1154,7 @@ bool Classifier::sortByGenusAndSpecies(const Match & a, const Match & b) {
 
 void Classifier::writeReadClassification(Query * queryList, int queryNum, ofstream & readClassificationFile){
     for(int i = 0; i < queryNum; i++){
-        readClassificationFile <<i<< "\t" << queryList[i].isClassified << "\t" << queryList[i].name << "\t" << queryList[i].classification << "\t" << queryList[i].queryLength << "\t" << queryList[i].score << "\t";
+        readClassificationFile <<queryList[i].isClassified << "\t" << queryList[i].name << "\t" << queryList[i].classification << "\t" << queryList[i].queryLength << "\t" << queryList[i].score << "\t";
         for(auto it = queryList[i].taxCnt.begin(); it != queryList[i].taxCnt.end(); ++it){
             readClassificationFile<<it->first<<":"<<it->second<<" ";
         }
