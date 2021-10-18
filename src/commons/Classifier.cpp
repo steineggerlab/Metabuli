@@ -938,7 +938,7 @@ int Classifier::selectTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, v
             selecetedGenusList.push_back(i);
             maxScore = currScore;
             numberOfGenus = 1;
-        } else if (currScore == maxScore && coverage > 0.2){
+        } else if (currScore == maxScore && coverage > 0.1){
             selecetedGenusList.push_back(i);
             numberOfGenus++;
         }

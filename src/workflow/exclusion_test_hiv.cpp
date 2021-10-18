@@ -124,7 +124,10 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
 
     smatch assacc;
 
+    cout<<"127"<<endl;
+    int temp = 0;
     while(getline(readClassification,classString,'\n')){
+
         istringstream lineStream(classString);
         fields.clear();
         //3rd field -> classification
