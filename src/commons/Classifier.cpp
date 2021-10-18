@@ -639,22 +639,22 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
     queryList[currentQuery].score = normalizedScore;
 
     //Classify in genus level for highly diverged queries
-    if(hammingAverage > 1.0f){
-        selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchList[matchCombi[0].beginIdx].taxID,"genus");
-        queryList[currentQuery].isClassified = true;
-        queryList[currentQuery].classification = selectedTaxon;
-        queryList[currentQuery].newSpecies = true;
-        if(print) {
-            cout << "# " << currentQuery << "HH" << endl;
-            for (size_t i = 0; i < taxIdList.size(); i++) {
-                cout << i << " " << int(frame[i]) << " " << pos[i] << " " << taxIdList[i] << " " << int(ham[i]) << " "
-                     << redun[i] << endl;
-            }
-            cout << "Score: " << normalizedScore << "  " << selectedTaxon << " "
-                 << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
-        }
-        return selectedTaxon;
-    }
+//    if(hammingAverage > 1.0f){
+//        selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchList[matchCombi[0].beginIdx].taxID,"genus");
+//        queryList[currentQuery].isClassified = true;
+//        queryList[currentQuery].classification = selectedTaxon;
+//        queryList[currentQuery].newSpecies = true;
+//        if(print) {
+//            cout << "# " << currentQuery << "HH" << endl;
+//            for (size_t i = 0; i < taxIdList.size(); i++) {
+//                cout << i << " " << int(frame[i]) << " " << pos[i] << " " << taxIdList[i] << " " << int(ham[i]) << " "
+//                     << redun[i] << endl;
+//            }
+//            cout << "Score: " << normalizedScore << "  " << selectedTaxon << " "
+//                 << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
+//        }
+//        return selectedTaxon;
+//    }
 
     //Classify in species or lower level for queries that have close matches in reference DB.
     double selectedPercent = 0;
