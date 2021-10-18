@@ -562,7 +562,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
 
     //get the best genus for current query
     vector<ConsecutiveMatches> matchCombi;
-
     float maxScore;
     int res = getMatchesOfTheBestGenus(matchCombi, matchList, end, offset, queryLength, maxScore);
     float maxNum = queryLength / 3 - kmerLength + 1;
@@ -609,8 +608,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
 
 
     //If there are two or more good genus level candidates, find the LCA.
-    //
-    if(res == - 1 || res == 1 ){ // -1; more than one genus. 1; conserved in one genus
+    if(res == - 1 || res == 1 ){ // -1; more than one genus. 1; conserved within a genus
         selectedTaxon = ncbiTaxonomy.LCA(taxIdList)->taxId;
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
@@ -629,13 +627,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
     }
 
     //TODO FIX here; calculating in match2LCA is better
-    //Calculate coverage
-//    int coveredKmerCnt = 0;
-//    float coverage;
-//    for(size_t cm = 0 ; cm < matchCombi.size(); cm ++){
-//        coveredKmerCnt += matchCombi[cm].diffPosCnt; //It is valid only if overlapping is not allowed, thus only in species or lower rank.
-//    }
-//    coverage = float(coveredKmerCnt) / maxNum;
     queryList[currentQuery].score = normalizedScore;
 
     //Classify in genus level for highly diverged queries
@@ -764,9 +755,8 @@ int Classifier::getMatchesOfTheBestGenus(vector<ConsecutiveMatches> & chosenMatc
                     beginIdx = i;
 
                     //Find consecutive matches
-                    //TODO: this can be faster
                     while(matchList[i].position <= currentPos + 3 &&
-                          (conCnt == 0 || matchList[i].hamming <= hammingMean + 3) && ///TODO: Is it okay?
+                          (conCnt == 0 || matchList[i].hamming <= hammingMean + 3) &&
                           currentFrame == matchList[i].frame &&
                           currentSpecies == matchList[i].speciesTaxID && (i < end + 1)){
                         if(matchList[i].position != currentPos) {
@@ -932,7 +922,7 @@ int Classifier::selectTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, v
 
         currScore = totalDiffPosCnt - averageHamming;
         coverage = float(totalDiffPosCnt) / float(maxKmerNum);
-        if(currScore > maxScore){// && coverage > 0.2){
+        if(currScore > maxScore && coverage > 0.1){
             chosenGenusIdx = i;
             selecetedGenusList.clear();
             selecetedGenusList.push_back(i);
