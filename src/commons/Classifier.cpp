@@ -674,20 +674,20 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
 
         if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 2) {
             subSpeciesID = strainMatchCnt.begin()->first;
-            for(size_t cs = 0; cs < matchCombi.size(); cs++ ){
-                leftEndPos = matchCombi[cs].begin;
-                leftEndIdx = matchCombi[cs].beginIdx;
-                while(leftEndPos == matchList[leftEndIdx].position){
-                    endCheck += matchList[leftEndIdx].taxID == subSpeciesID;
-                    leftEndIdx ++;
-                }
-                rightEndPos = matchCombi[cs].end;
-                rightEndIdx = matchCombi[cs].endIdx;
-                while(rightEndPos == matchList[rightEndIdx].position){
-                    endCheck += matchList[rightEndIdx].taxID == subSpeciesID;
-                    rightEndIdx --;
-                }
-            }
+//            for(size_t cs = 0; cs < matchCombi.size(); cs++ ){ //matchCombi는 어느 단위?
+//                leftEndPos = matchCombi[cs].begin;
+//                leftEndIdx = matchCombi[cs].beginIdx;
+//                while(leftEndPos == matchList[leftEndIdx].position){
+//                    endCheck += matchList[leftEndIdx].taxID == subSpeciesID;
+//                    leftEndIdx ++;
+//                }
+//                rightEndPos = matchCombi[cs].end;
+//                rightEndIdx = matchCombi[cs].endIdx;
+//                while(rightEndPos == matchList[rightEndIdx].position){
+//                    endCheck += matchList[rightEndIdx].taxID == subSpeciesID;
+//                    rightEndIdx --;
+//                }
+//            }
             if (!endCheck) {
                 selectedLCA = subSpeciesID;
             }
