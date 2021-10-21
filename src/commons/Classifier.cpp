@@ -672,7 +672,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
             }
         }
 
-        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 2) {
+        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 7) {
             subSpeciesID = strainMatchCnt.begin()->first;
 //            for(size_t cs = 0; cs < matchCombi.size(); cs++ ){ //matchCombi는 어느 단위?
 //                leftEndPos = matchCombi[cs].begin;
