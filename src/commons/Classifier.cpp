@@ -921,26 +921,27 @@ int Classifier::selectTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, v
 
         currScore = totalDiffPosCnt - averageHamming;
         coverage = float(totalDiffPosCnt) / float(maxKmerNum);
-//        if(currScore > maxScore && coverage > 0.1){
-//            chosenGenusIdx = i;
-//            selecetedGenusList.clear();
-//            selecetedGenusList.push_back(i);
-//            maxScore = currScore;
-//            numberOfGenus = 1;
-//        } else if (currScore == maxScore && coverage > 0.1){
-//            selecetedGenusList.push_back(i);
-//            numberOfGenus++;
-//        }
-        if(currScore > maxScore){
+
+        if(currScore > maxScore && coverage > 0.1){
             chosenGenusIdx = i;
             selecetedGenusList.clear();
             selecetedGenusList.push_back(i);
             maxScore = currScore;
             numberOfGenus = 1;
-        } else if (currScore == maxScore){
+        } else if (currScore == maxScore && coverage > 0.1){
             selecetedGenusList.push_back(i);
             numberOfGenus++;
         }
+//        if(currScore > maxScore){
+//            chosenGenusIdx = i;
+//            selecetedGenusList.clear();
+//            selecetedGenusList.push_back(i);
+//            maxScore = currScore;
+//            numberOfGenus = 1;
+//        } else if (currScore == maxScore){
+//            selecetedGenusList.push_back(i);
+//            numberOfGenus++;
+//        }
     }
 
     for(size_t g = 0; g < selecetedGenusList.size(); g++) {
