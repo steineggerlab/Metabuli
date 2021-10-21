@@ -549,7 +549,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
 
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &queryLength, const int &currentQuery,
                                   const size_t &offset, const size_t &end, Match *matchList, Query *queryList) {
-    bool print = true;
+    bool print = false;
     TaxID selectedTaxon;
 
     if(print) {
@@ -816,14 +816,14 @@ bool Classifier::constructMatchCombination(vector<ConsecutiveMatches> & coMatche
     //sort consecutive match blocks
     sort(coMatches.begin(), coMatches.end(), Classifier::compareConsecutiveMatches);
 
-    cout<<endl;
-    cout<<"All"<<endl;
-    for(int i3 = 0; i3 < coMatches.size(); i3++){
-        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt<< " "<<coMatches[i3].diffPosCnt;
-        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
-        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
-        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
-    }
+//    cout<<endl;
+//    cout<<"All"<<endl;
+//    for(int i3 = 0; i3 < coMatches.size(); i3++){
+//        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt<< " "<<coMatches[i3].diffPosCnt;
+//        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
+//        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
+//        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
+//    }
 
 
     //container to store match blocks to be used.
@@ -867,14 +867,14 @@ bool Classifier::constructMatchCombination(vector<ConsecutiveMatches> & coMatche
         }
     }
 
-    cout<<"aligned"<<endl;
-    for(int i3 = 0; i3 < alignedCoMatches.size(); i3++){
-        cout<< alignedCoMatches[i3].begin << " " << alignedCoMatches[i3].end << " "<< alignedCoMatches[i3].matchCnt<< " "<<alignedCoMatches[i3].diffPosCnt;
-        cout<<" "<<alignedCoMatches[i3].hamming << " "<<int(alignedCoMatches[i3].frame)<<endl;
-        cout<<matchList[alignedCoMatches[i3].beginIdx].taxID<<endl;
-        cout<<matchList[alignedCoMatches[i3].endIdx].taxID<<endl;
-    }
-    cout<<endl;
+//    cout<<"aligned"<<endl;
+//    for(int i3 = 0; i3 < alignedCoMatches.size(); i3++){
+//        cout<< alignedCoMatches[i3].begin << " " << alignedCoMatches[i3].end << " "<< alignedCoMatches[i3].matchCnt<< " "<<alignedCoMatches[i3].diffPosCnt;
+//        cout<<" "<<alignedCoMatches[i3].hamming << " "<<int(alignedCoMatches[i3].frame)<<endl;
+//        cout<<matchList[alignedCoMatches[i3].beginIdx].taxID<<endl;
+//        cout<<matchList[alignedCoMatches[i3].endIdx].taxID<<endl;
+//    }
+//    cout<<endl;
 
     genus.push_back(alignedCoMatches);
     return false;
