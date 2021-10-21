@@ -626,7 +626,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
         return selectedTaxon;
     }
 
-    //TODO FIX here; calculating in match2LCA is better
     queryList[currentQuery].score = normalizedScore;
 
     //Classify in genus level for highly diverged queries
@@ -704,13 +703,13 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
         cout << "Score: " << normalizedScore << "  " << selectedLCA << " " << ncbiTaxonomy.taxonNode(selectedLCA)->rank
              << endl;
     }
+
     ///store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedLCA;
     queryList[currentQuery].score = normalizedScore;
     queryList[currentQuery].newSpecies = false;
     return selectedLCA;
-
 }
 
 
@@ -922,13 +921,23 @@ int Classifier::selectTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, v
 
         currScore = totalDiffPosCnt - averageHamming;
         coverage = float(totalDiffPosCnt) / float(maxKmerNum);
-        if(currScore > maxScore && coverage > 0.1){
+//        if(currScore > maxScore && coverage > 0.1){
+//            chosenGenusIdx = i;
+//            selecetedGenusList.clear();
+//            selecetedGenusList.push_back(i);
+//            maxScore = currScore;
+//            numberOfGenus = 1;
+//        } else if (currScore == maxScore && coverage > 0.1){
+//            selecetedGenusList.push_back(i);
+//            numberOfGenus++;
+//        }
+        if(currScore > maxScore){
             chosenGenusIdx = i;
             selecetedGenusList.clear();
             selecetedGenusList.push_back(i);
             maxScore = currScore;
             numberOfGenus = 1;
-        } else if (currScore == maxScore && coverage > 0.1){
+        } else if (currScore == maxScore){
             selecetedGenusList.push_back(i);
             numberOfGenus++;
         }
