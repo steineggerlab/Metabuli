@@ -720,8 +720,8 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &que
     if(print) {
         cout<<"# "<<currentQuery<<endl;
         for (int i = offset; i < end + 1; i++) {
-            cout << matchList[i].speciesTaxID << " " << int(matchList[i].frame) << " " << matchList[i].position << " "
-                 << matchList[i].taxID << " " << int(matchList[i].hamming) << endl;
+            cout << matchList[i].genusTaxID<<" "<<matchList[i].speciesTaxID << " " << int(matchList[i].frame) << " " <<
+            matchList[i].position << " " << matchList[i].taxID << " " << int(matchList[i].hamming) << endl;
         }
     }
 
@@ -1117,7 +1117,7 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
                 //hammingSum += overlaps[0].hamming;
             }
             overlaps.clear();
-            isTheLastOverlapped = (i == l-1 );
+            isTheLastOverlapped = (i == l - 1);
         } else{
             matches.push_back(filteredMatches[i]);
             if(filteredMatches[i].hamming < hammings[filteredMatches[i].position/3]){
