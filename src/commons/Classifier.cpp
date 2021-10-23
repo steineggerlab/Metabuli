@@ -1073,6 +1073,10 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     int coveredPosCnt = 0;
     int hammingSum = 0;
 
+    int asd = 0;
+    for(Match match : filteredMatches){
+        cout<<asd++<<" "<<match.position<<endl;
+    }
     bool * posCheckList = new bool[queryLength/3+1];
     memset(posCheckList, false, queryLength/3 + 1);
   //  uint8_t * hammings = new uint8_t[queryLength/3+1];
@@ -1085,6 +1089,10 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     // Sort
     sort(filteredMatches.begin(), filteredMatches.end(), sortMatchesByPos);
 
+    asd = 0;
+    for(Match match : filteredMatches){
+        cout<<asd++<<" "<<match.position<<endl;
+    }
     // Do not allow overlaps between the same species
     // TODO Fix error: More sequence -> more random match -> hamming increasing
     size_t i = 0;
