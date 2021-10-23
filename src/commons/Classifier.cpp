@@ -1010,7 +1010,7 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
                         cout<<i<<" "<<matchList[i].position<<endl;
                         conCnt++;
                         hammingSum += matchList[i].hamming;
-                        hammingMean = float(hammingSum) / float(diffPosCnt);
+                        hammingMean = float(hammingSum) / float(filteredMatches.size());
                         i++;
                     }
                     //TODO Should I remove the offset match after checking if the hamming was two high?
