@@ -1127,7 +1127,13 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
         }
         i++;
     }
-    if(!isTheLastOverlapped) matches.push_back(filteredMatches[l-1]);
+    if(!isTheLastOverlapped) {
+        if(!posCheckList[filteredMatches[l-1].position/3]){
+            posCheckList[filteredMatches[l-1].position/3] = true;
+            coveredPosCnt ++;
+        }
+        matches.push_back(filteredMatches[l-1]);
+    }
 
     for(int h = 0; h < size; h++){
         if(hammings[h] != 10){
