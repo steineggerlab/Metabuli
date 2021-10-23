@@ -511,7 +511,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     cout<<"num of matches"<<numOfMatches<<endl;
 
     //Sort matches in order to analyze
-    SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies);
+    SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
     //Devide matches into blocks for multi threading
     MatchBlock * matchBlocks = new MatchBlock[seqNum];
     cout<<seqNum<<endl;
@@ -970,9 +970,9 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
             currentSpecies = matchList[i].speciesTaxID;
             //For current species
             while(currentSpecies == matchList[i].speciesTaxID && (i < end + 1)){
-                currentFrame = matchList[i].frame;
+                //currentFrame = matchList[i].frame;
                 //For current frame
-                while (currentFrame == matchList[i].frame && currentSpecies == matchList[i].speciesTaxID && (i < end + 1)){
+                //while (currentFrame == matchList[i].frame && currentSpecies == matchList[i].speciesTaxID && (i < end + 1)){
                     //Find consecutive matches
                     i++;
                     newOffset = true;
@@ -981,7 +981,7 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
                     hammingMean = matchList[i-1].hamming;
                     while((i < end + 1) && currentFrame == matchList[i].frame &&
                             currentSpecies == matchList[i].speciesTaxID &&
-                            matchList[i-1].position + 3 == matchList[i].position &&
+                            matchList[i].position <= matchList[i-1].position + 3 &&
                             ((float)matchList[i].hamming) <= hammingMean + 3){
                         if(newOffset){
                             newOffset=false;
@@ -996,7 +996,7 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
                         i++;
                     }
                     //TODO Should I remove the offset match after checking if the hamming was two high?
-                }
+                //}
             }
         }
 
@@ -1511,6 +1511,20 @@ bool Classifier::sortByGenusAndSpecies(const Match & a, const Match & b) {
                 else if (a.frame == b.frame) {
                     if (a.position < b.position) return true;
                 }
+            }
+        }
+    }
+    return false;
+}
+
+bool Classifier::sortByGenusAndSpecies2(const Match & a, const Match & b) {
+    if (a.queryId < b.queryId) return true;
+    else if (a.queryId == b.queryId) {
+        if(a.genusTaxID < b.genusTaxID) return true;
+        else if(a.genusTaxID == b.genusTaxID) {
+            if(a.speciesTaxID < b.speciesTaxID) return true;
+            else if (a.speciesTaxID == b.speciesTaxID) {
+                if (a.position < b.position) return true;
             }
         }
     }

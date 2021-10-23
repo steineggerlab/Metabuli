@@ -230,6 +230,8 @@ private:
     // Analyzing k-mer matches
     void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum, Query * queryList);
 
+    static bool sortByGenusAndSpecies2(const Match & a, const Match & b);
+
     static bool sortByGenusAndSpecies(const Match & a, const Match & b);
 
     static bool compareConsecutiveMatches(const ConsecutiveMatches & a, const ConsecutiveMatches & b);
