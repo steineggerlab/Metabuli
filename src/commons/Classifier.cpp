@@ -1132,6 +1132,9 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
             posCheckList[filteredMatches[l-1].position/3] = true;
             coveredPosCnt ++;
         }
+        if(filteredMatches[l-1].hamming < hammings[filteredMatches[l-1].position/3]){
+            hammings[filteredMatches[l-1].position/3] = filteredMatches[l-1].hamming;
+        }
         matches.push_back(filteredMatches[l-1]);
     }
 
