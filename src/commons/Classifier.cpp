@@ -951,7 +951,7 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
     TaxID currentGenus;
     TaxID currentSpecies;
 
-    int maxNum = queryLength / 3 - kmerLength + 1;
+    int maxNum = (int)queryLength / 3 - kmerLength + 1;
 
     vector<Match> filteredMatches;
     vector<vector<Match>> matchesForEachGenus;
