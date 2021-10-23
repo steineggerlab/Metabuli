@@ -1088,7 +1088,7 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     vector<Match> overlaps;
 
     // Sort
-    sort(filteredMatches.begin(), filteredMatches.end(), sortMatchesByPos);
+    sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
 
     asd = 0;
     for(Match match : filteredMatches){
@@ -1537,7 +1537,7 @@ bool Classifier::sortByGenusAndSpecies(const Match & a, const Match & b) {
     return false;
 }
 
-bool Classifier::sortMatchesByPos(const Match &a, const Match &b) {
+bool Classifier::sortMatchesByPos(const Match & a, const Match & b) {
     if (a.position/3 < b.position/3) return true;
     else if (a.queryId/3 == b.queryId/3) {
         if(a.speciesTaxID < b.speciesTaxID) return true;
