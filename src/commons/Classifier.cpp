@@ -1002,7 +1002,7 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
                         if(newOffset){
                             newOffset=false;
                             hammingSum = matchList[i-1].hamming;
-                            cout<<i<<" "<<matchList[i-1].position<<endl;
+                            cout<<i-1<<" "<<matchList[i-1].position<<" newoffset"<<endl;
                             filteredMatches.push_back(matchList[i-1]);
                             conCnt++;
                         }
