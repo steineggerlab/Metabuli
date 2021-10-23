@@ -1120,8 +1120,8 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
             isTheLastOverlapped = (i == l-1 );
         } else{
             matches.push_back(filteredMatches[i]);
-            if(overlaps[0].hamming < hammings[overlaps[0].position/3]){
-                hammings[overlaps[0].position/3] = overlaps[0].hamming;
+            if(filteredMatches[i].hamming < hammings[overlaps[0].position/3]){
+                hammings[overlaps[0].position/3] = filteredMatches[i].hamming;
             }
             //hammingSum += filteredMatches[i].hamming;
         }
