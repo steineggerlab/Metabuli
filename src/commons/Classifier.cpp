@@ -1002,12 +1002,12 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
                         if(newOffset){
                             newOffset=false;
                             hammingSum = matchList[i-1].hamming;
-                            cout<<i-1<<" "<<matchList[i-1].position<<" newoffset"<<endl;
+                            //cout<<i-1<<" "<<matchList[i-1].position<<" newoffset"<<endl;
                             filteredMatches.push_back(matchList[i-1]);
                             conCnt++;
                         }
                         filteredMatches.push_back(matchList[i]);
-                        cout<<i<<" "<<matchList[i].position<<endl;
+                        //cout<<i<<" "<<matchList[i].position<<endl;
                         conCnt++;
                         hammingSum += matchList[i].hamming;
                         hammingMean = float(hammingSum) / float(filteredMatches.size());
@@ -1020,10 +1020,10 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
 
         // Construct a list of matches to score current genus
         if(!filteredMatches.empty()) {
-            cout<<"length "<<queryLength<<endl;
+           // cout<<"length "<<queryLength<<endl;
             constructMatchCombination2(filteredMatches, maxNum, matchesForEachGenus, scoreOfEachGenus,
                                        queryLength);
-            cout<<"length2 "<<queryLength<<endl;
+            //cout<<"length2 "<<queryLength<<endl;
         }
         filteredMatches.clear();
     }
@@ -1067,16 +1067,16 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
 void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int maxNum,
                                             vector<vector<Match>> & matchesForEachGenus,
                                             vector<float> & scoreOfEachGenus, size_t queryLength){
-    cout<<endl;
-    cout<<"Query Len "<<queryLength<<endl;
+//    cout<<endl;
+//    cout<<"Query Len "<<queryLength<<endl;
     float score;
     int coveredPosCnt = 0;
     int hammingSum = 0;
 
-    int asd = 0;
-    for(Match match : filteredMatches){
-        cout<<asd++<<" "<<match.position<<endl;
-    }
+//    int asd = 0;
+//    for(Match match : filteredMatches){
+//        cout<<asd++<<" "<<match.position<<endl;
+//    }
 
     bool * posCheckList = new bool[queryLength/3+1];
     memset(posCheckList, false, queryLength/3 + 1);
@@ -1090,10 +1090,10 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     // Sort
     sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
 
-    asd = 0;
-    for(Match match : filteredMatches){
-        cout<<asd++<<" "<<match.position<<endl;
-    }
+//    asd = 0;
+//    for(Match match : filteredMatches){
+//        cout<<asd++<<" "<<match.position<<endl;
+//    }
     // Do not allow overlaps between the same species
     // TODO Fix error: More sequence -> more random match -> hamming increasing
     size_t i = 0;
@@ -1125,7 +1125,7 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
 
 
         while(i + 1 < l){
-            cout<<filteredMatches[i].position<<" "<<filteredMatches[i].position/3<<endl;
+       //     cout<<filteredMatches[i].position<<" "<<filteredMatches[i].position/3<<endl;
         if(!posCheckList[filteredMatches[i].position/3]){
             posCheckList[filteredMatches[i].position/3] = true;
             coveredPosCnt ++;
