@@ -1002,10 +1002,12 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
                         if(newOffset){
                             newOffset=false;
                             hammingSum = matchList[i-1].hamming;
+                            cout<<i<<" "<<matchList[i-1].position<<endl;
                             filteredMatches.push_back(matchList[i-1]);
                             conCnt++;
                         }
                         filteredMatches.push_back(matchList[i]);
+                        cout<<i<<" "<<matchList[i].position<<endl;
                         conCnt++;
                         hammingSum += matchList[i].hamming;
                         hammingMean = float(hammingSum) / float(diffPosCnt);
