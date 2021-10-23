@@ -714,7 +714,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
 
 TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &queryLength, const int &currentQuery,
                                   const size_t &offset, const size_t &end, Match *matchList, Query *queryList) {
-    bool print = true;
+    bool print = false;
     TaxID selectedTaxon;
 
     if(print) {
