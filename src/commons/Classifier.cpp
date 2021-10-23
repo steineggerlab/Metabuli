@@ -1086,7 +1086,11 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     bool isTheLastOverlapped = false;
 
     while(i + 1 < l){
-        coveredPosCnt += (posCheckList[filteredMatches[i].position/3] = (posCheckList[filteredMatches[i].position/3] == false));
+        if(!posCheckList[filteredMatches[i].position/3]){
+            posCheckList[filteredMatches[i].position/3] = true;
+            coveredPosCnt ++;
+        }
+        //coveredPosCnt += (posCheckList[filteredMatches[i].position/3] = (posCheckList[filteredMatches[i].position/3] == false));
         //check overlap
         overlapped = false;
         while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
