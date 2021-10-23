@@ -1107,6 +1107,7 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
 //            totalHamming += genus[i][j].hamming;
 //        }
 
+        cout<<endl;
         while(i + 1 < l){
             cout<<filteredMatches[i].position/3<<endl;
         if(!posCheckList[filteredMatches[i].position/3]){
