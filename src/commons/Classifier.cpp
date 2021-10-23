@@ -717,7 +717,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &que
     bool print = true;
     TaxID selectedTaxon;
 
-    if(print) {
+    if(PRINT) {
         cout<<"# "<<currentQuery<<endl;
         for (int i = offset; i < end + 1; i++) {
             cout << matchList[i].genusTaxID<<" "<<matchList[i].speciesTaxID << " " << int(matchList[i].frame) << " " <<
@@ -731,7 +731,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &que
     float maxScore;
     int res = getMatchesOfTheBestGenus2(matchesForLCA, matchList, end, offset, queryLength, maxScore);
 
-    if(print){
+    if(PRINT){
         sort(matchesForLCA.begin(), matchesForLCA.end(), Classifier::sortByGenusAndSpecies);
     }
     float maxNum = queryLength / 3 - kmerLength + 1;
@@ -762,7 +762,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &que
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
         queryList[currentQuery].score = normalizedScore;
-        if(print) {
+        if(PRINT) {
             cout << "# " << currentQuery << " " << res << endl;
             for (size_t i = 0; i < taxIdList.size(); i++) {
                 cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
@@ -822,7 +822,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &que
         }
     }
 
-    if(print) {
+    if(PRINT) {
         cout << "# " << currentQuery << endl;
         for (size_t i = 0; i < taxIdList.size(); i++) {
             cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
@@ -1152,8 +1152,10 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
         return;
     scoreOfEachGenus.push_back((float)coveredPosCnt - (float)hammingSum / (float)matches.size());
     matchesForEachGenus.push_back(matches);
-    cout<<filteredMatches[0].genusTaxID<<" "<<coveredPosCnt<<" "<<hammingSum<<" "<<matches.size()<<endl;
-
+    if(PRINT) {
+        cout << filteredMatches[0].genusTaxID << " " << coveredPosCnt << " " << hammingSum << " " << matches.size()
+             << endl;
+    }
 
 
 //    cout<<"aligned"<<endl;
