@@ -979,10 +979,10 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
                     hammingSum = 0;
                     conCnt = 0;
                     hammingMean = matchList[i-1].hamming;
-                    while((i < end + 1) && currentFrame == matchList[i].frame &&
+                    while((i < end + 1)  &&
                             currentSpecies == matchList[i].speciesTaxID &&
                             matchList[i].position <= matchList[i-1].position + 3 &&
-                            ((float)matchList[i].hamming) <= hammingMean + 3){
+                            ((float)matchList[i].hamming) <= hammingMean + 3){ //&& currentFrame == matchList[i].frame
                         if(newOffset){
                             newOffset=false;
                             hammingSum = matchList[i-1].hamming;
