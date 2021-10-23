@@ -955,6 +955,7 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
     TaxID currentGenus;
     TaxID currentSpecies;
 
+
     int maxNum = (int)queryLength / 3 - kmerLength + 1;
 
     vector<Match> filteredMatches;
@@ -962,6 +963,7 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
     vector<bool> conservedWithinGenus;
     vector<float> scoreOfEachGenus;
     size_t i = offset;
+    size_t offsetIdx = 0;
     bool newOffset = true;
     while(i < end + 1) {
         currentGenus = matchList[i].genusTaxID;
@@ -974,27 +976,47 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
                 //For current frame
                 //while (currentFrame == matchList[i].frame && currentSpecies == matchList[i].speciesTaxID && (i < end + 1)){
                     //Find consecutive matches
+                    offsetIdx = i;
                     i++;
                     newOffset = true;
                     hammingSum = 0;
                     conCnt = 0;
                     hammingMean = matchList[i-1].hamming;
-                    while((i < end + 1)  &&
-                            currentSpecies == matchList[i].speciesTaxID &&
-                            matchList[i].position <= matchList[i-1].position + 3 &&
-                            ((float)matchList[i].hamming) <= hammingMean + 3){ //&& currentFrame == matchList[i].frame
-                        if(newOffset){
-                            newOffset=false;
-                            hammingSum = matchList[i-1].hamming;
-                            filteredMatches.push_back(matchList[i-1]);
-                            conCnt++;
-                        }
+
+                    // TODO 여러개가 있을 수 있다 그런데 처음 온 애 hamming이 커서 지랄, 시작만 좀 시켜보자!
+                while((i < end + 1)  &&
+                      currentSpecies == matchList[i].speciesTaxID &&
+                      matchList[i].position <= matchList[i-1].position + 3){ //&& currentFrame == matchList[i].frame
+                    if(newOffset && ((float)matchList[i].hamming) <= hammingMean + 3){
+                        newOffset = false;
+                        hammingSum = matchList[offsetIdx].hamming;
+                        filteredMatches.push_back(matchList[offsetIdx]);
+                        conCnt++;
+                    }
+                    if(!newOffset) {
                         filteredMatches.push_back(matchList[i]);
                         conCnt++;
                         hammingSum += matchList[i].hamming;
                         hammingMean = float(hammingSum) / float(filteredMatches.size());
-                        i++;
                     }
+                    i++;
+                }
+//                    while((i < end + 1)  &&
+//                            currentSpecies == matchList[i].speciesTaxID &&
+//                            matchList[i].position <= matchList[i-1].position + 3 &&
+//                            ((float)matchList[i].hamming) <= hammingMean + 3){ //&& currentFrame == matchList[i].frame
+//                        if(newOffset){
+//                            newOffset=false;
+//                            hammingSum = matchList[i-1].hamming;
+//                            filteredMatches.push_back(matchList[i-1]);
+//                            conCnt++;
+//                        }
+//                        filteredMatches.push_back(matchList[i]);
+//                        conCnt++;
+//                        hammingSum += matchList[i].hamming;
+//                        hammingMean = float(hammingSum) / float(filteredMatches.size());
+//                        i++;
+//                    }
                     //TODO Should I remove the offset match after checking if the hamming was two high?
                 //}
             }
