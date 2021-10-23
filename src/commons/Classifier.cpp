@@ -1121,7 +1121,7 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
         } else{
             matches.push_back(filteredMatches[i]);
             if(filteredMatches[i].hamming < hammings[filteredMatches[i].position/3]){
-                hammings[overlaps[0].position/3] = filteredMatches[i].hamming;
+                hammings[filteredMatches[i].position/3] = filteredMatches[i].hamming;
             }
             //hammingSum += filteredMatches[i].hamming;
         }
