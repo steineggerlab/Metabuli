@@ -533,7 +533,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     {
 #pragma omp for schedule(dynamic, 1)
         for(size_t i = 0; i < blockIdx; ++ i ){
-            TaxID selectedLCA = chooseBestTaxon(ncbiTaxonomy, seqSegments[matchBlocks[i].id].length, matchBlocks[i].id,
+            TaxID selectedLCA = chooseBestTaxon2(ncbiTaxonomy, seqSegments[matchBlocks[i].id].length, matchBlocks[i].id,
                                                 matchBlocks[i].start,
                                                 matchBlocks[i].end, matchList.data, queryList);
         }
@@ -712,6 +712,152 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
     return selectedLCA;
 }
 
+TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &queryLength, const int &currentQuery,
+                                  const size_t &offset, const size_t &end, Match *matchList, Query *queryList) {
+    bool print = true;
+    TaxID selectedTaxon;
+
+    if(print) {
+        cout<<"# "<<currentQuery<<endl;
+        for (int i = offset; i < end + 1; i++) {
+            cout << matchList[i].speciesTaxID << " " << int(matchList[i].frame) << " " << matchList[i].position << " "
+                 << matchList[i].taxID << " " << int(matchList[i].hamming) << endl;
+        }
+    }
+
+    //get the best genus for current query
+    vector<Match> matchesForLCA;
+    float maxScore;
+    int res = getMatchesOfTheBestGenus2(matchesForLCA, matchList, end, offset, queryLength, maxScore);
+    float maxNum = queryLength / 3 - kmerLength + 1;
+    float normalizedScore = maxScore / maxNum;
+
+    //If there is no proper genus for current query, it is un-classified.
+    if(res == 3){
+        queryList[currentQuery].isClassified = false;
+        queryList[currentQuery].classification = 0;
+        queryList[currentQuery].score = 0;
+        queryList[currentQuery].newSpecies = false;
+        return 0;
+    }
+
+    vector<TaxID> taxIdList;
+    vector<uint32_t> pos;
+    vector<uint8_t> frame;
+    vector<uint8_t> ham;
+    vector<int> redun;
+    float hammingSum = 0.0f;
+    for(size_t i = 0; i < matchesForLCA.size(); i++ ){
+        taxIdList.push_back(matchesForLCA[i].taxID);
+        pos.push_back(matchesForLCA[i].position);
+        frame.push_back(matchesForLCA[i].frame);
+        ham.push_back(matchesForLCA[i].hamming);
+        redun.push_back(matchesForLCA[i].red);
+        queryList[currentQuery].taxCnt[matchesForLCA[i].taxID] ++;
+        hammingSum += matchesForLCA[i].hamming;
+    }
+    float hammingAverage = hammingSum / matchesForLCA.size();
+
+    //There is no case where totalNumberOfMatches is equal to 0
+
+
+    //If there are two or more good genus level candidates, find the LCA.
+    if(res == 2 ){ // 2; more than one genus.
+        selectedTaxon = ncbiTaxonomy.LCA(taxIdList)->taxId;
+        queryList[currentQuery].isClassified = true;
+        queryList[currentQuery].classification = selectedTaxon;
+        queryList[currentQuery].score = normalizedScore;
+        if(print) {
+            cout << "# " << currentQuery << " " << res << endl;
+            for (size_t i = 0; i < taxIdList.size(); i++) {
+                cout << i << " " << int(frame[i]) << " " << pos[i] << " " << taxIdList[i] << " " << int(ham[i]) << " "
+                     << redun[i] << endl;
+            }
+            cout << "Score: " << normalizedScore << " " << selectedTaxon << " "
+                 << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
+        }
+        return selectedTaxon;
+    }
+
+    queryList[currentQuery].score = normalizedScore;
+
+    //Classify in genus level for highly diverged queries
+//    if(hammingAverage > 1.0f){
+//        selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchList[matchCombi[0].beginIdx].taxID,"genus");
+//        queryList[currentQuery].isClassified = true;
+//        queryList[currentQuery].classification = selectedTaxon;
+//        queryList[currentQuery].newSpecies = true;
+//        if(print) {
+//            cout << "# " << currentQuery << "HH" << endl;
+//            for (size_t i = 0; i < taxIdList.size(); i++) {
+//                cout << i << " " << int(frame[i]) << " " << pos[i] << " " << taxIdList[i] << " " << int(ham[i]) << " "
+//                     << redun[i] << endl;
+//            }
+//            cout << "Score: " << normalizedScore << "  " << selectedTaxon << " "
+//                 << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
+//        }
+//        return selectedTaxon;
+//    }
+
+    //Classify in species or lower level for queries that have close matches in reference DB.
+    double selectedPercent = 0;
+    TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.7, selectedPercent, queryLength, hammingAverage);
+
+    ///TODO optimize strain specific classification criteria
+    //Strain classification only for high coverage with LCA of species level
+    TaxID subSpeciesID;
+    uint32_t leftEndPos = 0;
+    size_t leftEndIdx = 0;
+    uint32_t rightEndPos = 0;
+    size_t rightEndIdx = 0;
+    int endCheck = 0;
+    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){ /// There are more strain level classifications with lower coverage threshold, but also with more false postives. 0.8~0.85 looks good.
+        int strainCnt = 0;
+        unordered_map<TaxID, int> strainMatchCnt;
+        TaxID strainTaxId;
+
+        for(size_t i = 0; i < matchesForLCA.size(); i++ ){
+            if(selectedLCA != matchesForLCA[i].taxID && ncbiTaxonomy.IsAncestor(selectedLCA, matchesForLCA[i].taxID)){
+                strainMatchCnt[matchesForLCA[i].taxID]++;
+            }
+        }
+
+        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 2) {
+            selectedLCA = strainMatchCnt.begin()->first;
+//            for(size_t cs = 0; cs < matchCombi.size(); cs++ ){ //matchCombi는 어느 단위?
+//                leftEndPos = matchCombi[cs].begin;
+//                leftEndIdx = matchCombi[cs].beginIdx;
+//                while(leftEndPos == matchList[leftEndIdx].position){
+//                    endCheck += matchList[leftEndIdx].taxID == subSpeciesID;
+//                    leftEndIdx ++;
+//                }
+//                rightEndPos = matchCombi[cs].end;
+//                rightEndIdx = matchCombi[cs].endIdx;
+//                while(rightEndPos == matchList[rightEndIdx].position){
+//                    endCheck += matchList[rightEndIdx].taxID == subSpeciesID;
+//                    rightEndIdx --;
+//                }
+//            }
+        }
+    }
+
+    if(print) {
+        cout << "# " << currentQuery << endl;
+        for (size_t i = 0; i < taxIdList.size(); i++) {
+            cout << i << " " << int(frame[i]) << " " << pos[i] << " " << taxIdList[i] << " " << int(ham[i]) << " "
+                 << redun[i] << endl;
+        }
+        cout << "Score: " << normalizedScore << "  " << selectedLCA << " " << ncbiTaxonomy.taxonNode(selectedLCA)->rank
+             << endl;
+    }
+
+    ///store classification results
+    queryList[currentQuery].isClassified = true;
+    queryList[currentQuery].classification = selectedLCA;
+    queryList[currentQuery].score = normalizedScore;
+    queryList[currentQuery].newSpecies = false;
+    return selectedLCA;
+}
 
 int Classifier::getMatchesOfTheBestGenus(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end,
                                          size_t offset, size_t queryLength, float & bestScore){
@@ -809,6 +955,200 @@ int Classifier::getMatchesOfTheBestGenus(vector<ConsecutiveMatches> & chosenMatc
     return 3;
 }
 
+int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
+                                         size_t offset, size_t queryLength, float & bestScore){
+    int conCnt = 0;
+    int diffPosCnt = 0;
+    uint32_t hammingSum = 0;
+    float hammingMean = 0.0;
+    size_t beginIdx = 0;
+    size_t endIdx = 0;
+    uint32_t conBegin = 0;
+    uint32_t conEnd = 0;
+    uint32_t currentPos;
+    uint8_t currentFrame;
+    TaxID currentGenus;
+    TaxID currentSpecies;
+
+    int maxNum = queryLength / 3 - kmerLength + 1;
+
+    vector<Match> filteredMatches;
+    vector<vector<Match>> matchesForEachGenus;
+    vector<bool> conservedWithinGenus;
+    vector<float> scoreOfEachGenus;
+    size_t i = offset;
+    bool newOffset = true;
+    while(i < end + 1) {
+        currentGenus = matchList[i].genusTaxID;
+        //For current genus
+        while (currentGenus == matchList[i].genusTaxID && (i < end + 1)) {
+            currentSpecies = matchList[i].speciesTaxID;
+            //For current species
+            while(currentSpecies == matchList[i].speciesTaxID && (i < end + 1)){
+                currentFrame = matchList[i].frame;
+                //For current frame
+                while (currentFrame == matchList[i].frame && currentSpecies == matchList[i].speciesTaxID && (i < end + 1)){
+                    //Find consecutive matches
+                    i++;
+                    newOffset = true;
+                    hammingSum = 0;
+                    conCnt = 0;
+                    hammingMean = matchList[i-1].hamming;
+                    while((i < end + 1) && currentFrame == matchList[i].frame &&
+                            currentSpecies == matchList[i].speciesTaxID &&
+                            matchList[i-1].position + 3 == matchList[i].position &&
+                            ((float)matchList[i].hamming) <= hammingMean + 3){
+                        if(newOffset){
+                            hammingSum = matchList[i-1].hamming;
+                            filteredMatches.push_back(matchList[i-1]);
+                            conCnt++;
+                        }
+                        filteredMatches.push_back(matchList[i]);
+                        conCnt++;
+                        hammingSum += matchList[i].hamming;
+                        hammingMean = float(hammingSum) / float(diffPosCnt);
+                        i++;
+                    }
+                    //TODO Should I remove the offset match after checking if the hamming was two high?
+                }
+            }
+        }
+
+        // Construct a list of matches to score current genus
+        if(!filteredMatches.empty()) {
+            constructMatchCombination2(filteredMatches, maxNum, matchesForEachGenus, scoreOfEachGenus,
+                                       queryLength);
+        }
+        filteredMatches.clear();
+    }
+
+    // If there are no meaningful genus
+    if(scoreOfEachGenus.empty()){
+        bestScore = 0;
+        return 3;
+    }
+
+    // Choose the best genus
+    float maxScore = -100;
+    vector<size_t> maxIdx;
+    for(size_t g = 0; g < scoreOfEachGenus.size(); g++){
+        if(scoreOfEachGenus[g] > maxScore){
+            maxScore = scoreOfEachGenus[g];
+            maxIdx.clear();
+            maxIdx.push_back(g);
+        } else if(scoreOfEachGenus[g] == maxScore){
+            maxIdx.push_back(g);
+        }
+    }
+    bestScore = maxScore;
+
+    for(size_t g = 0; g < maxIdx.size(); g++){
+        matchesForMajorityLCA.insert(matchesForMajorityLCA.end(), matchesForEachGenus[maxIdx[g]].begin(),
+                                     matchesForEachGenus[maxIdx[g]].end());
+    }
+
+    if(maxIdx.size() > 1){
+        return 2;
+    }
+    return 1;
+
+    //Three cases
+    //1. one genus
+    //2. more than one genus
+    //3. no genus
+}
+
+void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int maxNum,
+                                            vector<vector<Match>> & matchesForEachGenus,
+                                            vector<float> & scoreOfEachGenus, size_t queryLength){
+    float score;
+    int coveredPosCnt = 0;
+    int hammingSum = 0;
+
+    bool * posCheckList = new bool[queryLength/3+1];
+    memset(posCheckList, false, queryLength/3 + 1);
+  //  uint8_t * hammings = new uint8_t[queryLength/3+1];
+  //  memset(hammings, 10, queryLength/3 + 1);
+
+    int currPos;
+    vector<Match> matches;
+    vector<Match> overlaps;
+
+    // Sort
+    sort(filteredMatches.begin(), filteredMatches.end(), sortMatchesByPos);
+
+    // Do not allow overlaps between the same species
+    // TODO Fix error: More sequence -> more random match -> hamming increasing
+    size_t i = 0;
+    size_t l = filteredMatches.size();
+    bool overlapped = false;
+    uint8_t minHamming = 0;
+    bool isTheLastOverlapped = false;
+
+    while(i + 1 < l){
+        coveredPosCnt += (posCheckList[filteredMatches[i].position/3] = (posCheckList[filteredMatches[i].position/3] == false));
+        //check overlap
+        overlapped = false;
+        while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
+            filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < l)){
+            if(!overlapped) {
+                overlapped = true;
+                overlaps.push_back(filteredMatches[i]);
+                minHamming = filteredMatches[i].hamming;
+            } else if(filteredMatches[i].hamming == minHamming){
+                overlaps.push_back(filteredMatches[i]);
+            }
+            i++;
+        }
+        if(overlapped) {
+            if(filteredMatches[i].hamming == minHamming) overlaps.push_back(filteredMatches[i]);
+            if(overlaps.size() == 1){
+                matches.push_back(overlaps[0]);
+                hammingSum += overlaps[0].hamming;
+            } else {
+                overlaps[0].taxID = overlaps[0].speciesTaxID;
+                overlaps[0].red = 1;
+                matches.push_back(overlaps[0]);
+                hammingSum += overlaps[0].hamming;
+            }
+            overlaps.clear();
+            isTheLastOverlapped = (i == l-1 );
+        } else{
+            matches.push_back(filteredMatches[i]);
+            hammingSum += filteredMatches[i].hamming;
+        }
+        i++;
+    }
+    if(!isTheLastOverlapped) matches.push_back(filteredMatches[l-1]);
+
+
+    if(coveredPosCnt >= maxNum) coveredPosCnt = maxNum - 1;
+    if(coveredPosCnt < maxNum * 0.1)
+        return;
+    scoreOfEachGenus.push_back(coveredPosCnt - (float)hammingSum / (float)matches.size());
+    matchesForEachGenus.push_back(matches);
+
+//    cout<<endl;
+//    cout<<"All"<<endl;
+//    for(int i3 = 0; i3 < coMatches.size(); i3++){
+//        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt<< " "<<coMatches[i3].diffPosCnt;
+//        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
+//        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
+//        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
+//    }
+
+//    cout<<"aligned"<<endl;
+//    for(int i3 = 0; i3 < alignedCoMatches.size(); i3++){
+//        cout<< alignedCoMatches[i3].begin << " " << alignedCoMatches[i3].end << " "<< alignedCoMatches[i3].matchCnt<< " "<<alignedCoMatches[i3].diffPosCnt;
+//        cout<<" "<<alignedCoMatches[i3].hamming << " "<<int(alignedCoMatches[i3].frame)<<endl;
+//        cout<<matchList[alignedCoMatches[i3].beginIdx].taxID<<endl;
+//        cout<<matchList[alignedCoMatches[i3].endIdx].taxID<<endl;
+//    }
+//    cout<<endl;
+
+  //  delete[] hammings;
+    delete[] posCheckList;
+}
 
 bool Classifier::constructMatchCombination(vector<ConsecutiveMatches> & coMatches,
                                            vector<vector<ConsecutiveMatches>> & genus, Match * matchList,
@@ -1147,6 +1487,17 @@ bool Classifier::sortByGenusAndSpecies(const Match & a, const Match & b) {
                     if (a.position < b.position) return true;
                 }
             }
+        }
+    }
+    return false;
+}
+
+bool Classifier::sortMatchesByPos(const Match &a, const Match &b) {
+    if (a.position/3 < b.position/3) return true;
+    else if (a.queryId/3 == b.queryId/3) {
+        if(a.speciesTaxID < b.speciesTaxID) return true;
+        else if(a.speciesTaxID == b.speciesTaxID){
+            return a.hamming < b.hamming;
         }
     }
     return false;
