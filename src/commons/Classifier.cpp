@@ -999,6 +999,7 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
                             matchList[i-1].position + 3 == matchList[i].position &&
                             ((float)matchList[i].hamming) <= hammingMean + 3){
                         if(newOffset){
+                            newOffset=false;
                             hammingSum = matchList[i-1].hamming;
                             filteredMatches.push_back(matchList[i-1]);
                             conCnt++;
@@ -1085,7 +1086,28 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     uint8_t minHamming = 0;
     bool isTheLastOverlapped = false;
 
-    while(i + 1 < l){
+//    bool * posCheckList = new bool[queryLength/3+1];
+//
+//    for(size_t i = 0; i < genus.size(); i++){
+//        totalDiffPosCnt = 0;
+//        totalMatchCnt = 0;
+//        totalHamming = 0;
+//        averageHamming = 0;
+//        memset(posCheckList, false, queryLength/3 + 1);
+//        for (size_t j = 0; j < genus[i].size(); j++) {
+//            startPos = genus[i][j].begin;
+//            endPos = genus[i][j].end;
+//            for(uint32_t k = startPos; k <= endPos; k += 3){
+//                if(!posCheckList[k/3]){
+//                    totalDiffPosCnt ++;
+//                    posCheckList[k/3] = true;
+//                }
+//            }
+//            totalMatchCnt += genus[i][j].matchCnt;
+//            totalHamming += genus[i][j].hamming;
+//        }
+
+        while(i + 1 < l){
         if(!posCheckList[filteredMatches[i].position/3]){
             posCheckList[filteredMatches[i].position/3] = true;
             coveredPosCnt ++;
