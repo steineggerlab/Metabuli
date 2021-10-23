@@ -1066,7 +1066,7 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
                                             vector<vector<Match>> & matchesForEachGenus,
                                             vector<float> & scoreOfEachGenus, size_t queryLength){
     cout<<endl;
-    cout<<"Query Len "<<queryLength;
+    cout<<"Query Len "<<queryLength<<endl;
     float score;
     int coveredPosCnt = 0;
     int hammingSum = 0;
