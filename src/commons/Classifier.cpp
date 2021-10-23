@@ -528,7 +528,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
 
     //Process each blocks
-    omp_set_num_threads(1);
+    omp_set_num_threads(ThreadNum);
 #pragma omp parallel default(none), shared(cout,matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList, blockIdx)
     {
 #pragma omp for schedule(dynamic, 1)
@@ -1125,7 +1125,6 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
 
 
         while(i + 1 < l){
-       //     cout<<filteredMatches[i].position<<" "<<filteredMatches[i].position/3<<endl;
         if(!posCheckList[filteredMatches[i].position/3]){
             posCheckList[filteredMatches[i].position/3] = true;
             coveredPosCnt ++;
