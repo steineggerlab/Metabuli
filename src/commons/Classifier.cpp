@@ -1051,12 +1051,12 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     int coveredPosCnt = 0;
     int hammingSum = 0;
 
-    int size = queryLength/3 - kmerLength;
+    int size = queryLength/3 - 7;
 
-    bool * posCheckList = new bool[size];
-    memset(posCheckList, false, size);
-    uint8_t * hammings = new uint8_t[size];
-    memset(hammings, 10, size);
+    bool * posCheckList = new bool[size+1];
+    memset(posCheckList, false, size+1);
+    uint8_t * hammings = new uint8_t[size+1];
+    memset(hammings, 10, size+1);
 
     int currPos;
 
