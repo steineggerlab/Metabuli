@@ -822,7 +822,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &que
             }
         }
 
-        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 1) {
+        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 0) {
             selectedLCA = strainMatchCnt.begin()->first;
 //            for(size_t cs = 0; cs < matchCombi.size(); cs++ ){ //matchCombi는 어느 단위?
 //                leftEndPos = matchCombi[cs].begin;
