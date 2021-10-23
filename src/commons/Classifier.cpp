@@ -1539,7 +1539,7 @@ bool Classifier::sortByGenusAndSpecies(const Match & a, const Match & b) {
 
 bool Classifier::sortMatchesByPos(const Match & a, const Match & b) {
     if (a.position/3 < b.position/3) return true;
-    else if (a.queryId/3 == b.queryId/3) {
+    else if (a.position/3 == b.position/3) {
         if(a.speciesTaxID < b.speciesTaxID) return true;
         else if(a.speciesTaxID == b.speciesTaxID){
             return a.hamming < b.hamming;
