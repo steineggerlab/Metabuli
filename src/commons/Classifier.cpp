@@ -533,7 +533,6 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     {
 #pragma omp for schedule(dynamic, 1)
         for(size_t i = 0; i < blockIdx; ++ i ){
-            cout<<"query length "<<seqSegments[matchBlocks[i].id].length<<endl;
             TaxID selectedLCA = chooseBestTaxon2(ncbiTaxonomy, seqSegments[matchBlocks[i].id].length, matchBlocks[i].id,
                                                 matchBlocks[i].start,
                                                 matchBlocks[i].end, matchList.data, queryList);
@@ -823,7 +822,7 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &que
             }
         }
 
-        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 2) {
+        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 1) {
             selectedLCA = strainMatchCnt.begin()->first;
 //            for(size_t cs = 0; cs < matchCombi.size(); cs++ ){ //matchCombi는 어느 단위?
 //                leftEndPos = matchCombi[cs].begin;
