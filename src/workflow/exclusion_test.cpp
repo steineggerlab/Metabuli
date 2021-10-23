@@ -120,11 +120,11 @@ int exclusiontest(int argc, const char **argv, const Command &command){
         while(getline(lineStream, field, '\t')){
             fields.push_back(field);
         }
-        classInt = stoi(fields[3]);
+        classInt = stoi(fields[2]);
         classList.push_back(classInt);
 
         //2nd field -> assacc
-        regex_search(fields[2], assacc, regex1);
+        regex_search(fields[1], assacc, regex1);
         //assacc to right answer
         rightAnswer = assacc2taxid[assacc[0]];
         rightAnswer_sp = ncbiTaxonomy.getTaxIdAtRank(rightAnswer, "species");

@@ -822,22 +822,8 @@ TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &que
             }
         }
 
-        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 0) {
+        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 1) {
             selectedLCA = strainMatchCnt.begin()->first;
-//            for(size_t cs = 0; cs < matchCombi.size(); cs++ ){ //matchCombi는 어느 단위?
-//                leftEndPos = matchCombi[cs].begin;
-//                leftEndIdx = matchCombi[cs].beginIdx;
-//                while(leftEndPos == matchList[leftEndIdx].position){
-//                    endCheck += matchList[leftEndIdx].taxID == subSpeciesID;
-//                    leftEndIdx ++;
-//                }
-//                rightEndPos = matchCombi[cs].end;
-//                rightEndIdx = matchCombi[cs].endIdx;
-//                while(rightEndPos == matchList[rightEndIdx].position){
-//                    endCheck += matchList[rightEndIdx].taxID == subSpeciesID;
-//                    rightEndIdx --;
-//                }
-//            }
         }
     }
 
@@ -1001,12 +987,10 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
                         if(newOffset){
                             newOffset=false;
                             hammingSum = matchList[i-1].hamming;
-                            //cout<<i-1<<" "<<matchList[i-1].position<<" newoffset"<<endl;
                             filteredMatches.push_back(matchList[i-1]);
                             conCnt++;
                         }
                         filteredMatches.push_back(matchList[i]);
-                        //cout<<i<<" "<<matchList[i].position<<endl;
                         conCnt++;
                         hammingSum += matchList[i].hamming;
                         hammingMean = float(hammingSum) / float(filteredMatches.size());
@@ -1019,10 +1003,8 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
 
         // Construct a list of matches to score current genus
         if(!filteredMatches.empty()) {
-           // cout<<"length "<<queryLength<<endl;
-            constructMatchCombination2(filteredMatches, maxNum, matchesForEachGenus, scoreOfEachGenus,
+           constructMatchCombination2(filteredMatches, maxNum, matchesForEachGenus, scoreOfEachGenus,
                                        queryLength);
-            //cout<<"length2 "<<queryLength<<endl;
         }
         filteredMatches.clear();
     }
