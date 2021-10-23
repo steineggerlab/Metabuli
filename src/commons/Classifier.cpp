@@ -1018,6 +1018,7 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
 
         // Construct a list of matches to score current genus
         if(!filteredMatches.empty()) {
+            cout<<"length "<<queryLength<<endl;
             constructMatchCombination2(filteredMatches, maxNum, matchesForEachGenus, scoreOfEachGenus,
                                        queryLength);
         }
