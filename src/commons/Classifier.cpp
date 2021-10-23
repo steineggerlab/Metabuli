@@ -1077,6 +1077,7 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     for(Match match : filteredMatches){
         cout<<asd++<<" "<<match.position<<endl;
     }
+
     bool * posCheckList = new bool[queryLength/3+1];
     memset(posCheckList, false, queryLength/3 + 1);
   //  uint8_t * hammings = new uint8_t[queryLength/3+1];
@@ -1165,6 +1166,7 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     if(!isTheLastOverlapped) matches.push_back(filteredMatches[l-1]);
 
 
+    delete[] posCheckList;
     if(coveredPosCnt >= maxNum) coveredPosCnt = maxNum - 1;
     if(coveredPosCnt < maxNum * 0.1)
         return;
@@ -1190,7 +1192,7 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
 //    cout<<endl;
 
   //  delete[] hammings;
-    delete[] posCheckList;
+
 }
 
 bool Classifier::constructMatchCombination(vector<ConsecutiveMatches> & coMatches,
