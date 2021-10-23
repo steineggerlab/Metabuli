@@ -1143,6 +1143,7 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
         return;
     scoreOfEachGenus.push_back((float)coveredPosCnt - (float)hammingSum / (float)matches.size());
     matchesForEachGenus.push_back(matches);
+    cout<<filteredMatches[0].genusTaxID<<" "<<coveredPosCnt<<" "<<hammingSum<<" "<<matches.size()<<endl;
 
 
 
