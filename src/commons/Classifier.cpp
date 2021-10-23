@@ -1051,7 +1051,7 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     int coveredPosCnt = 0;
     int hammingSum = 0;
 
-    int size = queryLength/3+1;
+    int size = queryLength/3 - kmerLength;
 
     bool * posCheckList = new bool[size];
     memset(posCheckList, false, size);
@@ -1142,7 +1142,7 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
         matches.push_back(filteredMatches[l-1]);
     }
 
-    for(int h = 0; h < size; h++){
+    for(int h = 0; h < size - 1; h++){
         if(hammings[h] != 10){
             hammingSum += hammings[h];
         }
