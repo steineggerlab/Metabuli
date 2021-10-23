@@ -714,7 +714,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
 
 TaxID Classifier::chooseBestTaxon2(NcbiTaxonomy &ncbiTaxonomy, const size_t &queryLength, const int &currentQuery,
                                   const size_t &offset, const size_t &end, Match *matchList, Query *queryList) {
-    bool print = false;
+    bool print = true;
     TaxID selectedTaxon;
 
     if(print) {
@@ -1048,16 +1048,9 @@ int Classifier::getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA,
 void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int maxNum,
                                             vector<vector<Match>> & matchesForEachGenus,
                                             vector<float> & scoreOfEachGenus, size_t queryLength){
-//    cout<<endl;
-//    cout<<"Query Len "<<queryLength<<endl;
     float score;
     int coveredPosCnt = 0;
     int hammingSum = 0;
-
-//    int asd = 0;
-//    for(Match match : filteredMatches){
-//        cout<<asd++<<" "<<match.position<<endl;
-//    }
 
     bool * posCheckList = new bool[queryLength/3+1];
     memset(posCheckList, false, queryLength/3 + 1);
@@ -1065,47 +1058,32 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
   //  memset(hammings, 10, queryLength/3 + 1);
 
     int currPos;
-    vector<Match> matches;
+
     vector<Match> overlaps;
 
     // Sort
     sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
 
-//    asd = 0;
-//    for(Match match : filteredMatches){
-//        cout<<asd++<<" "<<match.position<<endl;
+//        cout<<endl;
+//    cout<<"All"<<endl;
+//    for(int i3 = 0; i3 < coMatches.size(); i3++){
+//        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt<< " "<<coMatches[i3].diffPosCnt;
+//        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
+//        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
+//        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
 //    }
+
     // Do not allow overlaps between the same species
     // TODO Fix error: More sequence -> more random match -> hamming increasing
     size_t i = 0;
     size_t l = filteredMatches.size();
+    vector<Match> matches;
+    matches.reserve(l);
     bool overlapped = false;
     uint8_t minHamming = 0;
     bool isTheLastOverlapped = false;
 
-//    bool * posCheckList = new bool[queryLength/3+1];
-//
-//    for(size_t i = 0; i < genus.size(); i++){
-//        totalDiffPosCnt = 0;
-//        totalMatchCnt = 0;
-//        totalHamming = 0;
-//        averageHamming = 0;
-//        memset(posCheckList, false, queryLength/3 + 1);
-//        for (size_t j = 0; j < genus[i].size(); j++) {
-//            startPos = genus[i][j].begin;
-//            endPos = genus[i][j].end;
-//            for(uint32_t k = startPos; k <= endPos; k += 3){
-//                if(!posCheckList[k/3]){
-//                    totalDiffPosCnt ++;
-//                    posCheckList[k/3] = true;
-//                }
-//            }
-//            totalMatchCnt += genus[i][j].matchCnt;
-//            totalHamming += genus[i][j].hamming;
-//        }
-
-
-        while(i + 1 < l){
+    while(i + 1 < l){
         if(!posCheckList[filteredMatches[i].position/3]){
             posCheckList[filteredMatches[i].position/3] = true;
             coveredPosCnt ++;
@@ -1153,14 +1131,7 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     scoreOfEachGenus.push_back(coveredPosCnt - (float)hammingSum / (float)matches.size());
     matchesForEachGenus.push_back(matches);
 
-//    cout<<endl;
-//    cout<<"All"<<endl;
-//    for(int i3 = 0; i3 < coMatches.size(); i3++){
-//        cout<< coMatches[i3].begin << " " << coMatches[i3].end << " "<< coMatches[i3].matchCnt<< " "<<coMatches[i3].diffPosCnt;
-//        cout<<" "<<coMatches[i3].hamming << " "<<int(coMatches[i3].frame)<<endl;
-//        cout<<matchList[coMatches[i3].beginIdx].taxID<<endl;
-//        cout<<matchList[coMatches[i3].endIdx].taxID<<endl;
-//    }
+
 
 //    cout<<"aligned"<<endl;
 //    for(int i3 = 0; i3 < alignedCoMatches.size(); i3++){
