@@ -1116,7 +1116,7 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
 
 
         while(i + 1 < l){
-            cout<<filteredMatches[i].position/3<<endl;
+            cout<<filteredMatches[i].position<<" "<<filteredMatches[i].position/3<<endl;
         if(!posCheckList[filteredMatches[i].position/3]){
             posCheckList[filteredMatches[i].position/3] = true;
             coveredPosCnt ++;
