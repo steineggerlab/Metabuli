@@ -1047,10 +1047,12 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     int coveredPosCnt = 0;
     int hammingSum = 0;
 
-    bool * posCheckList = new bool[queryLength/3+1];
-    memset(posCheckList, false, queryLength/3 + 1);
-  //  uint8_t * hammings = new uint8_t[queryLength/3+1];
-  //  memset(hammings, 10, queryLength/3 + 1);
+    int size = queryLength/3+1;
+
+    bool * posCheckList = new bool[size];
+    memset(posCheckList, false, size);
+    uint8_t * hammings = new uint8_t[size];
+    memset(hammings, 10, size);
 
     int currPos;
 
@@ -1101,29 +1103,45 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
             if(filteredMatches[i].hamming == minHamming) overlaps.push_back(filteredMatches[i]);
             if(overlaps.size() == 1){
                 matches.push_back(overlaps[0]);
-                hammingSum += overlaps[0].hamming;
+                if(overlaps[0].hamming < hammings[overlaps[0].position/3]){
+                    hammings[overlaps[0].position/3] = overlaps[0].hamming;
+                }
+                //hammingSum += overlaps[0].hamming;
             } else {
                 overlaps[0].taxID = overlaps[0].speciesTaxID;
                 overlaps[0].red = 1;
                 matches.push_back(overlaps[0]);
-                hammingSum += overlaps[0].hamming;
+                if(overlaps[0].hamming < hammings[overlaps[0].position/3]){
+                    hammings[overlaps[0].position/3] = overlaps[0].hamming;
+                }
+                //hammingSum += overlaps[0].hamming;
             }
             overlaps.clear();
             isTheLastOverlapped = (i == l-1 );
         } else{
             matches.push_back(filteredMatches[i]);
-            hammingSum += filteredMatches[i].hamming;
+            if(overlaps[0].hamming < hammings[overlaps[0].position/3]){
+                hammings[overlaps[0].position/3] = overlaps[0].hamming;
+            }
+            //hammingSum += filteredMatches[i].hamming;
         }
         i++;
     }
     if(!isTheLastOverlapped) matches.push_back(filteredMatches[l-1]);
 
+    for(int h = 0; h < size; h++){
+        if(hammings[h] != 10){
+            hammingSum += hammings[h];
+        }
+    }
+
 
     delete[] posCheckList;
+    delete[] hammings;
     if(coveredPosCnt >= maxNum) coveredPosCnt = maxNum - 1;
     if(coveredPosCnt < maxNum * 0.1)
         return;
-    scoreOfEachGenus.push_back(coveredPosCnt - (float)hammingSum / (float)matches.size());
+    scoreOfEachGenus.push_back((float)coveredPosCnt - (float)hammingSum / (float)matches.size());
     matchesForEachGenus.push_back(matches);
 
 
