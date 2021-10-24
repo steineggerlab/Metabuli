@@ -572,7 +572,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
         sort(matchesForLCA.begin(), matchesForLCA.end(), Classifier::sortByGenusAndSpecies);
     }
     float maxNum = queryLength / 3 - kmerLength + 1;
-    float normalizedScore = maxScore / maxNum;
+    //float normalizedScore = maxScore / maxNum;
 
     //If there is no proper genus for current query, it is un-classified.
     if(res == 3){
@@ -598,20 +598,20 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
         selectedTaxon = ncbiTaxonomy.LCA(taxIdList)->taxId;
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
-        queryList[currentQuery].score = normalizedScore;
+        queryList[currentQuery].score = maxScore;
         if(PRINT) {
             cout << "# " << currentQuery << " " << res << endl;
             for (size_t i = 0; i < taxIdList.size(); i++) {
                 cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
                 matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) <<" "<< matchesForLCA[i].red << endl;
             }
-            cout << "Score: " << normalizedScore << " " << selectedTaxon << " "
+            cout << "Score: " << maxScore << " " << selectedTaxon << " "
                  << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
         }
         return selectedTaxon;
     }
 
-    queryList[currentQuery].score = normalizedScore;
+    queryList[currentQuery].score = maxScore;
 
 //    //Classify in genus level for highly diverged queries
 //    if(normalizedScore < 0.4){
@@ -656,21 +656,21 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
             cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
                  matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) <<" "<< matchesForLCA[i].red << endl;
         }
-        cout << "Score: " << normalizedScore << "  " << selectedLCA << " " << ncbiTaxonomy.taxonNode(selectedLCA)->rank
+        cout << "Score: " << maxScore << "  " << selectedLCA << " " << ncbiTaxonomy.taxonNode(selectedLCA)->rank
              << endl;
     }
 
     if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){
-        cout<<"sp\t"<<normalizedScore<<"\n";
+        cout<<"sp\t"<<maxScore<<"\n";
     } else if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
-        cout<<"sub\t"<<normalizedScore<<"\n";
+        cout<<"sub\t"<<maxScore<<"\n";
     } else if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 8){
-        cout<<"genus\t"<<normalizedScore<<"\n";
+        cout<<"genus\t"<<maxScore<<"\n";
     }
     ///store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedLCA;
-    queryList[currentQuery].score = normalizedScore;
+    queryList[currentQuery].score = maxScore;
     queryList[currentQuery].newSpecies = false;
     return selectedLCA;
 }
@@ -880,7 +880,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     if(coveredPosCnt >= maxNum) coveredPosCnt = maxNum - 1;
     if(coveredPosCnt < maxNum * 0.1)
         return;
-    scoreOfEachGenus.push_back((float)coveredLength - (float)hammingSum / (float)queryLength);
+    scoreOfEachGenus.push_back(((float)coveredLength - (float)hammingSum) / (float)queryLength);
     matchesForEachGenus.push_back(matches);
     if(PRINT) {
         cout << filteredMatches[0].genusTaxID << " " << coveredPosCnt << " " << hammingSum << " " << matches.size()
