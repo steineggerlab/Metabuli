@@ -859,7 +859,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     delete[] posCheckList;
     delete[] hammings;
     if(coveredPosCnt >= maxNum) coveredPosCnt = maxNum - 1;
-    if(coveredPosCnt < maxNum * 0.1)
+    if(coveredPosCnt < maxNum * 0.05)
         return;
     scoreOfEachGenus.push_back((float)coveredPosCnt - (float)hammingSum / (float)matches.size());
     matchesForEachGenus.push_back(matches);
