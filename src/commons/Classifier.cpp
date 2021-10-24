@@ -527,7 +527,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
 
 
-    if (!PRINT) {
+    if (PRINT) {
         omp_set_num_threads(1);
     } else {
         omp_set_num_threads(ThreadNum);
