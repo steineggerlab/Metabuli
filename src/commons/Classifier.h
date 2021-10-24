@@ -92,23 +92,6 @@ private:
         TaxID childTaxon;
     };
 
-    struct ConsecutiveMatches{
-        ConsecutiveMatches(uint32_t begin, uint32_t end, int matchCnt_, int hamming,
-                           int diffPosCnt, size_t bi, size_t ei, uint8_t frame_, TaxID speciesID, int score_ = 0)
-            : begin(begin), end(end), matchCnt(matchCnt_), hamming(hamming), diffPosCnt(diffPosCnt), beginIdx(bi),
-            endIdx(ei), frame(frame_), speciesID(speciesID), score(score_) {}
-        uint32_t begin; //start position on query sequence
-        uint32_t end; //end position on query sequence
-        int matchCnt;
-        int hamming; //hamming sum
-        int diffPosCnt; //
-        size_t beginIdx; //beginning index on matchList
-        size_t endIdx; //end index
-        int score;
-        TaxID speciesID;
-        uint8_t frame;
-    };
-
     struct QueryInfo{
         int queryId;
         bool isClassified;
@@ -234,29 +217,17 @@ private:
 
     static bool sortByGenusAndSpecies(const Match & a, const Match & b);
 
-    static bool compareConsecutiveMatches(const ConsecutiveMatches & a, const ConsecutiveMatches & b);
-
     TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery,
                           const size_t & offset, const size_t & end, Match * matchList, Query * queryList);
 
-    TaxID chooseBestTaxon2(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery,
-                          const size_t & offset, const size_t & end, Match * matchList, Query * queryList);
-
-    int getMatchesOfTheBestGenus(vector<ConsecutiveMatches> & chosenMatchCombination, Match * matchList, size_t end,
+    static int getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
                                  size_t offset, size_t queryLength, float & bestScore);
 
-    int getMatchesOfTheBestGenus2(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
-                                 size_t offset, size_t queryLength, float & bestScore);
-
-    bool constructMatchCombination(vector<ConsecutiveMatches> & coMatches, vector<vector<ConsecutiveMatches>> & genus,
-                                   Match * matchList, int maxNum);
-    void constructMatchCombination2(vector<Match> & filteredMatches, int maxNum, vector<vector<Match>> & matchesForEachGenus,
-                                    vector<float> & scoreOfEachGenus, size_t queryLength);
+    static void constructMatchCombination(vector<Match> & filteredMatches, int maxNum,
+                                          vector<vector<Match>> & matchesForEachGenus,vector<float> & scoreOfEachGenus,
+                                          size_t queryLength);
 
     static bool sortMatchesByPos(const Match & a, const Match & b);
-
-    int selectTheBestGenus(vector<vector<ConsecutiveMatches>> & genus, vector<ConsecutiveMatches> & choosed,
-                           int maxKmerNum, size_t queryLength, float & bestScore);
 
     TaxID match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & taxonomy, float majorityCutoff,
                     double &selectedPercent, uint32_t queryLength, float hammingAverage);
@@ -274,7 +245,6 @@ private:
     static bool compareForWritingMatches(const Match & a, const Match & b);
 
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts>& map, TaxID key);
-
 
 public:
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName,
