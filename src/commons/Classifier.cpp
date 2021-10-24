@@ -614,7 +614,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
     queryList[currentQuery].score = maxScore;
 
     //Classify in genus level for highly diverged queries
-    if(maxScore < 0.4){
+    if(maxScore < 0.6){
         selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
@@ -880,7 +880,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     if(coveredPosCnt >= maxNum) coveredPosCnt = maxNum - 1;
     if(coveredPosCnt < maxNum * 0.1)
         return;
-    scoreOfEachGenus.push_back(((float)coveredLength - (float)hammingSum) / (float)queryLength);
+    scoreOfEachGenus.push_back(((float)coveredLength - (float)hammingSum/20.0f) / (float)queryLength);
     matchesForEachGenus.push_back(matches);
     if(PRINT) {
         cout << filteredMatches[0].genusTaxID << " " << coveredPosCnt << " " << hammingSum << " " << matches.size()
