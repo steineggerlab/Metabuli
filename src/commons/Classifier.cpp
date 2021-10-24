@@ -527,7 +527,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
 
 
-    if (PRINT) {
+    if (!PRINT) {
         omp_set_num_threads(1);
     } else {
         omp_set_num_threads(ThreadNum);
@@ -553,9 +553,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
 
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &queryLength, const int &currentQuery,
                                   const size_t &offset, const size_t &end, Match *matchList, Query *queryList) {
-    bool print = true;
     TaxID selectedTaxon;
-
     if(PRINT) {
         cout<<"# "<<currentQuery<<endl;
         for (int i = offset; i < end + 1; i++) {
@@ -662,6 +660,13 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
              << endl;
     }
 
+    if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){
+        cout<<"sub\t"<<normalizedScore<<"\n";
+    } else if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
+        cout<<"sp\t"<<normalizedScore<<"\n";
+    } else if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 8){
+        cout<<"genus\t"<<normalizedScore<<"\n";
+    }
     ///store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedLCA;
