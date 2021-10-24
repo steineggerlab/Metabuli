@@ -613,23 +613,23 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
 
     queryList[currentQuery].score = maxScore;
 
-    //Classify in genus level for highly diverged queries
-    if(maxScore < 0.6){
-        selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
-        queryList[currentQuery].isClassified = true;
-        queryList[currentQuery].classification = selectedTaxon;
-        queryList[currentQuery].newSpecies = true;
-        if(PRINT) {
-            cout << "# " << currentQuery << "HH" << endl;
-            for (size_t i = 0; i < matchesForLCA.size(); i++) {
-                cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
-                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) <<" "<< matchesForLCA[i].red << endl;
-            }
-            cout << "Score: " << maxScore << "  " << selectedTaxon << " "
-                 << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
-        }
-        return selectedTaxon;
-    }
+//    //Classify in genus level for highly diverged queries
+//    if(maxScore < 0.6){
+//        selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
+//        queryList[currentQuery].isClassified = true;
+//        queryList[currentQuery].classification = selectedTaxon;
+//        queryList[currentQuery].newSpecies = true;
+//        if(PRINT) {
+//            cout << "# " << currentQuery << "HH" << endl;
+//            for (size_t i = 0; i < matchesForLCA.size(); i++) {
+//                cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
+//                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) <<" "<< matchesForLCA[i].red << endl;
+//            }
+//            cout << "Score: " << maxScore << "  " << selectedTaxon << " "
+//                 << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
+//        }
+//        return selectedTaxon;
+//    }
 
     //Classify in species or lower level for queries that have close matches in reference DB.
     double selectedPercent = 0;
@@ -661,11 +661,11 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
     }
 
     if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){
-        cout<<"sp\t"<<maxScore<<"\n";
+        cout<<"sp\t"<<maxScore<<endl;
     } else if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
-        cout<<"sub\t"<<maxScore<<"\n";
+        cout<<"sub\t"<<maxScore<<endl;
     } else if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 8){
-        cout<<"genus\t"<<maxScore<<"\n";
+        cout<<"genus\t"<<maxScore<<endl;
     }
     ///store classification results
     queryList[currentQuery].isClassified = true;
