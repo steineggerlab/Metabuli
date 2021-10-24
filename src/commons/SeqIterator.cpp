@@ -117,16 +117,16 @@ void SeqIterator::sixFrameTranslation(const char * seq){
         aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 1)]]])][nuc2int(iRCT[atcg[seq[end - (i + 2)]]])][nuc2int(iRCT[atcg[seq[end - (i + 3)]]])]);
         aaFrames[5].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 2)]]])][nuc2int(iRCT[atcg[seq[end - (i + 3)]]])][nuc2int(iRCT[atcg[seq[end - (i + 4)]]])]);
     }
-    if(len % 3 == 0){
-        aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[end - 2]])][nuc2int(atcg[seq[end - 1]])][nuc2int(atcg[seq[end]])]);
-        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[2]]])][nuc2int(iRCT[atcg[seq[1]]])][nuc2int(iRCT[atcg[seq[0]]])]);
-    }
-    if(len % 3 == 1 ){
-        aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[end - 3]])][nuc2int(atcg[seq[end - 2]])][nuc2int(atcg[seq[end - 1]])]);
-        aaFrames[1].push_back(nuc2aa[nuc2int(atcg[seq[end - 2]])][nuc2int(atcg[seq[end - 1]])][nuc2int(atcg[seq[end]])]);
-        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[3]]])][nuc2int(iRCT[atcg[seq[2]]])][nuc2int(iRCT[atcg[seq[1]]])]);
-        aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[2]]])][nuc2int(iRCT[atcg[seq[1]]])][nuc2int(iRCT[atcg[seq[0]]])]);
-    }
+//    if(len % 3 == 0){
+//        aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[end - 2]])][nuc2int(atcg[seq[end - 1]])][nuc2int(atcg[seq[end]])]);
+//        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[2]]])][nuc2int(iRCT[atcg[seq[1]]])][nuc2int(iRCT[atcg[seq[0]]])]);
+//    }
+//    if(len % 3 == 1 ){
+//        aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[end - 3]])][nuc2int(atcg[seq[end - 2]])][nuc2int(atcg[seq[end - 1]])]);
+//        aaFrames[1].push_back(nuc2aa[nuc2int(atcg[seq[end - 2]])][nuc2int(atcg[seq[end - 1]])][nuc2int(atcg[seq[end]])]);
+//        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[3]]])][nuc2int(iRCT[atcg[seq[2]]])][nuc2int(iRCT[atcg[seq[1]]])]);
+//        aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[2]]])][nuc2int(iRCT[atcg[seq[1]]])][nuc2int(iRCT[atcg[seq[0]]])]);
+//    }
 }
 
 

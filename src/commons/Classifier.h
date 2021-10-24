@@ -111,11 +111,14 @@ private:
     };
 
     struct Match{ //16byte
+        Match(uint32_t queryId, int taxID, int speciesTaxID, int genusTaxID, int position, uint8_t frame, uint8_t hamming, int red)
+            : queryId(queryId), taxID(taxID), speciesTaxID(speciesTaxID), genusTaxID(genusTaxID), position(position),
+            frame(frame), hamming(hamming), red(red){}
         uint32_t queryId;
         int taxID;
         int speciesTaxID;
         int genusTaxID;
-        uint16_t position;
+        int position;
         uint8_t frame;
         uint8_t hamming;
         int red; ///TODO remove it later

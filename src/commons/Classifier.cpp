@@ -527,7 +527,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
 
 
-    if (PRINT) {
+    if (!PRINT) {
         omp_set_num_threads(1);
     } else {
         omp_set_num_threads(ThreadNum);
@@ -613,23 +613,23 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
 
     queryList[currentQuery].score = normalizedScore;
 
-    //Classify in genus level for highly diverged queries
-    if(normalizedScore < 0.4){
-        selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
-        queryList[currentQuery].isClassified = true;
-        queryList[currentQuery].classification = selectedTaxon;
-        queryList[currentQuery].newSpecies = true;
-        if(PRINT) {
-            cout << "# " << currentQuery << "HH" << endl;
-            for (size_t i = 0; i < matchesForLCA.size(); i++) {
-                cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
-                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) <<" "<< matchesForLCA[i].red << endl;
-            }
-            cout << "Score: " << normalizedScore << "  " << selectedTaxon << " "
-                 << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
-        }
-        return selectedTaxon;
-    }
+//    //Classify in genus level for highly diverged queries
+//    if(normalizedScore < 0.4){
+//        selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
+//        queryList[currentQuery].isClassified = true;
+//        queryList[currentQuery].classification = selectedTaxon;
+//        queryList[currentQuery].newSpecies = true;
+//        if(PRINT) {
+//            cout << "# " << currentQuery << "HH" << endl;
+//            for (size_t i = 0; i < matchesForLCA.size(); i++) {
+//                cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
+//                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) <<" "<< matchesForLCA[i].red << endl;
+//            }
+//            cout << "Score: " << normalizedScore << "  " << selectedTaxon << " "
+//                 << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
+//        }
+//        return selectedTaxon;
+//    }
 
     //Classify in species or lower level for queries that have close matches in reference DB.
     double selectedPercent = 0;
@@ -660,13 +660,13 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
              << endl;
     }
 
-//    if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){
-//        cout<<"sp\t"<<normalizedScore<<"\n";
-//    } else if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
-//        cout<<"sub\t"<<normalizedScore<<"\n";
-//    } else if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 8){
-//        cout<<"genus\t"<<normalizedScore<<"\n";
-//    }
+    if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){
+        cout<<"sp\t"<<normalizedScore<<"\n";
+    } else if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
+        cout<<"sub\t"<<normalizedScore<<"\n";
+    } else if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 8){
+        cout<<"genus\t"<<normalizedScore<<"\n";
+    }
     ///store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedLCA;
@@ -796,6 +796,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     size_t l = filteredMatches.size();
     vector<Match> matches;
     matches.reserve(l);
+    //matches.emplace_back(0, 0, 0, 0, -100, 0, 0, 0);
     bool overlapped = false;
     uint8_t minHamming = 0;
     bool isTheLastOverlapped = false;
@@ -823,6 +824,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
             if(filteredMatches[i].hamming == minHamming) overlaps.push_back(filteredMatches[i]);
             if(overlaps.size() == 1){
                 matches.push_back(overlaps[0]);
+
                 if(overlaps[0].hamming < hammings[overlaps[0].position/3]){
                     hammings[overlaps[0].position/3] = overlaps[0].hamming;
                 }
@@ -861,12 +863,24 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
         }
     }
 
+    int coveredLength = 24;
+    int gap;
+    for(size_t m = 1; m < matches.size(); m++){
+        gap = matches[m].position - matches[m-1].position;
+        if(gap > 24){
+            coveredLength += 8;
+        }else{
+            coveredLength += gap;
+        }
+    }
+
+    // scoring
     delete[] posCheckList;
     delete[] hammings;
     if(coveredPosCnt >= maxNum) coveredPosCnt = maxNum - 1;
     if(coveredPosCnt < maxNum * 0.1)
         return;
-    scoreOfEachGenus.push_back((float)coveredPosCnt - (float)hammingSum / (float)matches.size());
+    scoreOfEachGenus.push_back((float)coveredLength - (float)hammingSum / (float)queryLength);
     matchesForEachGenus.push_back(matches);
     if(PRINT) {
         cout << filteredMatches[0].genusTaxID << " " << coveredPosCnt << " " << hammingSum << " " << matches.size()
