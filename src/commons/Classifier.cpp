@@ -660,13 +660,13 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
              << endl;
     }
 
-    if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){
-        cout<<"sp\t"<<normalizedScore<<"\n";
-    } else if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
-        cout<<"sub\t"<<normalizedScore<<"\n";
-    } else if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 8){
-        cout<<"genus\t"<<normalizedScore<<"\n";
-    }
+//    if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){
+//        cout<<"sp\t"<<normalizedScore<<"\n";
+//    } else if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
+//        cout<<"sub\t"<<normalizedScore<<"\n";
+//    } else if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 8){
+//        cout<<"genus\t"<<normalizedScore<<"\n";
+//    }
     ///store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedLCA;
