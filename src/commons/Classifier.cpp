@@ -1095,7 +1095,7 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches, NcbiTaxonomy & 
         currentCoverage = (float)it->second/maxKmerCnt;
         currnetPercentage = (float)it->second/matchNum;
         currRank = NcbiTaxonomy::findRankIndex(taxonomy.taxonNode(it->first)->rank);
-        if(currentCove  rage > coverageThreshold && currRank <= 4){
+        if(currentCoverage > coverageThreshold && currRank <= 4){
             if(!haveMetCovThr){
                 haveMetCovThr = true;
                 maxCnt = it->second;
