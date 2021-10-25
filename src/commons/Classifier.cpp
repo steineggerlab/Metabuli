@@ -883,7 +883,6 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
 
 
     int coveredLength = 24;
-    int hammingSum2 = matches[0].hamming;
     int gap;
     for(size_t m = 1; m < matches.size(); m++){
         gap = matches[m].position - matches[m-1].position;
@@ -1079,6 +1078,7 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches, NcbiTaxonomy & 
     float currentCoverage;
     float currnetPercentage;
     bool haveMetCovThr = false;
+    bool haveMetMajorityThr = false;
     bool tied = 0;
     size_t matchNum = matches.size();
     int maxCnt;
@@ -1110,6 +1110,7 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches, NcbiTaxonomy & 
             }
         } else if (currnetPercentage >= majorityCutoff && (!haveMetCovThr)) {
             // TaxID currParentTaxId = node->parentTaxId;
+            haveMetMajorityThr = true;
             if ((currRank < minRank) || ((currRank == minRank) && (currnetPercentage > selectedPercent))) {
                 selectedTaxon = it->first;
                 minRank = currRank;
@@ -1124,9 +1125,11 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches, NcbiTaxonomy & 
         } else{
             return bestOne;
         }
+    } else if (haveMetMajorityThr) {
+        return selectedTaxon;
     }
-
-    return selectedTaxon;
+    
+    return matches[0].genusTaxID;
 }
 
 int Classifier::getNumOfSplits() const { return this->numOfSplit; }
