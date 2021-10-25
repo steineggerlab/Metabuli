@@ -5,6 +5,7 @@
 #include "Classifier.h"
 #include "LocalParameters.h"
 #include <ctime>
+
 Classifier::Classifier() {
     seqIterator = new SeqIterator();
     numOfSplit = 0;
@@ -1123,9 +1124,9 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches, NcbiTaxonomy & 
         } else{
             return bestOne;
         }
-    } else {
-        return selectedTaxon;
     }
+
+    return selectedTaxon;
 }
 
 int Classifier::getNumOfSplits() const { return this->numOfSplit; }
