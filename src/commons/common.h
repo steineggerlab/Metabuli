@@ -8,7 +8,7 @@
 #define kmerBufSize 10000000000 // 10000000000 | 2860000000
 #define ThreadNum 64
 #define SplitNum 4096
-#define PRINT true
+#define PRINT false;
 
 //#define kmerBufSize 1000000000
 #define AApart(x) x & ()

@@ -111,17 +111,19 @@ private:
     };
 
     struct Match{ //16byte
-        Match(uint32_t queryId, int taxID, int speciesTaxID, int genusTaxID, int position, uint8_t frame, uint8_t hamming, int red)
+        Match(uint32_t queryId, int taxID, int speciesTaxID, int genusTaxID, int position, uint8_t frame,
+              uint8_t hamming, int red, int rightEndHamming)
             : queryId(queryId), taxID(taxID), speciesTaxID(speciesTaxID), genusTaxID(genusTaxID), position(position),
-            frame(frame), hamming(hamming), red(red){}
+            frame(frame), hamming(hamming), red(red), rightEndHamming(rightEndHamming){ }
         uint32_t queryId;
         int taxID;
         int speciesTaxID;
         int genusTaxID;
         int position;
-        uint8_t frame;
+        uint8_t frame; ///TODO remove it later
         uint8_t hamming;
-        int red; ///TODO remove it later
+        int red;///TODO remove it later
+        uint8_t rightEndHamming;
     };
 
     struct MatchBlock{
@@ -209,9 +211,9 @@ private:
                               const vector<TaxID> & genusTaxIdList, FILE * matchFile);
 
     void compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCompare, const size_t & startIdx,
-                    vector<size_t> & selectedMatches, vector<uint8_t> & selectedHamming);
+                    vector<size_t> & selectedMatches, vector<uint8_t> & selectedHamming, vector<int> & rightEndHammings);
 
-    uint8_t getHammingDistance(uint64_t kmer1, uint64_t kmer2);
+    uint8_t getHammingDistance(uint64_t kmer1, uint64_t kmer2, uint8_t & rightEndHamming);
 
     // Analyzing k-mer matches
     void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum, Query * queryList);
@@ -234,6 +236,8 @@ private:
 
     TaxID match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & taxonomy, float majorityCutoff,
                     double &selectedPercent, uint32_t queryLength, float hammingAverage);
+
+    TaxID classifyFurther(const std::vector<Match> & matches, NcbiTaxonomy & taxonomy, uint32_t queryLength);
 
     // Write report
     void writeReadClassification(Query * queryList, int queryNum , ofstream & readClassificationFile);
@@ -261,13 +265,15 @@ public:
     void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, vector<int> & wrongs, int i);
 };
 
-inline uint8_t Classifier::getHammingDistance(uint64_t kmer1, uint64_t kmer2) {
+inline uint8_t Classifier::getHammingDistance(uint64_t kmer1, uint64_t kmer2, uint8_t & rightEndHamming) {//87654321
     uint8_t hammingDist = 0;
-    for(int i = 0; i < 8 ; i++){
+    for(int i = 0; i < 7 ; i++){
         hammingDist += hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
         kmer1 >>= 3U;
         kmer2 >>= 3U;
     }
+    hammingDist += hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
+    rightEndHamming = hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
     return hammingDist;
 }
 
