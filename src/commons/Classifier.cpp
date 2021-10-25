@@ -647,9 +647,9 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
 
     //Classify in species or lower level for queries that have close matches in reference DB.
     double selectedPercent = 0;
-    TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.8, selectedPercent, queryLength, hammingAverage);
+    //TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.8, selectedPercent, queryLength, hammingAverage);
 
-    //TaxID selectedLCA = classifyFurther(matchesForLCA, ncbiTaxonomy, queryLength);
+    TaxID selectedLCA = classifyFurther(matchesForLCA, ncbiTaxonomy, queryLength);
 
     ///TODO optimize strain specific classification criteria
     //Strain classification only for high coverage with LCA of species level
@@ -1067,10 +1067,10 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches, NcbiTaxonomy & 
 
     std::map<TaxID, int> taxIdCounts;
     float majorityCutoff = 0.8;
-    float maxKmerCnt = queryLength/3.0f - 8;
+    float maxKmerCnt = queryLength/3.0f - 7;
 
     for(Match match : matches){
-        taxIdCounts[match.taxID] += 1.0f;
+        taxIdCounts[match.taxID] += 1;
         taxIdCounts[match.speciesTaxID] += (match.speciesTaxID != match.taxID); // subspecies
     }
 
@@ -1089,13 +1089,13 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches, NcbiTaxonomy & 
     float selectedPercent = 0;
     TaxID selectedTaxon;
     for(auto it = taxIdCounts.begin(); it != taxIdCounts.end(); it++){
-        if(it->second > maxKmerCnt) {
-            it->second = maxKmerCnt;
+        if(it->second >= maxKmerCnt) {
+            it->second = maxKmerCnt-1;
         }
         currentCoverage = (float)it->second/maxKmerCnt;
         currnetPercentage = (float)it->second/matchNum;
         currRank = NcbiTaxonomy::findRankIndex(taxonomy.taxonNode(it->first)->rank);
-        if(currentCoverage > coverageThreshold && currRank <= 4){
+        if(currentCove  rage > coverageThreshold && currRank <= 4){
             if(!haveMetCovThr){
                 haveMetCovThr = true;
                 maxCnt = it->second;
