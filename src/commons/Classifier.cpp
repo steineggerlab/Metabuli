@@ -1089,6 +1089,9 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches, NcbiTaxonomy & 
     float selectedPercent = 0;
     TaxID selectedTaxon;
     for(auto it = taxIdCounts.begin(); it != taxIdCounts.end(); it++){
+        if(it->second > maxKmerCnt) {
+            it->second = maxKmerCnt;
+        }
         currentCoverage = (float)it->second/maxKmerCnt;
         currnetPercentage = (float)it->second/matchNum;
         currRank = NcbiTaxonomy::findRankIndex(taxonomy.taxonNode(it->first)->rank);
@@ -1128,7 +1131,7 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches, NcbiTaxonomy & 
     } else if (haveMetMajorityThr) {
         return selectedTaxon;
     }
-    
+
     return matches[0].genusTaxID;
 }
 
