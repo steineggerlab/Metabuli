@@ -527,7 +527,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
 
 
-    if (!PRINT) {
+    if (PRINT) {
         omp_set_num_threads(1);
     } else {
         omp_set_num_threads(ThreadNum);
@@ -660,11 +660,11 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
              << endl;
     }
 
-    if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){
+    if(PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){
         cout<<"sp\t"<<maxScore<<endl;
-    } else if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
+    } else if(PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 3){
         cout<<"sub\t"<<maxScore<<endl;
-    } else if(!PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 8){
+    } else if(PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 8){
         cout<<"genus\t"<<maxScore<<endl;
     }
     ///store classification results
@@ -888,6 +888,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     }
 }
 
+// TODO It can be silplified
 TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & taxonomy, float majorityCutoff,
                             double &selectedPercent, uint32_t queryLength, float hammingAverage) {
 
