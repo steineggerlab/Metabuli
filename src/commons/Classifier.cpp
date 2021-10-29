@@ -871,11 +871,13 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     auto * hammingsAtEachPos = new uint8_t[size + 1];
     memset(hammingsAtEachPos, 10, (size + 1));
 
+    //TODO Hamming 이 이상
     size_t matchNum = matches.size();
     size_t f = 0;
     while(f < matchNum){
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
+        print_binary16(16,currHammings);
         for(int i2 = 0; i2 < 8; i2++){
             cout<<GET_2_BITS(currHammings)<<" "<<(int)hammingsAtEachPos[currPos + i2]<<endl;
             if(GET_2_BITS(currHammings) < hammingsAtEachPos[currPos + i2]){
