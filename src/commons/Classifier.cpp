@@ -879,11 +879,11 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
         currHammings = matches[f].rightEndHamming;
         print_binary16(16,currHammings); cout<<endl;
         for(int i2 = 0; i2 < 8; i2++){
-            cout<<GET_2_BITS(currHammings)<<" "<<(int)hammingsAtEachPos[currPos + i2]<<endl;
-            if(GET_2_BITS(currHammings) < hammingsAtEachPos[currPos + i2]){
-                hammingsAtEachPos[currPos + i2] = GET_2_BITS(currHammings);
+            cout<<GET_2_BITS(currHammings>>2*i2)<<" "<<(int)hammingsAtEachPos[currPos + i2]<<endl;
+            if(GET_2_BITS(currHammings>>2*i2) < hammingsAtEachPos[currPos + i2]){
+                hammingsAtEachPos[currPos + i2] = GET_2_BITS(currHammings>>2*i2);
             }
-            curHammings >>= 2;
+            //curHammings >>= 2;
         }
         print_binary16(16,currHammings); cout<<endl;
         f++;
