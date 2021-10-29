@@ -877,7 +877,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
         for(int i2 = 0; i2 < 8; i2++){
-            cout<<GET_2_BITS(currHammings)<<" "<<hammingsAtEachPos[currPos + i2]<<endl;
+            cout<<GET_2_BITS(currHammings)<<" "<<(int)hammingsAtEachPos[currPos + i2]<<endl;
             if(GET_2_BITS(currHammings) < hammingsAtEachPos[currPos + i2]){
                 hammingsAtEachPos[currPos + i2] = GET_2_BITS(currHammings);
             }
