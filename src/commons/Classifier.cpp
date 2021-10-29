@@ -870,8 +870,8 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     // Hamming distance & covered length
     int coveredPosCnt = 0;
     uint16_t currHammings;
-    int size = (int)queryLength/3 - 7;
-    auto * hammingsAtEachPos = new char[size + 1];
+    int size = (int)queryLength/3;
+    auto * hammingsAtEachPos = new uint8_t[size + 1];
     memset(hammingsAtEachPos, 10, (size + 1));
     size_t matchNum = matches.size();
     size_t f = 0;
