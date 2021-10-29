@@ -761,7 +761,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
     float maxScore = *max_element(scoreOfEachGenus.begin(), scoreOfEachGenus.end());
     vector<size_t> maxIdx;
     for(size_t g = 0; g < scoreOfEachGenus.size(); g++){
-        if(scoreOfEachGenus[g] > maxScore * 0.9f){
+        if(scoreOfEachGenus[g] > maxScore * 0.95f){
             maxIdx.push_back(g);
         }
 //        if(scoreOfEachGenus[g] > maxScore){
