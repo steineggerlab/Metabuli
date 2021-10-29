@@ -787,6 +787,11 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
     //3. no genus
 }
 
+
+// TODO How about now allowing overlapping between species
+// Assumption : There will be no frame shift of the same gene between species
+// What about intergenic region?
+// I think this function can be combined with the calling function
 void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int maxNum,
                                             vector<vector<Match>> & matchesForEachGenus,
                                             vector<float> & scoreOfEachGenus, size_t queryLength){
@@ -897,7 +902,9 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     delete[] posCheckList;
     delete[] hammings;
     if(coveredPosCnt >= maxNum) coveredPosCnt = maxNum - 1;
-    if(coveredPosCnt < maxNum * 0.1)
+
+    // TODO using coveredLength
+    if(coveredLength < queryLength * 0.2)
         return;
     scoreOfEachGenus.push_back(((float)coveredLength - (float)hammingSum/20.0f) / (float)queryLength);
     matchesForEachGenus.push_back(matches);
@@ -1063,10 +1070,13 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     }
 }
 
+
+//TODO kmer count -> covered length
 TaxID Classifier::classifyFurther(const vector<Match> & matches, NcbiTaxonomy & taxonomy, uint32_t queryLength) {
 
     std::map<TaxID, int> taxIdCounts;
     float majorityCutoff = 0.8;
+    float coverageThreshold = 0.8;
     float maxKmerCnt = queryLength/3.0f - 7;
 
     for(Match match : matches){
@@ -1074,12 +1084,12 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches, NcbiTaxonomy & 
         taxIdCounts[match.speciesTaxID] += (match.speciesTaxID != match.taxID); // subspecies
     }
 
-    float coverageThreshold = 0.8;
+
     float currentCoverage;
     float currnetPercentage;
     bool haveMetCovThr = false;
     bool haveMetMajorityThr = false;
-    bool tied = 0;
+    bool tied = false;
     size_t matchNum = matches.size();
     int maxCnt;
     TaxID bestOne;
