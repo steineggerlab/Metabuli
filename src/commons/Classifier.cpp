@@ -662,7 +662,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
             }
         }
 
-        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 1) {
+        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 2) {
             selectedLCA = strainMatchCnt.begin()->first;
         }
     }
