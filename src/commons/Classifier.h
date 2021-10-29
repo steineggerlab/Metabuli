@@ -273,7 +273,7 @@ inline uint8_t Classifier::getHammingDistance(uint64_t kmer1, uint64_t kmer2, ui
         kmer2 >>= 3U;
         hammings = hammings & (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U*(7-i));
     }
-    return hammingDist;
+    return hammingSum;
 }
 
 inline uint64_t Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t* targetDiffIdxList, size_t & diffIdxPos){
