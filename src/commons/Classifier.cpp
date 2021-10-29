@@ -934,7 +934,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     scoreOfEachGenus.push_back(((float)coveredLength - (float)hammingSum2) / (float)queryLength);
     matchesForEachGenus.push_back(matches);
     if(PRINT) {
-        cout << filteredMatches[0].genusTaxID << " " << coveredPosCnt << " " << hammingSum << " " << matches.size()
+        cout << filteredMatches[0].genusTaxID << " " << coveredPosCnt << " " << hammingSum2 << " " << matches.size()
              << endl;
     }
 }
@@ -1213,8 +1213,8 @@ bool Classifier::sortByGenusAndSpecies2(const Match & a, const Match & b) {
 }
 
 bool Classifier::sortMatchesByPos(const Match & a, const Match & b) {
-    if (a.position < b.position) return true;
-    else if (a.position == b.position) {
+    if (a.position/3 < b.position/3) return true;
+    else if (a.position/3 == b.position/3) {
         if(a.speciesTaxID < b.speciesTaxID) return true;
         else if(a.speciesTaxID == b.speciesTaxID){
             return a.hamming < b.hamming;
