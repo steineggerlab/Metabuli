@@ -313,11 +313,8 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 
             //vectors for selected target k-mers
             vector<uint8_t> selectedHammingSum;
-            selectedHammingSum.reserve(1024);
             vector<size_t> selectedMatches;
-            selectedMatches.reserve(1024);
             vector<uint16_t> selectedHammings;
-            selectedHammings.reserve(1024);
             size_t startIdxOfAAmatch = 0;
             size_t posToWrite;
             size_t range;
