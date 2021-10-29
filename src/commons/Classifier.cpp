@@ -883,7 +883,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
             if(GET_2_BITS(currHammings) < hammingsAtEachPos[currPos + i2]){
                 hammingsAtEachPos[currPos + i2] = GET_2_BITS(currHammings);
             }
-            curHammings = curHammings >> 2;
+            curHammings >>= 2;
         }
         f++;
     }
