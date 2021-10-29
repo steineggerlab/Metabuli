@@ -870,13 +870,14 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     int size = (int)queryLength/3;
     auto * hammingsAtEachPos = new uint8_t[size + 1];
     memset(hammingsAtEachPos, 10, (size + 1));
+
     size_t matchNum = matches.size();
     size_t f = 0;
-
     while(f < matchNum){
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
         for(int i2 = 0; i2 < 8; i2++){
+            cout<<GET_2_BITS(currHammings)<<" "<<hammingsAtEachPos[currPos + i2]<<endl;
             if(GET_2_BITS(currHammings) < hammingsAtEachPos[currPos + i2]){
                 hammingsAtEachPos[currPos + i2] = GET_2_BITS(currHammings);
             }
@@ -885,11 +886,13 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
         f++;
     }
     for(int h = 0; h < size; h++){
+        cout<<(int)hammingsAtEachPos[h]<<" ";
         if(hammingsAtEachPos[h] < 10) {
             hammingSum += hammingsAtEachPos[h];
             coveredPosCnt ++;
         }
     }
+    cout<<endl;
 
     delete[] hammingsAtEachPos;
 
