@@ -123,7 +123,7 @@ private:
         uint8_t frame; ///TODO remove it later
         uint8_t hamming;
         int red;///TODO remove it later
-        uint8_t rightEndHamming;
+        uint16_t rightEndHamming;
     };
 
     struct MatchBlock{
