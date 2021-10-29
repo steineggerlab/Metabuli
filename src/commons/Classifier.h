@@ -211,7 +211,7 @@ private:
                               const vector<TaxID> & genusTaxIdList, FILE * matchFile);
 
     void compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCompare, const size_t & startIdx,
-                    vector<size_t> & selectedMatches, vector<uint8_t> & selectedHammingSum, vector<uint_16t> & rightEndHammings);
+                    vector<size_t> & selectedMatches, vector<uint8_t> & selectedHammingSum, vector<uint16_t> & rightEndHammings);
 
     uint8_t getHammingDistance(uint64_t kmer1, uint64_t kmer2, uint16_t & rightEndHamming);
 
