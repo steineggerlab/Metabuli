@@ -171,11 +171,11 @@ void SeqIterator::addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int fo
     size_t end = strlen(seq) - 1;
     if(forOrRev == 0){
         for( int i = 0; i < kmerLength * 3; i += 3) {
-            kmer |= nuc2num[nuc2int(atcg[seq[start + i]])][nuc2int(atcg[seq[start + i + 1]])][nuc2int(atcg[seq[start + i + 2]])] << i;
+            kmer |= (nuc2num[nuc2int(atcg[seq[start + i]])][nuc2int(atcg[seq[start + i + 1]])][nuc2int(atcg[seq[start + i + 2]])] << i);
         }
     } else{
         for( int i = 0; i < kmerLength * 3; i += 3) {
-            kmer |= nuc2num[nuc2int(iRCT[atcg[seq[end - (start + i)]]])][nuc2int(iRCT[atcg[seq[end - (start + i + 1)]]])][nuc2int(iRCT[atcg[seq[end - (start + i + 2)]]])] << i;
+            kmer |= (nuc2num[nuc2int(iRCT[atcg[seq[end - (start + i)]]])][nuc2int(iRCT[atcg[seq[end - (start + i + 1)]]])][nuc2int(iRCT[atcg[seq[end - (start + i + 2)]]])] << i);
         }
     }
 }

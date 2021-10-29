@@ -120,10 +120,10 @@ private:
         int speciesTaxID;
         int genusTaxID;
         int position;
-        uint8_t frame; ///TODO remove it later
-        uint8_t hamming;
         int red;///TODO remove it later
         uint16_t rightEndHamming;
+        uint8_t frame; ///TODO remove it later
+        uint8_t hamming;
     };
 
     struct MatchBlock{
@@ -213,7 +213,9 @@ private:
     void compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCompare, const size_t & startIdx,
                     vector<size_t> & selectedMatches, vector<uint8_t> & selectedHammingSum, vector<uint16_t> & rightEndHammings);
 
-    uint8_t getHammingDistance(uint64_t kmer1, uint64_t kmer2, uint16_t & rightEndHamming);
+    uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2);
+
+    uint16_t getHammings(uint64_t kmer1, uint64_t kmer2);
 
     // Analyzing k-mer matches
     void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum, Query * queryList);
@@ -234,8 +236,8 @@ private:
 
     static bool sortMatchesByPos(const Match & a, const Match & b);
 
-    TaxID match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & taxonomy, float majorityCutoff,
-                    double &selectedPercent, uint32_t queryLength, float hammingAverage);
+    TaxID match2LCA(const std::vector<Match> & matchList, NcbiTaxonomy & taxonomy, float majorityCutoff,
+                    double &selectedPercent, uint32_t queryLength);
 
     TaxID classifyFurther(const std::vector<Match> & matches, NcbiTaxonomy & taxonomy, uint32_t queryLength);
 
@@ -265,15 +267,32 @@ public:
     void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, vector<int> & wrongs, int i);
 };
 
-inline uint8_t Classifier::getHammingDistance(uint64_t kmer1, uint64_t kmer2, uint16_t & hammings) {//87654321
+inline uint8_t Classifier::getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2) {//12345678
     uint8_t hammingSum = 0;
+    hammingSum += hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
+    hammingSum += hammingLookup[GET_3_BITS(kmer1>>3U)][GET_3_BITS(kmer2>>3U)];
+    hammingSum += hammingLookup[GET_3_BITS(kmer1>>6U)][GET_3_BITS(kmer2>>6U)];
+    hammingSum += hammingLookup[GET_3_BITS(kmer1>>9U)][GET_3_BITS(kmer2>>9U)];
+    hammingSum += hammingLookup[GET_3_BITS(kmer1>>12U)][GET_3_BITS(kmer2>>12U)];
+    hammingSum += hammingLookup[GET_3_BITS(kmer1>>15U)][GET_3_BITS(kmer2>>15U)];
+    hammingSum += hammingLookup[GET_3_BITS(kmer1>>18U)][GET_3_BITS(kmer2>>18U)];
+    hammingSum += hammingLookup[GET_3_BITS(kmer1>>21U)][GET_3_BITS(kmer2>>21U)];
+//    for(int i = 0; i < 8 ; i++){
+//        hammingSum += hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
+//        kmer1 >>= 3U;
+//        kmer2 >>= 3U;
+//    }
+    return hammingSum;
+}
+
+inline uint16_t Classifier::getHammings(uint64_t kmer1, uint64_t kmer2) {  //hammings 87654321
+    uint16_t hammings = 0;
     for(int i = 0; i < 8 ; i++){
-        hammingSum += hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
-        hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U*(7-i);
+        hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U*i;
         kmer1 >>= 3U;
         kmer2 >>= 3U;
     }
-    return hammingSum;
+    return hammings;
 }
 
 inline uint64_t Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t* targetDiffIdxList, size_t & diffIdxPos){
