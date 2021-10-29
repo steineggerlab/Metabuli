@@ -875,6 +875,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     memset(hammingsAtEachPos, 10, size + 1);
     size_t matchNum = matches.size();
     size_t f = 0;
+
     while(f < matchNum){
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
@@ -893,6 +894,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
         }
     }
 
+    delete[] hammingsAtEachPos;
 
 //    for(size_t m = 1; m < matches.size(); m++){
 //        gap = matches[m].position - matches[m-1].position;
