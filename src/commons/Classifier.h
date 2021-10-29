@@ -211,9 +211,9 @@ private:
                               const vector<TaxID> & genusTaxIdList, FILE * matchFile);
 
     void compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCompare, const size_t & startIdx,
-                    vector<size_t> & selectedMatches, vector<uint8_t> & selectedHamming, vector<int> & rightEndHammings);
+                    vector<size_t> & selectedMatches, vector<uint8_t> & selectedHammingSum, vector<uint_16t> & rightEndHammings);
 
-    uint8_t getHammingDistance(uint64_t kmer1, uint64_t kmer2, uint8_t & rightEndHamming);
+    uint8_t getHammingDistance(uint64_t kmer1, uint64_t kmer2, uint16_t & rightEndHamming);
 
     // Analyzing k-mer matches
     void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum, Query * queryList);
@@ -265,15 +265,14 @@ public:
     void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, vector<int> & wrongs, int i);
 };
 
-inline uint8_t Classifier::getHammingDistance(uint64_t kmer1, uint64_t kmer2, uint8_t & rightEndHamming) {//87654321
-    uint8_t hammingDist = 0;
-    for(int i = 0; i < 7 ; i++){
-        hammingDist += hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
+inline uint8_t Classifier::getHammingDistance(uint64_t kmer1, uint64_t kmer2, uint16_t & hammings) {//87654321
+    uint8_t hammingSum = 0;
+    for(int i = 0; i < 8 ; i++){
+        hammingSum += hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
         kmer1 >>= 3U;
         kmer2 >>= 3U;
+        hammings = hammings & (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U*(7-i));
     }
-    hammingDist += hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
-    rightEndHamming = hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
     return hammingDist;
 }
 
