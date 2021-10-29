@@ -758,19 +758,35 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         return 3;
     }
 
-    // Choose the best genus
-    float maxScore = -100;
+    float maxScore = *max_element(scoreOfEachGenus.begin(), scoreOfEachGenus.end());
     vector<size_t> maxIdx;
     for(size_t g = 0; g < scoreOfEachGenus.size(); g++){
-        if(scoreOfEachGenus[g] > maxScore){
-            maxScore = scoreOfEachGenus[g];
-            maxIdx.clear();
-            maxIdx.push_back(g);
-        } else if(scoreOfEachGenus[g] == maxScore){
+        if(scoreOfEachGenus[g] > maxScore * 0.9f){
             maxIdx.push_back(g);
         }
+//        if(scoreOfEachGenus[g] > maxScore){
+//            maxScore = scoreOfEachGenus[g];
+//            maxIdx.clear();
+//            maxIdx.push_back(g);
+//        } else if(scoreOfEachGenus[g] == maxScore){
+//
+//        }
     }
     bestScore = maxScore;
+
+//    // Choose the best genus
+//    float maxScore = -100;
+//    vector<size_t> maxIdx;
+//    for(size_t g = 0; g < scoreOfEachGenus.size(); g++){
+//        if(scoreOfEachGenus[g] > maxScore){
+//            maxScore = scoreOfEachGenus[g];
+//            maxIdx.clear();
+//            maxIdx.push_back(g);
+//        } else if(scoreOfEachGenus[g] == maxScore){
+//            maxIdx.push_back(g);
+//        }
+//    }
+//    bestScore = maxScore;
 
     for(size_t g = 0; g < maxIdx.size(); g++){
         matchesForMajorityLCA.insert(matchesForMajorityLCA.end(), matchesForEachGenus[maxIdx[g]].begin(),
