@@ -269,9 +269,9 @@ inline uint8_t Classifier::getHammingDistance(uint64_t kmer1, uint64_t kmer2, ui
     uint8_t hammingSum = 0;
     for(int i = 0; i < 8 ; i++){
         hammingSum += hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
+        hammings = hammings & (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U*(7-i));
         kmer1 >>= 3U;
         kmer2 >>= 3U;
-        hammings = hammings & (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U*(7-i));
     }
     return hammingSum;
 }
