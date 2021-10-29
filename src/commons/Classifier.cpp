@@ -877,25 +877,25 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     while(f < matchNum){
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
-        print_binary16(16,currHammings); cout<<endl;
+        //print_binary16(16,currHammings); cout<<endl;
         for(int i2 = 0; i2 < 8; i2++){
-            cout<<GET_2_BITS(currHammings>>2*i2)<<" "<<(int)hammingsAtEachPos[currPos + i2]<<endl;
+           // cout<<GET_2_BITS(currHammings>>2*i2)<<" "<<(int)hammingsAtEachPos[currPos + i2]<<endl;
             if(GET_2_BITS(currHammings>>2*i2) < hammingsAtEachPos[currPos + i2]){
                 hammingsAtEachPos[currPos + i2] = GET_2_BITS(currHammings>>2*i2);
             }
             //curHammings >>= 2;
         }
-        print_binary16(16,currHammings); cout<<endl;
+        //print_binary16(16,currHammings); cout<<endl;
         f++;
     }
     for(int h = 0; h < size; h++){
-        cout<<(int)hammingsAtEachPos[h]<<" ";
+       // cout<<(int)hammingsAtEachPos[h]<<" ";
         if(hammingsAtEachPos[h] < 10) {
             hammingSum += hammingsAtEachPos[h];
             coveredPosCnt ++;
         }
     }
-    cout<<endl;
+    //cout<<endl;
 
     delete[] hammingsAtEachPos;
 
