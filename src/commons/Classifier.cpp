@@ -885,6 +885,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
             }
             curHammings >>= 2;
         }
+        print_binary16(16,currHammings); cout<<endl;
         f++;
     }
     for(int h = 0; h < size; h++){
