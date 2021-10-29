@@ -917,7 +917,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
             curHammings = matches[m].rightEndHamming;
             for(int i2 = 0; i2 < gap/3; i2++){
                 hammingSum2 += GET_2_BITS(curHammings);
-                curHammings >> 0X2U;
+                curHammings = curHammings >> 0X2U;
             }
             coveredLength += gap;
         }
