@@ -871,7 +871,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     auto * hammingsAtEachPos = new uint8_t[size + 1];
     memset(hammingsAtEachPos, 10, (size + 1));
 
-    //TODO Hamming 이 이상
+    //TODO Hamming sum을 좀 나눠야
     size_t matchNum = matches.size();
     size_t f = 0;
     while(f < matchNum){
@@ -916,7 +916,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
 //    }
 
     if((float)coveredPosCnt * 3 <= queryLength * 0.2f) return;
-    scoreOfEachGenus.push_back(((float)coveredPosCnt * 3 - (float)hammingSum) / (float)queryLength);
+    scoreOfEachGenus.push_back(((float)coveredPosCnt * 3 - (float)hammingSum * 0.2) / (float)queryLength);
     matchesForEachGenus.push_back(matches);
     if(PRINT) {
         cout << filteredMatches[0].genusTaxID << " " << coveredPosCnt << " " << hammingSum << " " << matches.size()
