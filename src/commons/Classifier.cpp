@@ -313,9 +313,11 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 
             //vectors for selected target k-mers
             vector<uint8_t> selectedHammingSum;
+            selectedHammingSum.reserve(1024);
             vector<size_t> selectedMatches;
+            selectedMatches.reserve(1024);
             vector<uint16_t> selectedHammings;
-
+            selectedHammings.reserve(1024);
             size_t startIdxOfAAmatch = 0;
             size_t posToWrite;
             size_t range;
@@ -817,10 +819,10 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
 
     int size = (int)queryLength/3 - 7;
 
-    bool * posCheckList = new bool[size+1];
-    memset(posCheckList, false, size+1);
-    uint8_t * hammings = new uint8_t[size+1];
-    memset(hammings, 10, size+1);
+//    bool * posCheckList = new bool[size+1];
+//    memset(posCheckList, false, size+1);
+//    uint8_t * hammings = new uint8_t[size+1];
+//    memset(hammings, 10, size+1);
 
     int currPos;
 
@@ -840,7 +842,6 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
 
     //TODO coveredPosCnt is needed?
     while(i + 1 < l){
-        //coveredPosCnt += (posCheckList[filteredMatches[i].position/3] = (posCheckList[filteredMatches[i].position/3] == false));
         //check overlap
         overlapped = false;
         while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
@@ -858,56 +859,57 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
             if(filteredMatches[i].hamming == minHamming) overlaps.push_back(filteredMatches[i]);
             if(overlaps.size() == 1){
                 matches.push_back(overlaps[0]);
-
-                if(overlaps[0].hamming < hammings[overlaps[0].position/3]){
-                    hammings[overlaps[0].position/3] = overlaps[0].hamming;
-                }
+//
+//                if(overlaps[0].hamming < hammings[overlaps[0].position/3]){
+//                    hammings[overlaps[0].position/3] = overlaps[0].hamming;
+//                }
             } else {
                 overlaps[0].taxID = overlaps[0].speciesTaxID;
                 overlaps[0].red = 1;
                 matches.push_back(overlaps[0]);
-                if(overlaps[0].hamming < hammings[overlaps[0].position/3]){
-                    hammings[overlaps[0].position/3] = overlaps[0].hamming;
-                }
+//                if(overlaps[0].hamming < hammings[overlaps[0].position/3]){
+//                    hammings[overlaps[0].position/3] = overlaps[0].hamming;
+//                }
             }
             overlaps.clear();
             isTheLastOverlapped = (i == l - 1);
         } else{
             matches.push_back(filteredMatches[i]);
-            if(filteredMatches[i].hamming < hammings[filteredMatches[i].position/3]){
-                hammings[filteredMatches[i].position/3] = filteredMatches[i].hamming;
-            }
+//            if(filteredMatches[i].hamming < hammings[filteredMatches[i].position/3]){
+//                hammings[filteredMatches[i].position/3] = filteredMatches[i].hamming;
+//            }
         }
 
-        if(!posCheckList[filteredMatches[i].position/3]){
-            posCheckList[filteredMatches[i].position/3] = true;
-            coveredPosCnt ++;
-        }
+//        if(!posCheckList[filteredMatches[i].position/3]){
+//            posCheckList[filteredMatches[i].position/3] = true;
+//            coveredPosCnt ++;
+//        }
 
         i++;
     }
     if(!isTheLastOverlapped) {
-        if(!posCheckList[filteredMatches[l-1].position/3]){
-            posCheckList[filteredMatches[l-1].position/3] = true;
-            coveredPosCnt ++;
-        }
-        if(filteredMatches[l-1].hamming < hammings[filteredMatches[l-1].position/3]){
-            hammings[filteredMatches[l-1].position/3] = filteredMatches[l-1].hamming;
-        }
+//        if(!posCheckList[filteredMatches[l-1].position/3]){
+//            posCheckList[filteredMatches[l-1].position/3] = true;
+//            coveredPosCnt ++;
+//        }
+//        if(filteredMatches[l-1].hamming < hammings[filteredMatches[l-1].position/3]){
+//            hammings[filteredMatches[l-1].position/3] = filteredMatches[l-1].hamming;
+//        }
         matches.push_back(filteredMatches[l-1]);
     }
 
-    for(int h = 0; h < size - 1; h++){
-        if(hammings[h] != 10){
-            hammingSum += hammings[h];
-        }
-    }
+//    for(int h = 0; h < size - 1; h++){
+//        if(hammings[h] != 10){
+//            hammingSum += hammings[h];
+//        }
+//    }
 
 
     int hammingSum2 = matches[0].hamming;
     uint16_t curHammings;
     int coveredLength = 24;
     int gap;
+    //TODO use diffPosCheck here
     for(size_t m = 1; m < matches.size(); m++){
         gap = matches[m].position - matches[m-1].position;
         if(gap > 24){
@@ -924,8 +926,8 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     }
 
     // scoring
-    delete[] posCheckList;
-    delete[] hammings;
+ //   delete[] posCheckList;
+ //   delete[] hammings;
 
     // TODO using coveredLength
     if(coveredLength <= queryLength * 0.2)
