@@ -913,7 +913,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     if(coveredPosCnt >= maxNum) coveredPosCnt = maxNum - 1;
 
     // TODO using coveredLength
-    if(coveredLength < queryLength * 0.3)
+    if(coveredLength <= queryLength * 0.2)
         return;
     scoreOfEachGenus.push_back(((float)coveredLength - (float)hammingSum2) / (float)queryLength);
     matchesForEachGenus.push_back(matches);
