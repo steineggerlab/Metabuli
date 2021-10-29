@@ -488,7 +488,7 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCo
 
     size_t size = targetKmersToCompare.size();
     auto * hammingSums = new uint8_t[size + 1];
-    auto * listOfHammings = new uint8_t[size + 1];
+    auto * listOfHammings = new uint16_t[size + 1];
     uint8_t currentHammingSum;
     uint8_t minHammingSum = UINT8_MAX;
     uint16_t hammings;
