@@ -648,9 +648,9 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
 
     //Classify in species or lower level for queries that have close matches in reference DB.
     double selectedPercent = 0;
-    //TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.8, selectedPercent, queryLength, hammingAverage);
+    TaxID selectedLCA = match2LCA(taxIdList, ncbiTaxonomy, 0.8, selectedPercent, queryLength, hammingAverage);
 
-    TaxID selectedLCA = classifyFurther(matchesForLCA, ncbiTaxonomy, queryLength);
+    //TaxID selectedLCA = classifyFurther(matchesForLCA, ncbiTaxonomy, queryLength);
 
     ///TODO optimize strain specific classification criteria
     //Strain classification only for high coverage with LCA of species level
