@@ -834,11 +834,11 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     size_t l = filteredMatches.size();
     vector<Match> matches;
     matches.reserve(l);
-    //matches.emplace_back(0, 0, 0, 0, -100, 0, 0, 0);
     bool overlapped = false;
     uint8_t minHamming = 0;
     bool isTheLastOverlapped = false;
 
+    //TODO coveredPosCnt is needed?
     while(i + 1 < l){
         //coveredPosCnt += (posCheckList[filteredMatches[i].position/3] = (posCheckList[filteredMatches[i].position/3] == false));
         //check overlap
@@ -926,7 +926,6 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     // scoring
     delete[] posCheckList;
     delete[] hammings;
-    if(coveredPosCnt >= maxNum) coveredPosCnt = maxNum - 1;
 
     // TODO using coveredLength
     if(coveredLength <= queryLength * 0.2)
@@ -934,7 +933,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     scoreOfEachGenus.push_back(((float)coveredLength - (float)hammingSum2) / (float)queryLength);
     matchesForEachGenus.push_back(matches);
     if(PRINT) {
-        cout << filteredMatches[0].genusTaxID << " " << coveredPosCnt << " " << hammingSum2 << " " << matches.size()
+        cout << filteredMatches[0].genusTaxID << " " << coveredLength << " " << hammingSum2 << " " << matches.size()
              << endl;
     }
 }
