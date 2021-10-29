@@ -1000,7 +1000,7 @@ TaxID Classifier::match2LCA(const std::vector<int> & taxIdList, NcbiTaxonomy & t
     float tiedCoverage;
     TaxID first;
     TaxID second = 0;
-    int maximunPossibleKmerNum = queryLength / 3 - kmerLength + 1;
+    int maximunPossibleKmerNum = queryLength / 3 - kmerLength;
     bool haveMetCovThr = false;
     bool tied = false;
     vector<TaxID> ties;
