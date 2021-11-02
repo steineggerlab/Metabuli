@@ -879,7 +879,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     uint16_t currHammings;
     int size = (int)queryLength/3;
     auto * hammingsAtEachPos = new signed char[size + 1];
-    memset(hammingsAtEachPos, -1, (size + 1));
+    memset(hammingsAtEachPos, 10, (size + 1));
 
     //TODO Using max hamming at each position -> random match가 문제..
     size_t matchNum = matches.size();
@@ -888,7 +888,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
         for(int i2 = 0; i2 < 8; i2++){
-            if((signed char)GET_2_BITS(currHammings>>2*i2) > hammingsAtEachPos[currPos + i2]){
+            if((signed char)GET_2_BITS(currHammings>>2*i2) < hammingsAtEachPos[currPos + i2]){
                 hammingsAtEachPos[currPos + i2] = GET_2_BITS(currHammings>>2*i2);
             }
         }
