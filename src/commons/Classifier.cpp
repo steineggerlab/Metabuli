@@ -690,14 +690,22 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
 
 
 int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
-                                         size_t offset, size_t queryLength, float & bestScore){
+                                         size_t offset, int queryLength, float & bestScore){
     int conCnt;
     uint32_t hammingSum;
     float hammingMean;
     TaxID currentGenus;
     TaxID currentSpecies;
 
-    int maxNum = (int)queryLength / 3 - kmerLength + 1;
+    int maxCoveredLength;
+    if(queryLength % 3 == 2){
+        maxCoveredLength = queryLength - 5; // 2
+    } else if(queryLength % 3 == 1){
+        maxCoveredLength = queryLength - 4; // 4
+    } else{
+        maxCoveredLength = queryLength - 6; // 3
+    }
+//    = (int)queryLength / 3 - kmerLength + 1;
 
     vector<Match> filteredMatches;
     vector<vector<Match>> matchesForEachGenus;
@@ -741,7 +749,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
 
         // Construct a list of matches for scoring current genus
         if(!filteredMatches.empty()) {
-           constructMatchCombination(filteredMatches, maxNum, matchesForEachGenus, scoreOfEachGenus,
+           constructMatchCombination(filteredMatches, maxCoveredLength, matchesForEachGenus, scoreOfEachGenus,
                                        queryLength);
         }
         filteredMatches.clear();
@@ -804,9 +812,11 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
 // Assumption : There will be no frame shift of the same gene between species
 // What about intergenic region?
 // I think this function can be combined with the calling function
-void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int maxNum,
+void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int maxCoveredLength,
                                             vector<vector<Match>> & matchesForEachGenus,
                                             vector<float> & scoreOfEachGenus, size_t queryLength){
+    //Maximum covered length
+
     vector<Match> overlaps;
     // Sort
     sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
@@ -855,7 +865,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
 
     int hammingSum = 0;
     uint16_t curHammings;
-    int coveredLength = 24;
+
     int gap;
     //TODO use diffPosCheck here & min hamming at each position
     int currPos = 0;
@@ -871,7 +881,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     auto * hammingsAtEachPos = new uint8_t[size + 1];
     memset(hammingsAtEachPos, 10, (size + 1));
 
-    //TODO Hamming sum을 좀 나눠야
+    //TODO Optimize the weight of hamming distance
     size_t matchNum = matches.size();
     size_t f = 0;
     while(f < matchNum){
@@ -914,9 +924,11 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
 //            coveredLength += gap;
 //        }
 //    }
+    int coveredLength = coveredPosCnt * 3;
+    if(coveredLength > maxCoveredLength) coveredLength = maxCoveredLength;
 
-    if((float)coveredPosCnt * 3 <= queryLength * 0.2f) return;
-    scoreOfEachGenus.push_back(((float)coveredPosCnt * 3 - (float)hammingSum * 0.2) / (float)queryLength);
+    if((float)coveredLength * 3 <= (float)maxCoveredLength * 0.2f) return;
+    scoreOfEachGenus.push_back(((float)coveredLength * 3 - (float)hammingSum * 0.1) / (float)maxCoveredLength);
     matchesForEachGenus.push_back(matches);
     if(PRINT) {
         cout << filteredMatches[0].genusTaxID << " " << coveredPosCnt << " " << hammingSum << " " << matches.size()

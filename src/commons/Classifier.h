@@ -228,7 +228,7 @@ private:
                           const size_t & offset, const size_t & end, Match * matchList, Query * queryList);
 
     static int getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
-                                 size_t offset, size_t queryLength, float & bestScore);
+                                 size_t offset, int queryLength, float & bestScore);
 
     static void constructMatchCombination(vector<Match> & filteredMatches, int maxNum,
                                           vector<vector<Match>> & matchesForEachGenus,vector<float> & scoreOfEachGenus,
