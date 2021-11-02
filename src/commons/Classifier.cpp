@@ -699,11 +699,11 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
 
     int maxCoveredLength;
     if(queryLength % 3 == 2){
-        maxCoveredLength = queryLength - 5; // 2
+        maxCoveredLength = queryLength - 2; // 2
     } else if(queryLength % 3 == 1){
         maxCoveredLength = queryLength - 4; // 4
     } else{
-        maxCoveredLength = queryLength - 6; // 3
+        maxCoveredLength = queryLength - 3; // 3
     }
 //    = (int)queryLength / 3 - kmerLength + 1;
 
