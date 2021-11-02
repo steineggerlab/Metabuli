@@ -924,7 +924,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     if(coveredLength > maxCoveredLength) coveredLength = maxCoveredLength;
 
     if((float)coveredLength <= (float)maxCoveredLength * 0.2f) return;
-    scoreOfEachGenus.push_back(((float)coveredLength - hammingSum) / (float)maxCoveredLength);
+    scoreOfEachGenus.push_back(((float)coveredLength - hammingSum*1.2) / (float)maxCoveredLength);
     matchesForEachGenus.push_back(matches);
     if(PRINT) {
         cout << filteredMatches[0].genusTaxID << " " << coveredPosCnt << " " << hammingSum << " " << matches.size()
@@ -987,11 +987,7 @@ TaxID Classifier::match2LCA(const std::vector<Match> & matchList, NcbiTaxonomy &
     float coverageThreshold = 0.8;
 
     float curCoverage;
-    float maxCoverage = -FLT_MAX;
-    float spMaxCoverage = -FLT_MAX;
     int spFisrtMaxWeight = 0;
-    int spSecondMaxWeight = 0;
-    float tiedCoverage;
     TaxID first;
     int maximunPossibleKmerNum = queryLength / 3 - kmerLength;
     bool haveMetCovThr = false;
