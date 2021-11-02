@@ -705,7 +705,6 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
     } else{
         maxCoveredLength = queryLength - 3; // 3
     }
-//    = (int)queryLength / 3 - kmerLength + 1;
 
     vector<Match> filteredMatches;
     vector<vector<Match>> matchesForEachGenus;
@@ -863,24 +862,13 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
         matches.push_back(filteredMatches[l-1]);
     }
 
-
-    uint16_t curHammings;
-
-    int gap;
-    //TODO use diffPosCheck here & min hamming at each position
-    int currPos = 0;
-    //Get first hamming
-    int firstPos = matches[0].position / 3;
-    uint8_t firstHamming = matches[0].hamming;
-
-
     // Hamming distance & covered length
     int coveredPosCnt = 0;
     uint16_t currHammings;
     int size = (int)queryLength/3;
     auto * hammingsAtEachPos = new signed char[size + 1];
-    memset(hammingsAtEachPos, 10, (size + 1));
-
+    memset(hammingsAtEachPos, -1, (size + 1));
+    int currPos;
     //TODO Using max hamming at each position -> random match가 문제..
     size_t matchNum = matches.size();
     size_t f = 0;
@@ -888,7 +876,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
         for(int i2 = 0; i2 < 8; i2++){
-            if((signed char)GET_2_BITS(currHammings>>2*i2) < hammingsAtEachPos[currPos + i2]){
+            if((signed char)GET_2_BITS(currHammings>>2*i2) > hammingsAtEachPos[currPos + i2]){
                 hammingsAtEachPos[currPos + i2] = GET_2_BITS(currHammings>>2*i2);
             }
         }
@@ -911,7 +899,6 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
             coveredPosCnt ++;
         }
     }
-    //cout<<endl;
 
     delete[] hammingsAtEachPos;
 
@@ -1061,18 +1048,18 @@ TaxID Classifier::match2LCA(const std::vector<Match> & matchList, NcbiTaxonomy &
 
 
 //TODO kmer count -> covered length
+//TODO hamming
 TaxID Classifier::classifyFurther(const vector<Match> & matches, NcbiTaxonomy & taxonomy, uint32_t queryLength) {
 
     std::map<TaxID, int> taxIdCounts;
     float majorityCutoff = 0.8;
     float coverageThreshold = 0.8;
-    float maxKmerCnt = queryLength/3.0f - 7;
+    float maxKmerCnt = queryLength/3.0f - kmerLength;
 
     for(Match match : matches){
         taxIdCounts[match.taxID] += 1;
         taxIdCounts[match.speciesTaxID] += (match.speciesTaxID != match.taxID); // subspecies
     }
-
 
     float currentCoverage;
     float currnetPercentage;
