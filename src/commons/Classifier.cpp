@@ -924,7 +924,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     if(coveredLength > maxCoveredLength) coveredLength = maxCoveredLength;
 
     if((float)coveredLength <= (float)maxCoveredLength * 0.2f) return;
-    scoreOfEachGenus.push_back(((float)coveredLength - hammingSum * 0.7) / (float)maxCoveredLength);
+    scoreOfEachGenus.push_back(((float)coveredLength - hammingSum) / (float)maxCoveredLength);
     matchesForEachGenus.push_back(matches);
     if(PRINT) {
         cout << filteredMatches[0].genusTaxID << " " << coveredPosCnt << " " << hammingSum << " " << matches.size()
