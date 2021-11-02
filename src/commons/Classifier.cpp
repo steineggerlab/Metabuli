@@ -625,7 +625,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
     queryList[currentQuery].score = maxScore;
 
     //Classify in genus level for highly diverged queries
-    if(maxScore < 0.7){
+    if(maxScore < 0.8){
         selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
