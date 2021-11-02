@@ -887,15 +887,11 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     while(f < matchNum){
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
-        //print_binary16(16,currHammings); cout<<endl;
         for(int i2 = 0; i2 < 8; i2++){
-           // cout<<GET_2_BITS(currHammings>>2*i2)<<" "<<(int)hammingsAtEachPos[currPos + i2]<<endl;
             if(GET_2_BITS(currHammings>>2*i2) < hammingsAtEachPos[currPos + i2]){
                 hammingsAtEachPos[currPos + i2] = GET_2_BITS(currHammings>>2*i2);
             }
-            //curHammings >>= 2;
         }
-        //print_binary16(16,currHammings); cout<<endl;
         f++;
     }
     for(int h = 0; h < size; h++){
@@ -928,7 +924,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     if(coveredLength > maxCoveredLength) coveredLength = maxCoveredLength;
 
     if((float)coveredLength * 3 <= (float)maxCoveredLength * 0.2f) return;
-    scoreOfEachGenus.push_back(((float)coveredLength * 3 - (float)hammingSum * 0.1) / (float)maxCoveredLength);
+    scoreOfEachGenus.push_back(((float)coveredLength * 3) / (float)maxCoveredLength);
     matchesForEachGenus.push_back(matches);
     if(PRINT) {
         cout << filteredMatches[0].genusTaxID << " " << coveredPosCnt << " " << hammingSum << " " << matches.size()
@@ -997,7 +993,6 @@ TaxID Classifier::match2LCA(const std::vector<Match> & matchList, NcbiTaxonomy &
     int spSecondMaxWeight = 0;
     float tiedCoverage;
     TaxID first;
-    TaxID second = 0;
     int maximunPossibleKmerNum = queryLength / 3 - kmerLength;
     bool haveMetCovThr = false;
     bool tied = false;
