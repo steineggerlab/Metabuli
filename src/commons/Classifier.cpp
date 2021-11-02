@@ -881,7 +881,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     auto * hammingsAtEachPos = new signed char[size + 1];
     memset(hammingsAtEachPos, -1, (size + 1));
 
-    //TODO Optimize the weight of hamming distance
+    //TODO Using max hamming at each position -> random match가 문제..
     size_t matchNum = matches.size();
     size_t f = 0;
     while(f < matchNum){
