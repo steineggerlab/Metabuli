@@ -863,7 +863,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
         matches.push_back(filteredMatches[l-1]);
     }
 
-    int hammingSum = 0;
+
     uint16_t curHammings;
 
     int gap;
@@ -894,11 +894,18 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
         }
         f++;
     }
+    float hammingSum = 0;
     for(int h = 0; h < size; h++){
        // cout<<(int)hammingsAtEachPos[h]<<" ";
-        if(hammingsAtEachPos[h] != - 1) {
-            hammingSum += hammingsAtEachPos[h];
+        if(hammingsAtEachPos[h] == 0) {
+            //hammingSum += hammingsAtEachPos[h];
             coveredPosCnt ++;
+        } else if(hammingsAtEachPos[h] == 1){
+            hammingSum += 1.5f;
+        } else if(hammingsAtEachPos[h] == 2){
+            hammingSum += 2.0f;
+        } else if(hammingsAtEachPos[h] == 3){
+            hammingSum += 2.5f;
         }
     }
     //cout<<endl;
@@ -924,7 +931,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     if(coveredLength > maxCoveredLength) coveredLength = maxCoveredLength;
 
     if((float)coveredLength <= (float)maxCoveredLength * 0.2f) return;
-    scoreOfEachGenus.push_back(((float)coveredLength - hammingSum*1.2) / (float)maxCoveredLength);
+    scoreOfEachGenus.push_back(((float)coveredLength - hammingSum) / (float)maxCoveredLength);
     matchesForEachGenus.push_back(matches);
     if(PRINT) {
         cout << filteredMatches[0].genusTaxID << " " << coveredPosCnt << " " << hammingSum << " " << matches.size()
