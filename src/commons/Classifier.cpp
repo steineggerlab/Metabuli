@@ -902,10 +902,13 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
             coveredPosCnt ++;
         } else if(hammingsAtEachPos[h] == 1){
             hammingSum += 1.5f;
+            coveredPosCnt ++;
         } else if(hammingsAtEachPos[h] == 2){
             hammingSum += 2.0f;
+            coveredPosCnt ++;
         } else if(hammingsAtEachPos[h] == 3){
             hammingSum += 2.5f;
+            coveredPosCnt ++;
         }
     }
     //cout<<endl;
