@@ -636,8 +636,8 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
     }
 
     //Classify in species or lower level for queries that have close matches in reference DB.
-    TaxID selectedLCA = match2LCA(matchesForLCA, ncbiTaxonomy, queryLength);
-    //TaxID selectedLCA = classifyFurther(matchesForLCA, ncbiTaxonomy, queryLength);
+    //TaxID selectedLCA = match2LCA(matchesForLCA, ncbiTaxonomy, queryLength);
+    TaxID selectedLCA = classifyFurther(matchesForLCA, ncbiTaxonomy, queryLength);
 
     ///TODO optimize strain specific classification criteria
     //Strain classification only for high coverage with LCA of species level
@@ -757,29 +757,8 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         if(scoreOfEachGenus[g] > maxScore * 0.95f){
             maxIdx.push_back(g);
         }
-//        if(scoreOfEachGenus[g] > maxScore){
-//            maxScore = scoreOfEachGenus[g];
-//            maxIdx.clear();
-//            maxIdx.push_back(g);
-//        } else if(scoreOfEachGenus[g] == maxScore){
-//
-//        }
     }
     bestScore = maxScore;
-
-//    // Choose the best genus
-//    float maxScore = -100;
-//    vector<size_t> maxIdx;
-//    for(size_t g = 0; g < scoreOfEachGenus.size(); g++){
-//        if(scoreOfEachGenus[g] > maxScore){
-//            maxScore = scoreOfEachGenus[g];
-//            maxIdx.clear();
-//            maxIdx.push_back(g);
-//        } else if(scoreOfEachGenus[g] == maxScore){
-//            maxIdx.push_back(g);
-//        }
-//    }
-//    bestScore = maxScore;
 
     for(size_t g = 0; g < maxIdx.size(); g++){
         matchesForMajorityLCA.insert(matchesForMajorityLCA.end(), matchesForEachGenus[maxIdx[g]].begin(),
@@ -820,60 +799,60 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     size_t i = 0;
     while(i + 1 < l){
         //check overlap
-//        overlapCnt = 0;
-//        while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
-//              filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < l)){
-//            overlapCnt++;
-//            if(overlapCnt == 1){
-//                overlappedMatch = filteredMatches[i];
-//                minHamming = filteredMatches[i].hamming;
-//            } else if (filteredMatches[i].hamming == minHamming){
-//                overlapCnt++;
-//            }
-//            ++i;
-//        }
-//        if(overlapCnt){
-//            if(filteredMatches[i].hamming == minHamming) overlapCnt++;
-//            if(overlapCnt == 1){
-//                matches.push_back(overlappedMatch);
-//            } else {
-//                overlappedMatch.taxID = overlappedMatch.speciesTaxID;
-//                matches.push_back(overlappedMatch);
-//            }
-//            isTheLastOverlapped = (i == l - 1);
-//        } else{
-//            matches.push_back(filteredMatches[i]);
-//        }
-//        i++;
-
-        overlapped = false;
+        overlapCnt = 0;
         while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
               filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < l)){
-            if(!overlapped) {
-                overlapped = true;
-                //overlappedMatch = filteredMatches[i];
-                overlaps.push_back(filteredMatches[i]);
+            overlapCnt++;
+            if(overlapCnt == 1){
+                overlappedMatch = filteredMatches[i];
                 minHamming = filteredMatches[i].hamming;
-            } else if(filteredMatches[i].hamming == minHamming){
-                overlaps.push_back(filteredMatches[i]);
+            } else if (filteredMatches[i].hamming == minHamming){
+                overlapCnt++;
             }
-            i++;
+            ++i;
         }
-        if(overlapped) {
-            if(filteredMatches[i].hamming == minHamming) overlaps.push_back(filteredMatches[i]);
-            if(overlaps.size() == 1){
-                matches.push_back(overlaps[0]);
+        if(overlapCnt){
+            if(filteredMatches[i].hamming == minHamming) overlapCnt++;
+            if(overlapCnt == 1){
+                matches.push_back(overlappedMatch);
             } else {
-                overlaps[0].taxID = overlaps[0].speciesTaxID;
-                overlaps[0].red = 1;
-                matches.push_back(overlaps[0]);
+                overlappedMatch.taxID = overlappedMatch.speciesTaxID;
+                matches.push_back(overlappedMatch);
             }
-            overlaps.clear();
             isTheLastOverlapped = (i == l - 1);
         } else{
             matches.push_back(filteredMatches[i]);
         }
         i++;
+
+//        overlapped = false;
+//        while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
+//              filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < l)){
+//            if(!overlapped) {
+//                overlapped = true;
+//                //overlappedMatch = filteredMatches[i];
+//                overlaps.push_back(filteredMatches[i]);
+//                minHamming = filteredMatches[i].hamming;
+//            } else if(filteredMatches[i].hamming == minHamming){
+//                overlaps.push_back(filteredMatches[i]);
+//            }
+//            i++;
+//        }
+//        if(overlapped) {
+//            if(filteredMatches[i].hamming == minHamming) overlaps.push_back(filteredMatches[i]);
+//            if(overlaps.size() == 1){
+//                matches.push_back(overlaps[0]);
+//            } else {
+//                overlaps[0].taxID = overlaps[0].speciesTaxID;
+//                overlaps[0].red = 1;
+//                matches.push_back(overlaps[0]);
+//            }
+//            overlaps.clear();
+//            isTheLastOverlapped = (i == l - 1);
+//        } else{
+//            matches.push_back(filteredMatches[i]);
+//        }
+//        i++;
     }
     if(!isTheLastOverlapped) {
         matches.push_back(filteredMatches[l-1]);
