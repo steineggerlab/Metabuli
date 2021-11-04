@@ -832,9 +832,9 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     // Calculate Hamming distance & covered length
     int coveredPosCnt = 0;
     uint16_t currHammings;
-    int size = (int)queryLength/3;
-    auto * hammingsAtEachPos = new signed char[size + 1];
-    memset(hammingsAtEachPos, -1, (size + 1));
+    int aminoAcidNum = (int)queryLength / 3;
+    auto * hammingsAtEachPos = new signed char[aminoAcidNum + 1];
+    memset(hammingsAtEachPos, -1, (aminoAcidNum + 1));
     int currPos;
     size_t matchNum = matches.size();
     size_t f = 0;
@@ -852,7 +852,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
         f++;
     }
     float hammingSum = 0;
-    for(int h = 0; h < size; h++){
+    for(int h = 0; h < aminoAcidNum; h++){
         if(hammingsAtEachPos[h] == 0) {
             coveredPosCnt++;
         }else if(hammingsAtEachPos[h] != -1){
@@ -907,7 +907,7 @@ TaxID Classifier::match2LCA(const std::vector<Match> & matchList, NcbiTaxonomy &
         // iterate all ancestors up to root (including). add currWeight and candidate status to each
         TaxID currParentTaxId = node->parentTaxId;
         while (currParentTaxId != currTaxId) {
-            if (ancTaxIdsCounts.find(currParentTaxId) != ancTaxIdsCounts.end()) {
+            if (ancTaxIdsCounts.find(currParentTaxId) != ancTaxIdsCounts.end()) { //원소가 있다면
                 ancTaxIdsCounts[currParentTaxId].update(currWeight, currTaxId);
             } else {
                 taxNode currParentNode;
@@ -938,11 +938,6 @@ TaxID Classifier::match2LCA(const std::vector<Match> & matchList, NcbiTaxonomy &
     double selectedPercent;
 
     for (auto it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); ++it) {
-        // consider only candidates
-        if (!(it->second.isCandidate)) {
-            continue;
-        }
-
         if(it->second.weight >= maximunPossibleKmerNum) {
             it->second.weight = maximunPossibleKmerNum - 1;
         }
@@ -951,7 +946,6 @@ TaxID Classifier::match2LCA(const std::vector<Match> & matchList, NcbiTaxonomy &
         TaxID currTaxId = it->first;
         TaxonNode const *node = taxonomy.taxonNode(currTaxId, false);
         int currRankIdx = NcbiTaxonomy::findRankIndex(node->rank);
-
         if (curCoverage > coverageThreshold && currRankIdx <= 4) {
             if (!haveMetCovThr) {
                 haveMetCovThr = true;
