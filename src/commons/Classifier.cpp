@@ -100,7 +100,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
 
     //extact k-mers from query sequences and compare them to target k-mer DB
     ///TODO measure time for extract & sort & search separately
-    beforeSearch = time(NULL);
+    beforeSearch = time(nullptr);
     while(processedSeqCnt < numOfSeq){
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryList);
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
@@ -111,13 +111,13 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     cout<<"Number of query k-mers: "<<numOfTatalQueryKmerCnt<<endl;
     writeMatches(matchBuffer, matchFile);
     fclose(matchFile);
-    afterSearch = time(NULL);
+    afterSearch = time(nullptr);
     cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
 
     //load matches and analyze
     cout<<"Analyse Result ... "<<endl;
     analyseResultParallel(taxonomy, sequences, matchFileName, numOfSeq, queryList);
-    afterAnalyze = time(NULL);
+    afterAnalyze = time(nullptr);
     cout<<"Time spent for analyzing: "<<double(afterAnalyze-afterSearch)<<endl;
 
     //write report files
@@ -814,66 +814,66 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     vector<Match> overlaps;
     Match overlappedMatch;
     int overlapCnt;
-    matches.reserve(l);
     bool overlapped;
+    matches.reserve(l);
     uint8_t minHamming = 0;
     bool isTheLastOverlapped = false;
     size_t i = 0;
     while(i + 1 < l){
         //check overlap
-        overlapped = false;
-        overlapCnt = 0;
-        while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
-              filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < l)){
-            overlapCnt++;
-            if(overlapCnt == 1){
-                overlappedMatch = filteredMatches[i];
-                minHamming = filteredMatches[i].hamming;
-            } else if (filteredMatches[i].hamming == minHamming){
-                overlapCnt++;
-            }
-            ++i;
-        }
-        if(overlapCnt){
-            if(filteredMatches[i].hamming == minHamming) overlapCnt++;
-            if(overlapCnt == 1){
-                matches.push_back(overlappedMatch);
-            } else {
-                overlappedMatch.taxID = overlappedMatch.speciesTaxID;
-                matches.push_back(overlappedMatch);
-            }
-            isTheLastOverlapped = (i == l - 1);
-        } else{
-            matches.push_back(filteredMatches[i]);
-        }
-        ++i;
+//        overlapCnt = 0;
 //        while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
-//            filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < l)){
-//            if(!overlapped) {
-//                overlapped = true;
+//              filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < l)){
+//            overlapCnt++;
+//            if(overlapCnt == 1){
 //                overlappedMatch = filteredMatches[i];
-//                //overlaps.push_back(filteredMatches[i]);
 //                minHamming = filteredMatches[i].hamming;
-//            } else if(filteredMatches[i].hamming == minHamming){
-//                overlaps.push_back(filteredMatches[i]);
+//            } else if (filteredMatches[i].hamming == minHamming){
+//                overlapCnt++;
 //            }
-//            i++;
+//            ++i;
 //        }
-//        if(overlapped) {
-//            if(filteredMatches[i].hamming == minHamming) overlaps.push_back(filteredMatches[i]);
-//            if(overlaps.size() == 1){
-//                matches.push_back(overlaps[0]);
+//        if(overlapCnt){
+//            if(filteredMatches[i].hamming == minHamming) overlapCnt++;
+//            if(overlapCnt == 1){
+//                matches.push_back(overlappedMatch);
 //            } else {
-//                overlaps[0].taxID = overlaps[0].speciesTaxID;
-//                overlaps[0].red = 1;
-//                matches.push_back(overlaps[0]);
+//                overlappedMatch.taxID = overlappedMatch.speciesTaxID;
+//                matches.push_back(overlappedMatch);
 //            }
-//            overlaps.clear();
 //            isTheLastOverlapped = (i == l - 1);
 //        } else{
 //            matches.push_back(filteredMatches[i]);
 //        }
 //        i++;
+        overlapped = false;
+        while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
+            filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < l)){
+            if(!overlapped) {
+                overlapped = true;
+                overlappedMatch = filteredMatches[i];
+                //overlaps.push_back(filteredMatches[i]);
+                minHamming = filteredMatches[i].hamming;
+            } else if(filteredMatches[i].hamming == minHamming){
+                overlaps.push_back(filteredMatches[i]);
+            }
+            i++;
+        }
+        if(overlapped) {
+            if(filteredMatches[i].hamming == minHamming) overlaps.push_back(filteredMatches[i]);
+            if(overlaps.size() == 1){
+                matches.push_back(overlaps[0]);
+            } else {
+                overlaps[0].taxID = overlaps[0].speciesTaxID;
+                overlaps[0].red = 1;
+                matches.push_back(overlaps[0]);
+            }
+            overlaps.clear();
+            isTheLastOverlapped = (i == l - 1);
+        } else{
+            matches.push_back(filteredMatches[i]);
+        }
+        i++;
     }
     if(!isTheLastOverlapped) {
         matches.push_back(filteredMatches[l-1]);
