@@ -968,7 +968,6 @@ TaxID Classifier::match2LCA(const std::vector<Match> & matchList, NcbiTaxonomy &
                 spFisrtMaxWeight = it->second.weight;
             }
         }
-
         else if (currPercent >= majorityCutoff && (!haveMetCovThr)) {
             if ((currRankIdx < minRank) || ((currRankIdx == minRank) && (currPercent > selectedPercent))) {
                 selectedTaxon = it->first;
