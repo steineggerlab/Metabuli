@@ -851,8 +851,8 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
             filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < l)){
             if(!overlapped) {
                 overlapped = true;
-                overlappedMatch = filteredMatches[i];
-                //overlaps.push_back(filteredMatches[i]);
+                //overlappedMatch = filteredMatches[i];
+                overlaps.push_back(filteredMatches[i]);
                 minHamming = filteredMatches[i].hamming;
             } else if(filteredMatches[i].hamming == minHamming){
                 overlaps.push_back(filteredMatches[i]);
