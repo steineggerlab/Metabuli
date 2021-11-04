@@ -888,6 +888,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     //TODO Using max hamming at each position -> random match가 문제..
     size_t matchNum = matches.size();
     size_t f = 0;
+    cout<<"hi"<<endl;
     while(f < matchNum){
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
@@ -901,6 +902,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
         if(GET_2_BITS_8(currHammings) > hammingsAtEachPos[currPos + 7]) hammingsAtEachPos[currPos + 7] = GET_2_BITS_8(currHammings);
         f++;
     }
+    cout<<"bye"<<endl;
     float hammingSum = 0;
     for(int h = 0; h < size; h++){
         if(hammingsAtEachPos[h] == 0) {
