@@ -891,19 +891,19 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     while(f < matchNum){
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
-        for(int i2 = 0; i2 < 8; i2++){
-            if((signed char)GET_2_BITS(currHammings>>2*i2) > hammingsAtEachPos[currPos + i2]){
-                hammingsAtEachPos[currPos + i2] = GET_2_BITS(currHammings>>2*i2);
-            }
-        }
-//        if(GET_2_BITS(currHammings) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
-//        if(GET_2_BITS(currHammings>>2) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings>>2);
-//        if(GET_2_BITS(currHammings>>4) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings>>4);
-//        if(GET_2_BITS(currHammings>>6) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings>>6);
-//        if(GET_2_BITS(currHammings>>8) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings>>8);
-//        if(GET_2_BITS(currHammings>>10) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings>>10);
-//        if(GET_2_BITS(currHammings>>12) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings>>12);
-//        if(GET_2_BITS(currHammings>>14) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings>>14);
+//        for(int i2 = 0; i2 < 8; i2++){
+//            if((signed char)GET_2_BITS(currHammings>>2*i2) > hammingsAtEachPos[currPos + i2]){
+//                hammingsAtEachPos[currPos + i2] = GET_2_BITS(currHammings>>2*i2);
+//            }
+//        }
+        if(GET_2_BITS(currHammings) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
+        if(GET_2_BITS(currHammings>>2) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings>>2);
+        if(GET_2_BITS(currHammings>>4) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings>>4);
+        if(GET_2_BITS(currHammings>>6) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings>>6);
+        if(GET_2_BITS(currHammings>>8) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings>>8);
+        if(GET_2_BITS(currHammings>>10) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings>>10);
+        if(GET_2_BITS(currHammings>>12) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings>>12);
+        if(GET_2_BITS(currHammings>>14) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings>>14);
         f++;
     }
     float hammingSum = 0;
