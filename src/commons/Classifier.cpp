@@ -900,11 +900,11 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
         if(GET_2_BITS(currHammings>>12) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>12);
         if(GET_2_BITS(currHammings>>14) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>14);
 
-        for(int i2 = 0; i2 < 8; i2++){
-            if((signed char)GET_2_BITS_1(currHammings>>2*i2) > hammingsAtEachPos[currPos + i2]){
-                hammingsAtEachPos[currPos + i2] = GET_2_BITS_1(currHammings>>2*i2);
-            }
-        }
+//        for(int i2 = 0; i2 < 8; i2++){
+//            if((signed char)GET_2_BITS_1(currHammings>>2*i2) > hammingsAtEachPos[currPos + i2]){
+//                hammingsAtEachPos[currPos + i2] = GET_2_BITS_1(currHammings>>2*i2);
+//            }
+//        }
         f++;
     }
     float hammingSum = 0;
