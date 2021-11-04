@@ -820,26 +820,55 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     size_t i = 0;
     while(i + 1 < l){
         //check overlap
-        overlapCnt = 0;
+//        overlapCnt = 0;
+//        while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
+//              filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < l)){
+//            overlapCnt++;
+//            if(overlapCnt == 1){
+//                overlappedMatch = filteredMatches[i];
+//                minHamming = filteredMatches[i].hamming;
+//            } else if (filteredMatches[i].hamming == minHamming){
+//                overlapCnt++;
+//            }
+//            ++i;
+//        }
+//        if(overlapCnt){
+//            if(filteredMatches[i].hamming == minHamming) overlapCnt++;
+//            if(overlapCnt == 1){
+//                matches.push_back(overlappedMatch);
+//            } else {
+//                overlappedMatch.taxID = overlappedMatch.speciesTaxID;
+//                matches.push_back(overlappedMatch);
+//            }
+//            isTheLastOverlapped = (i == l - 1);
+//        } else{
+//            matches.push_back(filteredMatches[i]);
+//        }
+//        i++;
+
+        overlapped = false;
         while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
               filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < l)){
-            overlapCnt++;
-            if(overlapCnt == 1){
-                overlappedMatch = filteredMatches[i];
+            if(!overlapped) {
+                overlapped = true;
+                //overlappedMatch = filteredMatches[i];
+                overlaps.push_back(filteredMatches[i]);
                 minHamming = filteredMatches[i].hamming;
-            } else if (filteredMatches[i].hamming == minHamming){
-                overlapCnt++;
+            } else if(filteredMatches[i].hamming == minHamming){
+                overlaps.push_back(filteredMatches[i]);
             }
-            ++i;
+            i++;
         }
-        if(overlapCnt){
-            if(filteredMatches[i].hamming == minHamming) overlapCnt++;
-            if(overlapCnt == 1){
-                matches.push_back(overlappedMatch);
+        if(overlapped) {
+            if(filteredMatches[i].hamming == minHamming) overlaps.push_back(filteredMatches[i]);
+            if(overlaps.size() == 1){
+                matches.push_back(overlaps[0]);
             } else {
-                overlappedMatch.taxID = overlappedMatch.speciesTaxID;
-                matches.push_back(overlappedMatch);
+                overlaps[0].taxID = overlaps[0].speciesTaxID;
+                overlaps[0].red = 1;
+                matches.push_back(overlaps[0]);
             }
+            overlaps.clear();
             isTheLastOverlapped = (i == l - 1);
         } else{
             matches.push_back(filteredMatches[i]);
@@ -868,13 +897,13 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
             }
         }
 //        if(GET_2_BITS(currHammings) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
-//        if(GET_2_BITS(currHammings>>2) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>2);
-//        if(GET_2_BITS(currHammings>>4) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>4);
-//        if(GET_2_BITS(currHammings>>6) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>6);
-//        if(GET_2_BITS(currHammings>>8) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>8);
-//        if(GET_2_BITS(currHammings>>10) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>10);
-//        if(GET_2_BITS(currHammings>>12) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>12);
-//        if(GET_2_BITS(currHammings>>14) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>14);
+//        if(GET_2_BITS(currHammings>>2) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings>>2);
+//        if(GET_2_BITS(currHammings>>4) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings>>4);
+//        if(GET_2_BITS(currHammings>>6) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings>>6);
+//        if(GET_2_BITS(currHammings>>8) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings>>8);
+//        if(GET_2_BITS(currHammings>>10) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings>>10);
+//        if(GET_2_BITS(currHammings>>12) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings>>12);
+//        if(GET_2_BITS(currHammings>>14) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings>>14);
         f++;
     }
     float hammingSum = 0;
