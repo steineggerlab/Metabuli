@@ -274,11 +274,6 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     int completedSplitCnt = 0;
     cout<<"Deviding query k-mer list into blocks for multi threading... done"<<endl;
 
-    ///taxonomical ID at the lowest rank? or at the rank of redundancy reduced
-    vector<const vector<int> *> taxID;
-    taxID.push_back(& taxIdList);
-    taxID.push_back(& spTaxIdList);
-
     size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
     size_t numOfDiffIdx = targetDiffIdxList.fileSize / sizeof(uint16_t);
     cout<<"The number of target k-mers: "<<numOfTargetKmer<<endl;
@@ -287,7 +282,8 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     omp_set_num_threads(ThreadNum);
     while(completedSplitCnt < threadNum) {
         bool hasOverflow = false;
-#pragma omp parallel default(none), shared(numOfDiffIdx, queryIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, numOfcall, querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, taxID, cout, genusTaxIdList)
+#pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, \
+        hasOverflow, querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList)
         {
             //query variables
             uint64_t currentQuery = UINT64_MAX;
