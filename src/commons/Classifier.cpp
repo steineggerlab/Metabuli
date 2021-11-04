@@ -845,66 +845,36 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
             matches.push_back(filteredMatches[i]);
         }
         i++;
-//        overlapped = false;
-//        while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
-//            filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < l)){
-//            if(!overlapped) {
-//                overlapped = true;
-//                //overlappedMatch = filteredMatches[i];
-//                overlaps.push_back(filteredMatches[i]);
-//                minHamming = filteredMatches[i].hamming;
-//            } else if(filteredMatches[i].hamming == minHamming){
-//                overlaps.push_back(filteredMatches[i]);
-//            }
-//            i++;
-//        }
-//        if(overlapped) {
-//            if(filteredMatches[i].hamming == minHamming) overlaps.push_back(filteredMatches[i]);
-//            if(overlaps.size() == 1){
-//                matches.push_back(overlaps[0]);
-//            } else {
-//                overlaps[0].taxID = overlaps[0].speciesTaxID;
-//                overlaps[0].red = 1;
-//                matches.push_back(overlaps[0]);
-//            }
-//            overlaps.clear();
-//            isTheLastOverlapped = (i == l - 1);
-//        } else{
-//            matches.push_back(filteredMatches[i]);
-//        }
-//        i++;
     }
     if(!isTheLastOverlapped) {
         matches.push_back(filteredMatches[l-1]);
     }
 
-    // Hamming distance & covered length
+    // Calculate Hamming distance & covered length
     int coveredPosCnt = 0;
     uint16_t currHammings;
     int size = (int)queryLength/3;
     auto * hammingsAtEachPos = new signed char[size + 1];
     memset(hammingsAtEachPos, -1, (size + 1));
     int currPos;
-    //TODO Using max hamming at each position -> random match가 문제..
     size_t matchNum = matches.size();
     size_t f = 0;
     while(f < matchNum){
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
-        if(GET_2_BITS(currHammings) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
-        if(GET_2_BITS(currHammings>>2) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>2);
-        if(GET_2_BITS(currHammings>>4) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>4);
-        if(GET_2_BITS(currHammings>>6) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>6);
-        if(GET_2_BITS(currHammings>>8) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>8);
-        if(GET_2_BITS(currHammings>>10) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>10);
-        if(GET_2_BITS(currHammings>>12) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>12);
-        if(GET_2_BITS(currHammings>>14) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>14);
-
-//        for(int i2 = 0; i2 < 8; i2++){
-//            if((signed char)GET_2_BITS_1(currHammings>>2*i2) > hammingsAtEachPos[currPos + i2]){
-//                hammingsAtEachPos[currPos + i2] = GET_2_BITS_1(currHammings>>2*i2);
-//            }
-//        }
+        for(int i2 = 0; i2 < 8; i2++){
+            if((signed char)GET_2_BITS(currHammings>>2*i2) > hammingsAtEachPos[currPos + i2]){
+                hammingsAtEachPos[currPos + i2] = GET_2_BITS(currHammings>>2*i2);
+            }
+        }
+//        if(GET_2_BITS(currHammings) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
+//        if(GET_2_BITS(currHammings>>2) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>2);
+//        if(GET_2_BITS(currHammings>>4) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>4);
+//        if(GET_2_BITS(currHammings>>6) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>6);
+//        if(GET_2_BITS(currHammings>>8) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>8);
+//        if(GET_2_BITS(currHammings>>10) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>10);
+//        if(GET_2_BITS(currHammings>>12) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>12);
+//        if(GET_2_BITS(currHammings>>14) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>14);
         f++;
     }
     float hammingSum = 0;
@@ -917,6 +887,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
         }
     }
     delete[] hammingsAtEachPos;
+
     int coveredLength = coveredPosCnt * 3;
     if(coveredLength > maxCoveredLength) coveredLength = maxCoveredLength;
 
