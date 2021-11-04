@@ -29,7 +29,7 @@ struct TargetKmerInfo{
 };
 
 struct TargetKmer{
-    TargetKmer():ADkmer(0), taxIdAtRank(0), info(0, false){};
+    TargetKmer(): info(0, false), ADkmer(0), taxIdAtRank(0){};
     TargetKmer(uint64_t ADkmer, TaxID taxIdAtRank, uint32_t seqID, bool redundacy) : ADkmer(ADkmer), taxIdAtRank(taxIdAtRank),info(seqID, redundacy) {}
     TargetKmerInfo info;
     uint64_t ADkmer; //8

@@ -111,10 +111,11 @@ private:
     };
 
     struct Match{ //16byte
+        Match(){}
         Match(uint32_t queryId, int taxID, int speciesTaxID, int genusTaxID, int position, uint8_t frame,
               uint8_t hamming, int red, int rightEndHamming)
             : queryId(queryId), taxID(taxID), speciesTaxID(speciesTaxID), genusTaxID(genusTaxID), position(position),
-            frame(frame), hamming(hamming), red(red), rightEndHamming(rightEndHamming){ }
+              red(red), rightEndHamming(rightEndHamming), frame(frame), hamming(hamming)  { }
         uint32_t queryId;
         int taxID;
         int speciesTaxID;
@@ -236,8 +237,7 @@ private:
 
     static bool sortMatchesByPos(const Match & a, const Match & b);
 
-    TaxID match2LCA(const std::vector<Match> & matchList, NcbiTaxonomy & taxonomy, float majorityCutoff,
-                    double &selectedPercent, uint32_t queryLength);
+    TaxID match2LCA(const std::vector<Match> & matchList, NcbiTaxonomy & taxonomy, uint32_t queryLength);
 
     TaxID classifyFurther(const std::vector<Match> & matches, NcbiTaxonomy & taxonomy, uint32_t queryLength);
 
@@ -277,11 +277,6 @@ inline uint8_t Classifier::getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2)
     hammingSum += hammingLookup[GET_3_BITS(kmer1>>15U)][GET_3_BITS(kmer2>>15U)];
     hammingSum += hammingLookup[GET_3_BITS(kmer1>>18U)][GET_3_BITS(kmer2>>18U)];
     hammingSum += hammingLookup[GET_3_BITS(kmer1>>21U)][GET_3_BITS(kmer2>>21U)];
-//    for(int i = 0; i < 8 ; i++){
-//        hammingSum += hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
-//        kmer1 >>= 3U;
-//        kmer2 >>= 3U;
-//    }
     return hammingSum;
 }
 
