@@ -636,8 +636,8 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
     }
 
     //Classify in species or lower level for queries that have close matches in reference DB.
-    //TaxID selectedLCA = match2LCA(matchesForLCA, ncbiTaxonomy, queryLength);
-    TaxID selectedLCA = classifyFurther(matchesForLCA, ncbiTaxonomy, queryLength);
+    TaxID selectedLCA = match2LCA(matchesForLCA, ncbiTaxonomy, queryLength);
+    //TaxID selectedLCA = classifyFurther(matchesForLCA, ncbiTaxonomy, queryLength);
 
     ///TODO optimize strain specific classification criteria
     //Strain classification only for high coverage with LCA of species level
@@ -824,35 +824,6 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
             matches.push_back(filteredMatches[i]);
         }
         i++;
-
-//        overlapped = false;
-//        while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
-//              filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < l)){
-//            if(!overlapped) {
-//                overlapped = true;
-//                //overlappedMatch = filteredMatches[i];
-//                overlaps.push_back(filteredMatches[i]);
-//                minHamming = filteredMatches[i].hamming;
-//            } else if(filteredMatches[i].hamming == minHamming){
-//                overlaps.push_back(filteredMatches[i]);
-//            }
-//            i++;
-//        }
-//        if(overlapped) {
-//            if(filteredMatches[i].hamming == minHamming) overlaps.push_back(filteredMatches[i]);
-//            if(overlaps.size() == 1){
-//                matches.push_back(overlaps[0]);
-//            } else {
-//                overlaps[0].taxID = overlaps[0].speciesTaxID;
-//                overlaps[0].red = 1;
-//                matches.push_back(overlaps[0]);
-//            }
-//            overlaps.clear();
-//            isTheLastOverlapped = (i == l - 1);
-//        } else{
-//            matches.push_back(filteredMatches[i]);
-//        }
-//        i++;
     }
     if(!isTheLastOverlapped) {
         matches.push_back(filteredMatches[l-1]);
@@ -870,11 +841,6 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     while(f < matchNum){
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
-//        for(int i2 = 0; i2 < 8; i2++){
-//            if((signed char)GET_2_BITS(currHammings>>2*i2) > hammingsAtEachPos[currPos + i2]){
-//                hammingsAtEachPos[currPos + i2] = GET_2_BITS(currHammings>>2*i2);
-//            }
-//        }
         if(GET_2_BITS(currHammings) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
         if(GET_2_BITS(currHammings>>2) > hammingsAtEachPos[currPos + 1]) hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings>>2);
         if(GET_2_BITS(currHammings>>4) > hammingsAtEachPos[currPos + 2]) hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings>>4);
