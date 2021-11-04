@@ -9,7 +9,7 @@
 #define IS_LAST_15_BITS(num)        (0x8000U & (num))
 #define GET_15_BITS(num)            (0x7fffU & (num))
 #define GET_3_BITS(num)             (0X7U    & (num))
-#define GET_2_BITS_1(num) (signed char)(0x3U & (num))
+#define GET_2_BITS(num) (signed char)(0x3U & (num))
 #define GET_2_BITS_2(num) (signed char)(0xCu & (num))
 #define GET_2_BITS_3(num) (signed char)(0x30u & (num))
 #define GET_2_BITS_4(num) (signed char)(0XC0u & (num))

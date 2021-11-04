@@ -888,21 +888,25 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     //TODO Using max hamming at each position -> random match가 문제..
     size_t matchNum = matches.size();
     size_t f = 0;
-    cout<<"hi"<<endl;
     while(f < matchNum){
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
-        if(GET_2_BITS_1(currHammings) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS_1(currHammings);
-        if(GET_2_BITS_2(currHammings) > hammingsAtEachPos[currPos + 1]) hammingsAtEachPos[currPos + 1] = GET_2_BITS_2(currHammings);
-        if(GET_2_BITS_3(currHammings) > hammingsAtEachPos[currPos + 2]) hammingsAtEachPos[currPos + 2] = GET_2_BITS_3(currHammings);
-        if(GET_2_BITS_4(currHammings) > hammingsAtEachPos[currPos + 3]) hammingsAtEachPos[currPos + 3] = GET_2_BITS_4(currHammings);
-        if(GET_2_BITS_5(currHammings) > hammingsAtEachPos[currPos + 4]) hammingsAtEachPos[currPos + 4] = GET_2_BITS_5(currHammings);
-        if(GET_2_BITS_6(currHammings) > hammingsAtEachPos[currPos + 5]) hammingsAtEachPos[currPos + 5] = GET_2_BITS_6(currHammings);
-        if(GET_2_BITS_7(currHammings) > hammingsAtEachPos[currPos + 6]) hammingsAtEachPos[currPos + 6] = GET_2_BITS_7(currHammings);
-        if(GET_2_BITS_8(currHammings) > hammingsAtEachPos[currPos + 7]) hammingsAtEachPos[currPos + 7] = GET_2_BITS_8(currHammings);
+        if(GET_2_BITS(currHammings) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
+        if(GET_2_BITS(currHammings>>2) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>2);
+        if(GET_2_BITS(currHammings>>4) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>4);
+        if(GET_2_BITS(currHammings>>6) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>6);
+        if(GET_2_BITS(currHammings>>8) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>8);
+        if(GET_2_BITS(currHammings>>10) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>10);
+        if(GET_2_BITS(currHammings>>12) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>12);
+        if(GET_2_BITS(currHammings>>14) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings>>14);
+
+        for(int i2 = 0; i2 < 8; i2++){
+            if((signed char)GET_2_BITS_1(currHammings>>2*i2) > hammingsAtEachPos[currPos + i2]){
+                hammingsAtEachPos[currPos + i2] = GET_2_BITS_1(currHammings>>2*i2);
+            }
+        }
         f++;
     }
-    cout<<"bye"<<endl;
     float hammingSum = 0;
     for(int h = 0; h < size; h++){
         if(hammingsAtEachPos[h] == 0) {
