@@ -340,8 +340,8 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                                                                       taxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
                                                                       spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
                                                                       genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                                      queryKmerList[j].info.pos, queryKmerList[j].info.frame, selectedHammingSum[k], 0,
-                                                                      selectedHammings[k]};
+                                                                      queryKmerList[j].info.pos, queryKmerList[j].info.frame,
+                                                                      selectedHammingSum[k],0, selectedHammings[k]};
                                 }
                                 posToWrite ++;
                             }
@@ -636,8 +636,8 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
     }
 
     //Classify in species or lower level for queries that have close matches in reference DB.
-    TaxID selectedLCA = match2LCA(matchesForLCA, ncbiTaxonomy, queryLength);
-    //TaxID selectedLCA = classifyFurther(matchesForLCA, ncbiTaxonomy, queryLength);
+    //TaxID selectedLCA = match2LCA(matchesForLCA, ncbiTaxonomy, queryLength);
+    TaxID selectedLCA = classifyFurther(matchesForLCA, ncbiTaxonomy, queryLength);
 
     ///TODO optimize strain specific classification criteria
     //Strain classification only for high coverage with LCA of species level
