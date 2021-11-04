@@ -636,8 +636,8 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
     }
 
     //Classify in species or lower level for queries that have close matches in reference DB.
-    //TaxID selectedLCA = match2LCA(matchesForLCA, ncbiTaxonomy, queryLength);
-    TaxID selectedLCA = classifyFurther(matchesForLCA, ncbiTaxonomy, queryLength);
+    TaxID selectedLCA = match2LCA(matchesForLCA, ncbiTaxonomy, queryLength);
+    //TaxID selectedLCA = classifyFurther(matchesForLCA, ncbiTaxonomy, queryLength);
 
     ///TODO optimize strain specific classification criteria
     //Strain classification only for high coverage with LCA of species level
@@ -938,6 +938,11 @@ TaxID Classifier::match2LCA(const std::vector<Match> & matchList, NcbiTaxonomy &
     double selectedPercent;
 
     for (auto it = ancTaxIdsCounts.begin(); it != ancTaxIdsCounts.end(); ++it) {
+        // consider only candidates
+        if (!(it->second.isCandidate)) {
+            continue;
+        }
+
         if(it->second.weight >= maximunPossibleKmerNum) {
             it->second.weight = maximunPossibleKmerNum - 1;
         }
@@ -989,7 +994,7 @@ TaxID Classifier::match2LCA(const std::vector<Match> & matchList, NcbiTaxonomy &
 //TODO hamming
 TaxID Classifier::classifyFurther(const vector<Match> & matches, NcbiTaxonomy & taxonomy, uint32_t queryLength) {
 
-    std::map<TaxID, int> taxIdCounts;
+    std::unordered_map<TaxID, int> taxIdCounts;
     float majorityCutoff = 0.8;
     float coverageThreshold = 0.8;
     float maxKmerCnt = queryLength/3.0f - kmerLength;
@@ -1276,6 +1281,7 @@ void Classifier::compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxon
 
     if(shot == 0){
         wrongs.push_back(i);
+        cout<<i<<endl;
         cout<<"X"<<endl;
         return;
     } else{
