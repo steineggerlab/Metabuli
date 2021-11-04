@@ -1233,6 +1233,7 @@ void Classifier::performanceTest(NcbiTaxonomy & ncbiTaxonomy, Query * queryList,
     for(int i = 0; i < numOfquery; i++) {
         classificationResult = queryList[i].classification;
         if (classificationResult == 0) {
+            cout<<"here "<<i<<endl;
             continue;
         } else {
             classifiedCnt ++;
