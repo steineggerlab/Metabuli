@@ -802,8 +802,8 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
         overlapCnt = 0;
         while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
               filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < l)){
-            overlapCnt++;
-            if(overlapCnt == 1){
+            if(overlapCnt == 0){
+                overlapCnt++;
                 overlappedMatch = filteredMatches[i];
                 minHamming = filteredMatches[i].hamming;
             } else if (filteredMatches[i].hamming == minHamming){
