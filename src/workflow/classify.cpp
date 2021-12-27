@@ -11,7 +11,7 @@ int classify(int argc, const char **argv, const Command& command)
 {
     LocalParameters &par = LocalParameters::getLocalInstance();
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
-    cout<<par.PARAM_THREADS.value<<endl;
+    cout<<*(int*)par.PARAM_THREADS.value<<endl;
 
     const char * queryFileName = par.filenames[0].c_str();
     const string databaseDirectory = par.filenames[1];
