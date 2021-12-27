@@ -104,7 +104,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     while(processedSeqCnt < numOfSeq){
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryList);
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
-        omp_set_num_threads(ThreadNum);
+        omp_set_num_threads(par.PARAM_THREADS);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile);
     }
@@ -151,9 +151,11 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     munmap(targetInfoList.data, targetInfoList.fileSize + 1);
 }
 
-void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt, Query * queryList) {
+void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile,
+                                             vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt,
+                                             Query * queryList, const LocalParameters & par) {
     bool hasOverflow = false;
-    omp_set_num_threads(ThreadNum);
+    omp_set_num_threads(par.PARAM_THREADS);
 #pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, cout, queryList)
     {
         SeqIterator seqIterator;
@@ -192,7 +194,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
 void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryKmerCnt, const MmapedData<uint16_t> & targetDiffIdxList,
                                       const MmapedData<TargetKmerInfo> & targetInfoList, const MmapedData<DiffIdxSplit> & diffIdxSplits,
                                       Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & spTaxIdList, const vector<TaxID> & genusTaxIdList,
-                                      FILE * matchFile){
+                                      FILE * matchFile, const LocalParameters & par){
     cout<<"linearSearch start..."<<endl;
     ///Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
     for(size_t checkN = queryKmerCnt - 1; checkN > 0; checkN--){
@@ -217,7 +219,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     //Devide query k-mer list into blocks for multi threading.
     //Each split has start and end points of query list + proper offset point of target k-mer list
     vector<QueryKmerSplit> querySplits;
-    int threadNum = ThreadNum;
+    int threadNum = par.PARAM_THREADS;
     uint64_t queryAA;
     if(threadNum == 1){ //Single thread
         querySplits.emplace_back(0, queryKmerCnt - 1, queryKmerCnt, diffIdxSplits.data[0]);
@@ -279,7 +281,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     cout<<"The number of target k-mers: "<<numOfTargetKmer<<endl;
 
     cout<<"Hi"<<querySplits.size()<<endl;
-    omp_set_num_threads(ThreadNum);
+    omp_set_num_threads(par.PARAM_THREADS);
     while(completedSplitCnt < threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList)
@@ -506,7 +508,8 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCo
 }
 
 ///It analyses the result of linear search.
-void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum, Query * queryList) {
+void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName,
+                                       int seqNum, Query * queryList, const LocalParameters & par) {
     //Mmap the file of matches
     struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
     cout << matchList.fileSize << "!!" << endl;
@@ -535,7 +538,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     if (PRINT) {
         omp_set_num_threads(1);
     } else {
-        omp_set_num_threads(ThreadNum);
+        omp_set_num_threads(par.PARAM_THREADS);
     }
 
     //Process each block

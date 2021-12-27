@@ -200,7 +200,8 @@ private:
             {3, 2, 3, 3, 4, 4, 1, 0}}; /// 4 means that there is no case where that value is used.
 
     // Extract query k-mer
-    void fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt, Query * queryList);
+    void fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs,
+                                     bool * checker, size_t & processedSeqCnt, Query * queryList, const LocalParameters & par);
 
 
     // Linear search
@@ -209,7 +210,7 @@ private:
     void linearSearchParallel(QueryKmer * queryKmerList, size_t & queryKmerCnt, const MmapedData<uint16_t> & targetDiffIdxList,
                               const MmapedData<TargetKmerInfo> & targetInfoList, const MmapedData<DiffIdxSplit> & diffIdxSplits,
                               Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & speciesTaxIdList,
-                              const vector<TaxID> & genusTaxIdList, FILE * matchFile);
+                              const vector<TaxID> & genusTaxIdList, FILE * matchFile, const LocalParameters & par);
 
     void compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCompare, const size_t & startIdx,
                     vector<size_t> & selectedMatches, vector<uint8_t> & selectedHammingSum, vector<uint16_t> & rightEndHammings);
@@ -219,7 +220,8 @@ private:
     uint16_t getHammings(uint64_t kmer1, uint64_t kmer2);
 
     // Analyzing k-mer matches
-    void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName, int seqNum, Query * queryList);
+    void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName
+                               , int seqNum, Query * queryList, const LocalParameters & par);
 
     static bool sortByGenusAndSpecies2(const Match & a, const Match & b);
 
