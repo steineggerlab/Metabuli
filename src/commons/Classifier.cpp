@@ -104,7 +104,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     while(processedSeqCnt < numOfSeq){
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryList);
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
-        omp_set_num_threads(par.PARAM_THREADS);
+        omp_set_num_threads(*(int * )par.PARAM_THREADS.value);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList, diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile);
     }
@@ -155,7 +155,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                                              vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt,
                                              Query * queryList, const LocalParameters & par) {
     bool hasOverflow = false;
-    omp_set_num_threads(par.PARAM_THREADS);
+    omp_set_num_threads(*(int * )par.PARAM_THREADS.value);
 #pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, cout, queryList)
     {
         SeqIterator seqIterator;
@@ -219,11 +219,11 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     //Devide query k-mer list into blocks for multi threading.
     //Each split has start and end points of query list + proper offset point of target k-mer list
     vector<QueryKmerSplit> querySplits;
-    int threadNum = par.PARAM_THREADS;
+    int * threadNum = (int *) par.PARAM_THREADS.value;
     uint64_t queryAA;
-    if(threadNum == 1){ //Single thread
+    if(*threadNum == 1){ //Single thread
         querySplits.emplace_back(0, queryKmerCnt - 1, queryKmerCnt, diffIdxSplits.data[0]);
-    } else if(threadNum == 2){ //Two threads
+    } else if(*threadNum == 2){ //Two threads
         size_t splitWidth = queryKmerCnt / 2;
         querySplits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
         for(size_t tSplitCnt = 0; tSplitCnt < numOfDiffIdxSplits_use; tSplitCnt++){
@@ -235,15 +235,15 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
             }
         }
     } else{ //More than two threads
-        size_t splitWidth = queryKmerCnt / (threadNum - 1);
+        size_t splitWidth = queryKmerCnt / (*threadNum - 1);
         querySplits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
-        for(int i = 1; i < threadNum; i ++){
+        for(int i = 1; i < *threadNum; i ++){
             queryAA = AminoAcid(queryKmerList[splitWidth * i].ADkmer);
             bool needLastTargetBlock = true;
             for(size_t j = 0; j < numOfDiffIdxSplits_use; j++){
                if(queryAA <= AminoAcid(diffIdxSplits.data[j].ADkmer)){
                    j = j - (j!=0);
-                   if(i != threadNum - 1)
+                   if(i != *threadNum - 1)
                        querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth, diffIdxSplits.data[j]);
                    else {
                        querySplits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
@@ -255,7 +255,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
             }
             if(needLastTargetBlock){
                 cout<<"needLastTargetBlock"<<endl;
-                if(i != threadNum - 1)
+                if(i != *threadNum - 1)
                     querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth, diffIdxSplits.data[numOfDiffIdxSplits_use - 1]);
                 else {
                     querySplits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
@@ -271,8 +271,8 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 //    }
 
 
-    bool * splitCheckList = (bool *)malloc(sizeof(bool)*threadNum);
-    fill_n(splitCheckList, threadNum, false);
+    bool * splitCheckList = (bool *)malloc(sizeof(bool) * *threadNum);
+    fill_n(splitCheckList, *threadNum, false);
     int completedSplitCnt = 0;
     cout<<"Deviding query k-mer list into blocks for multi threading... done"<<endl;
 
@@ -281,8 +281,8 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     cout<<"The number of target k-mers: "<<numOfTargetKmer<<endl;
 
     cout<<"Hi"<<querySplits.size()<<endl;
-    omp_set_num_threads(par.PARAM_THREADS);
-    while(completedSplitCnt < threadNum) {
+    omp_set_num_threads(*(int * )par.PARAM_THREADS.value);
+    while(completedSplitCnt < *threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList)
         {
@@ -538,7 +538,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     if (PRINT) {
         omp_set_num_threads(1);
     } else {
-        omp_set_num_threads(par.PARAM_THREADS);
+        omp_set_num_threads(*(int * )par.PARAM_THREADS.value);
     }
 
     //Process each block
