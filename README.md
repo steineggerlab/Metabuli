@@ -71,5 +71,12 @@ You can choose between NCBI and GTDB
     - --threads : number of CPU-cores used (all by default)
 ```
 
-## Output format
-
+### Output format
+#### Read Classification
+- Classified or Not
+- Sequence name
+- Taxonomical ID
+- Length of read
+- Classification score (0.0-1)
+- List of "taxID : k-mer match count"
+#### Composition Report
