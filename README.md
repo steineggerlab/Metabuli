@@ -4,6 +4,16 @@ Metabuli is a taxonomical classifier using amino acid and DNA at the same time.
 ## Requirements
 
 ## Installation
+Installation from Github source code.
+```
+git clone https://github.com/JaebeomKim0731/ADclassifier
+cd ADclassifier
+mkdir build
+cd build
+cmake ..
+make -j 16
+```
+The built binary can be found in ./build/src
 
 ## Database building
 You can build DB from a directory of FASTA files or from a sinlge FASTA file with taxonomy of NCBI or GTDB
@@ -13,6 +23,7 @@ You can choose between NCBI and GTDB
   ```
   # In 'util' directory
   ./make_assacc_to_ncbi_taxid.sh <o:outdir>
+  
     - outdir : A directory where tax dump files will be generated. Make sure that the directory is exist and empty.
   ```
   
@@ -20,6 +31,7 @@ You can choose between NCBI and GTDB
   ```
   # In 'util' directory
   ./make_assacc_to_gtdb_taxid.sh <o:outdir>
+  
     - outdir : A directory where tax dump files will be generated. Make sure that the directory is exist and empty.
   ```
 
@@ -29,6 +41,7 @@ You can choose between NCBI and GTDB
   The regular experssion is (GC[AF]_[0-9]*\.[0-9]*)
 ```
 ./adclassifier build_dir <i:directory> <i:taxonomy dir> <o:output> <tmpDir> [options]
+
   - directory: A directory that contains all FASTA files from which you want to make a database. 
                It may contain subdirectories of FASTA file.
   - taxonomy dir: The directory where taxdump files & ass2taxID exist. 
@@ -37,7 +50,7 @@ You can choose between NCBI and GTDB
   - tmpDir : Temporary directory
   * Option
     - --threads : number of CPU-cores used (all by default)
-    - --tax-mode
+
 ```
 
 ### 2. Build DB from a FASTA file. (WIP)
@@ -47,11 +60,15 @@ You can choose between NCBI and GTDB
 ## Classification
 ```
 ./adclassifier classify <i:FASTA> <i:DB dir> <i:taxonomy dir> <o:out dir> <job ID> <tmpDir> [options]
+  
   - FASTA : A FASTA file of reads you want to classify.
   - DB dir : The directory where you bulit the reference DB.
   - taxonomy dir : The directory of taxdump files. 
     !! Make sure that you are using the same taxonomy directory for DB build and classification !! 
   - out dir : The directory where the report files will be generated.
+  - job ID: For the result files.
+  * Option
+    - --threads : number of CPU-cores used (all by default)
 ```
 
 ## Output format
