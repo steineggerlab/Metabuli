@@ -9,7 +9,7 @@ Metabuli is a taxonomical classifier using amino acid and DNA at the same time.
 You can build DB from a directory of FASTA files or from a sinlge FASTA file with taxonomy of NCBI or GTDB
 ### 0. Generate taxonomy dump files & a mapping from assebmly accession to tax ID(ass2taxID)
 You can choose between NCBI and GTDB
-  - NCBI
+  - NCBI (WIP)
   ```
   # In 'util' directory
   ./make_assacc_to_ncbi_taxid.sh <o:outdir>
@@ -24,12 +24,15 @@ You can choose between NCBI and GTDB
   ```
 
 ### 1. Build DB from the directory of genome assemblies
+- Requirements: The FASTA file name must include the assembly accession.
+  If you downloaded assemblies using "ncbi-genome-download", you probably don't have to care about it.
+  The regular experssion is (GC[AF]_[0-9]*\.[0-9]*)
 ```
 ./adclassifier build_dir <i:directory> <i:taxonomy dir> <o:output> <tmpDir> [options]
   - directory: A directory that contains all FASTA files from which you want to make a database. 
-                               It may contain subdirectories of FASTA file.
-  - taxonomy dir: The directory where taxdump files and ass2taxID exist. 
-                   The final DB will follow the taxonomy of this directory.
+               It may contain subdirectories of FASTA file.
+  - taxonomy dir: The directory where taxdump files & ass2taxID exist. 
+                  The final DB will follow the taxonomy of this directory.
   - output : A directory where DB will be generated
   - tmpDir : Temporary directory
   * Option
@@ -38,11 +41,12 @@ You can choose between NCBI and GTDB
 ```
 
 ### 2. Build DB from a FASTA file. (WIP)
+- Requirements
 
 
 ## Classification
 ```
-./adclassifier classify <i:FASTA> <i:DB dir> <i:taxonomy dir> <out dir> <tmpDir>[options]
+./adclassifier classify <i:FASTA> <i:DB dir> <i:taxonomy dir> <o:out dir> <tmpDir> [options]
   - FASTA : A FASTA file of reads you want to classify.
   - DB dir : The directory where you bulit the reference DB.
   - taxonomy dir : The directory of taxdump files. 
