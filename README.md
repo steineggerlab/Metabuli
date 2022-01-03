@@ -46,7 +46,7 @@ You can choose between NCBI and GTDB
 
 ## Classification
 ```
-./adclassifier classify <i:FASTA> <i:DB dir> <i:taxonomy dir> <o:out dir> <tmpDir> [options]
+./adclassifier classify <i:FASTA> <i:DB dir> <i:taxonomy dir> <o:out dir> <job ID> <tmpDir> [options]
   - FASTA : A FASTA file of reads you want to classify.
   - DB dir : The directory where you bulit the reference DB.
   - taxonomy dir : The directory of taxdump files. 
