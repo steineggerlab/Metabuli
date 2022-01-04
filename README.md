@@ -80,4 +80,12 @@ You can choose between NCBI and GTDB
 - Length of read
 - Classification score (0.0-1)
 - List of "taxID : k-mer match count"
+
+```
+#Example
+1       read1       1337    150     1       5334:16 1337:42
+1       read2       139585  150     0.70    172034:5 167827:2 148906:3 148931:2 286486:5 139586:7
+0       read3       0       150     0
+
+```
 #### Composition Report
