@@ -1,7 +1,8 @@
 # Metabuli
 Metabuli is a taxonomical classifier using amino acid and DNA at the same time.
+It is developed to achieve specificity of DNA based method and sensitivity of amino acid based method at the same time.
 
-## Requirements
+## Requirements (WIP)
 
 ## Installation
 Installation from Github source code.
@@ -17,7 +18,7 @@ The built binary can be found in ./build/src
 
 ## Database building
 You can build DB from a directory of FASTA files or from a sinlge FASTA file with taxonomy of NCBI or GTDB
-### 0. Generate taxonomy dump files & a mapping from assebmly accession to tax ID(ass2taxID)
+### 0. Generate taxonomy dump files & a mapping from assebmly accession to tax ID
 You can choose between NCBI and GTDB
   - NCBI (WIP)
   ```
