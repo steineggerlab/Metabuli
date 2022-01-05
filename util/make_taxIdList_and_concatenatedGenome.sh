@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# It is used in build_dir
 TAXLIST=$1
 TAX_FILE_SORTED=$2
 GENOME=$3

@@ -1,6 +1,6 @@
 #!/bin/bash
 WDIR=$1
-MAP=$2
+MAP="assacc_to_taxid.tsv"
 MAP_pre="${MAP}_tmp"
 SUM_TXT="${WDIR}/assembly_summary_genbank.txt"
 SUM_TSV="${WDIR}/assembly_summary_genbank.tsv"
