@@ -168,7 +168,7 @@ private:
     size_t perfectMatchCount;
     size_t selectedMatchCount;
 
-    //performance test
+    // performance test
     Counts counts;
 
     size_t subspCnt;
@@ -207,10 +207,18 @@ private:
     // Linear search
     static bool compareForLinearSearch(const QueryKmer & a, const QueryKmer & b);
 
-    void linearSearchParallel(QueryKmer * queryKmerList, size_t & queryKmerCnt, const MmapedData<uint16_t> & targetDiffIdxList,
-                              const MmapedData<TargetKmerInfo> & targetInfoList, const MmapedData<DiffIdxSplit> & diffIdxSplits,
-                              Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & speciesTaxIdList,
-                              const vector<TaxID> & genusTaxIdList, FILE * matchFile, const LocalParameters & par);
+    void linearSearchParallel(
+            QueryKmer * queryKmerList,
+            size_t & queryKmerCnt,
+            const MmapedData<uint16_t> & targetDiffIdxList,
+            const MmapedData<TargetKmerInfo> & targetInfoList,
+            const MmapedData<DiffIdxSplit> & diffIdxSplits,
+            Buffer<Match> & matchBuffer,
+            const vector<int> & taxIdList,
+            const vector<int> & speciesTaxIdList,
+            const vector<TaxID> & genusTaxIdList,
+            FILE * matchFile,
+            const LocalParameters & par);
 
     void compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCompare, const size_t & startIdx,
                     vector<size_t> & selectedMatches, vector<uint8_t> & selectedHammingSum, vector<uint16_t> & rightEndHammings);
@@ -246,7 +254,7 @@ private:
     // Write report
     void writeReadClassification(Query * queryList, int queryNum , ofstream & readClassificationFile);
 
-    void writeReportFile(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, int numOfQuery);
+    void writeReportFile(const string & reportFileName, NcbiTaxonomy & ncbiTaxonomy, int numOfQuery);
 
     void writeReport(FILE * fp, const NcbiTaxonomy & ncbiTaxonomy, const unordered_map<TaxID, TaxonCounts> & cladeCounts,
                      unsigned long totalReads,TaxID taxID = 0, int depth = 0);

@@ -121,13 +121,16 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     afterAnalyze = time(nullptr);
     cout<<"Time spent for analyzing: "<<double(afterAnalyze-afterSearch)<<endl;
 
-    //write report files
+    // Write read classification results.
     ofstream readClassificationFile;
-    readClassificationFile.open(par.filenames[0]+"_ReadClassification.tsv");
+    readClassificationFile.open(par.filenames[3]+"/"+par.filenames[4]+"_ReadClassification.tsv");
     writeReadClassification(queryList,numOfSeq,readClassificationFile);
-    writeReportFile(par.filenames[0].c_str(), taxonomy, numOfSeq);
+    readClassificationFile.close();
 
-    //
+    // Write a composition report file.
+    writeReportFile(par.filenames[3]+"/"+par.filenames[4]+"_CompositionReport.tsv", taxonomy, numOfSeq);
+
+    // Below is for developing
     vector<int> wrongClassifications;
     sequences.clear();
     IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
@@ -1132,12 +1135,12 @@ void Classifier::writeReadClassification(Query * queryList, int queryNum, ofstre
     }
 }
 
-void Classifier::writeReportFile(const char * queryFileName, NcbiTaxonomy & ncbiTaxonomy, int numOfQuery){
+void Classifier::writeReportFile(const string & reportFileName, NcbiTaxonomy & ncbiTaxonomy, int numOfQuery){
     unordered_map<TaxID, TaxonCounts> cladeCounts = ncbiTaxonomy.getCladeCounts(taxCounts);
-    string outputFile = string(queryFileName) + "_REPORTFILE.tsv";
     FILE * fp;
-    fp = fopen(outputFile.c_str(), "w");
+    fp = fopen(reportFileName.c_str(), "w");
     writeReport(fp, ncbiTaxonomy, cladeCounts, numOfQuery);
+    fclose(fp);
 }
 
 void Classifier::writeReport(FILE * fp, const NcbiTaxonomy & ncbiTaxonomy, const unordered_map<TaxID, TaxonCounts> & cladeCounts, unsigned long totalReads, TaxID taxID, int depth){

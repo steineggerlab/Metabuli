@@ -16,6 +16,7 @@ int classify(int argc, const char **argv, const Command& command)
     const char * queryFileName = par.filenames[0].c_str();
     const string databaseDirectory = par.filenames[1];
     const string taxonomyDirectory = par.filenames[2];
+    const char * outputDir = par.filenames[3].c_str();
 
     const string names = taxonomyDirectory + "/names.dmp";
     const string nodes = taxonomyDirectory + "/nodes.dmp";

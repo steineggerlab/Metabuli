@@ -22,11 +22,12 @@ public:
         return static_cast<LocalParameters&>(LocalParameters::getInstance());
     }
 
-    std::vector<MMseqsParameter*> createTargetDB;
+    std::vector<MMseqsParameter*> build_dir;
+    std::vector<MMseqsParameter*> build_fasta;
     std::vector<MMseqsParameter*> prepareForTargetDB_GTDB;
     std::vector<MMseqsParameter*> prepareForTargetDB;
     std::vector<MMseqsParameter*> classify;
-    std::vector<MMseqsParameter*> krakenuniq;
+    std::vector<MMseqsParameter*> seqHeader2TaxId;
 
     PARAMETER(PARAM_GTDB_OR_NCBI)
 
