@@ -19,7 +19,7 @@ echo "Writing a list of FASTA files"
 find "${genomes}" -name "*.fna" > "${FASTAFILES}"
 
 num=0
-awk -F '/' '{print $0,$8}' "${FASTAFILES}" | while read -r fasta assacc; do
+awk -F '/' '{print $0,$10}' "${FASTAFILES}" | while read -r fasta assacc; do
   outname="${fname}_${num}"
   ~/miniconda3/bin/randomreads.sh ref="${fasta}" out="${outname}" length=150 reads=100 prefix="${assacc}" adderrors=f paired=t snprate=0.004 insrate=0.00005 delrate=0.00005 simplenames=t addpairnum=t
   num=$((num+1))
