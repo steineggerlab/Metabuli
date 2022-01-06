@@ -21,11 +21,11 @@ find "${genomes}" -name "*.fna" > "${FASTAFILES}"
 num=0
 awk -F '/' '{print $0,$8}' "${FASTAFILES}" | while read -r fasta assacc; do
   outname="${fname}_${num}"
-  ~/miniconda3/bin/randomreads.sh ref="${fasta}" out="${outname}" length=150 reads=100 prefix="${assacc}" adderrors=f maxsnps=0 maxinss=0 maxdels=0 maxsubs=0 maxns=0 snprate=0 insrate=0 delrate=0 subrate=0 nrate=0
+  ~/miniconda3/bin/randomreads.sh ref="${fasta}" out="${outname}" length=150 reads=100 prefix="${assacc}" adderrors=f paired=t snprate=0.004 insrate=0.00005 delrate=0.00005 simplenames=t addpairnum=t
   num=$((num+1))
 done
 
-cat ${fname}* > "${outdir}/randomreads0824.fastq"
+cat ${fname}* > "${outdir}/small-query-22819.fastq"
 find "${outdir}" -name "temp_*" | while read -d $'\0' gz; do
   rm "${gz}"
 done
