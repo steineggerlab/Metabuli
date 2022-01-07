@@ -11,12 +11,10 @@ int classify(int argc, const char **argv, const Command& command)
 {
     LocalParameters &par = LocalParameters::getLocalInstance();
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
-    cout<<*(int*)par.PARAM_THREADS.value<<endl;
 
     const char * queryFileName = par.filenames[0].c_str();
     const string databaseDirectory = par.filenames[1];
     const string taxonomyDirectory = par.filenames[2];
-    const char * outputDir = par.filenames[3].c_str();
 
     const string names = taxonomyDirectory + "/names.dmp";
     const string nodes = taxonomyDirectory + "/nodes.dmp";
@@ -29,7 +27,7 @@ int classify(int argc, const char **argv, const Command& command)
     string taxIdFileName = databaseDirectory+"/taxID_list";;
     const string diffIdxSplitFileName = databaseDirectory+"/split";;
 
-    //Load the taxonomical ID list
+    // Load the taxonomical ID list
     FILE * taxIdFile;
     if((taxIdFile = fopen(taxIdFileName.c_str(),"r")) == NULL){
         cout<<"Cannot open the taxID list file."<<endl;

@@ -79,7 +79,7 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     uint64_t entryKmer = lookingKmers[idxOfMin];
     TargetKmerInfo entryInfo = lookingInfos[idxOfMin];
 
-    ///write first k-mer
+    // write first k-mer
     getDiffIdx(lastWrittenKmer, entryKmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx);
     lastWrittenKmer = entryKmer;
     writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx);
@@ -88,7 +88,7 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
     int endFlag = 0;
 
     while(true){
-        ///update entry k-mer
+        // update entry k-mer
         entryKmer = lookingKmers[idxOfMin];
         entryInfo = lookingInfos[idxOfMin];
 
