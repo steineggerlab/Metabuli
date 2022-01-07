@@ -842,7 +842,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     uint16_t currHammings;
     int aminoAcidNum = (int)queryLength / 3;
     auto * hammingsAtEachPos = new signed char[aminoAcidNum + 1];
-    memset(hammingsAtEachPos, -1, (aminoAcidNum + 1));
+    memset(hammingsAtEachPos, 10, (aminoAcidNum + 1));
     int currPos;
     size_t matchNum = matches.size();
     size_t f = 0;
