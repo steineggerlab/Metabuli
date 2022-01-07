@@ -867,7 +867,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     for(int h = 0; h < aminoAcidNum; h++){
         if(hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
             coveredPosCnt++;
-        }else if(hammingsAtEachPos[h] != -1){ // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
+        }else if(hammingsAtEachPos[h] != 10){ // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
             hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
             coveredPosCnt ++;
         }
