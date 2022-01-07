@@ -1,7 +1,3 @@
-//
-// Created by KJB on 11/09/2020.
-//
-
 #ifndef ADCLASSIFIER2_COMMON_H
 #define ADCLASSIFIER2_COMMON_H
 #include "NcbiTaxonomy.h"
@@ -10,8 +6,6 @@
 #define SplitNum 4096
 #define PRINT true
 
-//#define kmerBufSize 1000000000
-#define AApart(x) x & ()
 struct Sequence{
     Sequence(size_t start, size_t end, size_t length) : start(start), end(end), length(length) { }
     Sequence() : start(0), end(0), length(0) { }
