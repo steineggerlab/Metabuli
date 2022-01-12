@@ -200,6 +200,10 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                                       Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & spTaxIdList, const vector<TaxID> & genusTaxIdList,
                                       FILE * matchFile, const LocalParameters & par){
     cout<<"linearSearch start..."<<endl;
+
+    for(size_t k = 0; k < queryKmerCnt; k++){
+        cout<<queryKmerList[k].ADkmer<<" "<<queryKmerList[k].info.frame<<" "<<queryKmerList[k].info.frame<<endl;
+    }
     ///Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
     for(size_t checkN = queryKmerCnt - 1; checkN > 0; checkN--){
         if(queryKmerList[checkN].ADkmer != UINT64_MAX){
@@ -396,7 +400,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                     }
                     candidateTargetKmers.clear();
 
-                    ///Get next query and start to find
+                    ///Get next query, and start to find
                     currentQuery = queryKmerList[j].ADkmer;
                     currentQueryAA = AminoAcid(currentQuery);
 
