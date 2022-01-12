@@ -47,6 +47,17 @@ struct Counts{
     int classCnt_correct;
     int phylumCnt_correct;
     int superkingdomCnt_correct;
+
+    //FP at each rank
+    int fp_subspecies;
+    int fp_species;
+    int fp_genus;
+    int fp_family;
+    int fp_order;
+    int fp_class;
+    int fp_phylum;
+    int fp_superkingdom;
+
 };
 
 void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts);
@@ -196,6 +207,8 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     cout<<"Species     : " << counts.speciesTargetNumber<<" / "<<counts.speciesCnt_correct<<" / "<<counts.speciesCnt_try<<endl;
     cout<<"Subspecies  : " << counts.subspeciesTargetNumber<<" / "<<counts.subspeciesCnt_correct<<" / "<<counts.subspeciesCnt_try<<endl;
 
+    cout<<"False positive at each rank"<<endl;
+
 }
 
 void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts& counts) { ///target: subspecies or species
@@ -251,7 +264,27 @@ void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts&
         counts.superkingdomCnt_try++;
     }
 
-    if(!isCorrect) return;
+    if(!isCorrect) {
+        const TaxonNode * LCAnode = ncbiTaxonomy.taxonNode(ncbiTaxonomy.LCA(shot, target));
+        string LCArank = LCAnode->rank;
+        if(shotRank == "species") {
+            counts.fp_subspecies ++;
+        } else if(shotRank == "genus"){
+            counts.fp_species ++;
+        } else if(shotRank == "family"){
+            counts.fp_genus++;
+        } else if(shotRank == "order") {
+            counts.fp_family++;
+        } else if(shotRank == "class") {
+            counts.fp_order++;
+        } else if(shotRank == "phylum") {
+            counts.fp_class++;
+        } else if(shotRank == "kingdom"){
+            counts.fp_phylum++;
+        }
+
+        return;
+    }
 
     //count the number of correct classification at each rank
     if(shotRank == "subspecies"){
