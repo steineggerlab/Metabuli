@@ -208,6 +208,12 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     cout<<"Subspecies  : " << counts.subspeciesTargetNumber<<" / "<<counts.subspeciesCnt_correct<<" / "<<counts.subspeciesCnt_try<<endl;
 
     cout<<"False positive at each rank"<<endl;
+    cout<<counts.fp_phylum<<endl;
+    cout<<counts.fp_class<<endl;
+    cout<<counts.fp_order<<endl;
+    cout<<counts.fp_family<<endl;
+    cout<<counts.fp_genus<<endl;
+    cout<<counts.fp_species<<endl;
 
 }
 
