@@ -202,7 +202,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     cout<<"linearSearch start..."<<endl;
 
     for(size_t k = 0; k < queryKmerCnt; k++){
-        cout<<queryKmerList[k].ADkmer<<" "<<(int) queryKmerList[k].info.frame<<" "<<(int) queryKmerList[k].info.frame<<endl;
+        cout<<queryKmerList[k].ADkmer<<" "<<(int) queryKmerList[k].info.frame<<" "<<(int) queryKmerList[k].info.pos<<endl;
     }
     ///Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
     for(size_t checkN = queryKmerCnt - 1; checkN > 0; checkN--){
