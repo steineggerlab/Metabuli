@@ -275,13 +275,16 @@ void SeqIterator::addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const
 
 size_t SeqIterator::kmerNumOfSixFrameTranslation(const char * seq){
     size_t len = strlen(seq);
-    if(len % 3 == 0){
-        return (6 * (len/3) - 46);
-    }else if(len % 3 == 1){
-        return (6 * (len/3) - 44);
-    }else if(len % 3 == 2){
-        return (6 * (len/3) - 42);
-    }
+    return (len/3 - kmerLength) * 6;
+
+
+//    if(len % 3 == 0){
+//        return (6 * (len/3) - 46);
+//    }else if(len % 3 == 1){
+//        return (6 * (len/3) - 44);
+//    }else if(len % 3 == 2){
+//        return (6 * (len/3) - 42);
+//    }
     return 0;
 }
 
