@@ -309,8 +309,9 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
             size_t range;
 #pragma omp for schedule(dynamic, 1)
             for (size_t i = 0; i < querySplits.size(); i++){
-                if(hasOverflow || splitCheckList[i])
+                if(hasOverflow || splitCheckList[i]) {
                     continue;
+                }
                 targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
@@ -321,6 +322,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                 currentQueryAA = UINT64_MAX;
 
                 for(size_t j = querySplits[i].start; j < querySplits[i].end + 1; j ++){
+                    cout<<currentQuery<<endl;
                     querySplits[i].start++;
                     ///Reuse the comparison data if queries are exactly identical
                     if(currentQuery == queryKmerList[j].ADkmer){
@@ -569,8 +571,8 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
     if(PRINT) {
         cout<<"# "<<currentQuery<<endl;
         for (int i = offset; i < end + 1; i++) {
-            cout << matchList[i].genusTaxID<<" "<<matchList[i].speciesTaxID << " " << int(matchList[i].frame) << " " <<
-            matchList[i].position << " " << matchList[i].taxID << " " << int(matchList[i].hamming) << endl;
+            cout << matchList[i].genusTaxID<<" "<<matchList[i].speciesTaxID << " " << matchList[i].taxID << " " <<
+            int(matchList[i].frame)<< " " << matchList[i].position  << " " << int(matchList[i].hamming) << endl;
         }
     }
 
