@@ -273,19 +273,19 @@ void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts&
     if(!isCorrect) {
         const TaxonNode * LCAnode = ncbiTaxonomy.taxonNode(ncbiTaxonomy.LCA(shot, target));
         string LCArank = LCAnode->rank;
-        if(shotRank == "species") {
+        if(LCArank == "species") {
             counts.fp_subspecies ++;
-        } else if(shotRank == "genus"){
+        } else if(LCArank == "genus"){
             counts.fp_species ++;
-        } else if(shotRank == "family"){
+        } else if(LCArank == "family"){
             counts.fp_genus++;
-        } else if(shotRank == "order") {
+        } else if(LCArank == "order") {
             counts.fp_family++;
-        } else if(shotRank == "class") {
+        } else if(LCArank == "class") {
             counts.fp_order++;
-        } else if(shotRank == "phylum") {
+        } else if(LCArank == "phylum") {
             counts.fp_class++;
-        } else if(shotRank == "kingdom"){
+        } else if(LCArank == "kingdom"){
             counts.fp_phylum++;
         }
 
