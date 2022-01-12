@@ -103,9 +103,16 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     beforeSearch = time(nullptr);
     while(processedSeqCnt < numOfSeq){
         fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt, queryList, par);
+        for(size_t k = 0; k < kmerBuffer.startIndexOfReserve; k++){
+            cout<<kmerBuffer.buffer[k].ADkmer<<" "<<(int) kmerBuffer.buffer[k].info.frame<<" "<<(int) kmerBuffer.buffer[k].info.pos<<kmerBuffer.buffer[k].info.sequenceID<<endl;
+        }
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
         omp_set_num_threads(*(int * )par.PARAM_THREADS.value);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
+        cout<<"After sort"<<endl;
+        for(size_t k = 0; k < kmerBuffer.startIndexOfReserve; k++){
+            cout<<kmerBuffer.buffer[k].ADkmer<<" "<<(int) kmerBuffer.buffer[k].info.frame<<" "<<(int) kmerBuffer.buffer[k].info.pos<<kmerBuffer.buffer[k].info.sequenceID<<endl;
+        }
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList,
                              diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile, par);
     }
@@ -202,7 +209,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     cout<<"linearSearch start..."<<endl;
 
     for(size_t k = 0; k < queryKmerCnt; k++){
-        cout<<queryKmerList[k].ADkmer<<" "<<(int) queryKmerList[k].info.frame<<" "<<(int) queryKmerList[k].info.pos<<endl;
+        cout<<queryKmerList[k].ADkmer<<" "<<(int) queryKmerList[k].info.frame<<" "<<(int) queryKmerList[k].info.pos<<queryKmerList[k].info.sequenceID<<endl;
     }
     ///Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
     for(size_t checkN = queryKmerCnt - 1; checkN > 0; checkN--){
