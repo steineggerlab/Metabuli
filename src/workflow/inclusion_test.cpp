@@ -214,6 +214,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     cout<<counts.fp_family<<endl;
     cout<<counts.fp_genus<<endl;
     cout<<counts.fp_species<<endl;
+    cout<<counts.fp_subspecies<<endl;
 
 }
 
