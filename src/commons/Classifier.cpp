@@ -274,7 +274,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 //        cout << querySplits[i].diffIdxSplit.infoIdxOffset << " " << querySplits[i].diffIdxSplit.diffIdxOffset << endl;
 //    }
 
-    cout << querySplits[0].start << " " << querySplits[0].end << endl;
+
 
     bool * splitCheckList = (bool *)malloc(sizeof(bool) * *threadNum);
     fill_n(splitCheckList, *threadNum, false);
@@ -323,7 +323,6 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                 currentQueryAA = UINT64_MAX;
 
                 for(size_t j = querySplits[i].start; j < querySplits[i].end + 1; j ++){
-                    cout<<j<<" "<<currentQuery<<endl;
                     querySplits[i].start++;
                     ///Reuse the comparison data if queries are exactly identical
                     if(currentQuery == queryKmerList[j].ADkmer){
