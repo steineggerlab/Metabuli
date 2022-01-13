@@ -191,10 +191,10 @@ int inclusiontest(int argc, const char **argv, const Command &command){
 //    }
 
     Counts counts = {0,0,0,0,0,0,0,0};
-    CountAtRank SS;
-    CountAtRank S;
-    CountAtRank G;
-    CountAtRank F;
+    CountAtRank SS = {0, 0, 0, 0, 0};
+    CountAtRank S = {0, 0, 0, 0, 0};
+    CountAtRank G = {0, 0, 0, 0, 0};
+    CountAtRank F = {0, 0, 0, 0, 0};
     ///score the classification
     for(size_t i = 0; i < classList.size(); i++){
         cout<<i<<" ";
@@ -243,10 +243,10 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     cout<<counts.fp_subspecies<<endl;
 
     cout<<"NEW"<<endl;
-    cout<<"Family      : " << F.total << " / " << F.TP << " / "<< F.FP << " / " << F.precision << F.sensitivity << endl;
-    cout<<"Genus       : " << G.total << " / " << G.TP << " / "<< G.FP << " / " << G.precision << G.sensitivity << endl;
-    cout<<"Species     : " << S.total << " / " << S.TP << " / "<< S.FP << " / " << S.precision << S.sensitivity << endl;
-    cout<<"Subspecies  : " << SS.total << " / " << SS.TP << " / "<< SS.FP << " / " << SS.precision << SS.sensitivity << endl;
+    cout<<"Family      : " << F.total << " / " << F.TP << " / "<< F.FP << " / " << F.precision << " / "<< F.sensitivity << endl;
+    cout<<"Genus       : " << G.total << " / " << G.TP << " / "<< G.FP << " / " << G.precision << " / "<< G.sensitivity << endl;
+    cout<<"Species     : " << S.total << " / " << S.TP << " / "<< S.FP << " / " << S.precision << " / "<< S.sensitivity << endl;
+    cout<<"Subspecies  : " << SS.total << " / " << SS.TP << " / "<< SS.FP << " / " << SS.precision << " / "<< SS.sensitivity << endl;
 
 }
 
