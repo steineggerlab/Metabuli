@@ -243,10 +243,10 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     cout<<counts.fp_subspecies<<endl;
 
     cout<<"NEW"<<endl;
-    cout<<"Family      : " << F.total << " / " << F.TP << " / "<< F.FP << " / " << F.endl;
-    cout<<"Genus       : " << counts.genusTargetNumber<<" / "<<counts.genusCnt_correct<<" / "<<counts.genusCnt_try<<endl;
-    cout<<"Species     : " << counts.speciesTargetNumber<<" / "<<counts.speciesCnt_correct<<" / "<<counts.speciesCnt_try<<endl;
-    cout<<"Subspecies  : " << counts.subspeciesTargetNumber<<" / "<<counts.subspeciesCnt_correct<<" / "<<counts.subspeciesCnt_try<<endl;
+    cout<<"Family      : " << F.total << " / " << F.TP << " / "<< F.FP << " / " << F.precision << F.sensitivity << endl;
+    cout<<"Genus       : " << G.total << " / " << G.TP << " / "<< G.FP << " / " << G.precision << G.sensitivity << endl;
+    cout<<"Species     : " << S.total << " / " << S.TP << " / "<< S.FP << " / " << S.precision << S.sensitivity << endl;
+    cout<<"Subspecies  : " << SS.total << " / " << SS.TP << " / "<< SS.FP << " / " << SS.precision << SS.sensitivity << endl;
 
 }
 
