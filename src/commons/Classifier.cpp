@@ -518,10 +518,8 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
                                        int seqNum, Query * queryList, const LocalParameters & par) {
     //Mmap the file of matches
     struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
-    cout << matchList.fileSize << "!!" << endl;
-    cout << matchFileName << endl;
     size_t numOfMatches = matchList.fileSize / sizeof(Match);
-    cout << "num of matches" << numOfMatches << endl;
+    cout << "num of matches " << numOfMatches << endl;
 
     //Sort matches in order to analyze
     SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
@@ -985,38 +983,46 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     size_t f = 0;
 
     // Get the sum of hamming distance at each position
-    auto * hammingsSumAtEachPos = new float[aminoAcidNum + 1];
-    memset(hammingsSumAtEachPos, 0.0f, (aminoAcidNum + 1));
-    auto * coveredCnt = new float[aminoAcidNum + 1];
-    memset(coveredCnt, 0.0f, (aminoAcidNum + 1));
+    auto * hammingsSumAtEachPos = new int[aminoAcidNum + 1];
+    memset(hammingsSumAtEachPos, 0, (aminoAcidNum + 1));
+    auto * coveredCnt = new int[aminoAcidNum + 1];
+    memset(coveredCnt, 0, (aminoAcidNum + 1));
 
     while(f < matchNum){
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
-        for(size_t p = 0; p < 8; p++){
-            hammingsSumAtEachPos[currPos + p] += GET_2_BITS(currHammings>>(2 * p));
-            coveredCnt[currPos + p] ++;
-        }
+        hammingsSumAtEachPos[currPos    ] += GET_2_BITS_INT(currHammings);
+        hammingsSumAtEachPos[currPos + 1] += GET_2_BITS_INT(currHammings>>2);
+        hammingsSumAtEachPos[currPos + 2] += GET_2_BITS_INT(currHammings>>4);
+        hammingsSumAtEachPos[currPos + 3] += GET_2_BITS_INT(currHammings>>6);
+        hammingsSumAtEachPos[currPos + 4] += GET_2_BITS_INT(currHammings>>8);
+        hammingsSumAtEachPos[currPos + 5] += GET_2_BITS_INT(currHammings>>10);
+        hammingsSumAtEachPos[currPos + 6] += GET_2_BITS_INT(currHammings>>12);
+        hammingsSumAtEachPos[currPos + 7] += GET_2_BITS_INT(currHammings>>14);
+        coveredCnt[currPos] ++;
+        coveredCnt[currPos + 1] ++;
+        coveredCnt[currPos + 2] ++;
+        coveredCnt[currPos + 3] ++;
+        coveredCnt[currPos + 4] ++;
+        coveredCnt[currPos + 5] ++;
+        coveredCnt[currPos + 6] ++;
+        coveredCnt[currPos + 7] ++;
         f++;
     }
 
     // Get the average of hamming distance at each position
-//    auto * hammingAvgAtEachPos = new float[aminoAcidNum + 1];
-//    memset(hammingAvgAtEachPos, 0.0f, (aminoAcidNum + 1));
     float hammingSum = 0.0f;
     float curHamming;
     for(int h = 0; h < aminoAcidNum; h++){
         if (coveredCnt[h] != 0){
-            hammingSum += hammingsSumAtEachPos[h] / coveredCnt[h];
+            hammingSum += (float) hammingsSumAtEachPos[h] / (float) coveredCnt[h];
             coveredPosCnt ++;
-//            if(curHamming != 0){
-//                hammingSum += 1.0f + (0.5f * curHamming);
-//            }
         }
     }
 
     delete[] hammingsSumAtEachPos;
     delete[] coveredCnt;
+
     // Score current genus
     int coveredLength = coveredPosCnt * 3;
     if(coveredLength > maxCoveredLength) coveredLength = maxCoveredLength;
