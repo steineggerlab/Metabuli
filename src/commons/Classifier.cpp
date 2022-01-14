@@ -991,14 +991,14 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     while(f < matchNum){
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
-        hammingsSumAtEachPos[currPos    ] += GET_2_BITS_INT(currHammings);
-        hammingsSumAtEachPos[currPos + 1] += GET_2_BITS_INT(currHammings>>2);
-        hammingsSumAtEachPos[currPos + 2] += GET_2_BITS_INT(currHammings>>4);
-        hammingsSumAtEachPos[currPos + 3] += GET_2_BITS_INT(currHammings>>6);
-        hammingsSumAtEachPos[currPos + 4] += GET_2_BITS_INT(currHammings>>8);
-        hammingsSumAtEachPos[currPos + 5] += GET_2_BITS_INT(currHammings>>10);
-        hammingsSumAtEachPos[currPos + 6] += GET_2_BITS_INT(currHammings>>12);
-        hammingsSumAtEachPos[currPos + 7] += GET_2_BITS_INT(currHammings>>14);
+        hammingsSumAtEachPos[currPos    ] += GET_2_BITS(currHammings);
+        hammingsSumAtEachPos[currPos + 1] += GET_2_BITS(currHammings>>2);
+        hammingsSumAtEachPos[currPos + 2] += GET_2_BITS(currHammings>>4);
+        hammingsSumAtEachPos[currPos + 3] += GET_2_BITS(currHammings>>6);
+        hammingsSumAtEachPos[currPos + 4] += GET_2_BITS(currHammings>>8);
+        hammingsSumAtEachPos[currPos + 5] += GET_2_BITS(currHammings>>10);
+        hammingsSumAtEachPos[currPos + 6] += GET_2_BITS(currHammings>>12);
+        hammingsSumAtEachPos[currPos + 7] += GET_2_BITS(currHammings>>14);
         coveredCnt[currPos] ++;
         coveredCnt[currPos + 1] ++;
         coveredCnt[currPos + 2] ++;
