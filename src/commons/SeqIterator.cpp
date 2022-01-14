@@ -185,24 +185,10 @@ bool SeqIterator::translateBlock(const char * seq, PredictedBlock & block){
     if(block.strand == 1){
         for(int i = block.start ; i + 2 <= block.end ; i = i + 3){
             aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[i]])][nuc2int(atcg[seq[i+1]])][nuc2int(atcg[seq[i+2]])]);
-//            if(aaFrames[0].back() == - 1){
-//                cout<<"NF**"<<endl;
-//                cout<<block.start<<" "<<block.end<<endl;
-//                cout<<seq[i]<<seq[i+1]<<seq[i+2]<<endl;
-//                cout<<atcg[seq[i]]<<atcg[seq[i+1]]<<atcg[seq[i+2]]<<endl;
-//                cout<<int(nuc2int(atcg[seq[i]]))<<int(nuc2int(atcg[seq[i+1]]))<<int(nuc2int(atcg[seq[i+2]]))<<endl;
-//            }
         }
     }else{
         for(int i = block.end; i >= (int)block.start + 2; i = i - 3){
             aaFrames[0].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[i]]])][nuc2int(iRCT[atcg[seq[i-1]]])][nuc2int(iRCT[atcg[seq[i-2]]])]);
-//            if(aaFrames[0].back() == - 1){
-//                cout<<"NR**"<<endl;
-//                cout<<block.start<<" "<<block.end<<endl;
-//                cout<<seq[i]<<seq[i-1]<<seq[i-2]<<endl;
-//                cout<<atcg[seq[i]]<<atcg[seq[i-1]]<<atcg[seq[i-2]]<<endl;
-//                cout<<int(nuc2int(atcg[seq[i]]))<<int(nuc2int(atcg[seq[i-1]]))<<int(nuc2int(atcg[seq[i-2]]))<<endl;
-//            }
         }
     }
     return true;
@@ -289,12 +275,6 @@ size_t SeqIterator::kmerNumOfSixFrameTranslation(const char * seq){
 }
 
 size_t SeqIterator::getNumOfKmerForBlock(const PredictedBlock & block){
-//    if(block.end <= block.start){
-//        cout<<"NONO"<<endl;
-//        cout<<block.start<<endl;
-//        cout<<block.end<<endl;
-//        cout<<block.strand<<endl;
-//    }
     size_t len = block.end - block.start + 1;
     return len/3 - 7;
 }
@@ -380,7 +360,7 @@ void SeqIterator::getTranslationBlocks(struct _gene * genes, struct _node * node
 
 void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length,
                                     size_t & blockIdx, vector<uint64_t> & intergenicKmerList, const char * seq){
-//    cout<<length<<endl;
+
     //Exceptional case 1: 0 prdicted gene
     if(numOfGene == 0){
         blocks.emplace_back(0, length - 1, 1);

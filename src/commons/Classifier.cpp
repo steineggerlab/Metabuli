@@ -928,6 +928,109 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     }
 }
 
+void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int maxCoveredLength,
+                                           vector<vector<Match>> & matchesForEachGenus,
+                                           vector<float> & scoreOfEachGenus, size_t queryLength){
+    // Sort
+    sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
+
+    // Do not allow overlaps between the same species
+    size_t numOfFitMat = filteredMatches.size();
+    vector<Match> matches;
+    Match overlappedMatch;
+    int overlapCnt;
+    matches.reserve(numOfFitMat);
+    uint8_t minHamming = 0;
+    bool isTheLastOverlapped = false;
+    size_t i = 0;
+
+    // Check overlaps between subspecies
+    while(i + 1 < numOfFitMat){
+        overlapCnt = 0;
+        while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
+              filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < numOfFitMat)){
+            if(overlapCnt == 0){
+                overlapCnt++;
+                overlappedMatch = filteredMatches[i];
+                minHamming = filteredMatches[i].hamming;
+            } else if (filteredMatches[i].hamming == minHamming){
+                overlapCnt++;
+            }
+            ++i;
+        }
+        if(overlapCnt){
+            if(filteredMatches[i].hamming == minHamming) overlapCnt++;
+            if(overlapCnt == 1){ // Overlapping with match of higher hamming distance -> ignore
+                matches.push_back(overlappedMatch);
+            } else { // Overlapping with match of the same hamming distance -> species
+                overlappedMatch.taxID = overlappedMatch.speciesTaxID;
+                matches.push_back(overlappedMatch);
+            }
+            isTheLastOverlapped = (i == numOfFitMat - 1);
+        } else{
+            matches.push_back(filteredMatches[i]);
+        }
+        i++;
+    }
+    if(!isTheLastOverlapped) {
+        matches.push_back(filteredMatches[numOfFitMat - 1]);
+    }
+
+    // Calculate Hamming distance & covered length
+    int coveredPosCnt = 0;
+    uint16_t currHammings;
+    int aminoAcidNum = (int)queryLength / 3;
+    int currPos;
+    size_t matchNum = matches.size();
+    size_t f = 0;
+
+    // Get the sum of hamming distance at each position
+    auto * hammingsSumAtEachPos = new float[aminoAcidNum + 1];
+    memset(hammingsSumAtEachPos, 0.0f, (aminoAcidNum + 1));
+    auto * coveredCnt = new float[aminoAcidNum + 1];
+    memset(coveredCnt, 0.0f, (aminoAcidNum + 1));
+
+    while(f < matchNum){
+        currPos = matches[f].position / 3;
+        currHammings = matches[f].rightEndHamming;
+        for(size_t p = 0; p < 8; p++){
+            hammingsSumAtEachPos[currPos + p] += GET_2_BITS(currHammings>>(2 * p));
+            coveredCnt[currPos + p] ++;
+        }
+        f++;
+    }
+
+    // Get the average of hamming distance at each position
+//    auto * hammingAvgAtEachPos = new float[aminoAcidNum + 1];
+//    memset(hammingAvgAtEachPos, 0.0f, (aminoAcidNum + 1));
+    float hammingSum = 0.0f;
+    float curHamming;
+    for(int h = 0; h < aminoAcidNum; h++){
+        if (coveredCnt[h] != 0){
+            curHamming += hammingsSumAtEachPos[h] / coveredCnt[h];
+            coveredPosCnt ++;
+            if(curHamming != 0){
+                hammingSum += 1.0f + (0.5f * curHamming);
+            }
+        }
+    }
+
+    delete[] hammingsSumAtEachPos;
+    delete[] coveredCnt;
+    // Score current genus
+    int coveredLength = coveredPosCnt * 3;
+    if(coveredLength > maxCoveredLength) coveredLength = maxCoveredLength;
+    if((float)coveredLength <= (float)queryLength * 0.2f || (matchNum < 4)) return; // Ignore genus with low coverage
+    scoreOfEachGenus.push_back(((float)coveredLength - hammingDist) / (float)maxCoveredLength);
+    matchesForEachGenus.push_back(matches);
+
+    if(PRINT) {
+        cout << filteredMatches[0].genusTaxID << " " << coveredLength << " " << hammingDist << " " <<((float)coveredLength - hammingDist) / (float)maxCoveredLength <<
+             " "<<matches.size()
+             << endl;
+    }
+}
+
 // TODO It can be silplified
 TaxID Classifier::match2LCA(const std::vector<Match> & matchList, NcbiTaxonomy & taxonomy, uint32_t queryLength) {
 

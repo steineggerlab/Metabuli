@@ -245,6 +245,10 @@ private:
                                           vector<vector<Match>> & matchesForEachGenus,vector<float> & scoreOfEachGenus,
                                           size_t queryLength);
 
+    static void constructMatchCombination2(vector<Match> & filteredMatches, int maxNum,
+                                          vector<vector<Match>> & matchesForEachGenus,vector<float> & scoreOfEachGenus,
+                                          size_t queryLength);
+
     static bool sortMatchesByPos(const Match & a, const Match & b);
 
     TaxID match2LCA(const std::vector<Match> & matchList, NcbiTaxonomy & taxonomy, uint32_t queryLength);
