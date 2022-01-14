@@ -758,7 +758,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
         if(!filteredMatches.empty()) {
-           constructMatchCombination(filteredMatches, maxCoveredLength, matchesForEachGenus, scoreOfEachGenus,
+           constructMatchCombination2(filteredMatches, maxCoveredLength, matchesForEachGenus, scoreOfEachGenus,
                                        queryLength);
         }
         filteredMatches.clear();
@@ -1007,11 +1007,11 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     float curHamming;
     for(int h = 0; h < aminoAcidNum; h++){
         if (coveredCnt[h] != 0){
-            curHamming += hammingsSumAtEachPos[h] / coveredCnt[h];
+            hammingSum += hammingsSumAtEachPos[h] / coveredCnt[h];
             coveredPosCnt ++;
-            if(curHamming != 0){
-                hammingSum += 1.0f + (0.5f * curHamming);
-            }
+//            if(curHamming != 0){
+//                hammingSum += 1.0f + (0.5f * curHamming);
+//            }
         }
     }
 
@@ -1021,11 +1021,11 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     int coveredLength = coveredPosCnt * 3;
     if(coveredLength > maxCoveredLength) coveredLength = maxCoveredLength;
     if((float)coveredLength <= (float)queryLength * 0.2f || (matchNum < 4)) return; // Ignore genus with low coverage
-    scoreOfEachGenus.push_back(((float)coveredLength - hammingDist) / (float)maxCoveredLength);
+    scoreOfEachGenus.push_back(((float)coveredLength - hammingSum) / (float)maxCoveredLength);
     matchesForEachGenus.push_back(matches);
 
     if(PRINT) {
-        cout << filteredMatches[0].genusTaxID << " " << coveredLength << " " << hammingDist << " " <<((float)coveredLength - hammingDist) / (float)maxCoveredLength <<
+        cout << filteredMatches[0].genusTaxID << " " << coveredLength << " " << hammingSum << " " <<((float)coveredLength - hammingSum) / (float)maxCoveredLength <<
              " "<<matches.size()
              << endl;
     }
