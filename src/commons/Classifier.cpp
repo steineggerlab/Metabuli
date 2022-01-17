@@ -984,9 +984,9 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
 
     // Get the sum of hamming distance at each position
     auto * hammingsSumAtEachPos = new int[aminoAcidNum + 1];
-    memset(hammingsSumAtEachPos, 0, (aminoAcidNum + 1));
+    memset(hammingsSumAtEachPos, 0, sizeof(int) * (aminoAcidNum + 1));
     auto * coveredCnt = new int[aminoAcidNum + 1];
-    memset(coveredCnt, 0, (aminoAcidNum + 1));
+    memset(coveredCnt, 0, sizeof(int) * (aminoAcidNum + 1));
 
     while(f < matchNum){
         currPos = matches[f].position / 3;
