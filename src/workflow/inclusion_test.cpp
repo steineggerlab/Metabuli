@@ -166,7 +166,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
         }
         classInt = stoi(fields[2]);
         classList.push_back(classInt);
-        scores.push_back(stof(fields[4]));
+//        scores.push_back(stof(fields[4]));
         regex_search(fields[1], assacc, regex1);
         rightAnswers.push_back(assacc2taxid[assacc[0]]);
     }
@@ -212,7 +212,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     ///score the classification
     for(size_t i = 0; i < classList.size(); i++){
         cout<<i<<" ";
-        compareTaxon(classList[i], rightAnswers[i], ncbiTaxonomy, counts, tpOrFp, scores[i]);
+        compareTaxon(classList[i], rightAnswers[i], ncbiTaxonomy, counts, tpOrFp, 3.0f);
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, SS, "subspecies");
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, S, "species");
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, G, "genus");
@@ -222,7 +222,8 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     ofstream scoreFile;
     scoreFile.open(scoreFileName);
     for(size_t i = 0; i < tpOrFp.size(); i ++){
-        scoreFile << tpOrFp[i].tf << "\t" << tpOrFp[i].rank << "\t" << tpOrFp[i].score << "\n";
+        scoreFile << tpOrFp[i].tf << "\t" << tpOrFp[i].rank << "\t" <<endl;
+//<< tpOrFp[0].score << "\n";
     }
     scoreFile.close();
 
