@@ -11,6 +11,13 @@
 #include <regex>
 
 using namespace std;
+
+struct Score{
+    Score(int tf, string rank, float score) : tf(tf), rank(rank), score(score) { }
+    int tf; // 1 = t, 2 = f
+    string rank;
+    float score;
+};
 struct Counts13{
     int classificationCnt;
     int correct;
@@ -49,6 +56,8 @@ struct Counts13{
 };
 
 void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts13 & counts);
+void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts13 & counts, float score,
+                   vector<Score> & Scores);
 
 
 
@@ -58,6 +67,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
 
     const string readClassificationFileName = par.filenames[0];
+    string scoreFileName = readClassificationFileName + "_SC";
 
     string names = "../../gtdb_taxdmp/names.dmp";
     string nodes = "../../gtdb_taxdmp/nodes.dmp";
@@ -71,12 +81,12 @@ int exclusiontest(int argc, const char **argv, const Command &command){
         }
     }
 
-    unordered_map<TaxID, TaxonCounts> cladeCnt = ncbiTaxonomy.getCladeCounts(taxCnt);
-    for(auto it = cladeCnt.begin(); it != cladeCnt.end(); it ++){
-        if(ncbiTaxonomy.taxonNode(it->first)->rank == "genus") {
-            cout << it->second.cladeCount << " " << it->second.taxCount << endl;
-        }
-    }
+//    unordered_map<TaxID, TaxonCounts> cladeCnt = ncbiTaxonomy.getCladeCounts(taxCnt);
+//    for(auto it = cladeCnt.begin(); it != cladeCnt.end(); it ++){
+//        if(ncbiTaxonomy.taxonNode(it->first)->rank == "genus") {
+//            cout << it->second.cladeCount << " " << it->second.taxCount << endl;
+//        }
+//    }
 
 
     Counts13 counts = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -105,6 +115,9 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     ifstream readClassification;
     readClassification.open(readClassificationFileName);
     vector<string> fields;
+    vector<float> scores;
+
+    vector<Score> Scores;
     string field;
     int classInt;
     int rightAnswer;
@@ -116,14 +129,18 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     while(getline(readClassification,classString,'\n')){
         istringstream lineStream(classString);
         fields.clear();
-        //3rd field -> classification
+
+        // 3rd field -> classification
         while(getline(lineStream, field, '\t')){
             fields.push_back(field);
         }
         classInt = stoi(fields[2]);
         classList.push_back(classInt);
 
-        //2nd field -> assacc
+        // 5th field -> score
+        scores.push_back(stof(fields[4]));
+
+        // 2nd field -> assacc
         regex_search(fields[1], assacc, regex1);
         //assacc to right answer
         rightAnswer = assacc2taxid[assacc[0]];
@@ -214,14 +231,18 @@ int exclusiontest(int argc, const char **argv, const Command &command){
 //        }
 //    }
 
-
-
-
     ///score the classification
     for(size_t i = 0; i < classList.size(); i++){
         cout<<i<<" ";
-        compareTaxon2(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
+        compareTaxon2(classList[i], rightAnswers[i], ncbiTaxonomy, counts, scores[i], Scores);
     }
+
+    ofstream scoreFile;
+    scoreFile.open(scoreFileName);
+    for(size_t i = 0; i < Scores.size(); i ++){
+        scoreFile << Scores[i].tf << "\t" << Scores[i].rank << "\t" << Scores[i].score << "\n";
+    }
+    scoreFile.close();
 
     cout<<"Num of queries: " << classList.size() << endl;
     cout<<"Num of classifications: "<< counts.classificationCnt << endl;
@@ -244,6 +265,83 @@ int exclusiontest(int argc, const char **argv, const Command &command){
 
 }
 
+void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts13 & counts, float score,
+                   vector<Score> & Scores) {
+    const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
+    const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
+    string shotRank = shotNode->rank;
+    string targetRank = targetNode->rank;
+    cout<<shot<<" "<<target<<" "<<shotRank<<" "<<targetRank<<" ";
+
+    if(shot == 0){
+        cout<<"X"<<endl;
+        return;
+    } else{
+        counts.classificationCnt++;
+    }
+
+    bool isCorrect = false;
+    if(shot == target){
+        counts.correct ++;
+        isCorrect = true;
+        cout<<"O"<<endl;
+        Scores.emplace_back(1, shotRank, score);
+    } else if(NcbiTaxonomy::findRankIndex(shotRank) <= NcbiTaxonomy::findRankIndex(targetRank)){ //classified into wrong taxon or too specifically
+        Scores.emplace_back(2, shotRank, score);
+        cout<<"X"<<endl;
+    } else { // classified at higher rank (too safe classification)
+        if(shotRank == "superkingdom"){
+            cout<<"X"<<endl;
+        } else if(shot == ncbiTaxonomy.getTaxIdAtRank(target, shotRank)){ //on right branch
+            counts.highRank ++;
+            Scores.emplace_back(2, shotRank, score);
+            cout<<"U"<<endl;
+        } else{ //on wrong branch
+            cout<<"X"<<endl;
+            Scores.emplace_back(2, shotRank, score);
+        }
+    }
+
+    //count the number of classification at each rank
+    if(shotRank == "subspecies") {
+        counts.subspeciesCnt_try++;
+    } else if(shotRank == "species") {
+        counts.speciesCnt_try ++;
+    } else if(shotRank == "genus"){
+        counts.genusCnt_try ++;
+    } else if(shotRank == "family"){
+        counts.familyCnt_try++;
+    } else if(shotRank == "order") {
+        counts.orderCnt_try++;
+    } else if(shotRank == "class") {
+        counts.classCnt_try++;
+    } else if(shotRank == "phylum") {
+        counts.phylumCnt_try++;
+    } else if(shotRank == "superkingdom"){
+        counts.superkingdomCnt_try++;
+    }
+
+    if(!isCorrect) return;
+
+    //count the number of correct classification at each rank
+    if(shotRank == "subspecies"){
+        counts.subspeciesCnt_correct ++;
+    } else if(shotRank == "species") {
+        counts.speciesCnt_correct ++;
+    } else if(shotRank == "genus"){
+        counts.genusCnt_correct ++;
+    } else if(shotRank == "family"){
+        counts.familyCnt_correct++;
+    } else if(shotRank == "order") {
+        counts.orderCnt_correct++;
+    } else if(shotRank == "class") {
+        counts.classCnt_correct++;
+    } else if(shotRank == "phylum") {
+        counts.phylumCnt_correct++;
+    } else if(shotRank == "superkingdom"){
+        counts.superkingdomCnt_correct++;
+    }
+}
 void compareTaxon2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts13 & counts) { ///target: subspecies or species
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
