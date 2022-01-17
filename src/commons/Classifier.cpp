@@ -1027,7 +1027,7 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
     int coveredLength = coveredPosCnt * 3;
     if(coveredLength > maxCoveredLength) coveredLength = maxCoveredLength;
     float score = ((float)coveredLength - hammingSum) / (float)maxCoveredLength;
-    if((float)coveredLength <= (float)queryLength * 0.2f || (matchNum < 4) || score < 0.3) return; // Ignore genus with low coverage
+    if((float)coveredLength <= (float)queryLength * 0.2f || (matchNum < 4) || score < 0.2) return; // Ignore genus with low coverage
     scoreOfEachGenus.push_back(score);
     matchesForEachGenus.push_back(matches);
 
