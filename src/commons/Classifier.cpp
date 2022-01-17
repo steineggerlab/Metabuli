@@ -756,7 +756,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
         if(!filteredMatches.empty()) {
-           constructMatchCombination2(filteredMatches, maxCoveredLength, matchesForEachGenus, scoreOfEachGenus,
+           constructMatchCombination(filteredMatches, maxCoveredLength, matchesForEachGenus, scoreOfEachGenus,
                                        queryLength);
         }
         filteredMatches.clear();
@@ -915,8 +915,9 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     // Score current genus
     int coveredLength = coveredPosCnt * 3;
     if(coveredLength > maxCoveredLength) coveredLength = maxCoveredLength;
-    if((float)coveredLength <= (float)queryLength * 0.2f || (matchNum < 4)) return; // Ignore genus with low coverage
-    scoreOfEachGenus.push_back(((float)coveredLength - hammingSum) / (float)maxCoveredLength);
+    float score = ((float)coveredLength - hammingSum) / (float)maxCoveredLength;
+    if((float)coveredLength <= (float)queryLength * 0.2f || (matchNum < 4) || score < 0.3) return; // Ignore genus with low coverage
+    scoreOfEachGenus.push_back(score);
     matchesForEachGenus.push_back(matches);
 
     if(PRINT) {
