@@ -13,6 +13,15 @@
 #include <iostream>
 #include <regex>
 
+using namespace std;
+
+struct Score2{
+    Score2(int tf, string rank, float score) : tf(tf), rank(rank), score(score) { }
+    int tf; // 1 = t, 2 = f
+    string rank;
+    float score;
+};
+
 struct Counts{
     int classificationCnt;
     int correct;
@@ -68,9 +77,10 @@ struct CountAtRank {
     float precision;
     float sensitivity;
 };
-using namespace std;
 
-void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts);
+
+void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts,
+                  vector<Score2> & tpOrFp, float score);
 void compareTaxonAtRank(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count, const string & rank);
 
 int inclusiontest(int argc, const char **argv, const Command &command){
@@ -79,6 +89,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
 
     const string readClassificationFileName = par.filenames[0];
+    string scoreFileName = readClassificationFileName + "_SC";
 
     string names = "../../gtdb_taxdmp/names.dmp";
     string nodes = "../../gtdb_taxdmp/nodes.dmp";
@@ -141,6 +152,9 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     string field;
     int classInt;
 
+    vector<float> scores;
+    vector<Score2> tpOrFp;
+
     regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
     smatch assacc;
 
@@ -152,7 +166,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
         }
         classInt = stoi(fields[2]);
         classList.push_back(classInt);
-
+        scores.push_back(stof(fields[4]));
         regex_search(fields[1], assacc, regex1);
         rightAnswers.push_back(assacc2taxid[assacc[0]]);
     }
@@ -198,12 +212,20 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     ///score the classification
     for(size_t i = 0; i < classList.size(); i++){
         cout<<i<<" ";
-        compareTaxon(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
+        compareTaxon(classList[i], rightAnswers[i], ncbiTaxonomy, counts, tpOrFp, scores[i]);
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, SS, "subspecies");
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, S, "species");
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, G, "genus");
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, F, "family");
     }
+
+    ofstream scoreFile;
+    scoreFile.open(scoreFileName);
+    for(size_t i = 0; i < tpOrFp.size(); i ++){
+        scoreFile << tpOrFp[i].tf << "\t" << tpOrFp[i].rank << "\t" << tpOrFp[i].score << "\n";
+    }
+    scoreFile.close();
+
     SS.precision = (float)SS.TP / (float)SS.total;
     S.precision = (float)S.TP / (float)S.total;
     G.precision = (float)G.TP / (float)G.total;
@@ -281,7 +303,8 @@ void compareTaxonAtRank(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, C
     return;
 }
 
-void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts& counts) { ///target: subspecies or species
+void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts& counts, vector<Score2> & scores,
+                  float score) { ///target: subspecies or species
 
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
@@ -299,10 +322,12 @@ void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts&
     bool isCorrect = false;
     if(shot == target){
         counts.correct ++;
+        scores.emplace_back(1, shotRank, score);
         isCorrect = true;
         cout<<"O"<<endl;
     } else if(NcbiTaxonomy::findRankIndex(shotRank) <= NcbiTaxonomy::findRankIndex(targetRank)){ //classified into wrong taxon or too specifically
         cout<<"X"<<endl;
+        scores.emplace_back(2, shotRank, score);
     } else { // classified at higher rank (too safe classification)
         if(shotRank == "superkingdom"){
             cout<<"X"<<endl;
@@ -310,8 +335,10 @@ void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts&
             counts.correct ++;
             cout<<"0"<<endl;
             isCorrect = true;
+            scores.emplace_back(1, shotRank, score);
         } else{ //on wrong branch
             cout<<"X"<<endl;
+            scores.emplace_back(2, shotRank, score);
         }
     }
 
