@@ -769,9 +769,11 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
     }
 
     float maxScore = *max_element(scoreOfEachGenus.begin(), scoreOfEachGenus.end());
+    if(maxScore < 0.25)
+        return 3;
     vector<size_t> maxIdx;
     for(size_t g = 0; g < scoreOfEachGenus.size(); g++){
-        if(scoreOfEachGenus[g] > maxScore * 0.9f){
+        if(scoreOfEachGenus[g] > maxScore * 0.95f){
             maxIdx.push_back(g);
         }
     }
@@ -916,7 +918,9 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     int coveredLength = coveredPosCnt * 3;
     if(coveredLength > maxCoveredLength) coveredLength = maxCoveredLength;
     float score = ((float)coveredLength - hammingSum) / (float)maxCoveredLength;
-    if((float)coveredLength <= (float)queryLength * 0.2f || (matchNum < 4) || score < 0.25) return; // Ignore genus with low coverage
+    if(matchNum < 4)
+        return;
+//    if((float)coveredLength <= (float)queryLength * 0.2f || (matchNum < 4) || score < 0.25) return; // Ignore genus with low coverage
     scoreOfEachGenus.push_back(score);
     matchesForEachGenus.push_back(matches);
 
@@ -1013,7 +1017,6 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
 
     // Get the average of hamming distance at each position
     float hammingSum = 0.0f;
-    float curHamming;
     for(int h = 0; h < aminoAcidNum; h++){
         if (coveredCnt[h] != 0){
             hammingSum += (float) hammingsSumAtEachPos[h] / (float) coveredCnt[h];
