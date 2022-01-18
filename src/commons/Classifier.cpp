@@ -773,7 +773,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         return 3;
     vector<size_t> maxIdx;
     for(size_t g = 0; g < scoreOfEachGenus.size(); g++){
-        if(scoreOfEachGenus[g] > maxScore * 0.95f){
+        if(scoreOfEachGenus[g] > maxScore * 0.9f){
             maxIdx.push_back(g);
         }
     }

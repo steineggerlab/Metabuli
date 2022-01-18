@@ -4,7 +4,7 @@
 #define kmerBufSize 10000000000 // 10000000000 | 2860000000
 #define ThreadNum 64
 #define SplitNum 4096
-#define PRINT true
+#define PRINT false
 
 struct Sequence{
     Sequence(size_t start, size_t end, size_t length) : start(start), end(end), length(length) { }
@@ -25,8 +25,9 @@ struct Query{
     unordered_map<TaxID,int> taxCnt;
 
     bool operator==(int id) const { return queryId == id;}
-    Query(int id, bool isClassified_, const string & name_, int classification_, float score, uint32_t len)
-    :queryId(id), isClassified(isClassified_), name(name_), classification(classification_), score(score), queryLength(len) { }
+    Query(int id, int classification_, float score, bool isClassified_, bool newSpecies, uint32_t len, const string & name_)
+    :queryId(id), classification(classification_), score(score), isClassified(isClassified_), newSpecies(newSpecies), queryLength(len),
+    name(name_) { }
     Query():queryId(0), isClassified(false), classification(0), score(0.0f), queryLength(0) {}
 };
 
