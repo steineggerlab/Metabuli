@@ -1445,7 +1445,8 @@ void Classifier::compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxon
     cout<<shot<<" "<<target<<" "<<shotRank<<" "<<targetRank<<" ";
 
     if(shot == 0){
-        wrongs.push_back(i);
+        if(shotRank == "genus")
+            wrongs.push_back(i);
         cout<<i<<endl;
         cout<<"X"<<endl;
         return;
@@ -1459,7 +1460,8 @@ void Classifier::compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxon
         isCorrect = true;
         cout<<"O"<<endl;
     } else if(NcbiTaxonomy::findRankIndex(shotRank) <= NcbiTaxonomy::findRankIndex(targetRank)){ //classified into wrong taxon or too specifically
-        wrongs.push_back(i);
+        if(shotRank == "genus")
+            wrongs.push_back(i);
         cout<<"X"<<endl;
     } else { // classified at higher rank (too safe classification)
         if(shotRank == "superkingdom"){
@@ -1470,7 +1472,7 @@ void Classifier::compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxon
             cout<<"O"<<endl;
             isCorrect = true;
         } else{ //on wrong branch
-            wrongs.push_back(i);
+            if(shotRank == "genus") wrongs.push_back(i);
             cout<<"X"<<endl;
         }
     }
