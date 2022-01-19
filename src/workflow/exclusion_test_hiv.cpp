@@ -61,9 +61,9 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
     const string readClassificationFileName = par.filenames[0];
     const string mappingFile = par.filenames[1];
 
-    string names = "../../hiv_taxdmp/names.dmp";
-    string nodes = "../../hiv_taxdmp/nodes.dmp";
-    string merged = "../../hiv_taxdmp/merged.dmp";
+    string names = "/data3/jaebeom/ncbi_dmp/names.dmp";
+    string nodes = "/data3/jaebeom/ncbi_dmp/nodes.dmp";
+    string merged = "/data3/jaebeom/ncbi_dmp/merged.dmp";
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
 
     unordered_map<TaxID, unsigned int> taxCnt;
