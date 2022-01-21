@@ -85,7 +85,6 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
 
     // 1) Load mapping file
     cout<<"Load mapping from accession ID to taxonomy ID"<<endl;
-    //const char * mappingFile = "/data3/jaebeom/hivdata/hiv_acc2taxid.tsv";
     unordered_map<string, int> acc2taxid;
     string eachLine;
     string eachItem;
@@ -107,39 +106,35 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
     map.close();
     cout<<"Here"<<endl;
 
-    ///read classification
+    // Load read classification
     vector<int> rightAnswers;
-    vector<int> classList;
-
-    string classString;
-    ifstream readClassification;
-    readClassification.open(readClassificationFileName);
+    vector<int> classifications;
+    string classificationString;
     vector<string> fields;
     string field;
-    int classInt;
+    int taxID;
     int rightAnswer;
     int rightAnswer_sp;
     unsigned int cladeCnt_sp;
-    string seqID;
-
+    string accession;
     smatch assacc;
-
-    cout<<"127"<<endl;
-    int temp = 0;
-    while(getline(readClassification,classString,'\n')){
-
-        istringstream lineStream(classString);
+    ifstream readClassification;
+    readClassification.open(readClassificationFileName);
+    while(getline(readClassification, classificationString, '\n')){
+        istringstream lineStream(classificationString);
         fields.clear();
-        //3rd field -> classification
+        // 3rd field -> classification
         while(getline(lineStream, field, '\t')){
             fields.push_back(field);
         }
-        classInt = stoi(fields[2]);
-        classList.push_back(classInt);
-        seqID = fields[1];
+        taxID = stoi(fields[2]);
+        classifications.push_back(taxID);
 
-        //assacc to right answer
-        rightAnswer = acc2taxid[seqID];
+        // 2nd field -> accession
+        accession = fields[1];
+
+        // accession to right answer
+        rightAnswer = acc2taxid[accession];
         rightAnswer_sp = ncbiTaxonomy.getTaxIdAtRank(rightAnswer, "species");
         cladeCnt_sp = cladeCnt[rightAnswer_sp].cladeCount;
 
@@ -168,7 +163,7 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
         }
     }
     cout<<"hi"<<endl;
-    cout<<"num of classification: "<< classList.size()<<endl;
+    cout << "num of classification: " << classifications.size() << endl;
 
 //    ///Load query file -> name
 //    regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
@@ -221,7 +216,7 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
 //                counts.genusTargetNumber ++;
 //            }
 //        } else{
-//            cout << classList[i] << " is not in the mapping file" << endl;
+//            cout << classifications[i] << " is not in the mapping file" << endl;
 //            rightAnswers.push_back(-1);
 //            continue;
 //        }
@@ -231,17 +226,17 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
 
 
     ///score the classification
-    for(size_t i = 0; i < classList.size(); i++){
+    for(size_t i = 0; i < classifications.size(); i++){
         cout<<i<<" ";
-        compareTaxon112(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
+        compareTaxon112(classifications[i], rightAnswers[i], ncbiTaxonomy, counts);
     }
 
-    cout<<"Num of queries: " << classList.size() << endl;
+    cout << "Num of queries: " << classifications.size() << endl;
     cout<<"Num of classifications: "<< counts.classificationCnt << endl;
     cout<<"Num of correct classifications: "<<counts.correct<<endl;
     cout<<"Num of correct but too broad classifications: "<<counts.highRank<<endl;
-    cout<<"classified/total = " << float(counts.classificationCnt)/float(classList.size()) << endl;
-    cout<<"correct   /total = "<< float(counts.correct) / float(classList.size())<<endl;
+    cout << "classified/total = " << float(counts.classificationCnt)/float(classifications.size()) << endl;
+    cout << "correct   /total = " << float(counts.correct) / float(classifications.size()) << endl;
     cout<<"correct   /classifications = "<<float(counts.correct) / float(counts.classificationCnt) <<endl;
     cout<<"high rank /classifications = "<<float(counts.highRank) / float(counts.classificationCnt) <<endl << endl;
 
