@@ -632,8 +632,8 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
 
     queryList[currentQuery].score = maxScore;
 
-    //Classify in genus level for highly diverged queries
-    if(maxScore < 0.8){
+    // Classify prokaryotes in genus level for highly diverged queries, not fo viruses
+    if(maxScore < 0.8 && ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "superkingdom") != 10239){
         selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
