@@ -54,7 +54,7 @@ std::vector<Command> commands = {
                 "Jaebeom Kim <jbeom0731@gmail.com>",
                 "<i:read-classification>",
                 CITATION_SPACEPHARER,
-                {{"read-classification", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},}},
+                {{"read-classification", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
         {"inclusiontest_hiv", inclusiontest_hiv, &localPar.classify, COMMAND_MAIN,
                 "It extracts k-mers from query sequences, and compares them to the target database",
                 NULL,
