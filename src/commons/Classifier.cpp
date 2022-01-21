@@ -656,17 +656,34 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &quer
 
     ///TODO optimize strain specific classification criteria
     //Strain classification only for high coverage with LCA of species level
+    int numOfstrains = 0;
+    TaxID strainID = 0;
+    int count = 1;
     if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){
         unordered_map<TaxID, int> strainMatchCnt;
         for(size_t i = 0; i < matchesForLCA.size(); i++ ){
-            if(selectedLCA != matchesForLCA[i].taxID && ncbiTaxonomy.IsAncestor(selectedLCA, matchesForLCA[i].taxID)){
+            if(selectedLCA != matchesForLCA[i].taxID
+                && ncbiTaxonomy.IsAncestor(selectedLCA, matchesForLCA[i].taxID)){
                 strainMatchCnt[matchesForLCA[i].taxID]++;
             }
         }
 
-        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 2) {
-            selectedLCA = strainMatchCnt.begin()->first;
+        for(auto strainIt = strainMatchCnt.begin(); strainIt != strainMatchCnt.end(); strainIt ++){
+            if(strainIt->second > 1){
+                strainID = strainIt->first;
+                numOfstrains++;
+                count = strainIt->second;
+            }
         }
+
+        if(numOfstrains == 1 && count > 2) {
+            selectedLCA = strainID;
+        }
+
+
+//        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 2) {
+//            selectedLCA = strainMatchCnt.begin()->first;
+//        }
     }
 
     if(PRINT) {
