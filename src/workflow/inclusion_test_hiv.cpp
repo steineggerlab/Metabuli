@@ -55,7 +55,7 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
 
     const string readClassificationFileName = par.filenames[0];
-
+    const char * mappingFile = par.filenames[1].c_str(); 
     string names = "../../hiv_taxdmp/names.dmp";
     string nodes = "../../hiv_taxdmp/nodes.dmp";
     string merged = "../../hiv_taxdmp/merged.dmp";
@@ -71,7 +71,7 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
 
     // 1) Load mapping file
     cout<<"Load mapping from accession ID to taxonomy ID"<<endl;
-    const char * mappingFile = "/data3/jaebeom/hivdata/hiv_acc2taxid.tsv";
+
     unordered_map<string, int> acc2taxid;
     string eachLine;
     string eachItem;
