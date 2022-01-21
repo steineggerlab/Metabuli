@@ -55,10 +55,11 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
 
     const string readClassificationFileName = par.filenames[0];
-    const char * mappingFile = par.filenames[1].c_str(); 
-    string names = "../../hiv_taxdmp/names.dmp";
-    string nodes = "../../hiv_taxdmp/nodes.dmp";
-    string merged = "../../hiv_taxdmp/merged.dmp";
+    const char * mappingFile = par.filenames[1].c_str();
+    string taxonomy = par.filenames[2];
+    string names = taxonomy + "names.dmp";
+    string nodes = taxonomy + "nodes.dmp";
+    string merged = taxonomy + "merged.dmp";
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
 
     unordered_map<TaxID, unsigned int> taxCnt;
