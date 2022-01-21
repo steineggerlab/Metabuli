@@ -63,7 +63,7 @@ std::vector<Command> commands = {
                 CITATION_SPACEPHARER,
                 {{"read-classification", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                         {"Mapping file (accession to tax ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-                        {"Mapping file (accession to tax ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
+                        {"Mapping file (accession to tax ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}},
 
         {"exclusiontest", exclusiontest, &localPar.classify, COMMAND_MAIN,
                 "It extracts k-mers from query sequences, and compares them to the target database",
