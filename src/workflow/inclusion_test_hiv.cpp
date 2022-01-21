@@ -106,7 +106,7 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
     int classInt;
 
     smatch assacc;
-
+    int pos;
     while(getline(readClassification,classString,'\n')){
         istringstream lineStream(classString);
         fields.clear();
@@ -115,6 +115,8 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
         }
         classInt = stoi(fields[2]);
         seqID = fields[1];
+        pos = seqID.find("_");
+        seqID = seqID.substr(0,pos);
         classList.push_back(classInt);
 
         //regex_search(fields[1], assacc, regex1);
