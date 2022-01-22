@@ -55,7 +55,7 @@ struct CountAtRank2 {
 
 using namespace std;
 void compareTaxon_hiv(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts);
-void compareTaxonAtRank(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank2 & count, const string & rank);
+void compareTaxonAtRank2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank2 & count, const string & rank);
 
 
 int inclusiontest_hiv(int argc, const char **argv, const Command &command){
@@ -174,10 +174,10 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
     for(size_t i = 0; i < classList.size(); i++){
         cout<<i<<" ";
         compareTaxon_hiv(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
-        compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, SS, "subspecies");
-        compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, S, "species");
-        compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, G, "genus");
-        compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, F, "family");
+        compareTaxonAtRank2(classList[i], rightAnswers[i], ncbiTaxonomy, SS, "subspecies");
+        compareTaxonAtRank2(classList[i], rightAnswers[i], ncbiTaxonomy, S, "species");
+        compareTaxonAtRank2(classList[i], rightAnswers[i], ncbiTaxonomy, G, "genus");
+        compareTaxonAtRank2(classList[i], rightAnswers[i], ncbiTaxonomy, F, "family");
     }
 
     SS.precision = (float)SS.TP / (float)SS.total;
