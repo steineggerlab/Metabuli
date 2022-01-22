@@ -45,9 +45,18 @@ struct Counts{
     int superkingdomCnt_correct;
 };
 
-void compareTaxon_hiv(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts);
+struct CountAtRank2 {
+    int total;
+    int FP;
+    int TP;
+    float precision;
+    float sensitivity;
+};
 
 using namespace std;
+void compareTaxon_hiv(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts);
+void compareTaxonAtRank(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank2 & count, const string & rank);
+
 
 int inclusiontest_hiv(int argc, const char **argv, const Command &command){
 
@@ -157,11 +166,29 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
 //    }
 
     Counts counts = {0,0,0,0,0,0,0,0};
+    CountAtRank2 SS = {0, 0, 0, 0, 0};
+    CountAtRank2 S = {0, 0, 0, 0, 0};
+    CountAtRank2 G = {0, 0, 0, 0, 0};
+    CountAtRank2 F = {0, 0, 0, 0, 0};
     ///score the classification
     for(size_t i = 0; i < classList.size(); i++){
         cout<<i<<" ";
         compareTaxon_hiv(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
+        compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, SS, "subspecies");
+        compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, S, "species");
+        compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, G, "genus");
+        compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, F, "family");
     }
+
+    SS.precision = (float)SS.TP / (float)SS.total;
+    S.precision = (float)S.TP / (float)S.total;
+    G.precision = (float)G.TP / (float)G.total;
+    F.precision = (float)F.TP / (float)F.total;
+
+    SS.sensitivity = (float)SS.TP / classList.size();
+    S.sensitivity = (float)S.TP / classList.size();
+    G.sensitivity = (float)G.TP / classList.size();
+    F.sensitivity = (float)F.TP / classList.size();
 
     cout<<"Num of queries: " << classList.size() << endl;
     cout<<"Num of classifications: "<< counts.classificationCnt << endl;
@@ -181,6 +208,13 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
     cout<<"Genus       : " << counts.genusTargetNumber<<" / "<<counts.genusCnt_correct<<" / "<<counts.genusCnt_try<<endl;
     cout<<"Species     : " << counts.speciesTargetNumber<<" / "<<counts.speciesCnt_correct<<" / "<<counts.speciesCnt_try<<endl;
     cout<<"Subspecies  : " << counts.subspeciesTargetNumber<<" / "<<counts.subspeciesCnt_correct<<" / "<<counts.subspeciesCnt_try<<endl;
+
+
+    cout<<endl<<"NEW"<<endl;
+    cout<<"Family      : " << F.total << " / " << F.TP << " / "<< F.FP << " / " << F.precision << " / "<< F.sensitivity << endl;
+    cout<<"Genus       : " << G.total << " / " << G.TP << " / "<< G.FP << " / " << G.precision << " / "<< G.sensitivity << endl;
+    cout<<"Species     : " << S.total << " / " << S.TP << " / "<< S.FP << " / " << S.precision << " / "<< S.sensitivity << endl;
+    cout<<"Subspecies  : " << SS.total << " / " << SS.TP << " / "<< SS.FP << " / " << SS.precision << " / "<< SS.sensitivity << endl;
 
     return 0;
 }
@@ -307,4 +341,35 @@ void compareTaxon_hiv(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Cou
 //    } else {
 //        return;
 //    }
+}
+
+void compareTaxonAtRank2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank2 & count, const string & rank) {
+    const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
+    const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
+    TaxID shotTaxIdAtRank = shotNode->taxId;
+    TaxID targetTaxIdAtRank = targetNode->taxId;
+    if(shot == 1) return;
+
+    // Classification at higher rank -> ignore
+    if(NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank)){
+        return;
+    }
+
+    // If classification is at the lower rank, climb up the tree to the rank.
+    if(NcbiTaxonomy::findRankIndex(shotNode->rank) < NcbiTaxonomy::findRankIndex(rank)){
+        shotTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(shotNode->taxId, rank);
+    }
+    if(NcbiTaxonomy::findRankIndex(targetNode->rank) < NcbiTaxonomy::findRankIndex(rank)){
+        targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(targetNode->taxId, rank);
+    }
+
+    // Correct classification at the rank
+    if(shotTaxIdAtRank == targetTaxIdAtRank){
+        count.TP++;
+    } else {
+        count.FP++;
+    }
+    count.total++;
+
+    return;
 }
