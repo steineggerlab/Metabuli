@@ -831,24 +831,28 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     uint8_t minHamming = 0;
     bool isTheLastOverlapped = false;
     size_t i = 0;
-
+    TaxID overlapID;
+    int uniqueIdCnt;
     // Check overlaps between subspecies
     while(i + 1 < numOfFitMat){
         overlapCnt = 0;
+        overlapID = 0;
+        uniqueIdCnt = 0;
         while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
-                filteredMatches[i].taxID != filteredMatches[i+1].taxID &&
                 filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < numOfFitMat)){
             if(overlapCnt == 0){
                 overlapCnt++;
+                overlapID = filteredMatches[i].taxID;
+                uniqueIdCnt ++;
                 overlappedMatch = filteredMatches[i];
                 minHamming = filteredMatches[i].hamming;
-            } else if (filteredMatches[i].hamming == minHamming){
+            } else if (filteredMatches[i].hamming == minHamming && (filteredMatches[i].taxID != overlapID)){
                 overlapCnt++;
             }
             ++i;
         }
         if(overlapCnt){
-            if(filteredMatches[i].hamming == minHamming) overlapCnt++;
+            if(filteredMatches[i].hamming == minHamming && (filteredMatches[i].taxID != overlapID)) overlapCnt++;
             if(overlapCnt == 1){ // Overlapping with match of higher hamming distance -> ignore
                 matches.push_back(overlappedMatch);
             } else { // Overlapping with match of the same hamming distance -> species
