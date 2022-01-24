@@ -235,8 +235,8 @@ private:
 
     static bool sortByGenusAndSpecies(const Match & a, const Match & b);
 
-    TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, const size_t & queryLength, const int & currentQuery,
-                          const size_t & offset, const size_t & end, Match * matchList, Query * queryList);
+    TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, size_t queryLength, int currentQuery,
+                          size_t offset, size_t end, Match * matchList, Query * queryList);
 
     static int getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
                                  size_t offset, int queryLength, float & bestScore);

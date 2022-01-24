@@ -29,11 +29,11 @@ struct TargetKmerInfo{
 };
 
 struct TargetKmer{
-    TargetKmer(): info(0, false), ADkmer(0), taxIdAtRank(0){};
+    TargetKmer(): ADkmer(0), taxIdAtRank(0), info(0, false) { };
     TargetKmer(uint64_t ADkmer, TaxID taxIdAtRank, uint32_t seqID, bool redundacy) : ADkmer(ADkmer), taxIdAtRank(taxIdAtRank),info(seqID, redundacy) {}
-    TargetKmerInfo info;
     uint64_t ADkmer; //8
     TaxID taxIdAtRank; //4
+    TargetKmerInfo info;
 
 };
 
@@ -42,6 +42,7 @@ struct DiffIdxSplit{
     DiffIdxSplit(const DiffIdxSplit & copy) {ADkmer = copy.ADkmer; diffIdxOffset = copy.diffIdxOffset; infoIdxOffset=copy.infoIdxOffset;}
     DiffIdxSplit() {};
     uint64_t ADkmer;
+
     size_t diffIdxOffset;
     size_t infoIdxOffset;
 };

@@ -1,5 +1,8 @@
 #ifndef ADCLASSIFIER2_COMMON_H
 #define ADCLASSIFIER2_COMMON_H
+#include <utility>
+
+
 #include "NcbiTaxonomy.h"
 #define kmerBufSize 10000000000 // 10000000000 | 2860000000
 #define ThreadNum 1
@@ -25,10 +28,10 @@ struct Query{
     unordered_map<TaxID,int> taxCnt;
 
     bool operator==(int id) const { return queryId == id;}
-    Query(int id, int classification_, float score, bool isClassified_, bool newSpecies, uint32_t len, const string & name_)
+    Query(int id, int classification_, float score, bool isClassified_, bool newSpecies, uint32_t len, string name_)
     :queryId(id), classification(classification_), score(score), isClassified(isClassified_), newSpecies(newSpecies), queryLength(len),
-    name(name_) { }
-    Query():queryId(0), isClassified(false), classification(0), score(0.0f), queryLength(0) {}
+    name(std::move(name_)) { }
+    Query():queryId(0), classification(0), score(0.0f), isClassified(false), queryLength(0) {}
 };
 
 

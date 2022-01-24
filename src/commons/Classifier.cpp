@@ -563,12 +563,12 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     cout << "end of analyseResultParallel" << endl;
 }
 
-TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, const size_t &queryLength, const int &currentQuery,
-                                  const size_t &offset, const size_t &end, Match *matchList, Query *queryList) {
+TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, size_t queryLength, int currentQuery,
+                                  size_t offset, size_t end, Match *matchList, Query *queryList) {
     TaxID selectedTaxon;
     if(PRINT) {
         cout<<"# "<<currentQuery<<endl;
-        for (int i = offset; i < end + 1; i++) {
+        for (size_t i = offset; i < end + 1; i++) {
             cout << matchList[i].genusTaxID<<" "<<matchList[i].speciesTaxID << " " << matchList[i].taxID << " " <<
             int(matchList[i].frame)<< " " << matchList[i].position  << " " << int(matchList[i].hamming) << endl;
         }

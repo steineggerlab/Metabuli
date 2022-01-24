@@ -21,8 +21,14 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     ///Sequences in the same split share the sequence to be used for training the prodigal.
     vector<FastaSplit> splits;
     getFastaSplits(taxIdListAtRank, splits, sequences);
+    for(size_t i = 0; i < taxIdListAtRank.size(); i ++){
+        cout<<taxIdListAtRank[i]<<endl;
+    }
 
     size_t numOfSplits = splits.size();
+    for(size_t i = 0; i < numOfSplits; i ++){
+        cout<<splits[i].offset<<" "<<splits[i].cnt<<" "<<splits[i].training<<endl;
+    }
     cout<<"numOfSplits "<<numOfSplits<<endl;
 
     bool * splitChecker = new bool[numOfSplits];
@@ -199,21 +205,22 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     cout<<seq->name.s<<endl;
                     prodigal.trainMeta(seq->seq.s);
                     cout<<"Max: "<<i<<" "<<prodigal.max_phase<<" "<<prodigal.max_score<<endl;
-
                 }else{
                     prodigal.trainASpecies(seq->seq.s);
                 }
 
                 // Generate intergenic 23-mer list
                 prodigal.getPredictedGenes(seq->seq.s);
+                cout<<"1"<<endl;
                 seqIterator.generateIntergenicKmerList(prodigal.genes, prodigal.nodes, prodigal.getNumberOfPredictedGenes(), intergenicKmerList, seq->seq.s);
-
+                cout<<"2"<<endl;
                 // Get min k-mer hash list for determining strandness
                 seqIterator.getMinHashList(standardList, seq->seq.s);
-
+                cout<<"3"<<endl;
                 // Getting all the sequence blocks of current split. Each block will be translated later separately.
                 numOfBlocks = 0;
                 for(size_t p = 0; p < splits[i].cnt; p++ ) {
+                    cout<<"p "<<p<<endl;
                     buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), static_cast<size_t>(seqs[splits[i].offset + p].length)};
                     kseq_destroy(seq);
                     seq = kseq_init(&buffer);
