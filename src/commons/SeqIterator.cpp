@@ -395,7 +395,6 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
 
     /* Main routine */
 
-    int newIntergenic = 0;
     bool hasBeenExtendedToLeft = false;
     int k = 23;
     char * newIntergenicKmer = (char*)malloc(sizeof(char)*(k+1));

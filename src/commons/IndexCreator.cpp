@@ -18,18 +18,10 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     vector<Sequence> sequences;
     getSeqSegmentsWithHead(sequences, seqFile);
 
-    ///Sequences in the same split share the sequence to be used for training the prodigal.
+    // Sequences in the same split share the sequence to be used for training the prodigal.
     vector<FastaSplit> splits;
     getFastaSplits(taxIdListAtRank, splits, sequences);
-    for(size_t i = 0; i < taxIdListAtRank.size(); i ++){
-        cout<<taxIdListAtRank[i]<<endl;
-    }
-
     size_t numOfSplits = splits.size();
-    for(size_t i = 0; i < numOfSplits; i ++){
-        cout<<splits[i].offset<<" "<<splits[i].cnt<<" "<<splits[i].training<<endl;
-    }
-    cout<<"numOfSplits "<<numOfSplits<<endl;
 
     bool * splitChecker = new bool[numOfSplits];
     fill_n(splitChecker, numOfSplits, false);
@@ -37,8 +29,6 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     size_t processedSplitCnt = 0;
     while(processedSplitCnt < numOfSplits){ ///check this condition
         fillTargetKmerBuffer2(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank);
-       	cout<<"processedSplitCnt "<<processedSplitCnt<<endl;
-       	cout<<kmerBuffer.startIndexOfReserve<<endl;
         writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdList);
     }
 
@@ -224,6 +214,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), static_cast<size_t>(seqs[splits[i].offset + p].length)};
                     kseq_destroy(seq);
                     seq = kseq_init(&buffer);
+                    kseq_read(seq);
                     seqIterator.getMinHashList(currentList, seq->seq.s);
                     cout<<seq->name.s<<endl;
                     if(seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, strlen(seq->seq.s))){
