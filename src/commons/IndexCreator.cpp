@@ -201,16 +201,14 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
 
                 // Generate intergenic 23-mer list
                 prodigal.getPredictedGenes(seq->seq.s);
-                cout<<"1"<<endl;
                 seqIterator.generateIntergenicKmerList(prodigal.genes, prodigal.nodes, prodigal.getNumberOfPredictedGenes(), intergenicKmerList, seq->seq.s);
-                cout<<"2"<<endl;
+
                 // Get min k-mer hash list for determining strandness
                 seqIterator.getMinHashList(standardList, seq->seq.s);
-                cout<<"3"<<endl;
+
                 // Getting all the sequence blocks of current split. Each block will be translated later separately.
                 numOfBlocks = 0;
                 for(size_t p = 0; p < splits[i].cnt; p++ ) {
-                    cout<<"p "<<p<<endl;
                     buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), static_cast<size_t>(seqs[splits[i].offset + p].length)};
                     kseq_destroy(seq);
                     seq = kseq_init(&buffer);
