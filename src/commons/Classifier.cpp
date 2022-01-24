@@ -836,7 +836,8 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     while(i + 1 < numOfFitMat){
         overlapCnt = 0;
         while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
-              filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < numOfFitMat)){
+                filteredMatches[i].taxID != filteredMatches[i+1].taxID &&
+                filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < numOfFitMat)){
             if(overlapCnt == 0){
                 overlapCnt++;
                 overlappedMatch = filteredMatches[i];
