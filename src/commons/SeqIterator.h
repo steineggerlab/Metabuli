@@ -33,6 +33,9 @@ using namespace std;
 
 typedef struct PredictedBlock {
     PredictedBlock(int start, int end, int strand) : start(start), end(end), strand(strand) { }
+    void printPredictedBlock() {
+        cout<<strand<<" "<<start<<" "<<end<<endl;
+    }
     int start;
     int end;
     int strand; //true for forward

@@ -204,34 +204,27 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     prodigal.trainASpecies(seq->seq.s);
                 }
 
-                //Generate intergenic k-mer list
+                // Generate intergenic 23-mer list
                 prodigal.getPredictedGenes(seq->seq.s);
-              //  cout<<i<<"- ng of t: "<<prodigal.ng<<endl;
                 seqIterator.generateIntergenicKmerList(prodigal.genes, prodigal.nodes, prodigal.getNumberOfPredictedGenes(), intergenicKmerList, seq->seq.s);
 
-                //Get min k-mer hash list for determining strandness
+                // Get min k-mer hash list for determining strandness
                 seqIterator.getMinHashList(standardList, seq->seq.s);
 
-
-                //Getting all the sequence blocks of current split. Each block will be translated later separately.
+                // Getting all the sequence blocks of current split. Each block will be translated later separately.
                 numOfBlocks = 0;
                 for(size_t p = 0; p < splits[i].cnt; p++ ) {
                     buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].offset + p].start]), static_cast<size_t>(seqs[splits[i].offset + p].length)};
                     kseq_destroy(seq);
                     seq = kseq_init(&buffer);
-                    int kseqL = kseq_read(seq);
-//                    if(size_t(kseqL) != strlen(seq->seq.s)){
-//                        cout<<"DIFF"<<endl;
-//                        cout<<kseqL<<" "<<strlen(seq->seq.s)<<endl;
-//                    }
                     seqIterator.getMinHashList(currentList, seq->seq.s);
+                    cout<<seq->name.s<<endl;
                     if(seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, strlen(seq->seq.s))){
                         prodigal.getPredictedGenes(seq->seq.s);
                         prodigal.removeCompletelyOverlappingGenes();
                         seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                           prodigal.fng, strlen(seq->seq.s),
                                                           numOfBlocks, intergenicKmerList, seq->seq.s);
-                        //cout<<i<<" "<<splits[i].offset+p<<" forward "<<strlen(seq->seq.s)<<endl;
                         strandness.push_back(true);
                     } else{
                         reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, strlen(seq->seq.s));
@@ -240,11 +233,9 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                           prodigal.fng, strlen(reverseCompliment),
                                                           numOfBlocks, intergenicKmerList, reverseCompliment);
-                        //cout<<i<<" "<<splits[i].offset+p<<" reverse "<<strlen(seq->seq.s)<<endl;
                         free(reverseCompliment);
                         strandness.push_back(false);
                     }
-                  //  cout<<i<<" "<<p<<" "<<prodigal.fng<<endl;
                     numOfBlocksList[p] = numOfBlocks;
                     currentList = priority_queue<uint64_t>();
                 }

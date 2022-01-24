@@ -364,6 +364,7 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
     //Exceptional case 1: 0 prdicted gene
     if(numOfGene == 0){
         blocks.emplace_back(0, length - 1, 1);
+        blocks.back().printPredictedBlock();
         blockIdx++;
         return;
     }
@@ -378,12 +379,14 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
             leftEnd = 0;
             while(leftEnd%3 != frame) leftEnd++; // y - (y - x) % 3 .. which would be faster?
             blocks.emplace_back(leftEnd, length-1, 1);
+            blocks.back().printPredictedBlock();
             blockIdx ++;
         } else{ //reverse
             frame = (genes[0].end - 1) % 3;
             rightEnd = length - 1;
             while(rightEnd%3 != frame) rightEnd--;
             blocks.emplace_back(0, rightEnd, -1);
+            blocks.back().printPredictedBlock();
             blockIdx++;
         }
         return;
@@ -410,6 +413,7 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
         leftEnd = 0;
         while (leftEnd % 3 != frame) leftEnd++;
         blocks.emplace_back(leftEnd, genes[1].begin - 1 + 22, 1);
+        blocks.back().printPredictedBlock();
         blockIdx++;
     } else {
         frame = (genes[0].end - 1) % 3;
@@ -417,6 +421,7 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
         while (rightEnd % 3 != frame) rightEnd--;
 
         blocks.emplace_back(0, rightEnd, -1);
+        blocks.back().printPredictedBlock();
         blockIdx++;
     }
 
@@ -449,9 +454,11 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
                 leftEnd = genes[geneIdx-1].end - 1- 22;
                 while(leftEnd%3 != frame) leftEnd++;
                 blocks.emplace_back(leftEnd, genes[geneIdx].end - 1, 1);
+                blocks.back().printPredictedBlock();
                 blockIdx ++;
             } else { // reverse
                 blocks.emplace_back(genes[geneIdx-1].end - 22 - 1, genes[geneIdx].end - 1, -1);
+                blocks.back().printPredictedBlock();
                 blockIdx++;
             }
             hasBeenExtendedToLeft = true;
@@ -462,23 +469,27 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
                     leftEnd = genes[geneIdx-1].end - 1 - 22;
                     while(leftEnd%3 != frame) leftEnd++;
                     blocks.emplace_back(leftEnd, genes[geneIdx + 1].begin - 1 + 22, 1);
+                    blocks.back().printPredictedBlock();
                     blockIdx ++;
                 } else{
                     frame = (genes[geneIdx].end - 1) % 3;
                     rightEnd = genes[geneIdx+1].begin - 1 + 22;
                     while(rightEnd%3 != frame) rightEnd--;
                     blocks.emplace_back(genes[geneIdx-1].end - 1 - 22, rightEnd, -1);
+                    blocks.back().printPredictedBlock();
                     blockIdx++;
                 }
             } else{
                 if(!isReverse){ //forward
                     blocks.emplace_back(genes[geneIdx].begin - 1, genes[geneIdx + 1].begin - 1 + 22, 1);
+                    blocks.back().printPredictedBlock();
                     blockIdx ++;
                 } else{
                     frame = (genes[geneIdx].end - 1) % 3;
                     rightEnd = genes[geneIdx+1].begin - 1 + 22;
                     while(rightEnd%3 != frame) rightEnd--;
                     blocks.emplace_back(genes[geneIdx].begin - 1, rightEnd, -1);
+                    blocks.back().printPredictedBlock();
                     blockIdx++;
                 }
             }
@@ -497,6 +508,7 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
             leftEnd = genes[numOfGene - 2].end - 1 - 22;
             while (leftEnd % 3 != frame) leftEnd++;
             blocks.emplace_back(leftEnd, length - 1, 1);
+            blocks.back().printPredictedBlock();
 
             blockIdx++;
         } else { // reverse
@@ -504,6 +516,7 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
             rightEnd = length - 1;
             while (rightEnd % 3 != frame) rightEnd--;
             blocks.emplace_back(genes[numOfGene - 2].end - 22 - 1, rightEnd, -1);
+            blocks.back().printPredictedBlock();
             blockIdx++;
         }
     } else { //extension to right
@@ -513,23 +526,27 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
                 leftEnd = genes[numOfGene - 2].end - 1 - 22;
                 while (leftEnd % 3 != frame) leftEnd++;
                 blocks.emplace_back(leftEnd, length - 1, 1);
+                blocks.back().printPredictedBlock();
                 blockIdx++;
             } else{
                 frame = (genes[numOfGene-1].end - 1)%3;
                 rightEnd = length - 1;
                 while(rightEnd%3 != frame) rightEnd--;
                 blocks.emplace_back(genes[numOfGene - 2].end - 22 - 1, rightEnd, -1);
+                blocks.back().printPredictedBlock();
                 blockIdx++;
             }
         } else{
             if(!isReverse){
                 blocks.emplace_back(genes[numOfGene - 1].begin, length - 1, 1);
+                blocks.back().printPredictedBlock();
                 blockIdx++;
             } else{
                 frame = (genes[numOfGene-1].end - 1)%3;
                 rightEnd = length - 1;
                 while(rightEnd%3 != frame) rightEnd--;
                 blocks.emplace_back(genes[numOfGene-1].begin - 1, rightEnd, -1);
+                blocks.back().printPredictedBlock();
                 blockIdx++;
             }
         }
@@ -650,7 +667,7 @@ void SeqIterator::generateIntergenicKmerList(_gene *genes, _node *nodes, int num
     char * kmer = (char*)malloc(sizeof(char) * (k+1));
     char * reverseKmer = (char*)malloc(sizeof(char) * (k+1));
 
-    //Use the frame of the first gene for the first intergenic region
+    // Use the frame of the first gene for the first intergenic region
     int beginOfFisrtGene = genes[0].begin - 1;
     if(beginOfFisrtGene > k - 1 ){
         strncpy(kmer, seq + beginOfFisrtGene - k, k);
