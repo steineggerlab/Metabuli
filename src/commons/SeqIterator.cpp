@@ -279,8 +279,8 @@ size_t SeqIterator::getNumOfKmerForBlock(const PredictedBlock & block){
     return len/3 - 7;
 }
 
-///It makes the block for translation from DNA to AA
-///Each block has a predicted gene part and intergenic region. When another gene shows up, new block starts.
+// It makes the blocks for translation
+// Each block has a predicted gene part and an intergenic region. When another gene shows up, new block starts.
 void SeqIterator::getTranslationBlocks(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length, size_t & blockIdx){
 
     //size_t stIdx = blockIdx;
@@ -291,7 +291,7 @@ void SeqIterator::getTranslationBlocks(struct _gene * genes, struct _node * node
     }
 
 
-    //for the first frame
+    // for the first frame
     if(genes[0].begin > 23) {
         //blocks.emplace_back(0, genes[0].begin + 22, 1);
         blocks.emplace_back(0, genes[0].begin - 1 + 22, 1);
@@ -406,7 +406,7 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
     uint64_t leftKmerHash = 0, rightKmerHash = 0;
 
 
-    //Extend the first gene to cover intergenic regions
+    // Extend the first gene to cover intergenic regions
     if(nodes[genes[0].start_ndx].strand == 1) { //forward
         frame = (genes[0].begin - 1) % 3;
         leftEnd = 0;
@@ -426,11 +426,11 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
 
 
 
-    //From the second gene to the second last gene
+    // From the second gene to the second last gene
     for(size_t geneIdx = 1; geneIdx < numOfGene - 1; geneIdx ++){
         isReverse = false;
 
-        //Make two k-mer hash; each from left and right of current gene. They are used for choosing extension direction.
+        // Make two k-mer hash; each from left and right of current gene. They are used for choosing extension direction.
         strncpy(leftKmer, seq + genes[geneIdx].begin - 1 - k, k);
         strncpy(rightKmer, seq + genes[geneIdx].end, k);
         if(nodes[genes[geneIdx].start_ndx].strand == 1){
@@ -446,7 +446,7 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
             rightKmerHash = XXH64(rightKmerReverse, k, 0);
         }
 
-        //Extend genes to cover intergenic regions
+        // Extend genes to cover intergenic regions
         if(find(intergenicKmerList.begin(), intergenicKmerList.end(), leftKmerHash) != intergenicKmerList.end()){ //Extension to left
             if(!isReverse){ //forward
                 frame = (genes[geneIdx].begin - 1) % 3;

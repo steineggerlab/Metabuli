@@ -457,16 +457,13 @@ void ProdigalWrapper::printGenes() {
 
 void ProdigalWrapper::removeCompletelyOverlappingGenes() {
     fng = 0;
-    if(ng == 0)
-        return;
+    if(ng == 0) return;
     for(int i = 0; i < ng - 1; i++){
         if(genes[i].begin >= genes[i+1].begin) {
-            cout<<"overlap"<<endl;
             continue;
         }
         finalGenes[fng++] = genes[i];
     }
-//    if(genes[ng-1].begin <= genes[ng-2].begin)
     finalGenes[fng++] = genes[ng-1];
 }
 

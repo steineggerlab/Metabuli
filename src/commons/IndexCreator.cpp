@@ -217,6 +217,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     cout<<seq->name.s<<endl;
                     if(seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, strlen(seq->seq.s))){
                         prodigal.getPredictedGenes(seq->seq.s);
+                        prodigal.printGenes();
                         prodigal.removeCompletelyOverlappingGenes();
                         seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                           prodigal.fng, strlen(seq->seq.s),
@@ -225,6 +226,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     } else{
                         reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, strlen(seq->seq.s));
                         prodigal.getPredictedGenes(reverseCompliment);
+                        prodigal.printGenes();
                         prodigal.removeCompletelyOverlappingGenes();
                         seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                           prodigal.fng, strlen(reverseCompliment),
@@ -241,11 +243,9 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                 for(size_t block = 0; block < numOfBlocks; block++){
                     totalKmerCntForOneTaxID += seqIterator.getNumOfKmerForBlock(blocks[block]);
                 }
-             //   cout<<totalKmerCntForOneTaxID<<endl;
 
                 // Fill k-mer buffer with k-mers of current split if the buffer has enough space
                 posToWrite = kmerBuffer.reserveMemory(totalKmerCntForOneTaxID);
-               // cout<<posToWrite<<endl;
                 if(posToWrite + totalKmerCntForOneTaxID < kmerBuffer.bufferSize){
                     size_t start = 0;
                     for(size_t seqIdx = 0; seqIdx < splits[i].cnt; seqIdx++){
@@ -255,13 +255,11 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                         kseq_read(seq);
                         size_t end = numOfBlocksList[seqIdx];
                         if(strandness[seqIdx]){
-                        //    cout<<splits[i].offset + seqIdx<<" "<<strlen(seq->seq.s)<<endl;
                             for(size_t bl = start; bl < end ; bl++){
                                 seqIterator.translateBlock(seq->seq.s,blocks[bl]);
                                 seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].offset + seqIdx, taxIdListAtRank[splits[i].offset + seqIdx]); //splits[i].offset + seqIdx
                             }
                         } else{
-                       //     cout<<splits[i].offset + seqIdx<<" "<<strlen(seq->seq.s)<<endl;
                             reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, strlen(seq->seq.s));
                             for(size_t bl = start; bl < end ; bl++){
                                 seqIterator.translateBlock(reverseCompliment,blocks[bl]);
@@ -269,10 +267,6 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                             }
                             free(reverseCompliment);
                         }
-//                        for(size_t bl = start; bl < end ; bl++){
-//                            seqIterator.translateBlock(seq->seq.s,blocks[bl]);
-//                            seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer, posToWrite, splits[i].offset + seqIdx, taxIdListAtRank[splits[i].offset + seqIdx]); //splits[i].offset + seqIdx
-//                        }
                         start = numOfBlocksList[seqIdx];
                     }
                     checker[i] = true;
