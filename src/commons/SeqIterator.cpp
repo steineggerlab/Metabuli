@@ -446,19 +446,35 @@ void SeqIterator::getTranslationBlocks2(struct _gene * genes, struct _node * nod
             rightKmerHash = XXH64(rightKmerReverse, k, 0);
         }
 
+        // TODO Simplify here
         // Extend genes to cover intergenic regions
         if(find(intergenicKmerList.begin(), intergenicKmerList.end(), leftKmerHash) != intergenicKmerList.end()){ //Extension to left
-            if(!isReverse){ //forward
-                frame = (genes[geneIdx].begin - 1) % 3;
-                leftEnd = genes[geneIdx-1].end - 1- 22;
-                while(leftEnd%3 != frame) leftEnd++;
-                blocks.emplace_back(leftEnd, genes[geneIdx].end - 1, 1);
-                blocks.back().printPredictedBlock();
-                blockIdx ++;
-            } else { // reverse
-                blocks.emplace_back(genes[geneIdx-1].end - 22 - 1, genes[geneIdx].end - 1, -1);
-                blocks.back().printPredictedBlock();
-                blockIdx++;
+            if(!hasBeenExtendedToLeft){
+                if (!isReverse) { //forward
+                    //frame = (genes[geneIdx].begin - 1) % 3;
+                    //leftEnd = genes[geneIdx].begin - 1;
+                    //while (leftEnd % 3 != frame) leftEnd++;
+                    blocks.emplace_back(genes[geneIdx].begin - 1, genes[geneIdx].end - 1, 1);
+                    blocks.back().printPredictedBlock();
+                    blockIdx++;
+                } else { // reverse
+                    blocks.emplace_back(genes[geneIdx].begin - 1, genes[geneIdx].end - 1, -1);
+                    blocks.back().printPredictedBlock();
+                    blockIdx++;
+                }
+            }else {
+                if (!isReverse) { //forward
+                    frame = (genes[geneIdx].begin - 1) % 3;
+                    leftEnd = genes[geneIdx - 1].end - 1 - 22;
+                    while (leftEnd % 3 != frame) leftEnd++;
+                    blocks.emplace_back(leftEnd, genes[geneIdx].end - 1, 1);
+                    blocks.back().printPredictedBlock();
+                    blockIdx++;
+                } else { // reverse
+                    blocks.emplace_back(genes[geneIdx - 1].end - 22 - 1, genes[geneIdx].end - 1, -1);
+                    blocks.back().printPredictedBlock();
+                    blockIdx++;
+                }
             }
             hasBeenExtendedToLeft = true;
         } else { // Extension to right
