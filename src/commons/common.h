@@ -5,7 +5,7 @@
 
 #include "NcbiTaxonomy.h"
 #define kmerBufSize 10000000000 // 10000000000 | 2860000000
-#define ThreadNum 1
+#define ThreadNum 32
 #define SplitNum 4096
 #define PRINT true
 

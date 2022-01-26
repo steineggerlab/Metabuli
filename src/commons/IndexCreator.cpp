@@ -191,10 +191,10 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
 
                 if(strlen(seq->seq.s) < 100000){
                     prodigal.is_meta = 1;
-                    cout<<"Training with metagenomic version: "<<splits[i].training<<" "<<seqs[splits[i].training].start<<" "<<i<<seq->headerOffset<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
-                    cout<<seq->name.s<<endl;
+//                    cout<<"Training with metagenomic version: "<<splits[i].training<<" "<<seqs[splits[i].training].start<<" "<<i<<seq->headerOffset<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
+//                    cout<<seq->name.s<<endl;
                     prodigal.trainMeta(seq->seq.s);
-                    cout<<"Max: "<<i<<" "<<prodigal.max_phase<<" "<<prodigal.max_score<<endl;
+//                    cout<<"Max: "<<i<<" "<<prodigal.max_phase<<" "<<prodigal.max_score<<endl;
                 }else{
                     prodigal.trainASpecies(seq->seq.s);
                 }
@@ -214,10 +214,10 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
                     seqIterator.getMinHashList(currentList, seq->seq.s);
-                    cout<<seq->name.s<<endl;
+//                    cout<<seq->name.s<<endl;
                     if(seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, strlen(seq->seq.s))){
                         prodigal.getPredictedGenes(seq->seq.s);
-                        prodigal.printGenes();
+//                        prodigal.printGenes();
                         prodigal.removeCompletelyOverlappingGenes();
                         seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                           prodigal.fng, strlen(seq->seq.s),
@@ -226,7 +226,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, Mmaped
                     } else{
                         reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, strlen(seq->seq.s));
                         prodigal.getPredictedGenes(reverseCompliment);
-                        prodigal.printGenes();
+//                        prodigal.printGenes();
                         prodigal.removeCompletelyOverlappingGenes();
                         seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                           prodigal.fng, strlen(reverseCompliment),
