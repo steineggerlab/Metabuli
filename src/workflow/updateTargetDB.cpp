@@ -71,7 +71,7 @@ int updateTargetDB(int argc, const char **argv, const Command &command){
         }
     }
     IndexCreator idxCre;
-    idxCre.startIndexCreatingParallel(seqFileName, updatedFileName, newTaxIdListAtRank, newTaxIdList);
+    idxCre.startIndexCreatingParallel(seqFileName, updatedFileName, newTaxIdListAtRank, newTaxIdList, par);
 
 
     /**Merge new k-mer data into outdated database.**/
