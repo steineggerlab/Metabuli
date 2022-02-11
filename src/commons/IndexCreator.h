@@ -19,6 +19,7 @@
 #include "NcbiTaxonomy.h"
 #include "FastSort.h"
 #include "Classifier.h"
+#include "LocalParameters.h"
 
 #ifdef OPENMP
 #include <omp.h>
