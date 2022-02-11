@@ -484,7 +484,8 @@ bool Classifier::compareForWritingMatches(const Match & a, const Match & b){
     return false;
 }
 
-///It compares query k-mers to target k-mers. If a query has matches, the matches with the smallest difference are selected.
+// It compares query k-mers to target k-mers.
+// If a query has matches, the matches with the smallest hamming distance will be selected
 void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCompare, const size_t & startIdx,
                             vector<size_t> & selectedMatches, vector<uint8_t> & selectedHammingSum,
                             vector<uint16_t> & selectedHammings) {
@@ -493,7 +494,8 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCo
     auto * hammingSums = new uint8_t[size + 1];
     uint8_t currentHammingSum;
     uint8_t minHammingSum = UINT8_MAX;
-    ///Calculate hamming distance
+
+    // Calculate hamming distance
     for(size_t i = 0; i < size; i++){
         currentHammingSum = getHammingDistanceSum(query, targetKmersToCompare[i]);
         if(currentHammingSum < minHammingSum)
@@ -501,7 +503,7 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCo
         hammingSums[i] = currentHammingSum;
     }
 
-    ///Select target k-mers that passed hamming criteria
+    // Select target k-mers that passed hamming criteria
     for(size_t h = 0; h < size; h++){
         if(hammingSums[h] == minHammingSum){
             selectedMatches.push_back(startIdx + h);
@@ -513,17 +515,18 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCo
     delete[] hammingSums;
 }
 
-///It analyses the result of linear search.
+// It analyses the result of linear search.
 void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName,
                                        int seqNum, Query * queryList, const LocalParameters & par) {
-    //Mmap the file of matches
+    // Mmap the file of matches
     struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
     size_t numOfMatches = matchList.fileSize / sizeof(Match);
     cout << "num of matches " << numOfMatches << endl;
 
-    //Sort matches in order to analyze
+    // Sort matches in order to analyze
     SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
-    //Devide matches into blocks for multi threading
+
+    // Devide matches into blocks for multi threading
     MatchBlock *matchBlocks = new MatchBlock[seqNum];
     cout << seqNum << endl;
     size_t matchIdx = 0;
@@ -545,13 +548,13 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
         omp_set_num_threads(*(int * )par.PARAM_THREADS.value);
     }
 
-    //Process each block
-#pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList, blockIdx)
+    // Process each block
+#pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList, blockIdx, par)
     {
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < blockIdx; ++i) {
             chooseBestTaxon(ncbiTaxonomy, seqSegments[matchBlocks[i].id].length, matchBlocks[i].id,
-                            matchBlocks[i].start, matchBlocks[i].end, matchList.data, queryList);
+                            matchBlocks[i].start, matchBlocks[i].end, matchList.data, queryList, par);
         }
     }
 
@@ -560,11 +563,12 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
     delete[] matchBlocks;
     munmap(matchList.data, matchList.fileSize + 1);
-    cout << "end of analyseResultParallel" << endl;
+    cout << "End of analyseResultParallel" << endl;
 }
 
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, size_t queryLength, int currentQuery,
-                                  size_t offset, size_t end, Match *matchList, Query *queryList) {
+                                  size_t offset, size_t end, Match *matchList, Query *queryList,
+                                  const LocalParameters & par ) {
     TaxID selectedTaxon;
     if(PRINT) {
         cout<<"# "<<currentQuery<<endl;
@@ -574,7 +578,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, size_t queryLength
         }
     }
 
-    //get the best genus for current query
+    // Get the best genus for current query
     vector<Match> matchesForLCA;
     matchesForLCA.reserve(end-offset+1);
     float maxScore;
@@ -607,7 +611,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, size_t queryLength
         hammingSum += matchesForLCA[i].hamming;
     }
 
-    //If there are two or more good genus level candidates, find the LCA.
+    // If there are two or more good genus level candidates, find the LCA.
     if(res == 2){
         vector<TaxID> taxIdList;
         taxIdList.reserve(matchesForLCA.size());
@@ -632,8 +636,8 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, size_t queryLength
 
     queryList[currentQuery].score = maxScore;
 
-    // Classify prokaryotes in genus level for highly diverged queries, not fo viruses
-    if(maxScore < 0.8 && !ncbiTaxonomy.IsAncestor(10239, matchesForLCA[0].taxID)){ // && ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "superkingdom") != 10239
+    // Classify prokaryotes in genus level for highly diverged queries, not for virus
+    if(maxScore < 0.8 && !ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)){
         selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
@@ -651,17 +655,16 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, size_t queryLength
     }
 
     // Classify in species or lower level for queries that have close matches in reference DB.
-    //TaxID selectedLCA = match2LCA(matchesForLCA, ncbiTaxonomy, queryLength);
     TaxID selectedLCA = classifyFurther(matchesForLCA, ncbiTaxonomy, queryLength);
 
     ///TODO optimize strain specific classification criteria
-    //Strain classification only for high coverage with LCA of species level
+    // Strain classification only for high coverage with LCA of species level
     int numOfstrains = 0;
     TaxID strainID = 0;
     int count = 1;
     if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){
         unordered_map<TaxID, int> strainMatchCnt;
-        for(size_t i = 0; i < matchesForLCA.size(); i++ ){
+        for(size_t i = 0; i < matchesForLCA.size(); i++){
             if(selectedLCA != matchesForLCA[i].taxID
                 && ncbiTaxonomy.IsAncestor(selectedLCA, matchesForLCA[i].taxID)){
                 strainMatchCnt[matchesForLCA[i].taxID]++;
@@ -679,11 +682,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, size_t queryLength
         if(numOfstrains == 1 && count > 2) {
             selectedLCA = strainID;
         }
-
-
-//        if(strainMatchCnt.size() == 1 && strainMatchCnt.begin()->second > 2) {
-//            selectedLCA = strainMatchCnt.begin()->first;
-//        }
     }
 
     if(PRINT) {
@@ -940,8 +938,9 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches, int 
     int coveredLength = coveredPosCnt * 3;
     if(coveredLength > maxCoveredLength) coveredLength = maxCoveredLength;
     float score = ((float)coveredLength - hammingSum) / (float)maxCoveredLength;
-    if(matchNum < 4)
-        return;
+    if(coveredPosCnt < 2) return;
+//    if(matchNum < 4)
+//        return;
 //    if((float)coveredLength <= (float)queryLength * 0.2f || (matchNum < 4) || score < 0.25) return; // Ignore genus with low coverage
     scoreOfEachGenus.push_back(score);
     matchesForEachGenus.push_back(matches);

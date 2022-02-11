@@ -30,9 +30,13 @@ public:
     std::vector<MMseqsParameter*> seqHeader2TaxId;
 
     PARAMETER(PARAM_GTDB_OR_NCBI)
+    PARAMETER(VIRUS_TAX_ID)
 
     //creatTargetDB
     int gtdbOrNcbi;
+
+    // Classify
+    int virusTaxId;
 
 private:
     LocalParameters();

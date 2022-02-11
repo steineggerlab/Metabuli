@@ -37,9 +37,15 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     munmap(seqFile.data, seqFile.fileSize + 1);
 }
 
-size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSplitCnt, const vector<FastaSplit> & splits, const vector<int> & taxIdListAtRank) {
+size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
+                                          MmapedData<char> & seqFile,
+                                          vector<Sequence> & seqs,
+                                          bool * checker, size_t & processedSplitCnt,
+                                          const vector<FastaSplit> & splits,
+                                          const vector<int> & taxIdListAtRank,
+                                          const LocalParameters & par) {
 #ifdef OPENMP
-   omp_set_num_threads(ThreadNum);
+   omp_set_num_threads(*(int * )par.PARAM_THREADS.value);
 #endif
     bool hasOverflow = false;
 
@@ -153,9 +159,16 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer, MmapedD
 }
 
 
-size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs, bool * checker, size_t & processedSplitCnt, const vector<FastaSplit> & splits, const vector<int> & taxIdListAtRank) {
+size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
+                                           MmapedData<char> & seqFile,
+                                           vector<Sequence> & seqs,
+                                           bool * checker,
+                                           size_t & processedSplitCnt,
+                                           const vector<FastaSplit> & splits,
+                                           const vector<int> & taxIdListAtRank,
+                                           const LocalParameters & par) {
 #ifdef OPENMP
-    omp_set_num_threads(ThreadNum);
+    omp_set_num_threads(*(int * )par.PARAM_THREADS.value);
 #endif
     bool hasOverflow = false;
 

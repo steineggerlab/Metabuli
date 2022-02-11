@@ -7,9 +7,13 @@
 #include "LocalParameters.h"
 #include "NcbiTaxonomy.h"
 
+void setClassifyDefaults(LocalParameters & par){
+    par.virusTaxId = 10239; // Taxonomy ID of virus taxon in NCBI
+}
 int classify(int argc, const char **argv, const Command& command)
 {
-    LocalParameters &par = LocalParameters::getLocalInstance();
+    LocalParameters & par = LocalParameters::getLocalInstance();
+    setClassifyDefaults(par);
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
 
     const char * queryFileName = par.filenames[0].c_str();

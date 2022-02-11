@@ -388,67 +388,6 @@ int ProdigalWrapper::getNextSeq(char * line, int training) {
 
 int ProdigalWrapper::getNumberOfPredictedGenes(){ return ng; }
 
-void ProdigalWrapper::updateDicodonFrequency() {
-    int i, path, counts[4096], glob = 0;
-    int left, right, in_gene;
-    double prob[4096], bg[4096];
-
-    for(i = 0; i < 4096; i++) { counts[i] = 0; prob[i] = 0.0; bg[i] = 0.0; }
-    left = -1; right = -1;
-    calc_mer_bg(6, seq, rseq, slen, bg);
-    path = ipath; in_gene = 0;
-
-    //TODO check here
-    for(int g = 0 ; g < ng ; ++ g){
-        if(nodes[genes[g].start_ndx].strand == 1){ //forward
-           left = genes[g].begin-1;
-           right = genes[g].end-1;
-           for(i = left; i < right-5; i+=3){
-               counts[mer_ndx(6, seq, i)] += 1; glob++;
-           }
-        } else { // reverse
-            left = slen - genes[g].end;
-            right = slen - genes[g].begin;
-            for(i = left; i < right-5; i+=3){
-                counts[mer_ndx(6, rseq, i)] += 1; glob++;
-            }
-        }
-    }
-//    while(path != -1) {
-//        if(nodes[path].strand == -1 && nodes[path].type != STOP) {
-//            in_gene = -1;
-//            left = slen-nodes[path].ndx-1;
-//        }
-//        if(nodes[path].strand == 1 && nodes[path].type == STOP) {
-//            in_gene = 1;
-//            right = nodes[path].ndx+2;
-//        }
-//        if(in_gene == -1 && nodes[path].strand == -1 && nodes[path].type == STOP) {
-//            right = slen-nodes[path].ndx+1;
-//            for(i = left; i < right-5; i+=3) {
-//                counts[mer_ndx(6, rseq, i)]++;
-//                glob++;
-//            }
-//            in_gene = 0;
-//        }
-//        if(in_gene == 1 && nodes[path].strand == 1 && nodes[path].type != STOP) {
-//            left = nodes[path].ndx;
-//            for(i = left; i < right-5; i+=3) { counts[mer_ndx(6, seq, i)]++; glob++; }
-//            in_gene = 0;
-//        }
-//        path = nodes[path].traceb;
-//    }
-    for(i = 0; i < 4096; i++) {
-        prob[i] = (counts[i]*1.0)/(glob*1.0);
-        if(prob[i] == 0 && bg[i] != 0) tinf.gene_dc[i] = -5.0;
-        else if(bg[i] == 0) tinf.gene_dc[i] = 0.0;
-        else tinf.gene_dc[i] = log(prob[i]/bg[i]);
-
-        if(tinf.gene_dc[i] > 5.0) tinf.gene_dc[i] = 5.0;
-        if(tinf.gene_dc[i] < -5.0) tinf.gene_dc[i] = -5.0;
-    }
-}
-
 void ProdigalWrapper::printGenes() {
     for(int i = 0 ; i < ng; i++){
         cout<<i<<" "<<genes[i].begin<<" "<<genes[i].end<<" "<<nodes[genes[i].start_ndx].strand<<endl;

@@ -35,13 +35,9 @@ private:
     FILE *start_ptr, *trans_ptr, *nuc_ptr;
     struct stat fbuf;
     pid_t pid;
-
-
     struct _training tinf;
     mask mlist[MAX_MASKS];
     struct _metagenomic_bin * meta;
-
-
 
 public:
     int fng, ng;
@@ -57,10 +53,8 @@ public:
     void trainASpecies(char * genome);
     void trainMeta(char * genome);
     int getNextSeq(char * seq, int training);
-    void updateDicodonFrequency();
     void printGenes();
     ProdigalWrapper();
     ~ProdigalWrapper();
-
 };
 #endif //ADCLASSIFIER2_PRODIGALWRAPPER_H
