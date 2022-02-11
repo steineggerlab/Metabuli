@@ -9,7 +9,9 @@ IndexCreator::~IndexCreator() {
 }
 
 ///It reads a reference sequence file and write a differential index file and target k-mer info file.
-void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const char * outputFileName, const vector<int> & taxIdListAtRank, const vector<int> & taxIdList)
+void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const char * outputFileName,
+                                              const vector<int> & taxIdListAtRank, const vector<int> & taxIdList,
+                                              const LocalParameters & par)
 {
     ///Mmap the input fasta file
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
@@ -28,7 +30,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     TargetKmerBuffer kmerBuffer(kmerBufSize);
     size_t processedSplitCnt = 0;
     while(processedSplitCnt < numOfSplits){ ///check this condition
-        fillTargetKmerBuffer2(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank);
+        fillTargetKmerBuffer2(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank, par);
         writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdList);
     }
 
