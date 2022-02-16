@@ -138,7 +138,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
         classList.push_back(classInt);
 
         // 5th field -> score
-        scores.push_back(stof(fields[4]));
+        //scores.push_back(stof(fields[4]));
 
         // 2nd field -> assacc
         regex_search(fields[1], assacc, regex1);
