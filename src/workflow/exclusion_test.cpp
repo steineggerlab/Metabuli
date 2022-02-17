@@ -107,7 +107,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     }
     map.close();
 
-    ///read classification
+    // read classification
     vector<int> rightAnswers;
     vector<int> classList;
 
@@ -234,7 +234,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     ///score the classification
     for(size_t i = 0; i < classList.size(); i++){
         cout<<i<<" ";
-        compareTaxon2(classList[i], rightAnswers[i], ncbiTaxonomy, counts, scores[i], Scores);
+        compareTaxon2(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
     }
 
     ofstream scoreFile;
