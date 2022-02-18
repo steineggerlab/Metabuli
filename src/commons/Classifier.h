@@ -185,6 +185,7 @@ private:
     size_t classifiedCnt;
 
     vector<size_t> closestKmers;
+
     vector<QueryInfo> queryInfos;
     unordered_map<TaxID, unsigned int> taxCounts;
 
@@ -228,7 +229,7 @@ private:
     uint16_t getHammings(uint64_t kmer1, uint64_t kmer2);
 
     // Analyzing k-mer matches
-    void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName
+    void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, Buffer<Match> & matchBuffer
                                , int seqNum, Query * queryList, const LocalParameters & par);
 
     static bool sortByGenusAndSpecies2(const Match & a, const Match & b);

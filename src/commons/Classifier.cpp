@@ -94,7 +94,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     size_t processedSeqCnt = 0;
 
     //Timer
-    time_t beforeSearch, afterSearch, afterAnalyze;
+    time_t beforeSearch, afterSearch, afterAnalyze, beforeIO;
 
     size_t numOfTatalQueryKmerCnt = 0;
 
@@ -110,14 +110,16 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
                              diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile, par);
     }
     cout<<"Number of query k-mers: "<<numOfTatalQueryKmerCnt<<endl;
+    beforeIO = time(nullptr);
     writeMatches(matchBuffer, matchFile);
+    cout<<"Time spent for writing matches: "<<double(time(nullptr)-beforeIO)<<endl;
     fclose(matchFile);
     afterSearch = time(nullptr);
     cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
 
     //load matches and analyze
     cout<<"Analyse Result ... "<<endl;
-    analyseResultParallel(taxonomy, sequences, matchFileName, numOfSeq, queryList, par);
+    analyseResultParallel(taxonomy, sequences, matchBuffer, numOfSeq, queryList, par);
     afterAnalyze = time(nullptr);
     cout<<"Time spent for analyzing: "<<double(afterAnalyze-afterSearch)<<endl;
 
@@ -269,13 +271,6 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
         }
     }
 
-//    cout<<"Query"<<endl;
-//    for(int i = 0 ; i < threadNum; i++){
-//        cout << querySplits[i].diffIdxSplit.infoIdxOffset << " " << querySplits[i].diffIdxSplit.diffIdxOffset << endl;
-//    }
-
-
-
     bool * splitCheckList = (bool *)malloc(sizeof(bool) * *threadNum);
     fill_n(splitCheckList, *threadNum, false);
     int completedSplitCnt = 0;
@@ -395,11 +390,11 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                     }
                     candidateTargetKmers.clear();
 
-                    /// Get next query, and start to find
+                    // Get next query, and start to find
                     currentQuery = queryKmerList[j].ADkmer;
                     currentQueryAA = AminoAcid(currentQuery);
 
-                    ///Skip target k-mers that are not matched in amino acid level
+                    // Skip target k-mers that are not matched in amino acid level
                     while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                         targetInfoIdx++;
@@ -516,16 +511,17 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCo
 }
 
 // It analyses the result of linear search.
-void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, char * matchFileName,
+void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, Buffer<Match> & matchBuffer,
                                        int seqNum, Query * queryList, const LocalParameters & par) {
     // Mmap the file of matches
-    struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
-    size_t numOfMatches = matchList.fileSize / sizeof(Match);
-    cout << "num of matches " << numOfMatches << endl;
+//    struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
+//    size_t numOfMatches = matchList.fileSize / sizeof(Match);
+//    cout << "num of matches " << numOfMatches << endl;
 
+    size_t numOfMatches = matchBuffer.startIndexOfReserve;
     // Sort matches in order to analyze
-    SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
-
+    //SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
+    SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + numOfMatches, Classifier::sortByGenusAndSpecies2);
     // Devide matches into blocks for multi threading
     MatchBlock *matchBlocks = new MatchBlock[seqNum];
     cout << seqNum << endl;
@@ -533,10 +529,10 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     size_t blockIdx = 0;
     uint32_t currentQuery;
     while (matchIdx < numOfMatches) {
-        currentQuery = matchList.data[matchIdx].queryId;
+        currentQuery = matchBuffer.buffer[matchIdx].queryId;
         matchBlocks[blockIdx].id = currentQuery;
         matchBlocks[blockIdx].start = matchIdx;
-        while ((currentQuery == matchList.data[matchIdx].queryId) && (matchIdx < numOfMatches)) ++matchIdx;
+        while ((currentQuery == matchBuffer.buffer[matchIdx].queryId) && (matchIdx < numOfMatches)) ++matchIdx;
         matchBlocks[blockIdx].end = matchIdx - 1;
         blockIdx++;
     }
@@ -549,12 +545,12 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     }
 
     // Process each block
-#pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqSegments, seqNum, ncbiTaxonomy, queryList, blockIdx, par)
+#pragma omp parallel default(none), shared(cout, matchBlocks, matchBuffer, seqSegments, seqNum, ncbiTaxonomy, queryList, blockIdx, par)
     {
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < blockIdx; ++i) {
             chooseBestTaxon(ncbiTaxonomy, seqSegments[matchBlocks[i].id].length, matchBlocks[i].id,
-                            matchBlocks[i].start, matchBlocks[i].end, matchList.data, queryList, par);
+                            matchBlocks[i].start, matchBlocks[i].end, matchBuffer.buffer, queryList, par);
         }
     }
 
@@ -562,7 +558,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
         ++taxCounts[queryList[i].classification];
     }
     delete[] matchBlocks;
-    munmap(matchList.data, matchList.fileSize + 1);
+    //munmap(matchList.data, matchList.fileSize + 1);
     cout << "End of analyseResultParallel" << endl;
 }
 
