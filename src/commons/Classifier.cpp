@@ -111,7 +111,7 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     }
     cout<<"Number of query k-mers: "<<numOfTatalQueryKmerCnt<<endl;
     beforeIO = time(nullptr);
-    writeMatches(matchBuffer, matchFile);
+  //  writeMatches(matchBuffer, matchFile);
     cout<<"Time spent for writing matches: "<<double(time(nullptr)-beforeIO)<<endl;
     fclose(matchFile);
     afterSearch = time(nullptr);
@@ -516,9 +516,10 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Seque
     // Mmap the file of matches
 //    struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
 //    size_t numOfMatches = matchList.fileSize / sizeof(Match);
-//    cout << "num of matches " << numOfMatches << endl;
+
 
     size_t numOfMatches = matchBuffer.startIndexOfReserve;
+    cout << "num of matches " << numOfMatches << endl;
     // Sort matches in order to analyze
     //SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
     SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + numOfMatches, Classifier::sortByGenusAndSpecies2);
