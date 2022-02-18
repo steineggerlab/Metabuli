@@ -132,24 +132,24 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
     // Write a composition report file.
     writeReportFile(par.filenames[3]+"/"+par.filenames[4]+"_CompositionReport.tsv", taxonomy, numOfSeq);
 
-    // Below is for developing
-    vector<int> wrongClassifications;
-    sequences.clear();
-    IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
-    performanceTest(taxonomy, queryList, numOfSeq, wrongClassifications);
-    ofstream wr;
-    wr.open(par.filenames[0]+"_wrong");
+//    // Below is for developing
+//    vector<int> wrongClassifications;
+//    sequences.clear();
+//    IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
+//    performanceTest(taxonomy, queryList, numOfSeq, wrongClassifications);
+//    ofstream wr;
+//    wr.open(par.filenames[0]+"_wrong");
+//
+//    for (size_t i = 0; i < wrongClassifications.size(); i++) {
+//            kseq_buffer_t buffer(const_cast<char *>(&queryFile.data[sequences[wrongClassifications[i]].start]), sequences[wrongClassifications[i]].length);
+//            kseq_t *seq = kseq_init(&buffer);
+//            kseq_read(seq);
+//            wr<<">"<<seq->name.s<<endl;
+//            wr<<seq->seq.s<<endl;
+//            kseq_destroy(seq);
+//    }
 
-    for (size_t i = 0; i < wrongClassifications.size(); i++) {
-            kseq_buffer_t buffer(const_cast<char *>(&queryFile.data[sequences[wrongClassifications[i]].start]), sequences[wrongClassifications[i]].length);
-            kseq_t *seq = kseq_init(&buffer);
-            kseq_read(seq);
-            wr<<">"<<seq->name.s<<endl;
-            wr<<seq->seq.s<<endl;
-            kseq_destroy(seq);
-    }
-
-    wr.close();
+//    wr.close();
     free(kmerBuffer.buffer);
     free(matchBuffer.buffer);
     munmap(queryFile.data, queryFile.fileSize + 1);
