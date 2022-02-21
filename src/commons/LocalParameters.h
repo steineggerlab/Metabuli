@@ -31,12 +31,14 @@ public:
 
     PARAMETER(PARAM_GTDB_OR_NCBI)
     PARAMETER(VIRUS_TAX_ID)
+    PARAMETER(SEQ_MODE)
 
     //creatTargetDB
     int gtdbOrNcbi;
 
     // Classify
     int virusTaxId;
+    int seqMode;
 
 private:
     LocalParameters();

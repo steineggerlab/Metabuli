@@ -17,13 +17,24 @@ LocalParameters::LocalParameters():
                      typeid(int),
                      (void *) &virusTaxId,
                      "[^[1-9]\\d*$]",
-                     MMseqsParameter::COMMAND_MISC) {
+                     MMseqsParameter::COMMAND_MISC),
+        SEQ_MODE(SEQ_MODE_ID,
+                     "--seq-mode",
+                     "Taxonomy ID of virus taxon",
+                     "Single-end: 1 [Default]\nPaired-end: 2\nLong read: 3",
+                     typeid(int),
+                     (void *) &seqMode,
+                     "[1-3]",
+                     MMseqsParameter::COMMAND_MISC)
+                     {
     //build_dir
     build_dir.push_back(&PARAM_THREADS);
     build_dir.push_back(&PARAM_GTDB_OR_NCBI);
 
     //classify
     classify.push_back(&PARAM_THREADS);
+    classify.push_back(&SEQ_MODE);
+    classify.push_back(&VIRUS_TAX_ID);
 
     //updateTargetDB
 
