@@ -280,7 +280,7 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer & kmerBuffer
                 size_t kmerCnt = SeqIterator::kmerNumOfSixFrameTranslation(seq->seq.s);
 
                 // Read 2
-                kseq_buffer_t buffer2(const_cast<char *>(&seqFile2.data[seqs[2].start]), seqs[2].length);
+                kseq_buffer_t buffer2(const_cast<char *>(&seqFile2.data[seqs2[i].start]), seqs2[i].length);
                 kseq_t *seq2 = kseq_init(&buffer2);
                 kseq_read(seq2);
                 kmerCnt += SeqIterator::kmerNumOfSixFrameTranslation(seq2->seq.s);
@@ -341,13 +341,11 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 
     cout<<"Filtering out meaningless target splits ... done"<<endl;
 
-    //Devide query k-mer list into blocks for multi threading.
-    //Each split has start and end points of query list + proper offset point of target k-mer list
+    // Divide query k-mer list into blocks for multi threading.
+    // Each split has start and end points of query list + proper offset point of target k-mer list
 
     vector<QueryKmerSplit> querySplits;
     int threadNum = par.threads;
-
-    //int * threadNum = (int *) par.PARAM_THREADS.value;
     uint64_t queryAA;
     if(threadNum == 1){ //Single thread
         querySplits.emplace_back(0, queryKmerCnt - 1, queryKmerCnt, diffIdxSplits.data[0]);
@@ -396,14 +394,9 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     bool * splitCheckList = (bool *)malloc(sizeof(bool) * threadNum);
     fill_n(splitCheckList, threadNum, false);
     int completedSplitCnt = 0;
-    cout<<"Deviding query k-mer list into blocks for multi threading... done"<<endl;
-
     size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
     size_t numOfDiffIdx = targetDiffIdxList.fileSize / sizeof(uint16_t);
     cout<<"The number of target k-mers: "<<numOfTargetKmer<<endl;
-
-    cout<<"Hi"<<querySplits.size()<<endl;
-
     while(completedSplitCnt < threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList)
@@ -522,19 +515,19 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                         targetInfoIdx++;
                     }
 
-                    if(AminoAcid(currentQuery) != AminoAcid(currentTargetKmer)) ///Move to next query k-mer if there isn't any match.
+                    if(AminoAcid(currentQuery) != AminoAcid(currentTargetKmer)) // Move to next query k-mer if there isn't any match.
                         continue;
                     else
                         startIdxOfAAmatch = targetInfoIdx;
 
-                    ///Load target k-mers that are matched in amino acid level
+                    // Load target k-mers that are matched in amino acid level
                     while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) && (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
                         candidateTargetKmers.push_back(currentTargetKmer);
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                         targetInfoIdx++;
                     }
 
-                    ///Compare the current query and the loaded target k-mers and select
+                    // Compare the current query and the loaded target k-mers and select
                     compareDna(currentQuery, candidateTargetKmers, startIdxOfAAmatch, selectedMatches, selectedHammingSum, selectedHammings);
                     posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
                     if(posToWrite + selectedMatches.size() >= matchBuffer.bufferSize){
