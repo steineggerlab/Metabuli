@@ -215,7 +215,7 @@ private:
                                             size_t numOfSeq,
                                             const LocalParameters & par);
 
-    int getMaxCoveredLength(int queryLength);
+    static int getMaxCoveredLength(int queryLength);
 
 
 
@@ -275,7 +275,10 @@ private:
 
     static bool sortMatchesByPos(const Match & a, const Match & b);
 
-    static TaxID classifyFurther(const std::vector<Match> & matches, NcbiTaxonomy & taxonomy, uint32_t queryLength);
+    static TaxID classifyFurther(const std::vector<Match> & matches,
+                                 NcbiTaxonomy & taxonomy,
+                                 uint32_t queryLength,
+                                 float maxKmerCnt);
 
     // Write report
     void writeReadClassification(Query * queryList, int queryNum , ofstream & readClassificationFile);

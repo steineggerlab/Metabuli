@@ -202,9 +202,13 @@ void Classifier::startClassify(const char * queryFileName,
     munmap(targetInfoList.data, targetInfoList.fileSize + 1);
 }
 
-void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile,
-                                             vector<Sequence> & seqs, bool * checker, size_t & processedSeqCnt,
-                                             Query * queryList, const LocalParameters & par) {
+void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer,
+                                             MmapedData<char> & seqFile,
+                                             vector<Sequence> & seqs,
+                                             bool * checker,
+                                             size_t & processedSeqCnt,
+                                             Query * queryList,
+                                             const LocalParameters & par) {
     bool hasOverflow = false;
     omp_set_num_threads(*(int * )par.PARAM_THREADS.value);
 #pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, cout, queryList)
@@ -223,11 +227,10 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
                     seqIterator.fillQueryKmerBuffer(seq->seq.s, kmerBuffer, posToWrite, i);
                     checker[i] = true;
-                    //seqs[i].length = strlen(seq->seq.s);
                     queryList[i].queryLength = getMaxCoveredLength((int) strlen(seq->seq.s));
                     queryList[i].queryId = i;
                     queryList[i].name = string(seq->name.s);
-                            //buffer.entry.name.s;
+                    queryList[i].kmerCnt = (int) kmerCnt;
 #pragma omp atomic
                     processedSeqCnt ++;
                 } else{
@@ -237,7 +240,6 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, Mmape
                 }
                 kseq_destroy(seq);
             }
-
         }
     }
 }
@@ -284,8 +286,8 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer & kmerBuffer
                 kseq_t *seq2 = kseq_init(&buffer2);
                 kseq_read(seq2);
                 kmerCnt += SeqIterator::kmerNumOfSixFrameTranslation(seq2->seq.s);
-                posToWrite = kmerBuffer.reserveMemory(kmerCnt);
 
+                posToWrite = kmerBuffer.reserveMemory(kmerCnt);
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
                     checker[i] = true;
                     // Read 1
@@ -301,6 +303,7 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer & kmerBuffer
                             getMaxCoveredLength((int) strlen(seq2->seq.s));
                     queryList[i].queryId = (int) i;
                     queryList[i].name = string(seq->name.s);
+                    queryList[i].kmerCnt = (int) kmerCnt;
 #pragma omp atomic
                     processedSeqCnt ++;
                 } else{
@@ -775,7 +778,10 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     }
 
     // Classify in species or lower level for queries that have close matches in reference DB.
-    TaxID selectedLCA = classifyFurther(matchesForLCA, ncbiTaxonomy, queryLength);
+    TaxID selectedLCA = classifyFurther(matchesForLCA,
+                                        ncbiTaxonomy,
+                                        queryLength,
+                                        (float) queryList[currentQuery].kmerCnt / 6);
 
     ///TODO optimize strain specific classification criteria
     // Strain classification only for high coverage with LCA of species level
@@ -1183,12 +1189,15 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
 
 //TODO kmer count -> covered length
 //TODO hamming
-TaxID Classifier::classifyFurther(const vector<Match> & matches, NcbiTaxonomy & taxonomy, uint32_t queryLength) {
+TaxID Classifier::classifyFurther(const vector<Match> & matches,
+                                  NcbiTaxonomy & taxonomy,
+                                  uint32_t queryLength,
+                                  float maxKmerCnt) {
 
     std::unordered_map<TaxID, int> taxIdCounts;
     float majorityCutoff = 0.8;
     float coverageThreshold = 0.8;
-    float maxKmerCnt = queryLength/3.0f - kmerLength;
+   // float maxKmerCnt = queryLength/3.0f - kmerLength;
 
     for(Match match : matches){
         taxIdCounts[match.taxID] += 1;
