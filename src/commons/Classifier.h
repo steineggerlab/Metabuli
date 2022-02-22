@@ -216,6 +216,7 @@ private:
                                             const LocalParameters & par);
 
     static int getMaxCoveredLength(int queryLength);
+    static int getQueryKmerNumber(int queryLength);
 
 
 

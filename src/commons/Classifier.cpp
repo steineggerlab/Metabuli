@@ -255,6 +255,10 @@ int Classifier::getMaxCoveredLength(int queryLength){
     }
 }
 
+int Classifier::getQueryKmerNumber(int queryLength){
+    return (getMaxCoveredLength(queryLength)/3 - kmerLength + 1) * 6;
+}
+
 void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer & kmerBuffer,
                                                     MmapedData<char> & seqFile1,
                                                     MmapedData<char> & seqFile2,
@@ -279,13 +283,16 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer & kmerBuffer
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile1.data[seqs[i].start]), seqs[i].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
-                size_t kmerCnt = SeqIterator::kmerNumOfSixFrameTranslation(seq->seq.s);
+                //size_t kmerCnt = SeqIterator::kmerNumOfSixFrameTranslation(seq->seq.s);
+                size_t kmerCnt = getQueryKmerNumber((int) strlen(seq->seq.s));
+                      //  SeqIterator::kmerNumOfSixFrameTranslation(seq->seq.s);
+
 
                 // Read 2
                 kseq_buffer_t buffer2(const_cast<char *>(&seqFile2.data[seqs2[i].start]), seqs2[i].length);
                 kseq_t *seq2 = kseq_init(&buffer2);
                 kseq_read(seq2);
-                kmerCnt += SeqIterator::kmerNumOfSixFrameTranslation(seq2->seq.s);
+                kmerCnt += getQueryKmerNumber((int) strlen(seq2->seq.s));
 
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt);
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
