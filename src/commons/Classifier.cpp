@@ -97,7 +97,7 @@ void Classifier::startClassify(const char * queryFileName,
     if(par.seqMode == 1){
         queryFile = mmapData<char>(par.filenames[0].c_str());
         IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
-        size_t numOfSeq = sequences.size();
+        numOfSeq = sequences.size();
         queryList = new Query[numOfSeq];
         cout<<"5"<<endl;
     } else if (par.seqMode == 2){
