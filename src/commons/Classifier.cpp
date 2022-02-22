@@ -890,8 +890,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
         if(!filteredMatches.empty()) {
-           constructMatchCombination(filteredMatches, maxCoveredLength, matchesForEachGenus, scoreOfEachGenus,
-                                       queryLength);
+           constructMatchCombination(filteredMatches, matchesForEachGenus, scoreOfEachGenus, queryLength);
         }
         filteredMatches.clear();
     }
