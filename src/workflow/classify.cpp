@@ -22,11 +22,12 @@ int classify(int argc, const char **argv, const Command& command)
     const string databaseDirectory = par.filenames[1];
     const string taxonomyDirectory = par.filenames[2];
 
-    cout << "Loading Taxonomy" << endl;
+    cout << "Loading Taxonomy ... ";
     const string names = taxonomyDirectory + "/names.dmp";
     const string nodes = taxonomyDirectory + "/nodes.dmp";
     const string merged = taxonomyDirectory + "/merged.dmp";
     NcbiTaxonomy taxonomy(names, nodes, merged);
+    cout << "Done!" << endl;
 
 
     const string targetDiffIdxFileName = databaseDirectory+"/diffIdx";
