@@ -22,7 +22,7 @@ int classify(int argc, const char **argv, const Command& command)
     const string databaseDirectory = par.filenames[1];
     const string taxonomyDirectory = par.filenames[2];
 
-    cout << "Loading Taxonomy ... ";
+    cout << "Loading Taxonomy ... " << endl;
     const string names = taxonomyDirectory + "/names.dmp";
     const string nodes = taxonomyDirectory + "/nodes.dmp";
     const string merged = taxonomyDirectory + "/merged.dmp";
@@ -36,6 +36,7 @@ int classify(int argc, const char **argv, const Command& command)
     const string diffIdxSplitFileName = databaseDirectory+"/split";;
 
     // Load the taxonomical ID list
+    cout << "Loading taxonomy ID list" <<endl;
     FILE * taxIdFile;
     if((taxIdFile = fopen(taxIdFileName.c_str(),"r")) == NULL){
         cout<<"Cannot open the taxID list file."<<endl;
@@ -48,6 +49,7 @@ int classify(int argc, const char **argv, const Command& command)
         taxIdList.push_back(atol(taxID));
     }
     fclose(taxIdFile);
+    cout<<"Done"<<endl;
 
     Classifier classifier;
     classifier.startClassify(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(),
