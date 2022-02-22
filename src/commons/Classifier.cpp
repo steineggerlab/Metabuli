@@ -61,6 +61,7 @@ void Classifier::startClassify(const char * queryFileName,
     vector<int> speciesTaxIdList;
     vector<TaxID> genusTaxIdList;
     taxonomy.createTaxIdListAtRank(taxIdList, speciesTaxIdList, "species");
+    cout<<"1"<<endl;
     taxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "genus");
     //output file
     char matchFileName[300];
@@ -79,14 +80,16 @@ void Classifier::startClassify(const char * queryFileName,
     struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName);
     struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName);
 
-
+    cout<<"2"<<endl;
     //allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
     Buffer<Match> matchBuffer(kmerBufSize);
 
     // Load query file
-    struct MmapedData<char> queryFile{};
-    struct MmapedData<char> queryFile2{};
+    MmapedData<char> queryFile{};
+    cout<<"3"<<endl;
+    MmapedData<char> queryFile2{};
+    cout<<"4"<<endl;
     vector<Sequence> sequences;
     vector<Sequence> sequences2;
     Query * queryList;
@@ -96,6 +99,7 @@ void Classifier::startClassify(const char * queryFileName,
         IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
         size_t numOfSeq = sequences.size();
         queryList = new Query[numOfSeq];
+        cout<<"5"<<endl;
     } else if (par.seqMode == 2){
         string queryFileName1 = par.filenames[0] + "_1";
         string queryFileName2 = par.filenames[0] + "_2";
@@ -127,11 +131,13 @@ void Classifier::startClassify(const char * queryFileName,
     // Extract k-mers from query sequences and compare them to target k-mer DB
     ///TODO measure time for extract & sort & search separately
     beforeSearch = time(nullptr);
+    cout<<"6"<<endl;
     omp_set_num_threads(par.threads);
     while(processedSeqCnt < numOfSeq){
         if(par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
             fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt,
                                         queryList, par);
+            cout<<"7"<<endl;
         } else if(par.seqMode == 2){
             fillQueryKmerBufferParallel_paired(kmerBuffer,
                                                queryFile,
