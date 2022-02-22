@@ -157,11 +157,16 @@ void Classifier::startClassify(const char * queryFileName,
 
     fclose(matchFile);
 
-    //load matches and analyze
+    // Sort Matches
+    time_t beforeSortMatches = time(nullptr);
+    SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve, Classifier::sortByGenusAndSpecies2);
+    cout << "Time spent for sorting matches" << double(time(nullptr) - beforeSortMatches) << endl;
+
+    // Analyze matches
     cout<<"Analyse Result ... "<<endl;
+    time_t beforeAnalyze = time(nullptr);
     analyseResultParallel(taxonomy, matchBuffer, numOfSeq, queryList, par);
-    afterAnalyze = time(nullptr);
-    cout<<"Time spent for analyzing: "<<double(afterAnalyze-afterSearch)<<endl;
+    cout<<"Time spent for analyzing: "<<double(time(nullptr)-beforeAnalyze)<<endl;
 
     // Write read classification results.
     ofstream readClassificationFile;
@@ -639,9 +644,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, Buffer<Match
 
     // Sort matches in order to analyze
     //SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
-    time_t beforeSortMatches = time(nullptr);
-    SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + numOfMatches, Classifier::sortByGenusAndSpecies2);
-    cout << "Time spent for sorting matches" << double(time(nullptr) - beforeSortMatches) << endl;
+
     // Devide matches into blocks for multi threading
     MatchBlock *matchBlocks = new MatchBlock[seqNum];
     size_t matchIdx = 0;
