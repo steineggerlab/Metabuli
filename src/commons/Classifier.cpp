@@ -61,7 +61,6 @@ void Classifier::startClassify(const char * queryFileName,
     vector<int> speciesTaxIdList;
     vector<TaxID> genusTaxIdList;
     taxonomy.createTaxIdListAtRank(taxIdList, speciesTaxIdList, "species");
-    cout<<"1"<<endl;
     taxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "genus");
     //output file
     char matchFileName[300];
@@ -80,16 +79,13 @@ void Classifier::startClassify(const char * queryFileName,
     struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName);
     struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName);
 
-    cout<<"2"<<endl;
-    //allocate memory for buffers
+    // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
     Buffer<Match> matchBuffer(kmerBufSize);
 
     // Load query file
     MmapedData<char> queryFile{};
-    cout<<"3"<<endl;
     MmapedData<char> queryFile2{};
-    cout<<"4"<<endl;
     vector<Sequence> sequences;
     vector<Sequence> sequences2;
     Query * queryList;
@@ -99,7 +95,6 @@ void Classifier::startClassify(const char * queryFileName,
         IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
         numOfSeq = sequences.size();
         queryList = new Query[numOfSeq];
-        cout<<"5"<<endl;
     } else if (par.seqMode == 2){
         string queryFileName1 = par.filenames[0] + "_1";
         string queryFileName2 = par.filenames[0] + "_2";
@@ -118,30 +113,22 @@ void Classifier::startClassify(const char * queryFileName,
     }
 
     // Checker for multi-threading
-    cout<<"12"<<endl;
-    cout<<numOfSeq<<endl;
     bool * processedSeqChecker = new bool[numOfSeq];
-    cout<<"13"<<endl;
     fill_n(processedSeqChecker, numOfSeq, false);
-    cout<<"14"<<endl;
     size_t processedSeqCnt = 0;
 
 
     // Timer
-    time_t beforeSearch, afterSearch, afterAnalyze, beforeIO;
-
+    time_t afterSearch, afterAnalyze, beforeIO;
     size_t numOfTatalQueryKmerCnt = 0;
 
     // Extract k-mers from query sequences and compare them to target k-mer DB
-    ///TODO measure time for extract & sort & search separately
-    beforeSearch = time(nullptr);
-    cout<<"6"<<endl;
     omp_set_num_threads(par.threads);
     while(processedSeqCnt < numOfSeq){
+        time_t beforeKmerExtraction = time(nullptr);
         if(par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
             fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt,
                                         queryList, par);
-            cout<<"7"<<endl;
         } else if(par.seqMode == 2){
             fillQueryKmerBufferParallel_paired(kmerBuffer,
                                                queryFile,
@@ -155,17 +142,20 @@ void Classifier::startClassify(const char * queryFileName,
                                                par);
         }
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
+        cout<<"Time spent for k-mer extraction: " << double(time(nullptr) - beforeKmerExtraction) << endl;
+
+        time_t beforeQueryKmerSort = time(nullptr);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
+        cout<<"Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
+
+        time_t beforeSearch = time(nullptr);
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList,
                              diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile, par);
+        cout<<"Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
     }
     cout<<"Number of query k-mers: "<<numOfTatalQueryKmerCnt<<endl;
-    beforeIO = time(nullptr);
-  //  writeMatches(matchBuffer, matchFile);
-    cout<<"Time spent for writing matches: "<<double(time(nullptr)-beforeIO)<<endl;
+
     fclose(matchFile);
-    afterSearch = time(nullptr);
-    cout<<"Time spent for searching: "<<double(afterSearch-beforeSearch)<<endl;
 
     //load matches and analyze
     cout<<"Analyse Result ... "<<endl;
@@ -649,8 +639,9 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, Buffer<Match
 
     // Sort matches in order to analyze
     //SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
+    time_t beforeSortMatches = time(nullptr);
     SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + numOfMatches, Classifier::sortByGenusAndSpecies2);
-
+    cout << "Time spent for sorting matches" << double(time(nullptr) - beforeSortMatches) << endl;
     // Devide matches into blocks for multi threading
     MatchBlock *matchBlocks = new MatchBlock[seqNum];
     size_t matchIdx = 0;
