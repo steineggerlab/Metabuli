@@ -118,8 +118,11 @@ void Classifier::startClassify(const char * queryFileName,
     }
 
     // Checker for multi-threading
+    cout<<"12"<<endl;
     bool * processedSeqChecker = new bool[numOfSeq];
+    cout<<"13"<<endl;
     fill_n(processedSeqChecker, numOfSeq, false);
+    cout<<"14"<<endl;
     size_t processedSeqCnt = 0;
 
 
