@@ -28,8 +28,12 @@ Classifier::Classifier() {
 
 Classifier::~Classifier() { }//delete seqIterator; }
 
-void Classifier::startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName,
-                               const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par,
+void Classifier::startClassify(const char * queryFileName,
+                               const char * targetDiffIdxFileName,
+                               const char * targetInfoFileName,
+                               const char * diffIdxSplitFileName,
+                               vector<int> & taxIdList,
+                               const LocalParameters & par,
                                NcbiTaxonomy & taxonomy) {
 //    ///-----------------------------------------------------
 //    unordered_map<int,int> genus;
@@ -109,13 +113,13 @@ void Classifier::startClassify(const char * queryFileName, const char * targetDi
         }
     }
 
-    //Checker for multi-threading
+    // Checker for multi-threading
     bool * processedSeqChecker = new bool[numOfSeq];
     fill_n(processedSeqChecker, numOfSeq, false);
     size_t processedSeqCnt = 0;
 
 
-    //Timer
+    // Timer
     time_t beforeSearch, afterSearch, afterAnalyze, beforeIO;
 
     size_t numOfTatalQueryKmerCnt = 0;
@@ -337,7 +341,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 
     vector<QueryKmerSplit> querySplits;
     int threadNum = par.threads;
-    
+
     //int * threadNum = (int *) par.PARAM_THREADS.value;
     uint64_t queryAA;
     if(threadNum == 1){ //Single thread
