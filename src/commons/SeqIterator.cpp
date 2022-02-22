@@ -102,13 +102,13 @@ SeqIterator::SeqIterator() {
 
 }
 
-///It translates a DNA sequence to amino acid sequences with six frames
+// It translates a DNA sequence to amino acid sequences with six frames
 void SeqIterator::sixFrameTranslation(const char * seq){
     for(int i = 0 ; i < 6 ; i++){ aaFrames[i].clear(); }
 
     int len = strlen(seq);
     size_t end = len - 1;
-    ///translation from DNA to AA. in each frame
+    // Translate DNA to AA.
     for(int i = 0; i < len - 4; i = i+3 ){
         aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[i    ]])][nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])]);
         aaFrames[1].push_back(nuc2aa[nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])][nuc2int(atcg[seq[i + 3]])]);
@@ -130,7 +130,7 @@ void SeqIterator::sixFrameTranslation(const char * seq){
 }
 
 
-void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID) {
+void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID, uint32_t offset) {
     uint32_t forOrRev;
     uint64_t tempKmer = 0;
     uint32_t seqLen = strlen(seq);
@@ -155,9 +155,9 @@ void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBu
             }else{
                 addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame);
                 if(forOrRev == 0) {
-                    kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3), frame};
+                    kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3) + offset, frame};
                 } else{
-                    kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, seqLen - ((frame%3) + (kmerCnt*3)) - 24 , frame};
+                    kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, seqLen - ((frame%3) + (kmerCnt*3)) - 24 + offset , frame};
                 }
             }
             posToWrite++;

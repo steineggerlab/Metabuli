@@ -23,7 +23,7 @@ struct Query{
     float score;
     bool isClassified;
     bool newSpecies;
-    uint32_t queryLength;
+    int queryLength;
     string name;
     unordered_map<TaxID,int> taxCnt;
 

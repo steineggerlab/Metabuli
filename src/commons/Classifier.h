@@ -132,7 +132,7 @@ private:
         MatchBlock() : start(0), end(0), id(0) { }
         size_t start;
         size_t end;
-        int id;
+        uint32_t id;
     };
 
     struct QueryKmerSplit{
@@ -163,7 +163,7 @@ private:
     };
 
     int numOfSplit;
-    SeqIterator * seqIterator;
+    //SeqIterator * seqIterator;
     size_t queryCount;
     size_t perfectMatchCount;
     size_t selectedMatchCount;
@@ -204,6 +204,20 @@ private:
     void fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer, MmapedData<char> & seqFile, vector<Sequence> & seqs,
                                      bool * checker, size_t & processedSeqCnt, Query * queryList, const LocalParameters & par);
 
+    void fillQueryKmerBufferParallel_paired(QueryKmerBuffer & kmerBuffer,
+                                            MmapedData<char> & seqFile1,
+                                            MmapedData<char> & seqFile2,
+                                            vector<Sequence> & seqs,
+                                            vector<Sequence> & seqs2,
+                                            bool * checker,
+                                            size_t & processedSeqCnt,
+                                            Query * queryList,
+                                            size_t numOfSeq,
+                                            const LocalParameters & par);
+
+    int getMaxCoveredLength(int queryLength);
+
+
 
     // Linear search
     static bool compareForLinearSearch(const QueryKmer & a, const QueryKmer & b);
@@ -229,23 +243,31 @@ private:
     uint16_t getHammings(uint64_t kmer1, uint64_t kmer2);
 
     // Analyzing k-mer matches
-    void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, vector<Sequence> & seqSegments, Buffer<Match> & matchBuffer
-                               , int seqNum, Query * queryList, const LocalParameters & par);
+    void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy,
+                               Buffer<Match> & matchBuffer,
+                               int seqNum,
+                               Query * queryList,
+                               const LocalParameters & par);
 
     static bool sortByGenusAndSpecies2(const Match & a, const Match & b);
 
     static bool sortByGenusAndSpecies(const Match & a, const Match & b);
 
-    TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy, size_t queryLength, int currentQuery,
-                          size_t offset, size_t end, Match * matchList, Query * queryList,
+    TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy,
+                          uint32_t currentQuery,
+                          size_t offset,
+                          size_t end,
+                          Match * matchList,
+                          Query * queryList,
                           const LocalParameters & par);
 
     static int getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
                                  size_t offset, int queryLength, float & bestScore);
 
-    static void constructMatchCombination(vector<Match> & filteredMatches, int maxNum,
-                                          vector<vector<Match>> & matchesForEachGenus,vector<float> & scoreOfEachGenus,
-                                          size_t queryLength);
+    static void constructMatchCombination(vector<Match> & filteredMatches,
+                                          vector<vector<Match>> & matchesForEachGenus,
+                                          vector<float> & scoreOfEachGenus,
+                                          int queryLength);
 
     static void constructMatchCombination2(vector<Match> & filteredMatches, int maxNum,
                                           vector<vector<Match>> & matchesForEachGenus,vector<float> & scoreOfEachGenus,
@@ -253,9 +275,7 @@ private:
 
     static bool sortMatchesByPos(const Match & a, const Match & b);
 
-    TaxID match2LCA(const std::vector<Match> & matchList, NcbiTaxonomy & taxonomy, uint32_t queryLength);
-
-    TaxID classifyFurther(const std::vector<Match> & matches, NcbiTaxonomy & taxonomy, uint32_t queryLength);
+    static TaxID classifyFurther(const std::vector<Match> & matches, NcbiTaxonomy & taxonomy, uint32_t queryLength);
 
     // Write report
     void writeReadClassification(Query * queryList, int queryNum , ofstream & readClassificationFile);
