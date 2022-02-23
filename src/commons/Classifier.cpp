@@ -685,7 +685,6 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, Buffer<Match
         ++taxCounts[queryList[i].classification];
     }
     delete[] matchBlocks;
-    //munmap(matchList.data, matchList.fileSize + 1);
     cout << "End of analyseResultParallel" << endl;
 }
 
@@ -779,9 +778,10 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     }
 
     // Classify in species or lower level for queries that have close matches in reference DB.
-    TaxID selectedLCA = classifyFurther2(matchesForLCA,
+    TaxID selectedLCA = classifyFurther3(matchesForLCA,
                                         ncbiTaxonomy,
-                                        (float) queryList[currentQuery].kmerCnt / 6);
+                                        (float) queryList[currentQuery].kmerCnt / 6,
+                                        queryLength);
 
     ///TODO optimize strain specific classification criteria
     // Strain classification only for high coverage with LCA of species level
@@ -1246,6 +1246,8 @@ TaxID Classifier::classifyFurther2(const vector<Match> & matches,
             }
         }
     }
+
+
     if (haveMetCovThr) {
         if(ties.size() > 1){
             return taxonomy.LCA(ties)->taxId;
@@ -1255,8 +1257,80 @@ TaxID Classifier::classifyFurther2(const vector<Match> & matches,
     } else if (haveMetMajorityThr) {
         return selectedTaxon;
     }
+    return matches[0].genusTaxID;
+}
+
+TaxID Classifier::classifyFurther3(const vector<Match> & matches,
+                                   NcbiTaxonomy & taxonomy,
+                                   int queryLength,
+                                   float possibleKmerNum) {
+
+    // Score each species
+    std::unordered_map<TaxID, float> speciesScores;
+    size_t i = 0;
+    TaxID currentSpeices;
+    size_t numOfMatch = matches.size();
+    size_t speciesBegin, speciesEnd;
+    while(i < numOfMatch){
+        currentSpeices = matches[i].speciesTaxID;
+        speciesBegin = i;
+        while(currentSpeices == matches[i].speciesTaxID && (i < numOfMatch)){
+            i++;
+        }
+        speciesEnd = i;
+        speciesScores[currentSpeices] = scoreTaxon(matches, speciesBegin, speciesEnd, queryLength);
+    }
+
+    pair<TaxID, float> bestSpecies = *max_element(speciesScores.begin(), speciesScores.end(),
+                                   [] (const pair<TaxID, float> & p1, const pair<TaxID, float> & p2 ){return p1.second < p2.second;});
+    if(bestSpecies.second > 0.9){
+        return bestSpecies.first;
+    }
 
     return matches[0].genusTaxID;
+}
+
+float Classifier::scoreTaxon(const vector<Match> & matches, size_t begin, size_t end, int queryLength) {
+
+    // Get the largest hamming distance at each position of query
+    int aminoAcidNum = queryLength / 3;
+    auto * hammingsAtEachPos = new signed char[aminoAcidNum + 1];
+    memset(hammingsAtEachPos, -1, (aminoAcidNum + 1));
+    int currPos;
+    size_t walker = begin;
+    size_t matchNum = matches.size();
+    uint16_t currHammings;
+    while(walker < end){
+        currPos = matches[walker].position / 3;
+        currHammings = matches[walker].rightEndHamming;
+        if(GET_2_BITS(currHammings) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
+        if(GET_2_BITS(currHammings>>2) > hammingsAtEachPos[currPos + 1]) hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings>>2);
+        if(GET_2_BITS(currHammings>>4) > hammingsAtEachPos[currPos + 2]) hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings>>4);
+        if(GET_2_BITS(currHammings>>6) > hammingsAtEachPos[currPos + 3]) hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings>>6);
+        if(GET_2_BITS(currHammings>>8) > hammingsAtEachPos[currPos + 4]) hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings>>8);
+        if(GET_2_BITS(currHammings>>10) > hammingsAtEachPos[currPos + 5]) hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings>>10);
+        if(GET_2_BITS(currHammings>>12) > hammingsAtEachPos[currPos + 6]) hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings>>12);
+        if(GET_2_BITS(currHammings>>14) > hammingsAtEachPos[currPos + 7]) hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings>>14);
+        walker++;
+    }
+
+    // Sum up hamming distances and count the number of position covered by the matches.
+    float hammingSum = 0;
+    int coveredPosCnt = 0;
+    for(int h = 0; h < aminoAcidNum; h++){
+        if(hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
+            coveredPosCnt++;
+        }else if(hammingsAtEachPos[h] != -1){ // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
+            hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
+            coveredPosCnt ++;
+        }
+    }
+    delete[] hammingsAtEachPos;
+
+    // Score
+    int coveredLength = coveredPosCnt * 3;
+    if (coveredLength > queryLength) coveredLength = queryLength;
+    return ((float)coveredLength - hammingSum) / (float)queryLength;
 }
 
 TaxID Classifier::classifyFurther(const vector<Match> & matches,

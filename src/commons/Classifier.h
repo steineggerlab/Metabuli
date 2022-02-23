@@ -271,7 +271,7 @@ private:
                                           int queryLength);
 
     static void constructMatchCombination2(vector<Match> & filteredMatches, int maxNum,
-                                          vector<vector<Match>> & matchesForEachGenus,vector<float> & scoreOfEachGenus,
+                                          vector<vector<Match>> & matchesForEachGenus, vector<float> & scoreOfEachGenus,
                                           size_t queryLength);
 
     static bool sortMatchesByPos(const Match & a, const Match & b);
@@ -283,6 +283,16 @@ private:
     static TaxID classifyFurther2(const std::vector<Match> & matches,
                                  NcbiTaxonomy & taxonomy,
                                  float maxKmerCnt);
+
+    static TaxID classifyFurther3(const std::vector<Match> & matches,
+                                  NcbiTaxonomy & taxonomy,
+                                  int queryLength,
+                                  float maxKmerCnt);
+
+    static float scoreTaxon(const vector<Match> & matches,
+                     size_t begin,
+                     size_t end,
+                     int queryLength);
 
     // Write report
     void writeReadClassification(Query * queryList, int queryNum , ofstream & readClassificationFile);
