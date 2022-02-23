@@ -785,7 +785,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     // Classify in species or lower level for queries that have close matches in reference DB.
     TaxID selectedLCA = classifyFurther(matchesForLCA,
                                         ncbiTaxonomy,
-                                        queryLength,
                                         (float) queryList[currentQuery].kmerCnt / 6);
 
     ///TODO optimize strain specific classification criteria
