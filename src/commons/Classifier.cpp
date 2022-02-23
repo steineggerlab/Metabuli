@@ -222,7 +222,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer,
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
                 seqIterator.sixFrameTranslation(seq->seq.s);
-                size_t kmerCnt = SeqIterator::kmerNumOfSixFrameTranslation(seq->seq.s);
+                size_t kmerCnt = getQueryKmerNumber((int) strlen(seq->seq.s));
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt);
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
                     seqIterator.fillQueryKmerBuffer(seq->seq.s, kmerBuffer, posToWrite, i);
@@ -1202,11 +1202,17 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches,
     std::unordered_map<TaxID, int> taxIdCounts;
     float majorityCutoff = 0.8;
     float coverageThreshold = 0.8;
-   // float maxKmerCnt = queryLength/3.0f - kmerLength;
 
+    // Subspecies
     for(Match match : matches){
         taxIdCounts[match.taxID] += 1;
-        taxIdCounts[match.speciesTaxID] += (match.speciesTaxID != match.taxID); // subspecies
+ //       taxIdCounts[match.speciesTaxID] += (match.speciesTaxID != match.taxID ); // subspecies
+    }
+
+    for(Match match : matches){
+        if(taxIdCounts[match.taxID] > 1 && match.speciesTaxID != match.taxID ){
+            taxIdCounts[match.speciesTaxID] += taxIdCounts[match.taxID];
+        }
     }
 
     float currentCoverage;
