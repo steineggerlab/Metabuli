@@ -817,7 +817,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
             }
         }
 
-        if(numOfstrains == 1 && count >= minStrainSpecificCnt + 1) {
+        if(numOfstrains == 1 && count >= minStrainSpecificCnt) {
             selectedLCA = strainID;
         }
     }
@@ -855,15 +855,6 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
     float hammingMean;
     TaxID currentGenus;
     TaxID currentSpecies;
-
-//    int maxCoveredLength;
-//    if(queryLength % 3 == 2){
-//        maxCoveredLength = queryLength - 2; // 2
-//    } else if(queryLength % 3 == 1){
-//        maxCoveredLength = queryLength - 4; // 4
-//    } else{
-//        maxCoveredLength = queryLength - 3; // 3
-//    }
 
     vector<Match> filteredMatches;
     vector<vector<Match>> matchesForEachGenus;
@@ -1201,6 +1192,78 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
 
 //TODO kmer count -> covered length
 //TODO hamming
+TaxID Classifier::classifyFurther2(const vector<Match> & matches,
+                                  NcbiTaxonomy & taxonomy,
+                                  float possibleKmerNum) {
+
+    std::unordered_map<TaxID, int> taxIdCounts;
+    float majorityCutoff = 0.8;
+    float coverageThreshold = 0.8;
+
+    // Subspecies && Species
+    for(Match match : matches){
+        taxIdCounts[match.taxID] += 1;
+    }
+
+    // Subspecies -> Species
+    for(Match match : matches){
+        if(taxIdCounts[match.taxID] > 1){
+            taxIdCounts[match.speciesTaxID] += (match.speciesTaxID != match.taxID);
+        }
+    }
+
+    // Max count
+    int maxCnt2 = (*max_element(taxIdCounts.begin(), taxIdCounts.end(),
+                                [] (const pair<TaxID, int> & p1, const pair<TaxID, int> & p2 ){return p1.second < p2.second;})
+    ).second;
+    if (maxCnt2 > (int) possibleKmerNum) { maxCnt2 = (int) possibleKmerNum; }
+
+    float currentCoverage;
+    float currnetPercentage;
+    bool haveMetCovThr = false;
+    bool haveMetMajorityThr = false;
+    bool tied = false;
+    size_t matchNum = matches.size();
+    int maxCnt;
+    TaxID bestOne;
+    TaxID currRank;
+    vector<TaxID> ties;
+    int minRank = INT_MAX;
+    float selectedPercent = 0;
+    TaxID selectedTaxon;
+    for(auto it = taxIdCounts.begin(); it != taxIdCounts.end(); it++) {
+        if (it->second >= maxCnt2) {
+            it->second = maxCnt2 - 1;
+        }
+        currentCoverage = (float) it->second / possibleKmerNum;
+        currnetPercentage = (float) it->second / matchNum;
+        currRank = NcbiTaxonomy::findRankIndex(taxonomy.taxonNode(it->first)->rank);
+
+        if (currentCoverage > coverageThreshold && (it->second >= maxCnt2 - 1)) {
+            haveMetCovThr = true;
+            ties.push_back(it->first);
+        } else if (currnetPercentage >= majorityCutoff && (!haveMetCovThr)) {
+            haveMetMajorityThr = true;
+            if ((currRank < minRank) || ((currRank == minRank) && (currnetPercentage > selectedPercent))) {
+                selectedTaxon = it->first;
+                minRank = currRank;
+                selectedPercent = currnetPercentage;
+            }
+        }
+    }
+    if (haveMetCovThr) {
+        if(ties.size() > 1){
+            return taxonomy.LCA(ties)->taxId;
+        } else{
+            return ties[0];
+        }
+    } else if (haveMetMajorityThr) {
+        return selectedTaxon;
+    }
+
+    return matches[0].genusTaxID;
+}
+
 TaxID Classifier::classifyFurther(const vector<Match> & matches,
                                   NcbiTaxonomy & taxonomy,
                                   float possibleKmerNum) {
@@ -1222,8 +1285,9 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches,
     }
 
     // Max count
-    int maxCnt2 = (*max_element(taxIdCounts.begin(), taxIdCounts.end(), [] (const pair<TaxID, int> & p1, const pair<TaxID, int> & p2 ){
-        return p1.second < p2.second;})).second;
+    int maxCnt2 = (*max_element(taxIdCounts.begin(), taxIdCounts.end(),
+                                [] (const pair<TaxID, int> & p1, const pair<TaxID, int> & p2 ){return p1.second < p2.second;})
+                                        ).second;
     if (maxCnt2 > (int) possibleKmerNum) { maxCnt2 = (int) possibleKmerNum; }
 
     float currentCoverage;
@@ -1247,16 +1311,10 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches,
         currnetPercentage = (float)it->second / matchNum;
         currRank = NcbiTaxonomy::findRankIndex(taxonomy.taxonNode(it->first)->rank);
 
-        if(currentCoverage > coverageThreshold && currRank <= 4){
-            if(!haveMetCovThr && (it->second >= maxCnt2 - 1)){
-                haveMetCovThr = true;
-                //maxCnt = it->second;
-                bestOne = it->first;
-                ties.push_back(it->first);
-            } else if(it->second >= maxCnt2 - 1){
-                tied = true;
-                ties.push_back(it->first);
-            }
+        if(currentCoverage > coverageThreshold && (it ->second >= maxCnt2 - 1)){
+            haveMetCovThr = true;
+            ties.push_back(it->first);
+
 //            else if(it->second > maxCnt){
 //                ties.clear();
 //                ties.push_back(it->first);

@@ -280,6 +280,10 @@ private:
                                  NcbiTaxonomy & taxonomy,
                                  float maxKmerCnt);
 
+    static TaxID classifyFurther2(const std::vector<Match> & matches,
+                                 NcbiTaxonomy & taxonomy,
+                                 float maxKmerCnt);
+
     // Write report
     void writeReadClassification(Query * queryList, int queryNum , ofstream & readClassificationFile);
 
