@@ -1196,24 +1196,28 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int
 //TODO hamming
 TaxID Classifier::classifyFurther(const vector<Match> & matches,
                                   NcbiTaxonomy & taxonomy,
-                                  uint32_t queryLength,
-                                  float maxKmerCnt) {
+                                  float possibleKmerNum) {
 
     std::unordered_map<TaxID, int> taxIdCounts;
     float majorityCutoff = 0.8;
     float coverageThreshold = 0.8;
 
-    // Subspecies
+    // Subspecies && Species
     for(Match match : matches){
         taxIdCounts[match.taxID] += 1;
- //       taxIdCounts[match.speciesTaxID] += (match.speciesTaxID != match.taxID ); // subspecies
     }
 
+    // Subspecies -> Species
     for(Match match : matches){
         if(taxIdCounts[match.taxID] > 1){
             taxIdCounts[match.speciesTaxID] += (match.speciesTaxID != match.taxID);
         }
     }
+
+    // Max count
+    int maxCnt2 = (*max_element(taxIdCounts.begin(), taxIdCounts.end(), [] (const pair<TaxID, int> & p1, const pair<TaxID, int> & p2 ){
+        return p1.second < p2.second;})).second;
+    if (maxCnt2 > (int) possibleKmerNum) { maxCnt2 = (int) possibleKmerNum; }
 
     float currentCoverage;
     float currnetPercentage;
@@ -1229,31 +1233,31 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches,
     float selectedPercent = 0;
     TaxID selectedTaxon;
     for(auto it = taxIdCounts.begin(); it != taxIdCounts.end(); it++){
-        if(it->second >= maxKmerCnt - 1) {
-            it->second = (int)maxKmerCnt - 2;
+        if(it->second >= maxCnt2) {
+            it->second = maxCnt2 - 1;
         }
-        currentCoverage = (float)it->second / maxKmerCnt;
+        currentCoverage = (float)it->second / possibleKmerNum;
         currnetPercentage = (float)it->second / matchNum;
         currRank = NcbiTaxonomy::findRankIndex(taxonomy.taxonNode(it->first)->rank);
 
         if(currentCoverage > coverageThreshold && currRank <= 4){
-            if(!haveMetCovThr){
+            if(!haveMetCovThr && (it->second >= maxCnt2 - 1)){
                 haveMetCovThr = true;
-                maxCnt = it->second;
+                //maxCnt = it->second;
                 bestOne = it->first;
                 ties.push_back(it->first);
-            } else if(it->second == maxCnt){
+            } else if(it->second >= maxCnt2 - 1){
                 tied = true;
                 ties.push_back(it->first);
-            } else if(it->second > maxCnt){
-                ties.clear();
-                ties.push_back(it->first);
-                tied = false;
-                bestOne = it->first;
-                maxCnt = it->second;
             }
+//            else if(it->second > maxCnt){
+//                ties.clear();
+//                ties.push_back(it->first);
+//                tied = false;
+//                bestOne = it->first;
+//                maxCnt = it->second;
+//            }
         } else if (currnetPercentage >= majorityCutoff && (!haveMetCovThr)) {
-            // TaxID currParentTaxId = node->parentTaxId;
             haveMetMajorityThr = true;
             if ((currRank < minRank) || ((currRank == minRank) && (currnetPercentage > selectedPercent))) {
                 selectedTaxon = it->first;
@@ -1261,6 +1265,32 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches,
                 selectedPercent = currnetPercentage;
             }
         }
+
+//        if(currentCoverage > coverageThreshold && currRank <= 4){
+//            if(!haveMetCovThr){
+//                haveMetCovThr = true;
+//                maxCnt = it->second;
+//                bestOne = it->first;
+//                ties.push_back(it->first);
+//            } else if(it->second == maxCnt){
+//                tied = true;
+//                ties.push_back(it->first);
+//            } else if(it->second > maxCnt){
+//                ties.clear();
+//                ties.push_back(it->first);
+//                tied = false;
+//                bestOne = it->first;
+//                maxCnt = it->second;
+//            }
+//        } else if (currnetPercentage >= majorityCutoff && (!haveMetCovThr)) {
+//            // TaxID currParentTaxId = node->parentTaxId;
+//            haveMetMajorityThr = true;
+//            if ((currRank < minRank) || ((currRank == minRank) && (currnetPercentage > selectedPercent))) {
+//                selectedTaxon = it->first;
+//                minRank = currRank;
+//                selectedPercent = currnetPercentage;
+//            }
+//        }
     }
 
     if (haveMetCovThr) {

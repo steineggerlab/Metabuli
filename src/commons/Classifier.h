@@ -278,7 +278,6 @@ private:
 
     static TaxID classifyFurther(const std::vector<Match> & matches,
                                  NcbiTaxonomy & taxonomy,
-                                 uint32_t queryLength,
                                  float maxKmerCnt);
 
     // Write report
