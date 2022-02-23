@@ -270,8 +270,9 @@ private:
                                           vector<float> & scoreOfEachGenus,
                                           int queryLength);
 
-    static void constructMatchCombination2(vector<Match> & filteredMatches, int maxNum,
-                                          vector<vector<Match>> & matchesForEachGenus, vector<float> & scoreOfEachGenus,
+    static void constructMatchCombination2(vector<Match> & filteredMatches,
+                                          vector<vector<Match>> & matchesForEachGenus,
+                                          vector<float> & scoreOfEachGenus,
                                           size_t queryLength);
 
     static bool sortMatchesByPos(const Match & a, const Match & b);

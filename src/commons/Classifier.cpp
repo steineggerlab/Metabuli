@@ -897,7 +897,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
         if(!filteredMatches.empty()) {
-           constructMatchCombination(filteredMatches, matchesForEachGenus, scoreOfEachGenus, queryLength);
+           constructMatchCombination2(filteredMatches, matchesForEachGenus, scoreOfEachGenus, queryLength);
         }
         filteredMatches.clear();
     }
@@ -1075,9 +1075,10 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches,
     }
 }
 
-void Classifier::constructMatchCombination2(vector<Match> & filteredMatches, int maxCoveredLength,
+void Classifier::constructMatchCombination2(vector<Match> & filteredMatches,
                                            vector<vector<Match>> & matchesForEachGenus,
-                                           vector<float> & scoreOfEachGenus, size_t queryLength){
+                                           vector<float> & scoreOfEachGenus,
+                                           size_t queryLength) {
     // Sort
     //sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
 
