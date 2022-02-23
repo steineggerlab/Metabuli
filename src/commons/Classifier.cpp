@@ -160,7 +160,7 @@ void Classifier::startClassify(const char * queryFileName,
     // Sort Matches
     time_t beforeSortMatches = time(nullptr);
     SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve, Classifier::sortByGenusAndSpecies2);
-    cout << "Time spent for sorting matches" << double(time(nullptr) - beforeSortMatches) << endl;
+    cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
 
     // Analyze matches
     cout<<"Analyse Result ... "<<endl;
@@ -792,6 +792,14 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     int numOfstrains = 0;
     TaxID strainID = 0;
     int count = 1;
+    int minStrainSpecificCnt;
+    if (par.seqMode == 1){
+        minStrainSpecificCnt = 2;
+    } else if (par.seqMode == 2){
+        minStrainSpecificCnt = 3;
+    } else if (par.seqMode == 3){
+        minStrainSpecificCnt = 4;
+    }
     if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){
         unordered_map<TaxID, int> strainMatchCnt;
         for(size_t i = 0; i < matchesForLCA.size(); i++){
@@ -802,14 +810,14 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
         }
 
         for(auto strainIt = strainMatchCnt.begin(); strainIt != strainMatchCnt.end(); strainIt ++){
-            if(strainIt->second > 1){
+            if(strainIt->second >= minStrainSpecificCnt){
                 strainID = strainIt->first;
                 numOfstrains++;
                 count = strainIt->second;
             }
         }
 
-        if(numOfstrains == 1 && count > 2) {
+        if(numOfstrains == 1 && count >= minStrainSpecificCnt + 1) {
             selectedLCA = strainID;
         }
     }
