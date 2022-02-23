@@ -119,7 +119,6 @@ void Classifier::startClassify(const char * queryFileName,
 
 
     // Timer
-    time_t afterSearch, afterAnalyze, beforeIO;
     size_t numOfTatalQueryKmerCnt = 0;
 
     // Extract k-mers from query sequences and compare them to target k-mer DB
@@ -672,9 +671,6 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, Buffer<Match
     {
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < blockIdx; ++i) {
-           // chooseBestTaxon(ncbiTaxonomy, seqSegments[matchBlocks[i].id].length, matchBlocks[i].id,
-            //                matchBlocks[i].start, matchBlocks[i].end, matchBuffer.buffer, queryList, par);
-
             chooseBestTaxon(ncbiTaxonomy,
                             matchBlocks[i].id,
                             matchBlocks[i].start,
@@ -1222,21 +1218,20 @@ TaxID Classifier::classifyFurther2(const vector<Match> & matches,
     float currnetPercentage;
     bool haveMetCovThr = false;
     bool haveMetMajorityThr = false;
-    bool tied = false;
     size_t matchNum = matches.size();
-    int maxCnt;
-    TaxID bestOne;
     TaxID currRank;
     vector<TaxID> ties;
     int minRank = INT_MAX;
     float selectedPercent = 0;
     TaxID selectedTaxon;
     for(auto it = taxIdCounts.begin(); it != taxIdCounts.end(); it++) {
+        currnetPercentage = (float) it->second / matchNum;
+
         if (it->second >= maxCnt2) {
             it->second = maxCnt2 - 1;
         }
-        currentCoverage = (float) it->second / possibleKmerNum;
-        currnetPercentage = (float) it->second / matchNum;
+        currentCoverage = (float) it->second / (possibleKmerNum - 1);
+
         currRank = NcbiTaxonomy::findRankIndex(taxonomy.taxonNode(it->first)->rank);
 
         if (currentCoverage > coverageThreshold && (it->second >= maxCnt2 - 1)) {
