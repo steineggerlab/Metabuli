@@ -285,8 +285,6 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer & kmerBuffer
                 kseq_read(seq);
                 //size_t kmerCnt = SeqIterator::kmerNumOfSixFrameTranslation(seq->seq.s);
                 size_t kmerCnt = getQueryKmerNumber((int) strlen(seq->seq.s));
-                      //  SeqIterator::kmerNumOfSixFrameTranslation(seq->seq.s);
-
 
                 // Read 2
                 kseq_buffer_t buffer2(const_cast<char *>(&seqFile2.data[seqs2[i].start]), seqs2[i].length);
@@ -1225,8 +1223,8 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches,
     float selectedPercent = 0;
     TaxID selectedTaxon;
     for(auto it = taxIdCounts.begin(); it != taxIdCounts.end(); it++){
-        if(it->second >= maxKmerCnt) {
-            it->second = (int)maxKmerCnt - 1;
+        if(it->second >= maxKmerCnt - 1) {
+            it->second = (int)maxKmerCnt - 2;
         }
         currentCoverage = (float)it->second / maxKmerCnt;
         currnetPercentage = (float)it->second / matchNum;
