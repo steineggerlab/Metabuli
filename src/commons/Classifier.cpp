@@ -1210,8 +1210,8 @@ TaxID Classifier::classifyFurther(const vector<Match> & matches,
     }
 
     for(Match match : matches){
-        if(taxIdCounts[match.taxID] > 1 && match.speciesTaxID != match.taxID ){
-            taxIdCounts[match.speciesTaxID] += taxIdCounts[match.taxID];
+        if(taxIdCounts[match.taxID] > 1){
+            taxIdCounts[match.speciesTaxID] += (match.speciesTaxID != match.taxID);
         }
     }
 
