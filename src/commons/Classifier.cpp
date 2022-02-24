@@ -895,7 +895,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
         if(!filteredMatches.empty()) {
-           constructMatchCombination(filteredMatches, matchesForEachGenus, scoreOfEachGenus, queryLength);
+           constructMatchCombination2(filteredMatches, matchesForEachGenus, scoreOfEachGenus, queryLength);
         }
         filteredMatches.clear();
     }
@@ -1082,60 +1082,26 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches,
 
 
     // Do not allow overlaps between the same species
-    size_t walker = 0;
-    size_t numOfMatch = filteredMatches.size();
-    while(walker + 1 < numOfMatch){
-        TaxID currentSpecies = filteredMatches[walker].speciesTaxID;
-        while(filteredMatches[walker].speciesTaxID == currentSpecies && walker + 1 < numOfMatch){
-
-        }
-    }
-
-    size_t numOfFitMat = filteredMatches.size();
     vector<Match> matches;
-    Match overlappedMatch;
-    int overlapCnt;
-    matches.reserve(numOfFitMat);
-    uint8_t minHamming = 0;
-    bool isTheLastOverlapped = false;
-    size_t i = 0;
-    TaxID overlapID;
-    int uniqueIdCnt;
-
-    // Check overlaps between subspecies
-    while(i + 1 < numOfFitMat){
-        overlapCnt = 0;
-        overlapID = 0;
-        uniqueIdCnt = 0;
-        while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
-              filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < numOfFitMat)){
-            if(overlapCnt == 0){
-                overlapCnt++;
-                overlapID = filteredMatches[i].taxID;
-                uniqueIdCnt ++;
-                overlappedMatch = filteredMatches[i];
-                minHamming = filteredMatches[i].hamming;
-            } else if (filteredMatches[i].hamming == minHamming && (filteredMatches[i].taxID != overlapID)){
-                overlapCnt++;
+    size_t walker = 0;
+    size_t numOfFitMat = filteredMatches.size();
+    while(walker < numOfFitMat){
+        TaxID currentSpecies = filteredMatches[walker].speciesTaxID;
+//        while(filteredMatches[walker].speciesTaxID ==  currentSpecies && walker  < numOfMatch) {
+            int currentPosition = filteredMatches[walker].position / 3;
+            Match currentMatch = filteredMatches[walker];
+            while (filteredMatches[walker].speciesTaxID ==  currentSpecies
+                    && filteredMatches[walker].position / 3 == currentPosition
+                    && walker < numOfFitMat) {
+                // Overlap
+                if(currentMatch.taxID != filteredMatches[walker].taxID &&
+                    currentMatch.hamming == filteredMatches[walker].hamming){
+                    currentMatch.taxID = currentMatch.speciesTaxID;
+                }
+                walker ++;
             }
-            ++i;
-        }
-        if(overlapCnt){
-            if(filteredMatches[i].hamming == minHamming && (filteredMatches[i].taxID != overlapID)) overlapCnt++;
-            if(overlapCnt == 1){ // Overlapping with match of higher hamming distance -> ignore
-                matches.push_back(overlappedMatch);
-            } else { // Overlapping with match of the same hamming distance -> species
-                overlappedMatch.taxID = overlappedMatch.speciesTaxID;
-                matches.push_back(overlappedMatch);
-            }
-            isTheLastOverlapped = (i == numOfFitMat - 1);
-        } else{
-            matches.push_back(filteredMatches[i]);
-        }
-        i++;
-    }
-    if(!isTheLastOverlapped) {
-        matches.push_back(filteredMatches[numOfFitMat - 1]);
+            matches.push_back(currentMatch);
+//        }
     }
 
     // Calculate Hamming distance & covered length
@@ -1522,8 +1488,8 @@ bool Classifier::sortByGenusAndSpecies2(const Match & a, const Match & b) {
 }
 
 bool Classifier::sortMatchesByPos(const Match & a, const Match & b) {
-    if (a.position < b.position) return true;
-    else if (a.position == b.position) {
+    if (a.position/3 < b.position/3) return true;
+    else if (a.position/3 == b.position/3) {
         if(a.speciesTaxID < b.speciesTaxID) return true;
         else if(a.speciesTaxID == b.speciesTaxID){
             return a.hamming < b.hamming;
