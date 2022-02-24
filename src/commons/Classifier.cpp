@@ -1512,6 +1512,9 @@ bool Classifier::sortByGenusAndSpecies2(const Match & a, const Match & b) {
             if(a.speciesTaxID < b.speciesTaxID) return true;
             else if (a.speciesTaxID == b.speciesTaxID) {
                 if (a.position < b.position) return true;
+                else if (a.position == b.position){
+                    return a.hamming < b.hamming;
+                }
             }
         }
     }
