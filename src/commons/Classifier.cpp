@@ -941,7 +941,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches,
                                            vector<float> & scoreOfEachGenus,
                                            int queryLength){
     // Sort
-    //sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
+    sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
 
     // Do not allow overlaps between the same species
     size_t numOfFitMat = filteredMatches.size();
@@ -1512,9 +1512,9 @@ bool Classifier::sortByGenusAndSpecies2(const Match & a, const Match & b) {
             if(a.speciesTaxID < b.speciesTaxID) return true;
             else if (a.speciesTaxID == b.speciesTaxID) {
                 if (a.position < b.position) return true;
-                else if (a.position == b.position){
-                    return a.hamming < b.hamming;
-                }
+//                else if (a.position == b.position){
+//                    return a.hamming < b.hamming;
+//                }
             }
         }
     }
@@ -1522,8 +1522,8 @@ bool Classifier::sortByGenusAndSpecies2(const Match & a, const Match & b) {
 }
 
 bool Classifier::sortMatchesByPos(const Match & a, const Match & b) {
-    if (a.position/3 < b.position/3) return true;
-    else if (a.position/3 == b.position/3) {
+    if (a.position < b.position) return true;
+    else if (a.position == b.position) {
         if(a.speciesTaxID < b.speciesTaxID) return true;
         else if(a.speciesTaxID == b.speciesTaxID){
             return a.hamming < b.hamming;
