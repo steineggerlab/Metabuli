@@ -941,7 +941,7 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches,
                                            vector<float> & scoreOfEachGenus,
                                            int queryLength){
     // Sort
-    sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
+    //sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
 
     // Do not allow overlaps between the same species
     size_t numOfFitMat = filteredMatches.size();
