@@ -778,11 +778,9 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     }
 
     // Classify in species or lower level for queries that have close matches in reference DB.
-    TaxID selectedLCA = classifyFurther3(matchesForLCA,
+    TaxID selectedLCA = classifyFurther2(matchesForLCA,
                                         ncbiTaxonomy,
-                                        queryLength,
-                                        (float) queryList[currentQuery].kmerCnt / 6
-                                        );
+                                        (float) queryList[currentQuery].kmerCnt / 6);
 
     ///TODO optimize strain specific classification criteria
     // Strain classification only for high coverage with LCA of species level
@@ -897,7 +895,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
         if(!filteredMatches.empty()) {
-           constructMatchCombination2(filteredMatches, matchesForEachGenus, scoreOfEachGenus, queryLength);
+           constructMatchCombination(filteredMatches, matchesForEachGenus, scoreOfEachGenus, queryLength);
         }
         filteredMatches.clear();
     }
@@ -1082,7 +1080,17 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches,
     // Sort
     //sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
 
+
     // Do not allow overlaps between the same species
+    size_t walker = 0;
+    size_t numOfMatch = filteredMatches.size();
+    while(walker + 1 < numOfMatch){
+        TaxID currentSpecies = filteredMatches[walker].speciesTaxID;
+        while(filteredMatches[walker].speciesTaxID == currentSpecies && walker + 1 < numOfMatch){
+
+        }
+    }
+
     size_t numOfFitMat = filteredMatches.size();
     vector<Match> matches;
     Match overlappedMatch;
@@ -1291,6 +1299,7 @@ TaxID Classifier::classifyFurther3(const vector<Match> & matches,
                                    NcbiTaxonomy & taxonomy,
                                    int queryLength,
                                    float possibleKmerNum) {
+
 
     // Score each species
     std::unordered_map<TaxID, float> speciesScores;
@@ -1503,9 +1512,6 @@ bool Classifier::sortByGenusAndSpecies2(const Match & a, const Match & b) {
             if(a.speciesTaxID < b.speciesTaxID) return true;
             else if (a.speciesTaxID == b.speciesTaxID) {
                 if (a.position < b.position) return true;
-                else if (a.position == b.position) {
-                    if (a.hamming < b.hamming) return true;
-                }
             }
         }
     }
@@ -1523,7 +1529,6 @@ bool Classifier::sortMatchesByPos(const Match & a, const Match & b) {
     return false;
 }
 
-\
 
 void Classifier::writeReadClassification(Query * queryList, int queryNum, ofstream & readClassificationFile){
     for(int i = 0; i < queryNum; i++){

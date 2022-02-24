@@ -254,6 +254,8 @@ private:
 
     static bool sortByGenusAndSpecies(const Match & a, const Match & b);
 
+    static bool sortBySpecies(const Match & a, const Match & b);
+
     TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy,
                           uint32_t currentQuery,
                           size_t offset,
