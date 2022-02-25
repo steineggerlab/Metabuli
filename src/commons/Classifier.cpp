@@ -165,26 +165,23 @@ void Classifier::startClassify(const char * queryFileName,
     cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
 
     // Analyze matches
-
-
-
-
-
-    // Write read classification results.
     if(par.seqMode == 2){
         cout<<"Analyse Result ... "<<endl;
         time_t beforeAnalyze = time(nullptr);
         analyseResultParallel(taxonomy, matchBuffer, (int) numOfSeq + numOfSeq2, queryList, par);
         cout<<"Time spent for analyzing: "<<double(time(nullptr)-beforeAnalyze)<<endl;
-        Query * combinedQueryList;
+        int readNum = (int) numOfSeq;
+        if(numOfSeq < numOfSeq2) readNum = (int) numOfSeq2;
+        cout<<readNum<<" "<<numOfSeq<<" "<<numOfSeq2<<endl;
+        Query * combinedQueryList = new Query[readNum];
         combinePairedEndClassifications(queryList, combinedQueryList, numOfSeq, numOfSeq2, taxonomy);
         ofstream readClassificationFile;
         readClassificationFile.open(par.filenames[3]+"/"+par.filenames[4]+"_ReadClassification.tsv");
-        int readNum = (int) numOfSeq;
-        if(numOfSeq < numOfSeq2) readNum = (int) numOfSeq2;
+
         writeReadClassification(combinedQueryList,readNum,readClassificationFile);
         readClassificationFile.close();
         writeReportFile(par.filenames[3]+"/"+par.filenames[4]+"_CompositionReport.tsv", taxonomy, readNum);
+        delete[] combinedQueryList;
     } else {
         cout<<"Analyse Result ... "<<endl;
         time_t beforeAnalyze = time(nullptr);
@@ -1301,16 +1298,11 @@ void Classifier::combinePairedEndClassifications(Query * queryList,
                                                  size_t numOfSeq,
                                                  size_t numOfSeq2,
                                                  NcbiTaxonomy & ncbiTaxonomy){
-    TaxID taxid;
     if(numOfSeq == numOfSeq2){
-        combinedQueryList = new Query[numOfSeq];
         for(size_t i = 0; i < numOfSeq; i ++){
             combineTwoClassifications(queryList[i], queryList[i+numOfSeq], combinedQueryList[i], ncbiTaxonomy);
-            combinedQueryList[i].classification = taxid;
-            combinedQueryList[i].queryLength = queryList[i].queryLength + queryList[i].queryLength;
         }
     } else if(numOfSeq > numOfSeq2){
-        combinedQueryList = new Query[numOfSeq];
         for(size_t i = 0; i < numOfSeq2; i ++){
             combineTwoClassifications(queryList[i], queryList[i+numOfSeq], combinedQueryList[i], ncbiTaxonomy);
         }
@@ -1318,7 +1310,6 @@ void Classifier::combinePairedEndClassifications(Query * queryList,
             combinedQueryList[i] = queryList[i];
         }
     } else if(numOfSeq < numOfSeq2){
-        combinedQueryList = new Query[numOfSeq2];
         for(size_t i = 0; i < numOfSeq; i ++){
             combineTwoClassifications(queryList[i], queryList[i+numOfSeq], combinedQueryList[i], ncbiTaxonomy);
         }
