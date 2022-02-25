@@ -778,11 +778,11 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     }
 
     // Classify in species or lower level for queries that have close matches in reference DB.
-    TaxID selectedLCA = classifyFurther2(matchesForLCA,
-                                        ncbiTaxonomy,
+    TaxID selectedLCA = classifyFurther3(matchesForLCA,
+                                        ncbiTaxonomy, queryLength,
                                         (float) queryList[currentQuery].kmerCnt / 6);
 
-    ///TODO optimize strain specific classification criteria
+    // TODO optimize strain specific classification criteria
     // Strain classification only for high coverage with LCA of species level
     int numOfstrains = 0;
     TaxID strainID = 0;
@@ -878,7 +878,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
                         hammingSum = matchList[offsetIdx].hamming;
                         filteredMatches.push_back(matchList[offsetIdx]);
                     }
-                    if(!newOffset && ((float)matchList[i].hamming) <= hammingMean + 3) {
+                    else if(!newOffset && ((float)matchList[i].hamming) <= hammingMean + 3) {
                         filteredMatches.push_back(matchList[i]);
                         hammingSum += matchList[i].hamming;
                         hammingMean = float(hammingSum) / float(filteredMatches.size());
@@ -886,37 +886,12 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
                     i++;
                 }
             }
-
-//            while(currentSpecies == matchList[i].speciesTaxID && (i < end + 1)){
-//                offsetIdx = i;
-//                i++;
-//                newOffset = true;
-//                hammingSum = 0;
-//                conCnt = 0;
-//                hammingMean = matchList[i-1].hamming;
-//                while((i < end + 1) && currentSpecies == matchList[i].speciesTaxID &&
-//                      matchList[i].position <= matchList[i-1].position + 3){
-//                    if(newOffset && ((float)matchList[i].hamming) <= hammingMean + 3){
-//                        newOffset = false;
-//                        hammingSum = matchList[offsetIdx].hamming;
-//                        filteredMatches.push_back(matchList[offsetIdx]);
-//                        conCnt++;
-//                    }
-//                    if(!newOffset) {
-//                        filteredMatches.push_back(matchList[i]);
-//                        conCnt++;
-//                        hammingSum += matchList[i].hamming;
-//                        hammingMean = float(hammingSum) / float(filteredMatches.size());
-//                    }
-//                    i++;
-//                }
-//            }
         }
 
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
         if(!filteredMatches.empty()) {
-           constructMatchCombination2(filteredMatches, matchesForEachGenus, scoreOfEachGenus, queryLength);
+           constructMatchCombination(filteredMatches, matchesForEachGenus, scoreOfEachGenus, queryLength);
         }
         filteredMatches.clear();
     }
@@ -954,154 +929,10 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
     //3. no genus
 }
 
-
-// Assumption : There will be no frame shift of the same gene between species
-// What about intergenic region?
 void Classifier::constructMatchCombination(vector<Match> & filteredMatches,
                                            vector<vector<Match>> & matchesForEachGenus,
                                            vector<float> & scoreOfEachGenus,
-                                           int queryLength){
-    // Sort
-    sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
-
-    // Do not allow overlaps between the same species
-    size_t numOfFitMat = filteredMatches.size();
-    vector<Match> matches;
-    Match overlappedMatch;
-    int overlapCnt;
-    matches.reserve(numOfFitMat);
-    uint8_t minHamming = 0;
-    bool isTheLastOverlapped = false;
-    size_t i = 0;
-    TaxID overlapID;
-    int uniqueIdCnt;
-
-    // Check overlaps between subspecies
-    while(i + 1 < numOfFitMat){
-        overlapCnt = 0;
-        overlapID = 0;
-        uniqueIdCnt = 0;
-        while(filteredMatches[i].speciesTaxID == filteredMatches[i+1].speciesTaxID &&
-                filteredMatches[i].position/3 == filteredMatches[i+1].position/3 && (i + 1 < numOfFitMat)){
-            if(overlapCnt == 0){
-                overlapCnt++;
-                overlapID = filteredMatches[i].taxID;
-                uniqueIdCnt ++;
-                overlappedMatch = filteredMatches[i];
-                minHamming = filteredMatches[i].hamming;
-            } else if (filteredMatches[i].hamming == minHamming && (filteredMatches[i].taxID != overlapID)){
-                overlapCnt++;
-            }
-            ++i;
-        }
-        if(overlapCnt){
-            if(filteredMatches[i].hamming == minHamming && (filteredMatches[i].taxID != overlapID)) overlapCnt++;
-            if(overlapCnt == 1){ // Overlapping with match of higher hamming distance -> ignore
-                matches.push_back(overlappedMatch);
-            } else { // Overlapping with match of the same hamming distance -> species
-                overlappedMatch.taxID = overlappedMatch.speciesTaxID;
-                matches.push_back(overlappedMatch);
-            }
-            isTheLastOverlapped = (i == numOfFitMat - 1);
-        } else{
-            matches.push_back(filteredMatches[i]);
-        }
-        i++;
-    }
-    if(!isTheLastOverlapped) {
-        matches.push_back(filteredMatches[numOfFitMat - 1]);
-    }
-
-    // Calculate Hamming distance & covered length
-    int coveredPosCnt = 0;
-    uint16_t currHammings;
-    int aminoAcidNum = (int)queryLength / 3;
-    int currPos;
-    size_t matchNum = matches.size();
-    size_t f = 0;
-
-//    // Get the smallest hamming distance at each position of query
-//    auto * hammingsAtEachPos = new signed char[aminoAcidNum + 1];
-//    memset(hammingsAtEachPos, 10, (aminoAcidNum + 1));
-//    while(f < matchNum){
-//        currPos = matches[f].position / 3;
-//        currHammings = matches[f].rightEndHamming;
-//        if(GET_2_BITS(currHammings) < hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
-//        if(GET_2_BITS(currHammings>>2) < hammingsAtEachPos[currPos + 1]) hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings>>2);
-//        if(GET_2_BITS(currHammings>>4) < hammingsAtEachPos[currPos + 2]) hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings>>4);
-//        if(GET_2_BITS(currHammings>>6) < hammingsAtEachPos[currPos + 3]) hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings>>6);
-//        if(GET_2_BITS(currHammings>>8) < hammingsAtEachPos[currPos + 4]) hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings>>8);
-//        if(GET_2_BITS(currHammings>>10) < hammingsAtEachPos[currPos + 5]) hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings>>10);
-//        if(GET_2_BITS(currHammings>>12) < hammingsAtEachPos[currPos + 6]) hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings>>12);
-//        if(GET_2_BITS(currHammings>>14) < hammingsAtEachPos[currPos + 7]) hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings>>14);
-//        f++;
-//    }
-//
-//    // Sum up hamming distances and count the number of position covered by the matches.
-//    float hammingSum = 0;
-//    for(int h = 0; h < aminoAcidNum; h++){
-//        if(hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
-//            coveredPosCnt++;
-//        }else if(hammingsAtEachPos[h] != 10){ // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
-//            hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
-//            coveredPosCnt ++;
-//        }
-//    }
-
-    // Get the largest hamming distance at each position of query
-    auto * hammingsAtEachPos = new signed char[aminoAcidNum + 1];
-    memset(hammingsAtEachPos, -1, (aminoAcidNum + 1));
-    while(f < matchNum){
-        currPos = matches[f].position / 3;
-        currHammings = matches[f].rightEndHamming;
-        if(GET_2_BITS(currHammings) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
-        if(GET_2_BITS(currHammings>>2) > hammingsAtEachPos[currPos + 1]) hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings>>2);
-        if(GET_2_BITS(currHammings>>4) > hammingsAtEachPos[currPos + 2]) hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings>>4);
-        if(GET_2_BITS(currHammings>>6) > hammingsAtEachPos[currPos + 3]) hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings>>6);
-        if(GET_2_BITS(currHammings>>8) > hammingsAtEachPos[currPos + 4]) hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings>>8);
-        if(GET_2_BITS(currHammings>>10) > hammingsAtEachPos[currPos + 5]) hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings>>10);
-        if(GET_2_BITS(currHammings>>12) > hammingsAtEachPos[currPos + 6]) hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings>>12);
-        if(GET_2_BITS(currHammings>>14) > hammingsAtEachPos[currPos + 7]) hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings>>14);
-        f++;
-    }
-
-    // Sum up hamming distances and count the number of position covered by the matches.
-    float hammingSum = 0;
-    for(int h = 0; h < aminoAcidNum; h++){
-        if(hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
-            coveredPosCnt++;
-        }else if(hammingsAtEachPos[h] != -1){ // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
-            hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
-            coveredPosCnt ++;
-        }
-    }
-    delete[] hammingsAtEachPos;
-
-    // Ignore too few matches
-    if(coveredPosCnt < 2) return;
-
-    // Score current genus
-    int coveredLength = coveredPosCnt * 3;
-    if (coveredLength > queryLength) coveredLength = queryLength;
-    float score = ((float)coveredLength - hammingSum) / (float)queryLength;
-    scoreOfEachGenus.push_back(score);
-    matchesForEachGenus.push_back(matches);
-
-    if(PRINT) {
-        cout << filteredMatches[0].genusTaxID << " " << coveredLength << " " << hammingSum << " " <<((float)coveredLength - hammingSum) / (float)queryLength <<
-        " "<<matches.size()
-             << endl;
-    }
-}
-
-void Classifier::constructMatchCombination2(vector<Match> & filteredMatches,
-                                           vector<vector<Match>> & matchesForEachGenus,
-                                           vector<float> & scoreOfEachGenus,
-                                           size_t queryLength) {
-    // Sort
-   // sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
-
-
+                                           int queryLength) {
     // Do not allow overlaps between the same species
     vector<Match> matches;
     size_t walker = 0;
@@ -1109,23 +940,24 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches,
     Match & currentMatch = filteredMatches[0];
     while(walker < numOfFitMat){
         TaxID currentSpecies = filteredMatches[walker].speciesTaxID;
-//        while(filteredMatches[walker].speciesTaxID ==  currentSpecies && walker  < numOfMatch) {
-            int currentPosition = filteredMatches[walker].position / 3;
-            currentMatch = filteredMatches[walker];
-            while (filteredMatches[walker].speciesTaxID ==  currentSpecies
-                    && filteredMatches[walker].position / 3 == currentPosition
-                    && walker < numOfFitMat) {
-                // Overlapping with lower hamming distance -> displace
-                if(filteredMatches[walker].hamming < currentMatch.hamming){
-                    currentMatch = filteredMatches[walker];
-                } else if(currentMatch.taxID != filteredMatches[walker].taxID &&
+        int currentPosition = filteredMatches[walker].position / 3;
+        currentMatch = filteredMatches[walker];
+        // Look through overlaps within a species
+        while (filteredMatches[walker].speciesTaxID ==  currentSpecies
+            && filteredMatches[walker].position / 3 == currentPosition
+            && walker < numOfFitMat) {
+            // Take the match with lower hamming distance
+            if(filteredMatches[walker].hamming < currentMatch.hamming) {
+                currentMatch = filteredMatches[walker];
+            }
+            // Overlapping with same hamming distance but different subspecies taxonomy ID -> species level
+            else if(currentMatch.taxID != filteredMatches[walker].taxID &&
                     currentMatch.hamming == filteredMatches[walker].hamming){
                     currentMatch.taxID = currentMatch.speciesTaxID;
-                }
-                walker ++;
             }
-            matches.push_back(currentMatch);
-//        }
+            walker ++;
+        }
+        matches.push_back(currentMatch);
     }
 
     // Calculate Hamming distance & covered length
@@ -1290,7 +1122,6 @@ TaxID Classifier::classifyFurther3(const vector<Match> & matches,
                                    int queryLength,
                                    float possibleKmerNum) {
 
-
     // Score each species
     std::unordered_map<TaxID, float> speciesScores;
     size_t i = 0;
@@ -1307,6 +1138,7 @@ TaxID Classifier::classifyFurther3(const vector<Match> & matches,
         speciesScores[currentSpeices] = scoreTaxon(matches, speciesBegin, speciesEnd, queryLength);
     }
 
+    // Get the best species
     pair<TaxID, float> bestSpecies = *max_element(speciesScores.begin(), speciesScores.end(),
                                    [] (const pair<TaxID, float> & p1, const pair<TaxID, float> & p2 ){return p1.second < p2.second;});
     if(bestSpecies.second > 0.9){
@@ -1357,113 +1189,6 @@ float Classifier::scoreTaxon(const vector<Match> & matches, size_t begin, size_t
     int coveredLength = coveredPosCnt * 3;
     if (coveredLength > queryLength) coveredLength = queryLength;
     return ((float)coveredLength - hammingSum) / (float)queryLength;
-}
-
-TaxID Classifier::classifyFurther(const vector<Match> & matches,
-                                  NcbiTaxonomy & taxonomy,
-                                  float possibleKmerNum) {
-
-    std::unordered_map<TaxID, int> taxIdCounts;
-    float majorityCutoff = 0.8;
-    float coverageThreshold = 0.8;
-
-    // Subspecies && Species
-    for(Match match : matches){
-        taxIdCounts[match.taxID] += 1;
-    }
-
-    // Subspecies -> Species
-    for(Match match : matches){
-        if(taxIdCounts[match.taxID] > 1){
-            taxIdCounts[match.speciesTaxID] += (match.speciesTaxID != match.taxID);
-        }
-    }
-
-    // Max count
-    int maxCnt2 = (*max_element(taxIdCounts.begin(), taxIdCounts.end(),
-                                [] (const pair<TaxID, int> & p1, const pair<TaxID, int> & p2 ){return p1.second < p2.second;})
-                                        ).second;
-    if (maxCnt2 > (int) possibleKmerNum) { maxCnt2 = (int) possibleKmerNum; }
-
-    float currentCoverage;
-    float currnetPercentage;
-    bool haveMetCovThr = false;
-    bool haveMetMajorityThr = false;
-    bool tied = false;
-    size_t matchNum = matches.size();
-    int maxCnt;
-    TaxID bestOne;
-    TaxID currRank;
-    vector<TaxID> ties;
-    int minRank = INT_MAX;
-    float selectedPercent = 0;
-    TaxID selectedTaxon;
-    for(auto it = taxIdCounts.begin(); it != taxIdCounts.end(); it++){
-        if(it->second >= maxCnt2) {
-            it->second = maxCnt2 - 1;
-        }
-        currentCoverage = (float)it->second / possibleKmerNum;
-        currnetPercentage = (float)it->second / matchNum;
-        currRank = NcbiTaxonomy::findRankIndex(taxonomy.taxonNode(it->first)->rank);
-
-        if(currentCoverage > coverageThreshold && (it ->second >= maxCnt2 - 1)){
-            haveMetCovThr = true;
-            ties.push_back(it->first);
-
-//            else if(it->second > maxCnt){
-//                ties.clear();
-//                ties.push_back(it->first);
-//                tied = false;
-//                bestOne = it->first;
-//                maxCnt = it->second;
-//            }
-        } else if (currnetPercentage >= majorityCutoff && (!haveMetCovThr)) {
-            haveMetMajorityThr = true;
-            if ((currRank < minRank) || ((currRank == minRank) && (currnetPercentage > selectedPercent))) {
-                selectedTaxon = it->first;
-                minRank = currRank;
-                selectedPercent = currnetPercentage;
-            }
-        }
-
-//        if(currentCoverage > coverageThreshold && currRank <= 4){
-//            if(!haveMetCovThr){
-//                haveMetCovThr = true;
-//                maxCnt = it->second;
-//                bestOne = it->first;
-//                ties.push_back(it->first);
-//            } else if(it->second == maxCnt){
-//                tied = true;
-//                ties.push_back(it->first);
-//            } else if(it->second > maxCnt){
-//                ties.clear();
-//                ties.push_back(it->first);
-//                tied = false;
-//                bestOne = it->first;
-//                maxCnt = it->second;
-//            }
-//        } else if (currnetPercentage >= majorityCutoff && (!haveMetCovThr)) {
-//            // TaxID currParentTaxId = node->parentTaxId;
-//            haveMetMajorityThr = true;
-//            if ((currRank < minRank) || ((currRank == minRank) && (currnetPercentage > selectedPercent))) {
-//                selectedTaxon = it->first;
-//                minRank = currRank;
-//                selectedPercent = currnetPercentage;
-//            }
-//        }
-    }
-
-    if (haveMetCovThr) {
-        if(tied){
-            return taxonomy.LCA(ties)->taxId;
-        } else{
-            return bestOne;
-        }
-    } else if (haveMetMajorityThr) {
-        return selectedTaxon;
-    }
-
-    return matches[0].genusTaxID;
 }
 
 int Classifier::getNumOfSplits() const { return this->numOfSplit; }
