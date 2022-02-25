@@ -175,6 +175,7 @@ void Classifier::startClassify(const char * queryFileName,
         cout<<"Analyse Result ... "<<endl;
         time_t beforeAnalyze = time(nullptr);
         analyseResultParallel(taxonomy, matchBuffer, (int) numOfSeq + numOfSeq2, queryList, par);
+        cout<<"Time spent for analyzing: "<<double(time(nullptr)-beforeAnalyze)<<endl;
         Query * combinedQueryList;
         combinePairedEndClassifications(queryList, combinedQueryList, numOfSeq, numOfSeq2, taxonomy);
         ofstream readClassificationFile;
@@ -382,7 +383,7 @@ void Classifier::fillQueryKmerBufferParallel_paired2(QueryKmerBuffer & kmerBuffe
                 kseq_read(seq2);
                 size_t kmerCnt2 = getQueryKmerNumber((int) strlen(seq2->seq.s));
 
-                posToWrite = kmerBuffer.reserveMemory(kmerCnt);
+                posToWrite = kmerBuffer.reserveMemory(kmerCnt + kmerCnt2);
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
                     checker[i] = true;
                     // Read 1
@@ -883,14 +884,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     int numOfstrains = 0;
     TaxID strainID = 0;
     int count = 1;
-    int minStrainSpecificCnt;
-    if (par.seqMode == 1){
-        minStrainSpecificCnt = 2;
-    } else if (par.seqMode == 2){
-        minStrainSpecificCnt = 3;
-    } else if (par.seqMode == 3){
-        minStrainSpecificCnt = 4;
-    }
+    int minStrainSpecificCnt = 2;
     if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){
         unordered_map<TaxID, int> strainMatchCnt;
         for(size_t i = 0; i < matchesForLCA.size(); i++){
@@ -901,14 +895,14 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
         }
 
         for(auto strainIt = strainMatchCnt.begin(); strainIt != strainMatchCnt.end(); strainIt ++){
-            if(strainIt->second >= minStrainSpecificCnt){
+            if(strainIt->second > 1){
                 strainID = strainIt->first;
                 numOfstrains++;
                 count = strainIt->second;
             }
         }
 
-        if(numOfstrains == 1 && count >= minStrainSpecificCnt) {
+        if(numOfstrains == 1 && count > 2) {
             selectedLCA = strainID;
         }
     }
