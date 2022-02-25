@@ -870,7 +870,6 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
                 i++;
                 newOffset = true;
                 hammingSum = 0;
-                conCnt = 0;
                 hammingMean = matchList[i-1].hamming;
                 while((i < end + 1) && currentSpecies == matchList[i].speciesTaxID &&
                       matchList[i].position <= matchList[i-1].position + 3){
@@ -878,18 +877,40 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
                         newOffset = false;
                         hammingSum = matchList[offsetIdx].hamming;
                         filteredMatches.push_back(matchList[offsetIdx]);
-                        conCnt++;
                     }
-                    if(!newOffset) {
+                    if(!newOffset && ((float)matchList[i].hamming) <= hammingMean + 3) {
                         filteredMatches.push_back(matchList[i]);
-                        conCnt++;
                         hammingSum += matchList[i].hamming;
                         hammingMean = float(hammingSum) / float(filteredMatches.size());
                     }
                     i++;
                 }
-                //TODO Should I remove the offset match after checking if the hamming was two high?
             }
+
+//            while(currentSpecies == matchList[i].speciesTaxID && (i < end + 1)){
+//                offsetIdx = i;
+//                i++;
+//                newOffset = true;
+//                hammingSum = 0;
+//                conCnt = 0;
+//                hammingMean = matchList[i-1].hamming;
+//                while((i < end + 1) && currentSpecies == matchList[i].speciesTaxID &&
+//                      matchList[i].position <= matchList[i-1].position + 3){
+//                    if(newOffset && ((float)matchList[i].hamming) <= hammingMean + 3){
+//                        newOffset = false;
+//                        hammingSum = matchList[offsetIdx].hamming;
+//                        filteredMatches.push_back(matchList[offsetIdx]);
+//                        conCnt++;
+//                    }
+//                    if(!newOffset) {
+//                        filteredMatches.push_back(matchList[i]);
+//                        conCnt++;
+//                        hammingSum += matchList[i].hamming;
+//                        hammingMean = float(hammingSum) / float(filteredMatches.size());
+//                    }
+//                    i++;
+//                }
+//            }
         }
 
         // Construct a match combination using filtered matches of current genus
