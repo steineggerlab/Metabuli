@@ -1099,7 +1099,7 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches,
                                            vector<float> & scoreOfEachGenus,
                                            size_t queryLength) {
     // Sort
-    //sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
+    sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
 
 
     // Do not allow overlaps between the same species
