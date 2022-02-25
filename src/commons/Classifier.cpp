@@ -1199,9 +1199,10 @@ float Classifier::scoreTaxon(const vector<Match> & matches, size_t begin, size_t
     }
     delete[] hammingsAtEachPos;
     hammingSum = 0;
+
     // Score
     int coveredLength = coveredPosCnt * 3;
-    if (coveredLength >= queryLength - 3) coveredLength = queryLength - 3;
+    if (coveredLength >= queryLength - 6) coveredLength = queryLength - 6;
     return ((float)coveredLength - hammingSum) / (float)queryLength;
 }
 
