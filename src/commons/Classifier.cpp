@@ -1099,23 +1099,26 @@ void Classifier::constructMatchCombination2(vector<Match> & filteredMatches,
                                            vector<float> & scoreOfEachGenus,
                                            size_t queryLength) {
     // Sort
-    sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
+   // sort(filteredMatches.begin(), filteredMatches.end(), Classifier::sortMatchesByPos);
 
 
     // Do not allow overlaps between the same species
     vector<Match> matches;
     size_t walker = 0;
     size_t numOfFitMat = filteredMatches.size();
+    Match & currentMatch = filteredMatches[0];
     while(walker < numOfFitMat){
         TaxID currentSpecies = filteredMatches[walker].speciesTaxID;
 //        while(filteredMatches[walker].speciesTaxID ==  currentSpecies && walker  < numOfMatch) {
             int currentPosition = filteredMatches[walker].position / 3;
-            Match currentMatch = filteredMatches[walker];
+            currentMatch = filteredMatches[walker];
             while (filteredMatches[walker].speciesTaxID ==  currentSpecies
                     && filteredMatches[walker].position / 3 == currentPosition
                     && walker < numOfFitMat) {
-                // Overlap
-                if(currentMatch.taxID != filteredMatches[walker].taxID &&
+                // Overlapping with lower hamming distance -> displace
+                if(filteredMatches[walker].hamming < currentMatch.hamming){
+                    currentMatch = filteredMatches[walker];
+                } else if(currentMatch.taxID != filteredMatches[walker].taxID &&
                     currentMatch.hamming == filteredMatches[walker].hamming){
                     currentMatch.taxID = currentMatch.speciesTaxID;
                 }
@@ -1509,8 +1512,8 @@ bool Classifier::sortByGenusAndSpecies2(const Match & a, const Match & b) {
 }
 
 bool Classifier::sortMatchesByPos(const Match & a, const Match & b) {
-    if (a.position < b.position) return true;
-    else if (a.position == b.position) {
+    if (a.position/3 < b.position/3) return true;
+    else if (a.position/3 == b.position/3) {
         if(a.speciesTaxID < b.speciesTaxID) return true;
         else if(a.speciesTaxID == b.speciesTaxID){
             return a.hamming < b.hamming;
