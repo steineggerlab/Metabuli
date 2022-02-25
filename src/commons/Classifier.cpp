@@ -90,6 +90,7 @@ void Classifier::startClassify(const char * queryFileName,
     vector<Sequence> sequences2;
     Query * queryList;
     size_t numOfSeq;
+    size_t numOfSeq2;
     if(par.seqMode == 1){
         queryFile = mmapData<char>(par.filenames[0].c_str());
         IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
@@ -102,14 +103,16 @@ void Classifier::startClassify(const char * queryFileName,
         queryFile2 = mmapData<char>(queryFileName2.c_str());
         IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
         IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
+
         numOfSeq = sequences.size();
-        size_t seqCnt2 = sequences2.size();
-        if(numOfSeq > seqCnt2){
-            queryList = new Query[numOfSeq];
-        } else {
-            numOfSeq = seqCnt2;
-            queryList = new Query[numOfSeq];
-        }
+        numOfSeq2 = sequences2.size();
+        queryList = new Query[numOfSeq + numOfSeq2];
+//        if(numOfSeq > numOfSeq2){
+//            queryList = new Query[numOfSeq];
+//        } else {
+//            numOfSeq = numOfSeq2;
+//            queryList = new Query[numOfSeq];
+//        }
     }
 
     // Checker for multi-threading
@@ -129,7 +132,7 @@ void Classifier::startClassify(const char * queryFileName,
             fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt,
                                         queryList, par);
         } else if(par.seqMode == 2){
-            fillQueryKmerBufferParallel_paired(kmerBuffer,
+            fillQueryKmerBufferParallel_paired2(kmerBuffer,
                                                queryFile,
                                                queryFile2,
                                                sequences,
@@ -162,19 +165,42 @@ void Classifier::startClassify(const char * queryFileName,
     cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
 
     // Analyze matches
-    cout<<"Analyse Result ... "<<endl;
-    time_t beforeAnalyze = time(nullptr);
-    analyseResultParallel(taxonomy, matchBuffer, numOfSeq, queryList, par);
-    cout<<"Time spent for analyzing: "<<double(time(nullptr)-beforeAnalyze)<<endl;
+
+
+
+
 
     // Write read classification results.
-    ofstream readClassificationFile;
-    readClassificationFile.open(par.filenames[3]+"/"+par.filenames[4]+"_ReadClassification.tsv");
-    writeReadClassification(queryList,numOfSeq,readClassificationFile);
-    readClassificationFile.close();
+    if(par.seqMode == 2){
+        cout<<"Analyse Result ... "<<endl;
+        time_t beforeAnalyze = time(nullptr);
+        analyseResultParallel(taxonomy, matchBuffer, (int) numOfSeq + numOfSeq2, queryList, par);
+        Query * combinedQueryList;
+        combinePairedEndClassifications(queryList, combinedQueryList, numOfSeq, numOfSeq2, taxonomy);
+        ofstream readClassificationFile;
+        readClassificationFile.open(par.filenames[3]+"/"+par.filenames[4]+"_ReadClassification.tsv");
+        int readNum = (int) numOfSeq;
+        if(numOfSeq < numOfSeq2) readNum = (int) numOfSeq2;
+        writeReadClassification(combinedQueryList,readNum,readClassificationFile);
+        readClassificationFile.close();
+        writeReportFile(par.filenames[3]+"/"+par.filenames[4]+"_CompositionReport.tsv", taxonomy, readNum);
+    } else {
+        cout<<"Analyse Result ... "<<endl;
+        time_t beforeAnalyze = time(nullptr);
+        analyseResultParallel(taxonomy, matchBuffer, (int) numOfSeq, queryList, par);
+        cout<<"Time spent for analyzing: "<<double(time(nullptr)-beforeAnalyze)<<endl;
+        ofstream readClassificationFile;
+        readClassificationFile.open(par.filenames[3]+"/"+par.filenames[4]+"_ReadClassification.tsv");
+        writeReadClassification(queryList,(int) numOfSeq,readClassificationFile);
+        readClassificationFile.close();
+        writeReportFile(par.filenames[3]+"/"+par.filenames[4]+"_CompositionReport.tsv", taxonomy, numOfSeq);
+    }
+
+
+
 
     // Write a composition report file.
-    writeReportFile(par.filenames[3]+"/"+par.filenames[4]+"_CompositionReport.tsv", taxonomy, numOfSeq);
+
 
 //    // Below is for developing
 //    vector<int> wrongClassifications;
@@ -197,6 +223,7 @@ void Classifier::startClassify(const char * queryFileName,
     free(kmerBuffer.buffer);
     free(matchBuffer.buffer);
     munmap(queryFile.data, queryFile.fileSize + 1);
+    munmap(queryFile2.data, queryFile2.fileSize + 1);
     munmap(targetDiffIdxList.data, targetDiffIdxList.fileSize + 1);
     munmap(targetInfoList.data, targetInfoList.fileSize + 1);
 }
@@ -308,6 +335,75 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer & kmerBuffer
                     queryList[i].queryId = (int) i;
                     queryList[i].name = string(seq->name.s);
                     queryList[i].kmerCnt = (int) kmerCnt;
+#pragma omp atomic
+                    processedSeqCnt ++;
+                } else{
+#pragma omp atomic
+                    kmerBuffer.startIndexOfReserve -= kmerCnt;
+                    hasOverflow = true;
+                }
+                kseq_destroy(seq);
+                kseq_destroy(seq2);
+            }
+        }
+    }
+}
+
+void Classifier::fillQueryKmerBufferParallel_paired2(QueryKmerBuffer & kmerBuffer,
+                                                    MmapedData<char> & seqFile1,
+                                                    MmapedData<char> & seqFile2,
+                                                    vector<Sequence> & seqs,
+                                                    vector<Sequence> & seqs2,
+                                                    bool * checker,
+                                                    size_t & processedSeqCnt,
+                                                    Query * queryList,
+                                                    size_t numOfSeq,
+                                                    const LocalParameters & par) {
+    bool hasOverflow = false;
+
+#pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile1, seqFile2, seqs, seqs2, cout, queryList, numOfSeq)
+    {
+        SeqIterator seqIterator;
+        SeqIterator seqIterator2;
+        size_t posToWrite;
+#pragma omp for schedule(dynamic, 1)
+        for (size_t i = 0; i < numOfSeq; i++) {
+            if(checker[i] == false && !hasOverflow) {
+                // Read 1
+                kseq_buffer_t buffer(const_cast<char *>(&seqFile1.data[seqs[i].start]), seqs[i].length);
+                kseq_t *seq = kseq_init(&buffer);
+                kseq_read(seq);
+                //size_t kmerCnt = SeqIterator::kmerNumOfSixFrameTranslation(seq->seq.s);
+                size_t kmerCnt = getQueryKmerNumber((int) strlen(seq->seq.s));
+
+                // Read 2
+                kseq_buffer_t buffer2(const_cast<char *>(&seqFile2.data[seqs2[i].start]), seqs2[i].length);
+                kseq_t *seq2 = kseq_init(&buffer2);
+                kseq_read(seq2);
+                size_t kmerCnt2 = getQueryKmerNumber((int) strlen(seq2->seq.s));
+
+                posToWrite = kmerBuffer.reserveMemory(kmerCnt);
+                if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
+                    checker[i] = true;
+                    // Read 1
+                    seqIterator.sixFrameTranslation(seq->seq.s);
+                    seqIterator.fillQueryKmerBuffer(seq->seq.s, kmerBuffer, posToWrite, (int) i);
+
+                    // Read 2
+                    seqIterator2.sixFrameTranslation(seq2->seq.s);
+                    seqIterator2.fillQueryKmerBuffer(seq2->seq.s, kmerBuffer, posToWrite,(int) i + numOfSeq);
+
+                    // Query Info for Read 1
+                    queryList[i].queryLength = getMaxCoveredLength((int) strlen(seq->seq.s));
+                    queryList[i].queryId = (int) i;
+                    queryList[i].name = string(seq->name.s);
+                    queryList[i].kmerCnt = (int) kmerCnt;
+
+                    // Query Info for Read 2
+                    queryList[i + numOfSeq].queryLength = getMaxCoveredLength((int) strlen(seq2->seq.s));
+                    queryList[i + numOfSeq].queryId = (int) i + numOfSeq;
+                    queryList[i + numOfSeq].name = string(seq2->name.s);
+                    queryList[i + numOfSeq].kmerCnt = (int) kmerCnt2;
 #pragma omp atomic
                     processedSeqCnt ++;
                 } else{
@@ -1202,10 +1298,76 @@ float Classifier::scoreTaxon(const vector<Match> & matches, size_t begin, size_t
 
     // Score
     int coveredLength = coveredPosCnt * 3;
-    if (coveredLength >= queryLength - 6) coveredLength = queryLength - 6;
+    if (coveredLength >= queryLength - 3) coveredLength = queryLength - 3;
     return ((float)coveredLength - hammingSum) / (float)queryLength;
 }
 
+void Classifier::combinePairedEndClassifications(Query * queryList,
+                                                 Query * combinedQueryList,
+                                                 size_t numOfSeq,
+                                                 size_t numOfSeq2,
+                                                 NcbiTaxonomy & ncbiTaxonomy){
+    TaxID taxid;
+    if(numOfSeq == numOfSeq2){
+        combinedQueryList = new Query[numOfSeq];
+        for(size_t i = 0; i < numOfSeq; i ++){
+            combineTwoClassifications(queryList[i], queryList[i+numOfSeq], combinedQueryList[i], ncbiTaxonomy);
+            combinedQueryList[i].classification = taxid;
+            combinedQueryList[i].queryLength = queryList[i].queryLength + queryList[i].queryLength;
+        }
+    } else if(numOfSeq > numOfSeq2){
+        combinedQueryList = new Query[numOfSeq];
+        for(size_t i = 0; i < numOfSeq2; i ++){
+            combineTwoClassifications(queryList[i], queryList[i+numOfSeq], combinedQueryList[i], ncbiTaxonomy);
+        }
+        for(size_t i = numOfSeq2; i < numOfSeq; i ++){
+            combinedQueryList[i] = queryList[i];
+        }
+    } else if(numOfSeq < numOfSeq2){
+        combinedQueryList = new Query[numOfSeq2];
+        for(size_t i = 0; i < numOfSeq; i ++){
+            combineTwoClassifications(queryList[i], queryList[i+numOfSeq], combinedQueryList[i], ncbiTaxonomy);
+        }
+        for(size_t i = numOfSeq; i < numOfSeq2; i ++){
+            combinedQueryList[i] = queryList[numOfSeq + i];
+        }
+    }
+}
+
+void Classifier::combineTwoClassifications(Query & r1, Query & r2, Query & pair, NcbiTaxonomy & ncbiTaxonomy) {
+    pair.queryId = r1.queryId;
+    pair.queryLength = r1.queryLength + r2.queryLength;
+    pair.name = r1.name;
+    pair.isClassified = r1.isClassified || r2.isClassified;
+    pair.score = (r1.score + r2.score) / 2.0f;
+
+    // Match Info
+    for(auto it = r2.taxCnt.begin(); it != r2.taxCnt.end(); it ++){
+        r1.taxCnt[it->first] += it -> second;
+    }
+    pair.taxCnt = r1.taxCnt;
+
+    // Unclassified
+    if(!r1.isClassified && !r2.isClassified) {
+        pair.classification = 0;
+        return;
+    }
+
+    // Identical
+    if(r1.classification == r2.classification){
+        pair.classification = r1.classification;
+        return;
+    }
+
+    // Different
+    if(ncbiTaxonomy.IsAncestor(r1.classification, r2.classification)){ // r1's taxon is ancestor
+        pair.classification = r2.classification;
+    } else if (ncbiTaxonomy.IsAncestor(r2.classification, r1.classification)){// r2's taxon is ancestor
+        pair.classification = r1.classification;
+    } else { // Different branch
+        pair.classification = ncbiTaxonomy.LCA(r2.classification, r1.classification);
+    }
+}
 int Classifier::getNumOfSplits() const { return this->numOfSplit; }
 
 bool Classifier::compareForLinearSearch(const QueryKmer & a, const QueryKmer & b){

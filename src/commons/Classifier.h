@@ -215,6 +215,17 @@ private:
                                             size_t numOfSeq,
                                             const LocalParameters & par);
 
+    void fillQueryKmerBufferParallel_paired2(QueryKmerBuffer & kmerBuffer,
+                                            MmapedData<char> & seqFile1,
+                                            MmapedData<char> & seqFile2,
+                                            vector<Sequence> & seqs,
+                                            vector<Sequence> & seqs2,
+                                            bool * checker,
+                                            size_t & processedSeqCnt,
+                                            Query * queryList,
+                                            size_t numOfSeq,
+                                            const LocalParameters & par);
+
     static int getMaxCoveredLength(int queryLength);
     static int getQueryKmerNumber(int queryLength);
 
@@ -272,16 +283,8 @@ private:
                                           vector<float> & scoreOfEachGenus,
                                           int queryLength);
 
-    static void constructMatchCombination2(vector<Match> & filteredMatches,
-                                          vector<vector<Match>> & matchesForEachGenus,
-                                          vector<float> & scoreOfEachGenus,
-                                          size_t queryLength);
-
     static bool sortMatchesByPos(const Match & a, const Match & b);
 
-    static TaxID classifyFurther(const std::vector<Match> & matches,
-                                 NcbiTaxonomy & taxonomy,
-                                 float maxKmerCnt);
 
     static TaxID classifyFurther2(const std::vector<Match> & matches,
                                  NcbiTaxonomy & taxonomy,
@@ -297,6 +300,13 @@ private:
                      size_t end,
                      int queryLength);
 
+    void combinePairedEndClassifications(Query * queryList,
+                                         Query * combinedQueryList,
+                                         size_t numOfSeq,
+                                         size_t numOfSeq2,
+                                         NcbiTaxonomy & taxonomy);
+
+    void combineTwoClassifications(Query & r1, Query & r2, Query & pair, NcbiTaxonomy & taxonomy);
     // Write report
     void writeReadClassification(Query * queryList, int queryNum , ofstream & readClassificationFile);
 
