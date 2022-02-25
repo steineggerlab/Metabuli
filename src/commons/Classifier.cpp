@@ -1139,13 +1139,27 @@ TaxID Classifier::classifyFurther3(const vector<Match> & matches,
     }
 
     // Get the best species
-    pair<TaxID, float> bestSpecies = *max_element(speciesScores.begin(), speciesScores.end(),
-                                   [] (const pair<TaxID, float> & p1, const pair<TaxID, float> & p2 ){return p1.second < p2.second;});
-    if(bestSpecies.second > 0.9){
-        return bestSpecies.first;
+    vector<TaxID> ties;
+    float bestScore = 0.f;
+    for(auto sp = speciesScores.begin(); sp != speciesScores.end(); sp ++){
+        if(sp->second > bestScore){
+            ties.clear();
+            ties.push_back(sp->first);
+            bestScore = sp->second;
+        } else if(sp->second == bestScore){
+            ties.push_back(sp->first);
+        }
     }
 
-    return matches[0].genusTaxID;
+    if(ties.size() > 1){
+        return matches[0].genusTaxID;
+    } else {
+        return ties[0];
+    }
+//
+//    if(bestSpecies.second > 0.9){
+//        return bestSpecies.first;
+//    }
 }
 
 float Classifier::scoreTaxon(const vector<Match> & matches, size_t begin, size_t end, int queryLength) {
