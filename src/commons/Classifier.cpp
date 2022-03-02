@@ -788,7 +788,13 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     float maxScore;
     int res;
     if(par.seqMode == 2){
-        res = getMatchesOfTheBestGenus_paired(matchesForLCA, matchList, end, offset, queryLength,queryList[currentQuery].queryLength2, maxScore);
+        res = getMatchesOfTheBestGenus_paired(matchesForLCA,
+                                              matchList,
+                                              end,
+                                              offset,
+                                              queryList[currentQuery].queryLength,
+                                              queryList[currentQuery].queryLength2,
+                                              maxScore);
     } else {
         res = getMatchesOfTheBestGenus(matchesForLCA, matchList, end, offset, queryLength, maxScore);
     }
@@ -1331,8 +1337,8 @@ void Classifier::constructMatchCombination_paired(vector<Match> & filteredMatche
     if(coveredPosCnt_read1 + coveredPosCnt_read2 < 2) return;
 
     // Score current genus
-    int coveredLength_read1 = coveredLength_read1 * 3;
-    int coveredLength_read2 = coveredLength_read1 * 3;
+    int coveredLength_read1 = coveredPosCnt_read1 * 3;
+    int coveredLength_read2 = coveredPosCnt_read2 * 3;
     if (coveredLength_read1 > readLength1) coveredLength_read1 = readLength1;
     if (coveredLength_read2 > readLength2) coveredLength_read2 = readLength2;
     float score = ((float)(coveredLength_read1 + coveredLength_read2) - hammingSum) / (float)(readLength1 + readLength2);
