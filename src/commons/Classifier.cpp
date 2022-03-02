@@ -786,7 +786,12 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     vector<Match> matchesForLCA;
     matchesForLCA.reserve(end-offset+1);
     float maxScore;
-    int res = getMatchesOfTheBestGenus(matchesForLCA, matchList, end, offset, queryLength, maxScore);
+    int res;
+    if(par.seqMode == 2){
+        res = getMatchesOfTheBestGenus_paired(matchesForLCA, matchList, end, offset, queryLength,queryList[currentQuery].queryLength2, maxScore);
+    } else {
+        res = getMatchesOfTheBestGenus(matchesForLCA, matchList, end, offset, queryLength, maxScore);
+    }
 
     if(PRINT) {
         cout<<"# "<<currentQuery<<" filtered"<<endl;
@@ -859,10 +864,17 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     }
 
     // Classify in species or lower level for queries that have close matches in reference DB.
-    TaxID selectedLCA = classifyFurther_paired(matchesForLCA,
-                                        ncbiTaxonomy, queryLength, queryList[currentQuery].queryLength2,
-                                        (float) queryList[currentQuery].kmerCnt / 6);
 
+    TaxID selectedLCA;
+    if(par.seqMode == 2) {
+        selectedLCA = classifyFurther_paired(matchesForLCA,
+                                             ncbiTaxonomy, queryLength, queryList[currentQuery].queryLength2,
+                                             (float) queryList[currentQuery].kmerCnt / 6);
+    } else {
+        selectedLCA = classifyFurther3(matchesForLCA,
+                                             ncbiTaxonomy, queryLength,
+                                             (float) queryList[currentQuery].kmerCnt / 6);
+    }
     // TODO optimize strain specific classification criteria
     // Strain classification only for high coverage with LCA of species level
     int numOfstrains = 0;
@@ -921,7 +933,91 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     return selectedLCA;
 }
 
+int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
+                                         size_t offset, int readLength1, int readLength2, float & bestScore){
+    int conCnt;
+    uint32_t hammingSum;
+    float hammingMean;
+    TaxID currentGenus;
+    TaxID currentSpecies;
 
+    vector<Match> filteredMatches;
+    vector<vector<Match>> matchesForEachGenus;
+    vector<bool> conservedWithinGenus;
+    vector<float> scoreOfEachGenus;
+    size_t i = offset;
+    size_t offsetIdx;
+    bool newOffset;
+    while(i < end + 1) {
+        currentGenus = matchList[i].genusTaxID;
+        // For current genus
+        while (currentGenus == matchList[i].genusTaxID && (i < end + 1)) {
+            currentSpecies = matchList[i].speciesTaxID;
+            // For current species
+            // Filter un-consecutive matches (probably random matches)
+            while(currentSpecies == matchList[i].speciesTaxID && (i < end + 1)){
+                offsetIdx = i;
+                i++;
+                newOffset = true;
+                hammingSum = 0;
+                hammingMean = matchList[i-1].hamming;
+                while((i < end + 1) && currentSpecies == matchList[i].speciesTaxID &&
+                      matchList[i].position <= matchList[i-1].position + 3){
+                    if(newOffset && ((float)matchList[i].hamming) <= hammingMean + 3){
+                        newOffset = false;
+                        hammingSum = matchList[offsetIdx].hamming;
+                        filteredMatches.push_back(matchList[offsetIdx]);
+                    }
+                    else if(!newOffset && ((float)matchList[i].hamming) <= hammingMean + 3) {
+                        filteredMatches.push_back(matchList[i]);
+                        hammingSum += matchList[i].hamming;
+                        hammingMean = float(hammingSum) / float(filteredMatches.size());
+                    }
+                    i++;
+                }
+            }
+        }
+
+        // Construct a match combination using filtered matches of current genus
+        // so that it can best cover the query, and score the combination
+        if(!filteredMatches.empty()) {
+            constructMatchCombination_paired(filteredMatches, matchesForEachGenus, scoreOfEachGenus, readLength1, readLength2);
+        }
+        filteredMatches.clear();
+    }
+
+    // If there are no meaningful genus
+    if(scoreOfEachGenus.empty()){
+        bestScore = 0;
+        return 3;
+    }
+
+    float maxScore = *max_element(scoreOfEachGenus.begin(), scoreOfEachGenus.end());
+    if(maxScore < 0.25)
+        return 3;
+    vector<size_t> maxIdx;
+    for(size_t g = 0; g < scoreOfEachGenus.size(); g++){
+        if(scoreOfEachGenus[g] > maxScore * 0.9f){
+            maxIdx.push_back(g);
+        }
+    }
+    bestScore = maxScore;
+
+    for(size_t g = 0; g < maxIdx.size(); g++){
+        matchesForMajorityLCA.insert(matchesForMajorityLCA.end(), matchesForEachGenus[maxIdx[g]].begin(),
+                                     matchesForEachGenus[maxIdx[g]].end());
+    }
+
+    if(maxIdx.size() > 1){
+        return 2;
+    }
+    return 1;
+
+    //Three cases
+    //1. one genus
+    //2. more than one genus
+    //3. no genus
+}
 int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
                                          size_t offset, int queryLength, float & bestScore){
     int conCnt;
@@ -1116,6 +1212,135 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches,
 
     if(PRINT) {
         cout << filteredMatches[0].genusTaxID << " " << coveredLength << " " << hammingSum << " " <<((float)coveredLength - hammingSum) / (float)queryLength <<
+             " "<<matches.size()
+             << endl;
+    }
+}
+
+void Classifier::constructMatchCombination_paired(vector<Match> & filteredMatches,
+                                           vector<vector<Match>> & matchesForEachGenus,
+                                           vector<float> & scoreOfEachGenus,
+                                           int readLength1,
+                                           int readLength2) {
+    // Do not allow overlaps between the same species
+    vector<Match> matches;
+    size_t walker = 0;
+    size_t numOfFitMat = filteredMatches.size();
+    Match & currentMatch = filteredMatches[0];
+    while(walker < numOfFitMat){
+        TaxID currentSpecies = filteredMatches[walker].speciesTaxID;
+        int currentPosition = filteredMatches[walker].position / 3;
+        currentMatch = filteredMatches[walker];
+        // Look through overlaps within a species
+        while (filteredMatches[walker].speciesTaxID ==  currentSpecies
+               && filteredMatches[walker].position / 3 == currentPosition
+               && walker < numOfFitMat) {
+            // Take the match with lower hamming distance
+            if(filteredMatches[walker].hamming < currentMatch.hamming) {
+                currentMatch = filteredMatches[walker];
+            }
+                // Overlapping with same hamming distance but different subspecies taxonomy ID -> species level
+            else if(currentMatch.taxID != filteredMatches[walker].taxID &&
+                    currentMatch.hamming == filteredMatches[walker].hamming){
+                currentMatch.taxID = currentMatch.speciesTaxID;
+            }
+            walker ++;
+        }
+        matches.push_back(currentMatch);
+    }
+
+    // Calculate Hamming distance & covered length
+    int coveredPosCnt_read1 = 0;
+    int coveredPosCnt_read2 = 0;
+    uint16_t currHammings;
+    int aminoAcidNum_total = ((int) readLength1 / 3) + ((int) readLength2 / 3);
+    int aminoAcidNum_read1 = ((int) readLength1 / 3);
+    int currPos;
+    size_t matchNum = matches.size();
+    size_t f = 0;
+
+//    // Get the smallest hamming distance at each position of query
+//    auto * hammingsAtEachPos = new signed char[aminoAcidNum + 1];
+//    memset(hammingsAtEachPos, 10, (aminoAcidNum + 1));
+//    while(f < matchNum){
+//        currPos = matches[f].position / 3;
+//        currHammings = matches[f].rightEndHamming;
+//        if(GET_2_BITS(currHammings) < hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
+//        if(GET_2_BITS(currHammings>>2) < hammingsAtEachPos[currPos + 1]) hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings>>2);
+//        if(GET_2_BITS(currHammings>>4) < hammingsAtEachPos[currPos + 2]) hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings>>4);
+//        if(GET_2_BITS(currHammings>>6) < hammingsAtEachPos[currPos + 3]) hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings>>6);
+//        if(GET_2_BITS(currHammings>>8) < hammingsAtEachPos[currPos + 4]) hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings>>8);
+//        if(GET_2_BITS(currHammings>>10) < hammingsAtEachPos[currPos + 5]) hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings>>10);
+//        if(GET_2_BITS(currHammings>>12) < hammingsAtEachPos[currPos + 6]) hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings>>12);
+//        if(GET_2_BITS(currHammings>>14) < hammingsAtEachPos[currPos + 7]) hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings>>14);
+//        f++;
+//    }
+//
+//    // Sum up hamming distances and count the number of position covered by the matches.
+//    float hammingSum = 0;
+//    for(int h = 0; h < aminoAcidNum; h++){
+//        if(hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
+//            coveredPosCnt++;
+//        }else if(hammingsAtEachPos[h] != 10){ // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
+//            hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
+//            coveredPosCnt ++;
+//        }
+//    }
+
+    // Get the largest hamming distance at each position of query
+    auto * hammingsAtEachPos = new signed char[aminoAcidNum_total + 1];
+    memset(hammingsAtEachPos, -1, (aminoAcidNum_total + 1));
+    while(f < matchNum){
+        currPos = matches[f].position / 3;
+        currHammings = matches[f].rightEndHamming;
+        if(GET_2_BITS(currHammings) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
+        if(GET_2_BITS(currHammings>>2) > hammingsAtEachPos[currPos + 1]) hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings>>2);
+        if(GET_2_BITS(currHammings>>4) > hammingsAtEachPos[currPos + 2]) hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings>>4);
+        if(GET_2_BITS(currHammings>>6) > hammingsAtEachPos[currPos + 3]) hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings>>6);
+        if(GET_2_BITS(currHammings>>8) > hammingsAtEachPos[currPos + 4]) hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings>>8);
+        if(GET_2_BITS(currHammings>>10) > hammingsAtEachPos[currPos + 5]) hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings>>10);
+        if(GET_2_BITS(currHammings>>12) > hammingsAtEachPos[currPos + 6]) hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings>>12);
+        if(GET_2_BITS(currHammings>>14) > hammingsAtEachPos[currPos + 7]) hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings>>14);
+        f++;
+    }
+
+    // Sum up hamming distances and count the number of position covered by the matches.
+    float hammingSum = 0;
+    for(int h = 0; h < aminoAcidNum_total; h++){
+        if(h <= aminoAcidNum_read1) {
+            if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
+                coveredPosCnt_read1 ++;
+            } else if (hammingsAtEachPos[h] != -1) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
+                hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
+                coveredPosCnt_read1 ++;
+            }
+        }
+            // Read 2
+        else {
+            if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
+                coveredPosCnt_read2++;
+            } else if (hammingsAtEachPos[h] != -1) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
+                hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
+                coveredPosCnt_read2 ++;
+            }
+        }
+    }
+    delete[] hammingsAtEachPos;
+
+    // Ignore too few matches
+    if(coveredPosCnt_read1 + coveredPosCnt_read2 < 2) return;
+
+    // Score current genus
+    int coveredLength_read1 = coveredLength_read1 * 3;
+    int coveredLength_read2 = coveredLength_read1 * 3;
+    if (coveredLength_read1 > readLength1) coveredLength_read1 = readLength1;
+    if (coveredLength_read2 > readLength2) coveredLength_read2 = readLength2;
+    float score = ((float)(coveredLength_read1 + coveredLength_read2) - hammingSum) / (float)(readLength1 + readLength2);
+    scoreOfEachGenus.push_back(score);
+    matchesForEachGenus.push_back(matches);
+
+    if(PRINT) {
+        cout << filteredMatches[0].genusTaxID << " " << coveredLength_read1 + coveredLength_read2 << " " << hammingSum << " " <<score<<
              " "<<matches.size()
              << endl;
     }

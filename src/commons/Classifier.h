@@ -278,10 +278,18 @@ private:
     static int getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
                                  size_t offset, int queryLength, float & bestScore);
 
+    static int getMatchesOfTheBestGenus_paired(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
+                                        size_t offset, int readLength1, int readLength2, float & bestScore);
+
     static void constructMatchCombination(vector<Match> & filteredMatches,
                                           vector<vector<Match>> & matchesForEachGenus,
                                           vector<float> & scoreOfEachGenus,
                                           int queryLength);
+
+    static void constructMatchCombination_paired(vector<Match> & filteredMatches,
+                                          vector<vector<Match>> & matchesForEachGenus,
+                                          vector<float> & scoreOfEachGenus,
+                                          int readLength1, int readLength2);
 
     static bool sortMatchesByPos(const Match & a, const Match & b);
 
