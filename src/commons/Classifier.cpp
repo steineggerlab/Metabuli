@@ -169,17 +169,14 @@ void Classifier::startClassify(const char * queryFileName,
     time_t beforeAnalyze = time(nullptr);
     analyseResultParallel(taxonomy, matchBuffer, (int) numOfSeq, queryList, par);
     cout<<"Time spent for analyzing: "<<double(time(nullptr)-beforeAnalyze)<<endl;
+
+
+    // Write report files
     ofstream readClassificationFile;
     readClassificationFile.open(par.filenames[3]+"/"+par.filenames[4]+"_ReadClassification.tsv");
     writeReadClassification(queryList,(int) numOfSeq,readClassificationFile);
     readClassificationFile.close();
     writeReportFile(par.filenames[3]+"/"+par.filenames[4]+"_CompositionReport.tsv", taxonomy, numOfSeq);
-
-
-
-
-    // Write a composition report file.
-
 
     // Below is for developing
     vector<int> wrongClassifications;
@@ -201,8 +198,8 @@ void Classifier::startClassify(const char * queryFileName,
             kseq_read(seq2);
             wr<<">"<<seq->name.s<<endl;
             wr<<seq->seq.s<<endl;
-            wr<<">"<<seq2->name.s<<endl;
-            wr<<seq2->seq.s<<endl;
+            wr2<<">"<<seq2->name.s<<endl;
+            wr2<<seq2->seq.s<<endl;
             kseq_destroy(seq);
             kseq_destroy(seq2);
     }
