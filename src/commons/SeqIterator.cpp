@@ -131,14 +131,14 @@ void SeqIterator::sixFrameTranslation(const char * seq){
 
 
 void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID, uint32_t offset) {
-    uint32_t forOrRev;
+    int forOrRev;
     uint64_t tempKmer = 0;
     uint32_t seqLen = strlen(seq);
     int checkN;
     for(uint32_t frame = 0 ; frame < 6 ; frame++){
         uint32_t len = aaFrames[frame].size();
         forOrRev = frame / 3;
-        for (uint32_t kmerCnt = 0 ; kmerCnt < len - kmerLength + 1 ; kmerCnt++) {
+        for (int kmerCnt = 0 ; kmerCnt < len - kmerLength + 1 ; kmerCnt++) {
             ///Amino acid 2 number
             tempKmer = 0;
             checkN = 0;

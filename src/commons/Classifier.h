@@ -295,10 +295,23 @@ private:
                                   int queryLength,
                                   float maxKmerCnt);
 
+    static TaxID classifyFurther_paired(const std::vector<Match> & matches,
+                                  NcbiTaxonomy & taxonomy,
+                                  int read1Length,
+                                  int read2Length,
+                                  float maxKmerCnt,
+    );
+
     static float scoreTaxon(const vector<Match> & matches,
                      size_t begin,
                      size_t end,
                      int queryLength);
+
+    static float scoreTaxon2(const vector<Match> & matches,
+                            size_t begin,
+                            size_t end,
+                            int queryLength,
+                            int queryLength2);
 
     void combinePairedEndClassifications(Query * queryList,
                                          Query * combinedQueryList,
