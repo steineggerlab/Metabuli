@@ -109,13 +109,49 @@ void SeqIterator::sixFrameTranslation(const char * seq){
     int len = strlen(seq);
     size_t end = len - 1;
     // Translate DNA to AA.
-    for(int i = 0; i < len - 4; i = i+3 ){
-        aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[i    ]])][nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])]);
-        aaFrames[1].push_back(nuc2aa[nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])][nuc2int(atcg[seq[i + 3]])]);
-        aaFrames[2].push_back(nuc2aa[nuc2int(atcg[seq[i + 2]])][nuc2int(atcg[seq[i + 3]])][nuc2int(atcg[seq[i + 4]])]);
-        aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 0)]]])][nuc2int(iRCT[atcg[seq[end - (i + 1)]]])][nuc2int(iRCT[atcg[seq[end - (i + 2)]]])]);
-        aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 1)]]])][nuc2int(iRCT[atcg[seq[end - (i + 2)]]])][nuc2int(iRCT[atcg[seq[end - (i + 3)]]])]);
-        aaFrames[5].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 2)]]])][nuc2int(iRCT[atcg[seq[end - (i + 3)]]])][nuc2int(iRCT[atcg[seq[end - (i + 4)]]])]);
+    if(len % 3 == 2) {
+        for (int i = 0; i < len - 4; i = i + 3) {
+            aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[i   ]])][nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])]);
+            aaFrames[1].push_back(nuc2aa[nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])][nuc2int(atcg[seq[i + 3]])]);
+            aaFrames[2].push_back(nuc2aa[nuc2int(atcg[seq[i + 2]])][nuc2int(atcg[seq[i + 3]])][nuc2int(atcg[seq[i + 4]])]);
+            aaFrames[3].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 0)]]])][nuc2int(iRCT[atcg[seq[end - (i + 1)]]])][nuc2int(iRCT[atcg[seq[end - (i + 2)]]])]);
+            aaFrames[4].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 1)]]])][nuc2int(iRCT[atcg[seq[end - (i + 2)]]])][nuc2int(iRCT[atcg[seq[end - (i + 3)]]])]);
+            aaFrames[5].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 2)]]])][nuc2int(iRCT[atcg[seq[end - (i + 3)]]])][nuc2int(iRCT[atcg[seq[end - (i + 4)]]])]);
+        }
+    } else if(len % 3 == 1){
+        for (int i = 0; i < len - 4; i = i + 3) {
+            aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[i]])][nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])]);
+            aaFrames[1].push_back(
+                    nuc2aa[nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])][nuc2int(atcg[seq[i + 3]])]);
+            aaFrames[2].push_back(
+                    nuc2aa[nuc2int(atcg[seq[i + 2]])][nuc2int(atcg[seq[i + 3]])][nuc2int(atcg[seq[i + 4]])]);
+            aaFrames[3].push_back(
+                    nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 0) - 3]]])][nuc2int(iRCT[atcg[seq[end - (i + 1) - 3]]])][
+                            nuc2int(iRCT[atcg[seq[end - (i + 2) - 3]]])]);
+            aaFrames[4].push_back(
+                    nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 1) - 3]]])][nuc2int(iRCT[atcg[seq[end - (i + 2) - 3]]])][
+                            nuc2int(iRCT[atcg[seq[end - (i + 3) - 3]]])]);
+            aaFrames[5].push_back(
+                    nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 2)]]])][nuc2int(iRCT[atcg[seq[end - (i + 3)]]])][
+                            nuc2int(iRCT[atcg[seq[end - (i + 4)]]])]);
+        }
+    } else {
+        for (int i = 0; i < len - 4; i = i + 3) {
+            aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[i]])][nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])]);
+            aaFrames[1].push_back(
+                    nuc2aa[nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])][nuc2int(atcg[seq[i + 3]])]);
+            aaFrames[2].push_back(
+                    nuc2aa[nuc2int(atcg[seq[i + 2]])][nuc2int(atcg[seq[i + 3]])][nuc2int(atcg[seq[i + 4]])]);
+            aaFrames[3].push_back(
+                    nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 0) - 3]]])][nuc2int(iRCT[atcg[seq[end - (i + 1) - 3]]])][
+                            nuc2int(iRCT[atcg[seq[end - (i + 2) - 3]]])]);
+            aaFrames[4].push_back(
+                    nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 1)]]])][nuc2int(iRCT[atcg[seq[end - (i + 2)]]])][
+                            nuc2int(iRCT[atcg[seq[end - (i + 3)]]])]);
+            aaFrames[5].push_back(
+                    nuc2aa[nuc2int(iRCT[atcg[seq[end - (i + 2)]]])][nuc2int(iRCT[atcg[seq[end - (i + 3)]]])][
+                            nuc2int(iRCT[atcg[seq[end - (i + 4)]]])]);
+        }
     }
 //    if(len % 3 == 0){
 //        aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[end - 2]])][nuc2int(atcg[seq[end - 1]])][nuc2int(atcg[seq[end]])]);
