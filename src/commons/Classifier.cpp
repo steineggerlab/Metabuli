@@ -334,76 +334,6 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer & kmerBuffer
     }
 }
 
-void Classifier::fillQueryKmerBufferParallel_paired2(QueryKmerBuffer & kmerBuffer,
-                                                    MmapedData<char> & seqFile1,
-                                                    MmapedData<char> & seqFile2,
-                                                    vector<Sequence> & seqs,
-                                                    vector<Sequence> & seqs2,
-                                                    bool * checker,
-                                                    size_t & processedSeqCnt,
-                                                    Query * queryList,
-                                                    size_t numOfSeq,
-                                                    const LocalParameters & par) {
-    bool hasOverflow = false;
-
-#pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile1, seqFile2, seqs, seqs2, cout, queryList, numOfSeq)
-    {
-        SeqIterator seqIterator;
-        SeqIterator seqIterator2;
-        size_t posToWrite;
-#pragma omp for schedule(dynamic, 1)
-        for (size_t i = 0; i < numOfSeq; i++) {
-            if(checker[i] == false && !hasOverflow) {
-                // Read 1
-                kseq_buffer_t buffer(const_cast<char *>(&seqFile1.data[seqs[i].start]), seqs[i].length);
-                kseq_t *seq = kseq_init(&buffer);
-                kseq_read(seq);
-                //size_t kmerCnt = SeqIterator::kmerNumOfSixFrameTranslation(seq->seq.s);
-                size_t kmerCnt = getQueryKmerNumber((int) strlen(seq->seq.s));
-
-                // Read 2
-                kseq_buffer_t buffer2(const_cast<char *>(&seqFile2.data[seqs2[i].start]), seqs2[i].length);
-                kseq_t *seq2 = kseq_init(&buffer2);
-                kseq_read(seq2);
-                size_t kmerCnt2 = getQueryKmerNumber((int) strlen(seq2->seq.s));
-
-                posToWrite = kmerBuffer.reserveMemory(kmerCnt + kmerCnt2);
-                if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
-                    checker[i] = true;
-                    // Read 1
-                    seqIterator.sixFrameTranslation(seq->seq.s);
-                    seqIterator.fillQueryKmerBuffer(seq->seq.s, kmerBuffer, posToWrite, (int) i);
-
-                    // Read 2
-                    seqIterator2.sixFrameTranslation(seq2->seq.s);
-                    seqIterator2.fillQueryKmerBuffer(seq2->seq.s, kmerBuffer, posToWrite,(int) i + numOfSeq);
-
-                    // Query Info for Read 1
-                    queryList[i].queryLength = getMaxCoveredLength((int) strlen(seq->seq.s));
-                    queryList[i].queryId = (int) i;
-                    queryList[i].name = string(seq->name.s);
-                    queryList[i].kmerCnt = (int) kmerCnt;
-
-                    // Query Info for Read 2
-                    queryList[i + numOfSeq].queryLength = getMaxCoveredLength((int) strlen(seq2->seq.s));
-                    queryList[i + numOfSeq].queryId = (int) i + numOfSeq;
-                    queryList[i + numOfSeq].name = string(seq2->name.s);
-                    queryList[i + numOfSeq].kmerCnt = (int) kmerCnt2;
-#pragma omp atomic
-                    processedSeqCnt ++;
-                } else{
-#pragma omp atomic
-                    kmerBuffer.startIndexOfReserve -= (kmerCnt + kmerCnt2);
-                    hasOverflow = true;
-                }
-                kseq_destroy(seq);
-                kseq_destroy(seq2);
-            }
-        }
-    }
-}
-
-
 void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryKmerCnt, const MmapedData<uint16_t> & targetDiffIdxList,
                                       const MmapedData<TargetKmerInfo> & targetInfoList, const MmapedData<DiffIdxSplit> & diffIdxSplits,
                                       Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & spTaxIdList, const vector<TaxID> & genusTaxIdList,
@@ -1613,8 +1543,10 @@ float Classifier::scoreTaxon2(const vector<Match> & matches, size_t begin, size_
     hammingSum = 0;
     int coveredLength_read1 = coveredPosCnt_read1 * 3;
     int coveredLength_read2 = coveredPosCnt_read2 * 3;
-    if (coveredLength_read1 >= queryLength - 3) coveredLength_read1 = queryLength - 3;
-    if (coveredLength_read2 >= queryLength2 - 3) coveredLength_read2 = queryLength2 - 3;
+    if (coveredLength_read1 >= queryLength) coveredLength_read1 = queryLength;
+    if (coveredLength_read2 >= queryLength2) coveredLength_read2 = queryLength2;
+//    if (coveredLength_read1 >= queryLength - 3) coveredLength_read1 = queryLength - 3;
+//    if (coveredLength_read2 >= queryLength2 - 3) coveredLength_read2 = queryLength2 - 3;
 
     return ((float)(coveredLength_read1 + coveredLength_read2) - hammingSum) / (float)(queryLength + queryLength2);
 }

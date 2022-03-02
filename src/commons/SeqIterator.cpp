@@ -767,37 +767,37 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
             case 2: //N
                 cout << "N";
                 if (dnaInfo == 0) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else if (dnaInfo == 1) {
                     dna24mer[7 - i] = "AAC";
                 } else if (dnaInfo == 2) {
                     dna24mer[7 - i] = "AAT";
                 } else {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 }
                 break;
             case 3: //D
                 cout << "D";
                 if (dnaInfo == 0) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else if (dnaInfo == 1) {
                     dna24mer[7 - i] = "GAC";
                 } else if (dnaInfo == 2) {
                     dna24mer[7 - i] = "GAT";
                 } else {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 }
                 break;
             case 4: //C
                 cout << "C";
                 if (dnaInfo == 0) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else if (dnaInfo == 1) {
                     dna24mer[7 - i] = "TGC";
                 } else if (dnaInfo == 2) {
                     dna24mer[7 - i] = "TGT";
                 } else {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 }
                 break;
             case 5: // Q
@@ -805,9 +805,9 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "CAA";
                 } else if (dnaInfo == 1) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else if (dnaInfo == 2) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else {
                     dna24mer[7 - i] = "CAG";
                 }
@@ -817,9 +817,9 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "GAA";
                 } else if (dnaInfo == 1) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else if (dnaInfo == 2) {
-                    cout << "FUCK" ;
+                    cout << "dddddd" ;
                 } else {
                     dna24mer[7 - i] = "GAG";
                 }
@@ -839,13 +839,13 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 case 8: //H
                 cout << "H";
                 if (dnaInfo == 0) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else if (dnaInfo == 1) {
                     dna24mer[7 - i] = "CAC";
                 } else if (dnaInfo == 2) {
                     dna24mer[7 - i] = "CAT";
                 } else {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 }
                 break;
                 case 9: //I
@@ -857,7 +857,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 } else if (dnaInfo == 2) {
                     dna24mer[7 - i] = "ATT";
                 } else {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 }
                 break;
                 case 10: //L
@@ -881,9 +881,9 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "AAA";
                 } else if (dnaInfo == 1) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else if (dnaInfo == 2) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else {
                     dna24mer[7 - i] = "AAG";
                 }
@@ -891,11 +891,11 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 case 12: // M
                 cout << "M";
                 if (dnaInfo == 0) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else if (dnaInfo == 1) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else if (dnaInfo == 2) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else {
                     dna24mer[7 - i] = "ATG";
                 }
@@ -903,13 +903,13 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 case 13://F
                 cout << "F";
                 if (dnaInfo == 0) {
-                    cout << "FUCK" ;
+                    cout << "dddddd" ;
                 } else if (dnaInfo == 1) {
                     dna24mer[7 - i] = "TTC";
                 } else if (dnaInfo == 2) {
                     dna24mer[7 - i] = "TTT";
                 } else {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 }
                 break;
                 case 14: //P
@@ -935,9 +935,9 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 } else if (dnaInfo == 3) {
                     dna24mer[7 - i] = "TCG";
                 } else if (dnaInfo == 4) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else if (dnaInfo == 5) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else if (dnaInfo == 6) {
                     dna24mer[7 - i] = "AGT";
                 } else {
@@ -959,11 +959,11 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 case 17: //W
                 cout << "W";
                 if (dnaInfo == 0) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else if (dnaInfo == 1) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else if (dnaInfo == 2) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else {
                     dna24mer[7 - i] = "TGG";
                 }
@@ -971,13 +971,13 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 case 18: //Y
                 cout << "Y";
                 if (dnaInfo == 0) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else if (dnaInfo == 1) {
                     dna24mer[7 - i] = "TAC";
                 } else if (dnaInfo == 2) {
                     dna24mer[7 - i] = "TAT";
                 } else {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 }
                 break;
                 case 19: //V
@@ -997,13 +997,13 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "TAA";
                 } else if (dnaInfo == 1) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else if (dnaInfo == 2) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else if (dnaInfo == 3) {
                     dna24mer[7 - i] = "TAG";
                 } else if (dnaInfo == 4) {
-                    cout << "FUCK";
+                    cout << "dddddd";
                 } else {
                     dna24mer[7 - i] = "TGA";
                 }

@@ -215,17 +215,6 @@ private:
                                             size_t numOfSeq,
                                             const LocalParameters & par);
 
-    void fillQueryKmerBufferParallel_paired2(QueryKmerBuffer & kmerBuffer,
-                                            MmapedData<char> & seqFile1,
-                                            MmapedData<char> & seqFile2,
-                                            vector<Sequence> & seqs,
-                                            vector<Sequence> & seqs2,
-                                            bool * checker,
-                                            size_t & processedSeqCnt,
-                                            Query * queryList,
-                                            size_t numOfSeq,
-                                            const LocalParameters & par);
-
     static int getMaxCoveredLength(int queryLength);
     static int getQueryKmerNumber(int queryLength);
 
