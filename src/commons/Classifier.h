@@ -299,7 +299,7 @@ private:
                                   NcbiTaxonomy & taxonomy,
                                   int read1Length,
                                   int read2Length,
-                                  float maxKmerCnt,
+                                  float maxKmerCnt
     );
 
     static float scoreTaxon(const vector<Match> & matches,
