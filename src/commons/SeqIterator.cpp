@@ -169,7 +169,7 @@ void SeqIterator::sixFrameTranslation(const char * seq){
 void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID, uint32_t offset) {
     int forOrRev;
     uint64_t tempKmer = 0;
-    uint32_t seqLen = strlen(seq);
+    int seqLen = strlen(seq);
     int checkN;
     for(uint32_t frame = 0 ; frame < 6 ; frame++){
         uint32_t len = aaFrames[frame].size();
@@ -189,11 +189,17 @@ void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBu
             if(checkN == 1){
                 kmerBuffer.buffer[posToWrite] = {UINT64_MAX, 0, 0, frame};
             }else{
-                addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame);
+                addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame, seqLen);
                 if(forOrRev == 0) {
                     kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3) + offset, frame};
                 } else{
-                    kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, seqLen - ((frame%3) + (kmerCnt*3)) - 24 + offset , frame};
+                    if((seqLen % 3 == 1 && (frame == 3 || frame == 4)) || (seqLen % 3 == 0 && frame == 3)) {
+                        kmerBuffer.buffer[posToWrite] = {tempKmer, seqID,
+                                                         seqLen - ((frame % 3) + (kmerCnt * 3)) - 24 + offset - 3,
+                                                         frame};
+                    } else {
+                        kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, seqLen - ((frame%3) + (kmerCnt*3)) - 24 + offset , frame};
+                    }
                 }
             }
             posToWrite++;
@@ -201,17 +207,27 @@ void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBu
     }
 }
 
-void SeqIterator::addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int forOrRev, const int & kmerCnt, const int & frame){
+void SeqIterator::addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int forOrRev, const int & kmerCnt, const int & frame, int seqLen){
     int start = (frame % 3) + (kmerCnt * 3);
     kmer <<= 25;
-    size_t end = strlen(seq) - 1;
-    if(forOrRev == 0){
+    size_t end = seqLen - 1;
+    if(forOrRev == 0){ // Forward
         for( int i = 0; i < kmerLength * 3; i += 3) {
             kmer |= (nuc2num[nuc2int(atcg[seq[start + i]])][nuc2int(atcg[seq[start + i + 1]])][nuc2int(atcg[seq[start + i + 2]])] << i);
         }
-    } else{
-        for( int i = 0; i < kmerLength * 3; i += 3) {
-            kmer |= (nuc2num[nuc2int(iRCT[atcg[seq[end - (start + i)]]])][nuc2int(iRCT[atcg[seq[end - (start + i + 1)]]])][nuc2int(iRCT[atcg[seq[end - (start + i + 2)]]])] << i);
+    } else { // Reverse
+        if ((seqLen % 3 == 1 && (frame == 3 || frame == 4)) || (seqLen % 3 == 0 && frame == 3)) {
+            for (int i = 0; i < kmerLength * 3; i += 3) {
+                kmer |= (nuc2num[nuc2int(iRCT[atcg[seq[end - (start + i) - 3]]])][
+                        nuc2int(iRCT[atcg[seq[end - (start + i + 1) - 3]]])][
+                        nuc2int(iRCT[atcg[seq[end - (start + i + 2) - 3]]])] << i);
+            }
+        } else {
+            for (int i = 0; i < kmerLength * 3; i += 3) {
+                kmer |= (nuc2num[nuc2int(iRCT[atcg[seq[end - (start + i)]]])][
+                        nuc2int(iRCT[atcg[seq[end - (start + i + 1)]]])][
+                        nuc2int(iRCT[atcg[seq[end - (start + i + 2)]]])] << i);
+            }
         }
     }
 }

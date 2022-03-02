@@ -51,7 +51,7 @@ private:
     int nuc2aa[8][8][8];
     uint64_t nuc2num[4][4][4];
 
-    void addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int forOrRev, const int & kmerCnt, const int & frame);
+    void addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int forOrRev, const int & kmerCnt, const int & frame, int readLength);
     void addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, const int & kmerCnt);
 
 public:
