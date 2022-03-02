@@ -1543,10 +1543,10 @@ float Classifier::scoreTaxon2(const vector<Match> & matches, size_t begin, size_
     hammingSum = 0;
     int coveredLength_read1 = coveredPosCnt_read1 * 3;
     int coveredLength_read2 = coveredPosCnt_read2 * 3;
-    if (coveredLength_read1 >= queryLength) coveredLength_read1 = queryLength;
-    if (coveredLength_read2 >= queryLength2) coveredLength_read2 = queryLength2;
-//    if (coveredLength_read1 >= queryLength - 3) coveredLength_read1 = queryLength - 3;
-//    if (coveredLength_read2 >= queryLength2 - 3) coveredLength_read2 = queryLength2 - 3;
+//    if (coveredLength_read1 >= queryLength) coveredLength_read1 = queryLength;
+//    if (coveredLength_read2 >= queryLength2) coveredLength_read2 = queryLength2;
+    if (coveredLength_read1 >= queryLength - 3) coveredLength_read1 = queryLength - 3;
+    if (coveredLength_read2 >= queryLength2 - 3) coveredLength_read2 = queryLength2 - 3;
 
     return ((float)(coveredLength_read1 + coveredLength_read2) - hammingSum) / (float)(queryLength + queryLength2);
 }
