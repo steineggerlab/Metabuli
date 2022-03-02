@@ -314,8 +314,8 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer & kmerBuffer
                     seqIterator2.fillQueryKmerBuffer(seq2->seq.s, kmerBuffer, posToWrite, (int) i, strlen(seq->seq.s));
 
                     // Query Info
-                    queryList[i].queryLength = getMaxCoveredLength((int) strlen(seq->seq.s)) +
-                            getMaxCoveredLength((int) strlen(seq2->seq.s));
+                    queryList[i].queryLength = getMaxCoveredLength((int) strlen(seq->seq.s));
+                    queryList[i].queryLength2 = getMaxCoveredLength((int) strlen(seq2->seq.s));
                     queryList[i].queryId = (int) i;
                     queryList[i].name = string(seq->name.s);
                     queryList[i].kmerCnt = (int) kmerCnt;
