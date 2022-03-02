@@ -1431,7 +1431,6 @@ TaxID Classifier::classifyFurther3(const vector<Match> & matches,
                                    NcbiTaxonomy & taxonomy,
                                    int queryLength,
                                    float possibleKmerNum) {
-
     // Score each species
     std::unordered_map<TaxID, float> speciesScores;
     size_t i = 0;
@@ -1609,14 +1608,15 @@ float Classifier::scoreTaxon2(const vector<Match> & matches, size_t begin, size_
         }
     }
     delete[] hammingsAtEachPos;
-    
+
     // Score
+    hammingSum = 0;
     int coveredLength_read1 = coveredPosCnt_read1 * 3;
     int coveredLength_read2 = coveredPosCnt_read2 * 3;
     if (coveredLength_read1 >= queryLength - 3) coveredLength_read1 = queryLength - 3;
     if (coveredLength_read2 >= queryLength2 - 3) coveredLength_read2 = queryLength2 - 3;
 
-    return ((float)(coveredLength_read1 + coveredLength_read2) - hammingSum) / (float)queryLength;
+    return ((float)(coveredLength_read1 + coveredLength_read2) - hammingSum) / (float)(queryLength + queryLength2);
 }
 
 void Classifier::combinePairedEndClassifications(Query * queryList,
