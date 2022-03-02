@@ -103,16 +103,15 @@ void Classifier::startClassify(const char * queryFileName,
         queryFile2 = mmapData<char>(queryFileName2.c_str());
         IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
         IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
-
         numOfSeq = sequences.size();
         numOfSeq2 = sequences2.size();
-        queryList = new Query[numOfSeq + numOfSeq2];
-//        if(numOfSeq > numOfSeq2){
-//            queryList = new Query[numOfSeq];
-//        } else {
-//            numOfSeq = numOfSeq2;
-//            queryList = new Query[numOfSeq];
-//        }
+//        queryList = new Query[numOfSeq + numOfSeq2];
+        if(numOfSeq > numOfSeq2){
+            queryList = new Query[numOfSeq];
+        } else {
+            numOfSeq = numOfSeq2;
+            queryList = new Query[numOfSeq];
+        }
     }
 
     // Checker for multi-threading
@@ -132,7 +131,7 @@ void Classifier::startClassify(const char * queryFileName,
             fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt,
                                         queryList, par);
         } else if(par.seqMode == 2){
-            fillQueryKmerBufferParallel_paired2(kmerBuffer,
+            fillQueryKmerBufferParallel_paired(kmerBuffer,
                                                queryFile,
                                                queryFile2,
                                                sequences,
@@ -164,35 +163,17 @@ void Classifier::startClassify(const char * queryFileName,
     SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve, Classifier::sortByGenusAndSpecies2);
     cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
 
-    // Analyze matches
-    if(par.seqMode == 2){
-        cout<<"Analyse Result ... "<<endl;
-        time_t beforeAnalyze = time(nullptr);
-        analyseResultParallel(taxonomy, matchBuffer, (int) numOfSeq + numOfSeq2, queryList, par);
-        cout<<"Time spent for analyzing: "<<double(time(nullptr)-beforeAnalyze)<<endl;
-        int readNum = (int) numOfSeq;
-        if(numOfSeq < numOfSeq2) readNum = (int) numOfSeq2;
-        cout<<readNum<<" "<<numOfSeq<<" "<<numOfSeq2<<endl;
-        Query * combinedQueryList = new Query[readNum];
-        combinePairedEndClassifications(queryList, combinedQueryList, numOfSeq, numOfSeq2, taxonomy);
-        ofstream readClassificationFile;
-        readClassificationFile.open(par.filenames[3]+"/"+par.filenames[4]+"_ReadClassification.tsv");
 
-        writeReadClassification(combinedQueryList,readNum,readClassificationFile);
-        readClassificationFile.close();
-        writeReportFile(par.filenames[3]+"/"+par.filenames[4]+"_CompositionReport.tsv", taxonomy, readNum);
-        delete[] combinedQueryList;
-    } else {
-        cout<<"Analyse Result ... "<<endl;
-        time_t beforeAnalyze = time(nullptr);
-        analyseResultParallel(taxonomy, matchBuffer, (int) numOfSeq, queryList, par);
-        cout<<"Time spent for analyzing: "<<double(time(nullptr)-beforeAnalyze)<<endl;
-        ofstream readClassificationFile;
-        readClassificationFile.open(par.filenames[3]+"/"+par.filenames[4]+"_ReadClassification.tsv");
-        writeReadClassification(queryList,(int) numOfSeq,readClassificationFile);
-        readClassificationFile.close();
-        writeReportFile(par.filenames[3]+"/"+par.filenames[4]+"_CompositionReport.tsv", taxonomy, numOfSeq);
-    }
+    // Analyze matches
+    cout<<"Analyse Result ... "<<endl;
+    time_t beforeAnalyze = time(nullptr);
+    analyseResultParallel(taxonomy, matchBuffer, (int) numOfSeq, queryList, par);
+    cout<<"Time spent for analyzing: "<<double(time(nullptr)-beforeAnalyze)<<endl;
+    ofstream readClassificationFile;
+    readClassificationFile.open(par.filenames[3]+"/"+par.filenames[4]+"_ReadClassification.tsv");
+    writeReadClassification(queryList,(int) numOfSeq,readClassificationFile);
+    readClassificationFile.close();
+    writeReportFile(par.filenames[3]+"/"+par.filenames[4]+"_CompositionReport.tsv", taxonomy, numOfSeq);
 
 
 
@@ -307,7 +288,6 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer & kmerBuffer
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile1.data[seqs[i].start]), seqs[i].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
-                //size_t kmerCnt = SeqIterator::kmerNumOfSixFrameTranslation(seq->seq.s);
                 size_t kmerCnt = getQueryKmerNumber((int) strlen(seq->seq.s));
 
                 // Read 2
@@ -406,7 +386,7 @@ void Classifier::fillQueryKmerBufferParallel_paired2(QueryKmerBuffer & kmerBuffe
                     processedSeqCnt ++;
                 } else{
 #pragma omp atomic
-                    kmerBuffer.startIndexOfReserve -= kmerCnt;
+                    kmerBuffer.startIndexOfReserve -= (kmerCnt + kmerCnt2);
                     hasOverflow = true;
                 }
                 kseq_destroy(seq);
@@ -881,7 +861,12 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     int numOfstrains = 0;
     TaxID strainID = 0;
     int count = 1;
-    int minStrainSpecificCnt = 2;
+    int minStrainSpecificCnt;
+    if(par.seqMode == 1){
+        minStrainSpecificCnt = 1;
+    } else if (par.seqMode == 2){
+        minStrainSpecificCnt = 2;
+    }
     if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedLCA)->rank) == 4){
         unordered_map<TaxID, int> strainMatchCnt;
         for(size_t i = 0; i < matchesForLCA.size(); i++){
@@ -892,14 +877,14 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
         }
 
         for(auto strainIt = strainMatchCnt.begin(); strainIt != strainMatchCnt.end(); strainIt ++){
-            if(strainIt->second > 1){
+            if(strainIt->second > minStrainSpecificCnt){
                 strainID = strainIt->first;
                 numOfstrains++;
                 count = strainIt->second;
             }
         }
 
-        if(numOfstrains == 1 && count > 2) {
+        if(numOfstrains == 1 && count > minStrainSpecificCnt + 1) {
             selectedLCA = strainID;
         }
     }
