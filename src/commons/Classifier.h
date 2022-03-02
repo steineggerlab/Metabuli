@@ -304,19 +304,12 @@ private:
                      size_t end,
                      int queryLength);
 
-    static float scoreTaxon2(const vector<Match> & matches,
+    static float scoreTaxon_paired(const vector<Match> & matches,
                             size_t begin,
                             size_t end,
                             int queryLength,
                             int queryLength2);
 
-    void combinePairedEndClassifications(Query * queryList,
-                                         Query * combinedQueryList,
-                                         size_t numOfSeq,
-                                         size_t numOfSeq2,
-                                         NcbiTaxonomy & taxonomy);
-
-    void combineTwoClassifications(Query & r1, Query & r2, Query & pair, NcbiTaxonomy & taxonomy);
     // Write report
     void writeReadClassification(Query * queryList, int queryNum , ofstream & readClassificationFile);
 

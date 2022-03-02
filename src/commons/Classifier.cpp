@@ -1420,7 +1420,7 @@ TaxID Classifier::classifyFurther_paired(const std::vector<Match> & matches,
             i++;
         }
         speciesEnd = i;
-        speciesScores[currentSpeices] = scoreTaxon2(matches, speciesBegin, speciesEnd, read1Length, read2Length);
+        speciesScores[currentSpeices] = scoreTaxon_paired(matches, speciesBegin, speciesEnd, read1Length, read2Length);
     }
 
     // Get the best species
@@ -1488,7 +1488,7 @@ float Classifier::scoreTaxon(const vector<Match> & matches, size_t begin, size_t
     return ((float)coveredLength - hammingSum) / (float)queryLength;
 }
 
-float Classifier::scoreTaxon2(const vector<Match> & matches, size_t begin, size_t end, int queryLength, int queryLength2) {
+float Classifier::scoreTaxon_paired(const vector<Match> & matches, size_t begin, size_t end, int queryLength, int queryLength2) {
 
     // Get the largest hamming distance at each position of query
     int aminoAcidNum_total = queryLength / 3 + queryLength2 / 3;
@@ -1551,66 +1551,6 @@ float Classifier::scoreTaxon2(const vector<Match> & matches, size_t begin, size_
     return ((float)(coveredLength_read1 + coveredLength_read2) - hammingSum) / (float)(queryLength + queryLength2);
 }
 
-void Classifier::combinePairedEndClassifications(Query * queryList,
-                                                 Query * combinedQueryList,
-                                                 size_t numOfSeq,
-                                                 size_t numOfSeq2,
-                                                 NcbiTaxonomy & ncbiTaxonomy){
-    if(numOfSeq == numOfSeq2){
-        for(size_t i = 0; i < numOfSeq; i ++){
-            combineTwoClassifications(queryList[i], queryList[i+numOfSeq], combinedQueryList[i], ncbiTaxonomy);
-        }
-    } else if(numOfSeq > numOfSeq2){
-        for(size_t i = 0; i < numOfSeq2; i ++){
-            combineTwoClassifications(queryList[i], queryList[i+numOfSeq], combinedQueryList[i], ncbiTaxonomy);
-        }
-        for(size_t i = numOfSeq2; i < numOfSeq; i ++){
-            combinedQueryList[i] = queryList[i];
-        }
-    } else if(numOfSeq < numOfSeq2){
-        for(size_t i = 0; i < numOfSeq; i ++){
-            combineTwoClassifications(queryList[i], queryList[i+numOfSeq], combinedQueryList[i], ncbiTaxonomy);
-        }
-        for(size_t i = numOfSeq; i < numOfSeq2; i ++){
-            combinedQueryList[i] = queryList[numOfSeq + i];
-        }
-    }
-}
-
-void Classifier::combineTwoClassifications(Query & r1, Query & r2, Query & pair, NcbiTaxonomy & ncbiTaxonomy) {
-    pair.queryId = r1.queryId;
-    pair.queryLength = r1.queryLength + r2.queryLength;
-    pair.name = r1.name;
-    pair.isClassified = r1.isClassified || r2.isClassified;
-    pair.score = (r1.score + r2.score) / 2.0f;
-
-    // Match Info
-    for(auto it = r2.taxCnt.begin(); it != r2.taxCnt.end(); it ++){
-        r1.taxCnt[it->first] += it -> second;
-    }
-    pair.taxCnt = r1.taxCnt;
-
-    // Unclassified
-    if(!r1.isClassified && !r2.isClassified) {
-        pair.classification = 0;
-        return;
-    }
-
-    // Identical
-    if(r1.classification == r2.classification){
-        pair.classification = r1.classification;
-        return;
-    }
-
-    // Different
-    if(ncbiTaxonomy.IsAncestor(r1.classification, r2.classification)){ // r1's taxon is ancestor
-        pair.classification = r2.classification;
-    } else if (ncbiTaxonomy.IsAncestor(r2.classification, r1.classification)){// r2's taxon is ancestor
-        pair.classification = r1.classification;
-    } else { // Different branch
-        pair.classification = ncbiTaxonomy.LCA(r2.classification, r1.classification);
-    }
-}
 int Classifier::getNumOfSplits() const { return this->numOfSplit; }
 
 bool Classifier::compareForLinearSearch(const QueryKmer & a, const QueryKmer & b){
