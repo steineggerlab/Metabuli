@@ -308,13 +308,13 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer & kmerBuffer
                     // Read 1
                     seqIterator.sixFrameTranslation(seq->seq.s);
                     seqIterator.fillQueryKmerBuffer(seq->seq.s, kmerBuffer, posToWrite, (int) i);
-
+                    queryList[i].queryLength = getMaxCoveredLength((int) strlen(seq->seq.s));
                     // Read 2
                     seqIterator2.sixFrameTranslation(seq2->seq.s);
-                    seqIterator2.fillQueryKmerBuffer(seq2->seq.s, kmerBuffer, posToWrite, (int) i, strlen(seq->seq.s));
+                    seqIterator2.fillQueryKmerBuffer(seq2->seq.s, kmerBuffer, posToWrite, (int) i, queryList[i].queryLength);
 
                     // Query Info
-                    queryList[i].queryLength = getMaxCoveredLength((int) strlen(seq->seq.s));
+                   // queryList[i].queryLength = getMaxCoveredLength((int) strlen(seq->seq.s));
 //                                                + getMaxCoveredLength((int) strlen(seq2->seq.s));
                     queryList[i].queryLength2 = getMaxCoveredLength((int) strlen(seq2->seq.s));
                     queryList[i].queryId = (int) i;
@@ -1313,7 +1313,8 @@ void Classifier::constructMatchCombination_paired(vector<Match> & filteredMatche
     // Sum up hamming distances and count the number of position covered by the matches.
     float hammingSum = 0;
     for(int h = 0; h < aminoAcidNum_total; h++){
-        if(h <= aminoAcidNum_read1) {
+        // Read 1
+        if(h < aminoAcidNum_read1) {
             if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
                 coveredPosCnt_read1 ++;
             } else if (hammingsAtEachPos[h] != -1) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
@@ -1321,7 +1322,7 @@ void Classifier::constructMatchCombination_paired(vector<Match> & filteredMatche
                 coveredPosCnt_read1 ++;
             }
         }
-            // Read 2
+        // Read 2
         else {
             if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
                 coveredPosCnt_read2++;
@@ -1567,7 +1568,6 @@ float Classifier::scoreTaxon2(const vector<Match> & matches, size_t begin, size_
 
     int currPos;
     size_t walker = begin;
-    size_t matchNum = matches.size();
     uint16_t currHammings;
     while(walker < end){
         currPos = matches[walker].position / 3;
@@ -1589,7 +1589,7 @@ float Classifier::scoreTaxon2(const vector<Match> & matches, size_t begin, size_
     int coveredPosCnt_read2 = 0;
     for(int h = 0; h < aminoAcidNum_total; h++){
         // Read 1
-        if(h <= aminoAcidNum_read1) {
+        if(h < aminoAcidNum_read1) {
             if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
                 coveredPosCnt_read1 ++;
             } else if (hammingsAtEachPos[h] != -1) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
