@@ -314,9 +314,9 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer & kmerBuffer
                     seqIterator2.fillQueryKmerBuffer(seq2->seq.s, kmerBuffer, posToWrite, (int) i, strlen(seq->seq.s));
 
                     // Query Info
-                    queryList[i].queryLength = getMaxCoveredLength((int) strlen(seq->seq.s))
-                                                + getMaxCoveredLength((int) strlen(seq2->seq.s));
-                    //queryList[i].queryLength2 = getMaxCoveredLength((int) strlen(seq2->seq.s));
+                    queryList[i].queryLength = getMaxCoveredLength((int) strlen(seq->seq.s));
+//                                                + getMaxCoveredLength((int) strlen(seq2->seq.s));
+                    queryList[i].queryLength2 = getMaxCoveredLength((int) strlen(seq2->seq.s));
                     queryList[i].queryId = (int) i;
                     queryList[i].name = string(seq->name.s);
                     queryList[i].kmerCnt = (int) kmerCnt;
@@ -859,8 +859,8 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     }
 
     // Classify in species or lower level for queries that have close matches in reference DB.
-    TaxID selectedLCA = classifyFurther3(matchesForLCA,
-                                        ncbiTaxonomy, queryLength,
+    TaxID selectedLCA = classifyFurther_paired(matchesForLCA,
+                                        ncbiTaxonomy, queryLength, queryList[currentQuery].queryLength2,
                                         (float) queryList[currentQuery].kmerCnt / 6);
 
     // TODO optimize strain specific classification criteria
@@ -1241,6 +1241,48 @@ TaxID Classifier::classifyFurther3(const vector<Match> & matches,
 //    }
 }
 
+TaxID Classifier::classifyFurther_paired(const std::vector<Match> & matches,
+                                    NcbiTaxonomy & taxonomy,
+                                    int read1Length,
+                                    int read2Length,
+                                    float maxKmerCnt){
+    // Score each species
+    std::unordered_map<TaxID, float> speciesScores;
+    size_t i = 0;
+    TaxID currentSpeices;
+    size_t numOfMatch = matches.size();
+    size_t speciesBegin, speciesEnd;
+    while(i < numOfMatch){
+        currentSpeices = matches[i].speciesTaxID;
+        speciesBegin = i;
+        while(currentSpeices == matches[i].speciesTaxID && (i < numOfMatch)){
+            i++;
+        }
+        speciesEnd = i;
+        speciesScores[currentSpeices] = scoreTaxon2(matches, speciesBegin, speciesEnd, read1Length, read2Length);
+    }
+
+    // Get the best species
+    vector<TaxID> ties;
+    float bestScore = 0.f;
+    for(auto sp = speciesScores.begin(); sp != speciesScores.end(); sp ++){
+        if(sp->second > bestScore){
+            ties.clear();
+            ties.push_back(sp->first);
+            bestScore = sp->second;
+        } else if(sp->second == bestScore){
+            ties.push_back(sp->first);
+        }
+    }
+
+    if(ties.size() > 1){
+        return matches[0].genusTaxID;
+    } else {
+        return ties[0];
+    }
+
+}
+
 float Classifier::scoreTaxon(const vector<Match> & matches, size_t begin, size_t end, int queryLength) {
 
     // Get the largest hamming distance at each position of query
@@ -1283,6 +1325,68 @@ float Classifier::scoreTaxon(const vector<Match> & matches, size_t begin, size_t
     int coveredLength = coveredPosCnt * 3;
     if (coveredLength >= queryLength - 3) coveredLength = queryLength - 3;
     return ((float)coveredLength - hammingSum) / (float)queryLength;
+}
+
+float Classifier::scoreTaxon2(const vector<Match> & matches, size_t begin, size_t end, int queryLength, int queryLength2) {
+
+    // Get the largest hamming distance at each position of query
+    int aminoAcidNum_total = queryLength / 3 + queryLength2 / 3;
+    int aminoAcidNum_read1 = queryLength / 3;
+    auto * hammingsAtEachPos = new signed char[aminoAcidNum_total + 1];
+    memset(hammingsAtEachPos, -1, (aminoAcidNum_total + 1));
+
+    int currPos;
+    size_t walker = begin;
+    size_t matchNum = matches.size();
+    uint16_t currHammings;
+    while(walker < end){
+        currPos = matches[walker].position / 3;
+        currHammings = matches[walker].rightEndHamming;
+        if(GET_2_BITS(currHammings) > hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
+        if(GET_2_BITS(currHammings>>2) > hammingsAtEachPos[currPos + 1]) hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings>>2);
+        if(GET_2_BITS(currHammings>>4) > hammingsAtEachPos[currPos + 2]) hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings>>4);
+        if(GET_2_BITS(currHammings>>6) > hammingsAtEachPos[currPos + 3]) hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings>>6);
+        if(GET_2_BITS(currHammings>>8) > hammingsAtEachPos[currPos + 4]) hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings>>8);
+        if(GET_2_BITS(currHammings>>10) > hammingsAtEachPos[currPos + 5]) hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings>>10);
+        if(GET_2_BITS(currHammings>>12) > hammingsAtEachPos[currPos + 6]) hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings>>12);
+        if(GET_2_BITS(currHammings>>14) > hammingsAtEachPos[currPos + 7]) hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings>>14);
+        walker++;
+    }
+
+    // Sum up hamming distances and count the number of position covered by the matches.
+    float hammingSum = 0;
+    int coveredPosCnt_read1 = 0;
+    int coveredPosCnt_read2 = 0;
+    for(int h = 0; h < aminoAcidNum_total; h++){
+        // Read 1
+        if(h <= aminoAcidNum_read1) {
+            if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
+                coveredPosCnt_read1 ++;
+            } else if (hammingsAtEachPos[h] != -1) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
+                hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
+                coveredPosCnt_read1 ++;
+            }
+        }
+        // Read 2
+        else {
+            if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
+                coveredPosCnt_read2++;
+            } else if (hammingsAtEachPos[h] != -1) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
+                hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
+                coveredPosCnt_read2 ++;
+            }
+        }
+    }
+    delete[] hammingsAtEachPos;
+    hammingSum = 0;
+
+    // Score
+    int coveredLength_read1 = coveredPosCnt_read1 * 3;
+    int coveredLength_read2 = coveredPosCnt_read2 * 3;
+    if (coveredLength_read1 >= queryLength - 3) coveredLength_read1 = queryLength - 3;
+    if (coveredLength_read2 >= queryLength2 - 3) coveredLength_read2 = queryLength2 - 3;
+
+    return ((float)(coveredLength_read1 + coveredLength_read2) - hammingSum) / (float)queryLength;
 }
 
 void Classifier::combinePairedEndClassifications(Query * queryList,
