@@ -822,10 +822,10 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     // Classify at the genus rank if the score at species level is not enough.
     if(lowerRankScore < 0.9){
         queryList[currentQuery].isClassified = true;
-        queryList[currentQuery].classification = selectedTaxon;
+        queryList[currentQuery].classification = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
         queryList[currentQuery].score = highRankScore;
         queryList[currentQuery].newSpecies = true;
-        return selectedTaxon;
+        return queryList[currentQuery].classification;
     }
 
     // Check if it can be classified at the subspecies rank.
