@@ -704,7 +704,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
                                   const LocalParameters & par ) {
     int queryLength = queryList[currentQuery].queryLength;
     TaxID selectedTaxon;
-    if(PRINT) {
+    if(PRINT || currentQuery == 509) {
         cout<<"# "<<currentQuery<<endl;
         for (size_t i = offset; i < end + 1; i++) {
             cout << matchList[i].genusTaxID<<" "<<matchList[i].speciesTaxID << " " << matchList[i].taxID << " " <<
@@ -729,7 +729,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
         res = getMatchesOfTheBestGenus(matchesForLCA, matchList, end, offset, queryLength, maxScore);
     }
 
-    if(PRINT) {
+    if(PRINT || currentQuery == 509) {
         cout<<"# "<<currentQuery<<" filtered"<<endl;
         for (size_t i = 0; i < matchesForLCA.size(); i++) {
             cout << matchesForLCA[i].genusTaxID<<" "<<matchesForLCA[i].speciesTaxID << " " << matchesForLCA[i].taxID << " " <<
@@ -767,7 +767,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
         queryList[currentQuery].score = maxScore;
-        if(PRINT) {
+        if(PRINT || currentQuery == 509) {
             cout << "# " << currentQuery << " " << res << endl;
             for (size_t i = 0; i < taxIdList.size(); i++) {
                 cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
@@ -787,7 +787,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
         queryList[currentQuery].newSpecies = true;
-        if(PRINT) {
+        if(PRINT || currentQuery == 509) {
             cout << "# " << currentQuery << "HH" << endl;
             for (size_t i = 0; i < matchesForLCA.size(); i++) {
                 cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
@@ -844,7 +844,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
         }
     }
 
-    if(PRINT) {
+    if(PRINT || currentQuery == 509) {
         cout << "# " << currentQuery << endl;
         for (size_t i = 0; i < matchesForLCA.size(); i++) {
             cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
@@ -1485,7 +1485,7 @@ float Classifier::scoreTaxon(const vector<Match> & matches, size_t begin, size_t
 
     // Score
     int coveredLength = coveredPosCnt * 3;
-    if (coveredLength >= queryLength - 3) coveredLength = queryLength - 3;
+    if (coveredLength >= queryLength) coveredLength = queryLength;
     return ((float)coveredLength - hammingSum) / (float)queryLength;
 }
 
