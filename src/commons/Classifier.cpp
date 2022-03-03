@@ -119,7 +119,6 @@ void Classifier::startClassify(const char * queryFileName,
     fill_n(processedSeqChecker, numOfSeq, false);
     size_t processedSeqCnt = 0;
 
-
     // Timer
     size_t numOfTatalQueryKmerCnt = 0;
 
@@ -170,7 +169,6 @@ void Classifier::startClassify(const char * queryFileName,
     time_t beforeAnalyze = time(nullptr);
     analyseResultParallel(taxonomy, matchBuffer, (int) numOfSeq, queryList, par);
     cout<<"Time spent for analyzing: "<<double(time(nullptr)-beforeAnalyze)<<endl;
-
 
     // Write report files
     ofstream readClassificationFile;
@@ -820,7 +818,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     }
 
     // Classify at the genus rank if the score at species level is not enough.
-    if(speciesRankScore < 0.9 && !ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)){
+    if(speciesRankScore < 0.95 && !ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)){
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
         queryList[currentQuery].score = highRankScore;
