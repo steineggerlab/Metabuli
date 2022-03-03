@@ -893,7 +893,6 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> & matchesForMajori
             // Filter un-consecutive matches (probably random matches)
             while(currentSpecies == matchList[i].speciesTaxID && (i < end + 1)){
                 offsetIdx = i;
-                i++;
                 newOffset = true;
                 hammingSum = 0;
                 hammingMean = matchList[i-1].hamming;
