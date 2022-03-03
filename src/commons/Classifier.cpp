@@ -153,6 +153,7 @@ void Classifier::startClassify(const char * queryFileName,
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList,
                              diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile, par);
         cout<<"Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
+        cout<<"The number of matches: "<<kmerBuffer.startIndexOfReserve<<endl;
     }
     cout<<"Number of query k-mers: "<<numOfTatalQueryKmerCnt<<endl;
 
@@ -191,7 +192,7 @@ void Classifier::startClassify(const char * queryFileName,
     wr2.open(par.filenames[0]+"_wrong_2");
     for (size_t i = 0; i < wrongClassifications.size(); i++) {
             kseq_buffer_t buffer(const_cast<char *>(&queryFile.data[sequences[wrongClassifications[i]].start]), sequences[wrongClassifications[i]].length);
-            kseq_buffer_t buffer2(const_cast<char *>(&queryFile.data[sequences[wrongClassifications[i]].start]), sequences[wrongClassifications[i]].length);
+            kseq_buffer_t buffer2(const_cast<char *>(&queryFile2.data[sequences[wrongClassifications[i]].start]), sequences2[wrongClassifications[i]].length);
             kseq_t *seq = kseq_init(&buffer);
             kseq_t *seq2 = kseq_init(&buffer2);
             kseq_read(seq);
@@ -339,7 +340,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                                       Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & spTaxIdList, const vector<TaxID> & genusTaxIdList,
                                       FILE * matchFile, const LocalParameters & par){
     cout<<"linearSearch start..."<<endl;
-    ///Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
+    // Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
     for(size_t checkN = queryKmerCnt - 1; checkN > 0; checkN--){
         if(queryKmerList[checkN].ADkmer != UINT64_MAX){
             queryKmerCnt = checkN + 1;
@@ -347,7 +348,7 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
         }
     }
 
-    ///Filter out meaningless target querySplits
+    // Filter out meaningless target querySplits
     size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
     size_t numOfDiffIdxSplits_use = numOfDiffIdxSplits;
     for(size_t i = 1; i < numOfDiffIdxSplits; i++){
@@ -452,12 +453,12 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 
                 for(size_t j = querySplits[i].start; j < querySplits[i].end + 1; j ++){
                     querySplits[i].start++;
-                    ///Reuse the comparison data if queries are exactly identical
+                    // Reuse the comparison data if queries are exactly identical
                     if(currentQuery == queryKmerList[j].ADkmer){
                         posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
                         if(posToWrite + selectedMatches.size() >= matchBuffer.bufferSize){
                             hasOverflow = true;
-                            querySplits[i].start = j; ///TODO why??
+                            querySplits[i].start = j;
 #pragma omp atomic
                             matchBuffer.startIndexOfReserve -= selectedMatches.size();
                             break;
