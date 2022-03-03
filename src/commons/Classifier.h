@@ -290,14 +290,15 @@ private:
     static TaxID classifyFurther3(const std::vector<Match> & matches,
                                   NcbiTaxonomy & taxonomy,
                                   int queryLength,
-                                  float maxKmerCnt);
+                                  float maxKmerCnt,
+                                  float & lowerRankScore);
 
     static TaxID classifyFurther_paired(const std::vector<Match> & matches,
                                   NcbiTaxonomy & taxonomy,
                                   int read1Length,
                                   int read2Length,
-                                  float maxKmerCnt
-    );
+                                  float maxKmerCnt,
+                                  float & lowerRankScore);
 
     static float scoreTaxon(const vector<Match> & matches,
                      size_t begin,
