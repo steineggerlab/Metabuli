@@ -197,8 +197,10 @@ void Classifier::startClassify(const char * queryFileName,
             kseq_t *seq2 = kseq_init(&buffer2);
             kseq_read(seq);
             kseq_read(seq2);
+
             wr<<">"<<seq->name.s<<endl;
             wr<<seq->seq.s<<endl;
+
             wr2<<">"<<seq2->name.s<<endl;
             wr2<<seq2->seq.s<<endl;
             kseq_destroy(seq);
@@ -801,22 +803,32 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
 
     // Classify in species or lower level for queries that have close matches in reference DB.
     float lowerRankScore;
+    TaxID selectedlowerTaxon;
     if(par.seqMode == 2) {
-        selectedTaxon = classifyFurther_paired(matchesForLCA,
+        selectedlowerTaxon = classifyFurther_paired(matchesForLCA,
                                              ncbiTaxonomy,
                                              queryLength,
                                              queryList[currentQuery].queryLength2,
                                              (float) queryList[currentQuery].kmerCnt / 6,
                                              lowerRankScore);
     } else {
-        selectedTaxon = classifyFurther3(matchesForLCA,
+        selectedlowerTaxon = classifyFurther3(matchesForLCA,
                                        ncbiTaxonomy,
                                        queryLength,
                                        (float) queryList[currentQuery].kmerCnt / 6,
                                        lowerRankScore);
     }
 
-    // Subspecies level classification
+    // Classify at the genus rank if the score at species level is not enough.
+    if(lowerRankScore < 0.9){
+        queryList[currentQuery].isClassified = true;
+        queryList[currentQuery].classification = selectedTaxon;
+        queryList[currentQuery].score = highRankScore;
+        queryList[currentQuery].newSpecies = true;
+        return selectedTaxon;
+    }
+
+    // Check if it can be classified at the subspecies rank.
     int numOfstrains = 0;
     TaxID strainID = 0;
     int count = 1;
@@ -826,11 +838,11 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     } else if (par.seqMode == 2){
         minStrainSpecificCnt = 2;
     }
-    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedTaxon)->rank) == 4){
+    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedlowerTaxon)->rank) == 4){
         unordered_map<TaxID, int> strainMatchCnt;
         for(size_t i = 0; i < matchesForLCA.size(); i++){
-            if(selectedTaxon != matchesForLCA[i].taxID
-                && ncbiTaxonomy.IsAncestor(selectedTaxon, matchesForLCA[i].taxID)){
+            if(selectedlowerTaxon != matchesForLCA[i].taxID
+                && ncbiTaxonomy.IsAncestor(selectedlowerTaxon, matchesForLCA[i].taxID)){
                 strainMatchCnt[matchesForLCA[i].taxID]++;
             }
         }
@@ -844,9 +856,15 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
         }
 
         if(numOfstrains == 1 && count > minStrainSpecificCnt + 1) {
-            selectedTaxon = strainID;
+            selectedlowerTaxon = strainID;
         }
     }
+
+    // Store classification results
+    queryList[currentQuery].isClassified = true;
+    queryList[currentQuery].classification = selectedlowerTaxon;
+    queryList[currentQuery].score = lowerRankScore;
+    queryList[currentQuery].newSpecies = false;
 
     if(PRINT) {
         cout << "# " << currentQuery << endl;
@@ -865,11 +883,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     } else if(PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedTaxon)->rank) == 8){
         cout<<"genus\t"<<highRankScore<<endl;
     }
-    ///store classification results
-    queryList[currentQuery].isClassified = true;
-    queryList[currentQuery].classification = selectedTaxon;
-    queryList[currentQuery].score = lowerRankScore;
-    queryList[currentQuery].newSpecies = false;
+
     return selectedTaxon;
 }
 
@@ -1403,10 +1417,6 @@ TaxID Classifier::classifyFurther3(const vector<Match> & matches,
     } else {
         return ties[0];
     }
-//
-//    if(bestSpecies.second > 0.9){
-//        return bestSpecies.first;
-//    }
 }
 
 TaxID Classifier::classifyFurther_paired(const std::vector<Match> & matches,
@@ -1417,6 +1427,7 @@ TaxID Classifier::classifyFurther_paired(const std::vector<Match> & matches,
                                     float & lowerRankScore){
     // Score each species
     std::unordered_map<TaxID, float> speciesScores;
+    std::unordered_map<TaxID, size_t> speciesCnt;
     size_t i = 0;
     TaxID currentSpeices;
     size_t numOfMatch = matches.size();
@@ -1428,6 +1439,7 @@ TaxID Classifier::classifyFurther_paired(const std::vector<Match> & matches,
             i++;
         }
         speciesEnd = i;
+        speciesCnt[currentSpeices] = speciesBegin - speciesEnd;
         speciesScores[currentSpeices] = scoreTaxon_paired(matches, speciesBegin, speciesEnd, read1Length, read2Length);
     }
 
@@ -1444,7 +1456,6 @@ TaxID Classifier::classifyFurther_paired(const std::vector<Match> & matches,
         }
     }
     lowerRankScore = bestScore;
-
     if(ties.size() > 1){
         return matches[0].genusTaxID;
     } else {
@@ -1453,7 +1464,6 @@ TaxID Classifier::classifyFurther_paired(const std::vector<Match> & matches,
 }
 
 float Classifier::scoreTaxon(const vector<Match> & matches, size_t begin, size_t end, int queryLength) {
-
     // Get the largest hamming distance at each position of query
     int aminoAcidNum = queryLength / 3;
     auto * hammingsAtEachPos = new signed char[aminoAcidNum + 1];
