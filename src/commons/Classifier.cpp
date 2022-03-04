@@ -954,7 +954,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> & matchesForMajori
     }
 
     float maxScore = *max_element(scoreOfEachGenus.begin(), scoreOfEachGenus.end());
-    if(maxScore < 0.25)
+    if(maxScore < 0.3)
         return 3;
     vector<size_t> maxIdx;
     for(size_t g = 0; g < scoreOfEachGenus.size(); g++){
@@ -1013,6 +1013,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
                         newOffset = false;
                         hammingSum = matchList[offsetIdx].hamming;
                         filteredMatches.push_back(matchList[offsetIdx]);
+                        continue;
                     }
                     else if(!newOffset && ((float)matchList[i].hamming) <= hammingMean + 3) {
                         filteredMatches.push_back(matchList[i]);
@@ -1039,7 +1040,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
     }
 
     float maxScore = *max_element(scoreOfEachGenus.begin(), scoreOfEachGenus.end());
-    if(maxScore < 0.25)
+    if(maxScore < 0.3)
         return 3;
     vector<size_t> maxIdx;
     for(size_t g = 0; g < scoreOfEachGenus.size(); g++){
