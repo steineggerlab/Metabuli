@@ -77,26 +77,6 @@ private:
         ScrCov(float score, float coverage) : score(score), coverage(coverage) {}
         ScrCov() : score(0.f), coverage(0.f){ }
     };
-    struct taxNode {
-        void set(const double weightInput, const bool isCandidateInput, const TaxID & childTaxonInput) {
-            weight = weightInput;
-            isCandidate = isCandidateInput;
-            childTaxon = childTaxonInput;
-        }
-
-        void update(const double weightToAdd, const TaxID & childTaxonInput) {
-            if (childTaxon != childTaxonInput) {
-                isCandidate = true;
-                childTaxon = childTaxonInput;
-            }
-            weight += weightToAdd;
-        }
-
-        // these will be filled when iterating over all contributing lineages
-        double weight;
-        bool isCandidate;
-        TaxID childTaxon;
-    };
 
     struct QueryInfo{
         int queryId;
@@ -300,19 +280,19 @@ private:
                                   ScrCov & speciesScrCov,
                                   vector<TaxID> & species);
 
-    static TaxID classifyFurther_paired(const std::vector<Match> & matches,
+    static void classifyFurther_paired(const std::vector<Match> & matches,
                                   NcbiTaxonomy & taxonomy,
                                   int read1Length,
                                   int read2Length,
-                                  float maxKmerCnt,
-                                  float & lowerRankScore);
+                                  ScrCov & speciesScrCov,
+                                  vector<TaxID> & species);
 
     static ScrCov scoreTaxon(const vector<Match> & matches,
                      size_t begin,
                      size_t end,
                      int queryLength);
 
-    static float scoreTaxon_paired(const vector<Match> & matches,
+    static ScrCov scoreTaxon_paired(const vector<Match> & matches,
                             size_t begin,
                             size_t end,
                             int queryLength,

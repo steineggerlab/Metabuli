@@ -804,17 +804,16 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
 
     // Choose the species with the highest coverage.
     float speciesRankCoverage;
-    float speciesRankScore;
     TaxID selectedSpecies;
     ScrCov speciesScrCov(0.f, 0.f);
     vector<TaxID> species;
     if(par.seqMode == 2) {
-        selectedSpecies = classifyFurther_paired(matchesForLCA,
-                                                    ncbiTaxonomy,
-                                                    queryLength,
-                                                    queryList[currentQuery].queryLength2,
-                                             (float) queryList[currentQuery].kmerCnt / 6,
-                                                    speciesRankCoverage);
+        classifyFurther_paired(matchesForLCA,
+                               ncbiTaxonomy,
+                               queryLength,
+                               queryList[currentQuery].queryLength2,
+                               speciesScrCov,
+                               species);
     } else {
         classifyFurther3(matchesForLCA,
                          ncbiTaxonomy,
@@ -1414,21 +1413,22 @@ void Classifier::classifyFurther3(const vector<Match> & matches,
             species.clear();
             species.push_back(sp->first);
             bestCoverage = sp->second.coverage;
+            speciesScrCov.coverage = sp->second.coverage;
+            speciesScrCov.score = sp->second.score;
         } else if(sp->second.coverage == bestCoverage){
             species.push_back(sp->first);
         }
     }
 }
 
-TaxID Classifier::classifyFurther_paired(const std::vector<Match> & matches,
+void Classifier::classifyFurther_paired(const std::vector<Match> & matches,
                                     NcbiTaxonomy & taxonomy,
                                     int read1Length,
                                     int read2Length,
-                                    float maxKmerCnt,
-                                    float & lowerRankScore){
+                                    ScrCov & speciesScrCov,
+                                    vector<TaxID> & species){
     // Score each species
-    std::unordered_map<TaxID, float> speciesScores;
-    std::unordered_map<TaxID, size_t> speciesCnt;
+    std::unordered_map<TaxID, ScrCov> speciesScrCovs;
     size_t i = 0;
     TaxID currentSpeices;
     size_t numOfMatch = matches.size();
@@ -1440,27 +1440,21 @@ TaxID Classifier::classifyFurther_paired(const std::vector<Match> & matches,
             i++;
         }
         speciesEnd = i;
-        speciesCnt[currentSpeices] = speciesBegin - speciesEnd;
-        speciesScores[currentSpeices] = scoreTaxon_paired(matches, speciesBegin, speciesEnd, read1Length, read2Length);
+        speciesScrCovs[currentSpeices] = scoreTaxon_paired(matches, speciesBegin, speciesEnd, read1Length, read2Length);
     }
 
     // Get the best species
-    vector<TaxID> ties;
-    float bestScore = 0.f;
-    for(auto sp = speciesScores.begin(); sp != speciesScores.end(); sp ++){
-        if(sp->second > bestScore){
-            ties.clear();
-            ties.push_back(sp->first);
-            bestScore = sp->second;
-        } else if(sp->second == bestScore){
-            ties.push_back(sp->first);
+    float bestCovergae = 0.f;
+    for(auto sp = speciesScrCovs.begin(); sp != speciesScrCovs.end(); sp ++){
+        if(sp->second.coverage > bestCovergae){
+            species.clear();
+            species.push_back(sp->first);
+            bestCovergae = sp->second.coverage;
+            speciesScrCov.coverage = sp->second.coverage;
+            speciesScrCov.score = sp->second.score;
+        } else if(sp->second.coverage == bestCovergae){
+            species.push_back(sp->first);
         }
-    }
-    lowerRankScore = bestScore;
-    if(ties.size() > 1){
-        return matches[0].genusTaxID;
-    } else {
-        return ties[0];
     }
 }
 
@@ -1505,10 +1499,10 @@ Classifier::ScrCov Classifier::scoreTaxon(const vector<Match> & matches,
     // Score
     int coveredLength = coveredPosCnt * 3;
     if (coveredLength >= queryLength) coveredLength = queryLength;
-    return ScrCov(((float)coveredLength - hammingSum) / (float) queryLength, (float) coveredLength / (float) queryLength);
+    return {((float)coveredLength - hammingSum) / (float) queryLength, (float) coveredLength / (float) queryLength};
 }
 
-float Classifier::scoreTaxon_paired(const vector<Match> & matches, size_t begin, size_t end, int queryLength, int queryLength2) {
+Classifier::ScrCov Classifier::scoreTaxon_paired(const vector<Match> & matches, size_t begin, size_t end, int queryLength, int queryLength2) {
 
     // Get the largest hamming distance at each position of query
     int aminoAcidNum_total = queryLength / 3 + queryLength2 / 3;
@@ -1568,7 +1562,8 @@ float Classifier::scoreTaxon_paired(const vector<Match> & matches, size_t begin,
     if (coveredLength_read1 >= queryLength) coveredLength_read1 = queryLength;
     if (coveredLength_read2 >= queryLength2) coveredLength_read2 = queryLength2;
 
-    return ((float)(coveredLength_read1 + coveredLength_read2) - hammingSum) / (float)(queryLength + queryLength2);
+    return {((float)coveredLength_read1 + coveredLength_read2 - hammingSum) / ((float) queryLength + queryLength2),
+                  ((float) coveredLength_read1 + coveredLength_read2) / ((float) queryLength + queryLength2)};
 }
 
 int Classifier::getNumOfSplits() const { return this->numOfSplit; }
