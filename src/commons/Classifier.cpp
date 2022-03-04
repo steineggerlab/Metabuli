@@ -780,51 +780,58 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
         return selectedTaxon;
     }
 
-//    // Classify prokaryotes in genus level for highly diverged queries, not for virus
-//    if(highRankScore < 0.8 && !ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)){
-//        selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
-//        queryList[currentQuery].isClassified = true;
-//        queryList[currentQuery].classification = selectedTaxon;
-//        queryList[currentQuery].newSpecies = true;
-//        queryList[currentQuery].score = highRankScore;
-//        if(PRINT) {
-//            cout << "# " << currentQuery << "HH" << endl;
-//            for (size_t i = 0; i < matchesForLCA.size(); i++) {
-//                cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
-//                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) <<" "<< matchesForLCA[i].red << endl;
-//            }
-//            cout << "Score: " << highRankScore << "  " << selectedTaxon << " "
-//                 << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
-//        }
-//        return selectedTaxon;
-//    }
-
-    // Choose the species with the highest coverage.
-    float speciesRankScore;
-    TaxID selectedlowerTaxon;
-    if(par.seqMode == 2) {
-        selectedlowerTaxon = classifyFurther_paired(matchesForLCA,
-                                             ncbiTaxonomy,
-                                             queryLength,
-                                             queryList[currentQuery].queryLength2,
-                                             (float) queryList[currentQuery].kmerCnt / 6,
-                                                    speciesRankScore);
-    } else {
-        selectedlowerTaxon = classifyFurther3(matchesForLCA,
-                                       ncbiTaxonomy,
-                                       queryLength,
-                                       (float) queryList[currentQuery].kmerCnt / 6,
-                                              speciesRankScore);
+    // Classify prokaryotes in genus level for highly diverged queries, not for virus
+    if(highRankScore < 0.8 && !ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)){
+        selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
+        queryList[currentQuery].isClassified = true;
+        queryList[currentQuery].classification = selectedTaxon;
+        queryList[currentQuery].newSpecies = true;
+        queryList[currentQuery].score = highRankScore;
+        if(PRINT) {
+            cout << "# " << currentQuery << "HH" << endl;
+            for (size_t i = 0; i < matchesForLCA.size(); i++) {
+                cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
+                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) <<" "<< matchesForLCA[i].red << endl;
+            }
+            cout << "Score: " << highRankScore << "  " << selectedTaxon << " "
+                 << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
+        }
+        return selectedTaxon;
     }
 
+    // Choose the species with the highest coverage.
+    float speciesRankCoverage;
+    float speciesRankScore;
+    TaxID selectedSpecies;
+    ScrCov speciesScrCov(0.f, 0.f);
+    vector<TaxID> species;
+    if(par.seqMode == 2) {
+        selectedSpecies = classifyFurther_paired(matchesForLCA,
+                                                    ncbiTaxonomy,
+                                                    queryLength,
+                                                    queryList[currentQuery].queryLength2,
+                                             (float) queryList[currentQuery].kmerCnt / 6,
+                                                    speciesRankCoverage);
+    } else {
+        classifyFurther3(matchesForLCA,
+                         ncbiTaxonomy,
+                         queryLength,
+                         (float) queryList[currentQuery].kmerCnt / 6,
+                         speciesScrCov,
+                         species);
+    }
+
+    // Classify at the genus rank if more than one species are selected.
     // Classify at the genus rank if the score at species level is not enough.
-    if(speciesRankScore < 0.95 && !ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)){
+    if(species.size() > 1
+        || (speciesScrCov.score < 0.95 && !ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID))){
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
         queryList[currentQuery].score = highRankScore;
-        queryList[currentQuery].newSpecies = true;
         return queryList[currentQuery].classification;
     }
+
+    selectedSpecies = species[0];
 
     // Check if it can be classified at the subspecies rank.
     int numOfstrains = 0;
@@ -836,11 +843,11 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     } else if (par.seqMode == 2){
         minStrainSpecificCnt = 2;
     }
-    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedlowerTaxon)->rank) == 4){
+    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedSpecies)->rank) == 4){
         unordered_map<TaxID, int> strainMatchCnt;
         for(size_t i = 0; i < matchesForLCA.size(); i++){
-            if(selectedlowerTaxon != matchesForLCA[i].taxID
-                && ncbiTaxonomy.IsAncestor(selectedlowerTaxon, matchesForLCA[i].taxID)){
+            if(selectedSpecies != matchesForLCA[i].taxID
+                && ncbiTaxonomy.IsAncestor(selectedSpecies, matchesForLCA[i].taxID)){
                 strainMatchCnt[matchesForLCA[i].taxID]++;
             }
         }
@@ -852,14 +859,14 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
             }
         }
         if(numOfstrains == 1 && count > minStrainSpecificCnt + 1) {
-            selectedlowerTaxon = strainID;
+            selectedSpecies = strainID;
         }
     }
 
     // Store classification results
     queryList[currentQuery].isClassified = true;
-    queryList[currentQuery].classification = selectedlowerTaxon;
-    queryList[currentQuery].score = speciesRankScore;
+    queryList[currentQuery].classification = selectedSpecies;
+    queryList[currentQuery].score = speciesRankCoverage;
     queryList[currentQuery].newSpecies = false;
 
     if(PRINT) {
@@ -880,7 +887,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
         cout<<"genus\t"<<highRankScore<<endl;
     }
 
-    return selectedlowerTaxon;
+    return selectedSpecies;
 }
 
 int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
@@ -1373,17 +1380,19 @@ TaxID Classifier::classifyFurther2(const vector<Match> & matches,
     return matches[0].genusTaxID;
 }
 
-TaxID Classifier::classifyFurther3(const vector<Match> & matches,
+void Classifier::classifyFurther3(const vector<Match> & matches,
                                    NcbiTaxonomy & taxonomy,
                                    int queryLength,
                                    float possibleKmerNum,
-                                   float & lowerRankScore) {
+                                   ScrCov & speciesScrCov,
+                                   vector<TaxID> & species) {
     // Score each species
-    std::unordered_map<TaxID, float> speciesScores;
+    std::unordered_map<TaxID, ScrCov> speciesScrCovs;
     size_t i = 0;
     TaxID currentSpeices;
     size_t numOfMatch = matches.size();
     size_t speciesBegin, speciesEnd;
+    float currScore, currCoverage;
     while(i < numOfMatch){
         currentSpeices = matches[i].speciesTaxID;
         speciesBegin = i;
@@ -1391,27 +1400,19 @@ TaxID Classifier::classifyFurther3(const vector<Match> & matches,
             i++;
         }
         speciesEnd = i;
-        speciesScores[currentSpeices] = scoreTaxon(matches, speciesBegin, speciesEnd, queryLength);
+        speciesScrCovs[currentSpeices] = scoreTaxon(matches, speciesBegin, speciesEnd, queryLength);
     }
 
     // Get the best species
-    vector<TaxID> ties;
-    float bestScore = 0.f;
-    for(auto sp = speciesScores.begin(); sp != speciesScores.end(); sp ++){
-        if(sp->second > bestScore){
-            ties.clear();
-            ties.push_back(sp->first);
-            bestScore = sp->second;
-        } else if(sp->second == bestScore){
-            ties.push_back(sp->first);
+    float bestCoverage = 0.f;
+    for(auto sp = speciesScrCovs.begin(); sp != speciesScrCovs.end(); sp ++){
+        if(sp->second.coverage > bestCoverage){
+            species.clear();
+            species.push_back(sp->first);
+            bestCoverage = sp->second.coverage;
+        } else if(sp->second.coverage == bestCoverage){
+            species.push_back(sp->first);
         }
-    }
-    lowerRankScore = bestScore;
-
-    if(ties.size() > 1){
-        return matches[0].genusTaxID;
-    } else {
-        return ties[0];
     }
 }
 
@@ -1459,7 +1460,10 @@ TaxID Classifier::classifyFurther_paired(const std::vector<Match> & matches,
     }
 }
 
-float Classifier::scoreTaxon(const vector<Match> & matches, size_t begin, size_t end, int queryLength) {
+Classifier::ScrCov Classifier::scoreTaxon(const vector<Match> & matches,
+                             size_t begin,
+                             size_t end,
+                             int queryLength) {
     // Get the largest hamming distance at each position of query
     int aminoAcidNum = queryLength / 3;
     auto * hammingsAtEachPos = new signed char[aminoAcidNum + 1];
@@ -1494,12 +1498,10 @@ float Classifier::scoreTaxon(const vector<Match> & matches, size_t begin, size_t
         }
     }
     delete[] hammingsAtEachPos;
-    hammingSum = 0;
-
     // Score
     int coveredLength = coveredPosCnt * 3;
     if (coveredLength >= queryLength) coveredLength = queryLength;
-    return ((float)coveredLength - hammingSum) / (float)queryLength;
+    return ScrCov(((float)coveredLength - hammingSum) / (float) queryLength, (float) coveredLength / (float) queryLength);
 }
 
 float Classifier::scoreTaxon_paired(const vector<Match> & matches, size_t begin, size_t end, int queryLength, int queryLength2) {

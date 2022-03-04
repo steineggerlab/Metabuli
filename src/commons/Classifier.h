@@ -71,6 +71,11 @@ class Classifier
 {
 private:
 
+    struct ScrCov{
+        float score;
+        float coverage;
+        ScrCov(float score, float coverage) : score(score), coverage(coverage) {}
+    };
     struct taxNode {
         void set(const double weightInput, const bool isCandidateInput, const TaxID & childTaxonInput) {
             weight = weightInput;
@@ -287,11 +292,12 @@ private:
                                  NcbiTaxonomy & taxonomy,
                                  float maxKmerCnt);
 
-    static TaxID classifyFurther3(const std::vector<Match> & matches,
+    static void classifyFurther3(const std::vector<Match> & matches,
                                   NcbiTaxonomy & taxonomy,
                                   int queryLength,
                                   float maxKmerCnt,
-                                  float & lowerRankScore);
+                                  ScrCov & speciesScrCov,
+                                  vector<TaxID> & species);
 
     static TaxID classifyFurther_paired(const std::vector<Match> & matches,
                                   NcbiTaxonomy & taxonomy,
@@ -300,7 +306,7 @@ private:
                                   float maxKmerCnt,
                                   float & lowerRankScore);
 
-    static float scoreTaxon(const vector<Match> & matches,
+    static ScrCov scoreTaxon(const vector<Match> & matches,
                      size_t begin,
                      size_t end,
                      int queryLength);
@@ -326,6 +332,8 @@ private:
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts>& map, TaxID key);
 
 public:
+
+
     void startClassify(const char * queryFileName, const char * targetDiffIdxFileName, const char * targetInfoFileName,
                        const char * diffIdxSplitFileName, vector<int> & taxIdList, const LocalParameters & par,
                        NcbiTaxonomy & taxonomy);
