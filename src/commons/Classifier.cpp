@@ -754,10 +754,8 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
         return 0;
     }
 
-    float hammingSum;
     for(size_t i = 0; i < matchesForLCA.size(); i++ ){
         queryList[currentQuery].taxCnt[matchesForLCA[i].taxID] ++;
-        hammingSum += matchesForLCA[i].hamming;
     }
 
     // If there are two or more good genus level candidates, find the LCA.
@@ -784,23 +782,23 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     }
 
     // Classify prokaryotes in genus level for highly diverged queries, not for virus
-    if(highRankScore < 0.8 && !ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)){
-        selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
-        queryList[currentQuery].isClassified = true;
-        queryList[currentQuery].classification = selectedTaxon;
-        queryList[currentQuery].newSpecies = true;
-        queryList[currentQuery].score = highRankScore;
-        if(PRINT) {
-            cout << "# " << currentQuery << "HH" << endl;
-            for (size_t i = 0; i < matchesForLCA.size(); i++) {
-                cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
-                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) <<" "<< matchesForLCA[i].red << endl;
-            }
-            cout << "Score: " << highRankScore << "  " << selectedTaxon << " "
-                 << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
-        }
-        return selectedTaxon;
-    }
+//    if(highRankScore < 0.8 && !ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)){
+//        selectedTaxon = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
+//        queryList[currentQuery].isClassified = true;
+//        queryList[currentQuery].classification = selectedTaxon;
+//        queryList[currentQuery].newSpecies = true;
+//        queryList[currentQuery].score = highRankScore;
+//        if(PRINT) {
+//            cout << "# " << currentQuery << "HH" << endl;
+//            for (size_t i = 0; i < matchesForLCA.size(); i++) {
+//                cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
+//                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) <<" "<< matchesForLCA[i].red << endl;
+//            }
+//            cout << "Score: " << highRankScore << "  " << selectedTaxon << " "
+//                 << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
+//        }
+//        return selectedTaxon;
+//    }
 
     // Choose the species with the highest coverage.
     float speciesRankCoverage;
