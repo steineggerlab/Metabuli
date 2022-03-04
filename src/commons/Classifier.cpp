@@ -178,38 +178,41 @@ void Classifier::startClassify(const char * queryFileName,
     writeReportFile(par.filenames[3]+"/"+par.filenames[4]+"_CompositionReport.tsv", taxonomy, numOfSeq);
 
     // Below is for developing
-    vector<int> wrongClassifications;
-    sequences.clear();
-    sequences2.clear();
-    IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
-    IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
-    performanceTest(taxonomy, queryList, numOfSeq, wrongClassifications);
-    ofstream wr;
-    ofstream wr2;
-    wr.open(par.filenames[0]+"_wrong_1");
-    wr2.open(par.filenames[0]+"_wrong_2");
-    for (size_t i = 0; i < wrongClassifications.size(); i++) {
-            kseq_buffer_t buffer(const_cast<char *>(&queryFile.data[sequences[wrongClassifications[i]].start]), sequences[wrongClassifications[i]].length);
-            kseq_buffer_t buffer2(const_cast<char *>(&queryFile2.data[sequences[wrongClassifications[i]].start]), sequences2[wrongClassifications[i]].length);
-            kseq_t *seq = kseq_init(&buffer);
-            kseq_t *seq2 = kseq_init(&buffer2);
-            kseq_read(seq);
-            kseq_read(seq2);
+//    vector<int> wrongClassifications;
+//    sequences.clear();
+//    sequences2.clear();
+//    IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
+//    IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
+//    performanceTest(taxonomy, queryList, numOfSeq, wrongClassifications);
+//    ofstream wr;
+//    ofstream wr2;
+//    wr.open(par.filenames[0]+"_wrong_1");
+//    wr2.open(par.filenames[0]+"_wrong_2");
+//    for (size_t i = 0; i < wrongClassifications.size(); i++) {
+//            kseq_buffer_t buffer(const_cast<char *>(&queryFile.data[sequences[wrongClassifications[i]].start]), sequences[wrongClassifications[i]].length);
+//            kseq_buffer_t buffer2(const_cast<char *>(&queryFile2.data[sequences[wrongClassifications[i]].start]), sequences2[wrongClassifications[i]].length);
+//            kseq_t *seq = kseq_init(&buffer);
+//            kseq_t *seq2 = kseq_init(&buffer2);
+//            kseq_read(seq);
+//            kseq_read(seq2);
+//
+//            wr<<">"<<seq->name.s<<endl;
+//            wr<<seq->seq.s<<endl;
+//
+//            wr2<<">"<<seq2->name.s<<endl;
+//            wr2<<seq2->seq.s<<endl;
+//            kseq_destroy(seq);
+//            kseq_destroy(seq2);
+//    }
+//    wr.close();
+//    wr2.close();
 
-            wr<<">"<<seq->name.s<<endl;
-            wr<<seq->seq.s<<endl;
-
-            wr2<<">"<<seq2->name.s<<endl;
-            wr2<<seq2->seq.s<<endl;
-            kseq_destroy(seq);
-            kseq_destroy(seq2);
-    }
-    wr.close();
-    wr2.close();
     free(kmerBuffer.buffer);
     free(matchBuffer.buffer);
     munmap(queryFile.data, queryFile.fileSize + 1);
-    munmap(queryFile2.data, queryFile2.fileSize + 1);
+    if(par.seqMode == 2) {
+        munmap(queryFile2.data, queryFile2.fileSize + 1);
+    }
     munmap(targetDiffIdxList.data, targetDiffIdxList.fileSize + 1);
     munmap(targetInfoList.data, targetInfoList.fileSize + 1);
 }
