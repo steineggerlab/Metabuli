@@ -75,6 +75,7 @@ private:
         float score;
         float coverage;
         ScrCov(float score, float coverage) : score(score), coverage(coverage) {}
+        ScrCov() : score(0.f), coverage(0.f){ }
     };
     struct taxNode {
         void set(const double weightInput, const bool isCandidateInput, const TaxID & childTaxonInput) {
