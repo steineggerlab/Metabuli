@@ -7,7 +7,7 @@
 #define kmerBufSize 10000000000 // 10000000000 | 2860000000
 #define ThreadNum 32
 #define SplitNum 4096
-#define PRINT true
+#define PRINT false
 #define MMAP true
 
 struct Sequence{
