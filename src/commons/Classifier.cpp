@@ -856,17 +856,17 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
             cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
                  matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) <<" "<< matchesForLCA[i].red << endl;
         }
-        cout << "Score: " << highRankScore << "  " << selectedTaxon << " " << ncbiTaxonomy.taxonNode(selectedTaxon)->rank
+        cout << "Score: " << highRankScore << "  " << selectedTaxon << " " << ncbiTaxonomy.taxonNode(selectedSpecies)->rank
              << endl;
     }
 
-    if(PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedTaxon)->rank) == 4){
-        cout<<"sp\t"<<highRankScore<<endl;
-    } else if(PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedTaxon)->rank) == 3){
-        cout<<"sub\t"<<highRankScore<<endl;
-    } else if(PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedTaxon)->rank) == 8){
-        cout<<"genus\t"<<highRankScore<<endl;
-    }
+//    if(PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedTaxon)->rank) == 4){
+//        cout<<"sp\t"<<highRankScore<<endl;
+//    } else if(PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedTaxon)->rank) == 3){
+//        cout<<"sub\t"<<highRankScore<<endl;
+//    } else if(PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedTaxon)->rank) == 8){
+//        cout<<"genus\t"<<highRankScore<<endl;
+//    }
 
     return selectedSpecies;
 }
