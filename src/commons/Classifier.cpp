@@ -650,11 +650,15 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy,
                                        const LocalParameters & par) {
 
     // Devide matches into blocks for multi threading
-    MatchBlock *matchBlocks = new MatchBlock[seqNum];
+    cout << "Devide matches into blocks for multi threading" << endl;
+    cout << seqNum <<endl;
+    cout << numOfMatches <<endl;
+    MatchBlock * matchBlocks = new MatchBlock[seqNum];
     size_t matchIdx = 0;
     size_t blockIdx = 0;
     uint32_t currentQuery;
     while (matchIdx < numOfMatches) {
+        cout<<blockIdx<<endl;
         currentQuery = matchList[matchIdx].queryId;
         matchBlocks[blockIdx].id = currentQuery;
         matchBlocks[blockIdx].start = matchIdx;
@@ -849,14 +853,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
         cout << "Score: " << speciesScrCov.score << "  " << selectedSpecies << " " << ncbiTaxonomy.taxonNode(selectedSpecies)->rank
              << endl;
     }
-
-//    if(PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedTaxon)->rank) == 4){
-//        cout<<"sp\t"<<highRankScore<<endl;
-//    } else if(PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedTaxon)->rank) == 3){
-//        cout<<"sub\t"<<highRankScore<<endl;
-//    } else if(PRINT && NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedTaxon)->rank) == 8){
-//        cout<<"genus\t"<<highRankScore<<endl;
-//    }
 
     return selectedSpecies;
 }
