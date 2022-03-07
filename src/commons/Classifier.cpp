@@ -782,7 +782,6 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     }
 
     // Choose the species with the highest coverage.
-    float speciesRankCoverage;
     TaxID selectedSpecies;
     ScrCov speciesScrCov(0.f, 0.f);
     vector<TaxID> species;
@@ -847,7 +846,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     // Store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedSpecies;
-    queryList[currentQuery].score = speciesRankCoverage;
+    queryList[currentQuery].score = speciesScrCov.score;
     queryList[currentQuery].newSpecies = false;
 
     if(PRINT) {
@@ -856,7 +855,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
             cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
                  matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) <<" "<< matchesForLCA[i].red << endl;
         }
-        cout << "Score: " << highRankScore << "  " << selectedTaxon << " " << ncbiTaxonomy.taxonNode(selectedSpecies)->rank
+        cout << "Score: " << speciesScrCov.score << "  " << selectedSpecies << " " << ncbiTaxonomy.taxonNode(selectedSpecies)->rank
              << endl;
     }
 
