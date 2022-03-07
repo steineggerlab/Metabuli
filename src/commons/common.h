@@ -8,6 +8,7 @@
 #define ThreadNum 32
 #define SplitNum 4096
 #define PRINT true
+#define MMAP true
 
 struct Sequence{
     Sequence(size_t start, size_t end, size_t length) : start(start), end(end), length(length) { }

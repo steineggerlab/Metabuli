@@ -231,7 +231,8 @@ private:
 
     // Analyzing k-mer matches
     void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy,
-                               Buffer<Match> & matchBuffer,
+                               Match * matchList,
+                               size_t numOfMatches,
                                int seqNum,
                                Query * queryList,
                                const LocalParameters & par);

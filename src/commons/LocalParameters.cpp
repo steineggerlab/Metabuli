@@ -25,7 +25,15 @@ LocalParameters::LocalParameters():
                      typeid(int),
                      (void *) &seqMode,
                      "[1-3]",
-                     MMseqsParameter::COMMAND_COMMON)
+                     MMseqsParameter::COMMAND_COMMON),
+        MEMORY_MODE(MEMORY_MODE_ID,
+                 "--memory-mode",
+                 "Keeping k-mer matches in the RAM or writing into a file",
+                 "Writing: 1 [Default]\n RAM:  2",
+                 typeid(int),
+                 (void *) &memoryMode,
+                 "[1-2]",
+                 MMseqsParameter::COMMAND_COMMON)
                      {
     //build_dir
     build_dir.push_back(&PARAM_THREADS);
@@ -35,6 +43,7 @@ LocalParameters::LocalParameters():
     classify.push_back(&PARAM_THREADS);
     classify.push_back(&SEQ_MODE);
     classify.push_back(&VIRUS_TAX_ID);
+    classify.push_back(&MEMORY_MODE);
 
     //updateTargetDB
 

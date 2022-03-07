@@ -156,19 +156,26 @@ void Classifier::startClassify(const char * queryFileName,
     }
     cout<<"Number of query k-mers: "<<numOfTatalQueryKmerCnt<<endl;
 
+    if(par.memoryMode == 1) {
+        writeMatches(matchBuffer, matchFile);
+        struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
+        size_t numOfMatches = matchList.fileSize / sizeof(Match);
+        time_t beforeSortMatches = time(nullptr);
+        SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
+        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
+        time_t beforeAnalyze = time(nullptr);
+        analyseResultParallel(taxonomy, matchList.data, numOfMatches, (int) numOfSeq, queryList, par);
+        cout<<"Time spent for analyzing: "<<double(time(nullptr)-beforeAnalyze)<<endl;
+    } else {
+        time_t beforeSortMatches = time(nullptr);
+        SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve,
+                      Classifier::sortByGenusAndSpecies2);
+        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
+        time_t beforeAnalyze = time(nullptr);
+        analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList, par);
+        cout<<"Time spent for analyzing: "<<double(time(nullptr)-beforeAnalyze)<<endl;
+    }
     fclose(matchFile);
-
-    // Sort Matches
-    time_t beforeSortMatches = time(nullptr);
-    SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve, Classifier::sortByGenusAndSpecies2);
-    cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
-
-
-    // Analyze matches
-    cout<<"Analyse Result ... "<<endl;
-    time_t beforeAnalyze = time(nullptr);
-    analyseResultParallel(taxonomy, matchBuffer, (int) numOfSeq, queryList, par);
-    cout<<"Time spent for analyzing: "<<double(time(nullptr)-beforeAnalyze)<<endl;
 
     // Write report files
     ofstream readClassificationFile;
@@ -605,16 +612,7 @@ void Classifier::writeMatches(Buffer<Match> & matchBuffer, FILE * matchFile){
     matchBuffer.startIndexOfReserve = 0;
 }
 
-bool Classifier::compareForWritingMatches(const Match & a, const Match & b){
-    if (a.queryId < b.queryId) return true;
-    else if (a.queryId == b.queryId) {
-        if (a.frame < b.frame) return true;
-        else if (a.frame == b.frame) {
-            if (a.position < b.position) return true;
-        }
-    }
-    return false;
-}
+
 
 // It compares query k-mers to target k-mers.
 // If a query has matches, the matches with the smallest hamming distance will be selected
@@ -648,14 +646,13 @@ void Classifier::compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCo
 }
 
 // It analyses the result of linear search.
-void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, Buffer<Match> & matchBuffer,
+void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, Match * matchList, size_t numOfMatches,
                                        int seqNum, Query * queryList, const LocalParameters & par) {
     // Mmap the file of matches
 //    struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
 //    size_t numOfMatches = matchList.fileSize / sizeof(Match);
 
 
-    size_t numOfMatches = matchBuffer.startIndexOfReserve;
 
     // Sort matches in order to analyze
     //SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
@@ -666,10 +663,10 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, Buffer<Match
     size_t blockIdx = 0;
     uint32_t currentQuery;
     while (matchIdx < numOfMatches) {
-        currentQuery = matchBuffer.buffer[matchIdx].queryId;
+        currentQuery = matchList[matchIdx].queryId;
         matchBlocks[blockIdx].id = currentQuery;
         matchBlocks[blockIdx].start = matchIdx;
-        while ((currentQuery == matchBuffer.buffer[matchIdx].queryId) && (matchIdx < numOfMatches)) ++matchIdx;
+        while ((currentQuery == matchList[matchIdx].queryId) && (matchIdx < numOfMatches)) ++matchIdx;
         matchBlocks[blockIdx].end = matchIdx - 1;
         blockIdx++;
     }
@@ -682,7 +679,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, Buffer<Match
     }
 
     // Process each block
-#pragma omp parallel default(none), shared(cout, matchBlocks, matchBuffer, seqNum, ncbiTaxonomy, queryList, blockIdx, par)
+#pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqNum, ncbiTaxonomy, queryList, blockIdx, par)
     {
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < blockIdx; ++i) {
@@ -690,7 +687,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, Buffer<Match
                             matchBlocks[i].id,
                             matchBlocks[i].start,
                             matchBlocks[i].end,
-                            matchBuffer.buffer,
+                            matchList,
                             queryList,
                             par);
         }
@@ -702,6 +699,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy, Buffer<Match
     delete[] matchBlocks;
     cout << "End of analyseResultParallel" << endl;
 }
+
 
 TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQuery,
                                   size_t offset, size_t end, Match * matchList, Query * queryList,
