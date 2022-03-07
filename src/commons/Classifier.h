@@ -254,6 +254,9 @@ private:
     static int getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
                                  size_t offset, int queryLength, float & bestScore);
 
+    static int getMatchesOfTheBestGenus_index(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
+                                        size_t offset, int queryLength, float & bestScore);
+
     static int getMatchesOfTheBestGenus_paired(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
                                         size_t offset, int readLength1, int readLength2, float & bestScore);
 
@@ -261,6 +264,12 @@ private:
                                           vector<vector<Match>> & matchesForEachGenus,
                                           vector<float> & scoreOfEachGenus,
                                           int queryLength);
+
+    static void constructMatchCombination_index(vector<size_t> & filteredMatchesIndex,
+                                                Match * matchList,
+                                                vector<vector<size_t>> & matchesForEachGenus,
+                                                vector<float> & scoreOfEachGenus,
+                                                int queryLength);
 
     static void constructMatchCombination_paired(vector<Match> & filteredMatches,
                                           vector<vector<Match>> & matchesForEachGenus,
@@ -274,12 +283,12 @@ private:
                                  NcbiTaxonomy & taxonomy,
                                  float maxKmerCnt);
 
-    static void classifyFurther3(const std::vector<Match> & matches,
-                                  NcbiTaxonomy & taxonomy,
-                                  int queryLength,
-                                  float maxKmerCnt,
-                                  ScrCov & speciesScrCov,
-                                  vector<TaxID> & species);
+    static void chooseSpecies(const std::vector<Match> & matches,
+                              NcbiTaxonomy & taxonomy,
+                              int queryLength,
+                              float maxKmerCnt,
+                              ScrCov & speciesScrCov,
+                              vector<TaxID> & species);
 
     static void classifyFurther_paired(const std::vector<Match> & matches,
                                   NcbiTaxonomy & taxonomy,
