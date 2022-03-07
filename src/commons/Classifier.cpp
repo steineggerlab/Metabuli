@@ -118,45 +118,45 @@ void Classifier::startClassify(const char * queryFileName,
 
     // Extract k-mers from query sequences and compare them to target k-mer DB
     omp_set_num_threads(par.threads);
-//    while(processedSeqCnt < numOfSeq){
-//        time_t beforeKmerExtraction = time(nullptr);
-//        if(par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
-//            fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt,
-//                                        queryList, par);
-//        } else if(par.seqMode == 2){
-//            fillQueryKmerBufferParallel_paired(kmerBuffer,
-//                                               queryFile,
-//                                               queryFile2,
-//                                               sequences,
-//                                               sequences2,
-//                                               processedSeqChecker,
-//                                               processedSeqCnt,
-//                                               queryList,
-//                                               numOfSeq,
-//                                               par);
-//        }
-//        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
-//        cout<<"Time spent for k-mer extraction: " << double(time(nullptr) - beforeKmerExtraction) << endl;
-//
-//        time_t beforeQueryKmerSort = time(nullptr);
-//        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
-//        cout<<"Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
-//
-//        time_t beforeSearch = time(nullptr);
-//        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList,
-//                             diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile, par);
-//        cout<<"Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
-//        cout<<"The number of matches: "<<kmerBuffer.startIndexOfReserve<<endl;
-//    }
-//    cout<<"Number of query k-mers: "<<numOfTatalQueryKmerCnt<<endl;
+    while(processedSeqCnt < numOfSeq){
+        time_t beforeKmerExtraction = time(nullptr);
+        if(par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
+            fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt,
+                                        queryList, par);
+        } else if(par.seqMode == 2){
+            fillQueryKmerBufferParallel_paired(kmerBuffer,
+                                               queryFile,
+                                               queryFile2,
+                                               sequences,
+                                               sequences2,
+                                               processedSeqChecker,
+                                               processedSeqCnt,
+                                               queryList,
+                                               numOfSeq,
+                                               par);
+        }
+        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
+        cout<<"Time spent for k-mer extraction: " << double(time(nullptr) - beforeKmerExtraction) << endl;
+
+        time_t beforeQueryKmerSort = time(nullptr);
+        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
+        cout<<"Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
+
+        time_t beforeSearch = time(nullptr);
+        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList,
+                             diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile, par);
+        cout<<"Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
+        cout<<"The number of matches: "<<kmerBuffer.startIndexOfReserve<<endl;
+    }
+    cout<<"Number of query k-mers: "<<numOfTatalQueryKmerCnt<<endl;
 
     if(par.memoryMode == 1) {
-        //writeMatches(matchBuffer, matchFile);
+        writeMatches(matchBuffer, matchFile);
         fclose(matchFile);
         struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
         size_t numOfMatches = matchList.fileSize / sizeof(Match);
         time_t beforeSortMatches = time(nullptr);
-        //SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
+        SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
         cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
         time_t beforeAnalyze = time(nullptr);
         analyseResultParallel(taxonomy, matchList.data, numOfMatches, (int) numOfSeq, queryList, par);
