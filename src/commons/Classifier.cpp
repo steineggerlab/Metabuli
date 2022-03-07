@@ -948,7 +948,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> & matchesForMajori
     //3. no genus
 }
 
-int Classifier::getMatchesOfTheBestGenus_index(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
+int Classifier::getMatchesOfTheBestGenus_index(vector<size_t> & matchesForMajorityLCA, Match * matchList, size_t end,
                                          size_t offset, int queryLength, float & bestScore){
     int conCnt;
     uint32_t hammingSum;

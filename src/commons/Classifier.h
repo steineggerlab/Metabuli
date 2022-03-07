@@ -254,7 +254,7 @@ private:
     static int getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
                                  size_t offset, int queryLength, float & bestScore);
 
-    static int getMatchesOfTheBestGenus_index(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
+    static int getMatchesOfTheBestGenus_index(vector<size_t> & matchesForMajorityLCA, Match * matchList, size_t end,
                                         size_t offset, int queryLength, float & bestScore);
 
     static int getMatchesOfTheBestGenus_paired(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
