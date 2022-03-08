@@ -1224,11 +1224,11 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
     while(i < end + 1) {
         currentGenus = matchList[i].genusTaxID;
         // For current genus
-        while (currentGenus == matchList[i].genusTaxID && (i < end + 1)) {
+        while ((i < end + 1) && currentGenus == matchList[i].genusTaxID) {
             currentSpecies = matchList[i].speciesTaxID;
             // For current species
             // Filter un-consecutive matches (probably random matches)
-            while(currentSpecies == matchList[i].speciesTaxID && (i < end + 1)){
+            while((i < end + 1) && currentSpecies == matchList[i].speciesTaxID){
                 offsetIdx = i;
                 i++;
                 newOffset = true;
