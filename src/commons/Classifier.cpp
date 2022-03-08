@@ -85,7 +85,7 @@ void Classifier::startClassify(const char * queryFileName,
     Query * queryList;
     size_t numOfSeq;
     size_t numOfSeq2;
-    if(par.seqMode == 1){
+    if(par.seqMode == 1 || par.seqMode == 3){
         queryFile = mmapData<char>(par.filenames[0].c_str());
         IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
         numOfSeq = sequences.size();
@@ -817,6 +817,8 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
         minStrainSpecificCnt = 1;
     } else if (par.seqMode == 2){
         minStrainSpecificCnt = 2;
+    } else if (par.seqMode == 3){
+        minStrainSpecificCnt = 3;
     }
     if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedSpecies)->rank) == 4){
         unordered_map<TaxID, int> strainMatchCnt;
