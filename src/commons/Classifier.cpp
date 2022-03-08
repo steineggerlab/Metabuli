@@ -666,7 +666,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy,
         matchBlocks[blockIdx].start = matchIdx;
         while ((currentQuery == matchList[matchIdx].queryId) && (matchIdx < numOfMatches)) ++matchIdx;
         matchBlocks[blockIdx].end = matchIdx - 1;
-//        cout<<blockIdx<<" "<<currentQuery<<" "<<endl;
+        cout<<blockIdx<<" "<<currentQuery<<" "<<matchIdx<<endl;
         blockIdx++;
     }
 
