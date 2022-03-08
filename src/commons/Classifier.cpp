@@ -662,11 +662,11 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy,
     uint32_t currentQuery;
     while (matchIdx < numOfMatches) {
         currentQuery = matchList[matchIdx].queryId;
-        cout<<blockIdx<<" "<<currentQuery<<endl;
         matchBlocks[blockIdx].id = currentQuery;
         matchBlocks[blockIdx].start = matchIdx;
         while ((currentQuery == matchList[matchIdx].queryId) && (matchIdx < numOfMatches)) ++matchIdx;
         matchBlocks[blockIdx].end = matchIdx - 1;
+//        cout<<blockIdx<<" "<<currentQuery<<" "<<endl;
         blockIdx++;
     }
 
@@ -682,7 +682,6 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy,
     {
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < blockIdx; ++i) {
-            cout<<i<<endl;
             chooseBestTaxon(ncbiTaxonomy,
                             matchBlocks[i].id,
                             matchBlocks[i].start,
@@ -730,7 +729,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     } else {
         res = getMatchesOfTheBestGenus(matchesForLCA, matchList, end, offset, queryLength, highRankScore);
     }
-
+    cout<<"1"<<endl;
     if(PRINT) {
         cout<<"# "<<currentQuery<<" filtered"<<endl;
         for (size_t i = 0; i < matchesForLCA.size(); i++) {
@@ -755,7 +754,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     for(size_t i = 0; i < matchesForLCA.size(); i++ ){
         queryList[currentQuery].taxCnt[matchesForLCA[i].taxID] ++;
     }
-
+    cout<<"2"<<endl;
     // If there are two or more good genus level candidates, find the LCA.
     if(res == 2){
         vector<TaxID> taxIdList;
@@ -778,7 +777,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
         }
         return selectedTaxon;
     }
-
+    cout<<"3"<<endl;
     // Choose the species with the highest coverage.
     TaxID selectedSpecies;
     ScrCov speciesScrCov(0.f, 0.f);
@@ -798,6 +797,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
                       speciesScrCov,
                       species);
     }
+    cout<<"4"<<endl;
 
     // Classify at the genus rank if more than one species are selected.
     // Classify at the genus rank if the score at species level is not enough.
@@ -1260,6 +1260,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         // so that it can best cover the query, and score the combination
         if(!filteredMatches.empty()) {
            constructMatchCombination(filteredMatches, matchesForEachGenus, scoreOfEachGenus, queryLength);
+           cout<<"2"<<endl;
         }
         filteredMatches.clear();
     }
