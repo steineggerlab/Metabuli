@@ -1256,7 +1256,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         // so that it can best cover the query, and score the combination
         if(!filteredMatches.empty()) {
            constructMatchCombination(filteredMatches, matchesForEachGenus, scoreOfEachGenus, queryLength);
-            cout<<"11"<<endl;
+           cout<<"11"<<endl;
         }
         filteredMatches.clear();
     }
@@ -1277,7 +1277,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         }
     }
     bestScore = maxScore;
-
+    cout<<"22"<<endl;
     for(size_t g = 0; g < maxIdx.size(); g++){
         matchesForMajorityLCA.insert(matchesForMajorityLCA.end(), matchesForEachGenus[maxIdx[g]].begin(),
                                      matchesForEachGenus[maxIdx[g]].end());
