@@ -1256,6 +1256,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         // so that it can best cover the query, and score the combination
         if(!filteredMatches.empty()) {
            constructMatchCombination(filteredMatches, matchesForEachGenus, scoreOfEachGenus, queryLength);
+            cout<<"11"<<endl;
         }
         filteredMatches.clear();
     }
