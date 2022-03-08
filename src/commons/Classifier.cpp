@@ -681,7 +681,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy,
 #pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqNum, ncbiTaxonomy, queryList, blockIdx, par)
     {
 #pragma omp for schedule(dynamic, 1)
-        for (size_t i = 0; i < blockIdx - 1; ++i) {
+        for (size_t i = blockIdx - 1; i < blockIdx; ++i) {
             chooseBestTaxon(ncbiTaxonomy,
                             matchBlocks[i].id,
                             matchBlocks[i].start,
