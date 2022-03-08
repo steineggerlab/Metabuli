@@ -818,7 +818,10 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     } else if (par.seqMode == 2){
         minStrainSpecificCnt = 2;
     } else if (par.seqMode == 3){
-        minStrainSpecificCnt = 3;
+        minStrainSpecificCnt = 5;
+        if(queryLength > 5000){
+            minStrainSpecificCnt = queryLength / 1000;
+        }
     }
     if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedSpecies)->rank) == 4){
         unordered_map<TaxID, int> strainMatchCnt;
