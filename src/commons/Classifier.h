@@ -243,7 +243,7 @@ private:
 
     static bool sortBySpecies(const Match & a, const Match & b);
 
-    TaxID chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy,
+    void chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy,
                           uint32_t currentQuery,
                           size_t offset,
                           size_t end,
@@ -251,7 +251,7 @@ private:
                           Query * queryList,
                           const LocalParameters & par);
 
-    TaxID chooseBestTaxon_index(NcbiTaxonomy & ncbiTaxonomy,
+    void chooseBestTaxon_index(NcbiTaxonomy & ncbiTaxonomy,
                           uint32_t currentQuery,
                           size_t offset,
                           size_t end,

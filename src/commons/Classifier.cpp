@@ -700,10 +700,11 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy,
 }
 
 
-TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQuery,
+void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQuery,
                                   size_t offset, size_t end, Match * matchList, Query * queryList,
                                   const LocalParameters & par ) {
     int queryLength = queryList[currentQuery].queryLength;
+    cout<<queryLength<<" "<<currentQuery<<endl;
     TaxID selectedTaxon;
     if(PRINT) {
         cout<<"# "<<currentQuery<<endl;
@@ -746,12 +747,10 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
 
     //If there is no proper genus for current query, it is un-classified.
     if(res == 3){
-        cout<<"b"<<endl;
         queryList[currentQuery].isClassified = false;
         queryList[currentQuery].classification = 0;
         queryList[currentQuery].score = 0;
         queryList[currentQuery].newSpecies = false;
-        cout<<"c"<<endl;
         return 0;
     }
     cout<<"a"<<endl;
