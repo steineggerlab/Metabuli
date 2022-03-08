@@ -65,7 +65,7 @@ void Classifier::startClassify(const char * queryFileName,
     //output file
     char matchFileName[300];
     sprintf(matchFileName,"%s_match2", queryFileName);
-    FILE * matchFile = fopen(matchFileName, "rb");
+    FILE * matchFile = fopen(matchFileName, "wb");
 
 
     // Load database
@@ -146,7 +146,7 @@ void Classifier::startClassify(const char * queryFileName,
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList,
                              diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile, par);
         cout<<"Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
-        cout<<"The number of matches: "<<kmerBuffer.startIndexOfReserve<<endl;
+        cout<<"The number of matches: "<<matchBuffer.startIndexOfReserve<<endl;
     }
     cout<<"Number of query k-mers: "<<numOfTatalQueryKmerCnt<<endl;
 
@@ -857,6 +857,165 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     return selectedSpecies;
 }
 
+//TaxID Classifier::chooseBestTaxon_index(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQuery,
+//                                  size_t offset, size_t end, Match * matchList, Query * queryList,
+//                                  const LocalParameters & par ) {
+//    int queryLength = queryList[currentQuery].queryLength;
+//    TaxID selectedTaxon;
+//    if(PRINT) {
+//        cout<<"# "<<currentQuery<<endl;
+//        for (size_t i = offset; i < end + 1; i++) {
+//            cout << matchList[i].genusTaxID<<" "<<matchList[i].speciesTaxID << " " << matchList[i].taxID << " " <<
+//                 int(matchList[i].frame)<< " " << matchList[i].position  << " " << int(matchList[i].hamming) << endl;
+//        }
+//    }
+//
+//    // Get the best genus for current query
+//    vector<size_t> genusMatches;
+//    genusMatches.reserve(end-offset+1);
+//    float highRankScore;
+//    int res;
+//    if(par.seqMode == 2){
+//        res = getMatchesOfTheBestGenus_paired(matchesForLCA,
+//                                              matchList,
+//                                              end,
+//                                              offset,
+//                                              queryList[currentQuery].queryLength,
+//                                              queryList[currentQuery].queryLength2,
+//                                              highRankScore);
+//    } else {
+//        res = getMatchesOfTheBestGenus_index(genusMatches, matchList, end, offset, queryLength, highRankScore);
+//    }
+//
+//    if(PRINT) {
+//        cout<<"# "<<currentQuery<<" filtered"<<endl;
+//        for (size_t i = 0; i < genusMatches.size(); i++) {
+//            cout << matchList[genusMatches[i]].genusTaxID<<" "<< matchList[genusMatches[i]].speciesTaxID << " " <<  matchList[genusMatches[i]].taxID << " " <<
+//                 int( matchList[genusMatches[i]].frame)<< " " <<  matchList[genusMatches[i]].position  << " " << int( matchList[genusMatches[i]].hamming) << endl;
+//        }
+//    }
+//
+////    if(PRINT){
+////        sort(matchesForLCA.begin(), matchesForLCA.end(), Classifier::sortByGenusAndSpecies);
+////    }
+//
+//    //If there is no proper genus for current query, it is un-classified.
+//    if(res == 3){
+//        queryList[currentQuery].isClassified = false;
+//        queryList[currentQuery].classification = 0;
+//        queryList[currentQuery].score = 0;
+//        queryList[currentQuery].newSpecies = false;
+//        return 0;
+//    }
+//
+//    for(size_t i = 0; i < genusMatches.size(); i++ ){
+//        queryList[currentQuery].taxCnt[matchList[genusMatches[i]].taxID] ++;
+//    }
+//
+//    // If there are two or more good genus level candidates, find the LCA.
+//    if(res == 2){
+//        vector<TaxID> taxIdList;
+//        taxIdList.reserve(genusMatches.size());
+//        for(size_t i = 0; i < genusMatches.size(); i++ ){
+//            taxIdList.push_back(matchList[genusMatches[i]].taxID);
+//        }
+//        selectedTaxon = ncbiTaxonomy.LCA(taxIdList)->taxId;
+//        queryList[currentQuery].isClassified = true;
+//        queryList[currentQuery].classification = selectedTaxon;
+//        queryList[currentQuery].score = highRankScore;
+//        if(PRINT) {
+//            cout << "# " << currentQuery << " " << res << endl;
+//            for (size_t i = 0; i < taxIdList.size(); i++) {
+//                cout << i << " " << int(matchList[genusMatches[i]].frame) << " " << matchList[genusMatches[i]].position<< " " <<
+//                matchList[genusMatches[i]].taxID << " " << int(matchList[genusMatches[i]].hamming) <<" "<< matchList[genusMatches[i]].red << endl;
+//            }
+//            cout << "Score: " << highRankScore << " " << selectedTaxon << " "
+//                 << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
+//        }
+//        return selectedTaxon;
+//    }
+//
+//    // Choose the species with the highest coverage.
+//    TaxID selectedSpecies;
+//    ScrCov speciesScrCov(0.f, 0.f);
+//    vector<TaxID> species;
+//    if(par.seqMode == 2) {
+//        classifyFurther_paired(matchesForLCA,
+//                               ncbiTaxonomy,
+//                               queryLength,
+//                               queryList[currentQuery].queryLength2,
+//                               speciesScrCov,
+//                               species);
+//    } else {
+//        chooseSpecies(matchesForLCA,
+//                      ncbiTaxonomy,
+//                      queryLength,
+//                      (float) queryList[currentQuery].kmerCnt / 6,
+//                      speciesScrCov,
+//                      species);
+//    }
+//
+//    // Classify at the genus rank if more than one species are selected.
+//    // Classify at the genus rank if the score at species level is not enough.
+//    if(species.size() > 1
+//       || (speciesScrCov.score < 0.9 && !ncbiTaxonomy.IsAncestor(par.virusTaxId, matchList[genusMatches[0]].taxID))){
+//        queryList[currentQuery].isClassified = true;
+//        queryList[currentQuery].classification = ncbiTaxonomy.getTaxIdAtRank(matchList[genusMatches[0]].taxID, "genus");
+//        queryList[currentQuery].score = highRankScore;
+//        return queryList[currentQuery].classification;
+//    }
+//
+//    selectedSpecies = species[0];
+//
+//    // Check if it can be classified at the subspecies rank.
+//    int numOfstrains = 0;
+//    TaxID strainID = 0;
+//    int count = 1;
+//    int minStrainSpecificCnt = 1;
+//    if(par.seqMode == 1){
+//        minStrainSpecificCnt = 1;
+//    } else if (par.seqMode == 2){
+//        minStrainSpecificCnt = 2;
+//    }
+//    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedSpecies)->rank) == 4){
+//        unordered_map<TaxID, int> strainMatchCnt;
+//        for(size_t i = 0; i < genusMatches.size(); i++){
+//            if(selectedSpecies != matchList[genusMatches[i]].taxID
+//               && ncbiTaxonomy.IsAncestor(selectedSpecies, matchesForLCA[i].taxID)){
+//                strainMatchCnt[matchesForLCA[i].taxID]++;
+//            }
+//        }
+//        for(auto strainIt = strainMatchCnt.begin(); strainIt != strainMatchCnt.end(); strainIt ++){
+//            if(strainIt->second > minStrainSpecificCnt){
+//                strainID = strainIt->first;
+//                numOfstrains++;
+//                count = strainIt->second;
+//            }
+//        }
+//        if(numOfstrains == 1 && count > minStrainSpecificCnt + 1) {
+//            selectedSpecies = strainID;
+//        }
+//    }
+//
+//    // Store classification results
+//    queryList[currentQuery].isClassified = true;
+//    queryList[currentQuery].classification = selectedSpecies;
+//    queryList[currentQuery].score = speciesScrCov.score;
+//    queryList[currentQuery].newSpecies = false;
+//
+//    if(PRINT) {
+//        cout << "# " << currentQuery << endl;
+//        for (size_t i = 0; i < matchesForLCA.size(); i++) {
+//            cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position<< " " <<
+//                 matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) <<" "<< matchesForLCA[i].red << endl;
+//        }
+//        cout << "Score: " << speciesScrCov.score << "  " << selectedSpecies << " " << ncbiTaxonomy.taxonNode(selectedSpecies)->rank
+//             << endl;
+//    }
+//
+//    return selectedSpecies;
+//}
+
 int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> & matchesForMajorityLCA, Match * matchList, size_t end,
                                          size_t offset, int readLength1, int readLength2, float & bestScore){
     int conCnt;
@@ -944,8 +1103,12 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> & matchesForMajori
     //3. no genus
 }
 
-int Classifier::getMatchesOfTheBestGenus_index(vector<size_t> & matchesForMajorityLCA, Match * matchList, size_t end,
-                                         size_t offset, int queryLength, float & bestScore){
+int Classifier::getMatchesOfTheBestGenus_index(vector<size_t> & matchesForMajorityLCA,
+                                               Match * matchList,
+                                               size_t end,
+                                               size_t offset,
+                                               int queryLength,
+                                               float & bestScore){
     int conCnt;
     uint32_t hammingSum;
     float hammingMean;
