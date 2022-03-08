@@ -751,7 +751,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         queryList[currentQuery].classification = 0;
         queryList[currentQuery].score = 0;
         queryList[currentQuery].newSpecies = false;
-        return 0;
+        return;
     }
     cout<<"a"<<endl;
     for(size_t i = 0; i < matchesForLCA.size(); i++ ){
@@ -778,7 +778,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
             cout << "Score: " << highRankScore << " " << selectedTaxon << " "
                  << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
         }
-        return selectedTaxon;
+        return;
     }
     cout<<"3"<<endl;
     // Choose the species with the highest coverage.
@@ -809,7 +809,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
         queryList[currentQuery].score = highRankScore;
-        return queryList[currentQuery].classification;
+        return;
     }
 
     selectedSpecies = species[0];
@@ -864,8 +864,6 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         cout << "Score: " << speciesScrCov.score << "  " << selectedSpecies << " " << ncbiTaxonomy.taxonNode(selectedSpecies)->rank
              << endl;
     }
-
-    return selectedSpecies;
 }
 
 //TaxID Classifier::chooseBestTaxon_index(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQuery,
