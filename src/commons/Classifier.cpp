@@ -156,7 +156,7 @@ void Classifier::startClassify(const char * queryFileName,
         struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
         size_t numOfMatches = matchList.fileSize / sizeof(Match);
         time_t beforeSortMatches = time(nullptr);
-        SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
+        //SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
         cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
         time_t beforeAnalyze = time(nullptr);
         analyseResultParallel(taxonomy, matchList.data, numOfMatches, (int) numOfSeq, queryList, par);
@@ -661,8 +661,8 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy,
     size_t blockIdx = 0;
     uint32_t currentQuery;
     while (matchIdx < numOfMatches) {
-        cout<<blockIdx<<endl;
         currentQuery = matchList[matchIdx].queryId;
+        cout<<blockIdx<<" "<<currentQuery<<endl;
         matchBlocks[blockIdx].id = currentQuery;
         matchBlocks[blockIdx].start = matchIdx;
         while ((currentQuery == matchList[matchIdx].queryId) && (matchIdx < numOfMatches)) ++matchIdx;
