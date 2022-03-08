@@ -751,6 +751,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
         queryList[currentQuery].classification = 0;
         queryList[currentQuery].score = 0;
         queryList[currentQuery].newSpecies = false;
+        cout<<"c"<<endl;
         return 0;
     }
     cout<<"a"<<endl;
