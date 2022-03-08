@@ -65,7 +65,7 @@ void Classifier::startClassify(const char * queryFileName,
     //output file
     char matchFileName[300];
     sprintf(matchFileName,"%s_match2", queryFileName);
-    FILE * matchFile = fopen(matchFileName, "wb");
+//    FILE * matchFile = fopen(matchFileName, "wb");
 
 
     // Load database
@@ -118,41 +118,41 @@ void Classifier::startClassify(const char * queryFileName,
 
     // Extract k-mers from query sequences and compare them to target k-mer DB
     omp_set_num_threads(par.threads);
-    while(processedSeqCnt < numOfSeq){
-        time_t beforeKmerExtraction = time(nullptr);
-        if(par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
-            fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt,
-                                        queryList, par);
-        } else if(par.seqMode == 2){
-            fillQueryKmerBufferParallel_paired(kmerBuffer,
-                                               queryFile,
-                                               queryFile2,
-                                               sequences,
-                                               sequences2,
-                                               processedSeqChecker,
-                                               processedSeqCnt,
-                                               queryList,
-                                               numOfSeq,
-                                               par);
-        }
-        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
-        cout<<"Time spent for k-mer extraction: " << double(time(nullptr) - beforeKmerExtraction) << endl;
-
-        time_t beforeQueryKmerSort = time(nullptr);
-        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
-        cout<<"Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
-
-        time_t beforeSearch = time(nullptr);
-        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList,
-                             diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile, par);
-        cout<<"Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
-        cout<<"The number of matches: "<<matchBuffer.startIndexOfReserve<<endl;
-    }
-    cout<<"Number of query k-mers: "<<numOfTatalQueryKmerCnt<<endl;
+//    while(processedSeqCnt < numOfSeq){
+//        time_t beforeKmerExtraction = time(nullptr);
+//        if(par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
+//            fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt,
+//                                        queryList, par);
+//        } else if(par.seqMode == 2){
+//            fillQueryKmerBufferParallel_paired(kmerBuffer,
+//                                               queryFile,
+//                                               queryFile2,
+//                                               sequences,
+//                                               sequences2,
+//                                               processedSeqChecker,
+//                                               processedSeqCnt,
+//                                               queryList,
+//                                               numOfSeq,
+//                                               par);
+//        }
+//        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
+//        cout<<"Time spent for k-mer extraction: " << double(time(nullptr) - beforeKmerExtraction) << endl;
+//
+//        time_t beforeQueryKmerSort = time(nullptr);
+//        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
+//        cout<<"Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
+//
+//        time_t beforeSearch = time(nullptr);
+//        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList,
+//                             diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile, par);
+//        cout<<"Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
+//        cout<<"The number of matches: "<<matchBuffer.startIndexOfReserve<<endl;
+//    }
+//    cout<<"Number of query k-mers: "<<numOfTatalQueryKmerCnt<<endl;
 
     if(par.memoryMode == 1) {
-        writeMatches(matchBuffer, matchFile);
-        fclose(matchFile);
+//        writeMatches(matchBuffer, matchFile);
+//        fclose(matchFile);
         struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
         size_t numOfMatches = matchList.fileSize / sizeof(Match);
         time_t beforeSortMatches = time(nullptr);
@@ -162,7 +162,7 @@ void Classifier::startClassify(const char * queryFileName,
         analyseResultParallel(taxonomy, matchList.data, numOfMatches, (int) numOfSeq, queryList, par);
         cout<<"Time spent for analyzing: "<<double(time(nullptr)-beforeAnalyze)<<endl;
     } else {
-        fclose(matchFile);
+//        fclose(matchFile);
         time_t beforeSortMatches = time(nullptr);
         SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve,
                       Classifier::sortByGenusAndSpecies2);
@@ -181,37 +181,37 @@ void Classifier::startClassify(const char * queryFileName,
     writeReportFile(par.filenames[3]+"/"+par.filenames[4]+"_CompositionReport.tsv", taxonomy, numOfSeq);
 
     // Below is for developing
-    ofstream wr;
-    ofstream wr2;
-    vector<int> wrongClassifications;
-    sequences.clear();
-    IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
-    wr.open(par.filenames[0]+"_wrong_1");
-    if(par.seqMode == 2) {
-        sequences2.clear();
-        IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
-        wr2.open(par.filenames[0] + "_wrong_2");
-    }
-    performanceTest(taxonomy, queryList, numOfSeq, wrongClassifications);
-    for (size_t i = 0; i < wrongClassifications.size(); i++) {
-        kseq_buffer_t buffer(const_cast<char *>(&queryFile.data[sequences[wrongClassifications[i]].start]), sequences[wrongClassifications[i]].length);
-        kseq_t *seq = kseq_init(&buffer);
-        kseq_read(seq);
-        wr<<">"<<seq->name.s<<endl;
-        wr<<seq->seq.s<<endl;
-        kseq_destroy(seq);
-        if(par.seqMode == 2) {
-            kseq_buffer_t buffer2(const_cast<char *>(&queryFile2.data[sequences[wrongClassifications[i]].start]),
-                                  sequences2[wrongClassifications[i]].length);
-            kseq_t *seq2 = kseq_init(&buffer2);
-            kseq_read(seq2);
-            wr2 << ">" << seq2->name.s << endl;
-            wr2 << seq2->seq.s << endl;
-            kseq_destroy(seq2);
-        }
-    }
-    wr.close();
-    wr2.close();
+//    ofstream wr;
+//    ofstream wr2;
+//    vector<int> wrongClassifications;
+//    sequences.clear();
+//    IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
+//    wr.open(par.filenames[0]+"_wrong_1");
+//    if(par.seqMode == 2) {
+//        sequences2.clear();
+//        IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
+//        wr2.open(par.filenames[0] + "_wrong_2");
+//    }
+//    performanceTest(taxonomy, queryList, numOfSeq, wrongClassifications);
+//    for (size_t i = 0; i < wrongClassifications.size(); i++) {
+//        kseq_buffer_t buffer(const_cast<char *>(&queryFile.data[sequences[wrongClassifications[i]].start]), sequences[wrongClassifications[i]].length);
+//        kseq_t *seq = kseq_init(&buffer);
+//        kseq_read(seq);
+//        wr<<">"<<seq->name.s<<endl;
+//        wr<<seq->seq.s<<endl;
+//        kseq_destroy(seq);
+//        if(par.seqMode == 2) {
+//            kseq_buffer_t buffer2(const_cast<char *>(&queryFile2.data[sequences[wrongClassifications[i]].start]),
+//                                  sequences2[wrongClassifications[i]].length);
+//            kseq_t *seq2 = kseq_init(&buffer2);
+//            kseq_read(seq2);
+//            wr2 << ">" << seq2->name.s << endl;
+//            wr2 << seq2->seq.s << endl;
+//            kseq_destroy(seq2);
+//        }
+//    }
+//    wr.close();
+//    wr2.close();
 
     free(kmerBuffer.buffer);
     free(matchBuffer.buffer);
