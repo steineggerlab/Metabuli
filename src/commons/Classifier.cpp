@@ -181,34 +181,37 @@ void Classifier::startClassify(const char * queryFileName,
     writeReportFile(par.filenames[3]+"/"+par.filenames[4]+"_CompositionReport.tsv", taxonomy, numOfSeq);
 
     // Below is for developing
-//    vector<int> wrongClassifications;
-//    sequences.clear();
-//    sequences2.clear();
-//    IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
-//    IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
-//    performanceTest(taxonomy, queryList, numOfSeq, wrongClassifications);
-//    ofstream wr;
-//    ofstream wr2;
-//    wr.open(par.filenames[0]+"_wrong_1");
-//    wr2.open(par.filenames[0]+"_wrong_2");
-//    for (size_t i = 0; i < wrongClassifications.size(); i++) {
-//            kseq_buffer_t buffer(const_cast<char *>(&queryFile.data[sequences[wrongClassifications[i]].start]), sequences[wrongClassifications[i]].length);
-//            kseq_buffer_t buffer2(const_cast<char *>(&queryFile2.data[sequences[wrongClassifications[i]].start]), sequences2[wrongClassifications[i]].length);
-//            kseq_t *seq = kseq_init(&buffer);
-//            kseq_t *seq2 = kseq_init(&buffer2);
-//            kseq_read(seq);
-//            kseq_read(seq2);
-//
-//            wr<<">"<<seq->name.s<<endl;
-//            wr<<seq->seq.s<<endl;
-//
-//            wr2<<">"<<seq2->name.s<<endl;
-//            wr2<<seq2->seq.s<<endl;
-//            kseq_destroy(seq);
-//            kseq_destroy(seq2);
-//    }
-//    wr.close();
-//    wr2.close();
+    ofstream wr;
+    ofstream wr2;
+    vector<int> wrongClassifications;
+    sequences.clear();
+    IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
+    wr.open(par.filenames[0]+"_wrong_1");
+    if(par.seqMode == 2) {
+        sequences2.clear();
+        IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
+        wr2.open(par.filenames[0] + "_wrong_2");
+    }
+    performanceTest(taxonomy, queryList, numOfSeq, wrongClassifications);
+    for (size_t i = 0; i < wrongClassifications.size(); i++) {
+        kseq_buffer_t buffer(const_cast<char *>(&queryFile.data[sequences[wrongClassifications[i]].start]), sequences[wrongClassifications[i]].length);
+        kseq_t *seq = kseq_init(&buffer);
+        kseq_read(seq);
+        wr<<">"<<seq->name.s<<endl;
+        wr<<seq->seq.s<<endl;
+        kseq_destroy(seq);
+        if(par.seqMode == 2) {
+            kseq_buffer_t buffer2(const_cast<char *>(&queryFile2.data[sequences[wrongClassifications[i]].start]),
+                                  sequences2[wrongClassifications[i]].length);
+            kseq_t *seq2 = kseq_init(&buffer2);
+            kseq_read(seq2);
+            wr2 << ">" << seq2->name.s << endl;
+            wr2 << seq2->seq.s << endl;
+            kseq_destroy(seq2);
+        }
+    }
+    wr.close();
+    wr2.close();
 
     free(kmerBuffer.buffer);
     free(matchBuffer.buffer);
@@ -981,12 +984,17 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
 //        minStrainSpecificCnt = 1;
 //    } else if (par.seqMode == 2){
 //        minStrainSpecificCnt = 2;
+//    } else if (par.seqMode == 3){
+//        minStrainSpecificCnt = 5;
+//        if(queryLength > 5000){
+//            minStrainSpecificCnt = queryLength / 1000;
+//        }
 //    }
 //    if(NcbiTaxonomy::findRankIndex(ncbiTaxonomy.taxonNode(selectedSpecies)->rank) == 4){
 //        unordered_map<TaxID, int> strainMatchCnt;
 //        for(size_t i = 0; i < genusMatches.size(); i++){
 //            if(selectedSpecies != matchList[genusMatches[i]].taxID
-//               && ncbiTaxonomy.IsAncestor(selectedSpecies, matchesForLCA[i].taxID)){
+//               && ncbiTaxonomy.IsAncestor(selectedSpecies, matchList[genusMatches[i]].taxID)){
 //                strainMatchCnt[matchesForLCA[i].taxID]++;
 //            }
 //        }
