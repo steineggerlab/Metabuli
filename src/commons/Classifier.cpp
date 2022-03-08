@@ -729,7 +729,9 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
     } else {
         res = getMatchesOfTheBestGenus(matchesForLCA, matchList, end, offset, queryLength, highRankScore);
     }
+
     cout<<"1"<<endl;
+
     if(PRINT) {
         cout<<"# "<<currentQuery<<" filtered"<<endl;
         for (size_t i = 0; i < matchesForLCA.size(); i++) {
@@ -750,7 +752,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
         queryList[currentQuery].newSpecies = false;
         return 0;
     }
-
+    cout<<"a"<<endl;
     for(size_t i = 0; i < matchesForLCA.size(); i++ ){
         queryList[currentQuery].taxCnt[matchesForLCA[i].taxID] ++;
     }
@@ -1260,7 +1262,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         // so that it can best cover the query, and score the combination
         if(!filteredMatches.empty()) {
            constructMatchCombination(filteredMatches, matchesForEachGenus, scoreOfEachGenus, queryLength);
-           cout<<"2"<<endl;
+           cout<<"3"<<endl;
         }
         filteredMatches.clear();
     }
