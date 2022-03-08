@@ -1396,9 +1396,9 @@ void Classifier::constructMatchCombination(vector<Match> & filteredMatches,
         int currentPosition = filteredMatches[walker].position / 3;
         currentMatch = filteredMatches[walker];
         // Look through overlaps within a species
-        while (filteredMatches[walker].speciesTaxID ==  currentSpecies
-            && filteredMatches[walker].position / 3 == currentPosition
-            && walker < numOfFitMat) {
+        while (walker < numOfFitMat
+            && filteredMatches[walker].speciesTaxID ==  currentSpecies
+            && filteredMatches[walker].position / 3 == currentPosition) {
             // Take the match with lower hamming distance
             if(filteredMatches[walker].hamming < currentMatch.hamming) {
                 currentMatch = filteredMatches[walker];
