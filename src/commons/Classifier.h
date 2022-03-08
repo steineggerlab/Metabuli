@@ -294,7 +294,6 @@ private:
     static void chooseSpecies(const std::vector<Match> & matches,
                               NcbiTaxonomy & taxonomy,
                               int queryLength,
-                              float maxKmerCnt,
                               ScrCov & speciesScrCov,
                               vector<TaxID> & species);
 

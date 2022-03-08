@@ -731,8 +731,6 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         res = getMatchesOfTheBestGenus(matchesForLCA, matchList, end, offset, queryLength, highRankScore);
     }
 
-    cout<<"1"<<endl;
-
     if(PRINT) {
         cout<<"# "<<currentQuery<<" filtered"<<endl;
         for (size_t i = 0; i < matchesForLCA.size(); i++) {
@@ -753,11 +751,10 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         queryList[currentQuery].newSpecies = false;
         return;
     }
-    cout<<"a"<<endl;
+
     for(size_t i = 0; i < matchesForLCA.size(); i++ ){
         queryList[currentQuery].taxCnt[matchesForLCA[i].taxID] ++;
     }
-    cout<<"2"<<endl;
     // If there are two or more good genus level candidates, find the LCA.
     if(res == 2){
         vector<TaxID> taxIdList;
@@ -780,7 +777,6 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         }
         return;
     }
-    cout<<"3"<<endl;
     // Choose the species with the highest coverage.
     TaxID selectedSpecies;
     ScrCov speciesScrCov(0.f, 0.f);
@@ -796,7 +792,6 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         chooseSpecies(matchesForLCA,
                       ncbiTaxonomy,
                       queryLength,
-                      (float) queryList[currentQuery].kmerCnt / 6,
                       speciesScrCov,
                       species);
     }
@@ -1261,7 +1256,6 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         // so that it can best cover the query, and score the combination
         if(!filteredMatches.empty()) {
            constructMatchCombination(filteredMatches, matchesForEachGenus, scoreOfEachGenus, queryLength);
-           cout<<"3"<<endl;
         }
         filteredMatches.clear();
     }
@@ -1709,7 +1703,6 @@ TaxID Classifier::classifyFurther2(const vector<Match> & matches,
 void Classifier::chooseSpecies(const vector<Match> & matches,
                                NcbiTaxonomy & taxonomy,
                                int queryLength,
-                               float maxKmerCnt,
                                ScrCov & speciesScrCov,
                                vector<TaxID> & species) {
     // Score each species
