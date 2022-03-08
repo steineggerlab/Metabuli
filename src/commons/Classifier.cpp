@@ -746,6 +746,7 @@ TaxID Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQu
 
     //If there is no proper genus for current query, it is un-classified.
     if(res == 3){
+        cout<<"b"<<endl;
         queryList[currentQuery].isClassified = false;
         queryList[currentQuery].classification = 0;
         queryList[currentQuery].score = 0;
