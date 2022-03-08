@@ -795,7 +795,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
                       speciesScrCov,
                       species);
     }
-    cout<<"4"<<endl;
+    cout<<currentQuery<<endl;
 
     // Classify at the genus rank if more than one species are selected.
     // Classify at the genus rank if the score at species level is not enough.
