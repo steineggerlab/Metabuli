@@ -706,7 +706,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
     int queryLength = 13497; //queryList[currentQuery].queryLength;
     cout<<queryLength<<" "<<currentQuery<<endl;
     TaxID selectedTaxon;
-    if(PRINT) {
+    if(PRINT || currentQuery == 210389) {
         cout<<"# "<<currentQuery<<endl;
         for (size_t i = offset; i < end + 1; i++) {
             cout << matchList[i].genusTaxID<<" "<<matchList[i].speciesTaxID << " " << matchList[i].taxID << " " <<
@@ -731,7 +731,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         res = getMatchesOfTheBestGenus(matchesForLCA, matchList, end, offset, queryLength, highRankScore);
     }
 
-    if(PRINT) {
+    if(PRINT || currentQuery == 210389) {
         cout<<"# "<<currentQuery<<" filtered"<<endl;
         for (size_t i = 0; i < matchesForLCA.size(); i++) {
             cout << matchesForLCA[i].genusTaxID<<" "<<matchesForLCA[i].speciesTaxID << " " << matchesForLCA[i].taxID << " " <<
@@ -1784,7 +1784,6 @@ Classifier::ScrCov Classifier::scoreTaxon(const vector<Match> & matches,
     memset(hammingsAtEachPos, -1, (aminoAcidNum + 1));
     int currPos;
     size_t walker = begin;
-    size_t matchNum = matches.size();
     uint16_t currHammings;
     while(walker < end){
         currPos = matches[walker].position / 3;
