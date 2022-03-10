@@ -62,16 +62,11 @@ void Classifier::startClassify(const char * queryFileName,
     vector<TaxID> genusTaxIdList;
     taxonomy.createTaxIdListAtRank(taxIdList, speciesTaxIdList, "species");
     taxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "genus");
+
     //output file
     char matchFileName[300];
     sprintf(matchFileName,"%s_match2", queryFileName);
     FILE * matchFile = fopen(matchFileName, "wb");
-
-
-    // Load database
-    struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName);
-    struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName);
-    struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName);
 
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
@@ -121,8 +116,13 @@ void Classifier::startClassify(const char * queryFileName,
     while(processedSeqCnt < numOfSeq){
         time_t beforeKmerExtraction = time(nullptr);
         if(par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
-            fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt,
-                                        queryList, par);
+            fillQueryKmerBufferParallel(kmerBuffer,
+                                        queryFile,
+                                        sequences,
+                                        processedSeqChecker,
+                                        processedSeqCnt,
+                                        queryList,
+                                        par);
         } else if(par.seqMode == 2){
             fillQueryKmerBufferParallel_paired(kmerBuffer,
                                                queryFile,
@@ -221,9 +221,6 @@ void Classifier::startClassify(const char * queryFileName,
     if(par.seqMode == 2) {
         munmap(queryFile2.data, queryFile2.fileSize + 1);
     }
-    munmap(targetDiffIdxList.data, targetDiffIdxList.fileSize + 1);
-    munmap(targetInfoList.data, targetInfoList.fileSize + 1);
-    munmap(diffIdxSplits.data, diffIdxSplits.fileSize + 1);
 }
 
 void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer & kmerBuffer,
@@ -351,9 +348,10 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
                                       const char * targetInfoFileName, const char * diffIdxSplitsFileName,
                                       Buffer<Match> & matchBuffer, const vector<int> & taxIdList, const vector<int> & spTaxIdList, const vector<TaxID> & genusTaxIdList,
                                       FILE * matchFile, const LocalParameters & par){
-    struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName);
-    struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName);
-    struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitsFileName);
+
+    struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName, 2);
+    struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName, 2);
+    struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitsFileName, 2);
 
     cout<<"linearSearch start..."<<endl;
     // Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
@@ -378,7 +376,6 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 
     // Divide query k-mer list into blocks for multi threading.
     // Each split has start and end points of query list + proper offset point of target k-mer list
-
     vector<QueryKmerSplit> querySplits;
     int threadNum = par.threads;
     uint64_t queryAA;
@@ -436,7 +433,6 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, querySplits, queryKmerList, targetDiffIdxFileName, targetInfoFileName, diffIdxSplitsFileName, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList)
         {
-
             struct MmapedData<uint16_t> targetDiffIdxList2 = mmapData<uint16_t>(targetDiffIdxFileName, 2);
             struct MmapedData<TargetKmerInfo> targetInfoList2 = mmapData<TargetKmerInfo>(targetInfoFileName, 2);
 

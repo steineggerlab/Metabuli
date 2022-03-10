@@ -33,7 +33,7 @@ MmapedData<T> mmapData(const char* filename, int mode = 1)
         mmapedData.data = static_cast<T *>(mmap(0, stat1.st_size + sizeof(T) * 2, PROT_WRITE | PROT_READ, MAP_SHARED,
                                                 file, 0));
     } else if (mode == 2) { // Only read
-        mmapedData.data = static_cast<T *>(mmap(0, stat1.st_size + sizeof(T) * 2, PROT_READ, MAP_PRIVATE,
+        mmapedData.data = static_cast<T *>(mmap(0, stat1.st_size + sizeof(T) * 2, PROT_READ, MAP_SHARED,
                                                 file, 0));
     }
     if(a == -1){
