@@ -699,7 +699,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy,
 void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQuery,
                                   size_t offset, size_t end, Match * matchList, Query * queryList,
                                   const LocalParameters & par ) {
-   // int queryLength = 13497; //queryList[currentQuery].queryLength;
+    int queryLength = queryList[currentQuery].queryLength; //queryList[currentQuery].queryLength; 13497
     TaxID selectedTaxon;
     if(PRINT) {
         cout<<"# "<<currentQuery<<endl;
