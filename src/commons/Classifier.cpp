@@ -65,7 +65,7 @@ void Classifier::startClassify(const char * queryFileName,
     //output file
     char matchFileName[300];
     sprintf(matchFileName,"%s_match2", queryFileName);
-//    FILE * matchFile = fopen(matchFileName, "wb");
+    FILE * matchFile = fopen(matchFileName, "wb");
 
 
     // Load database
@@ -139,24 +139,24 @@ void Classifier::startClassify(const char * queryFileName,
         cout<<"Time spent for k-mer extraction: " << double(time(nullptr) - beforeKmerExtraction) << endl;
 
         time_t beforeQueryKmerSort = time(nullptr);
-        //SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
+        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
         cout<<"Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
 
         time_t beforeSearch = time(nullptr);
-//        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList,
-//                             diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile, par);
+        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxFileName, targetInfoFileName,
+                             diffIdxSplitFileName, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile, par);
         cout<<"Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
         cout<<"The number of matches: "<<matchBuffer.startIndexOfReserve<<endl;
     }
     cout<<"Number of query k-mers: "<<numOfTatalQueryKmerCnt<<endl;
 
     if(par.memoryMode == 1) {
-//        writeMatches(matchBuffer, matchFile);
-//        fclose(matchFile);
+        writeMatches(matchBuffer, matchFile);
+        fclose(matchFile);
         struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
         size_t numOfMatches = matchList.fileSize / sizeof(Match);
         time_t beforeSortMatches = time(nullptr);
-        //SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
+        SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
         cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
         time_t beforeAnalyze = time(nullptr);
         analyseResultParallel(taxonomy, matchList.data, numOfMatches, (int) numOfSeq, queryList, par);
