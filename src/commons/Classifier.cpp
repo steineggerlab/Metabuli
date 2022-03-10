@@ -153,6 +153,7 @@ void Classifier::startClassify(const char * queryFileName,
     if(par.memoryMode == 1) {
         writeMatches(matchBuffer, matchFile);
         fclose(matchFile);
+        free(matchBuffer.buffer);
         struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
         size_t numOfMatches = matchList.fileSize / sizeof(Match);
         time_t beforeSortMatches = time(nullptr);
@@ -170,6 +171,7 @@ void Classifier::startClassify(const char * queryFileName,
         time_t beforeAnalyze = time(nullptr);
         analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList, par);
         cout<<"Time spent for analyzing: "<<double(time(nullptr)-beforeAnalyze)<<endl;
+        free(matchBuffer.buffer);
     }
 
 
@@ -214,7 +216,7 @@ void Classifier::startClassify(const char * queryFileName,
 //    wr2.close();
 
     free(kmerBuffer.buffer);
-    free(matchBuffer.buffer);
+
     munmap(queryFile.data, queryFile.fileSize + 1);
     if(par.seqMode == 2) {
         munmap(queryFile2.data, queryFile2.fileSize + 1);
@@ -435,8 +437,8 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
 #pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, querySplits, queryKmerList, targetDiffIdxFileName, targetInfoFileName, diffIdxSplitsFileName, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList)
         {
 
-            struct MmapedData<uint16_t> targetDiffIdxList2 = mmapData<uint16_t>(targetDiffIdxFileName);
-            struct MmapedData<TargetKmerInfo> targetInfoList2 = mmapData<TargetKmerInfo>(targetInfoFileName);
+            struct MmapedData<uint16_t> targetDiffIdxList2 = mmapData<uint16_t>(targetDiffIdxFileName, 2);
+            struct MmapedData<TargetKmerInfo> targetInfoList2 = mmapData<TargetKmerInfo>(targetInfoFileName, 2);
 
             //query variables
             uint64_t currentQuery = UINT64_MAX;

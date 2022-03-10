@@ -21,7 +21,7 @@ struct MmapedData
 };
 
 template <typename T>
-MmapedData<T> mmapData(const char* filename)
+MmapedData<T> mmapData(const char* filename, int mode = 1)
 {
     struct MmapedData<T> mmapedData;
     struct stat stat1;
@@ -29,7 +29,13 @@ MmapedData<T> mmapData(const char* filename)
     int a;
     a = stat(filename, &stat1);
     mmapedData.fileSize = stat1.st_size;
-    mmapedData.data = static_cast<T*>(mmap(0, stat1.st_size + sizeof(T)*2, PROT_WRITE|PROT_READ, MAP_SHARED, file, 0));
+    if(mode == 1) {
+        mmapedData.data = static_cast<T *>(mmap(0, stat1.st_size + sizeof(T) * 2, PROT_WRITE | PROT_READ, MAP_SHARED,
+                                                file, 0));
+    } else if (mode == 2) { // Only read
+        mmapedData.data = static_cast<T *>(mmap(0, stat1.st_size + sizeof(T) * 2, PROT_READ, MAP_PRIVATE,
+                                                file, 0));
+    }
     if(a == -1){
         mmapedData.fileSize = 0;
     }
