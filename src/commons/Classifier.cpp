@@ -118,37 +118,37 @@ void Classifier::startClassify(const char * queryFileName,
 
     // Extract k-mers from query sequences and compare them to target k-mer DB
     omp_set_num_threads(par.threads);
-//    while(processedSeqCnt < numOfSeq){
-//        time_t beforeKmerExtraction = time(nullptr);
-//        if(par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
-//            fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt,
-//                                        queryList, par);
-//        } else if(par.seqMode == 2){
-//            fillQueryKmerBufferParallel_paired(kmerBuffer,
-//                                               queryFile,
-//                                               queryFile2,
-//                                               sequences,
-//                                               sequences2,
-//                                               processedSeqChecker,
-//                                               processedSeqCnt,
-//                                               queryList,
-//                                               numOfSeq,
-//                                               par);
-//        }
-//        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
-//        cout<<"Time spent for k-mer extraction: " << double(time(nullptr) - beforeKmerExtraction) << endl;
-//
-//        time_t beforeQueryKmerSort = time(nullptr);
-//        //SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
-//        cout<<"Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
-//
-//        time_t beforeSearch = time(nullptr);
-////        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList,
-////                             diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile, par);
-//        cout<<"Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
-//        cout<<"The number of matches: "<<matchBuffer.startIndexOfReserve<<endl;
-//    }
-//    cout<<"Number of query k-mers: "<<numOfTatalQueryKmerCnt<<endl;
+    while(processedSeqCnt < numOfSeq){
+        time_t beforeKmerExtraction = time(nullptr);
+        if(par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
+            fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, processedSeqChecker, processedSeqCnt,
+                                        queryList, par);
+        } else if(par.seqMode == 2){
+            fillQueryKmerBufferParallel_paired(kmerBuffer,
+                                               queryFile,
+                                               queryFile2,
+                                               sequences,
+                                               sequences2,
+                                               processedSeqChecker,
+                                               processedSeqCnt,
+                                               queryList,
+                                               numOfSeq,
+                                               par);
+        }
+        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
+        cout<<"Time spent for k-mer extraction: " << double(time(nullptr) - beforeKmerExtraction) << endl;
+
+        time_t beforeQueryKmerSort = time(nullptr);
+        //SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Classifier::compareForLinearSearch);
+        cout<<"Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
+
+        time_t beforeSearch = time(nullptr);
+//        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxList, targetInfoList,
+//                             diffIdxSplits, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile, par);
+        cout<<"Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
+        cout<<"The number of matches: "<<matchBuffer.startIndexOfReserve<<endl;
+    }
+    cout<<"Number of query k-mers: "<<numOfTatalQueryKmerCnt<<endl;
 
     if(par.memoryMode == 1) {
 //        writeMatches(matchBuffer, matchFile);
@@ -654,8 +654,6 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy,
 
     // Devide matches into blocks for multi threading
     cout << "Devide matches into blocks for multi threading" << endl;
-    cout << seqNum <<endl;
-    cout << numOfMatches <<endl;
     MatchBlock * matchBlocks = new MatchBlock[seqNum];
     size_t matchIdx = 0;
     size_t blockIdx = 0;
@@ -666,22 +664,20 @@ void Classifier::analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy,
         matchBlocks[blockIdx].start = matchIdx;
         while ((currentQuery == matchList[matchIdx].queryId) && (matchIdx < numOfMatches)) ++matchIdx;
         matchBlocks[blockIdx].end = matchIdx - 1;
-//        cout<<blockIdx<<" "<<currentQuery<<" "<<matchIdx<<endl;
         blockIdx++;
     }
-
 
     if (PRINT) {
         omp_set_num_threads(1);
     } else {
         omp_set_num_threads(par.threads);
     }
-    cout<<"Here"<<endl;
+
     // Process each block
 #pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqNum, ncbiTaxonomy, queryList, blockIdx, par)
     {
 #pragma omp for schedule(dynamic, 1)
-        for (size_t i = blockIdx - 1; i < blockIdx; ++i) {
+        for (size_t i = 0; i < blockIdx; ++i) {
             chooseBestTaxon(ncbiTaxonomy,
                             matchBlocks[i].id,
                             matchBlocks[i].start,
@@ -706,7 +702,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
     int queryLength = 13497; //queryList[currentQuery].queryLength;
     cout<<queryLength<<" "<<currentQuery<<endl;
     TaxID selectedTaxon;
-    if(PRINT || currentQuery == 210389) {
+    if(PRINT) {
         cout<<"# "<<currentQuery<<endl;
         for (size_t i = offset; i < end + 1; i++) {
             cout << matchList[i].genusTaxID<<" "<<matchList[i].speciesTaxID << " " << matchList[i].taxID << " " <<
@@ -731,7 +727,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         res = getMatchesOfTheBestGenus(matchesForLCA, matchList, end, offset, queryLength, highRankScore);
     }
 
-    if(PRINT || currentQuery == 210389) {
+    if(PRINT) {
         cout<<"# "<<currentQuery<<" filtered"<<endl;
         for (size_t i = 0; i < matchesForLCA.size(); i++) {
             cout << matchesForLCA[i].genusTaxID<<" "<<matchesForLCA[i].speciesTaxID << " " << matchesForLCA[i].taxID << " " <<
@@ -795,7 +791,6 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
                       speciesScrCov,
                       species);
     }
-    cout<<currentQuery<<endl;
 
     // Classify at the genus rank if more than one species are selected.
     // Classify at the genus rank if the score at species level is not enough.
@@ -1255,9 +1250,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
         if(!filteredMatches.empty()) {
-            cout<<"33"<<endl;
             constructMatchCombination(filteredMatches, matchesForEachGenus, scoreOfEachGenus, queryLength);
-            cout<<"11"<<endl;
         }
         filteredMatches.clear();
     }
@@ -1278,7 +1271,7 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> & matchesForMajorityLCA, 
         }
     }
     bestScore = maxScore;
-    cout<<"22"<<endl;
+
     for(size_t g = 0; g < maxIdx.size(); g++){
         matchesForMajorityLCA.insert(matchesForMajorityLCA.end(), matchesForEachGenus[maxIdx[g]].begin(),
                                      matchesForEachGenus[maxIdx[g]].end());
