@@ -25,7 +25,12 @@ MmapedData<T> mmapData(const char* filename, int mode = 1)
 {
     struct MmapedData<T> mmapedData;
     struct stat stat1;
-    int file = open(filename, O_CREAT|O_RDWR );
+    int file;
+    if(mode == 2) {
+        file = open(filename, O_RDONLY);
+    } else {
+        file = open(filename, O_CREAT | O_RDWR);
+    }
     int a;
     a = stat(filename, &stat1);
     mmapedData.fileSize = stat1.st_size;

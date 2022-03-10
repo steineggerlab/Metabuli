@@ -605,12 +605,14 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
             munmap(targetDiffIdxList2.data, targetDiffIdxList2.fileSize + 1);
             munmap(targetInfoList2.data, targetInfoList2.fileSize + 1);
         }
-
         if(hasOverflow)
             writeMatches(matchBuffer, matchFile);
     }
     free(splitCheckList);
     queryKmerCnt = 0;
+    munmap(targetDiffIdxList.data, targetDiffIdxList.fileSize + 1);
+    munmap(targetInfoList.data, targetInfoList.fileSize + 1);
+    munmap(diffIdxSplits.data, diffIdxSplits.fileSize + 1);
     cout<<"end of linear seach parallel"<<endl;
 }
 
