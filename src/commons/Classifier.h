@@ -212,9 +212,9 @@ private:
     void linearSearchParallel(
             QueryKmer * queryKmerList,
             size_t & queryKmerCnt,
-            const MmapedData<uint16_t> & targetDiffIdxList,
-            const MmapedData<TargetKmerInfo> & targetInfoList,
-            const MmapedData<DiffIdxSplit> & diffIdxSplits,
+            const char * targetDiffIdxList,
+            const char * targetInfoList,
+            const char * diffIdxSplits,
             Buffer<Match> & matchBuffer,
             const vector<int> & taxIdList,
             const vector<int> & speciesTaxIdList,
