@@ -428,14 +428,21 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     int completedSplitCnt = 0;
     size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
     size_t numOfDiffIdx = targetDiffIdxList.fileSize / sizeof(uint16_t);
+
+    munmap(targetDiffIdxList.data, targetDiffIdxList.fileSize + 1);
+    munmap(targetInfoList.data, targetInfoList.fileSize + 1);
+    munmap(diffIdxSplits.data, diffIdxSplits.fileSize + 1);
+
     cout<<"The number of target k-mers: "<<numOfTargetKmer<<endl;
+
+    struct MmapedData<uint16_t> targetDiffIdxList2 = mmapData<uint16_t>(targetDiffIdxFileName, 2);
+    struct MmapedData<TargetKmerInfo> targetInfoList2 = mmapData<TargetKmerInfo>(targetInfoFileName, 2);
+
     while(completedSplitCnt < threadNum) {
         bool hasOverflow = false;
-#pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, querySplits, queryKmerList, targetDiffIdxFileName, targetInfoFileName, diffIdxSplitsFileName, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList)
+#pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow,\
+querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList)
         {
-            struct MmapedData<uint16_t> targetDiffIdxList2 = mmapData<uint16_t>(targetDiffIdxFileName, 2);
-            struct MmapedData<TargetKmerInfo> targetInfoList2 = mmapData<TargetKmerInfo>(targetInfoFileName, 2);
-
             //query variables
             uint64_t currentQuery = UINT64_MAX;
             uint64_t currentQueryAA = UINT64_MAX;
@@ -610,9 +617,6 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     }
     free(splitCheckList);
     queryKmerCnt = 0;
-    munmap(targetDiffIdxList.data, targetDiffIdxList.fileSize + 1);
-    munmap(targetInfoList.data, targetInfoList.fileSize + 1);
-    munmap(diffIdxSplits.data, diffIdxSplits.fileSize + 1);
     cout<<"end of linear seach parallel"<<endl;
 }
 
