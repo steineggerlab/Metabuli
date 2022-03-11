@@ -635,6 +635,9 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
             writeMatches(matchBuffer, matchFile);
     }
     cout << "Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
+
+    munmap(targetDiffIdxList2.data, targetDiffIdxList2.fileSize + 1);
+    munmap(targetInfoList2.data, targetInfoList2.fileSize + 1);
     free(splitCheckList);
     queryKmerCnt = 0;
     cout << "end of linear seach parallel" << endl;
