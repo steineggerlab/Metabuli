@@ -383,7 +383,6 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     // Divide query k-mer list into blocks for multi threading.
     // Each split has start and end points of query list + proper offset point of target k-mer list
     vector<QueryKmerSplit> querySplits;
-    vector<QueryKmer *> querySplits2;
     int threadNum = 256;
     uint64_t queryAA;
     if (threadNum == 1) { //Single thread
@@ -412,13 +411,9 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
                     if (i != threadNum - 1) {
                         querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth,
                                                  diffIdxSplits.data[j]);
-                        querySplits2.push_back(new QueryKmer[splitWidth]);
-                        memcpy(querySplits2[i], queryKmerList + splitWidth * i, splitWidth);
                     } else {
                         querySplits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
                                                  diffIdxSplits.data[j]);
-                        querySplits2.push_back(new QueryKmer[splitWidth]);
-                        memcpy(querySplits2[i], queryKmerList + splitWidth * i, queryKmerCnt - splitWidth * i);
                     }
                     needLastTargetBlock = false;
                     break;
@@ -429,13 +424,9 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
                 if (i != threadNum - 1) {
                     querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth,
                                              diffIdxSplits.data[numOfDiffIdxSplits_use - 1]);
-                    querySplits2.push_back(new QueryKmer[splitWidth]);
-                    memcpy(querySplits2[i], queryKmerList + splitWidth * i, splitWidth);
                 } else {
                     querySplits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
                                              diffIdxSplits.data[numOfDiffIdxSplits_use - 1]);
-                    querySplits2.push_back(new QueryKmer[splitWidth]);
-                    memcpy(querySplits2[i], queryKmerList + splitWidth * i, queryKmerCnt - splitWidth * i);
                 }
             }
         }
