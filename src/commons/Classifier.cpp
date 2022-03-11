@@ -690,7 +690,7 @@ void Classifier::linearSearchParallel2(QueryKmer * queryKmerList, size_t & query
         size_t splitWidth = queryKmerCnt / (threadNum - 1);
         querySplits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
         querySplits2.push_back(new QueryKmer[splitWidth]);
-        memcpy(querySplits2[0], queryKmerList, splitWidth);
+        memcpy(querySplits2[0], queryKmerList, sizeof(QueryKmer) * splitWidth);
 
         for(int i = 1; i < threadNum; i ++){
             queryAA = AminoAcid(queryKmerList[splitWidth * i].ADkmer);
@@ -702,12 +702,12 @@ void Classifier::linearSearchParallel2(QueryKmer * queryKmerList, size_t & query
                         querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth,
                                                  diffIdxSplits.data[j]);
                         querySplits2.push_back(new QueryKmer[splitWidth]);
-                        memcpy(querySplits2[i], queryKmerList + splitWidth * i, splitWidth);
+                        memcpy(querySplits2[i], queryKmerList + splitWidth * i, sizeof(QueryKmer) * splitWidth);
                     }else {
                         querySplits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
                                                  diffIdxSplits.data[j]);
                         querySplits2.push_back(new QueryKmer[splitWidth]);
-                        memcpy(querySplits2[i], queryKmerList + splitWidth * i, queryKmerCnt - splitWidth * i);
+                        memcpy(querySplits2[i], queryKmerList + splitWidth * i, sizeof(QueryKmer) * (queryKmerCnt - splitWidth * i));
                     }
                     needLastTargetBlock = false;
                     break;
@@ -719,12 +719,12 @@ void Classifier::linearSearchParallel2(QueryKmer * queryKmerList, size_t & query
                     querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth,
                                              diffIdxSplits.data[numOfDiffIdxSplits_use - 1]);
                     querySplits2.push_back(new QueryKmer[splitWidth]);
-                    memcpy(querySplits2[i], queryKmerList + splitWidth * i, splitWidth);
+                    memcpy(querySplits2[i], queryKmerList + splitWidth * i, sizeof(QueryKmer) * splitWidth);
                 }else {
                     querySplits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
                                              diffIdxSplits.data[numOfDiffIdxSplits_use-1]);
                     querySplits2.push_back(new QueryKmer[splitWidth]);
-                    memcpy(querySplits2[i], queryKmerList + splitWidth * i, queryKmerCnt - splitWidth * i);
+                    memcpy(querySplits2[i], queryKmerList + splitWidth * i, sizeof(QueryKmer) * (queryKmerCnt - splitWidth * i));
                 }
             }
         }
