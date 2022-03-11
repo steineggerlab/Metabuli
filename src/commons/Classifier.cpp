@@ -750,7 +750,7 @@ void Classifier::linearSearchParallel2(QueryKmer * queryKmerList, size_t & query
     while(completedSplitCnt < threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow,\
-querySplits, querySplits2, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList)
+querySplits, querySplits2, targetDiffIdxList2, targetInfoList2, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList)
         {
             //query variables
             uint64_t currentQuery = UINT64_MAX;
@@ -786,7 +786,7 @@ querySplits, querySplits2, queryKmerList, targetDiffIdxList2, targetInfoList2, m
                 for(size_t j = 0; j < querySplits[i].length; j ++){
                     querySplits[i].start++;
                     // Reuse the comparison data if queries are exactly identical
-                    if(currentQuery == queryKmerList[j].ADkmer){
+                    if(currentQuery == querySplits2[i][j].ADkmer){
                         posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
                         if(posToWrite + selectedMatches.size() >= matchBuffer.bufferSize){
                             hasOverflow = true;
@@ -798,18 +798,18 @@ querySplits, querySplits2, queryKmerList, targetDiffIdxList2, targetInfoList2, m
                             range = selectedMatches.size();
                             for (size_t k = 0; k < range; k++) {
                                 if(targetInfoList2.data[selectedMatches[k]].redundancy){
-                                    matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID,
+                                    matchBuffer.buffer[posToWrite] = {querySplits2[i][j].info.sequenceID,
                                                                       spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                                       spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                                       genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      queryKmerList[j].info.pos, queryKmerList[j].info.frame,
+                                                                      querySplits2[i][j].info.pos, querySplits2[i][j].info.frame,
                                                                       selectedHammingSum[k], 1, selectedHammings[k]};
                                 } else{
-                                    matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID,
+                                    matchBuffer.buffer[posToWrite] = {querySplits2[i][j].info.sequenceID,
                                                                       taxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                                       spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                                       genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      queryKmerList[j].info.pos, queryKmerList[j].info.frame,
+                                                                      querySplits2[i][j].info.pos, querySplits2[i][j].info.frame,
                                                                       selectedHammingSum[k],0, selectedHammings[k]};
                                 }
                                 posToWrite ++;
@@ -822,8 +822,8 @@ querySplits, querySplits2, queryKmerList, targetDiffIdxList2, targetInfoList2, m
                     selectedHammings.clear();
 
                     ///Reuse the candidate target k-mers to compare in DNA level if queries are the same at amino acid level but not at DNA level
-                    if(currentQueryAA == AminoAcid(queryKmerList[j].ADkmer)){
-                        compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, startIdxOfAAmatch, selectedMatches, selectedHammingSum, selectedHammings);
+                    if(currentQueryAA == AminoAcid(querySplits2[i][j].ADkmer)){
+                        compareDna(querySplits2[i][j].ADkmer, candidateTargetKmers, startIdxOfAAmatch, selectedMatches, selectedHammingSum, selectedHammings);
                         posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
                         if(posToWrite + selectedMatches.size() >= matchBuffer.bufferSize){
                             hasOverflow = true;
@@ -835,18 +835,18 @@ querySplits, querySplits2, queryKmerList, targetDiffIdxList2, targetInfoList2, m
                             range = selectedMatches.size();
                             for (size_t k = 0; k < range; k++) {
                                 if(targetInfoList2.data[selectedMatches[k]].redundancy){
-                                    matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID,
+                                    matchBuffer.buffer[posToWrite] = {querySplits2[i][j].info.sequenceID,
                                                                       spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                                       spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                                       genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      queryKmerList[j].info.pos, queryKmerList[j].info.frame,
+                                                                      querySplits2[i][j].info.pos, querySplits2[i][j].info.frame,
                                                                       selectedHammingSum[k], 1, selectedHammings[k]};
                                 } else{
-                                    matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID,
+                                    matchBuffer.buffer[posToWrite] = {querySplits2[i][j].info.sequenceID,
                                                                       taxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                                       spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                                       genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      queryKmerList[j].info.pos, queryKmerList[j].info.frame,
+                                                                      querySplits2[i][j].info.pos, querySplits2[i][j].info.frame,
                                                                       selectedHammingSum[k], 0, selectedHammings[k]};
                                 }
                                 posToWrite ++;
@@ -891,18 +891,18 @@ querySplits, querySplits2, queryKmerList, targetDiffIdxList2, targetInfoList2, m
                         range = selectedMatches.size();
                         for (size_t k = 0; k < range; k++) {
                             if(targetInfoList2.data[selectedMatches[k]].redundancy){
-                                matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID,
+                                matchBuffer.buffer[posToWrite] = {querySplits2[i][j].info.sequenceID,
                                                                   spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                                   spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                                   genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                  queryKmerList[j].info.pos, queryKmerList[j].info.frame,
+                                                                  querySplits2[i][j].info.pos, querySplits2[i][j].info.frame,
                                                                   selectedHammingSum[k], 1, selectedHammings[k]};
                             } else{
-                                matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID,
+                                matchBuffer.buffer[posToWrite] = {querySplits2[i][j].info.sequenceID,
                                                                   taxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                                   spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                                   genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                  queryKmerList[j].info.pos, queryKmerList[j].info.frame,
+                                                                  querySplits2[i][j].info.pos, querySplits2[i][j].info.frame,
                                                                   selectedHammingSum[k], 0, selectedHammings[k]};
                             }
                             posToWrite ++;
