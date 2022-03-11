@@ -143,7 +143,7 @@ void Classifier::startClassify(const char * queryFileName,
         cout<<"Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
 
         //time_t beforeSearch = time(nullptr);
-        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxFileName, targetInfoFileName,
+        linearSearchParallel2(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxFileName, targetInfoFileName,
                              diffIdxSplitFileName, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile, par);
        // cout<<"Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
         cout<<"The number of matches: "<<matchBuffer.startIndexOfReserve<<endl;
