@@ -616,14 +616,11 @@ void Classifier::linearSearchParallel(QueryKmer * queryKmerList, size_t & queryK
     cout<<"end of linear seach parallel"<<endl;
 }
 
-
 void Classifier::writeMatches(Buffer<Match> & matchBuffer, FILE * matchFile){
     //SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve, Classifier::compareForWritingMatches);
     fwrite(matchBuffer.buffer, sizeof(Match), matchBuffer.startIndexOfReserve, matchFile);
     matchBuffer.startIndexOfReserve = 0;
 }
-
-
 
 // It compares query k-mers to target k-mers.
 // If a query has matches, the matches with the smallest hamming distance will be selected
