@@ -222,6 +222,19 @@ private:
             FILE * matchFile,
             const LocalParameters & par);
 
+    void linearSearchParallel2(
+            QueryKmer * queryKmerList,
+            size_t & queryKmerCnt,
+            const char * targetDiffIdxList,
+            const char * targetInfoList,
+            const char * diffIdxSplits,
+            Buffer<Match> & matchBuffer,
+            const vector<int> & taxIdList,
+            const vector<int> & speciesTaxIdList,
+            const vector<TaxID> & genusTaxIdList,
+            FILE * matchFile,
+            const LocalParameters & par);
+
     void compareDna(uint64_t & query, vector<uint64_t> & targetKmersToCompare, const size_t & startIdx,
                     vector<size_t> & selectedMatches, vector<uint8_t> & selectedHammingSum, vector<uint16_t> & rightEndHammings);
 
