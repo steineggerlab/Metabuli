@@ -1002,6 +1002,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
 }
 
 void Classifier::writeMatches(Buffer<Match> &matchBuffer, FILE *matchFile) {
+    cout<<"HERE"<<matchBuffer.startIndexOfReserve<<endl;
     fwrite(matchBuffer.buffer, sizeof(Match), matchBuffer.startIndexOfReserve, matchFile);
     matchBuffer.startIndexOfReserve = 0;
 }
