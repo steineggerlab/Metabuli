@@ -668,8 +668,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                 // Check whether current split is completed or not
                 if (querySplits[i].start - 1 == querySplits[i].end) {
                     splitCheckList[i] = true;
-#pragma omp atomic
-                    completedSplitCnt++; //sync~~
+                    __sync_fetch_and_add(& completedSplitCnt, 1);
                 }
             }
         } // end of omp parallel
