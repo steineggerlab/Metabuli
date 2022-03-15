@@ -452,7 +452,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     while (completedSplitCnt < threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, \
-querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList)
+querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList, matchFile)
         {
             //query variables
             uint64_t currentQuery = UINT64_MAX;
@@ -491,6 +491,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                 currentQuery = UINT64_MAX;
                 currentQueryAA = UINT64_MAX;
 
+                size_t lastMovedQueryIdx;
                 for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
                     querySplits[i].start++;
                     // Reuse the comparison data if queries are exactly identical
@@ -503,12 +504,13 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                             if (posToWrite + matchCnt >=
                                 matchBuffer.bufferSize) { // full -> write matches to file first
                                 hasOverflow = true;
-                                querySplits[i].start = j;
+                                querySplits[i].start = lastMovedQueryIdx + 1; // TODO
 #pragma omp atomic
                                 matchBuffer.startIndexOfReserve -= selectedMatches.size();
                                 break;
                             } else { // not full -> copy matches to the shared buffer
                                 moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
+                                lastMovedQueryIdx = j;
                             }
                         }
 
@@ -550,12 +552,13 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                             if (posToWrite + matchCnt >=
                                 matchBuffer.bufferSize) { // full -> write matches to file first
                                 hasOverflow = true;
-                                querySplits[i].start = j;
+                                querySplits[i].start = lastMovedQueryIdx + 1;
 #pragma omp atomic
                                 matchBuffer.startIndexOfReserve -= selectedMatches.size();
                                 break;
                             } else { // not full -> copy matches to the shared buffer
                                 moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
+                                lastMovedQueryIdx = j;
                             }
                         }
 
@@ -619,12 +622,13 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                         posToWrite = matchBuffer.reserveMemory(matchCnt);
                         if (posToWrite + matchCnt >= matchBuffer.bufferSize) { // full -> write matches to file first
                             hasOverflow = true;
-                            querySplits[i].start = j;
+                            querySplits[i].start = lastMovedQueryIdx + 1;
 #pragma omp atomic
                             matchBuffer.startIndexOfReserve -= selectedMatches.size();
                             break;
                         } else { // not full -> copy matches to the shared buffer
                             moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
+                            lastMovedQueryIdx = j;
                         }
                     }
 
@@ -649,6 +653,18 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                         matchCnt++;
                     }
                 }
+
+                // Move matches in the local buffer to the shared buffer
+                posToWrite = matchBuffer.reserveMemory(matchCnt);
+                if (posToWrite + matchCnt >= matchBuffer.bufferSize) {
+                    querySplits[i].start = lastMovedQueryIdx + 1;
+#pragma omp atomic
+                    matchBuffer.startIndexOfReserve -= selectedMatches.size();
+                } else {
+                    moveMatches(matchBuffer.buffer, matches, matchCnt);
+                }
+                delete[] matches;
+                
                 // Check whether current split is completed or not
                 if (querySplits[i].start - 1 == querySplits[i].end) {
                     splitCheckList[i] = true;
@@ -656,10 +672,10 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                     completedSplitCnt++; //sync~~
                 }
             }
-            delete[] matches;
+
+
         } // end of omp parallel
-        if (hasOverflow)
-            writeMatches(matchBuffer, matchFile);
+        writeMatches(matchBuffer, matchFile);
     } // end of while(completeSplitCnt < threadNum)
     cout << "Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
 
