@@ -96,7 +96,7 @@ private:
         }
     };
 
-    struct Match{ //16byte
+    struct Match{ // 32 byte
         Match(){}
         Match(uint32_t queryId, int taxID, int speciesTaxID, int genusTaxID, int position, uint8_t frame,
               uint8_t hamming, int red, int rightEndHamming)
@@ -241,6 +241,8 @@ private:
     uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2);
 
     uint16_t getHammings(uint64_t kmer1, uint64_t kmer2);
+
+    void moveMatches(Match * dest, Match * src, int & matchNum);
 
     // Analyzing k-mer matches
     void analyseResultParallel(NcbiTaxonomy & ncbiTaxonomy,

@@ -145,9 +145,9 @@ void Classifier::startClassify(const char *queryFileName,
 
         //time_t beforeSearch = time(nullptr);
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxFileName,
-                              targetInfoFileName,
-                              diffIdxSplitFileName, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile,
-                              par);
+                             targetInfoFileName,
+                             diffIdxSplitFileName, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile,
+                             par);
         // cout<<"Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
         cout << "The number of matches: " << matchBuffer.startIndexOfReserve << endl;
     }
@@ -464,14 +464,20 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
             vector<uint64_t> candidateTargetKmers; //vector for candidate target k-mer, some of which are selected after based on hamming distance
             uint64_t currentTargetKmer;
 
+            //Match buffer for each thread
+            int matchBufferSize = 1000000; // 32 Mb
+            Match *matches = new Match[1000000];
+            int matchCnt = 0;
+
             //vectors for selected target k-mers
             vector<uint8_t> selectedHammingSum;
             vector<size_t> selectedMatches;
             vector<uint16_t> selectedHammings;
             size_t startIdxOfAAmatch = 0;
             size_t posToWrite;
+            int currMatchNum;
             size_t range;
-#pragma omp for schedule(dynamic, 8)
+#pragma omp for schedule(dynamic, 1)
             for (size_t i = 0; i < querySplits.size(); i++) {
                 if (hasOverflow || splitCheckList[i]) {
                     continue;
@@ -489,35 +495,42 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                     querySplits[i].start++;
                     // Reuse the comparison data if queries are exactly identical
                     if (currentQuery == queryKmerList[j].ADkmer) {
-                        posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
-                        if (posToWrite + selectedMatches.size() >= matchBuffer.bufferSize) {
-                            hasOverflow = true;
-                            querySplits[i].start = j;
+                        currMatchNum = selectedMatches.size();
+                        // If local buffer is full, copy them to the shared buffer.
+                        if (matchCnt + currMatchNum > matchBufferSize) {
+                            // Check if the shared buffer is full.
+                            posToWrite = matchBuffer.reserveMemory(matchCnt);
+                            if (posToWrite + matchCnt >=
+                                matchBuffer.bufferSize) { // full -> write matches to file first
+                                hasOverflow = true;
+                                querySplits[i].start = j;
 #pragma omp atomic
-                            matchBuffer.startIndexOfReserve -= selectedMatches.size();
-                            break;
-                        } else {
-                            range = selectedMatches.size();
-                            for (size_t k = 0; k < range; k++) {
-                                if (targetInfoList2.data[selectedMatches[k]].redundancy) {
-                                    matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID,
-                                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      queryKmerList[j].info.pos,
-                                                                      queryKmerList[j].info.frame,
-                                                                      selectedHammingSum[k], 1, selectedHammings[k]};
-                                } else {
-                                    matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID,
-                                                                      taxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      queryKmerList[j].info.pos,
-                                                                      queryKmerList[j].info.frame,
-                                                                      selectedHammingSum[k], 0, selectedHammings[k]};
-                                }
-                                posToWrite++;
+                                matchBuffer.startIndexOfReserve -= selectedMatches.size();
+                                break;
+                            } else { // not full -> copy matches to the shared buffer
+                                moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
                             }
+                        }
+
+                        for (int k = 0; k < currMatchNum; k++) {
+                            if (targetInfoList2.data[selectedMatches[k]].redundancy) {
+                                matches[matchCnt] = {queryKmerList[j].info.sequenceID,
+                                                     spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                     spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                     genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                     queryKmerList[j].info.pos,
+                                                     queryKmerList[j].info.frame,
+                                                     selectedHammingSum[k], 1, selectedHammings[k]};
+                            } else {
+                                matches[matchCnt] = {queryKmerList[j].info.sequenceID,
+                                                     taxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                     spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                     genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                     queryKmerList[j].info.pos,
+                                                     queryKmerList[j].info.frame,
+                                                     selectedHammingSum[k], 0, selectedHammings[k]};
+                            }
+                            matchCnt++;
                         }
                         continue;
                     }
@@ -529,35 +542,42 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                     if (currentQueryAA == AminoAcid(queryKmerList[j].ADkmer)) {
                         compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, startIdxOfAAmatch, selectedMatches,
                                    selectedHammingSum, selectedHammings);
-                        posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
-                        if (posToWrite + selectedMatches.size() >= matchBuffer.bufferSize) {
-                            hasOverflow = true;
-                            querySplits[i].start = j;
+                        currMatchNum = selectedMatches.size();
+                        // If local buffer is full, copy them to the shared buffer.
+                        if (matchCnt + currMatchNum > matchBufferSize) {
+                            // Check if the shared buffer is full.
+                            posToWrite = matchBuffer.reserveMemory(matchCnt);
+                            if (posToWrite + matchCnt >=
+                                matchBuffer.bufferSize) { // full -> write matches to file first
+                                hasOverflow = true;
+                                querySplits[i].start = j;
 #pragma omp atomic
-                            matchBuffer.startIndexOfReserve -= selectedMatches.size();
-                            break;
-                        } else {
-                            range = selectedMatches.size();
-                            for (size_t k = 0; k < range; k++) {
-                                if (targetInfoList2.data[selectedMatches[k]].redundancy) {
-                                    matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID,
-                                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      queryKmerList[j].info.pos,
-                                                                      queryKmerList[j].info.frame,
-                                                                      selectedHammingSum[k], 1, selectedHammings[k]};
-                                } else {
-                                    matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID,
-                                                                      taxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      queryKmerList[j].info.pos,
-                                                                      queryKmerList[j].info.frame,
-                                                                      selectedHammingSum[k], 0, selectedHammings[k]};
-                                }
-                                posToWrite++;
+                                matchBuffer.startIndexOfReserve -= selectedMatches.size();
+                                break;
+                            } else { // not full -> copy matches to the shared buffer
+                                moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
                             }
+                        }
+
+                        for (int k = 0; k < currMatchNum; k++) {
+                            if (targetInfoList2.data[selectedMatches[k]].redundancy) {
+                                matches[matchCnt] = {queryKmerList[j].info.sequenceID,
+                                                     spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                     spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                     genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                     queryKmerList[j].info.pos,
+                                                     queryKmerList[j].info.frame,
+                                                     selectedHammingSum[k], 1, selectedHammings[k]};
+                            } else {
+                                matches[matchCnt] = {queryKmerList[j].info.sequenceID,
+                                                     taxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                     spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                     genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                     queryKmerList[j].info.pos,
+                                                     queryKmerList[j].info.frame,
+                                                     selectedHammingSum[k], 0, selectedHammings[k]};
+                            }
+                            matchCnt++;
                         }
                         continue;
                     }
@@ -591,49 +611,58 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                     // Compare the current query and the loaded target k-mers and select
                     compareDna(currentQuery, candidateTargetKmers, startIdxOfAAmatch, selectedMatches,
                                selectedHammingSum, selectedHammings);
-                    posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
-                    if (posToWrite + selectedMatches.size() >= matchBuffer.bufferSize) {
-                        hasOverflow = true;
-                        querySplits[i].start = j;
+
+                    // If local buffer is full, copy them to the shared buffer.
+                    currMatchNum = selectedMatches.size();
+                    if (matchCnt + currMatchNum > matchBufferSize) {
+                        // Check if the shared buffer is full.
+                        posToWrite = matchBuffer.reserveMemory(matchCnt);
+                        if (posToWrite + matchCnt >= matchBuffer.bufferSize) { // full -> write matches to file first
+                            hasOverflow = true;
+                            querySplits[i].start = j;
 #pragma omp atomic
-                        matchBuffer.startIndexOfReserve -= selectedMatches.size();
-                        break;
-                    } else {
-                        range = selectedMatches.size();
-                        for (size_t k = 0; k < range; k++) {
-                            if (targetInfoList2.data[selectedMatches[k]].redundancy) {
-                                matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID,
-                                                                  spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                  spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                  genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                  queryKmerList[j].info.pos,
-                                                                  queryKmerList[j].info.frame,
-                                                                  selectedHammingSum[k], 1, selectedHammings[k]};
-                            } else {
-                                matchBuffer.buffer[posToWrite] = {queryKmerList[j].info.sequenceID,
-                                                                  taxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                  spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                  genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                  queryKmerList[j].info.pos,
-                                                                  queryKmerList[j].info.frame,
-                                                                  selectedHammingSum[k], 0, selectedHammings[k]};
-                            }
-                            posToWrite++;
+                            matchBuffer.startIndexOfReserve -= selectedMatches.size();
+                            break;
+                        } else { // not full -> copy matches to the shared buffer
+                            moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
                         }
                     }
-                }
 
-                // Check whether current split is completed or not
-                if (querySplits[i].start - 1 == querySplits[i].end) {
-                    splitCheckList[i] = true;
+                    for (int k = 0; k < currMatchNum; k++) {
+                        if (targetInfoList2.data[selectedMatches[k]].redundancy) {
+                            matches[matchCnt] = {queryKmerList[j].info.sequenceID,
+                                                 spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                 spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                 genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                 queryKmerList[j].info.pos,
+                                                 queryKmerList[j].info.frame,
+                                                 selectedHammingSum[k], 1, selectedHammings[k]};
+                        } else {
+                            matches[matchCnt] = {queryKmerList[j].info.sequenceID,
+                                                 taxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                 spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                 genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
+                                                 queryKmerList[j].info.pos,
+                                                 queryKmerList[j].info.frame,
+                                                 selectedHammingSum[k], 0, selectedHammings[k]};
+                        }
+                        matchCnt++;
+                    }
+
+                    continue;
+                    // Check whether current split is completed or not
+                    if (querySplits[i].start - 1 == querySplits[i].end) {
+                        splitCheckList[i] = true;
 #pragma omp atomic
-                    completedSplitCnt++;
+                        completedSplitCnt++; //sync~~
+                    }
                 }
             }
-        }
+            delete[] matches;
+        } // end of omp parallel
         if (hasOverflow)
             writeMatches(matchBuffer, matchFile);
-    }
+    } // end of while(completeSplitCnt < threadNum)
     cout << "Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
 
     munmap(targetDiffIdxList2.data, targetDiffIdxList2.fileSize + 1);
@@ -643,7 +672,13 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
     cout << "end of linear seach parallel" << endl;
 }
 
-void Classifier::linearSearchParallel2(QueryKmer *queryKmerList, size_t &queryKmerCnt, const char *targetDiffIdxFileName,
+void Classifier::moveMatches(Match *dest, Match *src, int &matchNum) {
+    memcpy(dest, src, sizeof(Match) * matchNum);
+    matchNum = 0;
+}
+
+void
+Classifier::linearSearchParallel2(QueryKmer *queryKmerList, size_t &queryKmerCnt, const char *targetDiffIdxFileName,
                                   const char *targetInfoFileName, const char *diffIdxSplitsFileName,
                                   Buffer<Match> &matchBuffer, const vector<int> &taxIdList,
                                   const vector<int> &spTaxIdList, const vector<TaxID> &genusTaxIdList,
@@ -955,7 +990,6 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
 }
 
 void Classifier::writeMatches(Buffer<Match> &matchBuffer, FILE *matchFile) {
-    //SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve, Classifier::compareForWritingMatches);
     fwrite(matchBuffer.buffer, sizeof(Match), matchBuffer.startIndexOfReserve, matchFile);
     matchBuffer.startIndexOfReserve = 0;
 }
