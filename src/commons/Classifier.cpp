@@ -186,38 +186,38 @@ void Classifier::startClassify(const char *queryFileName,
     readClassificationFile.close();
     writeReportFile(par.filenames[3] + "/" + par.filenames[4] + "_CompositionReport.tsv", taxonomy, numOfSeq);
 
-    // Below is for developing
-//    ofstream wr;
-//    ofstream wr2;
-//    vector<int> wrongClassifications;
-//    sequences.clear();
-//    IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
-//    wr.open(par.filenames[0]+"_wrong_1");
-//    if(par.seqMode == 2) {
-//        sequences2.clear();
-//        IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
-//        wr2.open(par.filenames[0] + "_wrong_2");
-//    }
-//    performanceTest(taxonomy, queryList, numOfSeq, wrongClassifications);
-//    for (size_t i = 0; i < wrongClassifications.size(); i++) {
-//        kseq_buffer_t buffer(const_cast<char *>(&queryFile.data[sequences[wrongClassifications[i]].start]), sequences[wrongClassifications[i]].length);
-//        kseq_t *seq = kseq_init(&buffer);
-//        kseq_read(seq);
-//        wr<<">"<<seq->name.s<<endl;
-//        wr<<seq->seq.s<<endl;
-//        kseq_destroy(seq);
-//        if(par.seqMode == 2) {
-//            kseq_buffer_t buffer2(const_cast<char *>(&queryFile2.data[sequences[wrongClassifications[i]].start]),
-//                                  sequences2[wrongClassifications[i]].length);
-//            kseq_t *seq2 = kseq_init(&buffer2);
-//            kseq_read(seq2);
-//            wr2 << ">" << seq2->name.s << endl;
-//            wr2 << seq2->seq.s << endl;
-//            kseq_destroy(seq2);
-//        }
-//    }
-//    wr.close();
-//    wr2.close();
+     Below is for developing
+    ofstream wr;
+    ofstream wr2;
+    vector<int> wrongClassifications;
+    sequences.clear();
+    IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
+    wr.open(par.filenames[0]+"_wrong_1");
+    if(par.seqMode == 2) {
+        sequences2.clear();
+        IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
+        wr2.open(par.filenames[0] + "_wrong_2");
+    }
+    performanceTest(taxonomy, queryList, numOfSeq, wrongClassifications);
+    for (size_t i = 0; i < wrongClassifications.size(); i++) {
+        kseq_buffer_t buffer(const_cast<char *>(&queryFile.data[sequences[wrongClassifications[i]].start]), sequences[wrongClassifications[i]].length);
+        kseq_t *seq = kseq_init(&buffer);
+        kseq_read(seq);
+        wr<<">"<<seq->name.s<<endl;
+        wr<<seq->seq.s<<endl;
+        kseq_destroy(seq);
+        if(par.seqMode == 2) {
+            kseq_buffer_t buffer2(const_cast<char *>(&queryFile2.data[sequences[wrongClassifications[i]].start]),
+                                  sequences2[wrongClassifications[i]].length);
+            kseq_t *seq2 = kseq_init(&buffer2);
+            kseq_read(seq2);
+            wr2 << ">" << seq2->name.s << endl;
+            wr2 << seq2->seq.s << endl;
+            kseq_destroy(seq2);
+        }
+    }
+    wr.close();
+    wr2.close();
 
     free(kmerBuffer.buffer);
 
@@ -504,7 +504,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                             if (posToWrite + matchCnt >=
                                 matchBuffer.bufferSize) { // full -> write matches to file first
                                 hasOverflow = true;
-                                querySplits[i].start = lastMovedQueryIdx + 1; // TODO
+                                querySplits[i].start = lastMovedQueryIdx + 1;
 #pragma omp atomic
                                 matchBuffer.startIndexOfReserve -= matchCnt;
                                 break;
@@ -687,318 +687,6 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
 void Classifier::moveMatches(Match *dest, Match *src, int &matchNum) {
     memcpy(dest, src, sizeof(Match) * matchNum);
     matchNum = 0;
-}
-
-void
-Classifier::linearSearchParallel2(QueryKmer *queryKmerList, size_t &queryKmerCnt, const char *targetDiffIdxFileName,
-                                  const char *targetInfoFileName, const char *diffIdxSplitsFileName,
-                                  Buffer<Match> &matchBuffer, const vector<int> &taxIdList,
-                                  const vector<int> &spTaxIdList, const vector<TaxID> &genusTaxIdList,
-                                  FILE *matchFile, const LocalParameters &par) {
-
-    struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName, 2);
-    struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName, 2);
-    struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitsFileName);
-
-    cout << "linearSearch start..." << endl;
-    // Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
-    for (size_t checkN = queryKmerCnt - 1; checkN > 0; checkN--) {
-        if (queryKmerList[checkN].ADkmer != UINT64_MAX) {
-            queryKmerCnt = checkN + 1;
-            break;
-        }
-    }
-
-    // Filter out meaningless target querySplits
-    size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
-    size_t numOfDiffIdxSplits_use = numOfDiffIdxSplits;
-    for (size_t i = 1; i < numOfDiffIdxSplits; i++) {
-        if (diffIdxSplits.data[i].ADkmer == 0 || diffIdxSplits.data[i].ADkmer == UINT64_MAX) {
-            diffIdxSplits.data[i] = {UINT64_MAX, UINT64_MAX, UINT64_MAX};
-            numOfDiffIdxSplits_use--;
-        }
-    }
-
-    cout << "Filtering out meaningless target splits ... done" << endl;
-
-    // Divide query k-mer list into blocks for multi threading.
-    // Each split has start and end points of query list + proper offset point of target k-mer list
-    vector<QueryKmerSplit> querySplits;
-    vector<QueryKmer *> querySplits2;
-    int threadNum = par.threads;
-    uint64_t queryAA;
-    if (threadNum == 1) { //Single thread
-        querySplits.emplace_back(0, queryKmerCnt - 1, queryKmerCnt, diffIdxSplits.data[0]);
-    } else if (threadNum == 2) { //Two threads
-        size_t splitWidth = queryKmerCnt / 2;
-        querySplits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
-        for (size_t tSplitCnt = 0; tSplitCnt < numOfDiffIdxSplits_use; tSplitCnt++) {
-            queryAA = AminoAcid(queryKmerList[splitWidth].ADkmer);
-            if (queryAA <= AminoAcid(diffIdxSplits.data[tSplitCnt].ADkmer)) {
-                tSplitCnt = tSplitCnt - (tSplitCnt != 0);
-                querySplits.emplace_back(splitWidth, queryKmerCnt - 1, queryKmerCnt - splitWidth,
-                                         diffIdxSplits.data[tSplitCnt]);
-                break;
-            }
-        }
-    } else { //More than two threads
-        size_t splitWidth = queryKmerCnt / (threadNum - 1);
-        querySplits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
-        querySplits2.push_back(new QueryKmer[splitWidth]);
-        memcpy(querySplits2[0], queryKmerList, sizeof(QueryKmer) * splitWidth);
-
-        for (int i = 1; i < threadNum; i++) {
-            queryAA = AminoAcid(queryKmerList[splitWidth * i].ADkmer);
-            bool needLastTargetBlock = true;
-            for (size_t j = 0; j < numOfDiffIdxSplits_use; j++) {
-                if (queryAA <= AminoAcid(diffIdxSplits.data[j].ADkmer)) {
-                    j = j - (j != 0);
-                    if (i != threadNum - 1) {
-                        querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth,
-                                                 diffIdxSplits.data[j]);
-                        querySplits2.push_back(new QueryKmer[splitWidth]);
-                        memcpy(querySplits2[i], queryKmerList + splitWidth * i, sizeof(QueryKmer) * splitWidth);
-                    } else {
-                        querySplits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
-                                                 diffIdxSplits.data[j]);
-                        querySplits2.push_back(new QueryKmer[splitWidth]);
-                        memcpy(querySplits2[i], queryKmerList + splitWidth * i,
-                               sizeof(QueryKmer) * (queryKmerCnt - splitWidth * i));
-                    }
-                    needLastTargetBlock = false;
-                    break;
-                }
-            }
-            if (needLastTargetBlock) {
-                cout << "needLastTargetBlock" << endl;
-                if (i != threadNum - 1) {
-                    querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth,
-                                             diffIdxSplits.data[numOfDiffIdxSplits_use - 1]);
-                    querySplits2.push_back(new QueryKmer[splitWidth]);
-                    memcpy(querySplits2[i], queryKmerList + splitWidth * i, sizeof(QueryKmer) * splitWidth);
-                } else {
-                    querySplits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
-                                             diffIdxSplits.data[numOfDiffIdxSplits_use - 1]);
-                    querySplits2.push_back(new QueryKmer[splitWidth]);
-                    memcpy(querySplits2[i], queryKmerList + splitWidth * i,
-                           sizeof(QueryKmer) * (queryKmerCnt - splitWidth * i));
-                }
-            }
-        }
-    }
-
-    bool *splitCheckList = (bool *) malloc(sizeof(bool) * threadNum);
-    fill_n(splitCheckList, threadNum, false);
-    int completedSplitCnt = 0;
-    size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
-    size_t numOfDiffIdx = targetDiffIdxList.fileSize / sizeof(uint16_t);
-
-    munmap(targetDiffIdxList.data, targetDiffIdxList.fileSize + 1);
-    munmap(targetInfoList.data, targetInfoList.fileSize + 1);
-    munmap(diffIdxSplits.data, diffIdxSplits.fileSize + 1);
-
-    cout << "The number of target k-mers: " << numOfTargetKmer << endl;
-
-    struct MmapedData<uint16_t> targetDiffIdxList2 = mmapData<uint16_t>(targetDiffIdxFileName, 2);
-    struct MmapedData<TargetKmerInfo> targetInfoList2 = mmapData<TargetKmerInfo>(targetInfoFileName, 2);
-
-    time_t beforeSearch = time(nullptr);
-
-    while (completedSplitCnt < threadNum) {
-        bool hasOverflow = false;
-#pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, \
-querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList)
-        {
-            //query variables
-            uint64_t currentQuery = UINT64_MAX;
-            uint64_t currentQueryAA = UINT64_MAX;
-
-            //target variables
-            size_t diffIdxPos = 0;
-            size_t targetInfoIdx = 0;
-            vector<uint64_t> candidateTargetKmers; //vector for candidate target k-mer, some of which are selected after based on hamming distance
-            uint64_t currentTargetKmer;
-
-            //vectors for selected target k-mers
-            vector<uint8_t> selectedHammingSum;
-            vector<size_t> selectedMatches;
-            vector<uint16_t> selectedHammings;
-            size_t startIdxOfAAmatch = 0;
-            size_t posToWrite;
-            size_t range;
-            QueryKmer *currQuerySplit;
-#pragma omp for schedule(dynamic, 1)
-            for (size_t i = 0; i < querySplits.size(); i++) {
-                currQuerySplit = new QueryKmer[querySplits[i].length];
-                memcpy(currQuerySplit, queryKmerList + querySplits[i].start, sizeof(QueryKmer) * querySplits[i].length);
-                if (hasOverflow || splitCheckList[i]) {
-                    continue;
-                }
-                targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
-                diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
-                currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
-                if (i == 0) {
-                    currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList2.data, diffIdxPos);
-                }
-                currentQuery = UINT64_MAX;
-                currentQueryAA = UINT64_MAX;
-
-                for (size_t j = 0; j < querySplits[i].length; j++) {
-                    querySplits[i].start++;
-                    // Reuse the comparison data if queries are exactly identical
-                    if (currentQuery == currQuerySplit[j].ADkmer) {
-                        posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
-                        if (posToWrite + selectedMatches.size() >= matchBuffer.bufferSize) {
-                            hasOverflow = true;
-                            querySplits[i].start = j;
-#pragma omp atomic
-                            matchBuffer.startIndexOfReserve -= selectedMatches.size();
-                            break;
-                        } else {
-                            range = selectedMatches.size();
-                            for (size_t k = 0; k < range; k++) {
-                                if (targetInfoList2.data[selectedMatches[k]].redundancy) {
-                                    matchBuffer.buffer[posToWrite] = {currQuerySplit[j].info.sequenceID,
-                                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      currQuerySplit[j].info.pos,
-                                                                      currQuerySplit[j].info.frame,
-                                                                      selectedHammingSum[k], 1, selectedHammings[k]};
-                                } else {
-                                    matchBuffer.buffer[posToWrite] = {currQuerySplit[j].info.sequenceID,
-                                                                      taxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      currQuerySplit[j].info.pos,
-                                                                      currQuerySplit[j].info.frame,
-                                                                      selectedHammingSum[k], 0, selectedHammings[k]};
-                                }
-                                posToWrite++;
-                            }
-                        }
-                        continue;
-                    }
-                    selectedMatches.clear();
-                    selectedHammingSum.clear();
-                    selectedHammings.clear();
-
-                    ///Reuse the candidate target k-mers to compare in DNA level if queries are the same at amino acid level but not at DNA level
-                    if (currentQueryAA == AminoAcid(currQuerySplit[j].ADkmer)) {
-                        compareDna(currQuerySplit[j].ADkmer, candidateTargetKmers, startIdxOfAAmatch, selectedMatches,
-                                   selectedHammingSum, selectedHammings);
-                        posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
-                        if (posToWrite + selectedMatches.size() >= matchBuffer.bufferSize) {
-                            hasOverflow = true;
-                            querySplits[i].start = j;
-#pragma omp atomic
-                            matchBuffer.startIndexOfReserve -= selectedMatches.size();
-                            break;
-                        } else {
-                            range = selectedMatches.size();
-                            for (size_t k = 0; k < range; k++) {
-                                if (targetInfoList2.data[selectedMatches[k]].redundancy) {
-                                    matchBuffer.buffer[posToWrite] = {currQuerySplit[j].info.sequenceID,
-                                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      currQuerySplit[j].info.pos,
-                                                                      currQuerySplit[j].info.frame,
-                                                                      selectedHammingSum[k], 1, selectedHammings[k]};
-                                } else {
-                                    matchBuffer.buffer[posToWrite] = {currQuerySplit[j].info.sequenceID,
-                                                                      taxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                      currQuerySplit[j].info.pos,
-                                                                      currQuerySplit[j].info.frame,
-                                                                      selectedHammingSum[k], 0, selectedHammings[k]};
-                                }
-                                posToWrite++;
-                            }
-                        }
-                        continue;
-                    }
-                    candidateTargetKmers.clear();
-
-                    // Get next query, and start to find
-                    currentQuery = currQuerySplit[j].ADkmer;
-                    currentQueryAA = AminoAcid(currentQuery);
-
-                    // Skip target k-mers that are not matched in amino acid level
-                    while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) &&
-                           (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
-                        currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList2.data, diffIdxPos);
-                        targetInfoIdx++;
-                    }
-
-                    if (AminoAcid(currentQuery) !=
-                        AminoAcid(currentTargetKmer)) // Move to next query k-mer if there isn't any match.
-                        continue;
-                    else
-                        startIdxOfAAmatch = targetInfoIdx;
-
-                    // Load target k-mers that are matched in amino acid level
-                    while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) &&
-                           (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
-                        candidateTargetKmers.push_back(currentTargetKmer);
-                        currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList2.data, diffIdxPos);
-                        targetInfoIdx++;
-                    }
-
-                    // Compare the current query and the loaded target k-mers and select
-                    compareDna(currentQuery, candidateTargetKmers, startIdxOfAAmatch, selectedMatches,
-                               selectedHammingSum, selectedHammings);
-                    posToWrite = matchBuffer.reserveMemory(selectedMatches.size());
-                    if (posToWrite + selectedMatches.size() >= matchBuffer.bufferSize) {
-                        hasOverflow = true;
-                        querySplits[i].start = j;
-#pragma omp atomic
-                        matchBuffer.startIndexOfReserve -= selectedMatches.size();
-                        break;
-                    } else {
-                        range = selectedMatches.size();
-                        for (size_t k = 0; k < range; k++) {
-                            if (targetInfoList2.data[selectedMatches[k]].redundancy) {
-                                matchBuffer.buffer[posToWrite] = {currQuerySplit[j].info.sequenceID,
-                                                                  spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                  spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                  genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                  currQuerySplit[j].info.pos,
-                                                                  currQuerySplit[j].info.frame,
-                                                                  selectedHammingSum[k], 1, selectedHammings[k]};
-                            } else {
-                                matchBuffer.buffer[posToWrite] = {currQuerySplit[j].info.sequenceID,
-                                                                  taxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                  spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                  genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                                  currQuerySplit[j].info.pos,
-                                                                  currQuerySplit[j].info.frame,
-                                                                  selectedHammingSum[k], 0, selectedHammings[k]};
-                            }
-                            posToWrite++;
-                        }
-                    }
-                }
-
-                // Check whether current split is completed or not
-                if (querySplits[i].start - 1 == querySplits[i].end) {
-                    splitCheckList[i] = true;
-#pragma omp atomic
-                    completedSplitCnt++;
-                }
-            }
-
-        }
-        if (hasOverflow)
-            writeMatches(matchBuffer, matchFile);
-    }
-    munmap(targetDiffIdxList2.data, targetDiffIdxList2.fileSize + 1);
-    munmap(targetInfoList2.data, targetInfoList2.fileSize + 1);
-    cout << "Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
-    free(splitCheckList);
-    queryKmerCnt = 0;
-    cout << "end of linear seach parallel" << endl;
 }
 
 void Classifier::writeMatches(Buffer<Match> &matchBuffer, FILE *matchFile) {
