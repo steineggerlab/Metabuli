@@ -154,7 +154,7 @@ void Classifier::startClassify(const char *queryFileName,
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
 
     if (par.memoryMode == 1) {
-        writeMatches(matchBuffer, matchFile);
+        //(matchBuffer, matchFile);
         fclose(matchFile);
         free(matchBuffer.buffer);
         struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
