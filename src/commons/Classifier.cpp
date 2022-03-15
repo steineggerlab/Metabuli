@@ -186,7 +186,7 @@ void Classifier::startClassify(const char *queryFileName,
     readClassificationFile.close();
     writeReportFile(par.filenames[3] + "/" + par.filenames[4] + "_CompositionReport.tsv", taxonomy, numOfSeq);
 
-     Below is for developing
+     //Below is for developing
     ofstream wr;
     ofstream wr2;
     vector<int> wrongClassifications;
