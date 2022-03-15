@@ -661,7 +661,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
 #pragma omp atomic
                     matchBuffer.startIndexOfReserve -= matchCnt;
                 } else {
-                    moveMatches(matchBuffer.buffer, matches, matchCnt);
+                    moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
                 }
                 delete[] matches;
 
@@ -684,7 +684,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
     cout << "end of linear seach parallel" << endl;
 }
 
-void Classifier::moveMatches(Match *dest, Match *src, int &matchNum) {
+void Classifier::moveMatches(Match * dest, Match * src, int & matchNum) {
     memcpy(dest, src, sizeof(Match) * matchNum);
     matchNum = 0;
 }
