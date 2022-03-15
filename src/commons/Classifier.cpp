@@ -648,13 +648,12 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                         }
                         matchCnt++;
                     }
-                    
-                    // Check whether current split is completed or not
-                    if (querySplits[i].start - 1 == querySplits[i].end) {
-                        splitCheckList[i] = true;
+                }
+                // Check whether current split is completed or not
+                if (querySplits[i].start - 1 == querySplits[i].end) {
+                    splitCheckList[i] = true;
 #pragma omp atomic
-                        completedSplitCnt++; //sync~~
-                    }
+                    completedSplitCnt++; //sync~~
                 }
             }
             delete[] matches;
