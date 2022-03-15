@@ -506,7 +506,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                                 hasOverflow = true;
                                 querySplits[i].start = lastMovedQueryIdx + 1; // TODO
 #pragma omp atomic
-                                matchBuffer.startIndexOfReserve -= selectedMatches.size();
+                                matchBuffer.startIndexOfReserve -= matchCnt;
                                 break;
                             } else { // not full -> copy matches to the shared buffer
                                 moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
@@ -554,7 +554,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                                 hasOverflow = true;
                                 querySplits[i].start = lastMovedQueryIdx + 1;
 #pragma omp atomic
-                                matchBuffer.startIndexOfReserve -= selectedMatches.size();
+                                matchBuffer.startIndexOfReserve -= matchCnt;
                                 break;
                             } else { // not full -> copy matches to the shared buffer
                                 moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
@@ -624,7 +624,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                             hasOverflow = true;
                             querySplits[i].start = lastMovedQueryIdx + 1;
 #pragma omp atomic
-                            matchBuffer.startIndexOfReserve -= selectedMatches.size();
+                            matchBuffer.startIndexOfReserve -= matchCnt;
                             break;
                         } else { // not full -> copy matches to the shared buffer
                             moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
@@ -659,12 +659,12 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                 if (posToWrite + matchCnt >= matchBuffer.bufferSize) {
                     querySplits[i].start = lastMovedQueryIdx + 1;
 #pragma omp atomic
-                    matchBuffer.startIndexOfReserve -= selectedMatches.size();
+                    matchBuffer.startIndexOfReserve -= matchCnt;
                 } else {
                     moveMatches(matchBuffer.buffer, matches, matchCnt);
                 }
                 delete[] matches;
-                
+
                 // Check whether current split is completed or not
                 if (querySplits[i].start - 1 == querySplits[i].end) {
                     splitCheckList[i] = true;
@@ -672,8 +672,6 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                     completedSplitCnt++; //sync~~
                 }
             }
-
-
         } // end of omp parallel
         writeMatches(matchBuffer, matchFile);
     } // end of while(completeSplitCnt < threadNum)
