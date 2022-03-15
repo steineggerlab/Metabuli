@@ -648,8 +648,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                         }
                         matchCnt++;
                     }
-
-                    continue;
+                    
                     // Check whether current split is completed or not
                     if (querySplits[i].start - 1 == querySplits[i].end) {
                         splitCheckList[i] = true;
