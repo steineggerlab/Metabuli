@@ -171,8 +171,7 @@ void Classifier::startClassify(const char *queryFileName,
                       Classifier::sortByGenusAndSpecies2);
         cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
         time_t beforeAnalyze = time(nullptr);
-        //analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList,
-                              par);
+        //analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList, par);
         cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
         free(matchBuffer.buffer);
     }
