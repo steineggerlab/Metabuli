@@ -670,7 +670,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                 }
             }
         } // end of omp parallel
-       // writeMatches(matchBuffer, matchFile);
+        writeMatches(matchBuffer, matchFile);
     } // end of while(completeSplitCnt < threadNum)
     cout << "Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
 
@@ -689,7 +689,7 @@ void Classifier::moveMatches(Match * dest, Match * src, int & matchNum) {
 void Classifier::writeMatches(Buffer<Match> &matchBuffer, FILE *matchFile) {
     cout<<"HERE"<<matchBuffer.startIndexOfReserve<<endl;
     fwrite(matchBuffer.buffer, sizeof(Match), matchBuffer.startIndexOfReserve, matchFile);
-    matchBuffer.startIndexOfReserve = 0;
+    //matchBuffer.startIndexOfReserve = 0;
 }
 
 // It compares query k-mers to target k-mers.
