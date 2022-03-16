@@ -153,32 +153,31 @@ void Classifier::startClassify(const char *queryFileName,
     }
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
 
-//    if (par.memoryMode == 1) {
-//        //(matchBuffer, matchFile);
+    if (par.memoryMode == 1) {
+        fclose(matchFile);
+        free(matchBuffer.buffer);
+        struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
+        size_t numOfMatches = matchList.fileSize / sizeof(Match);
+        time_t beforeSortMatches = time(nullptr);
+        SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
+        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
+        time_t beforeAnalyze = time(nullptr);
+        //analyseResultParallel(taxonomy, matchList.data, numOfMatches, (int) numOfSeq, queryList, par);
+        cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
+    } else {
 //        fclose(matchFile);
-//        free(matchBuffer.buffer);
-//        struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
-//        size_t numOfMatches = matchList.fileSize / sizeof(Match);
-//        time_t beforeSortMatches = time(nullptr);
-//        SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
-//        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
-//        time_t beforeAnalyze = time(nullptr);
-//        analyseResultParallel(taxonomy, matchList.data, numOfMatches, (int) numOfSeq, queryList, par);
-//        cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
-//    } else {
-////        fclose(matchFile);
-//        time_t beforeSortMatches = time(nullptr);
-//        SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve,
-//                      Classifier::sortByGenusAndSpecies2);
-//        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
-//        time_t beforeAnalyze = time(nullptr);
-//        analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList,
-//                              par);
-//        cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
-//        free(matchBuffer.buffer);
-//    }
-//
-//
+        time_t beforeSortMatches = time(nullptr);
+        SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve,
+                      Classifier::sortByGenusAndSpecies2);
+        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
+        time_t beforeAnalyze = time(nullptr);
+        analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList,
+                              par);
+        cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
+        free(matchBuffer.buffer);
+    }
+
+
 //    // Write report files
 //    ofstream readClassificationFile;
 //    readClassificationFile.open(par.filenames[3] + "/" + par.filenames[4] + "_ReadClassification.tsv");
