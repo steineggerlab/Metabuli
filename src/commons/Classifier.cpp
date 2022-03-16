@@ -151,69 +151,69 @@ void Classifier::startClassify(const char *queryFileName,
     }
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
 
-//    if (par.memoryMode == 1) {
+    if (par.memoryMode == 1) {
+        fclose(matchFile);
+        free(matchBuffer.buffer);
+        struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
+        size_t numOfMatches = matchList.fileSize / sizeof(Match);
+        time_t beforeSortMatches = time(nullptr);
+        SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
+        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
+        time_t beforeAnalyze = time(nullptr);
+        //analyseResultParallel(taxonomy, matchList.data, numOfMatches, (int) numOfSeq, queryList, par);
+        cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
+    } else {
 //        fclose(matchFile);
-//        free(matchBuffer.buffer);
-//        struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
-//        size_t numOfMatches = matchList.fileSize / sizeof(Match);
-//        time_t beforeSortMatches = time(nullptr);
-//        SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
-//        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
-//        time_t beforeAnalyze = time(nullptr);
-//        //analyseResultParallel(taxonomy, matchList.data, numOfMatches, (int) numOfSeq, queryList, par);
-//        cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
-//    } else {
-////        fclose(matchFile);
-//        time_t beforeSortMatches = time(nullptr);
-//        SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve,
-//                      Classifier::sortByGenusAndSpecies2);
-//        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
-//        time_t beforeAnalyze = time(nullptr);
-//        //analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList, par);
-//        cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
-//        free(matchBuffer.buffer);
-//    }
+        time_t beforeSortMatches = time(nullptr);
+        SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve,
+                      Classifier::sortByGenusAndSpecies2);
+        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
+        time_t beforeAnalyze = time(nullptr);
+        //analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList, par);
+        cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
+        free(matchBuffer.buffer);
+    }
 
 
-//    // Write report files
-//    ofstream readClassificationFile;
-//    readClassificationFile.open(par.filenames[3] + "/" + par.filenames[4] + "_ReadClassification.tsv");
-//    writeReadClassification(queryList, (int) numOfSeq, readClassificationFile);
-//    readClassificationFile.close();
-//    writeReportFile(par.filenames[3] + "/" + par.filenames[4] + "_CompositionReport.tsv", taxonomy, numOfSeq);
+    // Write report files
+    ofstream readClassificationFile;
+    readClassificationFile.open(par.filenames[3] + "/" + par.filenames[4] + "_ReadClassification.tsv");
+    writeReadClassification(queryList, (int) numOfSeq, readClassificationFile);
+    readClassificationFile.close();
+    writeReportFile(par.filenames[3] + "/" + par.filenames[4] + "_CompositionReport.tsv", taxonomy, numOfSeq);
 
-//     //Below is for developing
-//    ofstream wr;
-//    ofstream wr2;
-//    vector<int> wrongClassifications;
-//    sequences.clear();
-//    IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
-//    wr.open(par.filenames[0]+"_wrong_1");
-//    if(par.seqMode == 2) {
-//        sequences2.clear();
-//        IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
-//        wr2.open(par.filenames[0] + "_wrong_2");
-//    }
-//    performanceTest(taxonomy, queryList, numOfSeq, wrongClassifications);
-//    for (size_t i = 0; i < wrongClassifications.size(); i++) {
-//        kseq_buffer_t buffer(const_cast<char *>(&queryFile.data[sequences[wrongClassifications[i]].start]), sequences[wrongClassifications[i]].length);
-//        kseq_t *seq = kseq_init(&buffer);
-//        kseq_read(seq);
-//        wr<<">"<<seq->name.s<<endl;
-//        wr<<seq->seq.s<<endl;
-//        kseq_destroy(seq);
-//        if(par.seqMode == 2) {
-//            kseq_buffer_t buffer2(const_cast<char *>(&queryFile2.data[sequences[wrongClassifications[i]].start]),
-//                                  sequences2[wrongClassifications[i]].length);
-//            kseq_t *seq2 = kseq_init(&buffer2);
-//            kseq_read(seq2);
-//            wr2 << ">" << seq2->name.s << endl;
-//            wr2 << seq2->seq.s << endl;
-//            kseq_destroy(seq2);
-//        }
-//    }
-//    wr.close();
-//    wr2.close();
+     //Below is for developing
+    ofstream wr;
+    ofstream wr2;
+    vector<int> wrongClassifications;
+    sequences.clear();
+    IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
+    wr.open(par.filenames[0]+"_wrong_1");
+    if(par.seqMode == 2) {
+        sequences2.clear();
+        IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
+        wr2.open(par.filenames[0] + "_wrong_2");
+    }
+    performanceTest(taxonomy, queryList, numOfSeq, wrongClassifications);
+    for (size_t i = 0; i < wrongClassifications.size(); i++) {
+        kseq_buffer_t buffer(const_cast<char *>(&queryFile.data[sequences[wrongClassifications[i]].start]), sequences[wrongClassifications[i]].length);
+        kseq_t *seq = kseq_init(&buffer);
+        kseq_read(seq);
+        wr<<">"<<seq->name.s<<endl;
+        wr<<seq->seq.s<<endl;
+        kseq_destroy(seq);
+        if(par.seqMode == 2) {
+            kseq_buffer_t buffer2(const_cast<char *>(&queryFile2.data[sequences[wrongClassifications[i]].start]),
+                                  sequences2[wrongClassifications[i]].length);
+            kseq_t *seq2 = kseq_init(&buffer2);
+            kseq_read(seq2);
+            wr2 << ">" << seq2->name.s << endl;
+            wr2 << seq2->seq.s << endl;
+            kseq_destroy(seq2);
+        }
+    }
+    wr.close();
+    wr2.close();
 
     free(kmerBuffer.buffer);
 
