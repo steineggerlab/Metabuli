@@ -684,7 +684,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
 }
 
 void Classifier::moveMatches(Match * dest, Match * src, int & matchNum) {
-    //memcpy(dest, src, sizeof(Match) * matchNum);
+    memcpy(dest, src, sizeof(Match) * matchNum);
     matchNum = 0;
 }
 
