@@ -171,7 +171,7 @@ void Classifier::startClassify(const char *queryFileName,
                       Classifier::sortByGenusAndSpecies2);
         cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
         time_t beforeAnalyze = time(nullptr);
-        analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList,
+        //analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList,
                               par);
         cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
         free(matchBuffer.buffer);
@@ -671,7 +671,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                 }
             }
         } // end of omp parallel
-        writeMatches(matchBuffer, matchFile);
+       // writeMatches(matchBuffer, matchFile);
     } // end of while(completeSplitCnt < threadNum)
     cout << "Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
 
