@@ -153,38 +153,38 @@ void Classifier::startClassify(const char *queryFileName,
     }
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
 
-    if (par.memoryMode == 1) {
-        //(matchBuffer, matchFile);
-        fclose(matchFile);
-        free(matchBuffer.buffer);
-        struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
-        size_t numOfMatches = matchList.fileSize / sizeof(Match);
-        time_t beforeSortMatches = time(nullptr);
-        SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
-        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
-        time_t beforeAnalyze = time(nullptr);
-        analyseResultParallel(taxonomy, matchList.data, numOfMatches, (int) numOfSeq, queryList, par);
-        cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
-    } else {
+//    if (par.memoryMode == 1) {
+//        //(matchBuffer, matchFile);
 //        fclose(matchFile);
-        time_t beforeSortMatches = time(nullptr);
-        SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve,
-                      Classifier::sortByGenusAndSpecies2);
-        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
-        time_t beforeAnalyze = time(nullptr);
-        analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList,
-                              par);
-        cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
-        free(matchBuffer.buffer);
-    }
-
-
-    // Write report files
-    ofstream readClassificationFile;
-    readClassificationFile.open(par.filenames[3] + "/" + par.filenames[4] + "_ReadClassification.tsv");
-    writeReadClassification(queryList, (int) numOfSeq, readClassificationFile);
-    readClassificationFile.close();
-    writeReportFile(par.filenames[3] + "/" + par.filenames[4] + "_CompositionReport.tsv", taxonomy, numOfSeq);
+//        free(matchBuffer.buffer);
+//        struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
+//        size_t numOfMatches = matchList.fileSize / sizeof(Match);
+//        time_t beforeSortMatches = time(nullptr);
+//        SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
+//        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
+//        time_t beforeAnalyze = time(nullptr);
+//        analyseResultParallel(taxonomy, matchList.data, numOfMatches, (int) numOfSeq, queryList, par);
+//        cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
+//    } else {
+////        fclose(matchFile);
+//        time_t beforeSortMatches = time(nullptr);
+//        SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve,
+//                      Classifier::sortByGenusAndSpecies2);
+//        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
+//        time_t beforeAnalyze = time(nullptr);
+//        analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList,
+//                              par);
+//        cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
+//        free(matchBuffer.buffer);
+//    }
+//
+//
+//    // Write report files
+//    ofstream readClassificationFile;
+//    readClassificationFile.open(par.filenames[3] + "/" + par.filenames[4] + "_ReadClassification.tsv");
+//    writeReadClassification(queryList, (int) numOfSeq, readClassificationFile);
+//    readClassificationFile.close();
+//    writeReportFile(par.filenames[3] + "/" + par.filenames[4] + "_CompositionReport.tsv", taxonomy, numOfSeq);
 
 //     //Below is for developing
 //    ofstream wr;
