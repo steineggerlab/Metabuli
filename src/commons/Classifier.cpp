@@ -70,7 +70,8 @@ void Classifier::startClassify(const char *queryFileName,
 
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
-    Buffer<Match> matchBuffer(kmerBufSize * 10);
+    Buffer<Match> matchBuffer(5000000000);
+    //Buffer<Match> matchBuffer(kmerBufSize * 10);
 
     // Load query file
     MmapedData<char> queryFile{};
@@ -480,8 +481,8 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
             uint64_t currentTargetKmer;
 
             //Match buffer for each thread
-            int matchBufferSize = 1000000; // 32 Mb
-            Match *matches = new Match[1000000];
+            int localBufferSize = 1000000; // 32 Mb
+            auto * matches = new Match[localBufferSize];
             int matchCnt = 0;
 
             //vectors for selected target k-mers
@@ -513,7 +514,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                     if (currentQuery == queryKmerList[j].ADkmer) {
                         currMatchNum = selectedMatches.size();
                         // If local buffer is full, copy them to the shared buffer.
-                        if (matchCnt + currMatchNum > matchBufferSize) {
+                        if (matchCnt + currMatchNum > localBufferSize) {
                             // Check if the shared buffer is full.
                             posToWrite = matchBuffer.reserveMemory(matchCnt);
                             if (posToWrite + matchCnt >=
@@ -564,7 +565,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                                    selectedHammingSum, selectedHammings);
                         currMatchNum = selectedMatches.size();
                         // If local buffer is full, copy them to the shared buffer.
-                        if (matchCnt + currMatchNum > matchBufferSize) {
+                        if (matchCnt + currMatchNum > localBufferSize) {
                             // Check if the shared buffer is full.
                             posToWrite = matchBuffer.reserveMemory(matchCnt);
                             if (posToWrite + matchCnt >=
@@ -637,7 +638,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
 
                     // If local buffer is full, copy them to the shared buffer.
                     currMatchNum = selectedMatches.size();
-                    if (matchCnt + currMatchNum > matchBufferSize) {
+                    if (matchCnt + currMatchNum > localBufferSize) {
                         // Check if the shared buffer is full.
                         posToWrite = matchBuffer.reserveMemory(matchCnt);
                         if (posToWrite + matchCnt >= matchBuffer.bufferSize) { // full -> write matches to file first
