@@ -71,6 +71,7 @@ void Classifier::startClassify(const char *queryFileName,
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
     Buffer<Match> matchBuffer(5000000000);
+    cout<<"HHHHHHHH"<<kmerBufSize * 10<<endl;
     //Buffer<Match> matchBuffer(kmerBufSize * 10);
 
     // Load query file
