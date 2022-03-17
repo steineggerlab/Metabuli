@@ -518,6 +518,8 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                             posToWrite = matchBuffer.reserveMemory(matchCnt);
                             if (posToWrite + matchCnt >=
                                 matchBuffer.bufferSize) { // full -> write matches to file first
+                                cout<<"PTW: "<<posToWrite<<endl;
+                                cout<<"matchCnt: "<<matchCnt<<endl;
                                 hasOverflow = true;
                                 querySplits[i].start = lastMovedQueryIdx + 1;
 #pragma omp atomic
@@ -567,6 +569,8 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                             if (posToWrite + matchCnt >=
                                 matchBuffer.bufferSize) { // full -> write matches to file first
                                 hasOverflow = true;
+                                cout<<"PTW: "<<posToWrite<<endl;
+                                cout<<"matchCnt: "<<matchCnt<<endl;
                                 querySplits[i].start = lastMovedQueryIdx + 1;
 #pragma omp atomic
                                 matchBuffer.startIndexOfReserve -= matchCnt;
@@ -637,6 +641,8 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                         posToWrite = matchBuffer.reserveMemory(matchCnt);
                         if (posToWrite + matchCnt >= matchBuffer.bufferSize) { // full -> write matches to file first
                             hasOverflow = true;
+                            cout<<"PTW: "<<posToWrite<<endl;
+                            cout<<"matchCnt: "<<matchCnt<<endl;
                             querySplits[i].start = lastMovedQueryIdx + 1;
 #pragma omp atomic
                             matchBuffer.startIndexOfReserve -= matchCnt;
@@ -688,8 +694,6 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
             }
         } // end of omp parallel
         if(hasOverflow){
-
-            cout<<"OVERFLOW: "<<matchBuffer.startIndexOfReserve<<endl;
             break;
         }
         //writeMatches(matchBuffer, matchFile);
