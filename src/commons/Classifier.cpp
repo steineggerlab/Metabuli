@@ -570,7 +570,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                             posToWrite = matchBuffer.reserveMemory(matchCnt);
                             cout<<"bufferSize: " <<matchBuffer.bufferSize<<endl;
                             cout<<"PTW: "<<posToWrite<<endl;
-                            cout<<"matchCnt: "<<matchCnt<<endl
+                            cout<<"matchCnt: "<<matchCnt<<endl;
                             if (posToWrite + matchCnt >=
                                 matchBuffer.bufferSize) { // full -> write matches to file first
                                 hasOverflow = true;
@@ -646,7 +646,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                             hasOverflow = true;
                             cout<<"bufferSize: " <<matchBuffer.bufferSize<<endl;
                             cout<<"PTW: "<<posToWrite<<endl;
-                            cout<<"matchCnt: "<<matchCnt<<endl
+                            cout<<"matchCnt: "<<matchCnt<<endl;
                             querySplits[i].start = lastMovedQueryIdx + 1;
 #pragma omp atomic
                             matchBuffer.startIndexOfReserve -= matchCnt;
