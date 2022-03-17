@@ -688,6 +688,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
             }
         } // end of omp parallel
         if(hasOverflow){
+            cout<<"OVERFLOW"<<endl;
             break;
         }
         //writeMatches(matchBuffer, matchFile);
