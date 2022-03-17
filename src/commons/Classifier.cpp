@@ -70,7 +70,7 @@ void Classifier::startClassify(const char *queryFileName,
 
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
-    Buffer<Match> matchBuffer(kmerBufSize);
+    Buffer<Match> matchBuffer(kmerBufSize * 10);
 
     // Load query file
     MmapedData<char> queryFile{};
