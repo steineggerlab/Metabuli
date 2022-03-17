@@ -518,6 +518,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                             posToWrite = matchBuffer.reserveMemory(matchCnt);
                             if (posToWrite + matchCnt >=
                                 matchBuffer.bufferSize) { // full -> write matches to file first
+                                cout<<"bufferSize: " <<matchBuffer.bufferSize<<endl;
                                 cout<<"PTW: "<<posToWrite<<endl;
                                 cout<<"matchCnt: "<<matchCnt<<endl;
                                 hasOverflow = true;
