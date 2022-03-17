@@ -687,7 +687,7 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                 }
             }
         } // end of omp parallel
-        writeMatches(matchBuffer, matchFile);
+        //writeMatches(matchBuffer, matchFile);
     } // end of while(completeSplitCnt < threadNum)
     cout << "Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
 
