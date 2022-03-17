@@ -96,21 +96,21 @@ private:
         }
     };
 
-    struct Match{ // 32 byte
+    struct Match{ // 24(23) byte
         Match(){}
         Match(uint32_t queryId, int taxID, int speciesTaxID, int genusTaxID, int position, uint8_t frame,
               uint8_t hamming, int red, int rightEndHamming)
             : queryId(queryId), taxID(taxID), speciesTaxID(speciesTaxID), genusTaxID(genusTaxID), position(position),
               red(red), rightEndHamming(rightEndHamming), frame(frame), hamming(hamming)  { }
-        uint32_t queryId;
-        int taxID;
-        int speciesTaxID;
-        int genusTaxID;
-        int position;
-        int red;///TODO remove it later
-        uint16_t rightEndHamming;
-        uint8_t frame; ///TODO remove it later
-        uint8_t hamming;
+        uint32_t queryId; // 4
+        int taxID; // 4
+        int speciesTaxID; // 4
+        int genusTaxID; // 4
+        int position; // 4
+        int red;///TODO remove it later // 4
+        uint16_t rightEndHamming; // 2
+        uint8_t frame; ///TODO remove it later // 1
+        uint8_t hamming; // 1
     };
 
     struct MatchBlock{
@@ -388,14 +388,14 @@ inline uint64_t Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint
 
     fragment = targetDiffIdxList[diffIdxPos];
     diffIdxPos++;
-    while (!(fragment & check)){
+    while (!(fragment & check)){ // 27 %
         diffIn64bit |= fragment;
         diffIn64bit <<= 15u;
         fragment = targetDiffIdxList[diffIdxPos];
         diffIdxPos++;
     }
-    fragment &= ~check;
-    diffIn64bit |= fragment;
+    fragment &= ~check; // not; 8.47 %
+    diffIn64bit |= fragment; // or : 23.6%
 
     return diffIn64bit + lookingTarget;
 }
