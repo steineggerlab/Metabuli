@@ -4,7 +4,8 @@
 
 
 #include "NcbiTaxonomy.h"
-#define kmerBufSize 500000000 // 10000000000 | 286000000 (16 byte x 0.5 giga = 8 GB)
+#define kmerBufSize 500'000'000 // 10000000000 | 286000000 (16 byte x 0.5 giga = 8 GB)
+                                // 24 byte x 0.5 G x 4 = 48 GB
 #define ThreadNum 32
 #define SplitNum 4096
 #define PRINT false

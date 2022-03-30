@@ -70,9 +70,8 @@ void Classifier::startClassify(const char *queryFileName,
 
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
-    Buffer<Match> matchBuffer(5000000000);
-    cout<<kmerBufSize<<endl;
-    cout<<"HHHHHHHH"<<size_t(kmerBufSize) * size_t(10)<<endl;
+    Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(2));
+
     //Buffer<Match> matchBuffer(kmerBufSize * 10);
 
     // Load query file
@@ -541,17 +540,15 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                      genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                     queryKmerList[j].info.pos,
-                                                     queryKmerList[j].info.frame,
-                                                     selectedHammingSum[k], 1, selectedHammings[k]};
+                                                     queryKmerList[j].info.pos, selectedHammings[k],
+                                                     selectedHammingSum[k]};
                             } else {
                                 matches[matchCnt] = {queryKmerList[j].info.sequenceID,
                                                      taxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                      genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                     queryKmerList[j].info.pos,
-                                                     queryKmerList[j].info.frame,
-                                                     selectedHammingSum[k], 0, selectedHammings[k]};
+                                                     queryKmerList[j].info.pos, selectedHammings[k],
+                                                     selectedHammingSum[k]};
                             }
                             matchCnt++;
                         }
@@ -592,17 +589,15 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                      genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                     queryKmerList[j].info.pos,
-                                                     queryKmerList[j].info.frame,
-                                                     selectedHammingSum[k], 1, selectedHammings[k]};
+                                                     queryKmerList[j].info.pos, selectedHammings[k],
+                                                     selectedHammingSum[k]};
                             } else {
                                 matches[matchCnt] = {queryKmerList[j].info.sequenceID,
                                                      taxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                      spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                      genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                     queryKmerList[j].info.pos,
-                                                     queryKmerList[j].info.frame,
-                                                     selectedHammingSum[k], 0, selectedHammings[k]};
+                                                     queryKmerList[j].info.pos, selectedHammings[k],
+                                                     selectedHammingSum[k]};
                             }
                             matchCnt++;
                         }
@@ -665,17 +660,15 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                                                  spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                  spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                  genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                 queryKmerList[j].info.pos,
-                                                 queryKmerList[j].info.frame,
-                                                 selectedHammingSum[k], 1, selectedHammings[k]};
+                                                 queryKmerList[j].info.pos, selectedHammings[k],
+                                                 selectedHammingSum[k] };
                         } else {
                             matches[matchCnt] = {queryKmerList[j].info.sequenceID,
                                                  taxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                  spTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
                                                  genusTaxIdList[targetInfoList2.data[selectedMatches[k]].sequenceID],
-                                                 queryKmerList[j].info.pos,
-                                                 queryKmerList[j].info.frame,
-                                                 selectedHammingSum[k], 0, selectedHammings[k]};
+                                                 queryKmerList[j].info.pos, selectedHammings[k],
+                                                 selectedHammingSum[k] };
                         }
                         matchCnt++;
                     }
@@ -816,7 +809,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         cout << "# " << currentQuery << endl;
         for (size_t i = offset; i < end + 1; i++) {
             cout << matchList[i].genusTaxID << " " << matchList[i].speciesTaxID << " " << matchList[i].taxID << " " <<
-                 int(matchList[i].frame) << " " << matchList[i].position << " " << int(matchList[i].hamming) << endl;
+            matchList[i].position << " " << int(matchList[i].hamming) << endl;
         }
     }
 
@@ -841,8 +834,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         cout << "# " << currentQuery << " filtered" << endl;
         for (size_t i = 0; i < matchesForLCA.size(); i++) {
             cout << matchesForLCA[i].genusTaxID << " " << matchesForLCA[i].speciesTaxID << " " << matchesForLCA[i].taxID
-                 << " " <<
-                 int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position << " " << int(matchesForLCA[i].hamming)
+                 << " " << matchesForLCA[i].position << " " << int(matchesForLCA[i].hamming)
                  << endl;
         }
     }
@@ -863,6 +855,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
     for (size_t i = 0; i < matchesForLCA.size(); i++) {
         queryList[currentQuery].taxCnt[matchesForLCA[i].taxID]++;
     }
+
     // If there are two or more good genus level candidates, find the LCA.
     if (res == 2) {
         vector<TaxID> taxIdList;
@@ -877,8 +870,8 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         if (PRINT) {
             cout << "# " << currentQuery << " " << res << endl;
             for (size_t i = 0; i < taxIdList.size(); i++) {
-                cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position << " " <<
-                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) << " " << matchesForLCA[i].red
+                cout << i << " " << matchesForLCA[i].position << " " <<
+                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) << " "
                      << endl;
             }
             cout << "Score: " << highRankScore << " " << selectedTaxon << " "
@@ -886,6 +879,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         }
         return;
     }
+
     // Choose the species with the highest coverage.
     TaxID selectedSpecies;
     ScrCov speciesScrCov(0.f, 0.f);
@@ -927,8 +921,8 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
     } else if (par.seqMode == 2) {
         minStrainSpecificCnt = 2;
     } else if (par.seqMode == 3) {
-        minStrainSpecificCnt = 5;
-        if (queryLength > 5000) {
+        minStrainSpecificCnt = 3;
+        if (queryLength > 3000) {
             minStrainSpecificCnt = queryLength / 1000;
         }
     }
@@ -961,8 +955,8 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
     if (PRINT) {
         cout << "# " << currentQuery << endl;
         for (size_t i = 0; i < matchesForLCA.size(); i++) {
-            cout << i << " " << int(matchesForLCA[i].frame) << " " << matchesForLCA[i].position << " " <<
-                 matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) << " " << matchesForLCA[i].red << endl;
+            cout << i << " " << matchesForLCA[i].position << " " <<
+                 matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) << endl;
         }
         cout << "Score: " << speciesScrCov.score << "  " << selectedSpecies << " "
              << ncbiTaxonomy.taxonNode(selectedSpecies)->rank
@@ -2044,23 +2038,6 @@ bool Classifier::compareForLinearSearch(const QueryKmer &a, const QueryKmer &b) 
         return true;
     } else if (a.ADkmer == b.ADkmer) {
         return (a.info.sequenceID < b.info.sequenceID);
-    }
-    return false;
-}
-
-bool Classifier::sortByGenusAndSpecies(const Match &a, const Match &b) {
-    if (a.queryId < b.queryId) return true;
-    else if (a.queryId == b.queryId) {
-        if (a.genusTaxID < b.genusTaxID) return true;
-        else if (a.genusTaxID == b.genusTaxID) {
-            if (a.speciesTaxID < b.speciesTaxID) return true;
-            else if (a.speciesTaxID == b.speciesTaxID) {
-                if (a.position < b.position) return true;
-                else if (a.position == b.position) {
-                    if (a.frame < b.frame) return true;
-                }
-            }
-        }
     }
     return false;
 }

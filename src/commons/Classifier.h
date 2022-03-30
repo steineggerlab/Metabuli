@@ -25,6 +25,7 @@
 #include "LocalParameters.h"
 #include <set>
 #include <cmath>
+#include "Match.h"
 
 
 #define AminoAcid(x) (size_t)((x) & (~0 & ~16777215))
@@ -67,6 +68,8 @@ struct Counts{
     int superkingdomCnt_correct;
 };
 
+
+
 class Classifier
 {
 private:
@@ -96,22 +99,7 @@ private:
         }
     };
 
-    struct Match{ // 24(23) byte
-        Match(){}
-        Match(uint32_t queryId, int taxID, int speciesTaxID, int genusTaxID, int position, uint8_t frame,
-              uint8_t hamming, int red, int rightEndHamming)
-            : queryId(queryId), taxID(taxID), speciesTaxID(speciesTaxID), genusTaxID(genusTaxID), position(position),
-              red(red), rightEndHamming(rightEndHamming), frame(frame), hamming(hamming)  { }
-        uint32_t queryId; // 4
-        int taxID; // 4
-        int speciesTaxID; // 4
-        int genusTaxID; // 4
-        int position; // 4
-        int red;///TODO remove it later // 4
-        uint16_t rightEndHamming; // 2
-        uint8_t frame; ///TODO remove it later // 1
-        uint8_t hamming; // 1
-    };
+
 
     struct MatchBlock{
         MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) { }
