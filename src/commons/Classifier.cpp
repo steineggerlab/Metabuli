@@ -838,7 +838,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
                  << endl;
         }
     }
-    
+
     //If there is no proper genus for current query, it is un-classified.
     if (res == 3) {
         queryList[currentQuery].isClassified = false;

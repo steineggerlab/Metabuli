@@ -8,7 +8,7 @@
                                 // 24 byte x 0.5 G x 4 = 48 GB
 #define ThreadNum 32
 #define SplitNum 4096
-#define PRINT true
+#define PRINT false
 
 struct Sequence{
     Sequence(size_t start, size_t end, size_t length) : start(start), end(end), length(length) { }
