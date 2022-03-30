@@ -132,6 +132,8 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
 
         // 2nd field -> accession
         accession = fields[1];
+        int pos = accession.find("_");
+        accession = accession.substr(0,pos);
 
         // accession to right answer
         rightAnswer = acc2taxid[accession];
