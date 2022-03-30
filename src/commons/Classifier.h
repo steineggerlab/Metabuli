@@ -242,8 +242,6 @@ private:
 
     static bool sortByGenusAndSpecies2(const Match & a, const Match & b);
 
-    static bool sortByGenusAndSpecies(const Match & a, const Match & b);
-
     static bool sortBySpecies(const Match & a, const Match & b);
 
     void chooseBestTaxon(NcbiTaxonomy & ncbiTaxonomy,
