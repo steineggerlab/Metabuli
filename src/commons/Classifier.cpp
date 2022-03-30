@@ -518,9 +518,9 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                         if (matchCnt + currMatchNum > localBufferSize) {
                             // Check if the shared buffer is full.
                             posToWrite = matchBuffer.reserveMemory(matchCnt);
-                            cout<<"bufferSize: " <<matchBuffer.bufferSize<<endl;
-                            cout<<"PTW: "<<posToWrite<<endl;
-                            cout<<"matchCnt: "<<matchCnt<<endl;
+//                            cout<<"bufferSize: " <<matchBuffer.bufferSize<<endl;
+//                            cout<<"PTW: "<<posToWrite<<endl;
+//                            cout<<"matchCnt: "<<matchCnt<<endl;
                             if (posToWrite + matchCnt >=
                                 matchBuffer.bufferSize) { // full -> write matches to file first
                                 hasOverflow = true;
@@ -567,9 +567,9 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                         if (matchCnt + currMatchNum > localBufferSize) {
                             // Check if the shared buffer is full.
                             posToWrite = matchBuffer.reserveMemory(matchCnt);
-                            cout<<"bufferSize: " <<matchBuffer.bufferSize<<endl;
-                            cout<<"PTW: "<<posToWrite<<endl;
-                            cout<<"matchCnt: "<<matchCnt<<endl;
+//                            cout<<"bufferSize: " <<matchBuffer.bufferSize<<endl;
+//                            cout<<"PTW: "<<posToWrite<<endl;
+//                            cout<<"matchCnt: "<<matchCnt<<endl;
                             if (posToWrite + matchCnt >=
                                 matchBuffer.bufferSize) { // full -> write matches to file first
                                 hasOverflow = true;
@@ -641,9 +641,9 @@ querySplits, queryKmerList, targetDiffIdxList2, targetInfoList2, matchBuffer, co
                         posToWrite = matchBuffer.reserveMemory(matchCnt);
                         if (posToWrite + matchCnt >= matchBuffer.bufferSize) { // full -> write matches to file first
                             hasOverflow = true;
-                            cout<<"bufferSize: " <<matchBuffer.bufferSize<<endl;
-                            cout<<"PTW: "<<posToWrite<<endl;
-                            cout<<"matchCnt: "<<matchCnt<<endl;
+//                            cout<<"bufferSize: " <<matchBuffer.bufferSize<<endl;
+//                            cout<<"PTW: "<<posToWrite<<endl;
+//                            cout<<"matchCnt: "<<matchCnt<<endl;
                             querySplits[i].start = lastMovedQueryIdx + 1;
 #pragma omp atomic
                             matchBuffer.startIndexOfReserve -= matchCnt;
@@ -801,7 +801,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy &ncbiTaxonomy,
 
 
 void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQuery,
-                                 size_t offset, size_t end, Match *matchList, Query *queryList,
+                                 size_t offset, size_t end, Match *matchList, Query * queryList,
                                  const LocalParameters &par) {
     int queryLength = queryList[currentQuery].queryLength; //queryList[currentQuery].queryLength; 13497
     TaxID selectedTaxon;
