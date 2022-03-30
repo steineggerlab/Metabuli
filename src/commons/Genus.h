@@ -26,9 +26,9 @@ private:
 
     void keepMatch(Match & match);
 public:
-    TaxID getGenusID();
+    TaxID getGenusID() const { return genusID;}
     void takeMatch(Match & match);
-    float getScore();
+    float getScore() const { return score;}
     Species& chooseSpecies();
     void scoreGenus();
     Genus(size_t queryLength, TaxID genusID);
