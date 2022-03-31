@@ -70,9 +70,7 @@ void Classifier::startClassify(const char *queryFileName,
 
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
-    Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(2));
-
-    //Buffer<Match> matchBuffer(kmerBufSize * 10);
+    Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(10));
 
     // Load query file
     MmapedData<char> queryFile{};
@@ -96,7 +94,6 @@ void Classifier::startClassify(const char *queryFileName,
         IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
         numOfSeq = sequences.size();
         numOfSeq2 = sequences2.size();
-//        queryList = new Query[numOfSeq + numOfSeq2];
         if (numOfSeq > numOfSeq2) {
             queryList = new Query[numOfSeq];
         } else {
@@ -840,7 +837,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
     }
 
     //If there is no proper genus for current query, it is un-classified.
-    if (res == 3) {
+    if (res == 3 && !ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)) {
         queryList[currentQuery].isClassified = false;
         queryList[currentQuery].classification = 0;
         queryList[currentQuery].score = 0;
@@ -1185,8 +1182,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
     }
 
     float maxScore = *max_element(scoreOfEachGenus.begin(), scoreOfEachGenus.end());
-//    if (maxScore < 0.3)
-//        return 3;
+
     vector<size_t> maxIdx;
     for (size_t g = 0; g < scoreOfEachGenus.size(); g++) {
         if (scoreOfEachGenus[g] > maxScore * 0.9f) {
@@ -1199,6 +1195,9 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
         matchesForMajorityLCA.insert(matchesForMajorityLCA.end(), matchesForEachGenus[maxIdx[g]].begin(),
                                      matchesForEachGenus[maxIdx[g]].end());
     }
+
+    if (maxScore < 0.3)
+        return 3;
 
     if (maxIdx.size() > 1) {
         return 2;
