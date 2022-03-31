@@ -845,13 +845,23 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         return;
     }
 
-    // If the score is too low, it is un-classified in case of prokaryotes
-    if (res == 3 && !ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)) {
-        queryList[currentQuery].isClassified = false;
-        queryList[currentQuery].classification = 0;
-        queryList[currentQuery].score = 0;
-        queryList[currentQuery].newSpecies = false;
-        return;
+    // If the score is too low, it is un-classified
+    if (ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)){ // virus
+        if(highRankScore < 0.1){
+            queryList[currentQuery].isClassified = false;
+            queryList[currentQuery].classification = 0;
+            queryList[currentQuery].score = 0;
+            queryList[currentQuery].newSpecies = false;
+            return;
+        }
+    } else {
+        if (res == 3) {
+            queryList[currentQuery].isClassified = false;
+            queryList[currentQuery].classification = 0;
+            queryList[currentQuery].score = 0;
+            queryList[currentQuery].newSpecies = false;
+            return;
+        }
     }
 
     for (size_t i = 0; i < matchesForLCA.size(); i++) {
