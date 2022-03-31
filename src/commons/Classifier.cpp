@@ -836,7 +836,16 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         }
     }
 
-    //If there is no proper genus for current query, it is un-classified.
+    // If there is no proper genus for current query, it is un-classified.
+    if (res == 4) {
+        queryList[currentQuery].isClassified = false;
+        queryList[currentQuery].classification = 0;
+        queryList[currentQuery].score = 0;
+        queryList[currentQuery].newSpecies = false;
+        return;
+    }
+
+    // If the score is too low, it is un-classified in case of prokaryotes
     if (res == 3 && !ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)) {
         queryList[currentQuery].isClassified = false;
         queryList[currentQuery].classification = 0;
@@ -1178,7 +1187,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
     // If there are no meaningful genus
     if (scoreOfEachGenus.empty()) {
         bestScore = 0;
-        return 3;
+        return 4;
     }
 
     float maxScore = *max_element(scoreOfEachGenus.begin(), scoreOfEachGenus.end());
