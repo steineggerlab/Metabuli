@@ -62,6 +62,8 @@ void Classifier::startClassify(const char *queryFileName,
     vector<TaxID> genusTaxIdList;
     taxonomy.createTaxIdListAtRank(taxIdList, speciesTaxIdList, "species");
     cout<<taxonomy.taxonNode(taxIdList[0])->name<<endl;
+    cout<<"aa"<<endl;
+    cout<<taxonomy.taxonNode(speciesTaxIdList[0])->name<<endl;
     taxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "genus");
 
     //output file
