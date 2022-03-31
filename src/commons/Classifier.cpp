@@ -65,7 +65,7 @@ void Classifier::startClassify(const char *queryFileName,
     unordered_map<TaxID,int> spCnt;
     for(size_t i = 0; i < speciesTaxIdList.size(); i++){
         spCnt[speciesTaxIdList[i]] ++;
-        if(spCnt[speciesTaxIdList[i]]){
+        if(spCnt[speciesTaxIdList[i]] == 1){
             cout<<taxonomy.taxonNode(taxIdList[i])->name<<endl;
         }
     }
