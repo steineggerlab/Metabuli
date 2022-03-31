@@ -1185,8 +1185,8 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
     }
 
     float maxScore = *max_element(scoreOfEachGenus.begin(), scoreOfEachGenus.end());
-    if (maxScore < 0.3)
-        return 3;
+//    if (maxScore < 0.3)
+//        return 3;
     vector<size_t> maxIdx;
     for (size_t g = 0; g < scoreOfEachGenus.size(); g++) {
         if (scoreOfEachGenus[g] > maxScore * 0.9f) {
