@@ -61,10 +61,14 @@ void Classifier::startClassify(const char *queryFileName,
     vector<int> speciesTaxIdList;
     vector<TaxID> genusTaxIdList;
     taxonomy.createTaxIdListAtRank(taxIdList, speciesTaxIdList, "species");
-    cout<<taxonomy.taxonNode(taxIdList[0])->name<<endl;
-    cout<<"aa"<<endl;
-    cout<<taxonomy.taxonNode(speciesTaxIdList[0])->name<<endl;
     taxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "genus");
+    unordered_map<TaxID,int> spCnt;
+    for(size_t i = 0; i < speciesTaxIdList.size(); i++){
+        spCnt[speciesTaxIdList[i]] ++;
+        if(spCnt[speciesTaxIdList[i]]){
+            cout<<taxonomy.taxonNode(taxIdList[i])->name<<endl;
+        }
+    }
 
     //output file
     char matchFileName[300];
