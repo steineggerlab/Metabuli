@@ -62,13 +62,13 @@ void Classifier::startClassify(const char *queryFileName,
     vector<TaxID> genusTaxIdList;
     taxonomy.createTaxIdListAtRank(taxIdList, speciesTaxIdList, "species");
     taxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "genus");
-    unordered_map<TaxID,int> spCnt;
-    for(size_t i = 0; i < speciesTaxIdList.size(); i++){
-        spCnt[speciesTaxIdList[i]] ++;
-        if(spCnt[speciesTaxIdList[i]] == 1){
-            cout<<taxonomy.taxonNode(taxIdList[i])->name<<endl;
-        }
-    }
+//    unordered_map<TaxID,int> spCnt;
+//    for(size_t i = 0; i < speciesTaxIdList.size(); i++){
+//        spCnt[speciesTaxIdList[i]] ++;
+//        if(spCnt[speciesTaxIdList[i]] == 1){
+//            cout<<taxonomy.taxonNode(taxIdList[i])->name<<endl;
+//        }
+//    }
 
     //output file
     char matchFileName[300];
@@ -77,7 +77,7 @@ void Classifier::startClassify(const char *queryFileName,
 
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
-    Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(2));
+    Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(10));
 
     // Load query file
     MmapedData<char> queryFile{};
