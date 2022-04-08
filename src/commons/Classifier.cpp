@@ -1222,7 +1222,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                                      matchesForEachGenus[maxIdx[g]].end());
     }
 
-    if (maxScore < 0.3)
+    if (maxScore < 0.2)
         return 3;
 
     if (maxIdx.size() > 1) {
