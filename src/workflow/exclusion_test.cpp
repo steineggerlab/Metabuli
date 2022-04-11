@@ -261,6 +261,12 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     cout<<"NEW"<<endl;
     cout<<"Species     : " << S.total << " / " << S.TP << " / "<< S.FP << " / " << S.precision << " / "<< S.sensitivity << endl;
     cout<<"Subspecies  : " << SS.total << " / " << SS.TP << " / "<< SS.FP << " / " << SS.precision << " / "<< SS.sensitivity << endl;
+
+    cout<<"NEW"<<endl;
+    cout<<"Species     : " << S.total << " / " << S.TP + counts.correct << " / "<< S.FP + counts.classificationCnt - counts.correct << " / " << S.precision << " / "<< S.sensitivity << endl;
+    cout<<"Subspecies  : " << SS.total << " / " << SS.TP + counts.correct<< " / "<< SS.FP + counts.classificationCnt - counts.correct << " / " << SS.precision << " / "<< SS.sensitivity << endl;
+
+
 }
 
 void compareTaxon_exclusion(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts, float score,
