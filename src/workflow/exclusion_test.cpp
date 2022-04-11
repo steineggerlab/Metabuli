@@ -124,7 +124,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
         // Check if included or not
 
 
-        if(find(inGenomeList.begin(), inGenomeList.end(), assacc[0]) != inGenomeList.end()){ // Included
+        if(i < 24999850){ //find(inGenomeList.begin(), inGenomeList.end(), assacc[0]) != inGenomeList.end()){ // Included
             //rightAnswers.push_back(assacc2taxid[assacc[0]]);
             cout<<"in "<<i<<"\n";
             compareTaxonAtRank(classification, assacc2taxid[assacc[0]], ncbiTaxonomy, SS, "subspecies");
@@ -163,13 +163,6 @@ int exclusiontest(int argc, const char **argv, const Command &command){
                 counts.genusTargetNumber ++;
             }
         }
-
-//
-//        if(find(inGenomeList.begin(), inGenomeList.end(), assacc[0]) != inGenomeList.end()) {
-//
-//        } else {
-//
-//        }
         i++;
     }
 
