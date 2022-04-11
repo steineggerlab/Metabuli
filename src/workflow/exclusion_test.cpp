@@ -95,6 +95,9 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
     smatch assacc;
 
+    int i = 0;
+    CountAtRank SS = {0, 0, 0, 0, 0};
+    CountAtRank S = {0, 0, 0, 0, 0};
     while(getline(readClassification,classString,'\n')){
         istringstream lineStream(classString);
         fields.clear();
@@ -113,10 +116,15 @@ int exclusiontest(int argc, const char **argv, const Command &command){
         regex_search(fields[1], assacc, regex1);
 
         // Check if included or not
+
+
         if(find(inGenomeList.begin(), inGenomeList.end(), assacc[0]) != inGenomeList.end()){ // Included
-            rightAnswers.push_back(assacc2taxid[assacc[0]]);
+            //rightAnswers.push_back(assacc2taxid[assacc[0]]);
+            compareTaxonAtRank(classification, assacc2taxid[assacc[0]], ncbiTaxonomy, SS, "subspecies");
+            compareTaxonAtRank(classification, assacc2taxid[assacc[0]], ncbiTaxonomy, S, "species");
         } else { // Excluded
             //get the lowest ancestor that have different branch
+
             rightAnswer = assacc2taxid[assacc[0]];
             rightAnswer_sp = ncbiTaxonomy.getTaxIdAtRank(rightAnswer, "species");
             cladeCnt_sp = cladeCnt[rightAnswer_sp].cladeCount;
@@ -131,6 +139,9 @@ int exclusiontest(int argc, const char **argv, const Command &command){
             }
             rightAnswers.push_back(ancestor->taxId);
 
+            cout<<i<<" ";
+            compareTaxon_exclusion(classification, ancestor->taxId, ncbiTaxonomy, counts);
+            counts.queryCnt++;
             if(ancestor->rank == "superkingdom"){
                 counts.superkingdomTargetNumber ++;
             } else if(ancestor->rank == "phylum"){
@@ -145,6 +156,14 @@ int exclusiontest(int argc, const char **argv, const Command &command){
                 counts.genusTargetNumber ++;
             }
         }
+
+//        
+//        if(find(inGenomeList.begin(), inGenomeList.end(), assacc[0]) != inGenomeList.end()) {
+//
+//        } else {
+//
+//        }
+        i++;
     }
 
     cout<<"num of classification: "<< classList.size()<<endl;
@@ -206,21 +225,12 @@ int exclusiontest(int argc, const char **argv, const Command &command){
 //        }
 //    }
 
-    CountAtRank SS = {0, 0, 0, 0, 0};
-    CountAtRank S = {0, 0, 0, 0, 0};
+
 
     // Score the classification
-    for(size_t i = 0; i < classList.size(); i++){
-        cout<<i<<" ";
-
-        if(find(inGenomeList.begin(), inGenomeList.end(), assacc[0]) != inGenomeList.end()) {
-            compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, SS, "subspecies");
-            compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, S, "species");
-        } else {
-            compareTaxon_exclusion(classList[i], rightAnswers[i], ncbiTaxonomy, counts);
-            counts.queryCnt++;
-        }
-    }
+//    for(size_t i = 0; i < classList.size(); i++){
+//
+//    }
 
     ofstream scoreFile;
     scoreFile.open(scoreFileName);
