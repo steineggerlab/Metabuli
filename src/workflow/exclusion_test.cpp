@@ -59,7 +59,11 @@ int exclusiontest(int argc, const char **argv, const Command &command){
             inGenomeList.push_back(inGenome);
         }
     }
-
+    int z= 0;
+    for(string x : inGenomeList){
+        cout<<z<<" "<<x<<endl;
+        z++;
+    }
     // Load the mapping file (assacc to taxID)
     const char * mappingFile = "../../gtdb_taxdmp/assacc_to_taxid_gtdb.tsv";
     unordered_map<string, int> assacc2taxid;
@@ -157,7 +161,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
             }
         }
 
-//        
+//
 //        if(find(inGenomeList.begin(), inGenomeList.end(), assacc[0]) != inGenomeList.end()) {
 //
 //        } else {
