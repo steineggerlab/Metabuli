@@ -55,7 +55,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     string inGenome;
     vector<string> inGenomeList;
     if(includedGenomeList.is_open()){
-        while(getline(includedGenomeList,inGenome,'\t')){
+        while(getline(includedGenomeList,inGenome,'\n')){
             inGenomeList.push_back(inGenome);
         }
     }
