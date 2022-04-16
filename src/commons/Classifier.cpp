@@ -441,7 +441,6 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
                 }
             }
             if (needLastTargetBlock) {
-                cout << "needLastTargetBlock" << endl;
                 if (i != threadNum - 1) {
                     querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth,
                                              diffIdxSplits.data[numOfDiffIdxSplits_use - 1]);
@@ -517,9 +516,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         if (matchCnt + currMatchNum > localBufferSize) {
                             // Check if the shared buffer is full.
                             posToWrite = matchBuffer.reserveMemory(matchCnt);
-//                            cout<<"bufferSize: " <<matchBuffer.bufferSize<<endl;
-//                            cout<<"PTW: "<<posToWrite<<endl;
-//                            cout<<"matchCnt: "<<matchCnt<<endl;
                             if (posToWrite + matchCnt >=
                                 matchBuffer.bufferSize) { // full -> write matches to file first
                                 hasOverflow = true;
@@ -566,9 +562,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         if (matchCnt + currMatchNum > localBufferSize) {
                             // Check if the shared buffer is full.
                             posToWrite = matchBuffer.reserveMemory(matchCnt);
-//                            cout<<"bufferSize: " <<matchBuffer.bufferSize<<endl;
-//                            cout<<"PTW: "<<posToWrite<<endl;
-//                            cout<<"matchCnt: "<<matchCnt<<endl;
                             if (posToWrite + matchCnt >=
                                 matchBuffer.bufferSize) { // full -> write matches to file first
                                 hasOverflow = true;
