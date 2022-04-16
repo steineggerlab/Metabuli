@@ -796,8 +796,8 @@ void Classifier::analyseResultParallel(NcbiTaxonomy &ncbiTaxonomy,
         }
     }
 
-    for (int i = 0; i < seqNum; i++) {
-        ++taxCounts[queryList[i].classification];
+    for (size_t i = 0; i < blockIdx; i++) {
+        ++taxCounts[queryList[matchBlocks[i].id].classification];
     }
     delete[] matchBlocks;
     cout << "End of analyseResultParallel" << endl;
