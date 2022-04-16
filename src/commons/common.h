@@ -4,7 +4,7 @@
 
 
 #include "NcbiTaxonomy.h"
-#define kmerBufSize 500'000'000 // 10000000000 | 286000000 (16 byte x 0.5 giga = 8 GB)
+#define kmerBufSize 100000//500'000'000 // 10000000000 | 286000000 (16 byte x 0.5 giga = 8 GB)
                                 // 24 byte x 0.5 G x 4 = 48 GB
 #define ThreadNum 32
 #define SplitNum 4096
@@ -22,11 +22,12 @@ struct Query{
     int queryId;
     int classification;
     float score;
-    bool isClassified;
-    bool newSpecies;
     int queryLength;
     int queryLength2;
     int kmerCnt;
+    bool isClassified;
+    bool newSpecies;
+
     string name;
     unordered_map<TaxID,int> taxCnt;
 
@@ -34,7 +35,7 @@ struct Query{
 //    Query(int id, int classification_, float score, bool isClassified_, bool newSpecies, uint32_t len, string name_)
 //    :queryId(id), classification(classification_), score(score), isClassified(isClassified_), newSpecies(newSpecies), queryLength(len),
 //    name(std::move(name_)) { }
-    Query():queryId(0), classification(0), score(0.0f), isClassified(false), queryLength(0) {}
+    Query():queryId(0), classification(0), score(0.0f), queryLength(0), queryLength2(0), isClassified(false), newSpecies(false) {}
 };
 
 
