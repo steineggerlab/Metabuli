@@ -464,10 +464,13 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
 
     time_t beforeSearch = time(nullptr);
 
+    vector<vector<TaxID>> sspOrSp;
+    sspOrSp.push_back(move(taxIdList));
+    sspOrSp.push_back(move(spTaxIdList));
     while (completedSplitCnt < threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, \
-querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList, matchFile)
+querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList, matchFile, sspOrSp)
         {
             //query variables
             uint64_t currentQuery = UINT64_MAX;
@@ -500,6 +503,8 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             size_t posToWrite;
 
             int currMatchNum;
+            bool red;
+            size_t idx;
             size_t range;
 #pragma omp for schedule(dynamic, 1)
             for (size_t i = 0; i < querySplits.size(); i++) {
@@ -543,21 +548,29 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         }
 
                         for (int k = 0; k < currMatchNum; k++) {
-                            if (targetInfoList.data[selectedMatches[k]].redundancy) {
-                                matches[matchCnt] = {queryKmerList[j].info.sequenceID,
-                                                     spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                     spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                     genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                     queryKmerList[j].info.pos, selectedHammings[k],
-                                                     selectedHammingSum[k]};
-                            } else {
-                                matches[matchCnt] = {queryKmerList[j].info.sequenceID,
-                                                     taxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                     spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                     genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                     queryKmerList[j].info.pos, selectedHammings[k],
-                                                     selectedHammingSum[k]};
-                            }
+                            idx = selectedMatches[k];
+                            red = targetInfoList.data[idx].redundancy;
+                            matches[matchCnt] = {queryKmerList[j].info.sequenceID,
+                                                 sspOrSp[red][targetInfoList.data[idx].sequenceID],
+                                                 spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+                                                 genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+                                                 queryKmerList[j].info.pos, selectedHammings[k],
+                                                 selectedHammingSum[k]};
+//                            if (targetInfoList.data[selectedMatches[k]].redundancy) {
+//                                matches[matchCnt] = {queryKmerList[j].info.sequenceID,
+//                                                     spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+//                                                     spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+//                                                     genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+//                                                     queryKmerList[j].info.pos, selectedHammings[k],
+//                                                     selectedHammingSum[k]};
+//                            } else {
+//                                matches[matchCnt] = {queryKmerList[j].info.sequenceID,
+//                                                     taxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+//                                                     spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+//                                                     genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+//                                                     queryKmerList[j].info.pos, selectedHammings[k],
+//                                                     selectedHammingSum[k]};
+//                            }
                             matchCnt++;
                             totalMatchCnt2++;
                         }
@@ -597,21 +610,14 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         }
 
                         for (int k = 0; k < currMatchNum; k++) {
-                            if (targetInfoList.data[selectedMatches[k]].redundancy) {
-                                matches[matchCnt] = {queryKmerList[j].info.sequenceID,
-                                                     spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                     spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                     genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                     queryKmerList[j].info.pos, selectedHammings[k],
-                                                     selectedHammingSum[k]};
-                            } else {
-                                matches[matchCnt] = {queryKmerList[j].info.sequenceID,
-                                                     taxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                     spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                     genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                     queryKmerList[j].info.pos, selectedHammings[k],
-                                                     selectedHammingSum[k]};
-                            }
+                            idx = selectedMatches[k];
+                            red = targetInfoList.data[idx].redundancy;
+                            matches[matchCnt] = {queryKmerList[j].info.sequenceID,
+                                                 sspOrSp[red][targetInfoList.data[idx].sequenceID],
+                                                 spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+                                                 genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+                                                 queryKmerList[j].info.pos, selectedHammings[k],
+                                                 selectedHammingSum[k]};
                             matchCnt++;
                             totalMatchCnt2 ++;
                         }
@@ -671,21 +677,14 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     }
 
                     for (int k = 0; k < currMatchNum; k++) {
-                        if (targetInfoList.data[selectedMatches[k]].redundancy) {
-                            matches[matchCnt] = {queryKmerList[j].info.sequenceID,
-                                                 spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                 spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                 genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                 queryKmerList[j].info.pos, selectedHammings[k],
-                                                 selectedHammingSum[k] };
-                        } else {
-                            matches[matchCnt] = {queryKmerList[j].info.sequenceID,
-                                                 taxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                 spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                 genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                 queryKmerList[j].info.pos, selectedHammings[k],
-                                                 selectedHammingSum[k] };
-                        }
+                        idx = selectedMatches[k];
+                        red = targetInfoList.data[idx].redundancy;
+                        matches[matchCnt] = {queryKmerList[j].info.sequenceID,
+                                             sspOrSp[red][targetInfoList.data[idx].sequenceID],
+                                             spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+                                             genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+                                             queryKmerList[j].info.pos, selectedHammings[k],
+                                             selectedHammingSum[k]};
                         totalMatchCnt2 ++;
                         matchCnt++;
                     }
