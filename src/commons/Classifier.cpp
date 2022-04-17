@@ -404,7 +404,11 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     // Divide query k-mer list into blocks for multi threading.
     // Each split has start and end points of query list + proper offset point of target k-mer list
     vector<QueryKmerSplit> querySplits;
+
     int threadNum = par.threads;
+    if(threadNum != 1 && threadNum != 2){
+        threadNum = par.threads * 10;
+    }
     uint64_t queryAA;
     if (threadNum == 1) { //Single thread
         querySplits.emplace_back(0, queryKmerCnt - 1, queryKmerCnt, diffIdxSplits.data[0]);
