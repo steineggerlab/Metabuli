@@ -486,6 +486,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
 
             // Debugging
             size_t totalMatchCnt = 0;
+            size_t totalMatchCnt2 = 0;
             size_t totalCompareDNA = 0;
             size_t totalGetKmer = 0;
             size_t totalMoveCnt = 0;
@@ -558,6 +559,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                      selectedHammingSum[k]};
                             }
                             matchCnt++;
+                            totalMatchCnt2++;
                         }
 
                         if (currMatchNum != 0){
@@ -611,6 +613,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                      selectedHammingSum[k]};
                             }
                             matchCnt++;
+                            totalMatchCnt2 ++;
                         }
                         continue;
                     }
@@ -683,6 +686,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k] };
                         }
+                        totalMatchCnt2 ++;
                         matchCnt++;
                     }
                 } // End of one split
