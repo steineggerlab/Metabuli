@@ -483,7 +483,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             int localBufferSize = 1000000; // 32 Mb
             auto * matches = new Match[localBufferSize];
             int matchCnt = 0;
-
+            size_t totalMatchCnt = 0;
             //vectors for selected target k-mers
             vector<uint8_t> selectedHammingSum;
             vector<size_t> selectedMatches;
@@ -510,6 +510,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 size_t lastMovedQueryIdx;
                 for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
                     querySplits[i].start++;
+
                     // Reuse the comparison data if queries are exactly identical
                     if (currentQuery == queryKmerList[j].ADkmer) {
                         currMatchNum = selectedMatches.size();
@@ -620,6 +621,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
                         candidateTargetKmers.push_back(currentTargetKmer);
+                        totalMatchCnt++;
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                         targetInfoIdx++;
                     }
@@ -682,7 +684,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 // Check whether current split is completed or not
                 if (querySplits[i].start - 1 == querySplits[i].end) {
                     splitCheckList[i] = true;
-                    cout<<i<<"th split is completed"<<endl;
+                    cout<<i<<"th split is completed "<<totalMatchCnt<<endl;
                     __sync_fetch_and_add(& completedSplitCnt, 1);
                 }
             } // End of omp for (Iterating for splits)
