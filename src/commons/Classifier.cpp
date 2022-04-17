@@ -489,6 +489,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             size_t totalCompareDNA = 0;
             size_t totalGetKmer = 0;
             size_t totalMoveCnt = 0;
+            size_t totalSameKmer = 0;
 
             //vectors for selected target k-mers
             vector<uint8_t> selectedHammingSum;
@@ -496,6 +497,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             vector<uint16_t> selectedHammings;
             size_t startIdxOfAAmatch = 0;
             size_t posToWrite;
+
             int currMatchNum;
             size_t range;
 #pragma omp for schedule(dynamic, 1)
@@ -556,6 +558,10 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                      selectedHammingSum[k]};
                             }
                             matchCnt++;
+                        }
+
+                        if (currMatchNum != 0){
+                            totalSameKmer ++;
                         }
                         continue;
                     }
@@ -696,7 +702,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 // Check whether current split is completed or not
                 if (querySplits[i].start - 1 == querySplits[i].end) {
                     splitCheckList[i] = true;
-                    cout<<i<<"th split is completed "<<totalMatchCnt<<" "<<totalGetKmer<<" "<<totalCompareDNA<<" "<<totalMoveCnt<<endl;
+                    cout<<i<<"th split is completed "<<totalMatchCnt<<" "<<totalGetKmer<<" "<<totalCompareDNA<<" "<<totalSameKmer<<" "<<totalMoveCnt<<endl;
                     __sync_fetch_and_add(& completedSplitCnt, 1);
                 }
             } // End of omp for (Iterating for splits)
