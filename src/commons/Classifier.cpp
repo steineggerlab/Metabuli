@@ -480,7 +480,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             uint64_t currentTargetKmer;
 
             //Match buffer for each thread
-            int localBufferSize = 1000000; // 32 Mb
+            int localBufferSize = 2000000; // 64 Mb
             auto * matches = new Match[localBufferSize];
             int matchCnt = 0;
 
