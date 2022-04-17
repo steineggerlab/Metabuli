@@ -515,6 +515,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 size_t totalGetKmer = 0;
                 size_t totalMoveCnt = 0;
                 size_t totalSameKmer = 0;
+                size_t maxSameAmino = 0;
                 if (hasOverflow || splitCheckList[i]) {
                     continue;
                 }
@@ -563,21 +564,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k]};
-//                            if (targetInfoList.data[selectedMatches[k]].redundancy) {
-//                                matches[matchCnt] = {queryKmerList[j].info.sequenceID,
-//                                                     spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-//                                                     spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-//                                                     genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-//                                                     queryKmerList[j].info.pos, selectedHammings[k],
-//                                                     selectedHammingSum[k]};
-//                            } else {
-//                                matches[matchCnt] = {queryKmerList[j].info.sequenceID,
-//                                                     taxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-//                                                     spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-//                                                     genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-//                                                     queryKmerList[j].info.pos, selectedHammings[k],
-//                                                     selectedHammingSum[k]};
-//                            }
                             matchCnt++;
                             totalMatchCnt2++;
                         }
@@ -658,6 +644,9 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         totalGetKmer++;
                         targetInfoIdx++;
                     }
+                    if(candidateTargetKmers.size() > maxSameAmino){
+                        maxSameAmino = candidateTargetKmers.size();
+                    }
 
                     // Compare the current query and the loaded target k-mers and select
                     compareDna(currentQuery, candidateTargetKmers, startIdxOfAAmatch, selectedMatches,
@@ -710,7 +699,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 // Check whether current split is completed or not
                 if (querySplits[i].start - 1 == querySplits[i].end) {
                     splitCheckList[i] = true;
-                    cout<<i<<"th split is completed "<<totalMatchCnt2<<" "<<totalGetKmer<<" "<<totalCompareDNA<<" "<<totalSameKmer<<" "<<totalMoveCnt<<endl;
+                    cout<<i<<"th split is completed "<<totalMatchCnt2<<" "<<totalGetKmer<<" "<<totalCompareDNA<<" "<<totalSameKmer<<" "<<totalMoveCnt<<" "<<maxSameAmino<<endl;
                     __sync_fetch_and_add(& completedSplitCnt, 1);
                 }
             } // End of omp for (Iterating for splits)
