@@ -497,6 +497,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 if (hasOverflow || splitCheckList[i]) {
                     continue;
                 }
+                cout<<i<<endl;
                 targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
@@ -519,6 +520,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                             if (posToWrite + matchCnt >=
                                 matchBuffer.bufferSize) { // full -> write matches to file first
                                 hasOverflow = true;
+
                                 querySplits[i].start = lastMovedQueryIdx + 1;
 #pragma omp atomic
                                 matchBuffer.startIndexOfReserve -= matchCnt;
@@ -664,7 +666,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         }
                         matchCnt++;
                     }
-                }
+                } // End of one split
 
                 // Move matches in the local buffer to the shared buffer
                 posToWrite = matchBuffer.reserveMemory(matchCnt);
@@ -680,9 +682,10 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 // Check whether current split is completed or not
                 if (querySplits[i].start - 1 == querySplits[i].end) {
                     splitCheckList[i] = true;
+                    cout<<i<<"th split is completed"<<endl;
                     __sync_fetch_and_add(& completedSplitCnt, 1);
                 }
-            }
+            } // End of omp for (Iterating for splits)
         } // end of omp parallel
         if(hasOverflow){
             break;
