@@ -552,8 +552,8 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                             red = targetInfoList.data[idx].redundancy;
                             matches[matchCnt] = {queryKmerList[j].info.sequenceID,
                                                  sspOrSp[red][targetInfoList.data[idx].sequenceID],
-                                                 spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                 genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+                                                 spTaxIdList[targetInfoList.data[idx].sequenceID],
+                                                 genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k]};
 //                            if (targetInfoList.data[selectedMatches[k]].redundancy) {
@@ -614,12 +614,11 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                             red = targetInfoList.data[idx].redundancy;
                             matches[matchCnt] = {queryKmerList[j].info.sequenceID,
                                                  sspOrSp[red][targetInfoList.data[idx].sequenceID],
-                                                 spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                                 genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+                                                 spTaxIdList[targetInfoList.data[idx].sequenceID],
+                                                 genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k]};
                             matchCnt++;
-                            totalMatchCnt2 ++;
                         }
                         continue;
                     }
@@ -681,11 +680,10 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         red = targetInfoList.data[idx].redundancy;
                         matches[matchCnt] = {queryKmerList[j].info.sequenceID,
                                              sspOrSp[red][targetInfoList.data[idx].sequenceID],
-                                             spTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
-                                             genusTaxIdList[targetInfoList.data[selectedMatches[k]].sequenceID],
+                                             spTaxIdList[targetInfoList.data[idx].sequenceID],
+                                             genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                              queryKmerList[j].info.pos, selectedHammings[k],
                                              selectedHammingSum[k]};
-                        totalMatchCnt2 ++;
                         matchCnt++;
                     }
                 } // End of one split
