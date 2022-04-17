@@ -706,7 +706,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 // Check whether current split is completed or not
                 if (querySplits[i].start - 1 == querySplits[i].end) {
                     splitCheckList[i] = true;
-                    cout<<i<<"th split is completed "<<totalMatchCnt<<" "<<totalGetKmer<<" "<<totalCompareDNA<<" "<<totalSameKmer<<" "<<totalMoveCnt<<endl;
+                    cout<<i<<"th split is completed "<<totalMatchCnt2<<" "<<totalGetKmer<<" "<<totalCompareDNA<<" "<<totalSameKmer<<" "<<totalMoveCnt<<endl;
                     __sync_fetch_and_add(& completedSplitCnt, 1);
                 }
             } // End of omp for (Iterating for splits)
