@@ -493,13 +493,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             auto * matches = new Match[localBufferSize];
             int matchCnt = 0;
 
-            // Debugging
-            size_t totalMatchCnt = 0;
-            size_t totalMatchCnt2 = 0;
-            size_t totalCompareDNA = 0;
-            size_t totalGetKmer = 0;
-            size_t totalMoveCnt = 0;
-            size_t totalSameKmer = 0;
+
 
             //vectors for selected target k-mers
             vector<uint8_t> selectedHammingSum;
@@ -514,6 +508,13 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             size_t range;
 #pragma omp for schedule(dynamic, 1)
             for (size_t i = 0; i < querySplits.size(); i++) {
+                // Debugging
+                size_t totalMatchCnt = 0;
+                size_t totalMatchCnt2 = 0;
+                size_t totalCompareDNA = 0;
+                size_t totalGetKmer = 0;
+                size_t totalMoveCnt = 0;
+                size_t totalSameKmer = 0;
                 if (hasOverflow || splitCheckList[i]) {
                     continue;
                 }
