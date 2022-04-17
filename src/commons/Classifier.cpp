@@ -516,6 +516,8 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 size_t totalMoveCnt = 0;
                 size_t totalSameKmer = 0;
                 size_t maxSameAmino = 0;
+                size_t final1 = 0;
+                size_t final2 = 0;
                 if (hasOverflow || splitCheckList[i]) {
                     continue;
                 }
@@ -554,7 +556,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                 lastMovedQueryIdx = j;
                             }
                         }
-
+                        final1 += currMatchNum;
                         for (int k = 0; k < currMatchNum; k++) {
                             idx = selectedMatches[k];
                             red = targetInfoList.data[idx].redundancy;
@@ -581,9 +583,9 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     if (currentQueryAA == AminoAcid(queryKmerList[j].ADkmer)) {
                         compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, startIdxOfAAmatch, selectedMatches,
                                    selectedHammingSum, selectedHammings);
-                        totalCompareDNA++;
+                        totalCompareDNA += candidateTargetKmers.size();
                         currMatchNum = selectedMatches.size();
-
+                        final2 += currMatchNum;
                         // If local buffer is full, copy them to the shared buffer.
                         if (matchCnt + currMatchNum > localBufferSize) {
                             // Check if the shared buffer is full.
@@ -699,7 +701,8 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 // Check whether current split is completed or not
                 if (querySplits[i].start - 1 == querySplits[i].end) {
                     splitCheckList[i] = true;
-                    cout<<i<<"th split is completed "<<totalMatchCnt2<<" "<<totalGetKmer<<" "<<totalCompareDNA<<" "<<totalSameKmer<<" "<<totalMoveCnt<<" "<<maxSameAmino<<endl;
+                    cout<<i<<"th split is completed "<<totalMatchCnt2<<" "<<totalGetKmer<<" "<<totalCompareDNA<<" "<<totalSameKmer<<" "<<totalMoveCnt<<" "<<maxSameAmino<<
+                    " "<< final1 << " "<<final2<<endl;
                     __sync_fetch_and_add(& completedSplitCnt, 1);
                 }
             } // End of omp for (Iterating for splits)
