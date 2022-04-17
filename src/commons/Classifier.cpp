@@ -488,6 +488,8 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             size_t totalMatchCnt = 0;
             size_t totalCompareDNA = 0;
             size_t totalGetKmer = 0;
+            size_t totalMoveCnt = 0;
+
             //vectors for selected target k-mers
             vector<uint8_t> selectedHammingSum;
             vector<size_t> selectedMatches;
@@ -532,6 +534,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                 break;
                             } else { // not full -> copy matches to the shared buffer
                                 moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
+                                totalMoveCnt ++;
                                 lastMovedQueryIdx = j;
                             }
                         }
@@ -566,6 +569,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                    selectedHammingSum, selectedHammings);
                         totalCompareDNA++;
                         currMatchNum = selectedMatches.size();
+
                         // If local buffer is full, copy them to the shared buffer.
                         if (matchCnt + currMatchNum > localBufferSize) {
                             // Check if the shared buffer is full.
@@ -579,6 +583,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                 break;
                             } else { // not full -> copy matches to the shared buffer
                                 moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
+                                totalMoveCnt ++;
                                 lastMovedQueryIdx = j;
                             }
                         }
@@ -637,6 +642,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     compareDna(currentQuery, candidateTargetKmers, startIdxOfAAmatch, selectedMatches,
                                selectedHammingSum, selectedHammings);
                     totalCompareDNA ++;
+
                     // If local buffer is full, copy them to the shared buffer.
                     currMatchNum = selectedMatches.size();
                     if (matchCnt + currMatchNum > localBufferSize) {
@@ -644,15 +650,13 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         posToWrite = matchBuffer.reserveMemory(matchCnt);
                         if (posToWrite + matchCnt >= matchBuffer.bufferSize) { // full -> write matches to file first
                             hasOverflow = true;
-//                            cout<<"bufferSize: " <<matchBuffer.bufferSize<<endl;
-//                            cout<<"PTW: "<<posToWrite<<endl;
-//                            cout<<"matchCnt: "<<matchCnt<<endl;
                             querySplits[i].start = lastMovedQueryIdx + 1;
 #pragma omp atomic
                             matchBuffer.startIndexOfReserve -= matchCnt;
                             break;
                         } else { // not full -> copy matches to the shared buffer
                             moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
+                            totalMoveCnt ++;
                             lastMovedQueryIdx = j;
                         }
                     }
@@ -685,13 +689,14 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     matchBuffer.startIndexOfReserve -= matchCnt;
                 } else {
                     moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
+                    totalMoveCnt ++;
                 }
                 delete[] matches;
 
                 // Check whether current split is completed or not
                 if (querySplits[i].start - 1 == querySplits[i].end) {
                     splitCheckList[i] = true;
-                    cout<<i<<"th split is completed "<<totalMatchCnt<<" "<<totalGetKmer<<" "<<totalCompareDNA<<" "<<endl;
+                    cout<<i<<"th split is completed "<<totalMatchCnt<<" "<<totalGetKmer<<" "<<totalCompareDNA<<" "<<totalMoveCnt<<endl;
                     __sync_fetch_and_add(& completedSplitCnt, 1);
                 }
             } // End of omp for (Iterating for splits)
