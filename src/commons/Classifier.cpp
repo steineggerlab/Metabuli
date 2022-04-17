@@ -497,7 +497,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 if (hasOverflow || splitCheckList[i]) {
                     continue;
                 }
-                cout<<i<<endl;
+                cout<<i<<endl; // 여기를 여러번 가지도 않음.
                 targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
@@ -688,6 +688,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             } // End of omp for (Iterating for splits)
         } // end of omp parallel
         if(hasOverflow){
+            cout<<"overflow!!!"<<endl;
             break;
         }
         //writeMatches(matchBuffer, matchFile);
