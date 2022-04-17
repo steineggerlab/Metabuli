@@ -704,7 +704,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
                     totalMoveCnt ++;
                 }
-                delete[] matches;
+
 
                 // Check whether current split is completed or not
                 if (querySplits[i].start - 1 == querySplits[i].end) {
@@ -713,6 +713,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     __sync_fetch_and_add(& completedSplitCnt, 1);
                 }
             } // End of omp for (Iterating for splits)
+            delete[] matches;
         } // end of omp parallel
         if(hasOverflow){
             cout<<"overflow!!!"<<endl;
