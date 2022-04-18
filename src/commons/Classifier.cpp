@@ -587,10 +587,11 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         totalCompareDNA += candidateTargetKmers.size();
                         currMatchNum = selectedMatches.size();
                         final2 += currMatchNum;
-                        if(i == 289 || i ==466){
-                            cout<<i<<" "<<currMatchNum<<" ";
+                        if(i == 289){
+                            cout<<i<<" "<<currMatchNum<<" "<<queryKmerList[j].info.sequenceID<<" "<<queryKmerList[j].info.pos<<" "<<(int)queryKmerList[j].info.frame<<endl; ;
+                            seqIterator.printKmerInDNAsequence(currentQuery);
                             print_binary64(64,currentQuery);
-
+                            cout<<endl;
                         }
                         // If local buffer is full, copy them to the shared buffer.
                         if (matchCnt + currMatchNum > localBufferSize) {
