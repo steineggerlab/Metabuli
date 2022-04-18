@@ -789,7 +789,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
         copy >>= 3;
         switch (aa8mer[i]) {
             case 0: //A
-                cout << "A";
+//                cout << "A";
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "GCA";
                 } else if (dnaInfo == 1) {
@@ -801,7 +801,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
             case 1: //R
-                cout << "R";
+//                cout << "R";
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "CGA";
                 } else if (dnaInfo == 1) {
@@ -853,7 +853,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
             case 5: // Q
-                cout << "Q";
+//                cout << "Q";
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "CAA";
                 } else if (dnaInfo == 1) {
@@ -865,7 +865,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
             case 6: //E
-                cout << "E";
+//                cout << "E";
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "GAA";
                 } else if (dnaInfo == 1) {
@@ -877,7 +877,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
             case 7: //G
-                cout << "G";
+//                cout << "G";
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "GGA";
                 } else if (dnaInfo == 1) {
@@ -889,7 +889,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
                 case 8: //H
-                cout << "H";
+//                cout << "H";
                 if (dnaInfo == 0) {
                     cout << "dddddd";
                 } else if (dnaInfo == 1) {
@@ -901,7 +901,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
                 case 9: //I
-                cout << "I";
+//                cout << "I";
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "ATA";
                 } else if (dnaInfo == 1) {
@@ -913,7 +913,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
                 case 10: //L
-                cout << "L";
+//                cout << "L";
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "CTA";
                 } else if (dnaInfo == 1) {
@@ -929,7 +929,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
                 case 11: //K
-                cout << "K";
+//                cout << "K";
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "AAA";
                 } else if (dnaInfo == 1) {
@@ -941,7 +941,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
                 case 12: // M
-                cout << "M";
+//                cout << "M";
                 if (dnaInfo == 0) {
                     cout << "dddddd";
                 } else if (dnaInfo == 1) {
@@ -953,7 +953,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
                 case 13://F
-                cout << "F";
+//                cout << "F";
                 if (dnaInfo == 0) {
                     cout << "dddddd" ;
                 } else if (dnaInfo == 1) {
@@ -965,7 +965,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
                 case 14: //P
-                cout << "P";
+//                cout << "P";
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "CCA";
                 } else if (dnaInfo == 1) {
@@ -977,7 +977,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
                 case 15: //S
-                cout << "S";
+//                cout << "S";
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "TCA";
                 } else if (dnaInfo == 1) {
@@ -997,7 +997,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
                 case 16: //T
-                cout << "T";
+//                cout << "T";
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "ACA";
                 } else if (dnaInfo == 1) {
@@ -1009,7 +1009,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
                 case 17: //W
-                cout << "W";
+//                cout << "W";
                 if (dnaInfo == 0) {
                     cout << "dddddd";
                 } else if (dnaInfo == 1) {
@@ -1021,7 +1021,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
                 case 18: //Y
-                cout << "Y";
+//                cout << "Y";
                 if (dnaInfo == 0) {
                     cout << "dddddd";
                 } else if (dnaInfo == 1) {
@@ -1033,7 +1033,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
                 case 19: //V
-                cout << "V";
+//                cout << "V";
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "GTA";
                 } else if (dnaInfo == 1) {
@@ -1045,7 +1045,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
                 case 20: //stop
-                cout << "Z";
+//                cout << "Z";
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "TAA";
                 } else if (dnaInfo == 1) {
@@ -1064,7 +1064,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
         //cout<<dnaInfo<<" ";
     }
 
-    cout<<endl;
+//    cout<<endl;
     for (int i = 0; i < 8; i++) {
         cout << dna24mer[7-i];
     }
