@@ -755,7 +755,7 @@ void Classifier::writeMatches(Buffer<Match> &matchBuffer, FILE *matchFile) {
 
 // It compares query k-mers to target k-mers.
 // If a query has matches, the matches with the smallest hamming distance will be selected
-void Classifier::compareDna(uint64_t &query, vector<uint64_t> &targetKmersToCompare, const size_t &startIdx,
+void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompare, const size_t &startIdx,
                             vector<size_t> &selectedMatches, vector<uint8_t> &selectedHammingSum,
                             vector<uint16_t> &selectedHammings, int i) {
 
@@ -766,7 +766,6 @@ void Classifier::compareDna(uint64_t &query, vector<uint64_t> &targetKmersToComp
 
     // Calculate hamming distance
     for (size_t i = 0; i < size; i++) {
-
         currentHammingSum = getHammingDistanceSum(query, targetKmersToCompare[i]);
         if(i==289){
             cout<<currentHammingSum<<endl;
