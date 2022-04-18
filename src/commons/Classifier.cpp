@@ -764,7 +764,7 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
     uint8_t currentHammingSum;
     uint8_t minHammingSum = UINT8_MAX;
 
-    if(i2==2){
+    if(i2==289){
         cout<<"hello"<<endl;
     }
     // Calculate hamming distance
