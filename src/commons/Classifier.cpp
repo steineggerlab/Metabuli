@@ -590,12 +590,12 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         if(i == 289){
                             cout<<i<<" "<<currMatchNum<<" "<<queryKmerList[j].info.sequenceID<<" "<<queryKmerList[j].info.pos<<" "<<(int)queryKmerList[j].info.frame<<endl; ;
                             cout<<selectedHammingSum[0]<<endl;
-                            print_binary64(64,currentQuery);
+                            print_binary64(64,currentQuery); cout<<endl;
                             seqIterator.printKmerInDNAsequence(currentQuery);
-                            cout<<endl;
-                            for(size_t i = 0; i < candidateTargetKmers.size(); i++){
-                                seqIterator.printKmerInDNAsequence(candidateTargetKmers[i]);
-                                cout<<endl;
+                            //cout<<endl;
+                            for(size_t i = 0; i < selectedMatches.size(); i++){
+                                seqIterator.printKmerInDNAsequence(candidateTargetKmers[selectedMatches[i]-startIdxOfAAmatch]);
+                              //  cout<<endl;
                             }
                         }
                         // If local buffer is full, copy them to the shared buffer.
