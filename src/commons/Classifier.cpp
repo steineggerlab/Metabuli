@@ -783,7 +783,7 @@ void Classifier::compareDna(uint64_t &query, vector<uint64_t> &targetKmersToComp
     }
     if(i==289){
         cout<<"here"<<endl;
-        for(auto x : selectedHammings){
+        for(auto x : selectedHammingSum){
             cout<< (int) x <<endl;
         }
     }
