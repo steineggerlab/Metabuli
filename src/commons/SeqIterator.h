@@ -47,7 +47,7 @@ private:
     string iRCT;
     string atcg;
     vector<int> aaFrames[6];
-    uint64_t powers[10];
+    static uint64_t powers[10];
     int nuc2aa[8][8][8];
     uint64_t nuc2num[4][4][4];
 
