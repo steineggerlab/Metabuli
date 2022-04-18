@@ -628,7 +628,9 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k]};
-                            cout<<selectedHammingSum[k]<<endl;
+                            if(i == 289) {
+                                cout << selectedHammingSum[k] << endl;
+                            }
                             matchCnt++;
                         }
                         continue;
