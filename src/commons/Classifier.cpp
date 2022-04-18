@@ -589,7 +589,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         final2 += currMatchNum;
                         if(i == 289){
                             cout<<i<<" "<<currMatchNum<<" "<<queryKmerList[j].info.sequenceID<<" "<<queryKmerList[j].info.pos<<" "<<(int)queryKmerList[j].info.frame<<endl; ;
-                            cout<<selectedHammingSum[0]<<endl;
+                            cout<<(int) selectedHammingSum[0]<<endl;
                             print_binary64(64,currentQuery); cout<<endl;
                             seqIterator.printKmerInDNAsequence(currentQuery);
                             //cout<<endl;
