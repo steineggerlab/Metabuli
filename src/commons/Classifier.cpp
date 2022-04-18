@@ -591,9 +591,11 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                             cout<<i<<" "<<currMatchNum<<" "<<queryKmerList[j].info.sequenceID<<" "<<queryKmerList[j].info.pos<<" "<<(int)queryKmerList[j].info.frame<<endl; ;
                             cout<<(int) selectedHammingSum[0]<<endl;
                             print_binary64(64,currentQuery); cout<<endl;
+                            cout<<"Q ";
                             seqIterator.printKmerInDNAsequence(currentQuery);
                             //cout<<endl;
                             for(size_t i = 0; i < selectedMatches.size(); i++){
+                                cout<<(int) selectedHammingSum[i]<<" ";
                                 seqIterator.printKmerInDNAsequence(candidateTargetKmers[selectedMatches[i]-startIdxOfAAmatch]);
                               //  cout<<endl;
                             }
