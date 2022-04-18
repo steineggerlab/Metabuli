@@ -757,17 +757,20 @@ void Classifier::writeMatches(Buffer<Match> &matchBuffer, FILE *matchFile) {
 // If a query has matches, the matches with the smallest hamming distance will be selected
 void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompare, const size_t &startIdx,
                             vector<size_t> &selectedMatches, vector<uint8_t> &selectedHammingSum,
-                            vector<uint16_t> &selectedHammings, int i) {
+                            vector<uint16_t> &selectedHammings, int i2) {
 
     size_t size = targetKmersToCompare.size();
     uint8_t *hammingSums = new uint8_t[size + 1];
     uint8_t currentHammingSum;
     uint8_t minHammingSum = UINT8_MAX;
 
+    if(i2==2){
+        cout<<"hello"<<endl;
+    }
     // Calculate hamming distance
     for (size_t i = 0; i < size; i++) {
         currentHammingSum = getHammingDistanceSum(query, targetKmersToCompare[i]);
-        if(i==289){
+        if(i2==289){
             cout<<(int)currentHammingSum<<endl;
         }
         if (currentHammingSum < minHammingSum) {
@@ -784,7 +787,7 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
             selectedHammings.push_back(getHammings(query, targetKmersToCompare[h]));
         }
     }
-    if(i==289){
+    if(i2==289){
         cout<<"here"<<endl;
         for(auto x : selectedHammingSum){
             cout<< (int) x <<endl;
