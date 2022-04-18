@@ -493,7 +493,8 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             auto * matches = new Match[localBufferSize];
             int matchCnt = 0;
 
-
+            // For debug
+            SeqIterator seqIterator;
 
             //vectors for selected target k-mers
             vector<uint8_t> selectedHammingSum;
@@ -588,7 +589,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         final2 += currMatchNum;
                         if(i == 289 || i ==466){
                             cout<<i<<" "<<currMatchNum<<" ";
-                            SeqIterator::printKmerInDNAsequence(currentQuery);
+                            seqIterator.printKmerInDNAsequence(currentQuery);
 
                         }
                         // If local buffer is full, copy them to the shared buffer.

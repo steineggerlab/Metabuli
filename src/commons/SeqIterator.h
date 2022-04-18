@@ -47,7 +47,7 @@ private:
     string iRCT;
     string atcg;
     vector<int> aaFrames[6];
-    static uint64_t powers[10];
+    uint64_t powers[10];
     int nuc2aa[8][8][8];
     uint64_t nuc2num[4][4][4];
 
@@ -72,7 +72,7 @@ public:
     static size_t kmerNumOfSixFrameTranslation(const char * seq);
     size_t getNumOfKmerForBlock(const PredictedBlock & block);
     void fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const uint32_t & seqID, int taxIdAtRank);
-    static void printKmerInDNAsequence(uint64_t kmer);
+    void printKmerInDNAsequence(uint64_t kmer);
     SeqIterator();
 };
 #endif //ADKMER4_KMEREXTRACTOR_H
