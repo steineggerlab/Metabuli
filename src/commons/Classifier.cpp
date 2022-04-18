@@ -629,7 +629,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k]};
                             if(i == 289) {
-                                cout << selectedHammingSum[k] << endl;
+                                cout << (int)selectedHammingSum[k] << endl;
                             }
                             matchCnt++;
                         }
