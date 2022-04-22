@@ -224,7 +224,7 @@ private:
             const LocalParameters & par);
 
     void compareDna(uint64_t query,
-                    vector<uint64_t> & targetKmersToCompare, const size_t & startIdx,
+                    vector<uint64_t> & targetKmersToCompare, size_t startIdx,
                     vector<size_t> & selectedMatches, vector<uint8_t> & selectedHammingSum,
                     vector<uint16_t> & rightEndHammings, int i);
 

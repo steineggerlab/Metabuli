@@ -587,20 +587,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         totalCompareDNA += candidateTargetKmers.size();
                         currMatchNum = selectedMatches.size();
                         final2 += currMatchNum;
-                        if(i == 289){
-                            cout<<i<<" "<<currMatchNum<<" "<<queryKmerList[j].info.sequenceID<<" "<<queryKmerList[j].info.pos<<" "<<(int)queryKmerList[j].info.frame<<endl; ;
-                            cout<<(int) selectedHammingSum[0]<<endl;
-                            print_binary64(64,currentQuery); cout<<endl;
-                            cout<<"Q ";
-                            seqIterator.printKmerInDNAsequence(currentQuery);
-                            //cout<<endl;
-                            for(size_t i = 0; i < selectedMatches.size(); i++){
-                                cout<<(int) getHammingDistanceSum(currentQuery, candidateTargetKmers[selectedMatches[i]-startIdxOfAAmatch])<<" ";
-                                seqIterator.printKmerInDNAsequence(candidateTargetKmers[selectedMatches[i]-startIdxOfAAmatch]);
-                                print_binary64(64,candidateTargetKmers[selectedMatches[i]-startIdxOfAAmatch]); cout<<endl;
-                                //  cout<<endl;
-                            }
-                        }
+
                         // If local buffer is full, copy them to the shared buffer.
                         if (matchCnt + currMatchNum > localBufferSize) {
                             // Check if the shared buffer is full.
@@ -628,8 +615,8 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k]};
-                            if(i == 289) {
-                                cout << (int)selectedHammingSum[k] << endl;
+                            if(i == 289){
+                                cout<<(int) selectedHammingSum[k] <<endl;
                             }
                             matchCnt++;
                         }
@@ -755,30 +742,27 @@ void Classifier::writeMatches(Buffer<Match> &matchBuffer, FILE *matchFile) {
 
 // It compares query k-mers to target k-mers.
 // If a query has matches, the matches with the smallest hamming distance will be selected
-void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompare, const size_t &startIdx,
+void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompare, size_t startIdx,
                             vector<size_t> &selectedMatches, vector<uint8_t> &selectedHammingSum,
                             vector<uint16_t> &selectedHammings, int i2) {
 
     size_t size = targetKmersToCompare.size();
-    uint8_t *hammingSums = new uint8_t[size + 1];
+    uint8_t * hammingSums = new uint8_t[size + 1];
     uint8_t currentHammingSum;
     uint8_t minHammingSum = UINT8_MAX;
 
-    if(i2==289){
-        cout<<"hello"<<endl;
-    }
     // Calculate hamming distance
     for (size_t i = 0; i < size; i++) {
         currentHammingSum = getHammingDistanceSum(query, targetKmersToCompare[i]);
-        if(i2==289){
-            cout<<(int)currentHammingSum<<endl;
-        }
+
         if (currentHammingSum < minHammingSum) {
             minHammingSum = currentHammingSum;
         }
         hammingSums[i] = currentHammingSum;
     }
-
+    if(i2==289){
+        cout<<"Minimum Hamming Sum "<<(int) minHammingSum<<endl;
+    }
     // Select target k-mers that passed hamming criteria
     for (size_t h = 0; h < size; h++) {
         if (hammingSums[h] == minHammingSum) {
@@ -787,13 +771,6 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
             selectedHammings.push_back(getHammings(query, targetKmersToCompare[h]));
         }
     }
-    if(i2==289){
-        cout<<"here"<<endl;
-        for(auto x : selectedHammingSum){
-            cout<< (int) x <<endl;
-        }
-    }
-
     delete[] hammingSums;
 }
 
