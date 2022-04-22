@@ -345,6 +345,7 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
 
                 // Ignore short read
                 if(kmerCnt2 < 1 || kmerCnt < 1){
+                    processedSeqCnt++;
                     continue;
                 }
 
@@ -474,10 +475,6 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
     size_t numOfDiffIdx = targetDiffIdxList.fileSize / sizeof(uint16_t);
 
-    for(int i = 0; i < querySplits.size(); i++){
-        cout<<i<<" "<<querySplits[i].length<<endl;
-    }
-
     cout << "The number of target k-mers: " << numOfTargetKmer << endl;
 
     time_t beforeSearch = time(nullptr);
@@ -521,20 +518,11 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             size_t range;
 #pragma omp for schedule(dynamic, 1)
             for (size_t i = 0; i < querySplits.size(); i++) {
-                // Debugging
-                size_t totalMatchCnt = 0;
-                size_t totalMatchCnt2 = 0;
-                size_t totalCompareDNA = 0;
-                size_t totalGetKmer = 0;
-                size_t totalMoveCnt = 0;
-                size_t totalSameKmer = 0;
-                size_t maxSameAmino = 0;
-                size_t final1 = 0;
-                size_t final2 = 0;
+
                 if (hasOverflow || splitCheckList[i]) {
                     continue;
                 }
-                cout<<i<<endl; // 여기를 여러번 가지도 않음.
+
                 targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
@@ -565,11 +553,9 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                 break;
                             } else { // not full -> copy matches to the shared buffer
                                 moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
-                                totalMoveCnt ++;
                                 lastMovedQueryIdx = j;
                             }
                         }
-                        final1 += currMatchNum;
                         for (int k = 0; k < currMatchNum; k++) {
                             idx = selectedMatches[k];
                             red = targetInfoList.data[idx].redundancy;
@@ -580,11 +566,9 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k]};
                             matchCnt++;
-                            totalMatchCnt2++;
                         }
 
                         if (currMatchNum != 0){
-                            totalSameKmer ++;
                         }
                         continue;
                     }
@@ -596,14 +580,8 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     if (currentQueryAA == AminoAcid(queryKmerList[j].ADkmer)) {
                         compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, startIdxOfAAmatch, selectedMatches,
                                    selectedHammingSum, selectedHammings, i);
-                        totalCompareDNA += candidateTargetKmers.size();
                         currMatchNum = selectedMatches.size();
-                        final2 += currMatchNum;
 
-/*                        if(i == 289){
-                            cout<<"Q ";
-                            seqIterator.printKmerInDNAsequence(queryKmerList[j].ADkmer);
-                        }*/
                         // If local buffer is full, copy them to the shared buffer.
                         if (matchCnt + currMatchNum > localBufferSize) {
                             // Check if the shared buffer is full.
@@ -617,7 +595,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                 break;
                             } else { // not full -> copy matches to the shared buffer
                                 moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
-                                totalMoveCnt ++;
                                 lastMovedQueryIdx = j;
                             }
                         }
@@ -631,10 +608,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k]};
-//                            if(i == 289){
-//                                cout<<(int) selectedHammingSum[k] <<" ";
-//                                seqIterator.printKmerInDNAsequence(candidateTargetKmers[idx - startIdxOfAAmatch]);
-//                            }
                             matchCnt++;
                         }
                         continue;
@@ -649,7 +622,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
-                        totalGetKmer++;
                         targetInfoIdx++;
                     }
 
@@ -663,19 +635,13 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
                         candidateTargetKmers.push_back(currentTargetKmer);
-                        totalMatchCnt++;
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
-                        totalGetKmer++;
                         targetInfoIdx++;
-                    }
-                    if(candidateTargetKmers.size() > maxSameAmino){
-                        maxSameAmino = candidateTargetKmers.size();
                     }
 
                     // Compare the current query and the loaded target k-mers and select
                     compareDna(currentQuery, candidateTargetKmers, startIdxOfAAmatch, selectedMatches,
                                selectedHammingSum, selectedHammings, i);
-                    totalCompareDNA ++;
 
                     // If local buffer is full, copy them to the shared buffer.
                     currMatchNum = selectedMatches.size();
@@ -690,7 +656,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                             break;
                         } else { // not full -> copy matches to the shared buffer
                             moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
-                            totalMoveCnt ++;
                             lastMovedQueryIdx = j;
                         }
                     }
@@ -716,15 +681,12 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     matchBuffer.startIndexOfReserve -= matchCnt;
                 } else {
                     moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
-                    totalMoveCnt ++;
                 }
 
 
                 // Check whether current split is completed or not
                 if (querySplits[i].start - 1 == querySplits[i].end) {
                     splitCheckList[i] = true;
-                    cout<<i<<"th split is completed "<<totalMatchCnt2<<" "<<totalGetKmer<<" "<<totalCompareDNA<<" "<<totalSameKmer<<" "<<totalMoveCnt<<" "<<maxSameAmino<<
-                    " "<< final1 << " "<<final2<<endl;
                     __sync_fetch_and_add(& completedSplitCnt, 1);
                 }
             } // End of omp for (Iterating for splits)
@@ -743,7 +705,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
     munmap(diffIdxSplits.data, diffIdxSplits.fileSize + 1);
     free(splitCheckList);
     queryKmerCnt = 0;
-    cout << "end of linear seach parallel" << endl;
 }
 
 void Classifier::moveMatches(Match * dest, Match * src, int & matchNum) {
@@ -752,7 +713,6 @@ void Classifier::moveMatches(Match * dest, Match * src, int & matchNum) {
 }
 
 void Classifier::writeMatches(Buffer<Match> &matchBuffer, FILE *matchFile) {
-    cout<<"HERE"<<matchBuffer.startIndexOfReserve<<endl;
     fwrite(matchBuffer.buffer, sizeof(Match), matchBuffer.startIndexOfReserve, matchFile);
     matchBuffer.startIndexOfReserve = 0;
 }
@@ -777,9 +737,7 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
         }
         hammingSums[i] = currentHammingSum;
     }
-//    if(i2==289){
-//        cout<<"Minimum Hamming Sum "<<(int) minHammingSum<<endl;
-//    }
+
     // Select target k-mers that passed hamming criteria
     for (size_t h = 0; h < size; h++) {
         if (hammingSums[h] == minHammingSum) {
