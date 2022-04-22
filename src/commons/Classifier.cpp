@@ -773,7 +773,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy &ncbiTaxonomy,
     if (PRINT) {
         omp_set_num_threads(1);
     } else {
-        omp_set_num_threads(par.threads);
+        omp_set_num_threads(1);
     }
 
     // Process each block
