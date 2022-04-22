@@ -64,7 +64,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
             if((checker[i] == false) && (!hasOverflow)) {
                 size_t * numOfBlocksList = (size_t*)malloc(splits[i].cnt * sizeof(size_t));
 
-                ///Train Prodigal with a training sequence of i th split
+                // Train Prodigal with a training sequence of i th split
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[splits[i].training].start]), seqs[splits[i].training].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);

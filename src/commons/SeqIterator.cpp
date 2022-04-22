@@ -341,7 +341,6 @@ void SeqIterator::getTranslationBlocks(struct _gene * genes, struct _node * node
         return;
     }
 
-
     // for the first frame
     if(genes[0].begin > 23) {
         //blocks.emplace_back(0, genes[0].begin + 22, 1);

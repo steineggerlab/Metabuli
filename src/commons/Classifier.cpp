@@ -96,16 +96,10 @@ void Classifier::startClassify(const char *queryFileName,
     } else if (par.seqMode == 2) {
         string queryFileName1 = par.filenames[0] + "_1";
         string queryFileName2 = par.filenames[0] + "_2";
-        cout<<"1"<<endl;
         queryFile = mmapData<char>(queryFileName1.c_str());
-        cout<<"2"<<endl;
         queryFile2 = mmapData<char>(queryFileName2.c_str());
-        cout<<"3"<<endl;
         IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
-        cout<<"4"<<endl;
         IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
-        cout<<"5"<<endl;
-
         numOfSeq = sequences.size();
         numOfSeq2 = sequences2.size();
         if (numOfSeq > numOfSeq2) {
@@ -335,35 +329,59 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
         for (size_t i = 0; i < numOfSeq; i++) {
             if (checker[i] == false && !hasOverflow) {
                 // Read 1
+                cout<<"1"<<endl;
+
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile1.data[seqs[i].start]), seqs[i].length);
+
+                cout<<"2"<<endl;
+
+
                 kseq_t *seq = kseq_init(&buffer);
+
+                cout<<"3"<<endl;
                 kseq_read(seq);
+                cout<<"4"<<endl;
                 size_t kmerCnt = getQueryKmerNumber((int) strlen(seq->seq.s));
+                cout<<"5"<<endl;
 
                 // Read 2
                 kseq_buffer_t buffer2(const_cast<char *>(&seqFile2.data[seqs2[i].start]), seqs2[i].length);
+                cout<<"6"<<endl;
                 kseq_t *seq2 = kseq_init(&buffer2);
+                cout<<"7"<<endl;
                 kseq_read(seq2);
+                cout<<"8"<<endl;
                 kmerCnt += getQueryKmerNumber((int) strlen(seq2->seq.s));
+                cout<<"9"<<endl;
 
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt);
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
                     checker[i] = true;
+                    cout<<"10"<<endl;
                     // Read 1
+                    cout<<"11"<<endl;
                     seqIterator.sixFrameTranslation(seq->seq.s);
+                    cout<<"12"<<endl;
                     seqIterator.fillQueryKmerBuffer(seq->seq.s, kmerBuffer, posToWrite, (int) i);
+                    cout<<"13"<<endl;
                     queryList[i].queryLength = getMaxCoveredLength((int) strlen(seq->seq.s));
                     // Read 2
+                    cout<<"14"<<endl;
                     seqIterator2.sixFrameTranslation(seq2->seq.s);
+                    cout<<"15"<<endl;
                     seqIterator2.fillQueryKmerBuffer(seq2->seq.s, kmerBuffer, posToWrite, (int) i,
                                                      queryList[i].queryLength);
 
                     // Query Info
                     // queryList[i].queryLength = getMaxCoveredLength((int) strlen(seq->seq.s));
 //                                                + getMaxCoveredLength((int) strlen(seq2->seq.s));
+                    cout<<"16"<<endl;
                     queryList[i].queryLength2 = getMaxCoveredLength((int) strlen(seq2->seq.s));
+                    cout<<"17"<<endl;
                     queryList[i].queryId = (int) i;
+                    cout<<"18"<<endl;
                     queryList[i].name = string(seq->name.s);
+                    cout<<"19"<<endl;
                     queryList[i].kmerCnt = (int) kmerCnt;
 #pragma omp atomic
                     processedSeqCnt++;
