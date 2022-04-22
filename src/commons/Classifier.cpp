@@ -80,6 +80,7 @@ void Classifier::startClassify(const char *queryFileName,
     Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(10));
 
     // Load query file
+    cout << "Indexing query file ...";
     MmapedData<char> queryFile{};
     MmapedData<char> queryFile2{};
     vector<Sequence> sequences;
@@ -95,10 +96,16 @@ void Classifier::startClassify(const char *queryFileName,
     } else if (par.seqMode == 2) {
         string queryFileName1 = par.filenames[0] + "_1";
         string queryFileName2 = par.filenames[0] + "_2";
+        cout<<"1"<<endl;
         queryFile = mmapData<char>(queryFileName1.c_str());
+        cout<<"2"<<endl;
         queryFile2 = mmapData<char>(queryFileName2.c_str());
+        cout<<"3"<<endl;
         IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
+        cout<<"4"<<endl;
         IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
+        cout<<"5"<<endl;
+
         numOfSeq = sequences.size();
         numOfSeq2 = sequences2.size();
         if (numOfSeq > numOfSeq2) {
@@ -108,6 +115,7 @@ void Classifier::startClassify(const char *queryFileName,
             queryList = new Query[numOfSeq];
         }
     }
+    cout << "Done" << endl;
 
     // Checker for multi-threading
     bool *processedSeqChecker = new bool[numOfSeq];
