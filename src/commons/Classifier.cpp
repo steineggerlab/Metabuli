@@ -363,8 +363,6 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                                                      queryList[i].queryLength);
 
                     // Query Info
-                    // queryList[i].queryLength = getMaxCoveredLength((int) strlen(seq->seq.s));
-//                                                + getMaxCoveredLength((int) strlen(seq2->seq.s));
                     queryList[i].queryLength2 = getMaxCoveredLength((int) strlen(seq2->seq.s));
                     queryList[i].queryId = (int) i;
                     queryList[i].name = string(seq->name.s);
@@ -922,6 +920,13 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
         queryList[currentQuery].score = highRankScore;
+        if (queryList[currentQuery].classification == 150614) {
+            cout << "# " << currentQuery << endl;
+            for (size_t i = 0; i < matchesForLCA.size(); i++) {
+                cout << i << " " << matchesForLCA[i].position << " " <<
+                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) << endl;
+            }
+        }
         return;
     }
 
