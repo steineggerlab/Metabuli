@@ -80,7 +80,7 @@ void Classifier::startClassify(const char *queryFileName,
     Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(10));
 
     // Load query file
-    cout << "Indexing query file ..." << endl;
+    cout << "Indexing query file ...";
     MmapedData<char> queryFile{};
     MmapedData<char> queryFile2{};
     vector<Sequence> sequences;
@@ -335,13 +335,13 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile1.data[seqs[i].start]), seqs[i].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
-                size_t kmerCnt = getQueryKmerNumber((int) strlen(seq->seq.s));
+                int kmerCnt = getQueryKmerNumber((int) strlen(seq->seq.s));
 
                 // Read 2
                 kseq_buffer_t buffer2(const_cast<char *>(&seqFile2.data[seqs2[i].start]), seqs2[i].length);
                 kseq_t *seq2 = kseq_init(&buffer2);
                 kseq_read(seq2);
-                size_t kmerCnt2 = getQueryKmerNumber((int) strlen(seq2->seq.s));
+                int kmerCnt2 = getQueryKmerNumber((int) strlen(seq2->seq.s));
 
                 // Ignore short read
                 if(kmerCnt2 < 1 || kmerCnt < 1){
