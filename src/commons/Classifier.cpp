@@ -588,10 +588,10 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         currMatchNum = selectedMatches.size();
                         final2 += currMatchNum;
 
-                        if(i == 289){
+/*                        if(i == 289){
                             cout<<"Q ";
                             seqIterator.printKmerInDNAsequence(queryKmerList[j].ADkmer);
-                        }
+                        }*/
                         // If local buffer is full, copy them to the shared buffer.
                         if (matchCnt + currMatchNum > localBufferSize) {
                             // Check if the shared buffer is full.
@@ -619,10 +619,10 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k]};
-                            if(i == 289){
-                                cout<<(int) selectedHammingSum[k] <<" ";
-                                seqIterator.printKmerInDNAsequence(candidateTargetKmers[idx - startIdxOfAAmatch]);
-                            }
+//                            if(i == 289){
+//                                cout<<(int) selectedHammingSum[k] <<" ";
+//                                seqIterator.printKmerInDNAsequence(candidateTargetKmers[idx - startIdxOfAAmatch]);
+//                            }
                             matchCnt++;
                         }
                         continue;
@@ -765,9 +765,9 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
         }
         hammingSums[i] = currentHammingSum;
     }
-    if(i2==289){
-        cout<<"Minimum Hamming Sum "<<(int) minHammingSum<<endl;
-    }
+//    if(i2==289){
+//        cout<<"Minimum Hamming Sum "<<(int) minHammingSum<<endl;
+//    }
     // Select target k-mers that passed hamming criteria
     for (size_t h = 0; h < size; h++) {
         if (hammingSums[h] == minHammingSum) {
