@@ -127,6 +127,7 @@ void Classifier::startClassify(const char *queryFileName,
         matchBuffer.startIndexOfReserve = 0;
 
         // Extract query k-mer
+        cout<<"K-mer extraction ... ";
         if (par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
             fillQueryKmerBufferParallel(kmerBuffer,
                                         queryFile,
