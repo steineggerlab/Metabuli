@@ -590,7 +590,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
 
                         if(i == 289){
                             cout<<"Q ";
-                            seqIterator.printKmerInDNAsequence(currentQuery);
+                            seqIterator.printKmerInDNAsequence(queryKmerList[j].ADkmer);
                         }
                         // If local buffer is full, copy them to the shared buffer.
                         if (matchCnt + currMatchNum > localBufferSize) {
