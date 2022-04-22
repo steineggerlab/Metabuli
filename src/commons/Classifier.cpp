@@ -80,7 +80,7 @@ void Classifier::startClassify(const char *queryFileName,
     Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(10));
 
     // Load query file
-    cout << "Indexing query file ...";
+    cout << "Indexing query file ..." << endl;
     MmapedData<char> queryFile{};
     MmapedData<char> queryFile2{};
     vector<Sequence> sequences;
