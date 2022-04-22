@@ -271,7 +271,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
                 seqIterator.sixFrameTranslation(seq->seq.s);
-                size_t kmerCnt = getQueryKmerNumber((int) strlen(seq->seq.s));
+                int kmerCnt = getQueryKmerNumber((int) strlen(seq->seq.s));
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt);
 
                 // Ignore short read
@@ -282,7 +282,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                     queryList[i].queryLength = getMaxCoveredLength((int) strlen(seq->seq.s));
                     queryList[i].queryId = i;
                     queryList[i].name = string(seq->name.s);
-                    queryList[i].kmerCnt = (int) kmerCnt;
+                    queryList[i].kmerCnt = kmerCnt;
 #pragma omp atomic
                     processedSeqCnt++;
                 } else {
@@ -367,7 +367,7 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                     queryList[i].queryLength2 = getMaxCoveredLength((int) strlen(seq2->seq.s));
                     queryList[i].queryId = (int) i;
                     queryList[i].name = string(seq->name.s);
-                    queryList[i].kmerCnt = (int) kmerCnt + kmerCnt2;
+                    queryList[i].kmerCnt = kmerCnt + kmerCnt2;
 #pragma omp atomic
                     processedSeqCnt++;
                 } else {
