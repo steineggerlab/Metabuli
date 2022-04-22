@@ -273,6 +273,9 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                 seqIterator.sixFrameTranslation(seq->seq.s);
                 size_t kmerCnt = getQueryKmerNumber((int) strlen(seq->seq.s));
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt);
+
+                // Ignore short read
+                if (kmerCnt < 1) continue;
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
                     seqIterator.fillQueryKmerBuffer(seq->seq.s, kmerBuffer, posToWrite, i);
                     checker[i] = true;
@@ -338,10 +341,15 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                 kseq_buffer_t buffer2(const_cast<char *>(&seqFile2.data[seqs2[i].start]), seqs2[i].length);
                 kseq_t *seq2 = kseq_init(&buffer2);
                 kseq_read(seq2);
-                kmerCnt += getQueryKmerNumber((int) strlen(seq2->seq.s));
+                size_t kmerCnt2 = getQueryKmerNumber((int) strlen(seq2->seq.s));
 
-                posToWrite = kmerBuffer.reserveMemory(kmerCnt);
-                if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
+                // Ignore short read
+                if(kmerCnt2 < 1 || kmerCnt < 1){
+                    continue;
+                }
+
+                posToWrite = kmerBuffer.reserveMemory(kmerCnt + kmerCnt2);
+                if (posToWrite + kmerCnt + kmerCnt2 < kmerBuffer.bufferSize) {
                     checker[i] = true;
                     // Read 1
                     seqIterator.sixFrameTranslation(seq->seq.s);
@@ -359,12 +367,12 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                     queryList[i].queryLength2 = getMaxCoveredLength((int) strlen(seq2->seq.s));
                     queryList[i].queryId = (int) i;
                     queryList[i].name = string(seq->name.s);
-                    queryList[i].kmerCnt = (int) kmerCnt;
+                    queryList[i].kmerCnt = (int) kmerCnt + kmerCnt2;
 #pragma omp atomic
                     processedSeqCnt++;
                 } else {
 #pragma omp atomic
-                    kmerBuffer.startIndexOfReserve -= kmerCnt;
+                    kmerBuffer.startIndexOfReserve -= kmerCnt + kmerCnt2;
                     hasOverflow = true;
                 }
                 kseq_destroy(seq);
