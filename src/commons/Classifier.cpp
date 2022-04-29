@@ -1018,14 +1018,14 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
             speciesMatchCnt = 0;
             speciesDiffPosCnt = 0;
             consecutiveCnt = 0;
-            lastPos = -3;
+            lastPos = -1;
             lastIn = false;
             while (currentSpecies == matchList[i + 1].speciesTaxID && (i < end + 1)) {
                 if(matchList[i].position + 3 >= matchList[i + 1].position){
                     filteredMatches.push_back(matchList[i]);
                     speciesMatchCnt ++;
-                    if (matchList[i].position  >= lastPos + 3){
-                        lastPos = matchList[i].position;
+                    if (matchList[i].position / 3  != lastPos){
+                        lastPos = matchList[i].position / 3;
                         speciesDiffPosCnt ++;
                         consecutiveCnt ++;
                     }
@@ -1034,12 +1034,12 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                     lastIn = false;
                     filteredMatches.push_back(matchList[i]);
                     speciesMatchCnt ++;
-                    if (matchList[i].position  >= lastPos + 3){
-                        lastPos = matchList[i].position;
+                    if (matchList[i].position / 3  != lastPos){
+                        lastPos = matchList[i].position / 3;
                         speciesDiffPosCnt ++;
                         consecutiveCnt ++;
                     }
-                    if (consecutiveCnt < 3){
+                    if (consecutiveCnt < 4){
                         for (size_t j = 0; j < speciesMatchCnt; j ++){
                             filteredMatches.pop_back();
                         }
@@ -1052,12 +1052,12 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
             if (lastIn){
                 filteredMatches.push_back(matchList[i]);
                 speciesMatchCnt ++;
-                if (matchList[i].position  >= lastPos + 3){
-                    lastPos = matchList[i].position;
+                if (matchList[i].position / 3 != lastPos){
+                    lastPos = matchList[i].position / 3;
                     speciesDiffPosCnt ++;
                     consecutiveCnt ++;
                 }
-                if (consecutiveCnt < 3){
+                if (consecutiveCnt < 4){
                     for (size_t j = 0; j < speciesMatchCnt; j ++){
                         filteredMatches.pop_back();
                     }
