@@ -1005,6 +1005,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
     bool lastIn;
     size_t speciesMatchCnt;
     size_t speciesDiffPosCnt;
+    size_t consecutiveCnt;
     int lastPos;
     while (i < end + 1) {
         currentGenus = matchList[i].genusTaxID;
@@ -1013,8 +1014,10 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
             currentSpecies = matchList[i].speciesTaxID;
             // For current species
             // Filter un-consecutive matches (probably random matches)
+            // TODO: At least 4 consecutive diff pos !!!
             speciesMatchCnt = 0;
             speciesDiffPosCnt = 0;
+            consecutiveCnt = 0;
             lastPos = -3;
             lastIn = false;
             while (currentSpecies == matchList[i + 1].speciesTaxID && (i < end + 1)) {
@@ -1024,6 +1027,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                     if (matchList[i].position  >= lastPos + 3){
                         lastPos = matchList[i].position;
                         speciesDiffPosCnt ++;
+                        consecutiveCnt ++;
                     }
                     lastIn = true;
                 } else if (lastIn) {
@@ -1033,7 +1037,14 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                     if (matchList[i].position  >= lastPos + 3){
                         lastPos = matchList[i].position;
                         speciesDiffPosCnt ++;
+                        consecutiveCnt ++;
                     }
+                    if (consecutiveCnt < 4){
+                        for (size_t j = 0; j < speciesMatchCnt; j ++){
+                            filteredMatches.pop_back();
+                        }
+                    }
+                    consecutiveCnt = 0;
                 }
                 i ++;
             }
@@ -1044,13 +1055,18 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                     lastPos = matchList[i].position;
                     speciesDiffPosCnt ++;
                 }
-            }
-
-            if (speciesDiffPosCnt < 4){
-                for (size_t j = 0; j < speciesMatchCnt; j ++){
-                    filteredMatches.pop_back();
+                if (consecutiveCnt < 4){
+                    for (size_t j = 0; j < speciesMatchCnt; j ++){
+                        filteredMatches.pop_back();
+                    }
                 }
             }
+
+//            if (speciesDiffPosCnt < 4){
+//                for (size_t j = 0; j < speciesMatchCnt; j ++){
+//                    filteredMatches.pop_back();
+//                }
+//            }
             i ++;
         }
 
