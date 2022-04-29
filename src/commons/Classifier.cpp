@@ -1045,6 +1045,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                         }
                     }
                     consecutiveCnt = 0;
+                    speciesMatchCnt = 0;
                 }
                 i ++;
             }
