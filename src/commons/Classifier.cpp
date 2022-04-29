@@ -1013,7 +1013,6 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
             currentSpecies = matchList[i].speciesTaxID;
             // For current species
             // Filter un-consecutive matches (probably random matches)
-            // TODO: Count Diff Pos
             speciesMatchCnt = 0;
             speciesDiffPosCnt = 0;
             lastPos = -3;
@@ -1085,8 +1084,8 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                                      matchesForEachGenus[maxIdx[g]].end());
     }
 
-//    if (maxScore < 0.1)
-//        return 3;
+    if (maxScore < 0.2)
+        return 3;
 
     if (maxIdx.size() > 1) {
         return 2;
@@ -1540,34 +1539,6 @@ void Classifier::constructMatchCombination_paired(vector<Match> &filteredMatches
     int currPos;
     size_t matchNum = matches.size();
     size_t f = 0;
-
-//    // Get the smallest hamming distance at each position of query
-//    auto * hammingsAtEachPos = new signed char[aminoAcidNum + 1];
-//    memset(hammingsAtEachPos, 10, (aminoAcidNum + 1));
-//    while(f < matchNum){
-//        currPos = matches[f].position / 3;
-//        currHammings = matches[f].rightEndHamming;
-//        if(GET_2_BITS(currHammings) < hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
-//        if(GET_2_BITS(currHammings>>2) < hammingsAtEachPos[currPos + 1]) hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings>>2);
-//        if(GET_2_BITS(currHammings>>4) < hammingsAtEachPos[currPos + 2]) hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings>>4);
-//        if(GET_2_BITS(currHammings>>6) < hammingsAtEachPos[currPos + 3]) hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings>>6);
-//        if(GET_2_BITS(currHammings>>8) < hammingsAtEachPos[currPos + 4]) hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings>>8);
-//        if(GET_2_BITS(currHammings>>10) < hammingsAtEachPos[currPos + 5]) hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings>>10);
-//        if(GET_2_BITS(currHammings>>12) < hammingsAtEachPos[currPos + 6]) hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings>>12);
-//        if(GET_2_BITS(currHammings>>14) < hammingsAtEachPos[currPos + 7]) hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings>>14);
-//        f++;
-//    }
-//
-//    // Sum up hamming distances and count the number of position covered by the matches.
-//    float hammingSum = 0;
-//    for(int h = 0; h < aminoAcidNum; h++){
-//        if(hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
-//            coveredPosCnt++;
-//        }else if(hammingsAtEachPos[h] != 10){ // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
-//            hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
-//            coveredPosCnt ++;
-//        }
-//    }
 
     // Get the largest hamming distance at each position of query
     auto *hammingsAtEachPos = new signed char[aminoAcidNum_total + 1];
