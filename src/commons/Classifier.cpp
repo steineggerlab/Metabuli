@@ -1018,9 +1018,9 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
             speciesDiffPosCnt = 0;
             lastPos = -1;
             lastIn = false;
-            while (currentSpecies == matchList[i+1].speciesTaxID && (i < end + 1)) {
+            while (currentSpecies == matchList[i].speciesTaxID && (i < end + 1)) {
                 if(currentSpecies == matchList[i + 1].speciesTaxID){
-                    if(matchList[i].position + 3 <= matchList[i + 1].position){
+                    if(matchList[i].position + 3 >= matchList[i + 1].position){
                         filteredMatches.push_back(matchList[i]);
                         speciesMatchCnt ++;
                         if (matchList[i].position / 3 != lastPos){
