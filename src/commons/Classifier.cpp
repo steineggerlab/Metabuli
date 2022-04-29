@@ -1018,24 +1018,22 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
             speciesDiffPosCnt = 0;
             lastPos = -1;
             lastIn = false;
-            while (currentSpecies == matchList[i].speciesTaxID && (i < end + 1)) {
-                if(currentSpecies == matchList[i + 1].speciesTaxID){
-                    if(matchList[i].position + 3 >= matchList[i + 1].position){
-                        filteredMatches.push_back(matchList[i]);
-                        speciesMatchCnt ++;
-                        if (matchList[i].position / 3 != lastPos){
-                            lastPos = matchList[i].position / 3;
-                            speciesDiffPosCnt ++;
-                        }
-                        lastIn = true;
-                    } else if (lastIn) {
-                        lastIn = false;
-                        filteredMatches.push_back(matchList[i]);
-                        speciesMatchCnt ++;
-                        if (matchList[i].position / 3 != lastPos){
-                            lastPos = matchList[i].position / 3;
-                            speciesDiffPosCnt ++;
-                        }
+            while (currentSpecies == matchList[i + 1].speciesTaxID && (i < end + 1)) {
+                if(matchList[i].position + 3 >= matchList[i + 1].position){
+                    filteredMatches.push_back(matchList[i]);
+                    speciesMatchCnt ++;
+                    if (matchList[i].position / 3 != lastPos){
+                        lastPos = matchList[i].position / 3;
+                        speciesDiffPosCnt ++;
+                    }
+                    lastIn = true;
+                } else if (lastIn) {
+                    lastIn = false;
+                    filteredMatches.push_back(matchList[i]);
+                    speciesMatchCnt ++;
+                    if (matchList[i].position / 3 != lastPos){
+                        lastPos = matchList[i].position / 3;
+                        speciesDiffPosCnt ++;
                     }
                 }
                 i ++;
@@ -1076,7 +1074,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
 
     vector<size_t> maxIdx;
     for (size_t g = 0; g < scoreOfEachGenus.size(); g++) {
-        if (scoreOfEachGenus[g] > maxScore * 0.9f) {
+        if (scoreOfEachGenus[g] > maxScore * 0.95f) {
             maxIdx.push_back(g);
         }
     }
