@@ -773,7 +773,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy &ncbiTaxonomy,
     if (PRINT) {
         omp_set_num_threads(1);
     } else {
-        omp_set_num_threads(par.threads);
+        omp_set_num_threads(1);
     }
 
     // Process each block
@@ -921,14 +921,14 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         queryList[currentQuery].classification = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
         queryList[currentQuery].score = highRankScore;
 
-//        if (queryList[currentQuery].classification == 150614) {
-//            sort(matchesForLCA.begin(), matchesForLCA.end(), Classifier::sortMatchesByPos);
-//            cout << "# " << currentQuery << endl;
-//            for (size_t i = 0; i < matchesForLCA.size(); i++) {
-//                cout << i << " " << matchesForLCA[i].position << " " <<
-//                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) << endl;
-//            }
-//        }
+        if (queryList[currentQuery].classification == 150614) {
+            sort(matchesForLCA.begin(), matchesForLCA.end(), Classifier::sortMatchesByPos);
+            cout << "# " << currentQuery << endl;
+            for (size_t i = 0; i < matchesForLCA.size(); i++) {
+                cout << i << " " << matchesForLCA[i].position << " " <<
+                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) << endl;
+            }
+        }
         return;
     }
 
