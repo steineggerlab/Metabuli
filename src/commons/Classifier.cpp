@@ -1198,14 +1198,14 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                     i++;
                 }
             }
-            if (speciesMatchCnt == 2){
-                filteredMatches.pop_back();
-                filteredMatches.pop_back();
-            } else if (speciesMatchCnt == 3) {
-                filteredMatches.pop_back();
-                filteredMatches.pop_back();
-                filteredMatches.pop_back();
-            }
+//            if (speciesMatchCnt == 2){
+//                filteredMatches.pop_back();
+//                filteredMatches.pop_back();
+//            } else if (speciesMatchCnt == 3) {
+//                filteredMatches.pop_back();
+//                filteredMatches.pop_back();
+//                filteredMatches.pop_back();
+//            }
         }
 
         // Construct a match combination using filtered matches of current genus
@@ -1238,7 +1238,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                                      matchesForEachGenus[maxIdx[g]].end());
     }
 
-    if (maxScore < 0.1)
+    if (maxScore < 0.3)
         return 3;
 
     if (maxIdx.size() > 1) {
