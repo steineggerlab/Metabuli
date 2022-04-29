@@ -1002,7 +1002,10 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
     size_t i = offset;
     size_t offsetIdx;
     bool newOffset;
+    bool lastIn;
     size_t speciesMatchCnt;
+    size_t speciesDiffPosCnt;
+    int lastPos;
     while (i < end + 1) {
         currentGenus = matchList[i].genusTaxID;
         // For current genus
@@ -1010,44 +1013,48 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
             currentSpecies = matchList[i].speciesTaxID;
             // For current species
             // Filter un-consecutive matches (probably random matches)
+            // TODO: Count Diff Pos
             speciesMatchCnt = 0;
+            speciesDiffPosCnt = 0;
+            lastPos = -1;
+            lastIn = false;
             while (currentSpecies == matchList[i].speciesTaxID && (i < end + 1)) {
-                offsetIdx = i;
-                i++;
-                newOffset = true;
-                hammingSum = 0;
-                hammingMean = matchList[i - 1].hamming;
-                while ((i < end + 1) && currentSpecies == matchList[i].speciesTaxID &&
-                       matchList[i].position <= matchList[i - 1].position + 3) {
-                    if (newOffset && ((float) matchList[i].hamming) <= hammingMean + 3) {
-                        newOffset = false;
-                        hammingSum = matchList[offsetIdx].hamming + matchList[i].hamming;
-                        filteredMatches.push_back(matchList[offsetIdx]);
-                        filteredMatches.push_back(matchList[i]);
-                        speciesMatchCnt += 2;
-//                        continue;
-                    } else if (!newOffset && ((float) matchList[i].hamming) <= hammingMean + 3) {
+                if(currentSpecies == matchList[i + 1].speciesTaxID){
+                    if(matchList[i].position <= matchList[i - 1].position + 3){
                         filteredMatches.push_back(matchList[i]);
                         speciesMatchCnt ++;
-                        hammingSum += matchList[i].hamming;
-                        hammingMean = float(hammingSum) / float(filteredMatches.size());
+                        if (matchList[i].position / 3 != lastPos){
+                            lastPos = matchList[i].position / 3;
+                            speciesDiffPosCnt ++;
+                        }
+                        lastIn = true;
+                    } else if (lastIn) {
+                        lastIn = false;
+                        filteredMatches.push_back(matchList[i]);
+                        speciesMatchCnt ++;
+                        if (matchList[i].position / 3 != lastPos){
+                            lastPos = matchList[i].position / 3;
+                            speciesDiffPosCnt ++;
+                        }
                     }
-                    i++;
+                }
+                i ++;
+            }
+            if (lastIn){
+                filteredMatches.push_back(matchList[i]);
+                speciesMatchCnt ++;
+                if (matchList[i].position / 3 != lastPos){
+                    lastPos = matchList[i].position / 3;
+                    speciesDiffPosCnt ++;
                 }
             }
-            if (speciesMatchCnt == 2){
-                filteredMatches.pop_back();
-                filteredMatches.pop_back();
-            } else if (speciesMatchCnt == 3) {
-                filteredMatches.pop_back();
-                filteredMatches.pop_back();
-                filteredMatches.pop_back();
-            } else if (speciesMatchCnt == 4) {
-                filteredMatches.pop_back();
-                filteredMatches.pop_back();
-                filteredMatches.pop_back();
-                filteredMatches.pop_back();
+
+            if (speciesDiffPosCnt < 5){
+                for (size_t j = 0; j < speciesMatchCnt; j ++){
+                    filteredMatches.pop_back();
+                }
             }
+            i ++;
         }
 
         // Construct a match combination using filtered matches of current genus
