@@ -773,7 +773,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy &ncbiTaxonomy,
     if (PRINT) {
         omp_set_num_threads(1);
     } else {
-        omp_set_num_threads(1);
+        omp_set_num_threads(par.threads);
     }
 
     // Process each block
@@ -921,14 +921,14 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         queryList[currentQuery].classification = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
         queryList[currentQuery].score = highRankScore;
 
-        if (queryList[currentQuery].classification == 150614) {
-            sort(matchesForLCA.begin(), matchesForLCA.end(), Classifier::sortMatchesByPos);
-            cout << "# " << currentQuery << endl;
-            for (size_t i = 0; i < matchesForLCA.size(); i++) {
-                cout << i << " " << matchesForLCA[i].position << " " <<
-                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) << endl;
-            }
-        }
+//        if (queryList[currentQuery].classification == 150614) {
+//            sort(matchesForLCA.begin(), matchesForLCA.end(), Classifier::sortMatchesByPos);
+//            cout << "# " << currentQuery << endl;
+//            for (size_t i = 0; i < matchesForLCA.size(); i++) {
+//                cout << i << " " << matchesForLCA[i].position << " " <<
+//                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) << endl;
+//            }
+//        }
         return;
     }
 
@@ -1166,6 +1166,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
     size_t i = offset;
     size_t offsetIdx;
     bool newOffset;
+    size_t speciesMatchCnt;
     while (i < end + 1) {
         currentGenus = matchList[i].genusTaxID;
         // For current genus
@@ -1173,6 +1174,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
             currentSpecies = matchList[i].speciesTaxID;
             // For current species
             // Filter un-consecutive matches (probably random matches)
+            speciesMatchCnt = 0;
             while (currentSpecies == matchList[i].speciesTaxID && (i < end + 1)) {
                 offsetIdx = i;
                 i++;
@@ -1185,14 +1187,24 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                         newOffset = false;
                         hammingSum = matchList[offsetIdx].hamming;
                         filteredMatches.push_back(matchList[offsetIdx]);
+                        speciesMatchCnt ++;
                         continue;
                     } else if (!newOffset && ((float) matchList[i].hamming) <= hammingMean + 3) {
                         filteredMatches.push_back(matchList[i]);
+                        speciesMatchCnt ++;
                         hammingSum += matchList[i].hamming;
                         hammingMean = float(hammingSum) / float(filteredMatches.size());
                     }
                     i++;
                 }
+            }
+            if (speciesMatchCnt == 2){
+                filteredMatches.pop_back();
+                filteredMatches.pop_back();
+            } else if (speciesMatchCnt == 3) {
+                filteredMatches.pop_back();
+                filteredMatches.pop_back();
+                filteredMatches.pop_back();
             }
         }
 
@@ -1226,7 +1238,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                                      matchesForEachGenus[maxIdx[g]].end());
     }
 
-    if (maxScore < 0.3)
+    if (maxScore < 0.1)
         return 3;
 
     if (maxIdx.size() > 1) {
