@@ -1039,10 +1039,10 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                 i ++;
             }
             if (lastIn){
-                filteredMatches.push_back(matchList[i-1]);
+                filteredMatches.push_back(matchList[i]);
                 speciesMatchCnt ++;
-                if (matchList[i-1].position / 3 != lastPos){
-                    lastPos = matchList[i-1].position / 3;
+                if (matchList[i].position / 3 != lastPos){
+                    lastPos = matchList[i].position / 3;
                     speciesDiffPosCnt ++;
                 }
             }
