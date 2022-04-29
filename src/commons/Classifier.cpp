@@ -1016,14 +1016,14 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
             // TODO: Count Diff Pos
             speciesMatchCnt = 0;
             speciesDiffPosCnt = 0;
-            lastPos = -1;
+            lastPos = -3;
             lastIn = false;
             while (currentSpecies == matchList[i + 1].speciesTaxID && (i < end + 1)) {
                 if(matchList[i].position + 3 >= matchList[i + 1].position){
                     filteredMatches.push_back(matchList[i]);
                     speciesMatchCnt ++;
-                    if (matchList[i].position / 3 != lastPos){
-                        lastPos = matchList[i].position / 3;
+                    if (matchList[i].position  >= lastPos + 3){
+                        lastPos = matchList[i].position;
                         speciesDiffPosCnt ++;
                     }
                     lastIn = true;
@@ -1031,8 +1031,8 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                     lastIn = false;
                     filteredMatches.push_back(matchList[i]);
                     speciesMatchCnt ++;
-                    if (matchList[i].position / 3 != lastPos){
-                        lastPos = matchList[i].position / 3;
+                    if (matchList[i].position  >= lastPos + 3){
+                        lastPos = matchList[i].position;
                         speciesDiffPosCnt ++;
                     }
                 }
@@ -1041,8 +1041,8 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
             if (lastIn){
                 filteredMatches.push_back(matchList[i]);
                 speciesMatchCnt ++;
-                if (matchList[i].position / 3 != lastPos){
-                    lastPos = matchList[i].position / 3;
+                if (matchList[i].position  >= lastPos + 3){
+                    lastPos = matchList[i].position;
                     speciesDiffPosCnt ++;
                 }
             }
