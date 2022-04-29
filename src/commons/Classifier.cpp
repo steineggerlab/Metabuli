@@ -1047,7 +1047,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                 }
             }
 
-            if (speciesDiffPosCnt < 5){
+            if (speciesDiffPosCnt < 4){
                 for (size_t j = 0; j < speciesMatchCnt; j ++){
                     filteredMatches.pop_back();
                 }
