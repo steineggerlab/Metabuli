@@ -1054,6 +1054,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                 if (matchList[i].position  >= lastPos + 3){
                     lastPos = matchList[i].position;
                     speciesDiffPosCnt ++;
+                    consecutiveCnt ++;
                 }
                 if (consecutiveCnt < 4){
                     for (size_t j = 0; j < speciesMatchCnt; j ++){
