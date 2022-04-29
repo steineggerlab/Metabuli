@@ -1021,10 +1021,11 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                        matchList[i].position <= matchList[i - 1].position + 3) {
                     if (newOffset && ((float) matchList[i].hamming) <= hammingMean + 3) {
                         newOffset = false;
-                        hammingSum = matchList[offsetIdx].hamming;
+                        hammingSum = matchList[offsetIdx].hamming + matchList[i].hamming;
                         filteredMatches.push_back(matchList[offsetIdx]);
-                        speciesMatchCnt ++;
-                        continue;
+                        filteredMatches.push_back(matchList[i]);
+                        speciesMatchCnt += 2;
+//                        continue;
                     } else if (!newOffset && ((float) matchList[i].hamming) <= hammingMean + 3) {
                         filteredMatches.push_back(matchList[i]);
                         speciesMatchCnt ++;
