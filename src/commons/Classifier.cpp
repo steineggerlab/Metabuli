@@ -922,7 +922,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         queryList[currentQuery].score = highRankScore;
 
         if (queryList[currentQuery].classification == 150614) {
-            sort(matchesForLCA.begin(), matchesForLCA.end(), Classifier::sortMatchesByPos);
+//            sort(matchesForLCA.begin(), matchesForLCA.end(), Classifier::sortMatchesByPos);
             cout << "# " << currentQuery << endl;
             for (size_t i = 0; i < matchesForLCA.size(); i++) {
                 cout << i << " " << matchesForLCA[i].position << " " <<
