@@ -562,7 +562,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  spTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
-                                                 selectedHammingSum[k]};
+                                                 selectedHammingSum[k], queryKmerList[j].info.frame};
                             matchCnt++;
                         }
 
@@ -605,7 +605,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  spTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
-                                                 selectedHammingSum[k]};
+                                                 selectedHammingSum[k],queryKmerList[j].info.frame};
                             matchCnt++;
                         }
                         continue;
@@ -666,7 +666,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                              spTaxIdList[targetInfoList.data[idx].sequenceID],
                                              genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                              queryKmerList[j].info.pos, selectedHammings[k],
-                                             selectedHammingSum[k]};
+                                             selectedHammingSum[k],queryKmerList[j].info.frame};
                         matchCnt++;
                     }
                 } // End of one split
@@ -1007,11 +1007,14 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
     size_t speciesDiffPosCnt;
     size_t consecutiveCnt;
     int lastPos;
+    uint8_t curFrame;
     while (i < end + 1) {
         currentGenus = matchList[i].genusTaxID;
         // For current genus
         while (currentGenus == matchList[i].genusTaxID && (i < end + 1)) {
             currentSpecies = matchList[i].speciesTaxID;
+            curFrame = matchList[i].frame;
+//            currentFrame = matchList[i].
             // For current species
             // Filter un-consecutive matches (probably random matches)
             // TODO: At least 4 consecutive diff pos !!!
@@ -1020,55 +1023,60 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
             consecutiveCnt = 0;
             lastPos = -1;
             lastIn = false;
-            while (currentSpecies == matchList[i + 1].speciesTaxID && (i < end + 1)) {
-                if(matchList[i].position + 3 >= matchList[i + 1].position){
+            while ((i < end + 1) && currentSpecies == matchList[i + 1].speciesTaxID && curFrame == matchList[i+1].frame) {
+                if(matchList[i].position + 3 == matchList[i + 1].position){
                     filteredMatches.push_back(matchList[i]);
                     speciesMatchCnt ++;
-                    if (matchList[i].position / 3  != lastPos){
-                        lastPos = matchList[i].position / 3;
-                        speciesDiffPosCnt ++;
-                        consecutiveCnt ++;
-                    }
+                    consecutiveCnt ++;
+//                    if (matchList[i].position / 3  != lastPos){
+//                        lastPos = matchList[i].position / 3;
+//                        speciesDiffPosCnt ++;
+//                        consecutiveCnt ++;
+//                    }
                     lastIn = true;
                 } else if (lastIn) {
                     lastIn = false;
                     filteredMatches.push_back(matchList[i]);
                     speciesMatchCnt ++;
-                    if (matchList[i].position / 3  != lastPos){
-                        lastPos = matchList[i].position / 3;
-                        speciesDiffPosCnt ++;
-                        consecutiveCnt ++;
-                    }
-                    if (consecutiveCnt < 4){
-                        for (size_t j = 0; j < speciesMatchCnt; j ++){
+                    consecutiveCnt ++;
+//                    if (matchList[i].position / 3  != lastPos){
+//                        lastPos = matchList[i].position / 3;
+//                        speciesDiffPosCnt ++;
+//                        consecutiveCnt ++;
+//                    }
+                    if (consecutiveCnt < 2){
+                        for (size_t j = 0; j < consecutiveCnt; j ++){
                             filteredMatches.pop_back();
+                            speciesMatchCnt --;
                         }
                     }
                     consecutiveCnt = 0;
-                    speciesMatchCnt = 0;
+//                    speciesMatchCnt = 0;
                 }
                 i ++;
             }
             if (lastIn){
                 filteredMatches.push_back(matchList[i]);
+                consecutiveCnt ++;
                 speciesMatchCnt ++;
-                if (matchList[i].position / 3 != lastPos){
-                    lastPos = matchList[i].position / 3;
-                    speciesDiffPosCnt ++;
-                    consecutiveCnt ++;
-                }
-                if (consecutiveCnt < 4){
-                    for (size_t j = 0; j < speciesMatchCnt; j ++){
+//                if (matchList[i].position / 3 != lastPos){
+//                    lastPos = matchList[i].position / 3;
+//                    speciesDiffPosCnt ++;
+//                    consecutiveCnt ++;
+//                }
+                if (consecutiveCnt < 2){
+                    for (size_t j = 0; j < consecutiveCnt; j ++){
                         filteredMatches.pop_back();
+                        speciesMatchCnt --;
                     }
                 }
             }
 
-//            if (speciesDiffPosCnt < 4){
-//                for (size_t j = 0; j < speciesMatchCnt; j ++){
-//                    filteredMatches.pop_back();
-//                }
-//            }
+            if (speciesMatchCnt < 4) {
+                for (size_t j = 0; j < speciesMatchCnt; j ++){
+                    filteredMatches.pop_back();
+                }
+            }
             i ++;
         }
 
@@ -1922,9 +1930,12 @@ bool Classifier::sortByGenusAndSpecies2(const Match &a, const Match &b) {
         else if (a.genusTaxID == b.genusTaxID) {
             if (a.speciesTaxID < b.speciesTaxID) return true;
             else if (a.speciesTaxID == b.speciesTaxID) {
-                if (a.position < b.position) return true;
-                else if (a.position == b.position) {
-                    return a.hamming < b.hamming;
+                if(a.frame < b.frame) return true;
+                else if (a.frame == b.frame) {
+                    if (a.position < b.position) return true;
+                    else if (a.position == b.position) {
+                        return a.hamming < b.hamming;
+                    }
                 }
             }
         }
