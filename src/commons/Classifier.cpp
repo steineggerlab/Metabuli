@@ -1013,73 +1013,76 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
         // For current genus
         while (currentGenus == matchList[i].genusTaxID && (i < end + 1)) {
             currentSpecies = matchList[i].speciesTaxID;
-            curFrame = matchList[i].frame;
-//            currentFrame = matchList[i].
-            // For current species
-            // Filter un-consecutive matches (probably random matches)
-            // TODO: At least 4 consecutive diff pos !!!
             speciesMatchCnt = 0;
-            speciesDiffPosCnt = 0;
-            consecutiveCnt = 0;
-            lastPos = -1;
-            lastIn = false;
-            while ((i < end + 1) && currentSpecies == matchList[i + 1].speciesTaxID && curFrame == matchList[i+1].frame) {
-                if(matchList[i].position + 3 == matchList[i + 1].position){
-                    filteredMatches.push_back(matchList[i]);
-                    speciesMatchCnt ++;
-                    consecutiveCnt ++;
+
+            // For current Frame
+            while (currentSpecies == matchList[i].speciesTaxID && (i < end + 1)) {
+                curFrame = matchList[i].frame;
+//            currentFrame = matchList[i].
+                // For current species
+                // Filter un-consecutive matches (probably random matches)
+                // TODO: At least 4 consecutive diff pos !!!
+                speciesDiffPosCnt = 0;
+                consecutiveCnt = 0;
+                lastPos = -1;
+                lastIn = false;
+                while ((i < end + 1) && currentSpecies == matchList[i + 1].speciesTaxID &&
+                       curFrame == matchList[i + 1].frame) {
+                    if (matchList[i].position + 3 == matchList[i + 1].position) {
+                        filteredMatches.push_back(matchList[i]);
+                        speciesMatchCnt++;
+                        consecutiveCnt++;
 //                    if (matchList[i].position / 3  != lastPos){
 //                        lastPos = matchList[i].position / 3;
 //                        speciesDiffPosCnt ++;
 //                        consecutiveCnt ++;
 //                    }
-                    lastIn = true;
-                } else if (lastIn) {
-                    lastIn = false;
-                    filteredMatches.push_back(matchList[i]);
-                    speciesMatchCnt ++;
-                    consecutiveCnt ++;
+                        lastIn = true;
+                    } else if (lastIn) {
+                        lastIn = false;
+                        filteredMatches.push_back(matchList[i]);
+                        speciesMatchCnt++;
+                        consecutiveCnt++;
 //                    if (matchList[i].position / 3  != lastPos){
 //                        lastPos = matchList[i].position / 3;
 //                        speciesDiffPosCnt ++;
 //                        consecutiveCnt ++;
 //                    }
-                    if (consecutiveCnt < 2){
-                        for (size_t j = 0; j < consecutiveCnt; j ++){
-                            filteredMatches.pop_back();
-                            speciesMatchCnt --;
+                        if (consecutiveCnt < 2) {
+                            for (size_t j = 0; j < consecutiveCnt; j++) {
+                                filteredMatches.pop_back();
+                                speciesMatchCnt--;
+                            }
                         }
-                    }
-                    consecutiveCnt = 0;
+                        consecutiveCnt = 0;
 //                    speciesMatchCnt = 0;
+                    }
+                    i++;
                 }
-                i ++;
-            }
-            if (lastIn){
-                filteredMatches.push_back(matchList[i]);
-                consecutiveCnt ++;
-                speciesMatchCnt ++;
+                if (lastIn) {
+                    filteredMatches.push_back(matchList[i]);
+                    consecutiveCnt++;
+                    speciesMatchCnt++;
 //                if (matchList[i].position / 3 != lastPos){
 //                    lastPos = matchList[i].position / 3;
 //                    speciesDiffPosCnt ++;
 //                    consecutiveCnt ++;
 //                }
-                if (consecutiveCnt < 2){
-                    for (size_t j = 0; j < consecutiveCnt; j ++){
-                        filteredMatches.pop_back();
-                        speciesMatchCnt --;
+                    if (consecutiveCnt < 2) {
+                        for (size_t j = 0; j < consecutiveCnt; j++) {
+                            filteredMatches.pop_back();
+                            speciesMatchCnt--;
+                        }
                     }
                 }
+                i++;
             }
-
             if (speciesMatchCnt < 4) {
-                for (size_t j = 0; j < speciesMatchCnt; j ++){
+                for (size_t j = 0; j < speciesMatchCnt; j++) {
                     filteredMatches.pop_back();
                 }
             }
-            i ++;
         }
-
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
         if (!filteredMatches.empty()) {
