@@ -1013,75 +1013,59 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
         // For current genus
         while (currentGenus == matchList[i].genusTaxID && (i < end + 1)) {
             currentSpecies = matchList[i].speciesTaxID;
-            speciesMatchCnt = 0;
-
-            // For current Frame
-            while (currentSpecies == matchList[i].speciesTaxID && (i < end + 1)) {
-                curFrame = matchList[i].frame;
 //            currentFrame = matchList[i].
-                // For current species
-                // Filter un-consecutive matches (probably random matches)
-                // TODO: At least 4 consecutive diff pos !!!
-                speciesDiffPosCnt = 0;
-                consecutiveCnt = 0;
-                lastPos = -1;
-                lastIn = false;
-                while ((i < end + 1) && currentSpecies == matchList[i + 1].speciesTaxID &&
-                       curFrame == matchList[i + 1].frame) {
-                    if (matchList[i].position + 3 == matchList[i + 1].position) {
-                        filteredMatches.push_back(matchList[i]);
-                        speciesMatchCnt++;
-                        consecutiveCnt++;
-//                    if (matchList[i].position / 3  != lastPos){
-//                        lastPos = matchList[i].position / 3;
-//                        speciesDiffPosCnt ++;
-//                        consecutiveCnt ++;
-//                    }
-                        lastIn = true;
-                    } else if (lastIn) {
-                        lastIn = false;
-                        filteredMatches.push_back(matchList[i]);
-                        speciesMatchCnt++;
-                        consecutiveCnt++;
-//                    if (matchList[i].position / 3  != lastPos){
-//                        lastPos = matchList[i].position / 3;
-//                        speciesDiffPosCnt ++;
-//                        consecutiveCnt ++;
-//                    }
-                        if (consecutiveCnt < 2) {
-                            for (size_t j = 0; j < consecutiveCnt; j++) {
-                                filteredMatches.pop_back();
-                                speciesMatchCnt--;
-                            }
-                        }
-                        consecutiveCnt = 0;
-//                    speciesMatchCnt = 0;
-                    }
-                    i++;
-                }
-                if (lastIn) {
+            // For current species
+            // Filter un-consecutive matches (probably random matches)
+            // TODO: At least 4 consecutive diff pos !!!
+            speciesMatchCnt = 0;
+            speciesDiffPosCnt = 0;
+            consecutiveCnt = 0;
+            lastPos = -1;
+            lastIn = false;
+            while (currentSpecies == matchList[i + 1].speciesTaxID && (i < end + 1)) {
+                if(matchList[i].position + 3 >= matchList[i + 1].position){
                     filteredMatches.push_back(matchList[i]);
-                    consecutiveCnt++;
-                    speciesMatchCnt++;
-//                if (matchList[i].position / 3 != lastPos){
-//                    lastPos = matchList[i].position / 3;
-//                    speciesDiffPosCnt ++;
-//                    consecutiveCnt ++;
-//                }
-                    if (consecutiveCnt < 2) {
-                        for (size_t j = 0; j < consecutiveCnt; j++) {
+                    speciesMatchCnt ++;
+                    if (matchList[i].position / 3  != lastPos){
+                        lastPos = matchList[i].position / 3;
+                        speciesDiffPosCnt ++;
+                        consecutiveCnt ++;
+                    }
+                    lastIn = true;
+                } else if (lastIn) {
+                    lastIn = false;
+                    filteredMatches.push_back(matchList[i]);
+                    speciesMatchCnt ++;
+                    if (matchList[i].position / 3  != lastPos){
+                        lastPos = matchList[i].position / 3;
+                        speciesDiffPosCnt ++;
+                        consecutiveCnt ++;
+                    }
+                    if (consecutiveCnt < 4){
+                        for (size_t j = 0; j < speciesMatchCnt; j ++){
                             filteredMatches.pop_back();
-                            speciesMatchCnt--;
                         }
                     }
+                    consecutiveCnt = 0;
+                    speciesMatchCnt = 0;
                 }
-                i++;
+                i ++;
             }
-            if (speciesMatchCnt < 4) {
-                for (size_t j = 0; j < speciesMatchCnt; j++) {
-                    filteredMatches.pop_back();
+            if (lastIn){
+                filteredMatches.push_back(matchList[i]);
+                speciesMatchCnt ++;
+                if (matchList[i].position / 3 != lastPos){
+                    lastPos = matchList[i].position / 3;
+                    speciesDiffPosCnt ++;
+                    consecutiveCnt ++;
+                }
+                if (consecutiveCnt < 4){
+                    for (size_t j = 0; j < speciesMatchCnt; j ++){
+                        filteredMatches.pop_back();
+                    }
                 }
             }
+            i ++;
         }
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
@@ -1933,12 +1917,9 @@ bool Classifier::sortByGenusAndSpecies2(const Match &a, const Match &b) {
         else if (a.genusTaxID == b.genusTaxID) {
             if (a.speciesTaxID < b.speciesTaxID) return true;
             else if (a.speciesTaxID == b.speciesTaxID) {
-                if(a.frame < b.frame) return true;
-                else if (a.frame == b.frame) {
-                    if (a.position < b.position) return true;
-                    else if (a.position == b.position) {
-                        return a.hamming < b.hamming;
-                    }
+                if (a.position < b.position) return true;
+                else if (a.position == b.position) {
+                    return a.hamming < b.hamming;
                 }
             }
         }
