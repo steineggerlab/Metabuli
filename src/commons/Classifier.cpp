@@ -610,6 +610,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k],queryKmerList[j].info.frame};
                             if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 138118){
+                                cout << queryKmerList[j].info.sequenceID << "\t" << endl;
                                 seqIterator.printKmerInDNAsequence(currentQuery);
                             }
                             matchCnt++;
