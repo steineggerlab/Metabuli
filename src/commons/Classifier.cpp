@@ -563,7 +563,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k], queryKmerList[j].info.frame};
-                            if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 138118){
+                            if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 46337){
                                 cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t";
                                 seqIterator.printKmerInDNAsequence(currentQuery);
                             }
@@ -610,7 +610,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k],queryKmerList[j].info.frame};
-                            if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 138118){
+                            if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 46337){
                                 cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t";
                                 seqIterator.printKmerInDNAsequence(currentQuery);
                             }
@@ -675,7 +675,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                              genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                              queryKmerList[j].info.pos, selectedHammings[k],
                                              selectedHammingSum[k],queryKmerList[j].info.frame};
-                        if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 138118){
+                        if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 46337){
                             cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t";
                             seqIterator.printKmerInDNAsequence(currentQuery);
                         }
