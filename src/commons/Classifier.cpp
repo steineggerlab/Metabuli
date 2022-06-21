@@ -564,7 +564,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k], queryKmerList[j].info.frame};
                             if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 138118){
-                                cout << queryKmerList[j].info.sequenceID << "\t";
+                                cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t";
                                 seqIterator.printKmerInDNAsequence(currentQuery);
                             }
                             matchCnt++;
@@ -611,7 +611,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k],queryKmerList[j].info.frame};
                             if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 138118){
-                                cout << queryKmerList[j].info.sequenceID << "\t";
+                                cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t";
                                 seqIterator.printKmerInDNAsequence(currentQuery);
                             }
                             matchCnt++;
@@ -676,7 +676,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                              queryKmerList[j].info.pos, selectedHammings[k],
                                              selectedHammingSum[k],queryKmerList[j].info.frame};
                         if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 138118){
-                            cout << queryKmerList[j].info.sequenceID << "\t";
+                            cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t";
                             seqIterator.printKmerInDNAsequence(currentQuery);
                         }
                         matchCnt++;
