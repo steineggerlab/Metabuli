@@ -563,6 +563,9 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k], queryKmerList[j].info.frame};
+                            if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 138118){
+                                seqIterator.printKmerInDNAsequence(currentQuery);
+                            }
                             matchCnt++;
                         }
 
@@ -606,6 +609,9 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k],queryKmerList[j].info.frame};
+                            if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 138118){
+                                seqIterator.printKmerInDNAsequence(currentQuery);
+                            }
                             matchCnt++;
                         }
                         continue;
@@ -667,6 +673,9 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                              genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                              queryKmerList[j].info.pos, selectedHammings[k],
                                              selectedHammingSum[k],queryKmerList[j].info.frame};
+                        if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 138118){
+                            seqIterator.printKmerInDNAsequence(currentQuery);
+                        }
                         matchCnt++;
                     }
                 } // End of one split
