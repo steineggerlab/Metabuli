@@ -816,7 +816,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
             case 2: //N
-                cout << "N";
+//                cout << "N";
                 if (dnaInfo == 0) {
                     cout << "dddddd";
                 } else if (dnaInfo == 1) {
@@ -828,7 +828,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
             case 3: //D
-                cout << "D";
+//                cout << "D";
                 if (dnaInfo == 0) {
                     cout << "dddddd";
                 } else if (dnaInfo == 1) {
@@ -840,7 +840,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
             case 4: //C
-                cout << "C";
+//                cout << "C";
                 if (dnaInfo == 0) {
                     cout << "dddddd";
                 } else if (dnaInfo == 1) {
