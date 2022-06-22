@@ -7,7 +7,7 @@ It is developed to achieve specificity of DNA based method and sensitivity of am
 ## Installation
 Installation from Github source code.
 ```
-git clone https://github.com/JaebeomKim0731/ADclassifier
+git clone --recursive GITHUB_LINK
 cd ADclassifier
 mkdir build
 cd build
