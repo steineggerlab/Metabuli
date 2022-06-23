@@ -6,8 +6,17 @@
 #include "LocalParameters.h"
 #include <ctime>
 
-Classifier::Classifier() {
+Classifier::Classifier(LocalParameters & par) {
     //seqIterator = new SeqIterator();
+
+    reducedAA == par.reducedAA;
+    if(reducedAA == 0){
+        MARKER = ~0 & ~0Xffffff;
+        bitsForCodon = 3;
+    } else {
+        MARKER = ~0 & ~0Xffffffff;
+        bitsForCodon = 4;
+    }
     numOfSplit = 0;
     selectedMatchCount = 0;
     queryCount = 0;
@@ -129,7 +138,7 @@ void Classifier::startClassify(const char *queryFileName,
         matchBuffer.startIndexOfReserve = 0;
 
         // Extract query k-mer
-        cout<<"K-mer extraction ... "<<endl;
+        cout << "K-mer extraction ... " << endl;
         if (par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
             fillQueryKmerBufferParallel(kmerBuffer,
                                         queryFile,
@@ -174,7 +183,8 @@ void Classifier::startClassify(const char *queryFileName,
 
         // Classify queries based on the matches
         time_t beforeAnalyze = time(nullptr);
-        analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList, par);
+        analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList,
+                              par);
         cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
     }
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
@@ -262,7 +272,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
     omp_set_num_threads(*(int *) par.PARAM_THREADS.value);
 #pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, cout, queryList)
     {
-        SeqIterator seqIterator;
+        SeqIterator seqIterator(par);
         size_t posToWrite;
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < seqs.size(); i++) {
@@ -325,8 +335,8 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
 
 #pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile1, seqFile2, seqs, seqs2, cout, queryList, numOfSeq)
     {
-        SeqIterator seqIterator;
-        SeqIterator seqIterator2;
+        SeqIterator seqIterator(par);
+        SeqIterator seqIterator2(par);
         size_t posToWrite;
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < numOfSeq; i++) {
@@ -344,7 +354,7 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                 int kmerCnt2 = getQueryKmerNumber((int) strlen(seq2->seq.s));
 
                 // Ignore short read
-                if(kmerCnt2 < 1 || kmerCnt < 1){
+                if (kmerCnt2 < 1 || kmerCnt < 1) {
                     processedSeqCnt++;
                     continue;
                 }
@@ -417,7 +427,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     vector<QueryKmerSplit> querySplits;
 
     int threadNum = par.threads;
-    if(threadNum != 1 && threadNum != 2){
+    if (threadNum != 1 && threadNum != 2) {
         threadNum = par.threads * 10;
     }
     uint64_t queryAA;
@@ -483,7 +493,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     while (completedSplitCnt < threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, \
-querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList, matchFile, sspOrSp)
+querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList, matchFile, sspOrSp, par)
         {
             //query variables
             uint64_t currentQuery = UINT64_MAX;
@@ -497,11 +507,11 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
 
             //Match buffer for each thread
             int localBufferSize = 2000000; // 64 Mb
-            auto * matches = new Match[localBufferSize];
+            auto *matches = new Match[localBufferSize];
             int matchCnt = 0;
 
             // For debug
-            SeqIterator seqIterator;
+            SeqIterator seqIterator(par);
 
             //vectors for selected target k-mers
             vector<uint8_t> selectedHammingSum;
@@ -570,7 +580,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                             matchCnt++;
                         }
 
-                        if (currMatchNum != 0){
+                        if (currMatchNum != 0) {
                         }
                         continue;
                     }
@@ -579,7 +589,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     selectedHammings.clear();
 
                     // Reuse the candidate target k-mers to compare in DNA level if queries are the same at amino acid level but not at DNA level
-                    if (currentQueryAA == AminoAcid(queryKmerList[j].ADkmer)) {
+                    if (currentQueryAA == aminoAcid(queryKmerList[j].ADkmer)) {
                         compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, startIdxOfAAmatch, selectedMatches,
                                    selectedHammingSum, selectedHammings, i);
                         currMatchNum = selectedMatches.size();
@@ -609,7 +619,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  spTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
-                                                 selectedHammingSum[k],queryKmerList[j].info.frame};
+                                                 selectedHammingSum[k], queryKmerList[j].info.frame};
 //                            if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 46337){
 //                                cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t";
 //                                seqIterator.printKmerInDNAsequence(currentQuery);
@@ -622,23 +632,23 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
 
                     // Get next query, and start to find
                     currentQuery = queryKmerList[j].ADkmer;
-                    currentQueryAA = AminoAcid(currentQuery);
+                    currentQueryAA = aminoAcid(currentQuery);
 
                     // Skip target k-mers that are not matched in amino acid level
-                    while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) &&
+                    while (aminoAcid(currentQuery) > aminoAcid(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                         targetInfoIdx++;
                     }
 
-                    if (AminoAcid(currentQuery) !=
-                        AminoAcid(currentTargetKmer)) // Move to next query k-mer if there isn't any match.
+                    if (aminoAcid(currentQuery) !=
+                        aminoAcid(currentTargetKmer)) // Move to next query k-mer if there isn't any match.
                         continue;
                     else
                         startIdxOfAAmatch = targetInfoIdx;
 
                     // Load target k-mers that are matched in amino acid level
-                    while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) &&
+                    while (aminoAcid(currentQuery) == aminoAcid(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
                         candidateTargetKmers.push_back(currentTargetKmer);
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
@@ -674,7 +684,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                              spTaxIdList[targetInfoList.data[idx].sequenceID],
                                              genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                              queryKmerList[j].info.pos, selectedHammings[k],
-                                             selectedHammingSum[k],queryKmerList[j].info.frame};
+                                             selectedHammingSum[k], queryKmerList[j].info.frame};
 //                        if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 46337){
 //                            cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t";
 //                            seqIterator.printKmerInDNAsequence(currentQuery);
@@ -697,13 +707,13 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 // Check whether current split is completed or not
                 if (querySplits[i].start - 1 == querySplits[i].end) {
                     splitCheckList[i] = true;
-                    __sync_fetch_and_add(& completedSplitCnt, 1);
+                    __sync_fetch_and_add(&completedSplitCnt, 1);
                 }
             } // End of omp for (Iterating for splits)
             delete[] matches;
         } // end of omp parallel
-        if(hasOverflow){
-            cout<<"overflow!!!"<<endl;
+        if (hasOverflow) {
+            cout << "overflow!!!" << endl;
             break;
         }
         //writeMatches(matchBuffer, matchFile);
@@ -717,7 +727,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
     queryKmerCnt = 0;
 }
 
-void Classifier::moveMatches(Match * dest, Match * src, int & matchNum) {
+void Classifier::moveMatches(Match *dest, Match *src, int &matchNum) {
     memcpy(dest, src, sizeof(Match) * matchNum);
     matchNum = 0;
 }
@@ -734,7 +744,7 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
                             vector<uint16_t> &selectedHammings, int i2) {
 
     size_t size = targetKmersToCompare.size();
-    uint8_t * hammingSums = new uint8_t[size + 1];
+    uint8_t *hammingSums = new uint8_t[size + 1];
     uint8_t currentHammingSum;
     uint8_t minHammingSum = UINT8_MAX;
 
@@ -812,7 +822,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy &ncbiTaxonomy,
 
 
 void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQuery,
-                                 size_t offset, size_t end, Match *matchList, Query * queryList,
+                                 size_t offset, size_t end, Match *matchList, Query *queryList,
                                  const LocalParameters &par) {
     int queryLength = queryList[currentQuery].queryLength; //queryList[currentQuery].queryLength; 13497
     TaxID selectedTaxon;
@@ -820,7 +830,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         cout << "# " << currentQuery << endl;
         for (size_t i = offset; i < end + 1; i++) {
             cout << matchList[i].genusTaxID << " " << matchList[i].speciesTaxID << " " << matchList[i].taxID << " " <<
-            matchList[i].position << " " << int(matchList[i].hamming) << endl;
+                 matchList[i].position << " " << int(matchList[i].hamming) << endl;
         }
     }
 
@@ -860,8 +870,8 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
     }
 
     // If the score is too low, it is un-classified
-    if (ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)){ // virus
-        if(highRankScore < 0.1){
+    if (ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)) { // virus
+        if (highRankScore < 0.1) {
             queryList[currentQuery].isClassified = false;
             queryList[currentQuery].classification = 0;
             queryList[currentQuery].score = 0;
@@ -1035,49 +1045,49 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
             lastPos = -1;
             lastIn = false;
             while (currentSpecies == matchList[i + 1].speciesTaxID && (i < end + 1)) {
-                if(matchList[i].position + 3 >= matchList[i + 1].position){
+                if (matchList[i].position + 3 >= matchList[i + 1].position) {
                     filteredMatches.push_back(matchList[i]);
-                    speciesMatchCnt ++;
-                    if (matchList[i].position / 3  != lastPos){
+                    speciesMatchCnt++;
+                    if (matchList[i].position / 3 != lastPos) {
                         lastPos = matchList[i].position / 3;
-                        speciesDiffPosCnt ++;
-                        consecutiveCnt ++;
+                        speciesDiffPosCnt++;
+                        consecutiveCnt++;
                     }
                     lastIn = true;
                 } else if (lastIn) {
                     lastIn = false;
                     filteredMatches.push_back(matchList[i]);
-                    speciesMatchCnt ++;
-                    if (matchList[i].position / 3  != lastPos){
+                    speciesMatchCnt++;
+                    if (matchList[i].position / 3 != lastPos) {
                         lastPos = matchList[i].position / 3;
-                        speciesDiffPosCnt ++;
-                        consecutiveCnt ++;
+                        speciesDiffPosCnt++;
+                        consecutiveCnt++;
                     }
-                    if (consecutiveCnt < 4){
-                        for (size_t j = 0; j < speciesMatchCnt; j ++){
+                    if (consecutiveCnt < 4) {
+                        for (size_t j = 0; j < speciesMatchCnt; j++) {
                             filteredMatches.pop_back();
                         }
                     }
                     consecutiveCnt = 0;
                     speciesMatchCnt = 0;
                 }
-                i ++;
+                i++;
             }
-            if (lastIn){
+            if (lastIn) {
                 filteredMatches.push_back(matchList[i]);
-                speciesMatchCnt ++;
-                if (matchList[i].position / 3 != lastPos){
+                speciesMatchCnt++;
+                if (matchList[i].position / 3 != lastPos) {
                     lastPos = matchList[i].position / 3;
-                    speciesDiffPosCnt ++;
-                    consecutiveCnt ++;
+                    speciesDiffPosCnt++;
+                    consecutiveCnt++;
                 }
-                if (consecutiveCnt < 4){
-                    for (size_t j = 0; j < speciesMatchCnt; j ++){
+                if (consecutiveCnt < 4) {
+                    for (size_t j = 0; j < speciesMatchCnt; j++) {
                         filteredMatches.pop_back();
                     }
                 }
             }
-            i ++;
+            i++;
         }
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
@@ -1954,7 +1964,8 @@ bool Classifier::sortMatchesByPos(const Match &a, const Match &b) {
 void Classifier::writeReadClassification(Query *queryList, int queryNum, ofstream &readClassificationFile) {
     for (int i = 0; i < queryNum; i++) {
         readClassificationFile << queryList[i].isClassified << "\t" << queryList[i].name << "\t"
-                               << queryList[i].classification << "\t" << queryList[i].queryLength + queryList[i].queryLength2 << "\t"
+                               << queryList[i].classification << "\t"
+                               << queryList[i].queryLength + queryList[i].queryLength2 << "\t"
                                << queryList[i].score << "\t";
         for (auto it = queryList[i].taxCnt.begin(); it != queryList[i].taxCnt.end(); ++it) {
             readClassificationFile << it->first << ":" << it->second << " ";

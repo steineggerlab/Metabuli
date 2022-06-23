@@ -33,6 +33,7 @@ public:
     PARAMETER(VIRUS_TAX_ID)
     PARAMETER(SEQ_MODE)
     PARAMETER(MEMORY_MODE)
+    PARAMETER(REDUCED_AA)
 
     //creatTargetDB
     int gtdbOrNcbi;
@@ -41,6 +42,7 @@ public:
     int virusTaxId;
     int seqMode;
     int memoryMode;
+    int reducedAA;
 
 private:
     LocalParameters();

@@ -45,7 +45,6 @@ private:
     size_t numOfFlush=0;
     //SeqIterator * seqIterator;
     void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<int> & taxIdList);
-    void writeTargetFiles2(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<int> & taxIdList, const vector<TaxID> & taxIdListAtGenus);
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
     size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,

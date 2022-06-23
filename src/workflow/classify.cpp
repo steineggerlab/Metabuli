@@ -49,7 +49,7 @@ int classify(int argc, const char **argv, const Command& command)
     fclose(taxIdFile);
     cout<<"Done"<<endl;
 
-    Classifier classifier;
+    Classifier classifier(par);
     classifier.startClassify(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(),
                              diffIdxSplitFileName.c_str(), taxIdList, par, taxonomy);
 

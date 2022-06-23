@@ -2,8 +2,8 @@
 #include "LocalCommandDeclarations.h"
 #include "LocalParameters.h"
 
-const char* binary_name = "adclassifier";
-const char* tool_name = "adclassifier";
+const char* binary_name = "metabuli";
+const char* tool_name = "metabuli";
 // TODO Write one full sentence
 const char* tool_introduction = "Taxonomical classifier using 8-mers which have information of both of amino acid and DNA sequences";
 const char* main_author = "Jaebeom Kim <jbeom0731@gmail.com> ";

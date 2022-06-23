@@ -4,6 +4,7 @@
 
 #ifndef ADKMER4_KMEREXTRACTOR_H
 #define ADKMER4_KMEREXTRACTOR_H
+
 #include <iostream>
 #include <vector>
 #include "Kmer.h"
@@ -18,6 +19,7 @@
 #include <functional>
 #include "xxh3.h"
 #include <queue>
+#include "LocalParameters.h"
 
 #ifdef OPENMP
 #include <omp.h>
@@ -32,17 +34,18 @@ KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
 using namespace std;
 
 typedef struct PredictedBlock {
-    PredictedBlock(int start, int end, int strand) : start(start), end(end), strand(strand) { }
+    PredictedBlock(int start, int end, int strand) : start(start), end(end), strand(strand) {}
+
     void printPredictedBlock() {
-        cout<<strand<<" "<<start<<" "<<end<<endl;
+        cout << strand << " " << start << " " << end << endl;
     }
+
     int start;
     int end;
     int strand; //true for forward
-}PredictedBlock;
+} PredictedBlock;
 
-class SeqIterator
-{
+class SeqIterator {
 private:
     string iRCT;
     string atcg;
@@ -50,30 +53,56 @@ private:
     uint64_t powers[10];
     int nuc2aa[8][8][8];
     uint64_t nuc2num[4][4][4];
+    int bitsForCodon;
+    int bitsFor8Codons;
 
-    void addDNAInfo_QueryKmer(uint64_t & kmer, const char * seq, int forOrRev, const int & kmerCnt, const int & frame, int readLength);
-    void addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, const PredictedBlock& block, const int & kmerCnt);
+    void addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev, const int &kmerCnt, const int &frame,
+                              int readLength);
+
+    void addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const PredictedBlock &block, const int &kmerCnt);
 
 public:
-    void fillQueryKmerBuffer(const char * seq , QueryKmerBuffer & kmerBuffer, size_t & posToWrite, const int & seqID, uint32_t offset = 0);
-    string reverseCompliment(string & read) const ;
-    char * reverseCompliment(char * read, int length) const ;
-    void sixFrameTranslation(const char * seq);
-    bool translateBlock(const char* seq, PredictedBlock & block);
+    void fillQueryKmerBuffer(const char *seq, QueryKmerBuffer &kmerBuffer, size_t &posToWrite, const int &seqID,
+                             uint32_t offset = 0);
 
-    void generateIntergenicKmerList(struct _gene * genes, struct _node * nodes, int numberOfGenes, vector<uint64_t> & intergenicKmerList, const char * seq);
-    static void getTranslationBlocks(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
-    static void getTranslationBlocksReverse(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene, size_t length, size_t & numOfBlocks);
-    void getTranslationBlocks2(struct _gene * genes, struct _node * nodes, vector<PredictedBlock> & blocks, size_t numOfGene,
-                size_t length, size_t & numOfBlocks, vector<uint64_t> & intergenicKmerList, const char * seq);
+    string reverseCompliment(string &read) const;
 
-    void getMinHashList(priority_queue<uint64_t> & sortedHashQue, const char * seq);
-    bool compareMinHashList(priority_queue<uint64_t> list1, priority_queue<uint64_t> & list2, size_t length1, size_t length2);
-    static size_t kmerNumOfSixFrameTranslation(const char * seq);
-    size_t getNumOfKmerForBlock(const PredictedBlock & block);
-    void fillBufferWithKmerFromBlock(const PredictedBlock & block, const char * seq, TargetKmerBuffer & kmerBuffer, size_t & posToWrite, const uint32_t & seqID, int taxIdAtRank);
+    char *reverseCompliment(char *read, int length) const;
+
+    void sixFrameTranslation(const char *seq);
+
+    bool translateBlock(const char *seq, PredictedBlock &block);
+
+    void generateIntergenicKmerList(struct _gene *genes, struct _node *nodes, int numberOfGenes,
+                                    vector<uint64_t> &intergenicKmerList, const char *seq);
+
+    static void
+    getTranslationBlocks(struct _gene *genes, struct _node *nodes, vector<PredictedBlock> &blocks, size_t numOfGene,
+                         size_t length, size_t &numOfBlocks);
+
+    static void getTranslationBlocksReverse(struct _gene *genes, struct _node *nodes, vector<PredictedBlock> &blocks,
+                                            size_t numOfGene, size_t length, size_t &numOfBlocks);
+
+    void
+    getTranslationBlocks2(struct _gene *genes, struct _node *nodes, vector<PredictedBlock> &blocks, size_t numOfGene,
+                          size_t length, size_t &numOfBlocks, vector<uint64_t> &intergenicKmerList, const char *seq);
+
+    void getMinHashList(priority_queue<uint64_t> &sortedHashQue, const char *seq);
+
+    bool
+    compareMinHashList(priority_queue<uint64_t> list1, priority_queue<uint64_t> &list2, size_t length1, size_t length2);
+
+    static size_t kmerNumOfSixFrameTranslation(const char *seq);
+
+    size_t getNumOfKmerForBlock(const PredictedBlock &block);
+
+    void fillBufferWithKmerFromBlock(const PredictedBlock &block, const char *seq, TargetKmerBuffer &kmerBuffer,
+                                     size_t &posToWrite, const uint32_t &seqID, int taxIdAtRank);
+
     void printKmerInDNAsequence(uint64_t kmer);
-    SeqIterator();
+
+    SeqIterator(const LocalParameters &par);
 };
+
 #endif //ADKMER4_KMEREXTRACTOR_H
 

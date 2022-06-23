@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10.2)
-project(adclassifier2 CXX)
+project(metabuli CXX)
 set(CMAKE_CXX_STANDARD 14)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")

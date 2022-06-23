@@ -51,10 +51,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
 #endif
     bool hasOverflow = false;
 
-    #pragma omp parallel default(none), shared(checker, hasOverflow, splits, seqFile, seqs, kmerBuffer, processedSplitCnt, cout, taxIdListAtRank)
+    #pragma omp parallel default(none), shared(par, checker, hasOverflow, splits, seqFile, seqs, kmerBuffer, processedSplitCnt, cout, taxIdListAtRank)
     {
         ProdigalWrapper prodigal;
-        SeqIterator seqIterator;
+        SeqIterator seqIterator(par);
         size_t posToWrite;
         size_t numOfBlocks;
         size_t totalKmerCntForOneTaxID;
@@ -174,10 +174,10 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
 #endif
     bool hasOverflow = false;
 
-#pragma omp parallel default(none), shared(checker, hasOverflow, splits, seqFile, seqs, kmerBuffer, processedSplitCnt, cout, taxIdListAtRank)
+#pragma omp parallel default(none), shared(par, checker, hasOverflow, splits, seqFile, seqs, kmerBuffer, processedSplitCnt, cout, taxIdListAtRank)
     {
         ProdigalWrapper prodigal;
-        SeqIterator seqIterator;
+        SeqIterator seqIterator(par);
         size_t posToWrite;
         size_t numOfBlocks;
         size_t totalKmerCntForOneTaxID;
@@ -229,10 +229,8 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
                     seqIterator.getMinHashList(currentList, seq->seq.s);
-//                    cout<<seq->name.s<<endl;
                     if(seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, strlen(seq->seq.s))){
                         prodigal.getPredictedGenes(seq->seq.s);
-//                        prodigal.printGenes();
                         prodigal.removeCompletelyOverlappingGenes();
                         seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                           prodigal.fng, strlen(seq->seq.s),
@@ -241,7 +239,6 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                     } else{
                         reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, strlen(seq->seq.s));
                         prodigal.getPredictedGenes(reverseCompliment);
-//                        prodigal.printGenes();
                         prodigal.removeCompletelyOverlappingGenes();
                         seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                           prodigal.fng, strlen(reverseCompliment),
