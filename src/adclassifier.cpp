@@ -20,7 +20,7 @@ std::vector<Command> commands = {
          "<i:directory of FASTA files> <i:taxonomy dir> <o:output> <tmpDir>",
          CITATION_SPACEPHARER,
          {{"lowest directory including FASTA files", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::directory},
-          {"Mapping file (assembly accession to taxonomical ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+          {"Mapping file (assembly accession to taxonomical ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory},
           {"Directory where the DB will be generated", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty},
           {"tmpDir", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
 
