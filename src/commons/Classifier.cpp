@@ -270,7 +270,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                                              const LocalParameters &par) {
     bool hasOverflow = false;
     omp_set_num_threads(*(int *) par.PARAM_THREADS.value);
-#pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, cout, queryList)
+#pragma omp parallel default(none), shared(par, checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, cout, queryList)
     {
         SeqIterator seqIterator(par);
         size_t posToWrite;
@@ -333,7 +333,7 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                                                     const LocalParameters &par) {
     bool hasOverflow = false;
 
-#pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile1, seqFile2, seqs, seqs2, cout, queryList, numOfSeq)
+#pragma omp parallel default(none), shared(par, checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile1, seqFile2, seqs, seqs2, cout, queryList, numOfSeq)
     {
         SeqIterator seqIterator(par);
         SeqIterator seqIterator2(par);
