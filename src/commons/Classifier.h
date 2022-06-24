@@ -29,7 +29,7 @@
 #include "Match.h"
 
 
-//#define AminoAcid(x) (size_t)((x) & (~0 & ~16777215))
+#define AminoAcid(x) (size_t)((x) & (~0 & ~16777215))
 using namespace std;
 
 struct Counts {
@@ -347,7 +347,7 @@ private:
 
     unsigned int cladeCountVal(const std::unordered_map <TaxID, TaxonCounts> &map, TaxID key);
 
-    size_t AminoAcid(size_t kmer) {
+    size_t AminoAcidPart(size_t kmer) {
         return (kmer) & MARKER;
     }
 //    AminoAcid(x) (size_t)((x) & (~0 & ~16777215));

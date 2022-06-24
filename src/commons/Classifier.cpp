@@ -438,8 +438,8 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
         size_t splitWidth = queryKmerCnt / 2;
         querySplits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
         for (size_t tSplitCnt = 0; tSplitCnt < numOfDiffIdxSplits_use; tSplitCnt++) {
-            queryAA = AminoAcid(queryKmerList[splitWidth].ADkmer);
-            if (queryAA <= AminoAcid(diffIdxSplits.data[tSplitCnt].ADkmer)) {
+            queryAA = AminoAcidPart(queryKmerList[splitWidth].ADkmer);
+            if (queryAA <= AminoAcidPart(diffIdxSplits.data[tSplitCnt].ADkmer)) {
                 tSplitCnt = tSplitCnt - (tSplitCnt != 0);
                 querySplits.emplace_back(splitWidth, queryKmerCnt - 1, queryKmerCnt - splitWidth,
                                          diffIdxSplits.data[tSplitCnt]);
@@ -450,10 +450,10 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
         size_t splitWidth = queryKmerCnt / (threadNum - 1);
         querySplits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
         for (int i = 1; i < threadNum; i++) {
-            queryAA = AminoAcid(queryKmerList[splitWidth * i].ADkmer);
+            queryAA = AminoAcidPart(queryKmerList[splitWidth * i].ADkmer);
             bool needLastTargetBlock = true;
             for (size_t j = 0; j < numOfDiffIdxSplits_use; j++) {
-                if (queryAA <= AminoAcid(diffIdxSplits.data[j].ADkmer)) {
+                if (queryAA <= AminoAcidPart(diffIdxSplits.data[j].ADkmer)) {
                     j = j - (j != 0);
                     if (i != threadNum - 1) {
                         querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth,
@@ -585,7 +585,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     selectedHammings.clear();
 
                     // Reuse the candidate target k-mers to compare in DNA level if queries are the same at amino acid level but not at DNA level
-                    if (currentQueryAA == AminoAcid(queryKmerList[j].ADkmer)) {
+                    if (currentQueryAA == AminoAcidPart(queryKmerList[j].ADkmer)) {
                         compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, startIdxOfAAmatch, selectedMatches,
                                    selectedHammingSum, selectedHammings, i);
                         currMatchNum = selectedMatches.size();
@@ -624,23 +624,23 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
 
                     // Get next query, and start to find
                     currentQuery = queryKmerList[j].ADkmer;
-                    currentQueryAA = AminoAcid(currentQuery);
+                    currentQueryAA = AminoAcidPart(currentQuery);
 
                     // Skip target k-mers that are not matched in amino acid level
-                    while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) &&
+                    while (AminoAcidPart(currentQuery) > AminoAcidPart(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                         targetInfoIdx++;
                     }
 
-                    if (AminoAcid(currentQuery) !=
-                        AminoAcid(currentTargetKmer)) // Move to next query k-mer if there isn't any match.
+                    if (AminoAcidPart(currentQuery) !=
+                            AminoAcidPart(currentTargetKmer)) // Move to next query k-mer if there isn't any match.
                         continue;
                     else
                         startIdxOfAAmatch = targetInfoIdx;
 
                     // Load target k-mers that are matched in amino acid level
-                    while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) &&
+                    while (AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
 
                         print_binary64(64,currentQuery);
@@ -649,7 +649,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         cout<<"\n";
                         print_binary64(64,currentQueryAA);
                         cout<<"\n";
-                        print_binary64(64,AminoAcid(currentTargetKmer));
+                        print_binary64(64,AminoAcidPart(currentTargetKmer));
                         cout<<"\n";
                         seqIterator.printKmerInDNAsequence(currentTargetKmer);
 
