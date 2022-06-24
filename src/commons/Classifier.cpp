@@ -169,6 +169,7 @@ void Classifier::startClassify(const char *queryFileName,
                       Classifier::compareForLinearSearch);
         cout << "Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
 
+        omp_set_num_threads(1);
         // Search matches between query and target k-mers
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxFileName,
                              targetInfoFileName,
