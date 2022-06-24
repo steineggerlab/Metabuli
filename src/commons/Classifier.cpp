@@ -645,15 +645,15 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     while (AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
 
-                        print_binary64(64,currentQuery);
-                        cout<<"\n";
-                        print_binary64(64,currentTargetKmer);
-                        cout<<"\n";
-                        print_binary64(64,currentQueryAA);
-                        cout<<"\n";
-                        print_binary64(64,AminoAcidPart(currentTargetKmer));
-                        cout<<"\n";
-                        seqIterator.printKmerInDNAsequence(currentTargetKmer);
+//                        print_binary64(64,currentQuery);
+//                        cout<<"\n";
+//                        print_binary64(64,currentTargetKmer);
+//                        cout<<"\n";
+//                        print_binary64(64,currentQueryAA);
+//                        cout<<"\n";
+//                        print_binary64(64,AminoAcidPart(currentTargetKmer));
+//                        cout<<"\n";
+//                        seqIterator.printKmerInDNAsequence(currentTargetKmer);
 
                         candidateTargetKmers.push_back(currentTargetKmer);
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
