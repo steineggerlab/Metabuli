@@ -526,7 +526,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             size_t range;
 #pragma omp for schedule(dynamic, 1)
             for (size_t i = 0; i < querySplits.size(); i++) {
-                cout<<i<<endl;
                 if (hasOverflow || splitCheckList[i]) {
                     continue;
                 }
@@ -542,7 +541,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
 
                 size_t lastMovedQueryIdx;
                 for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
-                    cout<<i<<" "<<j<<endl;
                     querySplits[i].start++;
 
                     // Reuse the comparison data if queries are exactly identical
