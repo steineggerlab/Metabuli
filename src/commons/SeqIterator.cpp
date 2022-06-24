@@ -1054,12 +1054,21 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 }
                 break;
             case 8: //I
-//                cout << "H";
+                // IV
+
                 if (dnaInfo == 0) {
-                    dna24mer[7 - i] = "ATA";
+                    dna24mer[7 - i] = "GTA";
                 } else if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "ATC";
+                    dna24mer[7 - i] = "GTC";
                 } else if (dnaInfo == 2) {
+                    dna24mer[7 - i] = "GTT";
+                } else if (dnaInfo == 3) {
+                    dna24mer[7 - i] = "GTG";
+                } else if (dnaInfo == 4) {
+                    dna24mer[7 - i] = "ATA";
+                } else if (dnaInfo == 5) {
+                    dna24mer[7 - i] = "ATC";
+                } else if (dnaInfo == 6) {
                     dna24mer[7 - i] = "ATT";
                 } else {
                     cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
