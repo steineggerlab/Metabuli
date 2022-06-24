@@ -11,10 +11,12 @@ Classifier::Classifier(LocalParameters & par) {
 
     reducedAA = par.reducedAA;
     if(reducedAA == 0){
-        MARKER = ~0 & ~16777215;
+        MARKER = 16777215;
+        MARKER = ~ MARKER;
         bitsForCodon = 3;
     } else {
-        MARKER = ~0 & ~0Xffffffff;
+        MARKER = 0Xffffffff;
+        MARKER = ~MARKER;
         bitsForCodon = 4;
     }
     numOfSplit = 0;
