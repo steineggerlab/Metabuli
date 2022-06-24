@@ -26,14 +26,14 @@ LocalParameters::LocalParameters() :
         MEMORY_MODE(MEMORY_MODE_ID,
                     "--memory-mode",
                     "Keeping k-mer matches in the RAM or writing into a file",
-                    "Writing: 1 [Default]\n RAM:  2",
+                    "Writing: 1 [Default]\nRAM:  2",
                     typeid(int),
                     (void *) &memoryMode,
                     "[1-2]"),
         REDUCED_AA(REDUCED_AA_ID,
-                   "--reduce-aa",
+                   "--reduced-aa",
                    "Using reduced 15 alphabets to encode amino acids. It increases sensitivity",
-                   "Using 20 alphabets: 0 [Default]\n Using 15 alphabets: 1",
+                   "Using 20 alphabets: 0 [Default]\nUsing 15 alphabets: 1",
                    typeid(int),
                    (void *) &reducedAA,
                    "[1-2]") {
@@ -41,6 +41,11 @@ LocalParameters::LocalParameters() :
     build_dir.push_back(&PARAM_THREADS);
     build_dir.push_back(&PARAM_GTDB_OR_NCBI);
     build_dir.push_back(&REDUCED_AA);
+
+    //build_fasta
+    build_fasta.push_back(&PARAM_THREADS);
+    build_fasta.push_back(&PARAM_GTDB_OR_NCBI);
+    build_fasta.push_back(&REDUCED_AA);
 
     //classify
     classify.push_back(&PARAM_THREADS);

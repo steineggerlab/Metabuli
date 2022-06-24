@@ -404,6 +404,7 @@ inline uint16_t Classifier::getHammings(uint64_t kmer1, uint64_t kmer2) {  //ham
             kmer1 >>= 4U;
             kmer2 >>= 4U;
         }
+        return hammings;
     }
     for (int i = 0; i < 8; i++) {
         hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U * i;
