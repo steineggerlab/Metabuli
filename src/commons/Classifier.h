@@ -351,7 +351,7 @@ private:
         return (kmer) & MARKER;
     }
 
-    size_t getThreeBits(size_t num){
+    size_t getCodonBits(size_t num){
         return num & 0X7U;
     }
 public:
@@ -374,16 +374,16 @@ public:
 
 inline uint8_t Classifier::getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2) {//12345678
     uint8_t hammingSum = 0;
-    if(reducedAA == 0) {
-        hammingSum += hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
-        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 3U)][GET_3_BITS(kmer2 >> 3U)];
-        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 6U)][GET_3_BITS(kmer2 >> 6U)];
-        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 9U)][GET_3_BITS(kmer2 >> 9U)];
-        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 12U)][GET_3_BITS(kmer2 >> 12U)];
-        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 15U)][GET_3_BITS(kmer2 >> 15U)];
-        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 18U)][GET_3_BITS(kmer2 >> 18U)];
-        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 21U)][GET_3_BITS(kmer2 >> 21U)];
-    } else {
+//    if(reducedAA == 0) {
+//        hammingSum += hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
+//        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 3U)][GET_3_BITS(kmer2 >> 3U)];
+//        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 6U)][GET_3_BITS(kmer2 >> 6U)];
+//        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 9U)][GET_3_BITS(kmer2 >> 9U)];
+//        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 12U)][GET_3_BITS(kmer2 >> 12U)];
+//        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 15U)][GET_3_BITS(kmer2 >> 15U)];
+//        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 18U)][GET_3_BITS(kmer2 >> 18U)];
+//        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 21U)][GET_3_BITS(kmer2 >> 21U)];
+//    } else {
         hammingSum += hammingLookup[GET_4_BITS(kmer1)][GET_4_BITS(kmer2)];
         hammingSum += hammingLookup[GET_4_BITS(kmer1 >> 4U)][GET_4_BITS(kmer2 >> 4U)];
         hammingSum += hammingLookup[GET_4_BITS(kmer1 >> 8U)][GET_4_BITS(kmer2 >> 8U)];
@@ -392,7 +392,7 @@ inline uint8_t Classifier::getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2)
         hammingSum += hammingLookup[GET_4_BITS(kmer1 >> 20U)][GET_4_BITS(kmer2 >> 20U)];
         hammingSum += hammingLookup[GET_4_BITS(kmer1 >> 24U)][GET_4_BITS(kmer2 >> 24U)];
         hammingSum += hammingLookup[GET_4_BITS(kmer1 >> 28U)][GET_4_BITS(kmer2 >> 28U)];
-    }
+//    }
     return hammingSum;
 }
 
@@ -409,7 +409,7 @@ inline uint16_t Classifier::getHammings(uint64_t kmer1, uint64_t kmer2) {  //ham
     for (int i = 0; i < 8; i++) {
         hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U * i;
         kmer1 >>= bitsForCodon;
-        kmer2 >>= bitsForCodon;
+        kmer2 >>= d;
     }
     return hammings;
 }
