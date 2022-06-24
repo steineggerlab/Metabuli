@@ -526,7 +526,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             size_t range;
 #pragma omp for schedule(dynamic, 1)
             for (size_t i = 0; i < querySplits.size(); i++) {
-
+                cout<<i<<endl;
                 if (hasOverflow || splitCheckList[i]) {
                     continue;
                 }
@@ -542,6 +542,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
 
                 size_t lastMovedQueryIdx;
                 for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
+                    cout<<i<<" "<<j<<endl;
                     querySplits[i].start++;
 
                     // Reuse the comparison data if queries are exactly identical
@@ -573,10 +574,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k], queryKmerList[j].info.frame};
-//                            if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 46337){
-//                                cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t";
-//                                seqIterator.printKmerInDNAsequence(currentQuery);
-//                            }
                             matchCnt++;
                         }
 
@@ -620,10 +617,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k], queryKmerList[j].info.frame};
-//                            if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 46337){
-//                                cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t";
-//                                seqIterator.printKmerInDNAsequence(currentQuery);
-//                            }
                             matchCnt++;
                         }
                         continue;
@@ -685,10 +678,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                              genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                              queryKmerList[j].info.pos, selectedHammings[k],
                                              selectedHammingSum[k], queryKmerList[j].info.frame};
-//                        if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 46337){
-//                            cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t";
-//                            seqIterator.printKmerInDNAsequence(currentQuery);
-//                        }
                         matchCnt++;
                     }
                 } // End of one split
@@ -716,7 +705,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             cout << "overflow!!!" << endl;
             break;
         }
-        //writeMatches(matchBuffer, matchFile);
     } // end of while(completeSplitCnt < threadNum)
     cout << "Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
 
@@ -751,7 +739,6 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
     // Calculate hamming distance
     for (size_t i = 0; i < size; i++) {
         currentHammingSum = getHammingDistanceSum(query, targetKmersToCompare[i]);
-
         if (currentHammingSum < minHammingSum) {
             minHammingSum = currentHammingSum;
         }
