@@ -943,8 +943,13 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
 
 
     for (int i = 0; i < 8; i++) {
-        dnaInfo = copy & 7u;
-        copy >>= 3;
+        if(bitsForCodon == 4){
+            dnaInfo = copy & 0Xfu;
+        } else {
+            dnaInfo = copy & 7u;
+        }
+
+        copy >>= bitsForCodon;
         switch (aa8mer[i]) {
             case 0: //A
 //                cout << "A";
