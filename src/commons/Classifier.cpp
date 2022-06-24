@@ -9,9 +9,9 @@
 Classifier::Classifier(LocalParameters & par) {
     //seqIterator = new SeqIterator();
 
-    reducedAA == par.reducedAA;
+    reducedAA = par.reducedAA;
     if(reducedAA == 0){
-        MARKER = ~0 & ~0Xffffff;
+        MARKER = ~0 & ~16777215;
         bitsForCodon = 3;
     } else {
         MARKER = ~0 & ~0Xffffffff;

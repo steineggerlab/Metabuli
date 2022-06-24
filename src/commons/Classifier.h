@@ -350,7 +350,7 @@ private:
     size_t aminoAcid(size_t kmer) {
         return (kmer) & MARKER;
     }
-
+//    AminoAcid(x) (size_t)((x) & (~0 & ~16777215));
     size_t getCodonBits(size_t num){
         return num & 0X7U;
     }
