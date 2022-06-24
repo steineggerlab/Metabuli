@@ -646,7 +646,9 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         print_binary64(64,currentQuery);
                         cout<<"\n";
                         print_binary64(64,currentTargetKmer);
+                        cout<<"\n";
                         print_binary64(64,currentQueryAA);
+                        cout<<"\n";
                         print_binary64(64,aminoAcid(currentTargetKmer));
                         cout<<"\n";
                         seqIterator.printKmerInDNAsequence(currentTargetKmer);
