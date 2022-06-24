@@ -169,7 +169,7 @@ void Classifier::startClassify(const char *queryFileName,
                       Classifier::compareForLinearSearch);
         cout << "Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
 
-        omp_set_num_threads(1);
+//        omp_set_num_threads(1);
         // Search matches between query and target k-mers
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxFileName,
                              targetInfoFileName,
@@ -642,9 +642,9 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     // Load target k-mers that are matched in amino acid level
                     while (aminoAcid(currentQuery) == aminoAcid(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
-                        print_binary64(64,currentTargetKmer);
-                        cout<<"\n";
-                        seqIterator.printKmerInDNAsequence(currentTargetKmer);
+//                        print_binary64(64,currentTargetKmer);
+//                        cout<<"\n";
+//                        seqIterator.printKmerInDNAsequence(currentTargetKmer);
 
                         candidateTargetKmers.push_back(currentTargetKmer);
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
