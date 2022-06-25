@@ -11,6 +11,7 @@ void setClassifyDefaults(LocalParameters & par){
     par.virusTaxId = 10239;// Taxonomy ID of virus taxon in NCBI
     par.seqMode = 1;
     par.memoryMode = 1;
+    par.reducedAA = 0;
 }
 int classify(int argc, const char **argv, const Command& command)
 {
