@@ -1067,7 +1067,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                         speciesDiffPosCnt++;
                         consecutiveCnt++;
                     }
-                    if (consecutiveCnt < 3) {
+                    if (consecutiveCnt < 4) {
                         for (size_t j = 0; j < speciesMatchCnt; j++) {
                             filteredMatches.pop_back();
                         }
@@ -1085,7 +1085,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                     speciesDiffPosCnt++;
                     consecutiveCnt++;
                 }
-                if (consecutiveCnt < 3) {
+                if (consecutiveCnt < 4) {
                     for (size_t j = 0; j < speciesMatchCnt; j++) {
                         filteredMatches.pop_back();
                     }
