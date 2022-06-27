@@ -36,7 +36,7 @@ LocalParameters::LocalParameters() :
                    "Using 20 alphabets: 0 [Default]\nUsing 15 alphabets: 1",
                    typeid(int),
                    (void *) &reducedAA,
-                   "[1-2]") {
+                   "[0-1]") {
     //build_dir
     build_dir.push_back(&PARAM_THREADS);
     build_dir.push_back(&PARAM_GTDB_OR_NCBI);
