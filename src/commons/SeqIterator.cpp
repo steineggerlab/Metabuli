@@ -372,7 +372,7 @@ void SeqIterator::fillQueryKmerBuffer(const char *seq, QueryKmerBuffer &kmerBuff
                 kmerBuffer.buffer[posToWrite] = {UINT64_MAX, 0, 0, frame};
             } else {
                 addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame, seqLen);
-
+                printKmerInDNAsequence(tempKmer);
                 if (forOrRev == 0) {
                     kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3) + offset, frame};
                 } else {
