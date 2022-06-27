@@ -280,7 +280,7 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
         nuc2num[3][0][0] = 4; //GAA
         nuc2num[3][0][3] = 7; //GAG
         // for stop codon
-        nuc2num[2][3][0] = 4;
+        nuc2num[2][3][0] = 4; //TGA
     }
 }
 
@@ -1048,9 +1048,9 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 if (dnaInfo == 0) {
                     cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
                 } else if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "GAC";
+                    dna24mer[7 - i] = "CAC";
                 } else if (dnaInfo == 2) {
-                    dna24mer[7 - i] = "GAT";
+                    dna24mer[7 - i] = "CAT";
                 } else {
                     cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
                 }
@@ -1169,7 +1169,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "TAA";
                 } else if (dnaInfo == 4) {
-                    dna24mer[7 - i] = "TAA";
+                    dna24mer[7 - i] = "TGA";
                 } else if (dnaInfo == 3) {
                     dna24mer[7 - i] = "TAG";
                 } else {
