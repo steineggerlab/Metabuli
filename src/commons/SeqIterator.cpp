@@ -961,8 +961,10 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                     dna24mer[7 - i] = "GCC";
                 } else if (dnaInfo == 2) {
                     dna24mer[7 - i] = "GCT";
-                } else {
+                } else if (dnaInfo == 3) {
                     dna24mer[7 - i] = "GCG";
+                } else{
+                    cout<<"Error in A"<<endl;
                 }
                 break;
             case 1: //R
@@ -997,9 +999,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 break;
             case 3: //D
 //                cout << "D";
-                if (dnaInfo == 0) {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                } else if (dnaInfo == 1) {
+                if (dnaInfo == 1) {
                     dna24mer[7 - i] = "GAC";
                 } else if (dnaInfo == 2) {
                     dna24mer[7 - i] = "GAT";
@@ -1009,9 +1009,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 break;
             case 4: //C
 //                cout << "C";
-                if (dnaInfo == 0) {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                } else if (dnaInfo == 1) {
+                if (dnaInfo == 1) {
                     dna24mer[7 - i] = "TGC";
                 } else if (dnaInfo == 2) {
                     dna24mer[7 - i] = "TGT";
@@ -1023,12 +1021,14 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
 //                cout << "Q";
                 if (dnaInfo == 0) {
                     dna24mer[7 - i] = "CAA";
-                } else if (dnaInfo == 1) {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                } else if (dnaInfo == 2) {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                } else {
+                } else if (dnaInfo == 3) {
                     dna24mer[7 - i] = "CAG";
+                } else if (dnaInfo == 4) {
+                    dna24mer[7 - i] = "GAA";
+                } else if (dnaInfo == 7) {
+                    dna24mer[7 - i] = "GAG";
+                } else {
+                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
                 }
                 break;
             case 6: //G
