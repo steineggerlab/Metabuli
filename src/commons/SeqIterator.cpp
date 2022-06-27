@@ -407,13 +407,13 @@ SeqIterator::addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev,
             for (int i = 0; i < kmerLength; i ++) {
                 kmer |= (nuc2num[nuc2int(iRCT[atcg[seq[end - (start + i*3) - 3]]])][
                         nuc2int(iRCT[atcg[seq[end - (start + i*3 + 1) - 3]]])][
-                        nuc2int(iRCT[atcg[seq[end - (start + i*3 + 2) - 3]]])] << bitsForCodon);
+                        nuc2int(iRCT[atcg[seq[end - (start + i*3 + 2) - 3]]])] << (i * bitsForCodon));
             }
         } else {
             for (int i = 0; i < kmerLength; i ++) {
                 kmer |= (nuc2num[nuc2int(iRCT[atcg[seq[end - (start + i*3)]]])][
                         nuc2int(iRCT[atcg[seq[end - (start + i*3 + 1)]]])][
-                        nuc2int(iRCT[atcg[seq[end - (start + i*3 + 2)]]])] << bitsForCodon);
+                        nuc2int(iRCT[atcg[seq[end - (start + i*3 + 2)]]])] << (i * bitsForCodon));
             }
         }
     }
