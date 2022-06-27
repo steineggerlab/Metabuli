@@ -356,7 +356,7 @@ void SeqIterator::fillQueryKmerBuffer(const char *seq, QueryKmerBuffer &kmerBuff
         uint32_t len = aaFrames[frame].size();
         forOrRev = frame / 3;
         for (int kmerCnt = 0; kmerCnt < len - kmerLength + 1; kmerCnt++) {
-            /// Amino acid 2 number
+            // Convert amino acid 8-mer to an integer
             tempKmer = 0;
             checkN = 0;
             for (size_t i = 0; i < kmerLength; i++) {
@@ -367,10 +367,12 @@ void SeqIterator::fillQueryKmerBuffer(const char *seq, QueryKmerBuffer &kmerBuff
                 tempKmer += aaFrames[frame][kmerCnt + i] * powers[i];
             }
 
+            // Add DNA info
             if (checkN == 1) {
                 kmerBuffer.buffer[posToWrite] = {UINT64_MAX, 0, 0, frame};
             } else {
                 addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame, seqLen);
+
                 if (forOrRev == 0) {
                     kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3) + offset, frame};
                 } else {
