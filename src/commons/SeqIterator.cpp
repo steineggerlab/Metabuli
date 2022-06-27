@@ -152,7 +152,7 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
         nuc2num[0][3][2] = 10; //AGT
         nuc2num[0][3][1] = 9; //AGC
         // for stop codon
-        nuc2num[2][3][0] = 5;
+        nuc2num[2][3][0] = 4;
     }
 
         // Using 15 alphabets for amino acid, one for stop codon.
@@ -280,7 +280,7 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
         nuc2num[3][0][0] = 4; //GAA
         nuc2num[3][0][3] = 7; //GAG
         // for stop codon
-        nuc2num[2][3][0] = 5;
+        nuc2num[2][3][0] = 4;
     }
 }
 
