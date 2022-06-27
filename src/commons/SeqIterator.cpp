@@ -373,6 +373,7 @@ void SeqIterator::fillQueryKmerBuffer(const char *seq, QueryKmerBuffer &kmerBuff
             } else {
                 addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame, seqLen);
                 printKmerInDNAsequence(tempKmer);
+                print_binary64(64, tempKmer); cout<<endl;
                 if (forOrRev == 0) {
                     kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3) + offset, frame};
                 } else {
@@ -987,9 +988,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                 break;
             case 2: //N
 //                cout << "N";
-                if (dnaInfo == 0) {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                } else if (dnaInfo == 1) {
+                if (dnaInfo == 1) {
                     dna24mer[7 - i] = "AAC";
                 } else if (dnaInfo == 2) {
                     dna24mer[7 - i] = "AAT";
