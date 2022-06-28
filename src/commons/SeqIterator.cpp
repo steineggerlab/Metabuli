@@ -190,6 +190,8 @@ void SeqIterator::fillQueryKmerBuffer(const char * seq, QueryKmerBuffer & kmerBu
                 kmerBuffer.buffer[posToWrite] = {UINT64_MAX, 0, 0, frame};
             }else{
                 addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame, seqLen);
+                printKmerInDNAsequence(tempKmer);
+                print_binary64(64, tempKmer); cout<<endl;
                 if(forOrRev == 0) {
                     kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3) + offset, frame};
                 } else{
@@ -777,10 +779,10 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
     }
 
     ///Print Amino Acid 8 mer
-//    for(int i  = 0; i<8; i++){
-//        cout<<aa8mer[i]<<" ";
-//    }
-//    cout<<endl;
+    for(int i  = 0; i<8; i++){
+        cout<<aa8mer[i]<<" ";
+    }
+    cout<<endl;
 
 
     for (int i = 0; i < 8; i++) {
