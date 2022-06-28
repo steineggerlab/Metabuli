@@ -9,11 +9,11 @@
 Classifier::Classifier(LocalParameters & par) {
 
     reducedAA = par.reducedAA;
-    if(reducedAA == 0){
+    if(par.reducedAA == 0){
         MARKER = 16777215;
         MARKER = ~ MARKER;
         bitsForCodon = 3;
-    } else {
+    } par.reducedAA {
         MARKER = 0Xffffffff;
         MARKER = ~MARKER;
         bitsForCodon = 4;

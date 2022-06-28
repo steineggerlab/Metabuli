@@ -3,6 +3,7 @@
 //
 
 #include "Classifier.h"
+#include "ReducedClassifier.h"
 #include "Parameters.h"
 #include "LocalParameters.h"
 #include "NcbiTaxonomy.h"
@@ -50,9 +51,14 @@ int classify(int argc, const char **argv, const Command& command)
     }
     fclose(taxIdFile);
     cout<<"Done"<<endl;
-
-    Classifier classifier(par);
-    classifier.startClassify(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(),
+    Classifier * classifier;
+    if(par.reducedAA == 1){
+        classifier = new ReducedClassifier(par);
+    } else {
+        classifier = new Classifier(par);
+    }
+//    Classifier classifier(par);
+    classifier->startClassify(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(),
                              diffIdxSplitFileName.c_str(), taxIdList, par, taxonomy);
 
     return 0;
