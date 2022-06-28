@@ -1,7 +1,3 @@
-//
-// Created by 김재범 on 2021/01/20.
-//
-
 #include "IndexCreator.h"
 #include "FileMerger.h"
 #include "LocalParameters.h"
