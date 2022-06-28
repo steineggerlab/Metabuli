@@ -1186,7 +1186,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
     }
     else {
         uint64_t copy = kmer;
-        kmer >>= 25;
+        kmer >>= 24;
         int quotient;
         int dnaInfo;
         vector<int> aa8mer(8);
@@ -1203,7 +1203,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
         }
         cout<<endl;
 
-
+        string aminoacid = "ARNDCQEGHILKMFPSTWYVX";
         for (int i = 0; i < 8; i++) {
             dnaInfo = copy & 7u;
             copy >>= 3;
@@ -1216,8 +1216,10 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                         dna24mer[7 - i] = "GCC";
                     } else if (dnaInfo == 2) {
                         dna24mer[7 - i] = "GCT";
-                    } else {
+                    } else if (dnaInfo == 3){
                         dna24mer[7 - i] = "GCG";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
                     }
                     break;
                 case 1: //R
@@ -1232,8 +1234,10 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
                         dna24mer[7 - i] = "CGG";
                     } else if (dnaInfo == 4) {
                         dna24mer[7 - i] = "AGG";
-                    } else {
+                    } else if (dnaInfo == 5) {
                         dna24mer[7 - i] = "AGA";
+                    } else{
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
                     }
                     break;
                 case 2: //N
