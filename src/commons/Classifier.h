@@ -307,10 +307,6 @@ public:
     Classifier(LocalParameters &par);
 
     ~Classifier();
-
-    void performanceTest(NcbiTaxonomy &ncbiTaxonomy, Query *queryList, int numOfquery, vector<int> &wrongs);
-
-    void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy &ncbiTaxonomy, vector<int> &wrongs, int i);
 };
 
 inline uint8_t Classifier::getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2) {//12345678
