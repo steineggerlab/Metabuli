@@ -13,7 +13,7 @@ Classifier::Classifier(LocalParameters & par) {
         MARKER = 16777215;
         MARKER = ~ MARKER;
         bitsForCodon = 3;
-    } par.reducedAA {
+    } else if (par.reducedAA == 1) {
         MARKER = 0Xffffffff;
         MARKER = ~MARKER;
         bitsForCodon = 4;
