@@ -2,7 +2,6 @@
 // Created by 김재범 on 2021/05/10.
 //
 
-//#include "Classifier.h"
 #include "NcbiTaxonomy.h"
 #include "Parameters.h"
 #include "LocalParameters.h"

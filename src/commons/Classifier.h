@@ -199,19 +199,8 @@ protected:
                          Query *queryList,
                          const LocalParameters &par);
 
-    void chooseBestTaxon_index(NcbiTaxonomy &ncbiTaxonomy,
-                               uint32_t currentQuery,
-                               size_t offset,
-                               size_t end,
-                               Match *matchList,
-                               Query *queryList,
-                               const LocalParameters &par);
-
     static int getMatchesOfTheBestGenus(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
                                         size_t offset, int queryLength, float &bestScore);
-
-    static int getMatchesOfTheBestGenus_index(vector<size_t> &matchesForMajorityLCA, Match *matchList, size_t end,
-                                              size_t offset, int queryLength, float &bestScore);
 
     static int getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
                                                size_t offset, int readLength1, int readLength2, float &bestScore);
@@ -220,12 +209,6 @@ protected:
                                           vector<vector<Match>> &matchesForEachGenus,
                                           vector<float> &scoreOfEachGenus,
                                           int queryLength);
-
-    static void constructMatchCombination_index(vector<size_t> &filteredMatchesIndex,
-                                                Match *matchList,
-                                                vector<vector<size_t>> &matchesForEachGenus,
-                                                vector<float> &scoreOfEachGenus,
-                                                int queryLength);
 
     static void constructMatchCombination_paired(vector<Match> &filteredMatches,
                                                  vector<vector<Match>> &matchesForEachGenus,
@@ -281,7 +264,6 @@ protected:
         return (kmer) & MARKER;
     }
 
-//    AminoAcid(x) (size_t)((x) & (~0 & ~16777215));
     size_t getCodonBits(size_t num) {
         return num & 0X7U;
     }

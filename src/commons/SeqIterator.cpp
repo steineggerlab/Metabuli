@@ -880,306 +880,614 @@ void SeqIterator::generateIntergenicKmerList(_gene *genes, _node *nodes, int num
 }
 
 void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
-    uint64_t copy = kmer;
-    kmer >>= bitsFor8Codons;
-    int quotient;
-    int dnaInfo;
-    vector<int> aa8mer(8);
-    vector <string> dna24mer(8);
-    for (int i = 0; i < 8; i++) {
-        quotient = kmer / powers[7 - i];
-        kmer = kmer - (quotient * powers[7 - i]);
-        aa8mer[7 - i] = quotient;
-    }
-
-    string aminoacid = "ARNDCQGHILKFPSTXVWYME";
-    // Print Amino Acid 8 mer
-    for(int i  = 0; i<8; i++){
-        cout<<aminoacid[aa8mer[i]];
-    }
-    cout<<endl;
-
-
-    for (int i = 0; i < 8; i++) {
-        if(bitsForCodon == 4){
-            dnaInfo = copy & 0Xfu;
-        } else {
-            dnaInfo = copy & 7u;
+    if (bitsForCodon == 4) {
+        uint64_t copy = kmer;
+        kmer >>= bitsFor8Codons;
+        int quotient;
+        int dnaInfo;
+        vector<int> aa8mer(8);
+        vector<string> dna24mer(8);
+        for (int i = 0; i < 8; i++) {
+            quotient = kmer / powers[7 - i];
+            kmer = kmer - (quotient * powers[7 - i]);
+            aa8mer[7 - i] = quotient;
         }
 
-        copy >>= bitsForCodon;
-        switch (aa8mer[i]) {
-            case 0: //A
+        string aminoacid = "ARNDCQGHILKFPSTXVWYME";
+        // Print Amino Acid 8 mer
+        for (int i = 0; i < 8; i++) {
+            cout << aminoacid[aa8mer[i]];
+        }
+        cout << endl;
+
+
+        for (int i = 0; i < 8; i++) {
+            if (bitsForCodon == 4) {
+                dnaInfo = copy & 0Xfu;
+            } else {
+                dnaInfo = copy & 7u;
+            }
+
+            copy >>= bitsForCodon;
+            switch (aa8mer[i]) {
+                case 0: //A
 //                cout << "A";
-                if (dnaInfo == 0) {
-                    dna24mer[7 - i] = "GCA";
-                } else if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "GCC";
-                } else if (dnaInfo == 2) {
-                    dna24mer[7 - i] = "GCT";
-                } else if (dnaInfo == 3) {
-                    dna24mer[7 - i] = "GCG";
-                } else{
-                    cout<<"Error in A"<<endl;
-                }
-                break;
-            case 1: //R
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "GCA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "GCC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "GCT";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "GCG";
+                    } else {
+                        cout << "Error in A" << endl;
+                    }
+                    break;
+                case 1: //R
 //                cout << "R";
-                if (dnaInfo == 0) {
-                    dna24mer[7 - i] = "CGA";
-                } else if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "CGC";
-                } else if (dnaInfo == 2) {
-                    dna24mer[7 - i] = "CGT";
-                } else if (dnaInfo == 3) {
-                    dna24mer[7 - i] = "CGG";
-                } else if (dnaInfo == 4) {
-                    dna24mer[7 - i] = "AGA";
-                } else if (dnaInfo == 7){
-                    dna24mer[7 - i] = "AGG";
-                } else{
-                    cout<<"Error in R"<<endl;
-                }
-                break;
-            case 2: //N
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "CGA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "CGC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "CGT";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "CGG";
+                    } else if (dnaInfo == 4) {
+                        dna24mer[7 - i] = "AGA";
+                    } else if (dnaInfo == 7) {
+                        dna24mer[7 - i] = "AGG";
+                    } else {
+                        cout << "Error in R" << endl;
+                    }
+                    break;
+                case 2: //N
 //                cout << "N";
-                if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "AAC";
-                } else if (dnaInfo == 2) {
-                    dna24mer[7 - i] = "AAT";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 3: //D
+                    if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "AAC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "AAT";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 3: //D
 //                cout << "D";
-                if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "GAC";
-                } else if (dnaInfo == 2) {
-                    dna24mer[7 - i] = "GAT";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 4: //C
+                    if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "GAC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "GAT";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 4: //C
 //                cout << "C";
-                if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "TGC";
-                } else if (dnaInfo == 2) {
-                    dna24mer[7 - i] = "TGT";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 5: // Q
+                    if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "TGC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "TGT";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 5: // Q
 //                cout << "Q";
-                if (dnaInfo == 0) {
-                    dna24mer[7 - i] = "CAA";
-                } else if (dnaInfo == 3) {
-                    dna24mer[7 - i] = "CAG";
-                } else if (dnaInfo == 4) {
-                    dna24mer[7 - i] = "GAA";
-                } else if (dnaInfo == 7) {
-                    dna24mer[7 - i] = "GAG";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 6: //G
-                if (dnaInfo == 0) {
-                    dna24mer[7 - i] = "GGA";
-                } else if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "GGC";
-                } else if (dnaInfo == 2) {
-                    dna24mer[7 - i] = "GGT";
-                } else if (dnaInfo == 3){
-                    dna24mer[7 - i] = "GGG";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 7: //H
-                if (dnaInfo == 0) {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                } else if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "CAC";
-                } else if (dnaInfo == 2) {
-                    dna24mer[7 - i] = "CAT";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 8: //I
-                // IV
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "CAA";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "CAG";
+                    } else if (dnaInfo == 4) {
+                        dna24mer[7 - i] = "GAA";
+                    } else if (dnaInfo == 7) {
+                        dna24mer[7 - i] = "GAG";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 6: //G
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "GGA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "GGC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "GGT";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "GGG";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 7: //H
+                    if (dnaInfo == 0) {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "CAC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "CAT";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 8: //I
+                    // IV
 
-                if (dnaInfo == 0) {
-                    dna24mer[7 - i] = "GTA";
-                } else if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "GTC";
-                } else if (dnaInfo == 2) {
-                    dna24mer[7 - i] = "GTT";
-                } else if (dnaInfo == 3) {
-                    dna24mer[7 - i] = "GTG";
-                } else if (dnaInfo == 4) {
-                    dna24mer[7 - i] = "ATA";
-                } else if (dnaInfo == 5) {
-                    dna24mer[7 - i] = "ATC";
-                } else if (dnaInfo == 6) {
-                    dna24mer[7 - i] = "ATT";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 9: //L
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "GTA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "GTC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "GTT";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "GTG";
+                    } else if (dnaInfo == 4) {
+                        dna24mer[7 - i] = "ATA";
+                    } else if (dnaInfo == 5) {
+                        dna24mer[7 - i] = "ATC";
+                    } else if (dnaInfo == 6) {
+                        dna24mer[7 - i] = "ATT";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 9: //L
 //                cout << "I";
-                if (dnaInfo == 0) {
-                    dna24mer[7 - i] = "CTA";
-                } else if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "CTC";
-                } else if (dnaInfo == 2) {
-                    dna24mer[7 - i] = "CTT";
-                } else if (dnaInfo == 3) {
-                    dna24mer[7 - i] = "CTG";
-                } else if (dnaInfo == 4) {
-                    dna24mer[7 - i] = "TTA";
-                } else if (dnaInfo == 7) {
-                    dna24mer[7 - i] = "TTG";
-                } else if (dnaInfo == 8) {
-                    dna24mer[7 - i] = "ATG";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 10: //K
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "CTA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "CTC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "CTT";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "CTG";
+                    } else if (dnaInfo == 4) {
+                        dna24mer[7 - i] = "TTA";
+                    } else if (dnaInfo == 7) {
+                        dna24mer[7 - i] = "TTG";
+                    } else if (dnaInfo == 8) {
+                        dna24mer[7 - i] = "ATG";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 10: //K
 //                cout << "L";
-                if (dnaInfo == 0) {
-                    dna24mer[7 - i] = "AAA";
-                } else if (dnaInfo == 3) {
-                    dna24mer[7 - i] = "AAG";
-                } else {
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "AAA";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "AAG";
+                    } else {
 
-                }
-                break;
-            case 11: //FYW
-                if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "TTC";
-                } else if (dnaInfo == 2) {
-                    dna24mer[7 - i] = "TTT";
-                } else if (dnaInfo == 5) {
-                    dna24mer[7 - i] = "TAC";
-                } else if (dnaInfo == 6) {
-                    dna24mer[7 - i] = "TAT";
-                } else if (dnaInfo == 7) {
-                    dna24mer[7 - i] = "TGG";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 12: //P
-                if (dnaInfo == 0) {
-                    dna24mer[7 - i] = "CCA";
-                } else if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "CCC";
-                } else if (dnaInfo == 2) {
-                    dna24mer[7 - i] = "CCT";
-                } else if (dnaInfo == 3) {
-                    dna24mer[7 - i] = "CCG";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 13://S
-                if (dnaInfo == 0) {
-                    dna24mer[7 - i] = "TCA";
-                } else if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "TCC";
-                } else if (dnaInfo == 2) {
-                    dna24mer[7 - i] = "TCT";
-                } else if (dnaInfo == 3){
-                    dna24mer[7 - i] = "TCG";
-                } else if (dnaInfo == 9){
-                    dna24mer[7 - i] = "AGC";
-                } else if (dnaInfo == 10){
-                    dna24mer[7 - i] = "AGT";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 14: //T
+                    }
+                    break;
+                case 11: //FYW
+                    if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "TTC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "TTT";
+                    } else if (dnaInfo == 5) {
+                        dna24mer[7 - i] = "TAC";
+                    } else if (dnaInfo == 6) {
+                        dna24mer[7 - i] = "TAT";
+                    } else if (dnaInfo == 7) {
+                        dna24mer[7 - i] = "TGG";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 12: //P
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "CCA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "CCC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "CCT";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "CCG";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 13://S
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "TCA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "TCC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "TCT";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "TCG";
+                    } else if (dnaInfo == 9) {
+                        dna24mer[7 - i] = "AGC";
+                    } else if (dnaInfo == 10) {
+                        dna24mer[7 - i] = "AGT";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 14: //T
 //                cout << "P";
-                if (dnaInfo == 0) {
-                    dna24mer[7 - i] = "ACA";
-                } else if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "ACC";
-                } else if (dnaInfo == 2) {
-                    dna24mer[7 - i] = "ACT";
-                } else if (dnaInfo == 3) {
-                    dna24mer[7 - i] = "ACG";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 15: //STOP
-                if (dnaInfo == 0) {
-                    dna24mer[7 - i] = "TAA";
-                } else if (dnaInfo == 4) {
-                    dna24mer[7 - i] = "TGA";
-                } else if (dnaInfo == 3) {
-                    dna24mer[7 - i] = "TAG";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 16: //V
-                if (dnaInfo == 0) {
-                    dna24mer[7 - i] = "GTA";
-                } else if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "GTC";
-                } else if (dnaInfo == 2) {
-                    dna24mer[7 - i] = "GTT";
-                } else if (dnaInfo == 3){
-                    dna24mer[7 - i] = "GTG";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 17: //W
-                if (dnaInfo == 3) {
-                    dna24mer[7 - i] = "TGG";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 18: //Y
-                if (dnaInfo == 1) {
-                    dna24mer[7 - i] = "TAC";
-                } else if (dnaInfo == 2) {
-                    dna24mer[7 - i] = "TAT";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 19: //M
-                if (dnaInfo == 3){
-                    dna24mer[7 - i] = "ATG";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
-            case 20: //E
-                if (dnaInfo == 0) {
-                    dna24mer[7 - i] = "GAA";
-                } else if (dnaInfo == 3) {
-                    dna24mer[7 - i] = "GAG";
-                } else {
-                    cout<<"Error in "<<aminoacid[aa8mer[i]]<<endl;
-                }
-                break;
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "ACA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "ACC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "ACT";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "ACG";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 15: //STOP
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "TAA";
+                    } else if (dnaInfo == 4) {
+                        dna24mer[7 - i] = "TGA";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "TAG";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 16: //V
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "GTA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "GTC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "GTT";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "GTG";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 17: //W
+                    if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "TGG";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 18: //Y
+                    if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "TAC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "TAT";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 19: //M
+                    if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "ATG";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+                case 20: //E
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "GAA";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "GAG";
+                    } else {
+                        cout << "Error in " << aminoacid[aa8mer[i]] << endl;
+                    }
+                    break;
+            }
         }
-    }
 
-    for (int i = 0; i < 8; i++) {
-        cout << dna24mer[7 - i];
+        for (int i = 0; i < 8; i++) {
+            cout << dna24mer[7 - i];
+        }
+        cout << endl;
     }
-    cout << endl;
+    else {
+        uint64_t copy = kmer;
+        kmer >>= 25;
+        int quotient;
+        int dnaInfo;
+        vector<int> aa8mer(8);
+        vector<string> dna24mer(8);
+        for (int i = 0; i < 8; i++) {
+            quotient = kmer / powers[7 - i];
+            kmer = kmer - (quotient * powers[7 - i]);
+            aa8mer[7 - i] = quotient;
+        }
+
+        ///Print Amino Acid 8 mer
+        for(int i  = 0; i<8; i++){
+            cout<<aa8mer[i]<<" ";
+        }
+        cout<<endl;
+
+
+        for (int i = 0; i < 8; i++) {
+            dnaInfo = copy & 7u;
+            copy >>= 3;
+            switch (aa8mer[i]) {
+                case 0: //A
+//                cout << "A";
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "GCA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "GCC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "GCT";
+                    } else {
+                        dna24mer[7 - i] = "GCG";
+                    }
+                    break;
+                case 1: //R
+//                cout << "R";
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "CGA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "CGC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "CGT";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "CGG";
+                    } else if (dnaInfo == 4) {
+                        dna24mer[7 - i] = "AGG";
+                    } else {
+                        dna24mer[7 - i] = "AGA";
+                    }
+                    break;
+                case 2: //N
+//                cout << "N";
+                    if (dnaInfo == 0) {
+                        cout << "dddddd";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "AAC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "AAT";
+                    } else {
+                        cout << "dddddd";
+                    }
+                    break;
+                case 3: //D
+//                cout << "D";
+                    if (dnaInfo == 0) {
+                        cout << "dddddd";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "GAC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "GAT";
+                    } else {
+                        cout << "dddddd";
+                    }
+                    break;
+                case 4: //C
+//                cout << "C";
+                    if (dnaInfo == 0) {
+                        cout << "dddddd";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "TGC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "TGT";
+                    } else {
+                        cout << "dddddd";
+                    }
+                    break;
+                case 5: // Q
+//                cout << "Q";
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "CAA";
+                    } else if (dnaInfo == 1) {
+                        cout << "dddddd";
+                    } else if (dnaInfo == 2) {
+                        cout << "dddddd";
+                    } else {
+                        dna24mer[7 - i] = "CAG";
+                    }
+                    break;
+                case 6: //E
+//                cout << "E";
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "GAA";
+                    } else if (dnaInfo == 1) {
+                        cout << "dddddd";
+                    } else if (dnaInfo == 2) {
+                        cout << "dddddd" ;
+                    } else {
+                        dna24mer[7 - i] = "GAG";
+                    }
+                    break;
+                case 7: //G
+//                cout << "G";
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "GGA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "GGC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "GGT";
+                    } else {
+                        dna24mer[7 - i] = "GGG";
+                    }
+                    break;
+                case 8: //H
+//                cout << "H";
+                    if (dnaInfo == 0) {
+                        cout << "dddddd";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "CAC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "CAT";
+                    } else {
+                        cout << "dddddd";
+                    }
+                    break;
+                case 9: //I
+//                cout << "I";
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "ATA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "ATC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "ATT";
+                    } else {
+                        cout << "dddddd";
+                    }
+                    break;
+                case 10: //L
+//                cout << "L";
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "CTA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "CTC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "CTT";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "CTG";
+                    } else if (dnaInfo == 4) {
+                        dna24mer[7 - i] = "TTG";
+                    } else {
+                        dna24mer[7 - i] = "TTA";
+                    }
+                    break;
+                case 11: //K
+//                cout << "K";
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "AAA";
+                    } else if (dnaInfo == 1) {
+                        cout << "dddddd";
+                    } else if (dnaInfo == 2) {
+                        cout << "dddddd";
+                    } else {
+                        dna24mer[7 - i] = "AAG";
+                    }
+                    break;
+                case 12: // M
+//                cout << "M";
+                    if (dnaInfo == 0) {
+                        cout << "dddddd";
+                    } else if (dnaInfo == 1) {
+                        cout << "dddddd";
+                    } else if (dnaInfo == 2) {
+                        cout << "dddddd";
+                    } else {
+                        dna24mer[7 - i] = "ATG";
+                    }
+                    break;
+                case 13://F
+//                cout << "F";
+                    if (dnaInfo == 0) {
+                        cout << "dddddd" ;
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "TTC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "TTT";
+                    } else {
+                        cout << "dddddd";
+                    }
+                    break;
+                case 14: //P
+//                cout << "P";
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "CCA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "CCC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "CCT";
+                    } else {
+                        dna24mer[7 - i] = "CCG";
+                    }
+                    break;
+                case 15: //S
+//                cout << "S";
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "TCA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "TCC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "TCT";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "TCG";
+                    } else if (dnaInfo == 4) {
+                        cout << "dddddd";
+                    } else if (dnaInfo == 5) {
+                        cout << "dddddd";
+                    } else if (dnaInfo == 6) {
+                        dna24mer[7 - i] = "AGT";
+                    } else {
+                        dna24mer[7 - i] = "AGC";
+                    }
+                    break;
+                case 16: //T
+//                cout << "T";
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "ACA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "ACC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "ACT";
+                    } else {
+                        dna24mer[7 - i] = "ACG";
+                    }
+                    break;
+                case 17: //W
+//                cout << "W";
+                    if (dnaInfo == 0) {
+                        cout << "dddddd";
+                    } else if (dnaInfo == 1) {
+                        cout << "dddddd";
+                    } else if (dnaInfo == 2) {
+                        cout << "dddddd";
+                    } else {
+                        dna24mer[7 - i] = "TGG";
+                    }
+                    break;
+                case 18: //Y
+//                cout << "Y";
+                    if (dnaInfo == 0) {
+                        cout << "dddddd";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "TAC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "TAT";
+                    } else {
+                        cout << "dddddd";
+                    }
+                    break;
+                case 19: //V
+//                cout << "V";
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "GTA";
+                    } else if (dnaInfo == 1) {
+                        dna24mer[7 - i] = "GTC";
+                    } else if (dnaInfo == 2) {
+                        dna24mer[7 - i] = "GTT";
+                    } else {
+                        dna24mer[7 - i] = "GTG";
+                    }
+                    break;
+                case 20: //stop
+//                cout << "Z";
+                    if (dnaInfo == 0) {
+                        dna24mer[7 - i] = "TAA";
+                    } else if (dnaInfo == 1) {
+                        cout << "dddddd";
+                    } else if (dnaInfo == 2) {
+                        cout << "dddddd";
+                    } else if (dnaInfo == 3) {
+                        dna24mer[7 - i] = "TAG";
+                    } else if (dnaInfo == 4) {
+                        cout << "dddddd";
+                    } else {
+                        dna24mer[7 - i] = "TGA";
+                    }
+                    break;
+            }
+            //cout<<dnaInfo<<" ";
+        }
+
+//    cout<<endl;
+        for (int i = 0; i < 8; i++) {
+            cout << dna24mer[7-i];
+        }
+        cout << endl;
+    }
 }
