@@ -37,105 +37,61 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
 
     // Codon table
     if (par.reducedAA == 0) {
-        //A
-        nuc2aa[3][1][0] = 0;
-        nuc2aa[3][1][1] = 0;
-        nuc2aa[3][1][2] = 0;
-        nuc2aa[3][1][3] = 0;
-        //R
-        nuc2aa[1][3][0] = 1;
-        nuc2aa[1][3][1] = 1;
-        nuc2aa[1][3][2] = 1;
-        nuc2aa[1][3][3] = 1;
-        nuc2aa[0][3][0] = 1;
-        nuc2aa[0][3][3] = 1;
-        //N
-        nuc2aa[0][0][2] = 2;
-        nuc2aa[0][0][1] = 2;
-        //D
-        nuc2aa[3][0][2] = 3;
-        nuc2aa[3][0][1] = 3;
-        //C
-        nuc2aa[2][3][2] = 4;
-        nuc2aa[2][3][1] = 4;
-        //Q
-        nuc2aa[1][0][0] = 5;
-        nuc2aa[1][0][3] = 5;
-        //G
-        nuc2aa[3][3][0] = 6;
-        nuc2aa[3][3][1] = 6;
-        nuc2aa[3][3][2] = 6;
-        nuc2aa[3][3][3] = 6;
-        //H
-        nuc2aa[1][0][2] = 7;
-        nuc2aa[1][0][1] = 7;
-        //I
-        nuc2aa[0][2][2] = 8;
-        nuc2aa[0][2][1] = 8;
-        nuc2aa[0][2][0] = 8;
-        //L
-        nuc2aa[2][2][0] = 9;
-        nuc2aa[2][2][3] = 9;
-        nuc2aa[1][2][0] = 9;
-        nuc2aa[1][2][1] = 9;
-        nuc2aa[1][2][2] = 9;
-        nuc2aa[1][2][3] = 9;
-        //K
-        nuc2aa[0][0][0] = 10;
-        nuc2aa[0][0][3] = 10;
-        //F
-        nuc2aa[2][2][2] = 11;
-        nuc2aa[2][2][1] = 11;
-        //P
-        nuc2aa[1][1][0] = 12;
-        nuc2aa[1][1][1] = 12;
-        nuc2aa[1][1][2] = 12;
-        nuc2aa[1][1][3] = 12;
-        //S
-        nuc2aa[2][1][0] = 13;
-        nuc2aa[2][1][1] = 13;
-        nuc2aa[2][1][2] = 13;
-        nuc2aa[2][1][3] = 13;
-        nuc2aa[0][3][2] = 13;
-        nuc2aa[0][3][1] = 13;
-        //T
-        nuc2aa[0][1][0] = 14;
-        nuc2aa[0][1][1] = 14;
-        nuc2aa[0][1][2] = 14;
-        nuc2aa[0][1][3] = 14;
-        //Stop
-        nuc2aa[2][0][0] = 15;
-        nuc2aa[2][3][0] = 15;
-        nuc2aa[2][0][3] = 15;
-        //V
-        nuc2aa[3][2][0] = 16;
-        nuc2aa[3][2][1] = 16;
-        nuc2aa[3][2][2] = 16;
-        nuc2aa[3][2][3] = 16;
-        //W
+        // A
+        nuc2aa[3][1][0] = 0; nuc2aa[3][1][1] = 0; nuc2aa[3][1][2] = 0 ; nuc2aa[3][1][3] = 0;
+        // R
+        nuc2aa[1][3][0] = 1; nuc2aa[1][3][1] = 1; nuc2aa[1][3][2] = 1 ; nuc2aa[1][3][3] = 1; nuc2aa[0][3][0] = 1; nuc2aa[0][3][3] = 1;
+        // N
+        nuc2aa[0][0][2] = 2; nuc2aa[0][0][1] = 2;
+        // D
+        nuc2aa[3][0][2] = 3; nuc2aa[3][0][1] = 3;
+        // C
+        nuc2aa[2][3][2] = 4; nuc2aa[2][3][1] = 4;
+        // Q
+        nuc2aa[1][0][0] = 5; nuc2aa[1][0][3] = 5;
+        // E
+        nuc2aa[3][0][0] = 6; nuc2aa[3][0][3] = 6;
+        // G
+        nuc2aa[3][3][0] = 7; nuc2aa[3][3][1] = 7; nuc2aa[3][3][2] = 7; nuc2aa[3][3][3] =7;
+        // H
+        nuc2aa[1][0][2] = 8; nuc2aa[1][0][1] = 8;
+        // I
+        nuc2aa[0][2][2] = 9; nuc2aa[0][2][1] = 9; nuc2aa[0][2][0] = 9;
+        // L
+        nuc2aa[2][2][0] = 10; nuc2aa[2][2][3] = 10; nuc2aa[1][2][0] = 10; nuc2aa[1][2][1] = 10;nuc2aa[1][2][2] = 10; nuc2aa[1][2][3] =10 ;
+        // K
+        nuc2aa[0][0][0] = 11; nuc2aa[0][0][3] = 11;
+        // M
+        nuc2aa[0][2][3] = 12;
+        // F
+        nuc2aa[2][2][2] = 13; nuc2aa[2][2][1] = 13;
+        // P
+        nuc2aa[1][1][0] = 14; nuc2aa[1][1][1] = 14; nuc2aa[1][1][2] = 14; nuc2aa[1][1][3] = 14;
+        // S
+        nuc2aa[2][1][0] = 15; nuc2aa[2][1][1] = 15; nuc2aa[2][1][2] = 15; nuc2aa[2][1][3] = 15; nuc2aa[0][3][2] = 15; nuc2aa[0][3][1] = 15;
+        // T
+        nuc2aa[0][1][0] = 16; nuc2aa[0][1][1] = 16; nuc2aa[0][1][2] = 16; nuc2aa[0][1][3] = 16;
+        // W
         nuc2aa[2][3][3] = 17;
-        //Y
-        nuc2aa[2][0][2] = 18;
-        nuc2aa[2][0][1] = 18;
-        //M
-        nuc2aa[0][2][3] = 19;
-        //E
-        nuc2aa[3][0][0] = 20;
-        nuc2aa[3][0][3] = 20;
+        // Y
+        nuc2aa[2][0][2] = 18; nuc2aa[2][0][1] = 18;
+        // V
+        nuc2aa[3][2][0] = 19; nuc2aa[3][2][1] = 19; nuc2aa[3][2][2] = 19; nuc2aa[3][2][3] = 19;
+        // Stop
+        nuc2aa[2][0][0] = 20; nuc2aa[2][3][0] = 20; nuc2aa[2][0][3] = 20;
 
-        // Triplet code with N's
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
+        // triplet code with N's
+        for(int i = 0; i < 8; i++){
+            for(int j = 0; j < 8; j++){
                 nuc2aa[7][i][j] = -1;
                 nuc2aa[i][7][j] = -1;
                 nuc2aa[i][j][7] = -1;
             }
         }
 
-        // Codon encoding to store which DNA triplet code is used.
-        // This encoding is used for indexing hamming distance look-up table.
-        for (int i = 0; i < 4; i++) {
-            for (int i2 = 0; i2 < 4; i2++) {
+        // For encoding DNA information in k-mer
+        for(int i =0; i < 4 ; i++){
+            for(int i2 = 0; i2 < 4 ; i2++){
                 nuc2num[i][i2][0] = 0;
                 nuc2num[i][i2][1] = 1;
                 nuc2num[i][i2][2] = 2;
@@ -143,18 +99,17 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
             }
         }
         // for Arg
-        nuc2num[0][3][3] = 7; //AGG
-        nuc2num[0][3][0] = 4; //AGA
+        nuc2num[0][3][3] = 4;
+        nuc2num[0][3][0] = 5;
         // for Leu
-        nuc2num[2][2][3] = 7; //TTG
-        nuc2num[2][2][0] = 4; //TTA
+        nuc2num[2][2][3] = 4;
+        nuc2num[2][2][0] = 5;
         // for Ser
-        nuc2num[0][3][2] = 10; //AGT
-        nuc2num[0][3][1] = 9; //AGC
+        nuc2num[0][3][2] = 6;
+        nuc2num[0][3][1] = 7;
         // for stop codon
-        nuc2num[2][3][0] = 4;
+        nuc2num[2][3][0] = 5;
     }
-
         // Using 15 alphabets for amino acid, one for stop codon.
         // FYW, ML, IV, QE
     else if (par.reducedAA == 1) {

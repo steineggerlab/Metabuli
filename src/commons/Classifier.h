@@ -32,44 +32,6 @@
 #define AminoAcid(x) (size_t)((x) & (~0 & ~16777215))
 using namespace std;
 
-struct Counts {
-    int classificationCnt;
-    int correct;
-    int highRank;
-
-    //number of targets at each rank
-    int subspeciesTargetNumber;
-    int speciesTargetNumber;
-    int genusTargetNumber;
-    int familyTargetNumber;
-    int orderTargetNumber;
-    int classTargetNumber;
-    int phylumTargetNumber;
-    int superkingdomTargetNumber;
-
-    //number of classification at each rank
-    int subspeciesCnt_try;
-    int speciesCnt_try;
-    int genusCnt_try;
-    int familyCnt_try;
-    int orderCnt_try;
-    int classCnt_try;
-    int phylumCnt_try;
-    int superkingdomCnt_try;
-
-
-    //number of correct classifications at each rank
-    int subspeciesCnt_correct;
-    int speciesCnt_correct;
-    int genusCnt_correct;
-    int familyCnt_correct;
-    int orderCnt_correct;
-    int classCnt_correct;
-    int phylumCnt_correct;
-    int superkingdomCnt_correct;
-};
-
-
 class Classifier {
 protected:
 
@@ -107,9 +69,7 @@ protected:
 
     struct MatchBlock {
         MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) {}
-
         MatchBlock() : start(0), end(0), id(0) {}
-
         size_t start;
         size_t end;
         uint32_t id;
@@ -144,50 +104,11 @@ protected:
     };
 
     int numOfSplit;
-    //SeqIterator * seqIterator;
-    size_t queryCount;
-    size_t perfectMatchCount;
-    size_t selectedMatchCount;
-
-    // performance test
-    Counts counts;
-
-    size_t subspCnt;
-    size_t speciesCnt;
-    size_t genusCnt;
-    size_t familyCnt;
-    size_t orderCnt;
-    size_t classCnt;
-    size_t phylumCnt;
-    size_t superCnt;
-
-    size_t correctCnt;
-    size_t perfectCnt;
-    size_t classifiedCnt;
-
-    vector <size_t> closestKmers;
-
-    vector <QueryInfo> queryInfos;
+    vector<QueryInfo> queryInfos;
     unordered_map<TaxID, unsigned int> taxCounts;
-
-    // Variables changed by the number of alphabets
-    int reducedAA;
     uint64_t MARKER;
     int bitsForCodon;
-    uint8_t hammingLookup[11][11] = {
-            {0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3},
-            {1, 0, 1, 1, 2, 1, 2, 2, 2, 2, 3},
-            {1, 1, 0, 1, 2, 2, 1, 2, 2, 3, 2},
-            {1, 1, 1, 0, 2, 2, 2, 1, 1, 3, 3},
-            {1, 2, 2, 2, 0, 1, 1, 1, 2, 4, 4},
-            {2, 1, 2, 2, 1, 0, 1, 2, 4, 4, 4},
-            {2, 2, 1, 2, 1, 1, 0, 2, 4, 4, 4},
-            {2, 2, 2, 1, 1, 2, 2, 0, 1, 4, 4},
-            {2, 2, 2, 1, 2, 4, 4, 1, 0, 4, 4},
-            {3, 2, 3, 3, 4, 4, 4, 4, 4, 0, 4},
-            {3, 3, 2, 3, 4, 4, 4, 4, 4, 4, 0}};
-
-    uint8_t hammingLookup20[8][8] = {
+    uint8_t hammingLookup[8][8] = {
             {0, 1, 1, 1, 2, 1, 3, 3},
             {1, 0, 1, 1, 2, 2, 3, 2},
             {1, 1, 0, 1, 2, 2, 2, 3},
@@ -198,15 +119,15 @@ protected:
             {3, 2, 3, 3, 4, 4, 1, 0}};
 
     // Extract query k-mer
-    void fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer, MmapedData<char> &seqFile, vector <Sequence> &seqs,
+    void fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer, MmapedData<char> &seqFile, vector<Sequence> &seqs,
                                      bool *checker, size_t &processedSeqCnt, Query *queryList,
                                      const LocalParameters &par);
 
     void fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                                             MmapedData<char> &seqFile1,
                                             MmapedData<char> &seqFile2,
-                                            vector <Sequence> &seqs,
-                                            vector <Sequence> &seqs2,
+                                            vector<Sequence> &seqs,
+                                            vector<Sequence> &seqs2,
                                             bool *checker,
                                             size_t &processedSeqCnt,
                                             Query *queryList,
@@ -230,7 +151,7 @@ protected:
             Buffer<Match> &matchBuffer,
             const vector<int> &taxIdList,
             const vector<int> &speciesTaxIdList,
-            const vector <TaxID> &genusTaxIdList,
+            const vector<TaxID> &genusTaxIdList,
             FILE *matchFile,
             const LocalParameters &par);
 
@@ -243,14 +164,14 @@ protected:
             Buffer<Match> &matchBuffer,
             const vector<int> &taxIdList,
             const vector<int> &speciesTaxIdList,
-            const vector <TaxID> &genusTaxIdList,
+            const vector<TaxID> &genusTaxIdList,
             FILE *matchFile,
             const LocalParameters &par);
 
     void compareDna(uint64_t query,
-                    vector <uint64_t> &targetKmersToCompare, size_t startIdx,
-                    vector <size_t> &selectedMatches, vector <uint8_t> &selectedHammingSum,
-                    vector <uint16_t> &rightEndHammings, int i);
+                    vector<uint64_t> &targetKmersToCompare, size_t startIdx,
+                    vector<size_t> &selectedMatches, vector<uint8_t> &selectedHammingSum,
+                    vector<uint16_t> &rightEndHammings, int i);
 
     uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2);
 
@@ -286,57 +207,57 @@ protected:
                                Query *queryList,
                                const LocalParameters &par);
 
-    static int getMatchesOfTheBestGenus(vector <Match> &matchesForMajorityLCA, Match *matchList, size_t end,
+    static int getMatchesOfTheBestGenus(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
                                         size_t offset, int queryLength, float &bestScore);
 
-    static int getMatchesOfTheBestGenus_index(vector <size_t> &matchesForMajorityLCA, Match *matchList, size_t end,
+    static int getMatchesOfTheBestGenus_index(vector<size_t> &matchesForMajorityLCA, Match *matchList, size_t end,
                                               size_t offset, int queryLength, float &bestScore);
 
-    static int getMatchesOfTheBestGenus_paired(vector <Match> &matchesForMajorityLCA, Match *matchList, size_t end,
+    static int getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
                                                size_t offset, int readLength1, int readLength2, float &bestScore);
 
-    static void constructMatchCombination(vector <Match> &filteredMatches,
-                                          vector <vector<Match>> &matchesForEachGenus,
+    static void constructMatchCombination(vector<Match> &filteredMatches,
+                                          vector<vector<Match>> &matchesForEachGenus,
                                           vector<float> &scoreOfEachGenus,
                                           int queryLength);
 
-    static void constructMatchCombination_index(vector <size_t> &filteredMatchesIndex,
+    static void constructMatchCombination_index(vector<size_t> &filteredMatchesIndex,
                                                 Match *matchList,
-                                                vector <vector<size_t>> &matchesForEachGenus,
+                                                vector<vector<size_t>> &matchesForEachGenus,
                                                 vector<float> &scoreOfEachGenus,
                                                 int queryLength);
 
-    static void constructMatchCombination_paired(vector <Match> &filteredMatches,
-                                                 vector <vector<Match>> &matchesForEachGenus,
+    static void constructMatchCombination_paired(vector<Match> &filteredMatches,
+                                                 vector<vector<Match>> &matchesForEachGenus,
                                                  vector<float> &scoreOfEachGenus,
                                                  int readLength1, int readLength2);
 
     static bool sortMatchesByPos(const Match &a, const Match &b);
 
 
-    static TaxID classifyFurther2(const std::vector <Match> &matches,
+    static TaxID classifyFurther2(const std::vector<Match> &matches,
                                   NcbiTaxonomy &taxonomy,
                                   float maxKmerCnt);
 
-    static void chooseSpecies(const std::vector <Match> &matches,
+    static void chooseSpecies(const std::vector<Match> &matches,
                               NcbiTaxonomy &taxonomy,
                               int queryLength,
                               ScrCov &speciesScrCov,
-                              vector <TaxID> &species);
+                              vector<TaxID> &species);
 
-    static void classifyFurther_paired(const std::vector <Match> &matches,
+    static void classifyFurther_paired(const std::vector<Match> &matches,
                                        NcbiTaxonomy &taxonomy,
                                        int read1Length,
                                        int read2Length,
                                        ScrCov &speciesScrCov,
-                                       vector <TaxID> &species);
+                                       vector<TaxID> &species);
 
-    static ScrCov scoreTaxon(const vector <Match> &matches,
+    static ScrCov scoreTaxon(const vector<Match> &matches,
                              size_t begin,
                              size_t end,
                              int queryLength);
 
-    static ScrCov scoreTaxon_paired(const vector <Match> &matches,
+    static ScrCov scoreTaxon_paired(const vector<Match> &matches,
                                     size_t begin,
                                     size_t end,
                                     int queryLength,
@@ -347,22 +268,33 @@ protected:
 
     void writeReportFile(const string &reportFileName, NcbiTaxonomy &ncbiTaxonomy, int numOfQuery);
 
-    void writeReport(FILE *fp, const NcbiTaxonomy &ncbiTaxonomy, const unordered_map <TaxID, TaxonCounts> &cladeCounts,
+    void writeReport(FILE *fp, const NcbiTaxonomy &ncbiTaxonomy, const unordered_map<TaxID, TaxonCounts> &cladeCounts,
                      unsigned long totalReads, TaxID taxID = 0, int depth = 0);
 
     void writeMatches(Buffer<Match> &matchBuffer, FILE *matchFile);
 
     static bool compareForWritingMatches(const Match &a, const Match &b);
 
-    unsigned int cladeCountVal(const std::unordered_map <TaxID, TaxonCounts> &map, TaxID key);
+    unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts> &map, TaxID key);
 
     size_t AminoAcidPart(size_t kmer) {
         return (kmer) & MARKER;
     }
+
 //    AminoAcid(x) (size_t)((x) & (~0 & ~16777215));
-    size_t getCodonBits(size_t num){
+    size_t getCodonBits(size_t num) {
         return num & 0X7U;
     }
+
+    void setMarker(uint64_t marker) {
+        MARKER = 0Xffffffff;
+        MARKER = ~MARKER;
+    }
+
+    void setNumOfBitsForCodon(int num) {
+        bitsForCodon = num;
+    }
+
 public:
     void startClassify(const char *queryFileName, const char *targetDiffIdxFileName, const char *targetInfoFileName,
                        const char *diffIdxSplitFileName, vector<int> &taxIdList, const LocalParameters &par,
@@ -372,7 +304,7 @@ public:
 
     int getNumOfSplits() const;
 
-    Classifier(LocalParameters & par);
+    Classifier(LocalParameters &par);
 
     ~Classifier();
 
@@ -383,38 +315,19 @@ public:
 
 inline uint8_t Classifier::getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2) {//12345678
     uint8_t hammingSum = 0;
-//    if(reducedAA == 0) {
-//        hammingSum += hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
-//        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 3U)][GET_3_BITS(kmer2 >> 3U)];
-//        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 6U)][GET_3_BITS(kmer2 >> 6U)];
-//        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 9U)][GET_3_BITS(kmer2 >> 9U)];
-//        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 12U)][GET_3_BITS(kmer2 >> 12U)];
-//        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 15U)][GET_3_BITS(kmer2 >> 15U)];
-//        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 18U)][GET_3_BITS(kmer2 >> 18U)];
-//        hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 21U)][GET_3_BITS(kmer2 >> 21U)];
-//    } else {
-        hammingSum += hammingLookup[GET_4_BITS(kmer1)][GET_4_BITS(kmer2)];
-        hammingSum += hammingLookup[GET_4_BITS(kmer1 >> 4U)][GET_4_BITS(kmer2 >> 4U)];
-        hammingSum += hammingLookup[GET_4_BITS(kmer1 >> 8U)][GET_4_BITS(kmer2 >> 8U)];
-        hammingSum += hammingLookup[GET_4_BITS(kmer1 >> 12U)][GET_4_BITS(kmer2 >> 12U)];
-        hammingSum += hammingLookup[GET_4_BITS(kmer1 >> 16U)][GET_4_BITS(kmer2 >> 16U)];
-        hammingSum += hammingLookup[GET_4_BITS(kmer1 >> 20U)][GET_4_BITS(kmer2 >> 20U)];
-        hammingSum += hammingLookup[GET_4_BITS(kmer1 >> 24U)][GET_4_BITS(kmer2 >> 24U)];
-        hammingSum += hammingLookup[GET_4_BITS(kmer1 >> 28U)][GET_4_BITS(kmer2 >> 28U)];
-//    }
+    hammingSum += hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
+    hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 3U)][GET_3_BITS(kmer2 >> 3U)];
+    hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 6U)][GET_3_BITS(kmer2 >> 6U)];
+    hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 9U)][GET_3_BITS(kmer2 >> 9U)];
+    hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 12U)][GET_3_BITS(kmer2 >> 12U)];
+    hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 15U)][GET_3_BITS(kmer2 >> 15U)];
+    hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 18U)][GET_3_BITS(kmer2 >> 18U)];
+    hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 21U)][GET_3_BITS(kmer2 >> 21U)];
     return hammingSum;
 }
 
 inline uint16_t Classifier::getHammings(uint64_t kmer1, uint64_t kmer2) {  //hammings 87654321
     uint16_t hammings = 0;
-    if(reducedAA == 1){
-        for (int i = 0; i < 8; i++) {
-            hammings |= hammingLookup[GET_4_BITS(kmer1)][GET_4_BITS(kmer2)] << 2U * i;
-            kmer1 >>= 4U;
-            kmer2 >>= 4U;
-        }
-        return hammings;
-    }
     for (int i = 0; i < 8; i++) {
         hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U * i;
         kmer1 >>= bitsForCodon;

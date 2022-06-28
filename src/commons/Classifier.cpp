@@ -8,32 +8,13 @@
 
 Classifier::Classifier(LocalParameters & par) {
 
-    reducedAA = par.reducedAA;
-    if(par.reducedAA == 0){
-        MARKER = 16777215;
-        MARKER = ~ MARKER;
-        bitsForCodon = 3;
-    } else if (par.reducedAA == 1) {
-        MARKER = 0Xffffffff;
-        MARKER = ~MARKER;
-        bitsForCodon = 4;
-    }
-    numOfSplit = 0;
-    selectedMatchCount = 0;
-    queryCount = 0;
-    perfectMatchCount = 0;
 
-    correctCnt = 0;
-    perfectCnt = 0;
-    classifiedCnt = 0;
-    speciesCnt = 0;
-    subspCnt = 0;
-    genusCnt = 0;
-    phylumCnt = 0;
-    classCnt = 0;
-    orderCnt = 0;
-    familyCnt = 0;
-    superCnt = 0;
+    MARKER = 16777215;
+    MARKER = ~ MARKER;
+    bitsForCodon = 3;
+
+    numOfSplit = 0;
+
 }
 
 Classifier::~Classifier() {}

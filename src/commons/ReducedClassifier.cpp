@@ -6,7 +6,6 @@
 
 ReducedClassifier::ReducedClassifier(LocalParameters & par)
 : Classifier(par){
-    MARKER = 0Xffffffff;
-    MARKER = ~MARKER;
-    bitsForCodon = 4;
+    setMarker(0Xffffffff);
+    setNumOfBitsForCodon(4);
 }

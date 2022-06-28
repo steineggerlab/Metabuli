@@ -21,6 +21,8 @@ protected:
             {2, 2, 2, 1, 2, 4, 4, 1, 0, 4, 4},
             {3, 2, 3, 3, 4, 4, 4, 4, 4, 0, 4},
             {3, 3, 2, 3, 4, 4, 4, 4, 4, 4, 0}};
+
+
 public:
     uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2)  {
         uint8_t hammingSum = 0;

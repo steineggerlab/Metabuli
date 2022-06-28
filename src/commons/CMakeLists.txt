@@ -18,4 +18,6 @@ set(commons_source_files
         commons/LocalParameters.h
 		commons/ProdigalWrapper.h
 		commons/ProdigalWrapper.cpp
+		commons/ReducedClassifier.cpp
+		commons/ReducedClassifier.h
         PARENT_SCOPE)
