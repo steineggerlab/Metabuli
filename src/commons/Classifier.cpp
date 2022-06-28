@@ -874,23 +874,23 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
     }
 
     // If the score is too low, it is un-classified
-    if (ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)) { // virus
-        if (highRankScore < 0.1) {
+//    if (ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)) { // virus
+        if (highRankScore < par.minScore) {
             queryList[currentQuery].isClassified = false;
             queryList[currentQuery].classification = 0;
             queryList[currentQuery].score = 0;
             queryList[currentQuery].newSpecies = false;
             return;
         }
-    } else {
-        if (res == 3) {
-            queryList[currentQuery].isClassified = false;
-            queryList[currentQuery].classification = 0;
-            queryList[currentQuery].score = 0;
-            queryList[currentQuery].newSpecies = false;
-            return;
-        }
-    }
+//    } else {
+//        if (res == 3) {
+//            queryList[currentQuery].isClassified = false;
+//            queryList[currentQuery].classification = 0;
+//            queryList[currentQuery].score = 0;
+//            queryList[currentQuery].newSpecies = false;
+//            return;
+//        }
+//    }
 
     for (size_t i = 0; i < matchesForLCA.size(); i++) {
         queryList[currentQuery].taxCnt[matchesForLCA[i].taxID]++;
@@ -1122,9 +1122,6 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
         matchesForMajorityLCA.insert(matchesForMajorityLCA.end(), matchesForEachGenus[maxIdx[g]].begin(),
                                      matchesForEachGenus[maxIdx[g]].end());
     }
-
-//    if (maxScore < 0.1)
-//        return 3;
 
     if (maxIdx.size() > 1) {
         return 2;

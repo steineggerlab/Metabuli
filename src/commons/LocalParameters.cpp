@@ -36,7 +36,14 @@ LocalParameters::LocalParameters() :
                    "Using 20 alphabets: 0 [Default]\nUsing 15 alphabets: 1",
                    typeid(int),
                    (void *) &reducedAA,
-                   "[0-1]") {
+                   "[0-1]"),
+        MIN_SCORE(MIN_SCORE_ID,
+                   "--min-score",
+                   "The minimum score for classification",
+                   "You can set a value from 0.0 to 1.0 [Default 0.1]",
+                   typeid(float),
+                   (void *) &minScore,
+                  "^0(\\.[0-9]+)?|1(\\.0+)?$"){
     //build_dir
     build_dir.push_back(&PARAM_THREADS);
     build_dir.push_back(&PARAM_GTDB_OR_NCBI);
@@ -53,6 +60,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&VIRUS_TAX_ID);
     classify.push_back(&MEMORY_MODE);
     classify.push_back(&REDUCED_AA);
+    classify.push_back(&MIN_SCORE);
 
     //updateTargetDB
 

@@ -34,6 +34,7 @@ public:
     PARAMETER(SEQ_MODE)
     PARAMETER(MEMORY_MODE)
     PARAMETER(REDUCED_AA)
+    PARAMETER(MIN_SCORE)
 
     //creatTargetDB
     int gtdbOrNcbi;
@@ -43,6 +44,7 @@ public:
     int seqMode;
     int memoryMode;
     int reducedAA;
+    float minScore;
 
 private:
     LocalParameters();

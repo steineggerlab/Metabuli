@@ -12,6 +12,7 @@ void setClassifyDefaults(LocalParameters & par){
     par.seqMode = 1;
     par.memoryMode = 1;
     par.reducedAA = 0;
+    par.minScore = 0.1;
 }
 int classify(int argc, const char **argv, const Command& command)
 {
