@@ -648,12 +648,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         cout<<"\n";
                         print_binary64(64,AminoAcidPart(currentTargetKmer));
                         cout<<"\n";
-                        print_binary64(64,currentQueryAA);
-                        cout<<"\n";
-                        print_binary64(64,AminoAcidPart(currentTargetKmer));
-                        cout<<"\n";
-
-
                         candidateTargetKmers.push_back(currentTargetKmer);
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                         targetInfoIdx++;
