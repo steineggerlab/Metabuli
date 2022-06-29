@@ -6,6 +6,20 @@
 
 SeqIterator::SeqIterator(const LocalParameters &par) {
 
+    // Mask for spaced k-mer
+    size_t maskLen = par.spaceMask.length();
+    mask = new uint32_t[maskLen];
+    mask_int = new int[maskLen];
+    spaceNum = 0;
+    spaceNum_int = 0;
+    for(size_t i = 0; i < maskLen; i++){
+        mask[i] = par.spaceMask[i] - 48;
+        mask_int[i] = par.spaceMask[i] - 48;
+        spaceNum += (mask[i] == 0);
+        spaceNum_int += (mask[i] == 0);
+    }
+    cout<<mask<<endl;
+
     // powers
     size_t pow = 1;
     size_t numOfAlphabets = 0;
@@ -309,21 +323,21 @@ void SeqIterator::fillQueryKmerBuffer(const char *seq, QueryKmerBuffer &kmerBuff
     int checkN;
 
     uint32_t spaceSize = 4;
-    uint64_t spaceMask[12] = {1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1};
+    uint32_t spaceMask[12] = {1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1};
 
     for (uint32_t frame = 0; frame < 6; frame++) {
         uint32_t len = aaFrames[frame].size();
         forOrRev = frame / 3;
-        for (int kmerCnt = 0; kmerCnt < len - kmerLength - spaceSize + 1; kmerCnt++) {
+        for (uint32_t kmerCnt = 0; kmerCnt < len - kmerLength - spaceNum + 1; kmerCnt++) {
             // Convert amino acid 8-mer to an integer
             tempKmer = 0;
             checkN = 0;
-            for (size_t i = 0, j = 0; i < kmerLength + spaceSize; i++, j += spaceMask[i]) { // j:0-7, i:0-11
+            for (uint32_t i = 0, j = 0; i < kmerLength + spaceNum; i++, j += mask[i]) { // j:0-7, i:0-11
                 if (-1 == aaFrames[frame][kmerCnt + i]) {
                     checkN = 1;
                     break;
                 }
-                tempKmer += aaFrames[frame][kmerCnt + i] * powers[j] * spaceMask[i];
+                tempKmer += aaFrames[frame][kmerCnt + i] * powers[j] * mask[i];
             }
 
             // Add DNA info
@@ -357,27 +371,25 @@ SeqIterator::addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev,
                                   int seqLen) {
     int start = (frame % 3) + (kmerCnt * 3);
     kmer <<= bitsFor8Codons;
-    int spaceSize = 4;
-    int spaceMask[12] = {1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1};
     size_t end = seqLen - 1;
 
     if (forOrRev == 0) { // Forward
-        for (int i = 0, j = 0; i < kmerLength + spaceSize; i++, j += spaceMask[i]) {
+        for (int i = 0, j = 0; i < kmerLength + spaceNum_int; i++, j += mask_int[i]) {
             kmer |= nuc2num[nuc2int(atcg[seq[start + i * 3]])][nuc2int(atcg[seq[start + i * 3 + 1]])][
-                    nuc2int(atcg[seq[start + i * 3 + 2]])] * spaceMask[i] << (j * bitsForCodon);
+                    nuc2int(atcg[seq[start + i * 3 + 2]])] * mask[i] << (j * bitsForCodon);
         }
     } else { // Reverse
         if ((seqLen % 3 == 1 && (frame == 3 || frame == 4)) || (seqLen % 3 == 0 && frame == 3)) {
-            for (int i = 0, j = 0; i < kmerLength + spaceSize; i ++, j += spaceMask[i]) {
+            for (int i = 0, j = 0; i < kmerLength + spaceNum_int; i ++, j += mask_int[i]) {
                 kmer |= (nuc2num[nuc2int(iRCT[atcg[seq[end - (start + i*3) - 3]]])][
                         nuc2int(iRCT[atcg[seq[end - (start + i*3 + 1) - 3]]])][
-                        nuc2int(iRCT[atcg[seq[end - (start + i*3 + 2) - 3]]])] * spaceMask[i]) << (j * bitsForCodon);
+                        nuc2int(iRCT[atcg[seq[end - (start + i*3 + 2) - 3]]])] * mask[i]) << (j * bitsForCodon);
             }
         } else {
-            for (int i = 0, j = 0; i < kmerLength + spaceSize; i ++, j += spaceMask[i]) {
+            for (int i = 0, j = 0; i < kmerLength + spaceNum_int; i ++, j += mask_int[i]) {
                 kmer |= (nuc2num[nuc2int(iRCT[atcg[seq[end - (start + i*3)]]])][
                         nuc2int(iRCT[atcg[seq[end - (start + i*3 + 1)]]])][
-                        nuc2int(iRCT[atcg[seq[end - (start + i*3 + 2)]]])] * spaceMask[i]) << (j * bitsForCodon);
+                        nuc2int(iRCT[atcg[seq[end - (start + i*3 + 2)]]])] * mask[i]) << (j * bitsForCodon);
             }
         }
     }

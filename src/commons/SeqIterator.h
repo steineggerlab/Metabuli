@@ -53,6 +53,10 @@ private:
     uint64_t powers[10];
     int nuc2aa[8][8][8];
     uint64_t nuc2num[4][4][4];
+    uint32_t * mask;
+    int * mask_int;
+    uint32_t spaceNum;
+    int spaceNum_int;
     int bitsForCodon;
     int bitsFor8Codons;
 

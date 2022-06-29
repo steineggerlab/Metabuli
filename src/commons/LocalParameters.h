@@ -35,6 +35,7 @@ public:
     PARAMETER(MEMORY_MODE)
     PARAMETER(REDUCED_AA)
     PARAMETER(MIN_SCORE)
+    PARAMETER(SPACED)
 
     //creatTargetDB
     int gtdbOrNcbi;
@@ -45,6 +46,7 @@ public:
     int memoryMode;
     int reducedAA;
     float minScore;
+    std::string spaceMask;
 
 private:
     LocalParameters();

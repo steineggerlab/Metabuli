@@ -43,16 +43,25 @@ LocalParameters::LocalParameters() :
                    "You can set a value from 0.0 to 1.0 [Default 0.1]",
                    typeid(float),
                    (void *) &minScore,
-                  "^0(\\.[0-9]+)?|1(\\.0+)?$"){
+                  "^0(\\.[0-9]+)?|1(\\.0+)?$"),
+        SPACED(SPACED_ID,
+                  "--spacing-mask",
+                  "Binary patterned mask for spaced k-mer. The same mask must be used for DB creation and classification",
+               "A mask should contain at least eight '1's, and '0' means skip.\n [Default (no space) 11111111]",
+                  typeid(std::string),
+                  (void *) &spaceMask,
+                  ""){
     //build_dir
     build_dir.push_back(&PARAM_THREADS);
     build_dir.push_back(&PARAM_GTDB_OR_NCBI);
     build_dir.push_back(&REDUCED_AA);
+    build_dir.push_back(&SPACED);
 
     //build_fasta
     build_fasta.push_back(&PARAM_THREADS);
     build_fasta.push_back(&PARAM_GTDB_OR_NCBI);
     build_fasta.push_back(&REDUCED_AA);
+    build_fasta.push_back(&SPACED);
 
     //classify
     classify.push_back(&PARAM_THREADS);
@@ -61,6 +70,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MEMORY_MODE);
     classify.push_back(&REDUCED_AA);
     classify.push_back(&MIN_SCORE);
+    classify.push_back(&SPACED);
 
     //updateTargetDB
 

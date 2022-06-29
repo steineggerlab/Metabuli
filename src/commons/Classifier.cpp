@@ -7,14 +7,10 @@
 #include <ctime>
 
 Classifier::Classifier(LocalParameters & par) {
-
-
     MARKER = 16777215;
     MARKER = ~ MARKER;
     bitsForCodon = 3;
-
     numOfSplit = 0;
-
 }
 
 Classifier::~Classifier() {}
