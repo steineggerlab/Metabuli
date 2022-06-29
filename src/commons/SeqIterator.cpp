@@ -4,6 +4,10 @@
 
 #include "SeqIterator.h"
 
+SeqIterator::~SeqIterator() {
+    delete[] mask;
+    delete[] mask_int;
+}
 SeqIterator::SeqIterator(const LocalParameters &par) {
 
     // Mask for spaced k-mer

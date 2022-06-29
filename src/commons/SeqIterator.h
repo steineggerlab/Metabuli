@@ -105,7 +105,8 @@ public:
 
     void printKmerInDNAsequence(uint64_t kmer);
 
-    SeqIterator(const LocalParameters &par);
+    explicit SeqIterator(const LocalParameters &par);
+    ~SeqIterator();
 };
 
 #endif //ADKMER4_KMEREXTRACTOR_H
