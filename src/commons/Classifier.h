@@ -35,6 +35,11 @@ using namespace std;
 class Classifier {
 protected:
 
+    uint32_t * mask;
+    int * mask_int;
+    uint32_t spaceNum;
+    int spaceNum_int;
+    int unmaskedPos[8];
     struct ScrCov {
         float score;
         float coverage;
@@ -199,18 +204,18 @@ protected:
                          Query *queryList,
                          const LocalParameters &par);
 
-    static int getMatchesOfTheBestGenus(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
+    int getMatchesOfTheBestGenus(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
                                         size_t offset, int queryLength, float &bestScore);
 
-    static int getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
+    int getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
                                                size_t offset, int readLength1, int readLength2, float &bestScore);
 
-    static void constructMatchCombination(vector<Match> &filteredMatches,
+    void constructMatchCombination(vector<Match> &filteredMatches,
                                           vector<vector<Match>> &matchesForEachGenus,
                                           vector<float> &scoreOfEachGenus,
                                           int queryLength);
 
-    static void constructMatchCombination_paired(vector<Match> &filteredMatches,
+    void constructMatchCombination_paired(vector<Match> &filteredMatches,
                                                  vector<vector<Match>> &matchesForEachGenus,
                                                  vector<float> &scoreOfEachGenus,
                                                  int readLength1, int readLength2);
@@ -222,25 +227,25 @@ protected:
                                   NcbiTaxonomy &taxonomy,
                                   float maxKmerCnt);
 
-    static void chooseSpecies(const std::vector<Match> &matches,
+    void chooseSpecies(const std::vector<Match> &matches,
                               NcbiTaxonomy &taxonomy,
                               int queryLength,
                               ScrCov &speciesScrCov,
                               vector<TaxID> &species);
 
-    static void classifyFurther_paired(const std::vector<Match> &matches,
+   void classifyFurther_paired(const std::vector<Match> &matches,
                                        NcbiTaxonomy &taxonomy,
                                        int read1Length,
                                        int read2Length,
                                        ScrCov &speciesScrCov,
                                        vector<TaxID> &species);
 
-    static ScrCov scoreTaxon(const vector<Match> &matches,
+    ScrCov scoreTaxon(const vector<Match> &matches,
                              size_t begin,
                              size_t end,
                              int queryLength);
 
-    static ScrCov scoreTaxon_paired(const vector<Match> &matches,
+    ScrCov scoreTaxon_paired(const vector<Match> &matches,
                                     size_t begin,
                                     size_t end,
                                     int queryLength,

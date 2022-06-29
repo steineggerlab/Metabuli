@@ -11,6 +11,23 @@ Classifier::Classifier(LocalParameters & par) {
     MARKER = ~ MARKER;
     bitsForCodon = 3;
     numOfSplit = 0;
+
+    // Mask for spaced k-mer
+    size_t maskLen = par.spaceMask.length();
+    mask = new uint32_t[maskLen];
+    mask_int = new int[maskLen];
+    spaceNum = 0;
+    spaceNum_int = 0;
+    for(size_t i = 0, j = 0; i < maskLen; i++){
+        mask[i] = par.spaceMask[i] - 48;
+        mask_int[i] = par.spaceMask[i] - 48;
+        spaceNum += (mask[i] == 0);
+        spaceNum_int += (mask[i] == 0);
+        if(mask[i]==1){
+            unmaskedPos[j] = (int) i;
+            j++;
+        }
+    }
 }
 
 Classifier::~Classifier() {}
@@ -923,15 +940,6 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
         queryList[currentQuery].score = highRankScore;
-
-//        if (queryList[currentQuery].classification == 150614) {
-////            sort(matchesForLCA.begin(), matchesForLCA.end(), Classifier::sortMatchesByPos);
-//            cout << "# " << currentQuery << endl;
-//            for (size_t i = 0; i < matchesForLCA.size(); i++) {
-//                cout << i << " " << matchesForLCA[i].position << " " <<
-//                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) << endl;
-//            }
-//        }
         return;
     }
 
@@ -1271,21 +1279,21 @@ void Classifier::constructMatchCombination(vector<Match> &filteredMatches,
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
         if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos])
-            hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
+            hammingsAtEachPos[currPos + unmaskedPos[0]] = GET_2_BITS(currHammings);
         if (GET_2_BITS(currHammings >> 2) > hammingsAtEachPos[currPos + 1])
-            hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings >> 2);
+            hammingsAtEachPos[currPos + unmaskedPos[1]] = GET_2_BITS(currHammings >> 2);
         if (GET_2_BITS(currHammings >> 4) > hammingsAtEachPos[currPos + 2])
-            hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings >> 4);
+            hammingsAtEachPos[currPos + unmaskedPos[2]] = GET_2_BITS(currHammings >> 4);
         if (GET_2_BITS(currHammings >> 6) > hammingsAtEachPos[currPos + 3])
-            hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings >> 6);
+            hammingsAtEachPos[currPos + unmaskedPos[3]] = GET_2_BITS(currHammings >> 6);
         if (GET_2_BITS(currHammings >> 8) > hammingsAtEachPos[currPos + 4])
-            hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings >> 8);
+            hammingsAtEachPos[currPos + unmaskedPos[4]] = GET_2_BITS(currHammings >> 8);
         if (GET_2_BITS(currHammings >> 10) > hammingsAtEachPos[currPos + 5])
-            hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings >> 10);
+            hammingsAtEachPos[currPos + unmaskedPos[5]] = GET_2_BITS(currHammings >> 10);
         if (GET_2_BITS(currHammings >> 12) > hammingsAtEachPos[currPos + 6])
-            hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings >> 12);
+            hammingsAtEachPos[currPos + unmaskedPos[6]] = GET_2_BITS(currHammings >> 12);
         if (GET_2_BITS(currHammings >> 14) > hammingsAtEachPos[currPos + 7])
-            hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings >> 14);
+            hammingsAtEachPos[currPos + unmaskedPos[7]] = GET_2_BITS(currHammings >> 14);
         f++;
     }
 
@@ -1368,21 +1376,21 @@ void Classifier::constructMatchCombination_paired(vector<Match> &filteredMatches
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
         if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos])
-            hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
+            hammingsAtEachPos[currPos + unmaskedPos[0]] = GET_2_BITS(currHammings);
         if (GET_2_BITS(currHammings >> 2) > hammingsAtEachPos[currPos + 1])
-            hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings >> 2);
+            hammingsAtEachPos[currPos + unmaskedPos[1]] = GET_2_BITS(currHammings >> 2);
         if (GET_2_BITS(currHammings >> 4) > hammingsAtEachPos[currPos + 2])
-            hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings >> 4);
+            hammingsAtEachPos[currPos + unmaskedPos[2]] = GET_2_BITS(currHammings >> 4);
         if (GET_2_BITS(currHammings >> 6) > hammingsAtEachPos[currPos + 3])
-            hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings >> 6);
+            hammingsAtEachPos[currPos + unmaskedPos[3]] = GET_2_BITS(currHammings >> 6);
         if (GET_2_BITS(currHammings >> 8) > hammingsAtEachPos[currPos + 4])
-            hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings >> 8);
+            hammingsAtEachPos[currPos + unmaskedPos[4]] = GET_2_BITS(currHammings >> 8);
         if (GET_2_BITS(currHammings >> 10) > hammingsAtEachPos[currPos + 5])
-            hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings >> 10);
+            hammingsAtEachPos[currPos + unmaskedPos[5]] = GET_2_BITS(currHammings >> 10);
         if (GET_2_BITS(currHammings >> 12) > hammingsAtEachPos[currPos + 6])
-            hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings >> 12);
+            hammingsAtEachPos[currPos + unmaskedPos[6]] = GET_2_BITS(currHammings >> 12);
         if (GET_2_BITS(currHammings >> 14) > hammingsAtEachPos[currPos + 7])
-            hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings >> 14);
+            hammingsAtEachPos[currPos + unmaskedPos[7]] = GET_2_BITS(currHammings >> 14);
         f++;
     }
 
@@ -1597,21 +1605,21 @@ Classifier::ScrCov Classifier::scoreTaxon(const vector<Match> &matches,
         currPos = matches[walker].position / 3;
         currHammings = matches[walker].rightEndHamming;
         if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos])
-            hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
+            hammingsAtEachPos[currPos + unmaskedPos[0]] = GET_2_BITS(currHammings);
         if (GET_2_BITS(currHammings >> 2) > hammingsAtEachPos[currPos + 1])
-            hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings >> 2);
+            hammingsAtEachPos[currPos + unmaskedPos[1]] = GET_2_BITS(currHammings >> 2);
         if (GET_2_BITS(currHammings >> 4) > hammingsAtEachPos[currPos + 2])
-            hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings >> 4);
+            hammingsAtEachPos[currPos + unmaskedPos[2]] = GET_2_BITS(currHammings >> 4);
         if (GET_2_BITS(currHammings >> 6) > hammingsAtEachPos[currPos + 3])
-            hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings >> 6);
+            hammingsAtEachPos[currPos + unmaskedPos[3]] = GET_2_BITS(currHammings >> 6);
         if (GET_2_BITS(currHammings >> 8) > hammingsAtEachPos[currPos + 4])
-            hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings >> 8);
+            hammingsAtEachPos[currPos + unmaskedPos[4]] = GET_2_BITS(currHammings >> 8);
         if (GET_2_BITS(currHammings >> 10) > hammingsAtEachPos[currPos + 5])
-            hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings >> 10);
+            hammingsAtEachPos[currPos + unmaskedPos[5]] = GET_2_BITS(currHammings >> 10);
         if (GET_2_BITS(currHammings >> 12) > hammingsAtEachPos[currPos + 6])
-            hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings >> 12);
+            hammingsAtEachPos[currPos + unmaskedPos[6]] = GET_2_BITS(currHammings >> 12);
         if (GET_2_BITS(currHammings >> 14) > hammingsAtEachPos[currPos + 7])
-            hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings >> 14);
+            hammingsAtEachPos[currPos + unmaskedPos[7]] = GET_2_BITS(currHammings >> 14);
         walker++;
     }
 
@@ -1650,21 +1658,21 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
         currPos = matches[walker].position / 3;
         currHammings = matches[walker].rightEndHamming;
         if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos])
-            hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
+            hammingsAtEachPos[currPos + unmaskedPos[0]] = GET_2_BITS(currHammings);
         if (GET_2_BITS(currHammings >> 2) > hammingsAtEachPos[currPos + 1])
-            hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings >> 2);
+            hammingsAtEachPos[currPos + unmaskedPos[1]] = GET_2_BITS(currHammings >> 2);
         if (GET_2_BITS(currHammings >> 4) > hammingsAtEachPos[currPos + 2])
-            hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings >> 4);
+            hammingsAtEachPos[currPos + unmaskedPos[2]] = GET_2_BITS(currHammings >> 4);
         if (GET_2_BITS(currHammings >> 6) > hammingsAtEachPos[currPos + 3])
-            hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings >> 6);
+            hammingsAtEachPos[currPos + unmaskedPos[3]] = GET_2_BITS(currHammings >> 6);
         if (GET_2_BITS(currHammings >> 8) > hammingsAtEachPos[currPos + 4])
-            hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings >> 8);
+            hammingsAtEachPos[currPos + unmaskedPos[4]] = GET_2_BITS(currHammings >> 8);
         if (GET_2_BITS(currHammings >> 10) > hammingsAtEachPos[currPos + 5])
-            hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings >> 10);
+            hammingsAtEachPos[currPos + unmaskedPos[5]] = GET_2_BITS(currHammings >> 10);
         if (GET_2_BITS(currHammings >> 12) > hammingsAtEachPos[currPos + 6])
-            hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings >> 12);
+            hammingsAtEachPos[currPos + unmaskedPos[6]] = GET_2_BITS(currHammings >> 12);
         if (GET_2_BITS(currHammings >> 14) > hammingsAtEachPos[currPos + 7])
-            hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings >> 14);
+            hammingsAtEachPos[currPos + unmaskedPos[7]] = GET_2_BITS(currHammings >> 14);
         walker++;
     }
 
