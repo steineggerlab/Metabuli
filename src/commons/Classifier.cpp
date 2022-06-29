@@ -314,7 +314,7 @@ int Classifier::getMaxCoveredLength(int queryLength) {
 }
 
 int Classifier::getQueryKmerNumber(int queryLength) {
-    return (getMaxCoveredLength(queryLength) / 3 - kmerLength + 1) * 6;
+    return (getMaxCoveredLength(queryLength) / 3 - kmerLength + spaceNum_int + 1) * 6;
 }
 
 void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,

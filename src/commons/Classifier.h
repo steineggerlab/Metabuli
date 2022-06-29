@@ -141,7 +141,7 @@ protected:
 
     static int getMaxCoveredLength(int queryLength);
 
-    static int getQueryKmerNumber(int queryLength);
+    int getQueryKmerNumber(int queryLength);
 
 
     // Linear search
