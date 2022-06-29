@@ -46,7 +46,7 @@ LocalParameters::LocalParameters() :
                   "^0(\\.[0-9]+)?|1(\\.0+)?$"),
         SPACED(SPACED_ID,
                   "--spacing-mask",
-                  "Binary patterned mask for spaced k-mer. The same mask must be used for DB creation and classification",
+                  "Binary patterned mask for spaced k-mer.\nThe same mask must be used for DB creation and classification",
                "Binary patterned mask for spaced k-mer. The same mask must be used for DB creation and classification.\n"
                "A mask should contain at least eight '1's, and '0' means skip.",
                   typeid(std::string),

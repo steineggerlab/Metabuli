@@ -406,10 +406,6 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
         }
     }
 
-    for (size_t checkN = 0 ; checkN < queryKmerCnt; checkN ++) {
-            cout<<"Q1: ";seqIterator1.printKmerInDNAsequence(queryKmerList[checkN].ADkmer);
-            print_binary64(64, queryKmerList[checkN].ADkmer);
-    }
     // Filter out meaningless target querySplits
     size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
     size_t numOfDiffIdxSplits_use = numOfDiffIdxSplits;
@@ -642,16 +638,16 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     while (AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
 //@@@@
-                        cout<<"Q: ";seqIterator.printKmerInDNAsequence(currentQuery);
-                        print_binary64(64,currentQuery);
-                        cout<<"\n";
-                        print_binary64(64,AminoAcidPart(currentQuery));
-                        cout<<"\n";
-                        cout<<"T: ";seqIterator.printKmerInDNAsequence(currentTargetKmer);
-                        print_binary64(64,currentTargetKmer);
-                        cout<<"\n";
-                        print_binary64(64,AminoAcidPart(currentTargetKmer));
-                        cout<<"\n";
+//                        cout<<"Q: ";seqIterator.printKmerInDNAsequence(currentQuery);
+//                        print_binary64(64,currentQuery);
+//                        cout<<"\n";
+//                        print_binary64(64,AminoAcidPart(currentQuery));
+//                        cout<<"\n";
+//                        cout<<"T: ";seqIterator.printKmerInDNAsequence(currentTargetKmer);
+//                        print_binary64(64,currentTargetKmer);
+//                        cout<<"\n";
+//                        print_binary64(64,AminoAcidPart(currentTargetKmer));
+//                        cout<<"\n";
                         candidateTargetKmers.push_back(currentTargetKmer);
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                         targetInfoIdx++;
