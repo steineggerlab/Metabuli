@@ -402,13 +402,15 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     // Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
     for (size_t checkN = queryKmerCnt - 1; checkN > 0; checkN--) {
         if (queryKmerList[checkN].ADkmer != UINT64_MAX) {
-            cout<<"Q1: ";seqIterator1.printKmerInDNAsequence(queryKmerList[checkN].ADkmer);
-            print_binary64(64, queryKmerList[checkN].ADkmer);
             queryKmerCnt = checkN + 1;
             break;
         }
     }
 
+    for (size_t checkN = 0 ; checkN < queryKmerCnt; checkN ++) {
+            cout<<"Q1: ";seqIterator1.printKmerInDNAsequence(queryKmerList[checkN].ADkmer);
+            print_binary64(64, queryKmerList[checkN].ADkmer);
+    }
     // Filter out meaningless target querySplits
     size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
     size_t numOfDiffIdxSplits_use = numOfDiffIdxSplits;
