@@ -47,10 +47,18 @@ LocalParameters::LocalParameters() :
         SPACED(SPACED_ID,
                   "--spacing-mask",
                   "Binary patterned mask for spaced k-mer. The same mask must be used for DB creation and classification",
-               "A mask should contain at least eight '1's, and '0' means skip.\n [Default (no space) 11111111]",
+               "Binary patterned mask for spaced k-mer. The same mask must be used for DB creation and classification.\n"
+               "A mask should contain at least eight '1's, and '0' means skip.",
                   typeid(std::string),
                   (void *) &spaceMask,
-                  ""){
+                  ""),
+        MIN_CONSECUTIVE(MIN_CONSECUTIVE_ID,
+               "--min-consecutive",
+               ".",
+               "Matched k-mers from the same genus are pulled and aligned to query.\nMatches that are not consecutive for the specified number of times are ignored.",
+               typeid(int),
+               (void *) &minConsCnt,
+               ""){
     //build_dir
     build_dir.push_back(&PARAM_THREADS);
     build_dir.push_back(&PARAM_GTDB_OR_NCBI);
@@ -71,6 +79,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&REDUCED_AA);
     classify.push_back(&MIN_SCORE);
     classify.push_back(&SPACED);
+    classify.push_back(&MIN_CONSECUTIVE);
 
     //updateTargetDB
 

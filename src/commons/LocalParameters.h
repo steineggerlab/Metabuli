@@ -36,6 +36,7 @@ public:
     PARAMETER(REDUCED_AA)
     PARAMETER(MIN_SCORE)
     PARAMETER(SPACED)
+    PARAMETER(MIN_CONSECUTIVE)
 
     //creatTargetDB
     int gtdbOrNcbi;
@@ -47,6 +48,7 @@ public:
     int reducedAA;
     float minScore;
     std::string spaceMask;
+    int minConsCnt2;
 
 private:
     LocalParameters();
