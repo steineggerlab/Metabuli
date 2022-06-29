@@ -123,8 +123,10 @@ int build_fasta(int argc, const char **argv, const Command &command)
 
     char mergedDiffFileName[300];
     char mergedInfoFileName[300];
+    char parametersFileName[300];
     sprintf(mergedDiffFileName, "%s/diffIdx", dbDirectory);
     sprintf(mergedInfoFileName, "%s/info", dbDirectory);
+    sprintf(mergedInfoFileName, "%s/parameters.txt", dbDirectory);
     sprintf(diffIdxSplitFileName, "%s/split", dbDirectory);
 
     FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName);
@@ -136,6 +138,12 @@ int build_fasta(int argc, const char **argv, const Command &command)
     }
     cout<<"done"<<endl;
 
+    // Write parameters used
+    ofstream params;
+    params.open(parametersFileName);
+    params.write(("Mask for spaced k-mer: " + par.spaceMask).c_str(), (int)("Mask for spaced k-mer: " + par.spaceMask).length());
+    params.write(string("Number of alphabets for encoding amino acids: " + to_string(par.reducedAA)).c_str(),
+                 (int) ("Number of alphabets for encoding amino acids: " + to_string(par.reducedAA)).length());
     cout<<"Reference DB files you need are as below"<<endl;
     cout<<mergedDiffFileName<<endl;
     cout<<mergedInfoFileName<<endl;
