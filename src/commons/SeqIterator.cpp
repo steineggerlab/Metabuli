@@ -322,9 +322,6 @@ void SeqIterator::fillQueryKmerBuffer(const char *seq, QueryKmerBuffer &kmerBuff
     int seqLen = strlen(seq);
     int checkN;
 
-    uint32_t spaceSize = 4;
-    uint32_t spaceMask[12] = {1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1};
-
     for (uint32_t frame = 0; frame < 6; frame++) {
         uint32_t len = aaFrames[frame].size();
         forOrRev = frame / 3;
@@ -375,8 +372,8 @@ SeqIterator::addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev,
 
     if (forOrRev == 0) { // Forward
         for (int i = 0, j = 0; i < kmerLength + spaceNum_int; i++, j += mask_int[i]) {
-            kmer |= nuc2num[nuc2int(atcg[seq[start + i * 3]])][nuc2int(atcg[seq[start + i * 3 + 1]])][
-                    nuc2int(atcg[seq[start + i * 3 + 2]])] * mask[i] << (j * bitsForCodon);
+            kmer |= (nuc2num[nuc2int(atcg[seq[start + i * 3]])][nuc2int(atcg[seq[start + i * 3 + 1]])][
+                    nuc2int(atcg[seq[start + i * 3 + 2]])] * mask[i]) << (j * bitsForCodon);
         }
     } else { // Reverse
         if ((seqLen % 3 == 1 && (frame == 3 || frame == 4)) || (seqLen % 3 == 0 && frame == 3)) {
@@ -430,23 +427,22 @@ char *SeqIterator::reverseCompliment(char *read, int length) const {
 }
 
 
-///It extracts kmers from amino acid sequence with DNA information and fill the kmerBuffer with them.
+// It extracts kmers from amino acid sequence with DNA information and fill the kmerBuffer with them.
 void
 SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock &block, const char *seq, TargetKmerBuffer &kmerBuffer,
                                          size_t &posToWrite, const uint32_t &seqID, int taxIdAtRank) {
     uint64_t tempKmer = 0;
     int len = aaFrames[0].size();
     int checkN;
-    for (int kmerCnt = 0; kmerCnt < len - kmerLength + 1; kmerCnt++) {
-        ///Amino acid 2 number
+    for (int kmerCnt = 0; kmerCnt < len - kmerLength - spaceNum_int + 1; kmerCnt++) {
         tempKmer = 0;
         checkN = 0;
-        for (size_t i = 0; i < kmerLength; i++) {
+        for (uint32_t i = 0, j = 0; i < kmerLength + spaceNum; i++, j += mask[i]) {
             if (-1 == aaFrames[0][kmerCnt + i]) {
                 checkN = 1;
                 break;
             }
-            tempKmer += aaFrames[0][kmerCnt + i] * powers[i];
+            tempKmer += aaFrames[0][kmerCnt + i] * powers[i] * mask[i];
         }
         if (checkN == 1) {
             //    cout<<"N! "<<seqID<<" "<<posToWrite<<" "<<kmerCnt<<" "<<taxIdAtRank<<endl;
@@ -465,15 +461,15 @@ SeqIterator::addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const Predic
     kmer <<= bitsFor8Codons;
     if (block.strand == 1) {
         int start = block.start + (kmerCnt * 3);
-        for (int i = 0; i < kmerLength; i ++) {
-            kmer |= nuc2num[nuc2int(atcg[seq[start + i*3]])][nuc2int(atcg[seq[start + i*3 + 1]])][
-                    nuc2int(atcg[seq[start + i*3 + 2]])] << (i * bitsForCodon);
+        for (int i = 0, j = 0; i < kmerLength + spaceNum_int; i ++, j += mask_int[i]) {
+            kmer |= (nuc2num[nuc2int(atcg[seq[start + i*3]])][nuc2int(atcg[seq[start + i*3 + 1]])][
+                    nuc2int(atcg[seq[start + i*3 + 2]])] * mask[i]) << (i * bitsForCodon);
         }
     } else {
         int start = block.end - (kmerCnt * 3);
-        for (int i = 0; i < kmerLength; i ++) {
-            kmer |= nuc2num[nuc2int(iRCT[atcg[seq[start - i*3]]])][nuc2int(iRCT[atcg[seq[start - i*3 - 1]]])][
-                    nuc2int(iRCT[atcg[seq[start - i*3 - 2]]])] << (i * bitsForCodon);
+        for (int i = 0, j = 0; i < kmerLength + spaceNum_int; i++, j += mask_int[i]) {
+            kmer |= (nuc2num[nuc2int(iRCT[atcg[seq[start - i*3]]])][nuc2int(iRCT[atcg[seq[start - i*3 - 1]]])][
+                    nuc2int(iRCT[atcg[seq[start - i*3 - 2]]])] * mask[i]) << (i * bitsForCodon);
         }
     }
 }
