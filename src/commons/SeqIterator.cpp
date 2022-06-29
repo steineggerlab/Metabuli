@@ -22,7 +22,6 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
         spaceNum += (mask[i] == 0);
         spaceNum_int += (mask[i] == 0);
     }
-    cout<<mask<<endl;
 
     // powers
     size_t pow = 1;
