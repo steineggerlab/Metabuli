@@ -48,7 +48,7 @@ public:
     int reducedAA;
     float minScore;
     std::string spaceMask;
-    int minConsCnt2;
+    int minConsCnt;
 
 private:
     LocalParameters();
