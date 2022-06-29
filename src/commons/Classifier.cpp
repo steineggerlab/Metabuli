@@ -11,16 +11,15 @@ Classifier::Classifier(LocalParameters & par) {
     MARKER = ~ MARKER;
     bitsForCodon = 3;
     numOfSplit = 0;
+    minConsCnt = par.minConsCnt;
 
     // Mask for spaced k-mer
     size_t maskLen = par.spaceMask.length();
     mask = new uint32_t[maskLen];
-    mask_int = new int[maskLen];
     spaceNum = 0;
     spaceNum_int = 0;
     for(size_t i = 0, j = 0; i < maskLen; i++){
         mask[i] = par.spaceMask[i] - 48;
-        mask_int[i] = par.spaceMask[i] - 48;
         spaceNum += (mask[i] == 0);
         spaceNum_int += (mask[i] == 0);
         if(mask[i]==1){
@@ -1051,7 +1050,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                         speciesDiffPosCnt++;
                         consecutiveCnt++;
                     }
-                    if (consecutiveCnt < 4) {
+                    if (consecutiveCnt < minConsCnt) {
                         for (size_t j = 0; j < speciesMatchCnt; j++) {
                             filteredMatches.pop_back();
                         }
@@ -1069,7 +1068,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                     speciesDiffPosCnt++;
                     consecutiveCnt++;
                 }
-                if (consecutiveCnt < 4) {
+                if (consecutiveCnt < minConsCnt) {
                     for (size_t j = 0; j < speciesMatchCnt; j++) {
                         filteredMatches.pop_back();
                     }

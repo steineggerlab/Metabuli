@@ -35,11 +35,13 @@ using namespace std;
 class Classifier {
 protected:
 
+    size_t minConsCnt;
     uint32_t * mask;
-    int * mask_int;
     uint32_t spaceNum;
     int spaceNum_int;
     int unmaskedPos[8];
+
+
     struct ScrCov {
         float score;
         float coverage;

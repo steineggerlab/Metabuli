@@ -16,8 +16,8 @@ void setClassifyDefaults(LocalParameters & par){
     par.minScore = 0.1;
     par.spaceMask = "11111111";
     par.minConsCnt = 4;
-
 }
+
 int classify(int argc, const char **argv, const Command& command)
 {
     LocalParameters & par = LocalParameters::getLocalInstance();
