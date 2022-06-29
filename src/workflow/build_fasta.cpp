@@ -126,7 +126,7 @@ int build_fasta(int argc, const char **argv, const Command &command)
     char parametersFileName[300];
     sprintf(mergedDiffFileName, "%s/diffIdx", dbDirectory);
     sprintf(mergedInfoFileName, "%s/info", dbDirectory);
-    sprintf(mergedInfoFileName, "%s/parameters.txt", dbDirectory);
+    sprintf(parametersFileName, "%s/parameters.txt", dbDirectory);
     sprintf(diffIdxSplitFileName, "%s/split", dbDirectory);
 
     FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName);
