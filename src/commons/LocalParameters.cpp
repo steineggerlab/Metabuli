@@ -63,7 +63,7 @@ LocalParameters::LocalParameters() :
                        "--hamming-margin",
                        ".",
                        "If a query k-mer has multiple matches, the matches with hamming distance lower than sum of the minimum distance and this margin are selected for later steps.",
-                       typeid(uint8_t),
+                       typeid(int),
                        (void *) &hammingMargin,
                        "") {
     //build_dir

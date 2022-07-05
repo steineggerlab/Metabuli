@@ -29,7 +29,7 @@ Classifier::Classifier(LocalParameters & par) {
     }
 
     // Hamming Dist. margin
-    hammingMargin = par.hammingMargin;
+    hammingMargin = (uint8_t) par.hammingMargin;
 }
 
 Classifier::~Classifier() {}
