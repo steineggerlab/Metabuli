@@ -1,7 +1,3 @@
-//
-// Created by KJB on 01/09/2020.
-//
-
 #include "Classifier.h"
 #include "LocalParameters.h"
 #include <ctime>
