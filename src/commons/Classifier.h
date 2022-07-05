@@ -40,6 +40,7 @@ protected:
     uint32_t spaceNum;
     int spaceNum_int;
     int unmaskedPos[8];
+    uint8_t hammingMargin;
 
 
     struct ScrCov {

@@ -27,6 +27,9 @@ Classifier::Classifier(LocalParameters & par) {
             j++;
         }
     }
+
+    // Hamming Dist. margin
+    hammingMargin = par.hammingMargin;
 }
 
 Classifier::~Classifier() {}
@@ -752,7 +755,7 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
 
     // Select target k-mers that passed hamming criteria
     for (size_t h = 0; h < size; h++) {
-        if (hammingSums[h] == minHammingSum) {
+        if (hammingSums[h] <= minHammingSum + hammingMargin) {
             selectedMatches.push_back(startIdx + h);
             selectedHammingSum.push_back(hammingSums[h]);
             selectedHammings.push_back(getHammings(query, targetKmersToCompare[h]));
@@ -1021,7 +1024,6 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
 //            currentFrame = matchList[i].
             // For current species
             // Filter un-consecutive matches (probably random matches)
-            // TODO: At least 4 consecutive diff pos !!!
             speciesMatchCnt = 0;
             speciesDiffPosCnt = 0;
             consecutiveCnt = 0;

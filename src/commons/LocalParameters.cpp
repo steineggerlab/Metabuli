@@ -38,27 +38,34 @@ LocalParameters::LocalParameters() :
                    (void *) &reducedAA,
                    "[0-1]"),
         MIN_SCORE(MIN_SCORE_ID,
-                   "--min-score",
-                   "The minimum score for classification",
-                   "You can set a value from 0.0 to 1.0 [Default 0.1]",
-                   typeid(float),
-                   (void *) &minScore,
+                  "--min-score",
+                  "The minimum score for classification",
+                  "You can set a value from 0.0 to 1.0 [Default 0.1]",
+                  typeid(float),
+                  (void *) &minScore,
                   "^0(\\.[0-9]+)?|1(\\.0+)?$"),
         SPACED(SPACED_ID,
-                  "--spacing-mask",
-                  "Binary patterned mask for spaced k-mer.\nThe same mask must be used for DB creation and classification",
+               "--spacing-mask",
+               "Binary patterned mask for spaced k-mer.\nThe same mask must be used for DB creation and classification",
                "Binary patterned mask for spaced k-mer. The same mask must be used for DB creation and classification.\n"
                "A mask should contain at least eight '1's, and '0' means skip.",
-                  typeid(std::string),
-                  (void *) &spaceMask,
-                  ""),
+               typeid(std::string),
+               (void *) &spaceMask,
+               ""),
         MIN_CONSECUTIVE(MIN_CONSECUTIVE_ID,
-               "--min-consecutive",
-               ".",
-               "Matched k-mers from the same genus are pulled and aligned to query.\nMatches that are not consecutive for the specified number of times are ignored.",
-               typeid(int),
-               (void *) &minConsCnt,
-               ""){
+                        "--min-consecutive",
+                        ".",
+                        "Matched k-mers from the same genus are pulled and aligned to query.\nMatches that are not consecutive for the specified number of times are ignored.",
+                        typeid(int),
+                        (void *) &minConsCnt,
+                        ""),
+        HAMMING_MARGIN(HAMMING_MARGIN_ID,
+                       "--hamming-margin",
+                       ".",
+                       "If a query k-mer has multiple matches, the matches with hamming distance lower than sum of the minimum distance and this margin are selected for later steps.",
+                       typeid(uint8_t),
+                       (void *) &hammingMargin,
+                       "") {
     //build_dir
     build_dir.push_back(&PARAM_THREADS);
     build_dir.push_back(&PARAM_GTDB_OR_NCBI);
@@ -80,6 +87,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MIN_SCORE);
     classify.push_back(&SPACED);
     classify.push_back(&MIN_CONSECUTIVE);
+    classify.push_back(&HAMMING_MARGIN);
 
     //updateTargetDB
 
