@@ -38,6 +38,7 @@ public:
     PARAMETER(SPACED)
     PARAMETER(MIN_CONSECUTIVE)
     PARAMETER(HAMMING_MARGIN)
+    PARAMETER(MIN_SP_SCORE)
 
     //creatTargetDB
     int gtdbOrNcbi;
@@ -51,6 +52,7 @@ public:
     std::string spaceMask;
     int minConsCnt;
     uint8_t hammingMargin;
+    float minSpScore;
 
 private:
     LocalParameters();

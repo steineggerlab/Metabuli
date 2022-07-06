@@ -65,7 +65,14 @@ LocalParameters::LocalParameters() :
                        "If a query k-mer has multiple matches, the matches with hamming distance lower than sum of the minimum distance and this margin are selected for later steps.",
                        typeid(int),
                        (void *) &hammingMargin,
-                       "") {
+                       ""),
+        MIN_SP_SCORE(MIN_SP_SCORE_ID,
+                       "--min-sp-score",
+                       ".",
+                       "Minimum score to be classified at the species level.",
+                       typeid(float),
+                       (void *) &minSpScore,
+                     "^0(\\.[0-9]+)?|1(\\.0+)?$"){
     //build_dir
     build_dir.push_back(&PARAM_THREADS);
     build_dir.push_back(&PARAM_GTDB_OR_NCBI);
@@ -88,6 +95,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&SPACED);
     classify.push_back(&MIN_CONSECUTIVE);
     classify.push_back(&HAMMING_MARGIN);
+    classify.push_back(&MIN_SP_SCORE);
 
     //updateTargetDB
 

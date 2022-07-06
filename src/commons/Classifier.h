@@ -41,6 +41,7 @@ protected:
     int spaceNum_int;
     int unmaskedPos[8];
     uint8_t hammingMargin;
+    float minSpScore;
 
 
     struct ScrCov {

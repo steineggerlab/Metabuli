@@ -109,7 +109,7 @@ int build_dir(int argc, const char **argv, const Command &command)
 
 void prepareForCreatingTargetDB(const LocalParameters & par){
     const string folder = par.filenames[0].c_str();
-    const string mappingFile = par.filenames[1] + "/assacc_to_taxid_gtdb.tsv";
+    const string mappingFile = par.filenames[1] + "/assacc_to_taxid.tsv";
     const char * outputFileName = par.filenames[2].c_str();
 
     string taxid_fname_fname = folder + "/taxid_filename";
