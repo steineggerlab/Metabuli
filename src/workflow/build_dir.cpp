@@ -89,7 +89,7 @@ int build_dir(int argc, const char **argv, const Command &command)
     sprintf(mergedInfoFileName, "%s/info", dbDirectory);
     sprintf(diffIdxSplitFileName, "%s/split", dbDirectory);
 
-    FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName);
+    FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName, par);
     merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtSpecies, taxIdList);
 
     for(int split = 0; split < numOfSplits ; split++){
