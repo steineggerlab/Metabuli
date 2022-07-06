@@ -27,7 +27,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 
     bool * splitChecker = new bool[numOfSplits];
     fill_n(splitChecker, numOfSplits, false);
-    TargetKmerBuffer kmerBuffer(kmerBufSize);
+    TargetKmerBuffer kmerBuffer(10'000'000'000);
     size_t processedSplitCnt = 0;
     while(processedSplitCnt < numOfSplits){ ///check this condition
         fillTargetKmerBuffer2(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank, par);
@@ -99,9 +99,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                     seqIterator.getMinHashList(currentList, seq->seq.s);
                     prodigal.getPredictedGenes(seq->seq.s);
                     prodigal.removeCompletelyOverlappingGenes();
-//                    if(p == 0){
-//                        prodigal.updateDicodonFrequency();
-//                    }
                     prodigal.printGenes();
                     if(seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, strlen(seq->seq.s))){
                         seqIterator.getTranslationBlocks(prodigal.finalGenes, prodigal.nodes, blocks,
@@ -206,10 +203,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
 
                 if(strlen(seq->seq.s) < 100000){
                     prodigal.is_meta = 1;
-//                    cout<<"Training with metagenomic version: "<<splits[i].training<<" "<<seqs[splits[i].training].start<<" "<<i<<seq->headerOffset<<" "<<splits[i].offset<<" "<<splits[i].cnt<<endl;
-//                    cout<<seq->name.s<<endl;
                     prodigal.trainMeta(seq->seq.s);
-//                    cout<<"Max: "<<i<<" "<<prodigal.max_phase<<" "<<prodigal.max_score<<endl;
                 }else{
                     prodigal.trainASpecies(seq->seq.s);
                 }
@@ -248,8 +242,16 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                     }
                     numOfBlocksList[p] = numOfBlocks;
                     currentList = priority_queue<uint64_t>();
+                    if(hasOverflow){
+                        break;
+                    }
                 }
-
+                if(hasOverflow){
+                    kseq_destroy(seq);
+                    free(numOfBlocksList);
+                    blocks.clear();
+                    break;
+                }
                 // Calculate the number of k-mers to reserve memory of k-mer buffer
                 totalKmerCntForOneTaxID = 0;
                 for(size_t block = 0; block < numOfBlocks; block++){
@@ -282,12 +284,10 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                         start = numOfBlocksList[seqIdx];
                     }
                     checker[i] = true;
-#pragma omp atomic
-                    processedSplitCnt ++;
+                    __sync_fetch_and_add(&processedSplitCnt, 1);
                 }else {
                     // Withdraw the reservation if the buffer is full.
-#pragma omp atomic
-                    kmerBuffer.startIndexOfReserve -= totalKmerCntForOneTaxID;
+                   __sync_fetch_and_add(&kmerBuffer.startIndexOfReserve, -1);
                     cout<<"buffer is full"<<endl;
                     hasOverflow = true;
                 }
