@@ -4,10 +4,17 @@
 
 #include "FileMerger.h"
 
-FileMerger::FileMerger(char* mergedDiffFileName, char * mergedInfoFileNmae, char * diffIdxSplitFileName)
+FileMerger::FileMerger(char* mergedDiffFileName, char * mergedInfoFileNmae, char * diffIdxSplitFileName, const LocalParameters & par)
 :mergedDiffFileName(mergedDiffFileName), mergedInfoFileName(mergedInfoFileNmae), diffIdxSplitFileName(diffIdxSplitFileName)
 {
     cre = new IndexCreator();
+    if (par.reducedAA == 1){
+        MARKER = 0Xffffffff;
+        MARKER = ~MARKER;
+    } else {
+        MARKER = 16777215;
+        MARKER = ~ MARKER;
+    }
 }
 
 FileMerger::~FileMerger() {
@@ -130,13 +137,13 @@ void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vect
         writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx);
         writtenKmerCnt++;
 
-        if(AminoAcid(lastWrittenKmer) != AAofTempSplitOffset && splitCheck == 1){
+        if(AminoAcidPart(lastWrittenKmer) != AAofTempSplitOffset && splitCheck == 1){
             splitList[splitListIdx++] = {lastWrittenKmer, totalBufferIdx, totalInfoIdx};
             splitCheck = 0;
         }
 
         if(writtenKmerCnt == offsetList[offsetListIdx]){
-            AAofTempSplitOffset = AminoAcid(lastWrittenKmer);
+            AAofTempSplitOffset = AminoAcidPart(lastWrittenKmer);
             splitCheck = 1;
             offsetListIdx++;
         }

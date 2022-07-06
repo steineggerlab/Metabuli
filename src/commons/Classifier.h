@@ -278,7 +278,7 @@ protected:
     }
 
     void setMarker(uint64_t marker) {
-        MARKER = 0Xffffffff;
+        MARKER = marker;
         MARKER = ~MARKER;
     }
 
