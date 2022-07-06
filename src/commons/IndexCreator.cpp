@@ -250,7 +250,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                     kseq_destroy(seq);
                     free(numOfBlocksList);
                     blocks.clear();
-                    break;
+                    continue;
                 }
                 // Calculate the number of k-mers to reserve memory of k-mer buffer
                 totalKmerCntForOneTaxID = 0;
