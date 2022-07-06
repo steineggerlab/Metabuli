@@ -287,7 +287,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                     __sync_fetch_and_add(&processedSplitCnt, 1);
                 }else {
                     // Withdraw the reservation if the buffer is full.
-                   __sync_fetch_and_add(&kmerBuffer.startIndexOfReserve, -1);
+                   __sync_fetch_and_add(&kmerBuffer.startIndexOfReserve, -totalKmerCntForOneTaxID);
                     cout<<"buffer is full"<<endl;
                     hasOverflow = true;
                 }
