@@ -37,6 +37,19 @@ struct Query{
     Query():queryId(0), classification(0), score(0.0f), queryLength(0), queryLength2(0), isClassified(false), newSpecies(false) {}
 };
 
-
+void loadTaxIdList(const char * fileName, vector<TaxID> & taxids){
+    FILE * taxIdFile;
+    if((taxIdFile = fopen(fileName,"r")) == NULL){
+        cout<<"Cannot open the taxID list file."<<endl;
+        return;
+    }
+    char taxID[100];
+    while(feof(taxIdFile) == 0) {
+        fscanf(taxIdFile,"%s",taxID);
+        taxids.push_back(atol(taxID));
+    }
+    fclose(taxIdFile);
+    taxids.pop_back();
+}
 
 #endif //ADCLASSIFIER2_COMMON_H

@@ -20,7 +20,7 @@
 #include "FastSort.h"
 #include "Classifier.h"
 #include "LocalParameters.h"
-
+#include <omp.h>
 #ifdef OPENMP
 #include <omp.h>
 #endif
@@ -28,7 +28,12 @@
 
 #define kmerLength 8
 
-
+struct TaxId2Fasta{
+    TaxID species;
+    TaxID taxid;
+    string fasta;
+    TaxId2Fasta(TaxID sp, TaxID ssp, string fasta): species(sp), taxid(ssp), fasta(std::move(fasta)) {}
+};
 
 using namespace std;
 
@@ -44,7 +49,7 @@ private:
     size_t availableMemory;
     size_t numOfFlush=0;
     //SeqIterator * seqIterator;
-    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<int> & taxIdList);
+    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<TaxId2Fasta> & taxid2fasta);
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
     size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
@@ -56,24 +61,34 @@ private:
                                 const vector<int> & taxIdList,
                                 const LocalParameters & par);
     static size_t fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
-                                        MmapedData<char> & seqFile,
-                                        vector<Sequence> & seqs,
                                         bool * checker,
                                         size_t & processedTaxIdCnt,
                                         const vector<FastaSplit> & splits,
-                                        const vector<int> & taxIdList,
+                                        const vector<TaxId2Fasta> & taxid2fasta,
                                         const LocalParameters & par);
+
 
     static void getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
     void getFastaSplits(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqSegments);
+    void getFastaSplits2(const vector<TaxId2Fasta> & taxIdListAtRank, vector<FastaSplit> & fastaSplit);
+    void mappingFromTaxIDtoFasta(const string & fastaList_fname,
+                                 unordered_map<string, int> & assacc2taxid,
+                                 vector<TaxId2Fasta> & taxid2fasta,
+                                 NcbiTaxonomy & taxonomy);
+
+    void unzipAndList(const string & folder, const string & fastaList_fname){
+        system(("./../../util/unzip_and_list.sh " + folder + " " + fastaList_fname).c_str());
+    }
+
+    void load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
+
 public:
     static void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
+    static void getSeqSegmentsWithHead2(vector<Sequence> & seqSegments, const char * seqFileName);
     IndexCreator();
     ~IndexCreator();
     int getNumOfFlush();
-    void startIndexCreatingParallel(const char * seqFileName, const char * outputFileName,
-                                    const vector<int> & taxIdListAtRank, const vector<int> & taxIdList,
-                                    const LocalParameters & par);
+    void startIndexCreatingParallel(const LocalParameters & par);
     void startIndexCreatingParallel2(const char * seqFileName, const char * outputFileName, const vector<int> & taxIdListAtSpecies, const vector<int> & taxIdListAtGenus, const vector<int> & taxIdList);
 
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx );

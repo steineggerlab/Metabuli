@@ -4,105 +4,34 @@
 #include <Command.h>
 #include <regex>
 #include <random>
+#include <utility>
+
+
 
 void prepareForCreatingTargetDB(const LocalParameters & par);
+
+
+
+
 
 int build_dir(int argc, const char **argv, const Command &command)
 {
     LocalParameters &par = LocalParameters::getLocalInstance();
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
-    const char * folder = par.filenames[0].c_str();
-    const string taxonomyDirectory = par.filenames[1];
-    const char * dbDirectory = par.filenames[2].c_str();
-
-    //Taxonomy
-    const string names = taxonomyDirectory + "/names.dmp";
-    const string nodes = taxonomyDirectory + "/nodes.dmp";
-    const string merged = taxonomyDirectory + "/merged.dmp";
-    NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
-
-    prepareForCreatingTargetDB(par);
-    string taxIdList_fname = string(dbDirectory) + "/taxID_list";
-    string genome_fname = string(folder) + "/concatenated_genome";
-
-
-    ifstream seqFile;
-    seqFile.open(genome_fname.c_str());
-
-    if (!seqFile.is_open()){
-        cout<<"Cannot open the sequence file."<<endl;
-        return 0;
-    }
-    seqFile.close();
-
-    //Make mapping from sequence ID to taxID. Index of vector is sequence ID.
-    FILE * taxIdFile;
-    if((taxIdFile = fopen(taxIdList_fname.c_str(),"r")) == NULL){
-        cout<<"Cannot open the taxID list file."<<endl;
-        return 0;
-    }
-    vector<int> taxIdList; char taxID[100];
-    while(feof(taxIdFile) == 0) {
-        fscanf(taxIdFile,"%s",taxID);
-        taxIdList.push_back(atol(taxID));
-    }
-    fclose(taxIdFile);
-    taxIdList.pop_back();
-    vector<int> taxIdListAtSpecies;
-    vector<int> taxIdListAtGenus;
-
-    //Create lists of species taxonomical IDs of each sequences.
-    cout<<"Create taxonomical ID list at species rank ... ";
-    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtSpecies, "species");
-    cout<<"done"<<endl;
-
-    //Create lists of genus taxonomical IDs of each sequences.
-    cout<<"Create taxonomical ID list at genus rank ... ";
-    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtGenus, "genus");
-    cout<<"done"<<endl;
 
     //Make files of differential indexing and information of k-mers
     cout<<"Start to creat reference DB file(s) ... ";
     IndexCreator idxCre;
-    idxCre.startIndexCreatingParallel(genome_fname.c_str(), dbDirectory,
-                                      taxIdListAtSpecies, taxIdList, par);
+    idxCre.startIndexCreatingParallel(par);
     cout<<"done"<<endl;
 
     //Merge files
     cout<<"Merge reference DB files ... "<<endl;
     int numOfSplits = idxCre.getNumOfFlush();
-    char diffIdxSplitFileName[300];
-    vector<char *> diffSplits;
-    vector<char *> infoSplits;
-    for(int split = 0; split < numOfSplits ; split++){
-        char * suffixedDiffIdxFileName = new char[300];
-        char * suffixedInfoFileName = new char[300];
-        sprintf(suffixedDiffIdxFileName, "%s/%d_diffIdx", dbDirectory, split);
-        sprintf(suffixedInfoFileName, "%s/%d_info", dbDirectory, split);
-        diffSplits.push_back(suffixedDiffIdxFileName);
-        infoSplits.push_back(suffixedInfoFileName);
-    }
+    FileMerger merger(par);
+    merger.mergeTargetFiles(par, numOfSplits);
 
-    char mergedDiffFileName[300];
-    char mergedInfoFileName[300];
-    sprintf(mergedDiffFileName, "%s/diffIdx", dbDirectory);
-    sprintf(mergedInfoFileName, "%s/info", dbDirectory);
-    sprintf(diffIdxSplitFileName, "%s/split", dbDirectory);
 
-    FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName, par);
-    merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtSpecies, taxIdList);
-
-    for(int split = 0; split < numOfSplits ; split++){
-        delete[] diffSplits[split];
-        delete[] infoSplits[split];
-    }
-    cout<<"done"<<endl;
-
-    cout<<"Reference DB files you need are as below"<<endl;
-    cout<<mergedDiffFileName<<endl;
-    cout<<mergedInfoFileName<<endl;
-    cout<<taxIdList_fname<<endl;
-    cout<<diffIdxSplitFileName<<endl;
 
     return 0;
 }
