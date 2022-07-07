@@ -13,10 +13,13 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
                                               const vector<int> & taxIdListAtRank, const vector<int> & taxIdList,
                                               const LocalParameters & par)
 {
+    // Getting start and end position of each sequence
+
+
     // Mmap the input fasta file
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
     cout<<"MMAPED"<<endl;
-    // Getting start and end position of each sequence
+
     vector<Sequence> sequences;
     getSeqSegmentsWithHead(sequences, seqFile);
     cout<<"getSeqSegmentsWithHead"<<endl;
@@ -176,6 +179,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
     {
         ProdigalWrapper prodigal;
         SeqIterator seqIterator(par);
+        cout<<omp_get_thread_num()<<" ="<<endl;
         size_t posToWrite;
         size_t numOfBlocks;
         size_t totalKmerCntForOneTaxID;
@@ -186,17 +190,19 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
         size_t lengthOfTrainingSeq;
         char * reverseCompliment;
         vector<bool> strandness;
-
+        cout<<omp_get_thread_num()<<" +"<<endl;
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < splits.size() ; i++) {
             if((checker[i] == false) && (!hasOverflow)) {
                 size_t * numOfBlocksList = (size_t*)malloc(splits[i].cnt * sizeof(size_t));
+                cout<<omp_get_thread_num()<<" ~"<<endl;
                 intergenicKmerList.clear();
                 strandness.clear();
                 standardList = priority_queue<uint64_t>();
 
                 //Train Prodigal with a training sequence of i th split
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[splits[i].training].start]), seqs[splits[i].training].length);
+                cout<<omp_get_thread_num()<<" !"<<endl;
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
                 lengthOfTrainingSeq = strlen(seq->seq.s);
@@ -456,6 +462,10 @@ void IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, Mmaped
         }
     }
     seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
+}
+
+void IndexCreator::getSeqSegmentsWithHead2(vector<Sequence> & seqSegments, const char * seqFileName){
+    FILE
 }
 
 void IndexCreator::getFastaSplits(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqs){
