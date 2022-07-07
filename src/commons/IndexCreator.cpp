@@ -15,16 +15,16 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 {
     // Mmap the input fasta file
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
-
+    cout<<"MMAPED"<<endl;
     // Getting start and end position of each sequence
     vector<Sequence> sequences;
     getSeqSegmentsWithHead(sequences, seqFile);
-
+    cout<<"getSeqSegmentsWithHead"<<endl;
     // Sequences in the same split share the sequence to be used for training the prodigal.
     vector<FastaSplit> splits;
     getFastaSplits(taxIdListAtRank, splits, sequences);
     size_t numOfSplits = splits.size();
-
+    cout<<"getFastaSplits"<<endl;
     bool * splitChecker = new bool[numOfSplits];
     fill_n(splitChecker, numOfSplits, false);
     TargetKmerBuffer kmerBuffer(10'000'000'000);
