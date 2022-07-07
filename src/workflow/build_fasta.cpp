@@ -110,7 +110,7 @@ int build_fasta(int argc, const char **argv, const Command &command)
     cout<<"Merge reference DB files ... "<<endl;
     FileMerger merger(par);
     merger.mergeTargetFiles(par, idxCre.getNumOfFlush());
-    
+
     // Write parameters used
     ofstream params;
     params.open(string(dbDirectory) + "/parameters");
