@@ -204,7 +204,9 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[splits[i].training].start]), seqs[splits[i].training].length);
                 cout<<omp_get_thread_num()<<" !"<<endl;
                 kseq_t *seq = kseq_init(&buffer);
+                cout<<omp_get_thread_num()<<" )"<<endl;
                 kseq_read(seq);
+                cout<<omp_get_thread_num()<<" ("<<endl;
                 lengthOfTrainingSeq = strlen(seq->seq.s);
                 prodigal.is_meta = 0;
                 cout<<omp_get_thread_num()<<" @"<<endl;
@@ -463,9 +465,14 @@ void IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, Mmaped
     }
     seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
 }
-//
+
 //void IndexCreator::getSeqSegmentsWithHead2(vector<Sequence> & seqSegments, const char * seqFileName){
-//    FILE
+//    FILE *fp;
+//    if ( (fp = fopen(seqFileName, "r")) == NULL) {
+//        fprintf(stderr, "Cannot open the sequence file for getting segments");
+//        return;
+//    }
+//
 //}
 
 void IndexCreator::getFastaSplits(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqs){
