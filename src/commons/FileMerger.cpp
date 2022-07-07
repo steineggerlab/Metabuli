@@ -188,7 +188,19 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
 
     // Load taxonomy id list
     vector<TaxID> taxIdList;
-    loadTaxIdList((string(dbDirectory) + "/taxID_list").c_str(), taxIdList);
+    //loadTaxIdList((string(dbDirectory) + "/taxID_list").c_str(), taxIdList);
+    FILE * taxIdFile;
+    if((taxIdFile = fopen((string(dbDirectory) + "/taxID_list").c_str(),"r")) == NULL){
+        cout<<"Cannot open the taxID list file."<<endl;
+        return;
+    }
+    char taxID[100];
+    while(feof(taxIdFile) == 0) {
+        fscanf(taxIdFile,"%s",taxID);
+        taxIdList.push_back(atol(taxID));
+    }
+    fclose(taxIdFile);
+    taxIdList.pop_back();
 
     // Make taxonomy id list at species rank
     vector<int> taxIdListAtSpecies;

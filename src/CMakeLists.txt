@@ -12,7 +12,7 @@ add_executable(metabuli
         ${util_source_files}
         ${workflow_source_files}
         metabuli.cpp
-        LocalCommandDeclarations.h workflow/inclusion_test.cpp workflow/exclusion_test.cpp workflow/inclusion_test_hiv.cpp workflow/exclusion_test_hiv.cpp commons/Query.cpp commons/Query.h commons/Genus.cpp commons/Genus.h commons/Species.cpp commons/Species.h commons/Match.h )
+        LocalCommandDeclarations.h workflow/inclusion_test.cpp workflow/exclusion_test.cpp workflow/inclusion_test_hiv.cpp workflow/exclusion_test_hiv.cpp commons/Query.cpp commons/Query.h commons/Genus.cpp commons/Genus.h commons/Species.cpp commons/Species.h commons/Match.h commons/common.cpp)
 
 mmseqs_setup_derived_target(metabuli)
 target_link_libraries(metabuli version)

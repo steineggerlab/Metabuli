@@ -1,9 +1,8 @@
 #ifndef ADCLASSIFIER2_COMMON_H
 #define ADCLASSIFIER2_COMMON_H
 #include <utility>
-
-
 #include "NcbiTaxonomy.h"
+#include <iostream>
 #define kmerBufSize 1'000'000'000 // 10000000000 | 286000000 (16 byte x 1 giga = 16 GB)
                                 // 24 byte x 1 G x 10 = 240 GB
 #define SplitNum 4096
@@ -27,8 +26,8 @@ struct Query{
     bool isClassified;
     bool newSpecies;
 
-    string name;
-    unordered_map<TaxID,int> taxCnt;
+    std::string name;
+    std::unordered_map<TaxID,int> taxCnt;
 
     bool operator==(int id) const { return queryId == id;}
 //    Query(int id, int classification_, float score, bool isClassified_, bool newSpecies, uint32_t len, string name_)
@@ -37,19 +36,6 @@ struct Query{
     Query():queryId(0), classification(0), score(0.0f), queryLength(0), queryLength2(0), isClassified(false), newSpecies(false) {}
 };
 
-void loadTaxIdList(const char * fileName, vector<TaxID> & taxids){
-    FILE * taxIdFile;
-    if((taxIdFile = fopen(fileName,"r")) == NULL){
-        cout<<"Cannot open the taxID list file."<<endl;
-        return;
-    }
-    char taxID[100];
-    while(feof(taxIdFile) == 0) {
-        fscanf(taxIdFile,"%s",taxID);
-        taxids.push_back(atol(taxID));
-    }
-    fclose(taxIdFile);
-    taxids.pop_back();
-}
+
 
 #endif //ADCLASSIFIER2_COMMON_H
