@@ -13,10 +13,10 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
                                               const vector<int> & taxIdListAtRank, const vector<int> & taxIdList,
                                               const LocalParameters & par)
 {
-    ///Mmap the input fasta file
+    // Mmap the input fasta file
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
 
-    ///Getting start and end position of each sequence
+    // Getting start and end position of each sequence
     vector<Sequence> sequences;
     getSeqSegmentsWithHead(sequences, seqFile);
 
@@ -29,12 +29,11 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     fill_n(splitChecker, numOfSplits, false);
     TargetKmerBuffer kmerBuffer(10'000'000'000);
     size_t processedSplitCnt = 0;
-    while(processedSplitCnt < numOfSplits){ ///check this condition
+    while(processedSplitCnt < numOfSplits){ // Check this condition
         fillTargetKmerBuffer2(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank, par);
         writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdList);
     }
 
-    //free(kmerBuffer.buffer);
     delete[] splitChecker;
     munmap(seqFile.data, seqFile.fileSize + 1);
 }
@@ -47,7 +46,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                                           const vector<int> & taxIdListAtRank,
                                           const LocalParameters & par) {
 #ifdef OPENMP
-   omp_set_num_threads(*(int * )par.PARAM_THREADS.value);
+   omp_set_num_threads(par.threads);
 #endif
     bool hasOverflow = false;
 
@@ -167,7 +166,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                                            const vector<int> & taxIdListAtRank,
                                            const LocalParameters & par) {
 #ifdef OPENMP
-    omp_set_num_threads(*(int * )par.PARAM_THREADS.value);
+    omp_set_num_threads(par.threads);
 #endif
     bool hasOverflow = false;
 
@@ -287,7 +286,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                     __sync_fetch_and_add(&processedSplitCnt, 1);
                 }else {
                     // Withdraw the reservation if the buffer is full.
-                   __sync_fetch_and_add(&kmerBuffer.startIndexOfReserve, -totalKmerCntForOneTaxID);
+                   __sync_fetch_and_sub(&kmerBuffer.startIndexOfReserve, totalKmerCntForOneTaxID);
                     cout<<"buffer is full"<<endl;
                     hasOverflow = true;
                 }
