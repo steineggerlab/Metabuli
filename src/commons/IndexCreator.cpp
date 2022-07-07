@@ -201,21 +201,21 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                 kseq_read(seq);
                 lengthOfTrainingSeq = strlen(seq->seq.s);
                 prodigal.is_meta = 0;
-
+                cout<<omp_get_thread_num()<<" @"<<endl;
                 if(strlen(seq->seq.s) < 100000){
                     prodigal.is_meta = 1;
                     prodigal.trainMeta(seq->seq.s);
                 }else{
                     prodigal.trainASpecies(seq->seq.s);
                 }
-
+                cout<<omp_get_thread_num()<<" %"<<endl;
                 // Generate intergenic 23-mer list
                 prodigal.getPredictedGenes(seq->seq.s);
                 seqIterator.generateIntergenicKmerList(prodigal.genes, prodigal.nodes, prodigal.getNumberOfPredictedGenes(), intergenicKmerList, seq->seq.s);
-
+                cout<<omp_get_thread_num()<<" #"<<endl;
                 // Get min k-mer hash list for determining strandness
                 seqIterator.getMinHashList(standardList, seq->seq.s);
-
+                cout<<omp_get_thread_num()<<" *"<<endl;
                 // Getting all the sequence blocks of current split. Each block will be translated later separately.
                 numOfBlocks = 0;
                 for(size_t p = 0; p < splits[i].cnt; p++ ) {
