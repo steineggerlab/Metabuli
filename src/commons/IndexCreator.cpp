@@ -143,6 +143,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                     prodigal.trainASpecies(seq->seq.s);
                 }
                 munmap(seqFile.data, seqFile.fileSize + 1);
+                sequences.clear();
 
                 // Generate intergenic 23-mer list
                 prodigal.getPredictedGenes(seq->seq.s);
@@ -153,6 +154,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
 
                 // Getting all the sequence blocks of current split. Each block will be translated later separately.
                 numOfBlocks = 0;
+
                 for(size_t fastaCnt = 0; fastaCnt < splits[i].cnt; fastaCnt++ ) {
                     struct MmapedData<char> seqFile = mmapData<char>(taxid2fasta[splits[i].offset + fastaCnt].fasta.c_str());
                     getSeqSegmentsWithHead(sequences, seqFile);
@@ -407,6 +409,7 @@ void IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, Mmaped
         }
     }
     seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
+//    for(size_t i = 0; i)
     sort(seqSegments.begin(), seqSegments.end(), [](const Sequence & a, const Sequence & b){return a.length > b.length;});
 }
 
