@@ -463,10 +463,10 @@ void IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, Mmaped
     }
     seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
 }
-
-void IndexCreator::getSeqSegmentsWithHead2(vector<Sequence> & seqSegments, const char * seqFileName){
-    FILE
-}
+//
+//void IndexCreator::getSeqSegmentsWithHead2(vector<Sequence> & seqSegments, const char * seqFileName){
+//    FILE
+//}
 
 void IndexCreator::getFastaSplits(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqs){
     size_t training = 0;
