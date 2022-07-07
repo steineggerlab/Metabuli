@@ -129,7 +129,7 @@ int build_fasta(int argc, const char **argv, const Command &command)
     sprintf(parametersFileName, "%s/parameters.txt", dbDirectory);
     sprintf(diffIdxSplitFileName, "%s/split", dbDirectory);
 
-    FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName, par);
+    FileMerger merger(par);
     merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtSpecies, taxIDs);
 
     for(int split = 0; split < numOfSplits ; split++){

@@ -89,6 +89,9 @@ public:
     ~IndexCreator();
     int getNumOfFlush();
     void startIndexCreatingParallel(const LocalParameters & par);
+    void startIndexCreatingParallel(const char * seqFileName, const char * outputFileName,
+                                    const vector<int> & taxIdListAtRank, const vector<int> & taxIdList,
+                                    const LocalParameters & par);
     void startIndexCreatingParallel2(const char * seqFileName, const char * outputFileName, const vector<int> & taxIdListAtSpecies, const vector<int> & taxIdListAtGenus, const vector<int> & taxIdList);
 
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx );

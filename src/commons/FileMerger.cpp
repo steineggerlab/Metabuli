@@ -19,6 +19,164 @@ FileMerger::~FileMerger() {
     delete cre;
 }
 
+void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & taxIdListAtRank, vector<int> & taxIdList) {
+    size_t writtenKmerCnt = 0;
+
+    ///Files to write on & buffers to fill them
+    FILE * mergedDiffFile = fopen(mergedDiffFileName, "wb");
+    FILE * mergedInfoFile = fopen(mergedInfoFileName, "wb");
+    FILE * diffIdxSplitFile = fopen(diffIdxSplitFileName, "wb");
+    uint16_t * diffBuffer = (uint16_t *)malloc(sizeof(uint16_t) * kmerBufSize);
+    size_t diffBufferIdx = 0;
+    size_t totalBufferIdx = 0;
+    TargetKmerInfo * infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * kmerBufSize);
+    size_t infoBufferIdx = 0;
+    size_t totalInfoIdx = 0;
+
+    ///Prepare files to merge
+    size_t numOfSplitFiles = diffIdxFileNames.size();
+    size_t numOfincompletedFiles = numOfSplitFiles;
+    size_t numOfKmerBeforeMerge = 0;
+    uint64_t * lookingKmers = new uint64_t[numOfSplitFiles];
+//    uint64_t lookingKmers[numOfSplitFiles];
+//    TargetKmerInfo lookingInfos[numOfSplitFiles];
+    auto * lookingInfos = new TargetKmerInfo[numOfSplitFiles];
+    //size_t diffFileIdx[numOfSplitFiles];
+    auto * diffFileIdx = new size_t[numOfSplitFiles];
+    memset(diffFileIdx, 0, numOfSplitFiles * sizeof(size_t));
+    auto * infoFileIdx = new size_t[numOfSplitFiles];
+//    size_t infoFileIdx[numOfSplitFiles];
+    memset(infoFileIdx, 0, numOfSplitFiles * sizeof(size_t));
+    size_t maxIdxOfEachFiles[numOfSplitFiles];
+    struct MmapedData<uint16_t> *diffFileList = new struct MmapedData<uint16_t>[numOfSplitFiles];
+    struct MmapedData<TargetKmerInfo> *infoFileList = new struct MmapedData<TargetKmerInfo>[numOfSplitFiles];
+    for (size_t file = 0; file < numOfSplitFiles; file++) {
+        diffFileList[file] = mmapData<uint16_t>(diffIdxFileNames[file]);
+        infoFileList[file] = mmapData<TargetKmerInfo>(infoFileNames[file]);
+        maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
+        numOfKmerBeforeMerge += infoFileList[file].fileSize / sizeof(TargetKmerInfo);
+    }
+
+    ///To make differential index splits
+    uint64_t AAofTempSplitOffset = UINT64_MAX;
+    size_t sizeOfSplit = numOfKmerBeforeMerge / (SplitNum - 1);
+    size_t offsetList[SplitNum + 1];
+    int offsetListIdx = 1;
+    for(size_t os = 0; os < SplitNum; os++){
+        offsetList[os] = os * sizeOfSplit;
+    }
+    offsetList[SplitNum] = UINT64_MAX;
+
+    DiffIdxSplit splitList[SplitNum];
+    memset(splitList, 0, sizeof(DiffIdxSplit) * SplitNum);
+    int splitListIdx = 1;
+
+    /// get the first k-mer to write
+    for(size_t file = 0; file < numOfSplitFiles; file++){
+        lookingKmers[file] = getNextKmer(0, diffFileList[file], diffFileIdx[file]);
+        lookingInfos[file] = infoFileList[file].data[0];
+        infoFileIdx[file] ++;
+    }
+
+    size_t idxOfMin = smallest(lookingKmers, lookingInfos, taxIdListAtRank, numOfSplitFiles);
+    uint64_t lastWrittenKmer = 0;
+    uint64_t entryKmer = lookingKmers[idxOfMin];
+    TargetKmerInfo entryInfo = lookingInfos[idxOfMin];
+
+    // write first k-mer
+    getDiffIdx(lastWrittenKmer, entryKmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx);
+    lastWrittenKmer = entryKmer;
+    writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx);
+    writtenKmerCnt++;
+    int splitCheck = 0;
+    int endFlag = 0;
+
+    while(true){
+        // update entry k-mer
+        entryKmer = lookingKmers[idxOfMin];
+        entryInfo = lookingInfos[idxOfMin];
+
+        ///update looking k-mers
+        lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
+        lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
+        infoFileIdx[idxOfMin] ++;
+        if( diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] ){
+            lookingKmers[idxOfMin] = UINT64_MAX;
+            numOfincompletedFiles--;
+            if(numOfincompletedFiles == 0) break;
+        }
+        idxOfMin = smallest(lookingKmers, lookingInfos, taxIdListAtRank, numOfSplitFiles);
+
+        int hasSeenOtherStrains = 0;
+        while(taxIdListAtRank[entryInfo.sequenceID] == taxIdListAtRank[lookingInfos[idxOfMin].sequenceID]){
+            if(entryKmer != lookingKmers[idxOfMin]) break;
+
+            hasSeenOtherStrains += (taxIdList[entryInfo.sequenceID] != taxIdList[lookingInfos[idxOfMin].sequenceID]);
+
+            lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
+            lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
+            infoFileIdx[idxOfMin] ++;
+
+            if(diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] ){
+                lookingKmers[idxOfMin] = UINT64_MAX;
+                numOfincompletedFiles--;
+                if(numOfincompletedFiles == 0){
+                    endFlag = 1;
+                    break;
+                }
+            }
+            idxOfMin = smallest(lookingKmers, lookingInfos, taxIdListAtRank, numOfSplitFiles);
+        }
+
+        entryInfo.redundancy = (hasSeenOtherStrains > 0 || entryInfo.redundancy);
+        getDiffIdx(lastWrittenKmer, entryKmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx);
+        lastWrittenKmer = entryKmer;
+        writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx);
+        writtenKmerCnt++;
+
+        if(AminoAcid(lastWrittenKmer) != AAofTempSplitOffset && splitCheck == 1){
+            splitList[splitListIdx++] = {lastWrittenKmer, totalBufferIdx, totalInfoIdx};
+            splitCheck = 0;
+        }
+
+        if(writtenKmerCnt == offsetList[offsetListIdx]){
+            AAofTempSplitOffset = AminoAcid(lastWrittenKmer);
+            splitCheck = 1;
+            offsetListIdx++;
+        }
+
+        if(endFlag == 1) break;
+    }
+
+    cre->flushInfoBuf(infoBuffer, mergedInfoFile, infoBufferIdx);
+    cre->flushKmerBuf(diffBuffer, mergedDiffFile, diffBufferIdx);
+    fwrite(splitList, sizeof(DiffIdxSplit), SplitNum, diffIdxSplitFile);
+    for(int i = 0; i < SplitNum; i++){
+        cout<<splitList[i].ADkmer<< " "<<splitList[i].diffIdxOffset<< " "<<splitList[i].infoIdxOffset<<endl;
+    }
+    free(diffBuffer);
+    free(infoBuffer);
+    fclose(mergedDiffFile);
+    fclose(mergedInfoFile);
+    fclose(diffIdxSplitFile);
+
+    for(size_t file = 0; file < numOfSplitFiles; file++){
+        munmap(diffFileList[file].data, diffFileList[file].fileSize + 1);
+        munmap(infoFileList[file].data, infoFileList[file].fileSize + 1);
+    }
+    cout<<"Creating target DB is done"<<endl;
+    cout<<"Total k-mer count    : " << numOfKmerBeforeMerge <<endl;
+    cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
+
+    delete[] diffFileList;
+    delete[] infoFileList;
+    delete[] lookingInfos;
+    delete[] lookingKmers;
+    delete[] diffFileIdx;
+    delete[] infoFileIdx;
+}
+
+
 // Merge differential index and k-mer information files, reducing redundancy
 void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) {
     size_t writtenKmerCnt = 0;

@@ -8,6 +8,36 @@ IndexCreator::IndexCreator()
 IndexCreator::~IndexCreator() {
 }
 
+void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const char * outputFileName,
+                                              const vector<int> & taxIdListAtRank, const vector<int> & taxIdList,
+                                              const LocalParameters & par)
+{
+    ///Mmap the input fasta file
+    struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
+
+    ///Getting start and end position of each sequence
+    vector<Sequence> sequences;
+    getSeqSegmentsWithHead(sequences, seqFile);
+
+    // Sequences in the same split share the sequence to be used for training the prodigal.
+    vector<FastaSplit> splits;
+    getFastaSplits(taxIdListAtRank, splits, sequences);
+    size_t numOfSplits = splits.size();
+
+    bool * splitChecker = new bool[numOfSplits];
+    fill_n(splitChecker, numOfSplits, false);
+    TargetKmerBuffer kmerBuffer(kmerBufSize);
+    size_t processedSplitCnt = 0;
+    while(processedSplitCnt < numOfSplits){ ///check this condition
+        fillTargetKmerBuffer2(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank, par);
+        writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdList);
+    }
+
+    //free(kmerBuffer.buffer);
+    delete[] splitChecker;
+    munmap(seqFile.data, seqFile.fileSize + 1);
+}
+
 // It reads a reference sequence file and write a differential index file and target k-mer info file.
 void IndexCreator::startIndexCreatingParallel(const LocalParameters & par)
 {
