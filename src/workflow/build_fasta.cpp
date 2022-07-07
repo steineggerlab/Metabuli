@@ -108,47 +108,16 @@ int build_fasta(int argc, const char **argv, const Command &command)
 
     //Merge files
     cout<<"Merge reference DB files ... "<<endl;
-    int numOfSplits = idxCre.getNumOfFlush();
-    char diffIdxSplitFileName[300];
-    vector<char *> diffSplits;
-    vector<char *> infoSplits;
-    for(int split = 0; split < numOfSplits ; split++){
-        char * suffixedDiffIdxFileName = new char[300];
-        char * suffixedInfoFileName = new char[300];
-        sprintf(suffixedDiffIdxFileName, "%s/%d_diffIdx", dbDirectory, split);
-        sprintf(suffixedInfoFileName, "%s/%d_info", dbDirectory, split);
-        diffSplits.push_back(suffixedDiffIdxFileName);
-        infoSplits.push_back(suffixedInfoFileName);
-    }
-
-    char mergedDiffFileName[300];
-    char mergedInfoFileName[300];
-    char parametersFileName[300];
-    sprintf(mergedDiffFileName, "%s/diffIdx", dbDirectory);
-    sprintf(mergedInfoFileName, "%s/info", dbDirectory);
-    sprintf(parametersFileName, "%s/parameters.txt", dbDirectory);
-    sprintf(diffIdxSplitFileName, "%s/split", dbDirectory);
-
     FileMerger merger(par);
-    merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtSpecies, taxIDs);
-
-    for(int split = 0; split < numOfSplits ; split++){
-        delete[] diffSplits[split];
-        delete[] infoSplits[split];
-    }
-    cout<<"done"<<endl;
-
+    merger.mergeTargetFiles(par, idxCre.getNumOfFlush());
+    
     // Write parameters used
     ofstream params;
-    params.open(parametersFileName);
+    params.open(string(dbDirectory) + "/parameters");
     params.write(("Mask for spaced k-mer: " + par.spaceMask).c_str(), (int)("Mask for spaced k-mer: " + par.spaceMask).length());
     params.write(string("Number of alphabets for encoding amino acids: " + to_string(par.reducedAA)).c_str(),
                  (int) ("Number of alphabets for encoding amino acids: " + to_string(par.reducedAA)).length());
     cout<<"Reference DB files you need are as below"<<endl;
-    cout<<mergedDiffFileName<<endl;
-    cout<<mergedInfoFileName<<endl;
-    cout<<taxIdFileName<<endl;
-    cout<<diffIdxSplitFileName<<endl;
 
     return 0;
 }
