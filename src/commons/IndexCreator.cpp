@@ -163,7 +163,6 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                         kseq_destroy(seq);
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
-                        cout<<seq->name.s<<endl;
                         seqIterator.getMinHashList(currentList, seq->seq.s);
                         if(seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, strlen(seq->seq.s))){
                             prodigal.getPredictedGenes(seq->seq.s);

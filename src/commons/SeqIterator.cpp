@@ -370,7 +370,7 @@ void
 SeqIterator::addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev, const int &kmerCnt, const int &frame,
                                   int seqLen) {
     int start = (frame % 3) + (kmerCnt * 3);
-    kmer <<= bitsFor8Codons + 1;
+    kmer <<= bitsFor8Codons;
     size_t end = seqLen - 1;
 
     if (forOrRev == 0) { // Forward
