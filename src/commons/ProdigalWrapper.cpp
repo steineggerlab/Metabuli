@@ -65,7 +65,7 @@ trainASpecies(char * genome){
     tinf.st_wt = 4.35;
     tinf.trans_table = 11;
 
-    fprintf(stderr, "Request:  Single Genome, Phase:  Training\n");
+//    fprintf(stderr, "Request:  Single Genome, Phase:  Training\n");
 //    fprintf(stderr, "Reading in the sequence(s) to train...\n");
 
     slen = getNextSeq(genome, 1);
