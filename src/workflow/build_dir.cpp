@@ -10,7 +10,7 @@ int build_dir(int argc, const char **argv, const Command &command)
 {
     LocalParameters &par = LocalParameters::getLocalInstance();
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
-    
+
     //Make files of differential indexing and information of k-mers
     cout<<"Start to creat reference DB file(s) ... ";
     IndexCreator idxCre;
