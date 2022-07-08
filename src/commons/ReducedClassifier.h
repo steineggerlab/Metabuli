@@ -24,7 +24,7 @@ protected:
 
 
 public:
-    uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2)  {
+    uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2) override {
         uint8_t hammingSum = 0;
         hammingSum += hammingLookup[GET_4_BITS(kmer1)][GET_4_BITS(kmer2)];
         hammingSum += hammingLookup[GET_4_BITS(kmer1 >> 4U)][GET_4_BITS(kmer2 >> 4U)];
@@ -37,7 +37,7 @@ public:
         return hammingSum;
     }
 
-    uint16_t getHammings(uint64_t kmer1, uint64_t kmer2) {  //hammings 87654321
+    uint16_t getHammings(uint64_t kmer1, uint64_t kmer2) override {  //hammings 87654321
         uint16_t hammings = 0;
         for (int i = 0; i < 8; i++) {
             hammings |= hammingLookup[GET_4_BITS(kmer1)][GET_4_BITS(kmer2)] << 2U * i;

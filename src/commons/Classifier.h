@@ -182,9 +182,9 @@ protected:
                     vector<size_t> &selectedMatches, vector<uint8_t> &selectedHammingSum,
                     vector<uint16_t> &rightEndHammings, int i);
 
-    uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2);
+    virtual uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2);
 
-    uint16_t getHammings(uint64_t kmer1, uint64_t kmer2);
+    virtual uint16_t getHammings(uint64_t kmer1, uint64_t kmer2);
 
     void moveMatches(Match *dest, Match *src, int &matchNum);
 
