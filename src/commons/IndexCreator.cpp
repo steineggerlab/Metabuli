@@ -129,6 +129,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                 // Load FASTA file for training
                 struct MmapedData<char> seqFile = mmapData<char>(taxid2fasta[splits[i].training].fasta.c_str());
                 getSeqSegmentsWithHead(sequences, seqFile);
+                sort(sequences.begin(), sequences.end(), [](const Sequence & a, const Sequence & b){return a.length > b.length;});
 
                 // Train Prodigal with a training sequence of i th split
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[sequences[0].start]), sequences[0].length);
@@ -158,6 +159,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                 for(size_t fastaCnt = 0; fastaCnt < splits[i].cnt; fastaCnt++ ) {
                     struct MmapedData<char> seqFile = mmapData<char>(taxid2fasta[splits[i].offset + fastaCnt].fasta.c_str());
                     getSeqSegmentsWithHead(sequences, seqFile);
+                    sort(sequences.begin(), sequences.end(), [](const Sequence & a, const Sequence & b){return a.length > b.length;});
                     for(size_t assembly = 0; assembly < sequences.size(); assembly ++){
                         buffer = {const_cast<char *>(&seqFile.data[sequences[assembly].start]), static_cast<size_t>(sequences[assembly].length)};
                         kseq_destroy(seq);
@@ -211,6 +213,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                     for(size_t fastaCnt = 0; fastaCnt < splits[i].cnt; fastaCnt++){
                         struct MmapedData<char> seqFile = mmapData<char>(taxid2fasta[splits[i].offset + fastaCnt].fasta.c_str());
                         getSeqSegmentsWithHead(sequences, seqFile);
+                        sort(sequences.begin(), sequences.end(), [](const Sequence & a, const Sequence & b){return a.length > b.length;});
                         // For each genome
                         for(size_t assembly = 0; assembly < sequences.size(); assembly ++) {
                             buffer = {const_cast<char *>(&seqFile.data[sequences[assembly].start]), static_cast<size_t>(sequences[assembly].length)};
@@ -409,7 +412,7 @@ void IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, Mmaped
     }
     seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
 //    for(size_t i = 0; i)
-    sort(seqSegments.begin(), seqSegments.end(), [](const Sequence & a, const Sequence & b){return a.length > b.length;});
+
 }
 
 void IndexCreator::getFastaSplits2(const vector<TaxId2Fasta> & taxid2fasta, vector<FastaSplit> & fastaSplit){

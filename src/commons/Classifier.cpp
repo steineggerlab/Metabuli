@@ -818,13 +818,13 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
                                  const LocalParameters &par) {
     int queryLength = queryList[currentQuery].queryLength; //queryList[currentQuery].queryLength; 13497
     TaxID selectedTaxon;
-//    if (PRINT) {
-//        cout << "# " << currentQuery << endl;
-//        for (size_t i = offset; i < end + 1; i++) {
-//            cout << matchList[i].genusTaxID << " " << matchList[i].speciesTaxID << " " << matchList[i].taxID << " " <<
-//                 matchList[i].position << " " << int(matchList[i].hamming) << endl;
-//        }
-//    }
+    if (PRINT) {
+        cout << "# " << currentQuery << endl;
+        for (size_t i = offset; i < end + 1; i++) {
+            cout << matchList[i].genusTaxID << " " << matchList[i].speciesTaxID << " " << matchList[i].taxID << " " <<
+                 matchList[i].position << " " << int(matchList[i].hamming) << endl;
+        }
+    }
 
     // Get the best genus for current query
     vector<Match> matchesForLCA;
@@ -843,14 +843,14 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         res = getMatchesOfTheBestGenus(matchesForLCA, matchList, end, offset, queryLength, highRankScore);
     }
 
-//    if (PRINT) {
-//        cout << "# " << currentQuery << " filtered" << endl;
-//        for (size_t i = 0; i < matchesForLCA.size(); i++) {
-//            cout << matchesForLCA[i].genusTaxID << " " << matchesForLCA[i].speciesTaxID << " " << matchesForLCA[i].taxID
-//                 << " " << matchesForLCA[i].position << " " << int(matchesForLCA[i].hamming)
-//                 << endl;
-//        }
-//    }
+    if (PRINT) {
+        cout << "# " << currentQuery << " filtered" << endl;
+        for (size_t i = 0; i < matchesForLCA.size(); i++) {
+            cout << matchesForLCA[i].genusTaxID << " " << matchesForLCA[i].speciesTaxID << " " << matchesForLCA[i].taxID
+                 << " " << matchesForLCA[i].position << " " << int(matchesForLCA[i].hamming)
+                 << endl;
+        }
+    }
 
     // If there is no proper genus for current query, it is un-classified.
     if (res == 4) {
@@ -885,16 +885,16 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
         queryList[currentQuery].score = highRankScore;
-//        if (PRINT) {
-//            cout << "# " << currentQuery << " " << res << endl;
-//            for (size_t i = 0; i < taxIdList.size(); i++) {
-//                cout << i << " " << matchesForLCA[i].position << " " <<
-//                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) << " "
-//                     << endl;
-//            }
-//            cout << "Score: " << highRankScore << " " << selectedTaxon << " "
-//                 << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
-//        }
+        if (PRINT) {
+            cout << "# " << currentQuery << " " << res << endl;
+            for (size_t i = 0; i < taxIdList.size(); i++) {
+                cout << i << " " << matchesForLCA[i].position << " " <<
+                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) << " "
+                     << endl;
+            }
+            cout << "Score: " << highRankScore << " " << selectedTaxon << " "
+                 << ncbiTaxonomy.taxonNode(selectedTaxon)->rank << endl;
+        }
         return;
     }
 
@@ -969,16 +969,16 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
     queryList[currentQuery].score = speciesScrCov.score;
     queryList[currentQuery].newSpecies = false;
 
-//    if (PRINT) {
-//        cout << "# " << currentQuery << endl;
-//        for (size_t i = 0; i < matchesForLCA.size(); i++) {
-//            cout << i << " " << matchesForLCA[i].position << " " <<
-//                 matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) << endl;
-//        }
-//        cout << "Score: " << speciesScrCov.score << "  " << selectedSpecies << " "
-//             << ncbiTaxonomy.taxonNode(selectedSpecies)->rank
-//             << endl;
-//    }
+    if (PRINT) {
+        cout << "# " << currentQuery << endl;
+        for (size_t i = 0; i < matchesForLCA.size(); i++) {
+            cout << i << " " << matchesForLCA[i].position << " " <<
+                 matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) << endl;
+        }
+        cout << "Score: " << speciesScrCov.score << "  " << selectedSpecies << " "
+             << ncbiTaxonomy.taxonNode(selectedSpecies)->rank
+             << endl;
+    }
 }
 
 int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
@@ -1306,12 +1306,12 @@ void Classifier::constructMatchCombination(vector<Match> &filteredMatches,
     scoreOfEachGenus.push_back(score);
     matchesForEachGenus.push_back(matches);
 
-//    if (PRINT) {
-//        cout << filteredMatches[0].genusTaxID << " " << coveredLength << " " << hammingSum << " "
-//             << ((float) coveredLength - hammingSum) / (float) queryLength <<
-//             " " << matches.size()
-//             << endl;
-//    }
+    if (PRINT) {
+        cout << filteredMatches[0].genusTaxID << " " << coveredLength << " " << hammingSum << " "
+             << ((float) coveredLength - hammingSum) / (float) queryLength <<
+             " " << matches.size()
+             << endl;
+    }
 }
 
 void Classifier::constructMatchCombination_paired(vector<Match> &filteredMatches,
@@ -1418,12 +1418,12 @@ void Classifier::constructMatchCombination_paired(vector<Match> &filteredMatches
     scoreOfEachGenus.push_back(score);
     matchesForEachGenus.push_back(matches);
 
-//    if (PRINT) {
-//        cout << filteredMatches[0].genusTaxID << " " << coveredLength_read1 + coveredLength_read2 << " " << hammingSum
-//             << " " << score <<
-//             " " << matches.size()
-//             << endl;
-//    }
+    if (PRINT) {
+        cout << filteredMatches[0].genusTaxID << " " << coveredLength_read1 + coveredLength_read2 << " " << hammingSum
+             << " " << score <<
+             " " << matches.size()
+             << endl;
+    }
 }
 
 TaxID Classifier::classifyFurther2(const vector<Match> &matches,
