@@ -273,10 +273,12 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     // get the first k-mer to write
     for(size_t file = 0; file < numOfSplits; file++){
         lookingKmers[file] = getNextKmer(0, diffFileList[file], diffFileIdx[file]);
+        cout<<"16"<<endl;
         lookingInfos[file] = infoFileList[file].data[0];
+        cout<<"17"<<endl;
         infoFileIdx[file] ++;
     }
-    cout<<"16"<<endl;
+
 
     size_t idxOfMin = smallest(lookingKmers, lookingInfos, taxIdListAtSpecies, numOfSplits);
     uint64_t lastWrittenKmer = 0;
