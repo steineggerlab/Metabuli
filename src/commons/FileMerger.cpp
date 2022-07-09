@@ -276,6 +276,7 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
         lookingInfos[file] = infoFileList[file].data[0];
         infoFileIdx[file] ++;
     }
+    cout<<"16"<<endl;
 
     size_t idxOfMin = smallest(lookingKmers, lookingInfos, taxIdListAtSpecies, numOfSplits);
     uint64_t lastWrittenKmer = 0;
@@ -291,6 +292,7 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     int endFlag = 0;
 
     size_t numOfincompletedFiles = numOfSplits;
+    cout<<"17"<<endl;
     while(true){
         // update entry k-mer
         entryKmer = lookingKmers[idxOfMin];
