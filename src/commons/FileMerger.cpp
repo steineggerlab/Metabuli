@@ -250,7 +250,9 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     cout<<"11"<<endl;
     for (int file = 0; file < numOfSplits; file++) {
         diffFileList[file] = mmapData<uint16_t>((dbDirectory + "/" + to_string(file) + "_diffIdx").c_str());
+        cout<<(dbDirectory + "/" + to_string(file) + "_diffIdx").c_str()<<endl;
         infoFileList[file] = mmapData<TargetKmerInfo>((dbDirectory + "/" + to_string(file) + "_info").c_str());
+        cout<<(dbDirectory + "/" + to_string(file) + "_info").c_str()<<endl;
         maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
         numOfKmerBeforeMerge += infoFileList[file].fileSize / sizeof(TargetKmerInfo);
     }
