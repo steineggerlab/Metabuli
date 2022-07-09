@@ -279,6 +279,7 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
         lookingInfos[file] = infoFileList[file].data[0];
         cout<<"17"<<endl;
         infoFileIdx[file] ++;
+        cout<<"18"<<endl;
     }
 
 
