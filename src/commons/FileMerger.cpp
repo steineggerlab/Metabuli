@@ -221,7 +221,6 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
 
     // Buffers to fill
     uint16_t * diffBuffer = (uint16_t *)malloc(sizeof(uint16_t) * kmerBufSize);
-    cout<<"1"<<endl;
     size_t diffBufferIdx = 0;
     size_t totalBufferIdx = 0;
     TargetKmerInfo * infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * kmerBufSize);
@@ -231,32 +230,20 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     // Prepare files to merge
     size_t numOfKmerBeforeMerge = 0;
     uint64_t * lookingKmers = new uint64_t[numOfSplits];
-    cout<<"4"<<endl;
     auto * lookingInfos = new TargetKmerInfo[numOfSplits];
-    cout<<"5"<<endl;
     auto * diffFileIdx = new size_t[numOfSplits];
-    cout<<"9"<<endl;
     memset(diffFileIdx, 0, numOfSplits * sizeof(size_t));
-    cout<<"6"<<endl;
     auto * infoFileIdx = new size_t[numOfSplits];
-    cout<<"8"<<endl;
     memset(infoFileIdx, 0, numOfSplits * sizeof(size_t));
-    cout<<"7"<<endl;
     auto * maxIdxOfEachFiles = new size_t[numOfSplits];
-    cout<<"12"<<endl;
     struct MmapedData<uint16_t> *diffFileList = new struct MmapedData<uint16_t>[numOfSplits];
-    cout<<"10"<<endl;
     struct MmapedData<TargetKmerInfo> *infoFileList = new struct MmapedData<TargetKmerInfo>[numOfSplits];
-    cout<<"11"<<endl;
     for (int file = 0; file < numOfSplits; file++) {
-        diffFileList[file] = mmapData<uint16_t>((dbDirectory + to_string(file) + "_diffIdx").c_str());
-        cout<<(dbDirectory + "/" + to_string(file) + "_diffIdx").c_str()<<endl;
-        infoFileList[file] = mmapData<TargetKmerInfo>((dbDirectory + to_string(file) + "_info").c_str());
-        cout<<(dbDirectory + "/" + to_string(file) + "_info").c_str()<<endl;
+        diffFileList[file] = mmapData<uint16_t>((dbDirectory + "/" + to_string(file) + "_diffIdx").c_str());
+        infoFileList[file] = mmapData<TargetKmerInfo>((dbDirectory + "/" + to_string(file) + "_info").c_str());
         maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
         numOfKmerBeforeMerge += infoFileList[file].fileSize / sizeof(TargetKmerInfo);
     }
-    cout<<"13"<<endl;
     // To make differential index splits
     uint64_t AAofTempSplitOffset = UINT64_MAX;
     size_t sizeOfSplit = numOfKmerBeforeMerge / (SplitNum - 1);
@@ -267,19 +254,14 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     }
     offsetList[SplitNum] = UINT64_MAX;
     DiffIdxSplit splitList[SplitNum];
-    cout<<"14"<<endl;
     memset(splitList, 0, sizeof(DiffIdxSplit) * SplitNum);
-    cout<<"15"<<endl;
     int splitListIdx = 1;
 
     // get the first k-mer to write
     for(size_t file = 0; file < numOfSplits; file++){
         lookingKmers[file] = getNextKmer(0, diffFileList[file], diffFileIdx[file]);
-        cout<<"16"<<endl;
         lookingInfos[file] = infoFileList[file].data[0];
-        cout<<"17"<<endl;
         infoFileIdx[file] ++;
-        cout<<"18"<<endl;
     }
 
 
@@ -297,7 +279,6 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     int endFlag = 0;
 
     size_t numOfincompletedFiles = numOfSplits;
-    cout<<"17"<<endl;
     while(true){
         // update entry k-mer
         entryKmer = lookingKmers[idxOfMin];
