@@ -18,10 +18,10 @@ int build_dir(int argc, const char **argv, const Command &command)
     cout<<"done"<<endl;
 
     //Merge files
-    cout<<"Merge reference DB files ... "<<endl;
-    int numOfSplits = idxCre.getNumOfFlush();
-    FileMerger merger(par);
-    merger.mergeTargetFiles(par, numOfSplits);
+//    cout<<"Merge reference DB files ... "<<endl;
+//    int numOfSplits = idxCre.getNumOfFlush();
+//    FileMerger merger(par);
+//    merger.mergeTargetFiles(par, numOfSplits);
 
     return 0;
 }

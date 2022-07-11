@@ -106,7 +106,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
         SeqIterator seqIterator(par);
         size_t posToWrite;
         size_t numOfBlocks;
-        size_t totalKmerCntForOneTaxID;
+        size_t kmerCntOfCurrSplit;
         vector<uint64_t> intergenicKmerList;
         vector<PredictedBlock> blocks;
         priority_queue<uint64_t> standardList;
@@ -118,7 +118,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
         vector<size_t> numOfBlocksList;
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < splits.size() ; i++) {
-            if((checker[i] == false) && (!hasOverflow)) {
+            if(!checker[i] && (!hasOverflow)) {
                 // Init
                 intergenicKmerList.clear();
                 strandness.clear();
@@ -127,12 +127,12 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                 numOfBlocksList.clear();
 
                 // Load FASTA file for training
-                struct MmapedData<char> seqFile = mmapData<char>(taxid2fasta[splits[i].training].fasta.c_str());
-                getSeqSegmentsWithHead(sequences, seqFile);
+                struct MmapedData<char> fastaForTraining = mmapData<char>(taxid2fasta[splits[i].training].fasta.c_str());
+                getSeqSegmentsWithHead(sequences, fastaForTraining);
                 sort(sequences.begin(), sequences.end(), [](const Sequence & a, const Sequence & b){return a.length > b.length;});
 
                 // Train Prodigal with a training sequence of i th split
-                kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[sequences[0].start]), sequences[0].length);
+                kseq_buffer_t buffer(const_cast<char *>(&fastaForTraining.data[sequences[0].start]), sequences[0].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
                 lengthOfTrainingSeq = strlen(seq->seq.s);
@@ -143,7 +143,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                 }else{
                     prodigal.trainASpecies(seq->seq.s);
                 }
-                munmap(seqFile.data, seqFile.fileSize + 1);
+                munmap(fastaForTraining.data, fastaForTraining.fileSize + 1);
                 sequences.clear();
 
                 // Generate intergenic 23-mer list
@@ -152,7 +152,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
 
                 // Get min k-mer hash list for determining strandness
                 seqIterator.getMinHashList(standardList, seq->seq.s);
-
+                kseq_destroy(seq);
                 // Getting all the sequence blocks of current split. Each block will be translated later separately.
                 numOfBlocks = 0;
 
@@ -162,7 +162,6 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                     sort(sequences.begin(), sequences.end(), [](const Sequence & a, const Sequence & b){return a.length > b.length;});
                     for(size_t assembly = 0; assembly < sequences.size(); assembly ++){
                         buffer = {const_cast<char *>(&seqFile.data[sequences[assembly].start]), static_cast<size_t>(sequences[assembly].length)};
-                        kseq_destroy(seq);
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
                         seqIterator.getMinHashList(currentList, seq->seq.s);
@@ -186,6 +185,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                             numOfBlocksList.push_back(numOfBlocks);
                         }
                         currentList = priority_queue<uint64_t>();
+                        kseq_destroy(seq);
                     }
                     munmap(seqFile.data, seqFile.fileSize + 1);
                     sequences.clear();
@@ -194,19 +194,18 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                     }
                 }
                 if(hasOverflow){
-                    kseq_destroy(seq);
                     blocks.clear();
                     continue;
                 }
                 // Calculate the number of k-mers to reserve memory of k-mer buffer
-                totalKmerCntForOneTaxID = 0;
+                kmerCntOfCurrSplit = 0;
                 for(size_t block = 0; block < numOfBlocks; block++){
-                    totalKmerCntForOneTaxID += seqIterator.getNumOfKmerForBlock(blocks[block]);
+                    kmerCntOfCurrSplit += seqIterator.getNumOfKmerForBlock(blocks[block]);
                 }
 
                 // Fill k-mer buffer with k-mers of current split if the buffer has enough space
-                posToWrite = kmerBuffer.reserveMemory(totalKmerCntForOneTaxID);
-                if(posToWrite + totalKmerCntForOneTaxID < kmerBuffer.bufferSize){
+                posToWrite = kmerBuffer.reserveMemory(kmerCntOfCurrSplit);
+                if(posToWrite + kmerCntOfCurrSplit < kmerBuffer.bufferSize){
                     size_t start = 0;
                     int assemblyIdx = 0;
                     // For current split
@@ -217,7 +216,6 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                         // For each genome
                         for(size_t assembly = 0; assembly < sequences.size(); assembly ++) {
                             buffer = {const_cast<char *>(&seqFile.data[sequences[assembly].start]), static_cast<size_t>(sequences[assembly].length)};
-                            kseq_destroy(seq);
                             seq = kseq_init(&buffer);
                             kseq_read(seq);
                             size_t end = numOfBlocksList[assemblyIdx];
@@ -236,6 +234,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                             }
                             start = numOfBlocksList[assemblyIdx];
                             assemblyIdx ++;
+                            kseq_destroy(seq);
                         }
                         sequences.clear();
                         munmap(seqFile.data, seqFile.fileSize + 1);
@@ -244,11 +243,10 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
                     __sync_fetch_and_add(&processedSplitCnt, 1);
                 }else {
                     // Withdraw the reservation if the buffer is full.
-                   __sync_fetch_and_sub(&kmerBuffer.startIndexOfReserve, totalKmerCntForOneTaxID);
-                    cout<<"buffer is full"<<endl;
                     hasOverflow = true;
+                   __sync_fetch_and_sub(&kmerBuffer.startIndexOfReserve, kmerCntOfCurrSplit);
+                    cout<<"buffer is full"<<endl;
                 }
-                kseq_destroy(seq);
                 blocks.clear();
             }
         }
