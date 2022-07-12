@@ -12,6 +12,7 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
 
     // Mask for spaced k-mer
     size_t maskLen = par.spaceMask.length();
+    cout<<"mask "<<maskLen<<" "<<par.spaceMask<<endl;
     mask = new uint32_t[maskLen];
     mask_int = new int[maskLen];
     spaceNum = 0;
