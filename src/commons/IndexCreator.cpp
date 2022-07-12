@@ -323,6 +323,7 @@ size_t IndexCreator::fillTargetKmerBuffer3(TargetKmerBuffer & kmerBuffer,
 
                     // Extract k-mer from the training sequence.
                     prodigal.removeCompletelyOverlappingGenes();
+                    blocks.clear();
                     seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
                                                       prodigal.fng, strlen(seq->seq.s),
                                                       numOfBlocks, intergenicKmerList, seq->seq.s);
