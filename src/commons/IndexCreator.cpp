@@ -925,7 +925,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
 size_t IndexCreator::estimateKmerNum(const vector<TaxId2Fasta> & taxid2fasta, const FastaSplit & split){
     struct stat stat1{};
     size_t kmerNum = 0;
-    for(size_t i = split.offset ; i < split.cnt; i ++){
+    for(size_t i = split.offset ; i < split.offset + split.cnt; i ++){
         int temp = stat(taxid2fasta[i].fasta.c_str(), &stat1);
         size_t charNum = stat1.st_size;
         kmerNum += charNum - kmerLength + 1;
