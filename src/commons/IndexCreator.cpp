@@ -288,7 +288,7 @@ size_t IndexCreator::fillTargetKmerBuffer3(TargetKmerBuffer & kmerBuffer,
                 standardList = priority_queue<uint64_t>();
                 sequences.clear();
                 kmerCntOfCurrSplit = estimateKmerNum(taxid2fasta, splits[i]);
-                cout<<kmerCntOfCurrSplit<<endl;
+                cout<<i<<" "<<taxid2fasta[splits[i].offset].fasta<<endl;
                 posToWrite = kmerBuffer.reserveMemory(kmerCntOfCurrSplit);
                 if (posToWrite + kmerCntOfCurrSplit < kmerBuffer.bufferSize) {
                     // Load FASTA file for training
