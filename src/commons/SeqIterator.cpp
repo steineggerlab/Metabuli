@@ -18,11 +18,11 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
     spaceNum_int = 0;
     for(size_t i = 0; i < maskLen; i++){
         mask[i] = par.spaceMask[i] - 48;
-        cout<<mask[i];
         mask_int[i] = par.spaceMask[i] - 48;
         spaceNum += (mask[i] == 0);
         spaceNum_int += (mask[i] == 0);
     }
+    cout<<"sp num "<<spaceNum<<endl;
     // powers
     size_t pow = 1;
     size_t numOfAlphabets = 0;
