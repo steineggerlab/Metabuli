@@ -82,7 +82,7 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par)
 
     TargetKmerBuffer kmerBuffer(10'000'000'000);
     while(processedSplitCnt < numOfSplits){ // Check this condition
-        fillTargetKmerBuffer2(kmerBuffer, splitChecker, processedSplitCnt, splits, taxid2fasta, par);
+        fillTargetKmerBuffer3(kmerBuffer, splitChecker, processedSplitCnt, splits, taxid2fasta, par);
         writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, dbDirectory, taxid2fasta);
     }
 
