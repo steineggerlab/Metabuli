@@ -422,7 +422,7 @@ void IndexCreator::extractKmerFromFasta(SeqIterator & seqIterator, MmapedData<ch
 }
 
 ///This function sort the TargetKmerBuffer, do redundancy reducing task, write the differential index of them
-void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName, const vector<TaxId2Fasta> & taxid2fasta,)
+void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName, const vector<TaxId2Fasta> & taxid2fasta)
 {
     // Write a split file, which will be merged later.
     char suffixedDiffIdxFileName[300];
