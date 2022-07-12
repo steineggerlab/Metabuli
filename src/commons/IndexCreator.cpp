@@ -455,7 +455,7 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
     }
 
     // Find the first index of meaningful k-mer
-    size_t startIdx;
+    size_t startIdx = 0;
     for(size_t i = 0; i < kmerNum ; i++){
         if(kmerBuffer[i].taxIdAtRank != 0){
             startIdx = i;
@@ -464,12 +464,12 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
     }
 
     // Redundancy reduction task
-    TargetKmer lookingKmer = kmerBuffer[0];
+    TargetKmer lookingKmer = kmerBuffer[0 + startIdx];
     size_t write = 0;
     int endFlag = 0;
     int hasSeenOtherStrains;
 
-    for(size_t i = 1 ; i < kmerNum ; i++) {
+    for(size_t i = 1 + startIdx; i < kmerNum ; i++) {
         hasSeenOtherStrains = 0;
         while(lookingKmer.taxIdAtRank == kmerBuffer[i].taxIdAtRank){
             if (lookingKmer.ADkmer != kmerBuffer[i].ADkmer) {
