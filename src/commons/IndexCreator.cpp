@@ -288,7 +288,6 @@ size_t IndexCreator::fillTargetKmerBuffer3(TargetKmerBuffer & kmerBuffer,
                 standardList = priority_queue<uint64_t>();
                 sequences.clear();
                 kmerCntOfCurrSplit = estimateKmerNum(taxid2fasta, splits[i]);
-                cout<<i<<" "<<taxid2fasta[splits[i].offset].fasta<<" "<<kmerCntOfCurrSplit<<endl;
                 posToWrite = kmerBuffer.reserveMemory(kmerCntOfCurrSplit);
                 if (posToWrite + kmerCntOfCurrSplit < kmerBuffer.bufferSize) {
                     // Load FASTA file for training
@@ -604,9 +603,6 @@ void IndexCreator::getFastaSplits2(const vector<TaxId2Fasta> & taxid2fasta, vect
             i++;
         }
         fastaSplit.emplace_back(training, offset, splitSize);
-    }
-    for(auto x:fastaSplit){
-        cout<<x.training<<" "<<x.offset<<" "<<x.cnt<<endl;
     }
 }
 void IndexCreator::getFastaSplits(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqs){
