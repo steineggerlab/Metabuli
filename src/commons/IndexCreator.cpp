@@ -314,7 +314,7 @@ size_t IndexCreator::fillTargetKmerBuffer3(TargetKmerBuffer & kmerBuffer,
                         prodigal.trainASpecies(seq->seq.s);
                     }
                     munmap(fastaForTraining.data, fastaForTraining.fileSize + 1);
-                    sequences.clear();
+
 
                     // Generate intergenic 23-mer list
                     prodigal.getPredictedGenes(seq->seq.s);
@@ -324,8 +324,9 @@ size_t IndexCreator::fillTargetKmerBuffer3(TargetKmerBuffer & kmerBuffer,
 
                     // Get min k-mer hash list for determining strandness
                     seqIterator.getMinHashList(standardList, seq->seq.s);
-                    kseq_destroy(seq);
 
+                    sequences.clear();
+                    kseq_destroy(seq);
                     // Getting all the sequence blocks of current split. Each block will be translated later separately.
                     numOfBlocks = 0;
                     for (size_t fastaCnt = 0; fastaCnt < splits[i].cnt; fastaCnt++) {
