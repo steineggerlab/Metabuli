@@ -272,7 +272,7 @@ size_t IndexCreator::fillTargetKmerBuffer3(TargetKmerBuffer & kmerBuffer,
         ProdigalWrapper prodigal;
         SeqIterator seqIterator(par);
         size_t posToWrite;
-        size_t numOfBlocks;
+        size_t numOfBlocks = 0;
         size_t kmerCntOfCurrSplit;
         vector<uint64_t> intergenicKmerList;
         vector<PredictedBlock> blocks;
@@ -288,6 +288,7 @@ size_t IndexCreator::fillTargetKmerBuffer3(TargetKmerBuffer & kmerBuffer,
                 standardList = priority_queue<uint64_t>();
                 sequences.clear();
                 kmerCntOfCurrSplit = estimateKmerNum(taxid2fasta, splits[i]);
+                cout<<kmerCntOfCurrSplit<<endl;
                 posToWrite = kmerBuffer.reserveMemory(kmerCntOfCurrSplit);
                 if (posToWrite + kmerCntOfCurrSplit < kmerBuffer.bufferSize) {
                     // Load FASTA file for training
@@ -334,12 +335,12 @@ size_t IndexCreator::fillTargetKmerBuffer3(TargetKmerBuffer & kmerBuffer,
                     kseq_destroy(seq);
                     if(sequences.size() > 1) {
                         extractKmerFromFasta(seqIterator, fastaForTraining, standardList, lengthOfTrainingSeq,
-                                             sequences,
-                                             prodigal, intergenicKmerList, kmerBuffer, posToWrite, splits[i].training,
-                                             taxid2fasta[splits[i].training].species, 1);
+                                             sequences, prodigal, intergenicKmerList, kmerBuffer, posToWrite,
+                                             splits[i].training,taxid2fasta[splits[i].training].species, 1);
 
                     }
                     munmap(fastaForTraining.data, fastaForTraining.fileSize + 1);
+                    sequences.clear();
 
                     // For each FASTA file...
                     for (size_t fastaCnt = 1; fastaCnt < splits[i].cnt; fastaCnt++) {
@@ -351,7 +352,7 @@ size_t IndexCreator::fillTargetKmerBuffer3(TargetKmerBuffer & kmerBuffer,
                                     prodigal, intergenicKmerList, kmerBuffer, posToWrite, splits[i].offset + fastaCnt,
                                     taxid2fasta[splits[i].training].species, 0);
                         munmap(seqFile.data, seqFile.fileSize + 1);
-                        sequences.clear();
+
                     }
                     checker[i] = true;
                     __sync_fetch_and_add(&processedSplitCnt, 1);
