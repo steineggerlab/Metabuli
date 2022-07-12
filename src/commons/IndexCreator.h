@@ -69,6 +69,13 @@ private:
                                         const vector<int> & taxIdList,
                                         const LocalParameters & par);
 
+    static size_t fillTargetKmerBuffer3(TargetKmerBuffer & kmerBuffer,
+                                        bool * checker,
+                                        size_t & processedTaxIdCnt,
+                                        const vector<FastaSplit> & splits,
+                                        const vector<TaxId2Fasta> & taxid2fasta,
+                                        const LocalParameters & par);
+
 
 
     static void getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
@@ -85,6 +92,7 @@ private:
 
     void load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
 
+    static size_t estimateKmerNum(const vector<TaxId2Fasta> & taxid2fasta, const FastaSplit & split);
 public:
     static void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
     static void getSeqSegmentsWithHead2(vector<Sequence> & seqSegments, const char * seqFileName);
