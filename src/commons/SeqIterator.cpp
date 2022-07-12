@@ -12,8 +12,8 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
 
     // Mask for spaced k-mer
     size_t maskLen = par.spaceMask.length();
-    mask = new uint32_t[maskLen];
-    mask_int = new int[maskLen];
+    mask = new uint32_t[maskLen+1];
+    mask_int = new int[maskLen+1];
     spaceNum = 0;
     spaceNum_int = 0;
     for(size_t i = 0; i < maskLen; i++){
@@ -22,7 +22,7 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
         spaceNum += (mask[i] == 0);
         spaceNum_int += (mask[i] == 0);
     }
-    cout<<"sp num "<<spaceNum<<endl;
+
     // powers
     size_t pow = 1;
     size_t numOfAlphabets = 0;
