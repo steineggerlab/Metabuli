@@ -76,6 +76,11 @@ private:
                                         const vector<TaxId2Fasta> & taxid2fasta,
                                         const LocalParameters & par);
 
+    static void extractKmerFromFasta(SeqIterator &seqIterator, MmapedData<char> &seqFile, priority_queue<uint64_t> &standardList,
+                     size_t lengthOfTrainingSeq, const vector<Sequence> &sequences, ProdigalWrapper &prodigal,
+                     vector<uint64_t> &intergenicKmerList, TargetKmerBuffer &kmerBuffer, size_t posToWrite,
+                     uint32_t seqID, int taxIdAtRank, size_t startIdx)
+
 
 
     static void getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);

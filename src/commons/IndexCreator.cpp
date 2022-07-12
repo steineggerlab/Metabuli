@@ -277,9 +277,7 @@ size_t IndexCreator::fillTargetKmerBuffer3(TargetKmerBuffer & kmerBuffer,
         vector<uint64_t> intergenicKmerList;
         vector<PredictedBlock> blocks;
         priority_queue<uint64_t> standardList;
-        priority_queue<uint64_t> currentList;
         size_t lengthOfTrainingSeq;
-        char *reverseCompliment;
         vector<Sequence> sequences;
 
 #pragma omp for schedule(dynamic, 1)
@@ -289,7 +287,6 @@ size_t IndexCreator::fillTargetKmerBuffer3(TargetKmerBuffer & kmerBuffer,
                 intergenicKmerList.clear();
                 standardList = priority_queue<uint64_t>();
                 sequences.clear();
-
                 kmerCntOfCurrSplit = estimateKmerNum(taxid2fasta, splits[i]);
                 posToWrite = kmerBuffer.reserveMemory(kmerCntOfCurrSplit);
                 if (posToWrite + kmerCntOfCurrSplit < kmerBuffer.bufferSize) {
@@ -313,10 +310,8 @@ size_t IndexCreator::fillTargetKmerBuffer3(TargetKmerBuffer & kmerBuffer,
                     } else {
                         prodigal.trainASpecies(seq->seq.s);
                     }
-                    munmap(fastaForTraining.data, fastaForTraining.fileSize + 1);
 
-
-                    // Generate intergenic 23-mer list
+                    // Generate intergenic 23-mer list. It is used to strandness of intergenic sequences.
                     prodigal.getPredictedGenes(seq->seq.s);
                     seqIterator.generateIntergenicKmerList(prodigal.genes, prodigal.nodes,
                                                            prodigal.getNumberOfPredictedGenes(), intergenicKmerList,
@@ -325,56 +320,38 @@ size_t IndexCreator::fillTargetKmerBuffer3(TargetKmerBuffer & kmerBuffer,
                     // Get min k-mer hash list for determining strandness
                     seqIterator.getMinHashList(standardList, seq->seq.s);
 
-                    sequences.clear();
+                    // Extract k-mer from the training sequence.
+                    prodigal.removeCompletelyOverlappingGenes();
+                    seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
+                                                      prodigal.fng, strlen(seq->seq.s),
+                                                      numOfBlocks, intergenicKmerList, seq->seq.s);
+                    for (size_t bl = 0; bl < numOfBlocks; bl++) {
+                        seqIterator.translateBlock(seq->seq.s, blocks[bl]);
+                        seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer,
+                                                                posToWrite, splits[i].training,
+                                                                taxid2fasta[splits[i].training].species);
+                    }
                     kseq_destroy(seq);
-                    // Getting all the sequence blocks of current split. Each block will be translated later separately.
-                    numOfBlocks = 0;
-                    for (size_t fastaCnt = 0; fastaCnt < splits[i].cnt; fastaCnt++) {
+                    if(sequences.size() > 1) {
+                        extractKmerFromFasta(seqIterator, fastaForTraining, standardList, lengthOfTrainingSeq,
+                                             sequences,
+                                             prodigal, intergenicKmerList, kmerBuffer, posToWrite, splits[i].training,
+                                             taxid2fasta[splits[i].training].species, 1);
+
+                    }
+                    munmap(fastaForTraining.data, fastaForTraining.fileSize + 1);
+
+                    // For each FASTA file...
+                    for (size_t fastaCnt = 1; fastaCnt < splits[i].cnt; fastaCnt++) {
                         struct MmapedData<char> seqFile = mmapData<char>(taxid2fasta[splits[i].offset + fastaCnt].fasta.c_str());
                         getSeqSegmentsWithHead(sequences, seqFile);
                         sort(sequences.begin(), sequences.end(),
                              [](const Sequence &a, const Sequence &b) { return a.length > b.length; });
-                        for (size_t assembly = 0; assembly < sequences.size(); assembly++) {
-                            buffer = {const_cast<char *>(&seqFile.data[sequences[assembly].start]),
-                                      static_cast<size_t>(sequences[assembly].length)};
-                            seq = kseq_init(&buffer);
-                            kseq_read(seq);
-                            numOfBlocks = 0;
-                            blocks.clear();
-                            // Get extended ORFs
-                            seqIterator.getMinHashList(currentList, seq->seq.s);
-                            if (seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq,
-                                                               strlen(seq->seq.s))) {
-                                prodigal.getPredictedGenes(seq->seq.s);
-                                prodigal.removeCompletelyOverlappingGenes();
-                                seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
-                                                                  prodigal.fng, strlen(seq->seq.s),
-                                                                  numOfBlocks, intergenicKmerList, seq->seq.s);
-                                for (size_t bl = 0; bl < numOfBlocks; bl++) {
-                                    seqIterator.translateBlock(seq->seq.s, blocks[bl]);
-                                    seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer,
-                                                                            posToWrite, splits[i].offset + fastaCnt,
-                                                                            taxid2fasta[splits[i].training].species);
-                                }
-                            } else {
-                                reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, strlen(seq->seq.s));
-                                prodigal.getPredictedGenes(reverseCompliment);
-                                prodigal.removeCompletelyOverlappingGenes();
-                                seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
-                                                                  prodigal.fng, strlen(reverseCompliment),
-                                                                  numOfBlocks, intergenicKmerList, reverseCompliment);
-                                for (size_t bl = 0; bl < numOfBlocks; bl++) {
-                                    seqIterator.translateBlock(reverseCompliment, blocks[bl]);
-                                    seqIterator.fillBufferWithKmerFromBlock(blocks[bl], reverseCompliment, kmerBuffer,
-                                                                            posToWrite, splits[i].offset + fastaCnt,
-                                                                            taxid2fasta[splits[i].training].species); //splits[i].offset + seqIdx
-                                }
-                                free(reverseCompliment);
-                            }
-                            currentList = priority_queue<uint64_t>();
-                            kseq_destroy(seq);
-                        }
+                        extractKmerFromFasta(seqIterator, fastaForTraining, standardList, lengthOfTrainingSeq, sequences,
+                                    prodigal, intergenicKmerList, kmerBuffer, posToWrite, splits[i].offset + fastaCnt,
+                                    taxid2fasta[splits[i].training].species, 0);
                         munmap(seqFile.data, seqFile.fileSize + 1);
+                        sequences.clear();
                     }
                     checker[i] = true;
                     __sync_fetch_and_add(&processedSplitCnt, 1);
@@ -390,8 +367,62 @@ size_t IndexCreator::fillTargetKmerBuffer3(TargetKmerBuffer & kmerBuffer,
     cout << "before return: " << kmerBuffer.startIndexOfReserve << endl;
     return 0;
 }
+
+void IndexCreator::extractKmerFromFasta(SeqIterator & seqIterator, MmapedData<char> & seqFile, priority_queue<uint64_t> & standardList,
+                 size_t lengthOfTrainingSeq, const vector<Sequence> & sequences, ProdigalWrapper & prodigal,
+                 vector<uint64_t> & intergenicKmerList, TargetKmerBuffer & kmerBuffer, size_t posToWrite,
+                 uint32_t seqID, int taxIdAtRank, size_t startIdx){
+    priority_queue<uint64_t> currentList;
+    vector<PredictedBlock> blocks;
+    kseq_buffer_t buffer;
+    kseq_t *seq;
+    char *reverseCompliment;
+    // For each assembly
+    for (size_t assembly = startIdx; assembly < sequences.size(); assembly++) {
+        buffer = {const_cast<char *>(&seqFile.data[sequences[assembly].start]),
+                  static_cast<size_t>(sequences[assembly].length)};
+        seq = kseq_init(&buffer);
+        kseq_read(seq);
+        size_t numOfBlocks = 0;
+        blocks.clear();
+        // Get extended ORFs
+        seqIterator.getMinHashList(currentList, seq->seq.s);
+        if (seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq,
+                                           strlen(seq->seq.s))) {
+            prodigal.getPredictedGenes(seq->seq.s);
+            prodigal.removeCompletelyOverlappingGenes();
+            seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
+                                              prodigal.fng, strlen(seq->seq.s),
+                                              numOfBlocks, intergenicKmerList, seq->seq.s);
+            for (size_t bl = 0; bl < numOfBlocks; bl++) {
+                seqIterator.translateBlock(seq->seq.s, blocks[bl]);
+                seqIterator.fillBufferWithKmerFromBlock(blocks[bl], seq->seq.s, kmerBuffer,
+                                                        posToWrite, seqID,
+                                                        taxIdAtRank);
+            }
+        } else {
+            reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, strlen(seq->seq.s));
+            prodigal.getPredictedGenes(reverseCompliment);
+            prodigal.removeCompletelyOverlappingGenes();
+            seqIterator.getTranslationBlocks2(prodigal.finalGenes, prodigal.nodes, blocks,
+                                              prodigal.fng, strlen(reverseCompliment),
+                                              numOfBlocks, intergenicKmerList, reverseCompliment);
+            for (size_t bl = 0; bl < numOfBlocks; bl++) {
+                seqIterator.translateBlock(reverseCompliment, blocks[bl]);
+                seqIterator.fillBufferWithKmerFromBlock(blocks[bl], reverseCompliment, kmerBuffer,
+                                                        posToWrite, seqID,
+                                                        taxIdAtRank); //splits[i].offset + seqIdx
+            }
+            free(reverseCompliment);
+        }
+        currentList = priority_queue<uint64_t>();
+        kseq_destroy(seq);
+    }
+
+}
+
 ///This function sort the TargetKmerBuffer, do redundancy reducing task, write the differential index of them
-void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName, const vector<TaxId2Fasta> & taxid2fasta)
+void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName, const vector<TaxId2Fasta> & taxid2fasta,)
 {
     // Write a split file, which will be merged later.
     char suffixedDiffIdxFileName[300];
