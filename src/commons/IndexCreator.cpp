@@ -925,7 +925,7 @@ size_t IndexCreator::estimateKmerNum(const vector<TaxId2Fasta> & taxid2fasta, co
     for(size_t i = split.offset ; i < split.offset + split.cnt; i ++){
         int temp = stat(taxid2fasta[i].fasta.c_str(), &stat1);
         size_t charNum = stat1.st_size;
-        kmerNum += charNum - kmerLength + 1;
+        kmerNum += charNum/3 - kmerLength + 1;
     }
     return kmerNum;
 }
