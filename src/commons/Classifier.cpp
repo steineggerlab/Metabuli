@@ -637,19 +637,19 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     while (AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
 //                        if(genusTaxIdList[targetInfoList.data[targetInfoIdx].sequenceID] == 307234){
-                          if(queryKmerList[j].info.pos == 232){
-                            cout<<"Q: ";seqIterator.printKmerInDNAsequence(currentQuery);
-                            print_binary64(64,currentQuery);
-                            cout<<"\n";
-                            print_binary64(64,AminoAcidPart(currentQuery));
-                            cout<<"\n";
-                            cout<<"T: ";seqIterator.printKmerInDNAsequence(currentTargetKmer);
-                            print_binary64(64,currentTargetKmer);
-                            cout<<"\n";
-                            print_binary64(64,AminoAcidPart(currentTargetKmer));
-                            cout<<"\n";
-                            cout<< (int)getHammingDistanceSum(currentQuery,currentTargetKmer) << " " <<queryKmerList[j].info.pos<<endl;
-                        }
+//                          if(queryKmerList[j].info.pos == 232){
+//                            cout<<"Q: ";seqIterator.printKmerInDNAsequence(currentQuery);
+//                            print_binary64(64,currentQuery);
+//                            cout<<"\n";
+//                            print_binary64(64,AminoAcidPart(currentQuery));
+//                            cout<<"\n";
+//                            cout<<"T: ";seqIterator.printKmerInDNAsequence(currentTargetKmer);
+//                            print_binary64(64,currentTargetKmer);
+//                            cout<<"\n";
+//                            print_binary64(64,AminoAcidPart(currentTargetKmer));
+//                            cout<<"\n";
+//                            cout<< (int)getHammingDistanceSum(currentQuery,currentTargetKmer) << " " <<queryKmerList[j].info.pos<<endl;
+//                        }
 //@@@@
 //                        cout<<"Q: ";seqIterator.printKmerInDNAsequence(currentQuery);
 //                        print_binary64(64,currentQuery);
