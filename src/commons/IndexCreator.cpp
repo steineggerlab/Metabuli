@@ -584,7 +584,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
     vector<Split> splits;
     size_t splitWidth = (kmerBuffer.startIndexOfReserve - startIdx) / par.threads;
     for (size_t i = 0; i < par.threads - 1; i++) {
-        for (size_t j = startIdx + splitWidth; j + 1 < kmerBuffer.startIndexOfReserve; i++) {
+        for (size_t j = startIdx + splitWidth; j + 1 < kmerBuffer.startIndexOfReserve; j++) {
             if (kmerBuffer.buffer[j].taxIdAtRank != kmerBuffer.buffer[j + 1].taxIdAtRank) {
                 splits.emplace_back(startIdx, j);
                 startIdx = j + 1;
