@@ -80,7 +80,7 @@ void Classifier::startClassify(const char *queryFileName,
 
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
-    Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(10));
+    Buffer<Match> matchBuffer(kmerBufSize);
 
     // Load query file
     cout << "Indexing query file ...";
