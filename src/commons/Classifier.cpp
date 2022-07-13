@@ -636,7 +636,8 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     // Load target k-mers that are matched in amino acid level
                     while (AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
-                        if(genusTaxIdList[targetInfoList.data[targetInfoIdx].sequenceID] == 307234){
+//                        if(genusTaxIdList[targetInfoList.data[targetInfoIdx].sequenceID] == 307234){
+                          if(queryKmerList[j].info.pos == 232){
                             cout<<"Q: ";seqIterator.printKmerInDNAsequence(currentQuery);
                             print_binary64(64,currentQuery);
                             cout<<"\n";
