@@ -647,7 +647,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                             cout<<"\n";
                             print_binary64(64,AminoAcidPart(currentTargetKmer));
                             cout<<"\n";
-                            cout<< (int)getHammingDistanceSum(currentQuery,currentTargetKmer) << endl;
+                            cout<< (int)getHammingDistanceSum(currentQuery,currentTargetKmer) << " " <<queryKmerList[j].info.pos<<endl;
                         }
 //@@@@
 //                        cout<<"Q: ";seqIterator.printKmerInDNAsequence(currentQuery);
