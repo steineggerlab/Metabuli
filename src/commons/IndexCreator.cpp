@@ -87,12 +87,12 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par)
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, IndexCreator::compareForDiffIdx);
         time_t sort = time(nullptr);
         cout<<"Time spent for sort kmers: "<<(double) (sort - start) << endl;
-//        size_t * uniqKmerIdx = new size_t[kmerBuffer.startIndexOfReserve + 1];
-//        size_t uniqKmerCnt = 0;
-//        reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt, par, taxid2fasta);
-//        time_t reduction = time(nullptr);
-//        cout<<"Time spent for reducing redundancy: "<<(double) (reduction - sort) << endl;
-        writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, dbDirectory, taxid2fasta, par);
+        size_t * uniqKmerIdx = new size_t[kmerBuffer.startIndexOfReserve + 1];
+        size_t uniqKmerCnt = 0;
+        reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt, par, taxid2fasta);
+        time_t reduction = time(nullptr);
+        cout<<"Time spent for reducing redundancy: "<<(double) (reduction - sort) << endl;
+        writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, dbDirectory, taxid2fasta, uniqKmerIdx, uniqKmerCnt);
     }
 
     delete[] splitChecker;
