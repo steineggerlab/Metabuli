@@ -1217,13 +1217,17 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
             aa8mer[7 - i] = quotient;
         }
 
-        ///Print Amino Acid 8 mer
-        for(int i  = 0; i<8; i++){
-            cout<<aa8mer[i]<<" ";
-        }
-        cout<<endl;
+//        ///Print Amino Acid 8 mer
+//        for(int i  = 0; i<8; i++){
+//            cout<<aa8mer[i]<<" ";
+//        }
+//        cout<<endl;
 
         string aminoacid = "ARNDCQEGHILKMFPSTWYVX";
+        for (int i = 0; i < 8; i++) {
+            cout << aminoacid[aa8mer[i]];
+        }
+        cout<<endl;
         for (int i = 0; i < 8; i++) {
             dnaInfo = copy & 7u;
             copy >>= 3;
