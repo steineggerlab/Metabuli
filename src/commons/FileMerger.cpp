@@ -202,13 +202,10 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     fclose(taxIdFile);
     taxIdList.pop_back();
 
-    cout<<"2"<<endl;
-
     // Make taxonomy id list at species rank
     vector<int> taxIdListAtSpecies;
     taxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtSpecies, "species");
 
-    cout<<"3"<<endl;
     // File names for the final DB
     string mergedDiffFileName = dbDirectory + "/diffIdx";
     string mergedInfoFileName = dbDirectory + "/info";
@@ -284,7 +281,7 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
         entryKmer = lookingKmers[idxOfMin];
         entryInfo = lookingInfos[idxOfMin];
 
-        ///update looking k-mers
+        // update looking k-mers
         lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
         lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
         infoFileIdx[idxOfMin] ++;
