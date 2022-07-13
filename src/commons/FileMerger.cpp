@@ -362,6 +362,7 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     delete[] lookingKmers;
     delete[] diffFileIdx;
     delete[] infoFileIdx;
+    delete[] maxIdxOfEachFiles;
 
     cout<<"done"<<endl;
 

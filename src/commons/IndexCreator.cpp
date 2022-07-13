@@ -83,7 +83,11 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par)
     TargetKmerBuffer kmerBuffer(10'000'000'000);
     while(processedSplitCnt < numOfSplits){ // Check this condition
         fillTargetKmerBuffer3(kmerBuffer, splitChecker, processedSplitCnt, splits, taxid2fasta, par);
-        writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, dbDirectory, taxid2fasta);
+        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, IndexCreator::compareForDiffIdx);
+        size_t * uniqKmerIdx = new size_t[kmerBuffer.startIndexOfReserve + 1];
+        size_t uniqKmerCnt = 0;
+        reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt, par, taxid2fasta);
+        writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, dbDirectory, taxid2fasta, uniqKmerIdx, uniqKmerCnt);
     }
 
     delete[] splitChecker;
@@ -425,7 +429,8 @@ void IndexCreator::extractKmerFromFasta(SeqIterator & seqIterator, MmapedData<ch
 }
 
 ///This function sort the TargetKmerBuffer, do redundancy reducing task, write the differential index of them
-void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName, const vector<TaxId2Fasta> & taxid2fasta)
+void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,
+                                    const vector<TaxId2Fasta> & taxid2fasta, const LocalParameters & par)
 {
     // Write a split file, which will be merged later.
     char suffixedDiffIdxFileName[300];
@@ -444,9 +449,6 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
     uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 10'000'000'000);
     size_t localBufIdx = 0;
     uint64_t lastKmer = 0;
-
-    // Sort for differential indexing
-    SORT_PARALLEL(kmerBuffer, kmerBuffer + kmerNum, IndexCreator::compareForDiffIdx);
 
     // Find the first index of garbage k-mer (UINT64_MAX)
     for(size_t checkN = kmerNum - 1; checkN >= 0; checkN--){
@@ -513,6 +515,139 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
     kmerNum = 0;
 }
 
+void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,
+                                    const vector<TaxId2Fasta> & taxid2fast, size_t * uniqeKmerIdx,
+                                    size_t & uniqKmerCnt){
+    // Write a split file, which will be merged later.
+    char suffixedDiffIdxFileName[300];
+    char suffixedInfoFileName[300];
+    sprintf(suffixedDiffIdxFileName, "%s/%zu_diffIdx", outputFileName, numOfFlush);
+    sprintf(suffixedInfoFileName, "%s/%zu_info", outputFileName, numOfFlush);
+
+    FILE * diffIdxFile = fopen(suffixedDiffIdxFileName, "wb");
+    FILE * infoFile = fopen(suffixedInfoFileName, "wb");
+    if (diffIdxFile == nullptr || infoFile == nullptr){
+        cout<<"Cannot open the file for writing target DB"<<endl;
+        return;
+    }
+    numOfFlush++;
+
+    // Redundancy reduction task
+    uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 10'000'000'000);
+    size_t localBufIdx = 0;
+    uint64_t lastKmer = 0;
+    size_t write = 0;
+
+    for(size_t i = 0; i < uniqKmerCnt ; i++) {
+        fwrite(& kmerBuffer[uniqeKmerIdx[i]].info, sizeof (TargetKmerInfo), 1, infoFile);
+        write++;
+        getDiffIdx(lastKmer, kmerBuffer[uniqeKmerIdx[i]].ADkmer, diffIdxFile, diffIdxBuffer, localBufIdx);
+        lastKmer = kmerBuffer[uniqeKmerIdx[i]].ADkmer;
+    }
+
+    cout<<"total k-mer count  : "<< kmerNum << endl;
+    cout<<"written k-mer count: "<<write<<endl;
+
+    flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
+    free(diffIdxBuffer);
+    fclose(diffIdxFile);
+    fclose(infoFile);
+    kmerNum = 0;
+}
+void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniqeKmerIdx, size_t & uniqueKmerCnt, const LocalParameters & par,
+                                    const vector<TaxId2Fasta> & taxid2fasta){
+
+    // Find the first index of garbage k-mer (UINT64_MAX)
+    for(size_t checkN = kmerBuffer.startIndexOfReserve - 1; checkN >= 0; checkN--){
+        if(kmerBuffer.buffer[checkN].ADkmer != UINT64_MAX){
+            kmerBuffer.startIndexOfReserve = checkN + 1;
+            break;
+        }
+    }
+
+    // Find the first index of meaningful k-mer
+    size_t startIdx = 0;
+    for(size_t i = 0; i < kmerBuffer.startIndexOfReserve ; i++){
+        if(kmerBuffer.buffer[i].taxIdAtRank != 0){
+            startIdx = i;
+            break;
+        }
+    }
+
+    // Make splits
+    vector<Split> splits;
+    size_t splitWidth = (kmerBuffer.startIndexOfReserve - startIdx) / par.threads;
+    for (size_t i = 0; i < par.threads - 1; i++) {
+        for (size_t j = startIdx + splitWidth; j + 1 < kmerBuffer.startIndexOfReserve; i++) {
+            if (kmerBuffer.buffer[j].taxIdAtRank != kmerBuffer.buffer[j + 1].taxIdAtRank) {
+                splits.emplace_back(startIdx, j);
+                startIdx = j + 1;
+                break;
+            }
+        }
+    }
+    splits.emplace_back(startIdx, kmerBuffer.startIndexOfReserve - 1);
+
+    //
+    size_t ** idxOfEachSplit = new size_t * [par.threads];
+    size_t * cntOfEachSplit = new size_t[par.threads];
+    for(int i = 0; i < par.threads; i++){
+        idxOfEachSplit[i] = new size_t[splits[i].end - splits[i].offset + 2];
+        cntOfEachSplit[i] = 0;
+    }
+#pragma omp parallel default(none), shared(kmerBuffer, taxid2fasta)
+    {
+        TargetKmer lookingKmer;
+        size_t write;
+        int endFlag;
+        int hasSeenOtherStrains;
+#pragma omp for schedule(dynamic, 1)
+        for(size_t split = 0; split < splits.size(); split ++){
+            lookingKmer = kmerBuffer.buffer[splits[split].offset];
+            write = 0;
+            endFlag = 0;
+            for(size_t i = 1 + splits[split].offset; i < splits[split].end + 1 ; i++) {
+                hasSeenOtherStrains = 0;
+                while(lookingKmer.taxIdAtRank == kmerBuffer.buffer[i].taxIdAtRank){
+                    if (lookingKmer.ADkmer != kmerBuffer.buffer[i].ADkmer) {
+                        break;
+                    }
+                    hasSeenOtherStrains += (taxid2fasta[lookingKmer.info.sequenceID].taxid
+                            != taxid2fasta[kmerBuffer.buffer[i].info.sequenceID].taxid);
+                    i++;
+                    if(i == splits[split].end + 1){
+                        endFlag = 1;
+                        break;
+                    }
+                }
+
+                lookingKmer.info.redundancy = (hasSeenOtherStrains > 0);
+                idxOfEachSplit[split][cntOfEachSplit[split]] = i - 1;
+                cntOfEachSplit[split] ++;
+                if(endFlag == 1) break;
+                lookingKmer = kmerBuffer.buffer[i];
+            }
+
+            //For the end part
+            if(!((kmerBuffer.buffer[splits[split].end - 1].ADkmer == kmerBuffer.buffer[splits[split].end].ADkmer) &&
+                 (kmerBuffer.buffer[splits[split].end - 1].taxIdAtRank == kmerBuffer.buffer[splits[split].end].taxIdAtRank))){
+                idxOfEachSplit[split][cntOfEachSplit[split]] = splits[split].end;
+                cntOfEachSplit[split] ++;
+            }
+        }
+    }
+
+    // Merge
+    for(int i = 0; i < par.threads; i++){
+        memcpy(uniqeKmerIdx + uniqueKmerCnt, idxOfEachSplit[i], cntOfEachSplit[i]);
+        uniqueKmerCnt += cntOfEachSplit[i];
+    }
+
+    for(int i = 0; i < par.threads; i++){
+        delete[] idxOfEachSplit[i];
+    }
+    delete[] cntOfEachSplit;
+}
 void IndexCreator::getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx ){
     uint64_t kmerdiff = entryToWrite - lastKmer;
     uint16_t buffer[5];

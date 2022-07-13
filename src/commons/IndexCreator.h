@@ -46,11 +46,18 @@ private:
         uint32_t cnt;
     };
 
+   struct Split{
+       Split(size_t offset, size_t end) : offset(offset), end(end) {}
+       size_t offset;
+       size_t end;
+   };
+
     size_t availableMemory;
     size_t numOfFlush=0;
     //SeqIterator * seqIterator;
-    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<TaxId2Fasta> & taxid2fasta);
+    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<TaxId2Fasta> & taxid2fasta, const LocalParameters & par);
     void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<int> & taxIdList);
+    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName, const vector<TaxId2Fasta> & taxid2fasta, size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
     static size_t fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
@@ -98,6 +105,8 @@ private:
     void load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
 
     static size_t estimateKmerNum(const vector<TaxId2Fasta> & taxid2fasta, const FastaSplit & split);
+    void reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniqeKmerIdx, size_t & uniqKmerCnt, const LocalParameters & par,
+                          const vector<TaxId2Fasta> & taxid2fasta);
 public:
     static void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
     static void getSeqSegmentsWithHead2(vector<Sequence> & seqSegments, const char * seqFileName);
