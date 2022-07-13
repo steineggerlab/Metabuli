@@ -650,16 +650,16 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
 //                            cout<< (int)getHammingDistanceSum(currentQuery,currentTargetKmer) << endl;
 //                        }
 //@@@@
-//                        cout<<"Q: ";seqIterator.printKmerInDNAsequence(currentQuery);
-//                        print_binary64(64,currentQuery);
-//                        cout<<"\n";
-//                        print_binary64(64,AminoAcidPart(currentQuery));
-//                        cout<<"\n";
-//                        cout<<"T: ";seqIterator.printKmerInDNAsequence(currentTargetKmer);
-//                        print_binary64(64,currentTargetKmer);
-//                        cout<<"\n";
-//                        print_binary64(64,AminoAcidPart(currentTargetKmer));
-//                        cout<<"\n";
+                        cout<<"Q: ";seqIterator.printKmerInDNAsequence(currentQuery);
+                        print_binary64(64,currentQuery);
+                        cout<<"\n";
+                        print_binary64(64,AminoAcidPart(currentQuery));
+                        cout<<"\n";
+                        cout<<"T: ";seqIterator.printKmerInDNAsequence(currentTargetKmer);
+                        print_binary64(64,currentTargetKmer);
+                        cout<<"\n";
+                        print_binary64(64,AminoAcidPart(currentTargetKmer));
+                        cout<<"\n";
                         candidateTargetKmers.push_back(currentTargetKmer);
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                         targetInfoIdx++;
@@ -708,7 +708,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 } else {
                     moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
                 }
-
 
                 // Check whether current split is completed or not
                 if (querySplits[i].start - 1 == querySplits[i].end) {
