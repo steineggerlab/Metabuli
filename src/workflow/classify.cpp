@@ -13,7 +13,7 @@ void setClassifyDefaults(LocalParameters & par){
     par.seqMode = 1;
     par.memoryMode = 1;
     par.reducedAA = 0;
-    par.minScore = 0.1;
+    par.minScore = 0.0;
     par.spaceMask = "11111111";
     par.minConsCnt = 4;
     par.hammingMargin = 0;
@@ -65,6 +65,6 @@ int classify(int argc, const char **argv, const Command& command)
     }
     classifier->startClassify(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(),
                              diffIdxSplitFileName.c_str(), taxIdList, par, taxonomy);
-
+    delete classifier;
     return 0;
 }

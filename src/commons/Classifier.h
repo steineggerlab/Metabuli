@@ -297,7 +297,7 @@ public:
 
     Classifier(LocalParameters &par);
 
-    ~Classifier();
+    virtual ~Classifier();
 };
 
 inline uint8_t Classifier::getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2) {//12345678

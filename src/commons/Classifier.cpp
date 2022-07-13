@@ -29,7 +29,9 @@ Classifier::Classifier(LocalParameters & par) {
     hammingMargin = (uint8_t) par.hammingMargin;
 }
 
-Classifier::~Classifier() {}
+Classifier::~Classifier() {
+    delete[] mask;
+}
 
 void Classifier::startClassify(const char *queryFileName,
                                const char *targetDiffIdxFileName,
