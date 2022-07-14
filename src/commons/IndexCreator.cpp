@@ -98,7 +98,12 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par)
         reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt, par, taxid2fasta);
         time_t reduction = time(nullptr);
         cout<<"Time spent for reducing redundancy: "<<(double) (reduction - sort) << endl;
-        writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par, taxid2fasta, uniqKmerIdx, uniqKmerCnt, (processedSplitCnt < numOfSplits));
+        if(processedSplitCnt == numOfSplits && numOfFlush == 0){
+            writeTargetFilesAndSplits(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par, uniqKmerIdx, uniqKmerCnt);
+        } else {
+            writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par,uniqKmerIdx, uniqKmerCnt);
+        }
+
     }
 
     delete[] splitChecker;
@@ -527,8 +532,7 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
 }
 
 void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par,
-                                    const vector<TaxId2Fasta> & taxid2fast, size_t * uniqeKmerIdx,
-                                    size_t & uniqKmerCnt, bool completed){
+                                    const size_t * uniqeKmerIdx, size_t & uniqKmerCnt){
     string diffIdxFileName;
     string infoFileName;
     diffIdxFileName = par.filenames[2] + "/" + to_string(numOfFlush) + "_diffIdx";
@@ -566,8 +570,7 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
 }
 
 void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par,
-                                    const vector<TaxId2Fasta> & taxid2fast, size_t * uniqeKmerIdx,
-                                    size_t & uniqKmerCnt){
+                                    const size_t * uniqeKmerIdx, size_t & uniqKmerCnt){
     string diffIdxFileName;
     string infoFileName;
 
@@ -576,9 +579,10 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
 
     // Make splits
     DiffIdxSplit splitList[SplitNum];
+    memset(splitList, 0, sizeof(DiffIdxSplit) * SplitNum);
     size_t splitWidth = uniqKmerCnt / par.threads;
-    for (size_t i = 0; i < par.threads; i++) {
-        for (size_t j = uniqeKmerIdx[i] + splitWidth; j + 1 < uniqKmerCnt; j++) {
+    for (size_t i = 1; i < (size_t) par.threads; i++) {
+        for (size_t j = uniqeKmerIdx[0] + splitWidth * i; j + 1 < uniqKmerCnt; j++) {
             if (AminoAcidPart(kmerBuffer[j].ADkmer) != AminoAcidPart(kmerBuffer[j + 1].ADkmer)) {
                 splitList[i].ADkmer = kmerBuffer[j].ADkmer;
                 break;
@@ -600,13 +604,19 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     uint64_t lastKmer = 0;
     size_t write = 0;
 
-
+    size_t splitIdx = 1;
+    size_t totalDiffIdx = 0;
     for(size_t i = 0; i < uniqKmerCnt ; i++) {
         fwrite(& kmerBuffer[uniqeKmerIdx[i]].info, sizeof (TargetKmerInfo), 1, infoFile);
         write++;
-        getDiffIdx(lastKmer, kmerBuffer[uniqeKmerIdx[i]].ADkmer, diffIdxFile, diffIdxBuffer, localBufIdx);
+        getDiffIdx(lastKmer, kmerBuffer[uniqeKmerIdx[i]].ADkmer, diffIdxFile,
+                   diffIdxBuffer, localBufIdx, totalDiffIdx);
         lastKmer = kmerBuffer[uniqeKmerIdx[i]].ADkmer;
-
+        if(lastKmer == splitList[splitIdx].ADkmer){
+            splitList[splitIdx].diffIdxOffset = totalDiffIdx;
+            splitList[splitIdx].infoIdxOffset = write;
+            splitIdx ++;
+        }
     }
 
     cout<<"total k-mer count  : "<< kmerNum << endl;
@@ -727,6 +737,23 @@ void IndexCreator::getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryT
         buffer[idx] = toWrite;
         idx--;
     }
+    writeDiffIdx(kmerBuf, handleKmerTable, (buffer + idx + 1), (4 - idx), localBufIdx);
+}
+
+void IndexCreator::getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
+                              uint16_t *kmerBuf, size_t & localBufIdx, size_t & totalBufferIdx){
+    uint64_t kmerdiff = entryToWrite - lastKmer;
+    uint16_t buffer[5];
+    int idx = 3;
+    buffer[4] = SET_END_FLAG(GET_15_BITS(kmerdiff));
+    kmerdiff >>= 15U;
+    while (kmerdiff) {
+        uint16_t toWrite = GET_15_BITS(kmerdiff);
+        kmerdiff >>= 15U;
+        buffer[idx] = toWrite;
+        idx--;
+    }
+    totalBufferIdx += 4 - idx;
     writeDiffIdx(kmerBuf, handleKmerTable, (buffer + idx + 1), (4 - idx), localBufIdx);
 }
 

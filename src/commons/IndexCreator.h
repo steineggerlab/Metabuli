@@ -59,8 +59,8 @@ private:
     //SeqIterator * seqIterator;
     void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<TaxId2Fasta> & taxid2fasta, const LocalParameters & par);
     void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<int> & taxIdList);
-    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const vector<TaxId2Fasta> & taxid2fasta, size_t * uniqeKmerIdx, size_t & uniqKmerCnt, bool completed);
-    void writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const vector<TaxId2Fasta> & taxid2fasta, size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
+    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
+    void writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
     static size_t fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
@@ -126,7 +126,10 @@ public:
                                     const LocalParameters & par);
     void startIndexCreatingParallel2(const char * seqFileName, const char * outputFileName, const vector<int> & taxIdListAtSpecies, const vector<int> & taxIdListAtGenus, const vector<int> & taxIdList);
 
-    void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx );
+    void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
+                    uint16_t *kmerBuf, size_t & localBufIdx );
+    void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
+                    uint16_t *kmerBuf, size_t & localBufIdx, size_t & totalBufferIdx);
     void writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t & infoBufferIdx);
     void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
     void flushInfoBuf(TargetKmerInfo * buffer, FILE * infoFile, size_t & localBufIdx );

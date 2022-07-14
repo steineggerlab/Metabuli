@@ -21,6 +21,10 @@ int build_dir(int argc, const char **argv, const Command &command)
     idxCre.startIndexCreatingParallel(par);
     cout<<"done"<<endl;
 
+    if(idxCre.getNumOfFlush() == 1){
+        return 0;
+    }
+    
     //Merge files
     cout<<"Merge reference DB files ... "<<endl;
     int numOfSplits = idxCre.getNumOfFlush();
