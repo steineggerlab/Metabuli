@@ -17,7 +17,7 @@ int build_dir(int argc, const char **argv, const Command &command)
 
     //Make files of differential indexing and information of k-mers
     cout<<"Start to creat reference DB file(s) ... ";
-    IndexCreator idxCre;
+    IndexCreator idxCre(par);
     idxCre.startIndexCreatingParallel(par);
     cout<<"done"<<endl;
 
