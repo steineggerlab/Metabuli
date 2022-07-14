@@ -80,7 +80,7 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par)
     fill_n(splitChecker, numOfSplits, false);
     size_t processedSplitCnt = 0;
 
-    TargetKmerBuffer kmerBuffer(10'000'000'000);
+    TargetKmerBuffer kmerBuffer(1'000'000'000);
     while(processedSplitCnt < numOfSplits){ // Check this condition
         fillTargetKmerBuffer3(kmerBuffer, splitChecker, processedSplitCnt, splits, taxid2fasta, par);
         time_t start = time(nullptr);
@@ -537,7 +537,7 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
     }
     numOfFlush++;
 
-    // Redundancy reduction task
+
     uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 10'000'000'000);
     size_t localBufIdx = 0;
     uint64_t lastKmer = 0;
@@ -569,7 +569,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
             break;
         }
     }
-    cout<<"1"<<endl;
+    cout<<"startIndexOfReserve: "<< kmerBuffer.startIndexOfReserve <<endl;
     // Find the first index of meaningful k-mer
     size_t startIdx = 0;
     for(size_t i = 0; i < kmerBuffer.startIndexOfReserve ; i++){
@@ -578,8 +578,8 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
             break;
         }
     }
+    cout<<"Start Index: "<<startIdx<<endl;
 
-    cout<<"2"<<endl;
     // Make splits
     vector<Split> splits;
     size_t splitWidth = (kmerBuffer.startIndexOfReserve - startIdx) / par.threads;
@@ -593,8 +593,10 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
         }
     }
     splits.emplace_back(startIdx, kmerBuffer.startIndexOfReserve - 1);
+    for(auto x : splits){
+        cout<<x.offset<<" "<<x.end<<endl;
+    }
 
-    cout<<"3"<<endl;
     //
     size_t ** idxOfEachSplit = new size_t * [par.threads];
     size_t * cntOfEachSplit = new size_t[par.threads];
@@ -644,14 +646,12 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
         }
     }
 
-    cout<<"4"<<endl;
     // Merge
     for(int i = 0; i < par.threads; i++){
         memcpy(uniqeKmerIdx + uniqueKmerCnt, idxOfEachSplit[i], cntOfEachSplit[i]);
         uniqueKmerCnt += cntOfEachSplit[i];
     }
 
-    cout<<"5"<<endl;
     for(int i = 0; i < par.threads; i++){
         delete[] idxOfEachSplit[i];
     }
