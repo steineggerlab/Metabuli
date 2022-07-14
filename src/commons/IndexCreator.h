@@ -39,7 +39,9 @@ using namespace std;
 
 class IndexCreator{
 private:
-   struct FastaSplit{
+    uint64_t MARKER;
+
+    struct FastaSplit{
         FastaSplit(size_t training, uint32_t offset, uint32_t cnt): training(training), offset(offset), cnt(cnt) {}
         size_t training;
         uint32_t offset;
@@ -57,7 +59,8 @@ private:
     //SeqIterator * seqIterator;
     void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<TaxId2Fasta> & taxid2fasta, const LocalParameters & par);
     void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<int> & taxIdList);
-    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName, const vector<TaxId2Fasta> & taxid2fasta, size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
+    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const vector<TaxId2Fasta> & taxid2fasta, size_t * uniqeKmerIdx, size_t & uniqKmerCnt, bool completed);
+    void writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const vector<TaxId2Fasta> & taxid2fasta, size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
     static size_t fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
@@ -107,10 +110,14 @@ private:
     static size_t estimateKmerNum(const vector<TaxId2Fasta> & taxid2fasta, const FastaSplit & split);
     void reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniqeKmerIdx, size_t & uniqKmerCnt, const LocalParameters & par,
                           const vector<TaxId2Fasta> & taxid2fasta);
+    size_t AminoAcidPart(size_t kmer) {
+        return (kmer) & MARKER;
+    }
+
 public:
     static void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
     static void getSeqSegmentsWithHead2(vector<Sequence> & seqSegments, const char * seqFileName);
-    IndexCreator();
+    IndexCreator(const LocalParameters & par);
     ~IndexCreator();
     int getNumOfFlush();
     void startIndexCreatingParallel(const LocalParameters & par);

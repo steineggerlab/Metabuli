@@ -82,7 +82,7 @@ void Classifier::startClassify(const char *queryFileName,
 
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
-    Buffer<Match> matchBuffer(kmerBufSize);
+    Buffer<Match> matchBuffer(kmerBufSize * 20);
 
     // Load query file
     cout << "Indexing query file ...";
@@ -158,14 +158,12 @@ void Classifier::startClassify(const char *queryFileName,
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
         cout << "Time spent for k-mer extraction: " << double(time(nullptr) - beforeKmerExtraction) << endl;
 
-
         time_t beforeQueryKmerSort = time(nullptr);
         // Sort query k-mer
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
                       Classifier::compareForLinearSearch);
         cout << "Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
 
-//        omp_set_num_threads(1);
         // Search matches between query and target k-mers
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxFileName,
                              targetInfoFileName,
@@ -337,7 +335,7 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
         size_t posToWrite;
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < numOfSeq; i++) {
-            if (checker[i] == false && !hasOverflow) {
+            if (!checker[i] && !hasOverflow) {
                 // Read 1
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile1.data[seqs[i].start]), seqs[i].length);
                 kseq_t *seq = kseq_init(&buffer);
@@ -705,9 +703,9 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 // Move matches in the local buffer to the shared buffer
                 posToWrite = matchBuffer.reserveMemory(matchCnt);
                 if (posToWrite + matchCnt >= matchBuffer.bufferSize) {
+                    hasOverflow = true;
                     querySplits[i].start = lastMovedQueryIdx + 1;
-#pragma omp atomic
-                    matchBuffer.startIndexOfReserve -= matchCnt;
+                    __sync_fetch_and_sub(& matchBuffer.startIndexOfReserve, matchCnt);
                 } else {
                     moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
                 }
