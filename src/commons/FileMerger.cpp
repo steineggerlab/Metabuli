@@ -5,7 +5,7 @@
 #include "FileMerger.h"
 
 FileMerger::FileMerger(const LocalParameters & par) {
-    cre = new IndexCreator();
+    cre = new IndexCreator(par);
     if (par.reducedAA == 1){
         MARKER = 0Xffffffff;
         MARKER = ~MARKER;
