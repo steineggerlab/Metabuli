@@ -103,7 +103,6 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par)
         } else {
             writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par,uniqKmerIdx, uniqKmerCnt);
         }
-
     }
 
     delete[] splitChecker;

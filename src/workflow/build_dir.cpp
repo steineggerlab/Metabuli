@@ -24,7 +24,7 @@ int build_dir(int argc, const char **argv, const Command &command)
     if(idxCre.getNumOfFlush() == 1){
         return 0;
     }
-    
+
     //Merge files
     cout<<"Merge reference DB files ... "<<endl;
     int numOfSplits = idxCre.getNumOfFlush();
