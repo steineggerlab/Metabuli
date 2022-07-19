@@ -150,7 +150,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                     getSeqSegmentsWithHead(sequences, fastaForTraining);
                     sort(sequences.begin(), sequences.end(),
                          [](const Sequence &a, const Sequence &b) { return a.length > b.length; });
-                    cout<<endl;
+                    cout<<"Training"<<endl;
                     for(auto x : sequences){
                         cout<<x.start<<" "<<x.end<<" "<<x.length<<endl;
                     }
@@ -209,7 +209,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                         getSeqSegmentsWithHead(sequences, seqFile);
                         sort(sequences.begin(), sequences.end(),
                              [](const Sequence &a, const Sequence &b) { return a.length > b.length; });
-                        cout<<endl;
+                        cout<<"Others"<<endl;
                         for(auto x : sequences){
                             cout<<x.start<<" "<<x.end<<" "<<x.length<<endl;
                         }
