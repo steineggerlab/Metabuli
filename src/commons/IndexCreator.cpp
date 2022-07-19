@@ -205,6 +205,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                         getSeqSegmentsWithHead(sequences, seqFile);
                         sort(sequences.begin(), sequences.end(),
                              [](const Sequence &a, const Sequence &b) { return a.length > b.length; });
+                        cout<<endl;
+                        for(auto x : sequences){
+                            cout<<x.start<<" "<<x.end<<" "<<x.length<<endl;
+                        }
                         extractKmerFromFasta(seqIterator, fastaForTraining, standardList, lengthOfTrainingSeq, sequences,
                                     prodigal, intergenicKmerList, kmerBuffer, posToWrite, splits[i].offset + fastaCnt,
                                     taxid2fasta[splits[i].training].species, 0);
