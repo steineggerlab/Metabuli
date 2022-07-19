@@ -379,7 +379,7 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
     string diffIdxFileName;
     string infoFileName;
     diffIdxFileName = par.filenames[2] + "/" + to_string(numOfFlush) + "_diffIdx";
-    infoFileName = par.filenames[2] + "/" + to_string(numOfFlush) + "_Info";
+    infoFileName = par.filenames[2] + "/" + to_string(numOfFlush) + "_info";
 
     FILE * diffIdxFile = fopen(diffIdxFileName.c_str(), "wb");
     FILE * infoFile = fopen(infoFileName.c_str(), "wb");
