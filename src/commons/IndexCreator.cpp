@@ -84,7 +84,7 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par)
     fill_n(splitChecker, numOfSplits, false);
     size_t processedSplitCnt = 0;
 
-    TargetKmerBuffer kmerBuffer(1'000'000'000);
+    TargetKmerBuffer kmerBuffer(10'000'000'000);
     while(processedSplitCnt < numOfSplits){ // Check this condition
         fillTargetKmerBuffer(kmerBuffer, splitChecker, processedSplitCnt, splits, taxid2fasta, par);
         time_t start = time(nullptr);
@@ -205,10 +205,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                         getSeqSegmentsWithHead(sequences, seqFile);
                         sort(sequences.begin(), sequences.end(),
                              [](const Sequence &a, const Sequence &b) { return a.length > b.length; });
-                        cout<<endl;
-                        for(auto x : sequences){
-                            cout<<x.start<<" "<<x.end<<" "<<x.length<<endl;
-                        }
                         extractKmerFromFasta(seqIterator, seqFile, standardList, lengthOfTrainingSeq, sequences,
                                     prodigal, intergenicKmerList, kmerBuffer, posToWrite, splits[i].offset + fastaCnt,
                                     taxid2fasta[splits[i].training].species, 0);
