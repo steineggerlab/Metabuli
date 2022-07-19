@@ -1543,8 +1543,8 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
     // Get the largest hamming distance at each position of query
     int aminoAcidNum_total = queryLength / 3 + queryLength2 / 3;
     int aminoAcidNum_read1 = queryLength / 3;
-    auto *hammingsAtEachPos = new signed char[aminoAcidNum_total + 1];
-    memset(hammingsAtEachPos, -1, (aminoAcidNum_total + 1));
+    auto *hammingsAtEachPos = new signed char[aminoAcidNum_total + 3];
+    memset(hammingsAtEachPos, -1, (aminoAcidNum_total + 3));
 
     int currPos;
     size_t walker = begin;
