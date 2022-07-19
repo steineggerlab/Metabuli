@@ -1268,8 +1268,8 @@ void Classifier::constructMatchCombination_paired(vector<Match> &filteredMatches
     size_t f = 0;
 
     // Get the largest hamming distance at each position of query
-    auto *hammingsAtEachPos = new signed char[aminoAcidNum_total + 1];
-    memset(hammingsAtEachPos, -1, (aminoAcidNum_total + 1));
+    auto *hammingsAtEachPos = new signed char[aminoAcidNum_total + 3];
+    memset(hammingsAtEachPos, -1, (aminoAcidNum_total + 3));
     while (f < matchNum) {
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
