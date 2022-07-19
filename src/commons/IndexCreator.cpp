@@ -217,7 +217,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                                     prodigal, intergenicKmerList, kmerBuffer, posToWrite, splits[i].offset + fastaCnt,
                                     taxid2fasta[splits[i].training].species, 0);
                         munmap(seqFile.data, seqFile.fileSize + 1);
-
+                        sequences.clear();
                     }
                     checker[i] = true;
                     __sync_fetch_and_add(&processedSplitCnt, 1);
