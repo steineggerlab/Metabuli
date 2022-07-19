@@ -84,7 +84,7 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par)
     fill_n(splitChecker, numOfSplits, false);
     size_t processedSplitCnt = 0;
 
-    TargetKmerBuffer kmerBuffer(1'000'000'000);
+    TargetKmerBuffer kmerBuffer(10'000'000'000);
     while(processedSplitCnt < numOfSplits){ // Check this condition
         fillTargetKmerBuffer(kmerBuffer, splitChecker, processedSplitCnt, splits, taxid2fasta, par);
         time_t start = time(nullptr);
@@ -141,7 +141,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
 
                 // Estimate the number of k-mers to be extracted from fasta files of current splits
                 kmerCntOfCurrSplit = estimateKmerNum(taxid2fasta, splits[i]);
-
+                cout<<i<<" "<<taxid2fasta[splits[i].offset].fasta<<" "<<kmerCntOfCurrSplit<<endl;
                 posToWrite = kmerBuffer.reserveMemory(kmerCntOfCurrSplit);
                 if (posToWrite + kmerCntOfCurrSplit < kmerBuffer.bufferSize) {
                     // Load FASTA file for training
