@@ -669,6 +669,9 @@ void IndexCreator::getFastaSplits2(const vector<TaxId2Fasta> & taxid2fasta, vect
         }
         fastaSplit.emplace_back(training, offset, splitSize);
     }
+    for(auto x : fastaSplit){
+        cout<<x.training<<" "<<x.offset<<" "<<x.cnt<<endl;
+    }
 }
 void IndexCreator::getFastaSplits(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqs){
     size_t training = 0;
