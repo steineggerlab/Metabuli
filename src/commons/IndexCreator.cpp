@@ -84,7 +84,7 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par)
     fill_n(splitChecker, numOfSplits, false);
     size_t processedSplitCnt = 0;
 
-    TargetKmerBuffer kmerBuffer(10'000'000'000);
+    TargetKmerBuffer kmerBuffer(1'000'000'000);
     while(processedSplitCnt < numOfSplits){ // Check this condition
         fillTargetKmerBuffer(kmerBuffer, splitChecker, processedSplitCnt, splits, taxid2fasta, par);
         time_t start = time(nullptr);
