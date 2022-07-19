@@ -338,7 +338,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
         }
     }
 
-    // Filter out meaningless target querySplits
+    // Filter out meaningless target splits
     size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
     size_t numOfDiffIdxSplits_use = numOfDiffIdxSplits;
     for (size_t i = 1; i < numOfDiffIdxSplits; i++) {
