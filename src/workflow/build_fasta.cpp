@@ -94,12 +94,6 @@ int build_fasta(int argc, const char **argv, const Command &command)
     ncbiTaxonomy.createTaxIdListAtRank(taxIDs, taxIdListAtSpecies, "species");
     cout<<"done"<<endl;
 
-    //Create lists of genus taxonomical IDs of each sequences.
-    cout<<"Create taxonomical ID list at genus rank ... ";
-    vector<int> taxIdListAtGenus;
-    ncbiTaxonomy.createTaxIdListAtRank(taxIDs, taxIdListAtGenus, "genus");
-    cout<<"done"<<endl;
-
     //Make files of differential indexing and information of k-mers
     cout<<"Start to creat reference DB file(s) ... ";
     IndexCreator idxCre(par);

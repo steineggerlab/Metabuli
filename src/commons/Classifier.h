@@ -164,19 +164,6 @@ protected:
             FILE *matchFile,
             const LocalParameters &par);
 
-    void linearSearchParallel2(
-            QueryKmer *queryKmerList,
-            size_t &queryKmerCnt,
-            const char *targetDiffIdxList,
-            const char *targetInfoList,
-            const char *diffIdxSplits,
-            Buffer<Match> &matchBuffer,
-            const vector<int> &taxIdList,
-            const vector<int> &speciesTaxIdList,
-            const vector<TaxID> &genusTaxIdList,
-            FILE *matchFile,
-            const LocalParameters &par);
-
     void compareDna(uint64_t query,
                     vector<uint64_t> &targetKmersToCompare, size_t startIdx,
                     vector<size_t> &selectedMatches, vector<uint8_t> &selectedHammingSum,
@@ -197,8 +184,6 @@ protected:
                                const LocalParameters &par);
 
     static bool sortByGenusAndSpecies2(const Match &a, const Match &b);
-
-    static bool sortBySpecies(const Match &a, const Match &b);
 
     void chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy,
                          uint32_t currentQuery,
@@ -232,17 +217,17 @@ protected:
                                   float maxKmerCnt);
 
     void chooseSpecies(const std::vector<Match> &matches,
-                              NcbiTaxonomy &taxonomy,
-                              int queryLength,
-                              ScrCov &speciesScrCov,
-                              vector<TaxID> &species);
+                       NcbiTaxonomy &taxonomy,
+                       int queryLength,
+                       ScrCov &speciesScrCov,
+                       vector<TaxID> &species);
 
-   void classifyFurther_paired(const std::vector<Match> &matches,
-                                       NcbiTaxonomy &taxonomy,
-                                       int read1Length,
-                                       int read2Length,
-                                       ScrCov &speciesScrCov,
-                                       vector<TaxID> &species);
+    void classifyFurther_paired(const std::vector<Match> &matches,
+                                NcbiTaxonomy &taxonomy,
+                                int read1Length,
+                                int read2Length,
+                                ScrCov &speciesScrCov,
+                                vector<TaxID> &species);
 
     ScrCov scoreTaxon(const vector<Match> &matches,
                              size_t begin,
@@ -250,10 +235,10 @@ protected:
                              int queryLength);
 
     ScrCov scoreTaxon_paired(const vector<Match> &matches,
-                                    size_t begin,
-                                    size_t end,
-                                    int queryLength,
-                                    int queryLength2);
+                             size_t begin,
+                             size_t end,
+                             int queryLength,
+                             int queryLength2);
 
     // Write report
     void writeReadClassification(Query *queryList, int queryNum, ofstream &readClassificationFile);
@@ -262,10 +247,6 @@ protected:
 
     void writeReport(FILE *fp, const NcbiTaxonomy &ncbiTaxonomy, const unordered_map<TaxID, TaxonCounts> &cladeCounts,
                      unsigned long totalReads, TaxID taxID = 0, int depth = 0);
-
-    void writeMatches(Buffer<Match> &matchBuffer, FILE *matchFile);
-
-    static bool compareForWritingMatches(const Match &a, const Match &b);
 
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts> &map, TaxID key);
 
@@ -292,8 +273,6 @@ public:
                        NcbiTaxonomy &taxonomy);
 
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiffIdxList, size_t &diffIdxPos);
-
-    int getNumOfSplits() const;
 
     Classifier(LocalParameters &par);
 

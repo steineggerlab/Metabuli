@@ -490,63 +490,13 @@ size_t SeqIterator::getNumOfKmerForBlock(const PredictedBlock &block) {
 
 // It makes the blocks for translation
 // Each block has a predicted gene part and an intergenic region. When another gene shows up, new block starts.
-void SeqIterator::getTranslationBlocks(struct _gene *genes, struct _node *nodes, vector <PredictedBlock> &blocks,
-                                       size_t numOfGene, size_t length, size_t &blockIdx) {
-
-    if (numOfGene == 0) {
-        blocks.emplace_back(0, length - 1, 1);
-        blockIdx++;
-        return;
-    }
-
-    // for the first frame
-    if (genes[0].begin > 23) {
-        //blocks.emplace_back(0, genes[0].begin + 22, 1);
-        blocks.emplace_back(0, genes[0].begin - 1 + 22, 1);
-        blockIdx++;
-    }
-
-    int frame;
-    int rightEnd = 0;
-    size_t currIdx;
-    for (size_t geneIdx = 0; geneIdx < numOfGene - 1; geneIdx++) {
-        currIdx = geneIdx;
-        if (nodes[genes[currIdx].start_ndx].strand == 1) { //forward
-            blocks.emplace_back(genes[currIdx].begin - 1, genes[geneIdx + 1].begin - 1 + 22, 1);
-            blockIdx++;
-        } else { // reverse
-            frame = (genes[currIdx].end - 1) % 3;
-            rightEnd = genes[geneIdx + 1].begin - 1 + 22;
-            while (rightEnd % 3 != frame) {
-                rightEnd--;
-            }
-            blocks.emplace_back(genes[currIdx].begin - 1, rightEnd, -1);
-            blockIdx++;
-        }
-    }
-
-    if (nodes[genes[numOfGene - 1].start_ndx].strand == 1) { //forward
-        blocks.emplace_back(genes[numOfGene - 1].begin - 1, length - 1, 1);
-        blockIdx++;
-    } else { // reverse
-        frame = (genes[numOfGene - 1].end - 1) % 3;
-        rightEnd = length - 1;
-        while (rightEnd % 3 != frame) {
-            rightEnd--;
-        }
-        blocks.emplace_back(genes[numOfGene - 1].begin - 1, rightEnd, -1);
-        blockIdx++;
-    }
-}
-
-void SeqIterator::getTranslationBlocks2(struct _gene *genes, struct _node *nodes, vector <PredictedBlock> &blocks,
-                                        size_t numOfGene, size_t length,
-                                        size_t &blockIdx, vector <uint64_t> &intergenicKmerList, const char *seq) {
+void SeqIterator::getTranslationBlocks(struct _gene *genes, struct _node *nodes, vector<PredictedBlock> &blocks,
+                                       size_t numOfGene, size_t length,
+                                       size_t &blockIdx, vector<uint64_t> &intergenicKmerList, const char *seq) {
 
     //Exceptional case 1: 0 prdicted gene
     if (numOfGene == 0) {
         blocks.emplace_back(0, length - 1, 1);
-//        blocks.back().printPredictedBlock();
         blockIdx++;
         return;
     }
@@ -561,14 +511,12 @@ void SeqIterator::getTranslationBlocks2(struct _gene *genes, struct _node *nodes
             leftEnd = 0;
             while (leftEnd % 3 != frame) leftEnd++; // y - (y - x) % 3 .. which would be faster?
             blocks.emplace_back(leftEnd, length - 1, 1);
-//            blocks.back().printPredictedBlock();
             blockIdx++;
         } else { //reverse
             frame = (genes[0].end - 1) % 3;
             rightEnd = length - 1;
             while (rightEnd % 3 != frame) rightEnd--;
             blocks.emplace_back(0, rightEnd, -1);
-//            blocks.back().printPredictedBlock();
             blockIdx++;
         }
         return;
@@ -594,15 +542,12 @@ void SeqIterator::getTranslationBlocks2(struct _gene *genes, struct _node *nodes
         leftEnd = 0;
         while (leftEnd % 3 != frame) leftEnd++;
         blocks.emplace_back(leftEnd, genes[1].begin - 1 + 22, 1);
-//        blocks.back().printPredictedBlock();
         blockIdx++;
     } else {
         frame = (genes[0].end - 1) % 3;
         rightEnd = genes[1].begin - 1 + 22;
         while (rightEnd % 3 != frame) rightEnd--;
-
         blocks.emplace_back(0, rightEnd, -1);
-//        blocks.back().printPredictedBlock();
         blockIdx++;
     }
 
@@ -628,21 +573,15 @@ void SeqIterator::getTranslationBlocks2(struct _gene *genes, struct _node *nodes
             rightKmerHash = XXH64(rightKmerReverse, k, 0);
         }
 
-        // TODO Simplify here
         // Extend genes to cover intergenic regions
         if (find(intergenicKmerList.begin(), intergenicKmerList.end(), leftKmerHash) !=
             intergenicKmerList.end()) { //Extension to left
             if (!hasBeenExtendedToLeft) {
                 if (!isReverse) { // Forward
-                    //frame = (genes[geneIdx].begin - 1) % 3;
-                    //leftEnd = genes[geneIdx].begin - 1;
-                    //while (leftEnd % 3 != frame) leftEnd++;
                     blocks.emplace_back(genes[geneIdx].begin - 1, genes[geneIdx].end - 1, 1);
-//                    blocks.back().printPredictedBlock();
                     blockIdx++;
                 } else { // Reverse
                     blocks.emplace_back(genes[geneIdx].begin - 1, genes[geneIdx].end - 1, -1);
-//                    blocks.back().printPredictedBlock();
                     blockIdx++;
                 }
             } else {
@@ -651,11 +590,9 @@ void SeqIterator::getTranslationBlocks2(struct _gene *genes, struct _node *nodes
                     leftEnd = genes[geneIdx - 1].end - 1 - 22;
                     while (leftEnd % 3 != frame) leftEnd++;
                     blocks.emplace_back(leftEnd, genes[geneIdx].end - 1, 1);
-//                    blocks.back().printPredictedBlock();
                     blockIdx++;
                 } else { // reverse
                     blocks.emplace_back(genes[geneIdx - 1].end - 22 - 1, genes[geneIdx].end - 1, -1);
-//                    blocks.back().printPredictedBlock();
                     blockIdx++;
                 }
             }
@@ -667,27 +604,23 @@ void SeqIterator::getTranslationBlocks2(struct _gene *genes, struct _node *nodes
                     leftEnd = genes[geneIdx - 1].end - 1 - 22;
                     while (leftEnd % 3 != frame) leftEnd++;
                     blocks.emplace_back(leftEnd, genes[geneIdx + 1].begin - 1 + 22, 1);
-//                    blocks.back().printPredictedBlock();
                     blockIdx++;
                 } else {
                     frame = (genes[geneIdx].end - 1) % 3;
                     rightEnd = genes[geneIdx + 1].begin - 1 + 22;
                     while (rightEnd % 3 != frame) rightEnd--;
                     blocks.emplace_back(genes[geneIdx - 1].end - 1 - 22, rightEnd, -1);
-//                    blocks.back().printPredictedBlock();
                     blockIdx++;
                 }
             } else {
                 if (!isReverse) { //forward
                     blocks.emplace_back(genes[geneIdx].begin - 1, genes[geneIdx + 1].begin - 1 + 22, 1);
-//                    blocks.back().printPredictedBlock();
                     blockIdx++;
                 } else {
                     frame = (genes[geneIdx].end - 1) % 3;
                     rightEnd = genes[geneIdx + 1].begin - 1 + 22;
                     while (rightEnd % 3 != frame) rightEnd--;
                     blocks.emplace_back(genes[geneIdx].begin - 1, rightEnd, -1);
-//                    blocks.back().printPredictedBlock();
                     blockIdx++;
                 }
             }
@@ -707,15 +640,12 @@ void SeqIterator::getTranslationBlocks2(struct _gene *genes, struct _node *nodes
             leftEnd = genes[numOfGene - 2].end - 1 - 22;
             while (leftEnd % 3 != frame) leftEnd++;
             blocks.emplace_back(leftEnd, length - 1, 1);
-//            blocks.back().printPredictedBlock();
-
             blockIdx++;
         } else { // reverse
             frame = (genes[numOfGene - 1].end - 1) % 3;
             rightEnd = length - 1;
             while (rightEnd % 3 != frame) rightEnd--;
             blocks.emplace_back(genes[numOfGene - 2].end - 22 - 1, rightEnd, -1);
-//            blocks.back().printPredictedBlock();
             blockIdx++;
         }
     } else { //extension to right
@@ -725,27 +655,23 @@ void SeqIterator::getTranslationBlocks2(struct _gene *genes, struct _node *nodes
                 leftEnd = genes[numOfGene - 2].end - 1 - 22;
                 while (leftEnd % 3 != frame) leftEnd++;
                 blocks.emplace_back(leftEnd, length - 1, 1);
-//                blocks.back().printPredictedBlock();
                 blockIdx++;
             } else {
                 frame = (genes[numOfGene - 1].end - 1) % 3;
                 rightEnd = length - 1;
                 while (rightEnd % 3 != frame) rightEnd--;
                 blocks.emplace_back(genes[numOfGene - 2].end - 22 - 1, rightEnd, -1);
-//                blocks.back().printPredictedBlock();
                 blockIdx++;
             }
         } else {
             if (!isReverse) {
                 blocks.emplace_back(genes[numOfGene - 1].begin, length - 1, 1);
-//                blocks.back().printPredictedBlock();
                 blockIdx++;
             } else {
                 frame = (genes[numOfGene - 1].end - 1) % 3;
                 rightEnd = length - 1;
                 while (rightEnd % 3 != frame) rightEnd--;
                 blocks.emplace_back(genes[numOfGene - 1].begin - 1, rightEnd, -1);
-//                blocks.back().printPredictedBlock();
                 blockIdx++;
             }
         }
@@ -761,53 +687,6 @@ void SeqIterator::getTranslationBlocks2(struct _gene *genes, struct _node *nodes
     free(rightKmer);
     free(leftKmerReverse);
     free(rightKmerReverse);
-}
-
-void SeqIterator::getTranslationBlocksReverse(struct _gene *genes, struct _node *nodes, vector <PredictedBlock> &blocks,
-                                              size_t numOfGene, size_t length, size_t &blockIdx) {
-    if (numOfGene == 0) {
-        blocks.emplace_back(0, length - 1, 1);
-        blockIdx++;
-        return;
-    }
-
-    //for the first frame
-    if (length - genes[numOfGene - 1].end > 1) {
-        //blocks.emplace_back(0, genes[0].begin + 22, 1);
-        blocks.emplace_back(genes[numOfGene - 1].end - 1 - 22, length - 1, -1);
-        blockIdx++;
-    }
-
-    int frame;
-    int rightEnd = 0;
-    int leftEnd = 0;
-    size_t currIdx;
-    for (int geneIdx = numOfGene - 1; geneIdx - 1 >= 0; geneIdx--) {
-        currIdx = geneIdx;
-        if (nodes[genes[currIdx].start_ndx].strand == 1) { //forward
-            frame = (genes[currIdx].begin - 1) % 3;
-            leftEnd = genes[geneIdx - 1].end - 1 - 22;
-            while (leftEnd % 3 != frame) leftEnd++;
-            blocks.emplace_back(leftEnd, genes[currIdx].end - 1, nodes[genes[geneIdx].start_ndx].strand);
-            blockIdx++;
-        } else { // reverse
-            blocks.emplace_back(genes[geneIdx - 1].end - 22 - 1, genes[currIdx].end - 1,
-                                nodes[genes[geneIdx].start_ndx].strand);
-            blockIdx++;
-        }
-    }
-
-
-    if (nodes[genes[0].start_ndx].strand == 1) { //forward
-        frame = (genes[0].begin - 1) % 3;
-        leftEnd = 0;
-        while (leftEnd % 3 != frame) leftEnd++;
-        blocks.emplace_back(leftEnd, genes[0].end - 1, nodes[genes[0].start_ndx].strand);
-        blockIdx++;
-    } else { // reverse
-        blocks.emplace_back(0, genes[0].end - 1, nodes[genes[0].start_ndx].strand);
-        blockIdx++;
-    }
 }
 
 bool SeqIterator::compareMinHashList(priority_queue <uint64_t> list1, priority_queue <uint64_t> &list2, size_t length1,

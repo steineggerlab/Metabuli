@@ -40,40 +40,11 @@ void Classifier::startClassify(const char *queryFileName,
                                vector<int> &taxIdList,
                                const LocalParameters &par,
                                NcbiTaxonomy &taxonomy) {
-//    ///-----------------------------------------------------
-//    unordered_map<int,int> genus;
-//    for(size_t i = 0 ; i < ncbiTaxonomy.taxonNodes.size(); i++){
-//        if(ncbiTaxonomy.taxonNodes[i].rank == "species"){
-//            genus[ncbiTaxonomy.taxonNodes[i].parentTaxId]++;
-//        }
-//    }
-//    auto it = genus.begin();
-//    size_t cnt = 0;
-//    int archeaCnt = 0;
-//    int bacteriaCnt = 0;
-//    for(auto it = genus.begin(); it != genus.end(); it++){
-//        if(it->second == 1){
-//            if(it->first < 5839)
-//                archeaCnt ++;
-//            else
-//                bacteriaCnt ++;
-//        }
-//        cnt ++;
-//    }
-//    cout<<archeaCnt<<" "<<bacteriaCnt<<" "<<cnt<<endl;
-//    return;
-    ///-------------------------------------------------------
+
     vector<int> speciesTaxIdList;
     vector<TaxID> genusTaxIdList;
     taxonomy.createTaxIdListAtRank(taxIdList, speciesTaxIdList, "species");
     taxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "genus");
-//    unordered_map<TaxID,int> spCnt;
-//    for(size_t i = 0; i < speciesTaxIdList.size(); i++){
-//        spCnt[speciesTaxIdList[i]] ++;
-//        if(spCnt[speciesTaxIdList[i]] == 1){
-//            cout<<taxonomy.taxonNode(taxIdList[i])->name<<endl;
-//        }
-//    }
 
     //output file
     char matchFileName[300];
@@ -136,30 +107,17 @@ void Classifier::startClassify(const char *queryFileName,
         // Extract query k-mer
         cout << "K-mer extraction ... " << endl;
         if (par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
-            fillQueryKmerBufferParallel(kmerBuffer,
-                                        queryFile,
-                                        sequences,
-                                        processedSeqChecker,
-                                        processedSeqCnt,
-                                        queryList,
-                                        par);
+            fillQueryKmerBufferParallel(kmerBuffer,queryFile,sequences,processedSeqChecker,processedSeqCnt,
+                                        queryList, par);
         } else if (par.seqMode == 2) {
-            fillQueryKmerBufferParallel_paired(kmerBuffer,
-                                               queryFile,
-                                               queryFile2,
-                                               sequences,
-                                               sequences2,
-                                               processedSeqChecker,
-                                               processedSeqCnt,
-                                               queryList,
-                                               numOfSeq,
-                                               par);
+            fillQueryKmerBufferParallel_paired(kmerBuffer,queryFile,queryFile2,sequences,sequences2,
+                                               processedSeqChecker, processedSeqCnt, queryList, numOfSeq, par);
         }
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
         cout << "Time spent for k-mer extraction: " << double(time(nullptr) - beforeKmerExtraction) << endl;
 
-        time_t beforeQueryKmerSort = time(nullptr);
         // Sort query k-mer
+        time_t beforeQueryKmerSort = time(nullptr);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
                       Classifier::compareForLinearSearch);
         cout << "Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
@@ -183,30 +141,6 @@ void Classifier::startClassify(const char *queryFileName,
         cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
     }
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
-
-//    if (par.memoryMode == 1) {
-//        fclose(matchFile);
-//        free(matchBuffer.buffer);
-//        struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
-//        size_t numOfMatches = matchList.fileSize / sizeof(Match);
-//        time_t beforeSortMatches = time(nullptr);
-//        SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
-//        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
-//        time_t beforeAnalyze = time(nullptr);
-//        analyseResultParallel(taxonomy, matchList.data, numOfMatches, (int) numOfSeq, queryList, par);
-//        cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
-//    } else {
-////        fclose(matchFile);
-//        time_t beforeSortMatches = time(nullptr);
-//        SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve,
-//                      Classifier::sortByGenusAndSpecies2);
-//        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
-//        time_t beforeAnalyze = time(nullptr);
-//        analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList, par);
-//        cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
-//        free(matchBuffer.buffer);
-//    }
-
 
     // Write report files
     ofstream readClassificationFile;
@@ -247,8 +181,6 @@ void Classifier::startClassify(const char *queryFileName,
 //    }
 //    wr.close();
 //    wr2.close();
-
-    free(kmerBuffer.buffer);
 
     munmap(queryFile.data, queryFile.fileSize + 1);
     if (par.seqMode == 2) {
@@ -634,33 +566,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     // Load target k-mers that are matched in amino acid level
                     while (AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
-//                        if(genusTaxIdList[targetInfoList.data[targetInfoIdx].sequenceID] == 307234){
-//                          if(queryKmerList[j].info.pos == 232){
-//                            cout<<"Q: ";seqIterator.printKmerInDNAsequence(currentQuery);
-//                            print_binary64(64,currentQuery);
-//                            cout<<"\n";
-//                            print_binary64(64,AminoAcidPart(currentQuery));
-//                            cout<<"\n";
-//                            cout<<"T: ";seqIterator.printKmerInDNAsequence(currentTargetKmer);
-//                            print_binary64(64,currentTargetKmer);
-//                            cout<<"\n";
-//                            print_binary64(64,AminoAcidPart(currentTargetKmer));
-//                            cout<<"\n";
-//                            cout<< (int)getHammingDistanceSum(currentQuery,currentTargetKmer) << " " <<queryKmerList[j].info.pos<<endl;
-//                        }
-//@@@@
-//                        cout<<"Q: ";seqIterator.printKmerInDNAsequence(currentQuery);
-//                        print_binary64(64,currentQuery);
-//                        cout<<"\n";
-//                        print_binary64(64,AminoAcidPart(currentQuery));
-//                        cout<<"\n";
-//                        cout<<"T: ";seqIterator.printKmerInDNAsequence(currentTargetKmer);
-//                        print_binary64(64,currentTargetKmer);
-//                        cout<<"\n";
-//                        print_binary64(64,AminoAcidPart(currentTargetKmer));
-//                        cout<<"\n";
-//                        cout<< (int)getHammingDistanceSum(currentQuery,currentTargetKmer) << endl;
-
                         candidateTargetKmers.push_back(currentTargetKmer);
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                         targetInfoIdx++;
@@ -735,11 +640,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
 void Classifier::moveMatches(Match *dest, Match *src, int &matchNum) {
     memcpy(dest, src, sizeof(Match) * matchNum);
     matchNum = 0;
-}
-
-void Classifier::writeMatches(Buffer<Match> &matchBuffer, FILE *matchFile) {
-    fwrite(matchBuffer.buffer, sizeof(Match), matchBuffer.startIndexOfReserve, matchFile);
-    matchBuffer.startIndexOfReserve = 0;
 }
 
 // It compares query k-mers to target k-mers.
@@ -1019,7 +919,6 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
         // For current genus
         while (currentGenus == matchList[i].genusTaxID && (i < end + 1)) {
             currentSpecies = matchList[i].speciesTaxID;
-//            currentFrame = matchList[i].
             // For current species
             // Filter un-consecutive matches (probably random matches)
             speciesMatchCnt = 0;
@@ -1708,8 +1607,6 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
     return {((float) coveredLength_read1 + coveredLength_read2 - hammingSum) / ((float) queryLength + queryLength2),
             ((float) coveredLength_read1 + coveredLength_read2) / ((float) queryLength + queryLength2)};
 }
-
-int Classifier::getNumOfSplits() const { return this->numOfSplit; }
 
 bool Classifier::compareForLinearSearch(const QueryKmer &a, const QueryKmer &b) {
     if (a.ADkmer < b.ADkmer) {

@@ -63,14 +63,9 @@ private:
     void writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
-    static size_t fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
-                                        bool * checker,
-                                        size_t & processedTaxIdCnt,
-                                        const vector<FastaSplit> & splits,
-                                        const vector<TaxId2Fasta> & taxid2fasta,
-                                        const LocalParameters & par);
 
-    static size_t fillTargetKmerBuffer2(TargetKmerBuffer & kmerBuffer,
+
+    static size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                                         MmapedData<char> & seqFile,
                                         vector<Sequence> & seqs,
                                         bool * checker,
@@ -79,7 +74,7 @@ private:
                                         const vector<int> & taxIdList,
                                         const LocalParameters & par);
 
-    static size_t fillTargetKmerBuffer3(TargetKmerBuffer & kmerBuffer,
+    static size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                                         bool * checker,
                                         size_t & processedTaxIdCnt,
                                         const vector<FastaSplit> & splits,
