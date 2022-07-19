@@ -209,7 +209,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                         for(auto x : sequences){
                             cout<<x.start<<" "<<x.end<<" "<<x.length<<endl;
                         }
-                        extractKmerFromFasta(seqIterator, fastaForTraining, standardList, lengthOfTrainingSeq, sequences,
+                        extractKmerFromFasta(seqIterator, seqFile, standardList, lengthOfTrainingSeq, sequences,
                                     prodigal, intergenicKmerList, kmerBuffer, posToWrite, splits[i].offset + fastaCnt,
                                     taxid2fasta[splits[i].training].species, 0);
                         munmap(seqFile.data, seqFile.fileSize + 1);
