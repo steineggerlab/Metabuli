@@ -416,11 +416,15 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
                                     const size_t * uniqeKmerIdx, size_t & uniqKmerCnt){
     string diffIdxFileName;
     string infoFileName;
+    string splitFileName;
 
     diffIdxFileName = par.filenames[2] + "/diffIdx";
     infoFileName = par.filenames[2] + "/info";
+    splitFileName = par.filenames[2] + "/split";
+
 
     // Make splits
+    FILE * diffIdxSplitFile = fopen(splitFileName.c_str(), "wb");
     DiffIdxSplit splitList[SplitNum];
     memset(splitList, 0, sizeof(DiffIdxSplit) * SplitNum);
     size_t splitWidth = uniqKmerCnt / par.threads;
@@ -466,7 +470,10 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     cout<<"written k-mer count: "<<write<<endl;
 
     flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
+    fwrite(splitList, sizeof(DiffIdxSplit), SplitNum, diffIdxSplitFile);
+
     free(diffIdxBuffer);
+    fclose(diffIdxSplitFile);
     fclose(diffIdxFile);
     fclose(infoFile);
     kmerNum = 0;
