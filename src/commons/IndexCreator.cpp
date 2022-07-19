@@ -26,7 +26,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 
     // Sequences in the same split share the sequence to be used for training the prodigal.
     vector<FastaSplit> splits;
-    getFastaSplits(taxIdListAtRank, splits, sequences);
+    splitAFastaFile(taxIdListAtRank, splits, sequences);
     size_t numOfSplits = splits.size();
 
     bool * splitChecker = new bool[numOfSplits];
@@ -78,7 +78,7 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par)
     // Divide FASTA files
     // Sequences in the same split share the sequence to be used for training the prodigal.
     vector<FastaSplit> splits;
-    getFastaSplits2(taxid2fasta, splits);
+    groupFastaFiles(taxid2fasta, splits);
     size_t numOfSplits = splits.size();
     bool * splitChecker = new bool[numOfSplits];
     fill_n(splitChecker, numOfSplits, false);
@@ -150,10 +150,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                     getSeqSegmentsWithHead(sequences, fastaForTraining);
                     sort(sequences.begin(), sequences.end(),
                          [](const Sequence &a, const Sequence &b) { return a.length > b.length; });
-                    cout<<"Training"<<endl;
-                    for(auto x : sequences){
-                        cout<<x.start<<" "<<x.end<<" "<<x.length<<endl;
-                    }
+//                    cout<<"Training"<<endl;
+//                    for(auto x : sequences){
+//                        cout<<x.start<<" "<<x.end<<" "<<x.length<<endl;
+//                    }
 
                     // Train Prodigal with a training sequence of i th split
                     kseq_buffer_t buffer(const_cast<char *>(&fastaForTraining.data[sequences[0].start]),
@@ -209,10 +209,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                         getSeqSegmentsWithHead(sequences, seqFile);
                         sort(sequences.begin(), sequences.end(),
                              [](const Sequence &a, const Sequence &b) { return a.length > b.length; });
-                        cout<<"Others"<<endl;
-                        for(auto x : sequences){
-                            cout<<x.start<<" "<<x.end<<" "<<x.length<<endl;
-                        }
+//                        cout<<"Others"<<endl;
+//                        for(auto x : sequences){
+//                            cout<<x.start<<" "<<x.end<<" "<<x.length<<endl;
+//                        }
                         extractKmerFromFasta(seqIterator, seqFile, standardList, lengthOfTrainingSeq, sequences,
                                     prodigal, intergenicKmerList, kmerBuffer, posToWrite, splits[i].offset + fastaCnt,
                                     taxid2fasta[splits[i].training].species, 0);
@@ -661,17 +661,17 @@ void IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, Mmaped
     seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
 }
 
-void IndexCreator::getFastaSplits2(const vector<TaxId2Fasta> & taxid2fasta, vector<FastaSplit> & fastaSplit){
+void IndexCreator::groupFastaFiles(const vector<TaxId2Fasta> & taxIdListAtRank, vector<FastaSplit> & fastaSplit){
     size_t i = 0;
     size_t training = 0;
     uint32_t offset = 0;
     uint32_t splitSize = 0;
-    while(i < taxid2fasta.size()){
-        TaxID currentSpecies = taxid2fasta[i].species;
+    while(i < taxIdListAtRank.size()){
+        TaxID currentSpecies = taxIdListAtRank[i].species;
         training = i;
         offset = i;
         splitSize = 0;
-        while(currentSpecies == taxid2fasta[i].species && i < taxid2fasta.size() && splitSize < 100){
+        while(currentSpecies == taxIdListAtRank[i].species && i < taxIdListAtRank.size() && splitSize < 30){
             splitSize ++;
             i++;
         }
@@ -681,7 +681,7 @@ void IndexCreator::getFastaSplits2(const vector<TaxId2Fasta> & taxid2fasta, vect
         cout<<x.training<<" "<<x.offset<<" "<<x.cnt<<endl;
     }
 }
-void IndexCreator::getFastaSplits(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqs){
+void IndexCreator::splitAFastaFile(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqSegments){
     size_t training = 0;
     size_t idx = 0;
     uint32_t offset = 0;
@@ -703,9 +703,9 @@ void IndexCreator::getFastaSplits(const vector<int> & taxIdListAtRank, vector<Fa
             if(cnt > 100){ //The largest number of consecutive plasmid is the smallest. The smaller, the more training and the less time of single threading
                 theLargest = 0;
                 for(uint32_t i = 0; i < cnt - 1; i++){
-                    if(seqs[offset + i].length > theLargest){
+                    if(seqSegments[offset + i].length > theLargest){
                         training = offset + i;
-                        theLargest = seqs[offset + i].length;
+                        theLargest = seqSegments[offset + i].length;
                     }
                 }
                 fastaSplit.emplace_back(training, offset, cnt - 1);
@@ -720,9 +720,9 @@ void IndexCreator::getFastaSplits(const vector<int> & taxIdListAtRank, vector<Fa
         }else {
             theLargest = 0;
             for (uint32_t i = 0; i < cnt; i++) {
-                if (seqs[offset + i].length > theLargest) {
+                if (seqSegments[offset + i].length > theLargest) {
                     training = offset + i;
-                    theLargest = seqs[offset + i].length;
+                    theLargest = seqSegments[offset + i].length;
                 }
             }
             fastaSplit.emplace_back(training, offset, cnt);

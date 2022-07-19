@@ -89,8 +89,8 @@ private:
 
 
     static void getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
-    void getFastaSplits(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqSegments);
-    void getFastaSplits2(const vector<TaxId2Fasta> & taxIdListAtRank, vector<FastaSplit> & fastaSplit);
+    void splitAFastaFile(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqSegments);
+    void groupFastaFiles(const vector<TaxId2Fasta> & taxIdListAtRank, vector<FastaSplit> & fastaSplit);
     void mappingFromTaxIDtoFasta(const string & fastaList_fname,
                                  unordered_map<string, int> & assacc2taxid,
                                  vector<TaxId2Fasta> & taxid2fasta,
