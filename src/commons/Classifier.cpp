@@ -92,9 +92,9 @@ void Classifier::startClassify(const char *queryFileName,
     fill_n(processedSeqChecker, numOfSeq, false);
     size_t processedSeqCnt = 0;
 
-    // Timer
+    //
     size_t numOfTatalQueryKmerCnt = 0;
-
+    size_t totalMatchCnt = 0;
     // Extract k-mers from query sequences and compare them to target k-mer DB
     omp_set_num_threads(par.threads);
     while (processedSeqCnt < numOfSeq) {
@@ -130,6 +130,7 @@ void Classifier::startClassify(const char *queryFileName,
 
         // Sort matches
         time_t beforeSortMatches = time(nullptr);
+        totalMatchCnt += matchBuffer.startIndexOfReserve;
         SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve,
                       Classifier::sortByGenusAndSpecies2);
         cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
@@ -141,6 +142,7 @@ void Classifier::startClassify(const char *queryFileName,
         cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
     }
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
+    cout << "The number of matches: " << totalMatchCnt << endl;
 
     // Write report files
     ofstream readClassificationFile;
