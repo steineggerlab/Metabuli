@@ -241,6 +241,7 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
         maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
         numOfKmerBeforeMerge += infoFileList[file].fileSize / sizeof(TargetKmerInfo);
     }
+
     // To make differential index splits
     uint64_t AAofTempSplitOffset = UINT64_MAX;
     size_t sizeOfSplit = numOfKmerBeforeMerge / (SplitNum - 1);
@@ -267,7 +268,7 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     uint64_t entryKmer = lookingKmers[idxOfMin];
     TargetKmerInfo entryInfo = lookingInfos[idxOfMin];
 
-    // write first k-mer
+    // Write first k-mer
     getDiffIdx(lastWrittenKmer, entryKmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx);
     lastWrittenKmer = entryKmer;
     writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx);
