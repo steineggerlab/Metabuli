@@ -57,7 +57,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
 //    taxDB.close();
 
     ///Load the mapping file (assacc to taxID)
-    const char * mappingFile = "../../gtdb_taxdmp/assacc_to_taxid_gtdb.tsv";
+    const char * mappingFile = "../../gtdb_taxdmp/assacc_to_taxid.tsv";
     unordered_map<string, int> assacc2taxid;
     string key, value;
     ifstream map;
