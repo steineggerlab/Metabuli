@@ -161,7 +161,6 @@ protected:
             const vector<int> &taxIdList,
             const vector<int> &speciesTaxIdList,
             const vector<TaxID> &genusTaxIdList,
-            FILE *matchFile,
             const LocalParameters &par);
 
     void compareDna(uint64_t query,

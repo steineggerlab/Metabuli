@@ -47,9 +47,9 @@ void Classifier::startClassify(const char *queryFileName,
     taxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "genus");
 
     //output file
-    char matchFileName[300];
-    sprintf(matchFileName, "%s_match2", queryFileName);
-    FILE *matchFile = fopen(matchFileName, "wb");
+//    char matchFileName[300];
+//    sprintf(matchFileName, "%s_match2", queryFileName);
+//    FILE *matchFile = fopen(matchFileName, "wb");
 
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
@@ -125,7 +125,7 @@ void Classifier::startClassify(const char *queryFileName,
         // Search matches between query and target k-mers
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxFileName,
                              targetInfoFileName,
-                             diffIdxSplitFileName, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile,
+                             diffIdxSplitFileName, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList,
                              par);
 
         // Sort matches
@@ -140,6 +140,7 @@ void Classifier::startClassify(const char *queryFileName,
         analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList,
                               par);
         cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
+        cout << "The number of processed sequences: " << processedSeqCnt << " (" << processedSeqCnt / numOfSeq << ")" << endl;
     }
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
     cout << "The number of matches: " << totalMatchCnt << endl;
@@ -324,7 +325,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
                                       const char *targetInfoFileName, const char *diffIdxSplitsFileName,
                                       Buffer<Match> &matchBuffer, const vector<int> &taxIdList,
                                       const vector<int> &spTaxIdList, const vector<TaxID> &genusTaxIdList,
-                                      FILE *matchFile, const LocalParameters &par) {
+                                      const LocalParameters &par) {
 
     struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName, 2);
     struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName, 2);
@@ -482,8 +483,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                 hasOverflow = true;
 
                                 querySplits[i].start = lastMovedQueryIdx + 1;
-#pragma omp atomic
-                                matchBuffer.startIndexOfReserve -= matchCnt;
+                                __sync_fetch_and_sub(& matchBuffer.startIndexOfReserve, matchCnt);
                                 break;
                             } else { // not full -> copy matches to the shared buffer
                                 moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
@@ -524,8 +524,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                 matchBuffer.bufferSize) { // full -> write matches to file first
                                 hasOverflow = true;
                                 querySplits[i].start = lastMovedQueryIdx + 1;
-#pragma omp atomic
-                                matchBuffer.startIndexOfReserve -= matchCnt;
+                                __sync_fetch_and_sub(& matchBuffer.startIndexOfReserve, matchCnt);
                                 break;
                             } else { // not full -> copy matches to the shared buffer
                                 moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
@@ -585,8 +584,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         if (posToWrite + matchCnt >= matchBuffer.bufferSize) { // full -> write matches to file first
                             hasOverflow = true;
                             querySplits[i].start = lastMovedQueryIdx + 1;
-#pragma omp atomic
-                            matchBuffer.startIndexOfReserve -= matchCnt;
+                            __sync_fetch_and_sub(& matchBuffer.startIndexOfReserve, matchCnt);
                             break;
                         } else { // not full -> copy matches to the shared buffer
                             moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
@@ -903,6 +901,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
     TaxID currentGenus;
     TaxID currentSpecies;
 
+    vector<Match> tempMatchContainer;
     vector<Match> filteredMatches;
     vector<vector<Match>> matchesForEachGenus;
     vector<bool> conservedWithinGenus;
@@ -930,7 +929,8 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
             lastIn = false;
             while (currentSpecies == matchList[i + 1].speciesTaxID && (i < end + 1)) {
                 if (matchList[i].position + 3 >= matchList[i + 1].position) {
-                    filteredMatches.push_back(matchList[i]);
+                    //filteredMatches.push_back(matchList[i]);
+                    tempMatchContainer.push_back(matchList[i]);
                     speciesMatchCnt++;
                     if (matchList[i].position / 3 != lastPos) {
                         lastPos = matchList[i].position / 3;
@@ -940,36 +940,46 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                     lastIn = true;
                 } else if (lastIn) {
                     lastIn = false;
-                    filteredMatches.push_back(matchList[i]);
+                    //filteredMatches.push_back(matchList[i]);
+                    tempMatchContainer.push_back(matchList[i]);
                     speciesMatchCnt++;
                     if (matchList[i].position / 3 != lastPos) {
                         lastPos = matchList[i].position / 3;
                         speciesDiffPosCnt++;
                         consecutiveCnt++;
                     }
-                    if (consecutiveCnt < minConsCnt) {
-                        for (size_t j = 0; j < speciesMatchCnt; j++) {
-                            filteredMatches.pop_back();
-                        }
+//                    if (consecutiveCnt < minConsCnt) {
+//                        for (size_t j = 0; j < speciesMatchCnt; j++) {
+//                            filteredMatches.pop_back();
+//                        }
+//                    }
+                    if (consecutiveCnt >= minConsCnt) {
+                        filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(), tempMatchContainer.end());
                     }
                     consecutiveCnt = 0;
                     speciesMatchCnt = 0;
+                    tempMatchContainer.clear();
                 }
                 i++;
             }
             if (lastIn) {
-                filteredMatches.push_back(matchList[i]);
+                //filteredMatches.push_back(matchList[i]);
+                tempMatchContainer.push_back(matchList[i]);
                 speciesMatchCnt++;
                 if (matchList[i].position / 3 != lastPos) {
                     lastPos = matchList[i].position / 3;
                     speciesDiffPosCnt++;
                     consecutiveCnt++;
                 }
-                if (consecutiveCnt < minConsCnt) {
-                    for (size_t j = 0; j < speciesMatchCnt; j++) {
-                        filteredMatches.pop_back();
-                    }
+                //                    if (consecutiveCnt < minConsCnt) {
+//                        for (size_t j = 0; j < speciesMatchCnt; j++) {
+//                            filteredMatches.pop_back();
+//                        }
+//                    }
+                if (consecutiveCnt >= minConsCnt) {
+                    filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(), tempMatchContainer.end());
                 }
+                tempMatchContainer.clear();
             }
             i++;
         }
