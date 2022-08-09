@@ -46,11 +46,6 @@ void Classifier::startClassify(const char *queryFileName,
     taxonomy.createTaxIdListAtRank(taxIdList, speciesTaxIdList, "species");
     taxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "genus");
 
-    //output file
-//    char matchFileName[300];
-//    sprintf(matchFileName, "%s_match2", queryFileName);
-//    FILE *matchFile = fopen(matchFileName, "wb");
-
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
     Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(20));
@@ -140,7 +135,7 @@ void Classifier::startClassify(const char *queryFileName,
         analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList,
                               par);
         cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
-        cout << "The number of processed sequences: " << processedSeqCnt << " (" << processedSeqCnt / numOfSeq << ")" << endl;
+        cout << "The number of processed sequences: " << processedSeqCnt << " (" << (double) processedSeqCnt / (double) numOfSeq << ")" << endl;
     }
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
     cout << "The number of matches: " << totalMatchCnt << endl;
@@ -929,7 +924,6 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
             lastIn = false;
             while (currentSpecies == matchList[i + 1].speciesTaxID && (i < end + 1)) {
                 if (matchList[i].position + 3 >= matchList[i + 1].position) {
-                    //filteredMatches.push_back(matchList[i]);
                     tempMatchContainer.push_back(matchList[i]);
                     speciesMatchCnt++;
                     if (matchList[i].position / 3 != lastPos) {
@@ -940,7 +934,6 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                     lastIn = true;
                 } else if (lastIn) {
                     lastIn = false;
-                    //filteredMatches.push_back(matchList[i]);
                     tempMatchContainer.push_back(matchList[i]);
                     speciesMatchCnt++;
                     if (matchList[i].position / 3 != lastPos) {
@@ -948,11 +941,6 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                         speciesDiffPosCnt++;
                         consecutiveCnt++;
                     }
-//                    if (consecutiveCnt < minConsCnt) {
-//                        for (size_t j = 0; j < speciesMatchCnt; j++) {
-//                            filteredMatches.pop_back();
-//                        }
-//                    }
                     if (consecutiveCnt >= minConsCnt) {
                         filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(), tempMatchContainer.end());
                     }
@@ -963,7 +951,6 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                 i++;
             }
             if (lastIn) {
-                //filteredMatches.push_back(matchList[i]);
                 tempMatchContainer.push_back(matchList[i]);
                 speciesMatchCnt++;
                 if (matchList[i].position / 3 != lastPos) {
@@ -971,11 +958,6 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
                     speciesDiffPosCnt++;
                     consecutiveCnt++;
                 }
-                //                    if (consecutiveCnt < minConsCnt) {
-//                        for (size_t j = 0; j < speciesMatchCnt; j++) {
-//                            filteredMatches.pop_back();
-//                        }
-//                    }
                 if (consecutiveCnt >= minConsCnt) {
                     filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(), tempMatchContainer.end());
                 }
