@@ -20,9 +20,10 @@ public:
         bufferSize = sizeOfBuffer;
         startIndexOfReserve = 0;
     };
-//    ~QueryKmerBuffer(){
-//        free(buffer);
-//    }
+    ~QueryKmerBuffer(){
+        free(buffer);
+    }
+
     size_t reserveMemory(size_t numOfKmer){
         size_t offsetToWrite = __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
         return offsetToWrite;
@@ -39,10 +40,10 @@ public:
     size_t bufferSize;
     explicit TargetKmerBuffer(size_t sizeOfBuffer){
         if(sizeOfBuffer == 0){
-            buffer = (TargetKmer *) malloc(sizeof(TargetKmer) * getTargetKmerBufferSize());
+            buffer = (TargetKmer *) calloc(sizeOfBuffer, sizeof(TargetKmer));
             bufferSize = getTargetKmerBufferSize();
         } else {
-            buffer = (TargetKmer *) malloc(sizeof(TargetKmer) * sizeOfBuffer);
+            buffer = (TargetKmer *) calloc(sizeOfBuffer, sizeof(TargetKmer));
             bufferSize = sizeOfBuffer;
         }
         startIndexOfReserve = 0;

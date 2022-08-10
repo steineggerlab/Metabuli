@@ -2,8 +2,8 @@
 #include "LocalCommandDeclarations.h"
 #include "LocalParameters.h"
 
-const char* binary_name = "adclassifier";
-const char* tool_name = "adclassifier";
+const char* binary_name = "metabuli";
+const char* tool_name = "metabuli";
 // TODO Write one full sentence
 const char* tool_introduction = "Taxonomical classifier using 8-mers which have information of both of amino acid and DNA sequences";
 const char* main_author = "Jaebeom Kim <jbeom0731@gmail.com> ";
@@ -17,12 +17,11 @@ std::vector<Command> commands = {
          "Building DB from multiple assemblies in input directory.",
          NULL,
          "Jaebeom Kim <jbeom0731@gmail.com>",
-         "<i:directory of FASTA files> <i:taxonomy dir> <o:output> <tmpDir>",
+         "<i:directory of FASTA files> <i:taxonomy dir> <o:output>",
          CITATION_SPACEPHARER,
          {{"lowest directory including FASTA files", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::directory},
-          {"Mapping file (assembly accession to taxonomical ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-          {"Directory where the DB will be generated", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty},
-          {"tmpDir", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
+          {"Mapping file (assembly accession to taxonomical ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory},
+          {"Directory where the DB will be generated", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty}}},
 
           {"build_fasta", build_fasta, &localPar.build_fasta, COMMAND_MAIN,
                 "Building DB from a single FASTA file. ",
@@ -39,14 +38,13 @@ std::vector<Command> commands = {
          "Assigning taxonomy label to query reads",
          NULL,
          "Jaebeom Kim <jbeom0731@gmail.com>",
-         "<i:FASTA> <i:DB dir> <i:taxonomy dir> <o:out dir> <job ID> <tmpDir>",
+         "<i:FASTA> <i:DB dir> <i:taxonomy dir> <o:out dir> <job ID> ",
          CITATION_SPACEPHARER,
          {{"FASTA", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::flatfile},
           {"DB dir", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::directory},
           {"taxonomy dir", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::directory},
           {"out dir", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory},
-          {"job ID", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-          {"tmpDir", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
+          {"job ID", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
 
         {"inclusiontest", inclusiontest, &localPar.classify, COMMAND_MAIN,
                 "It extracts k-mers from query sequences, and compares them to the target database",

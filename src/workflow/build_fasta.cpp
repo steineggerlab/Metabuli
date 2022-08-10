@@ -22,10 +22,6 @@ int build_fasta(int argc, const char **argv, const Command &command)
     const string names = taxonomyDirectory + "/names.dmp";
     const string nodes = taxonomyDirectory + "/nodes.dmp";
     const string merged = taxonomyDirectory + "/merged.dmp";
-    cout<<names<<endl;
-    cout<<nodes<<endl;
-    cout<<merged<<endl;
-
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
 
     // Make a tax ID list using mapping file (acc2taxID)
@@ -98,53 +94,24 @@ int build_fasta(int argc, const char **argv, const Command &command)
     ncbiTaxonomy.createTaxIdListAtRank(taxIDs, taxIdListAtSpecies, "species");
     cout<<"done"<<endl;
 
-    //Create lists of genus taxonomical IDs of each sequences.
-    cout<<"Create taxonomical ID list at genus rank ... ";
-    vector<int> taxIdListAtGenus;
-    ncbiTaxonomy.createTaxIdListAtRank(taxIDs, taxIdListAtGenus, "genus");
-    cout<<"done"<<endl;
-
     //Make files of differential indexing and information of k-mers
     cout<<"Start to creat reference DB file(s) ... ";
-    IndexCreator idxCre;
+    IndexCreator idxCre(par);
     idxCre.startIndexCreatingParallel(fastaName, dbDirectory, taxIdListAtSpecies, taxIDs, par);
     cout<<"done"<<endl;
 
     //Merge files
     cout<<"Merge reference DB files ... "<<endl;
-    int numOfSplits = idxCre.getNumOfFlush();
-    char diffIdxSplitFileName[300];
-    vector<char *> diffSplits;
-    vector<char *> infoSplits;
-    for(int split = 0; split < numOfSplits ; split++){
-        char * suffixedDiffIdxFileName = new char[300];
-        char * suffixedInfoFileName = new char[300];
-        sprintf(suffixedDiffIdxFileName, "%s/%d_diffIdx", dbDirectory, split);
-        sprintf(suffixedInfoFileName, "%s/%d_info", dbDirectory, split);
-        diffSplits.push_back(suffixedDiffIdxFileName);
-        infoSplits.push_back(suffixedInfoFileName);
-    }
+    FileMerger merger(par);
+    merger.mergeTargetFiles(par, idxCre.getNumOfFlush());
 
-    char mergedDiffFileName[300];
-    char mergedInfoFileName[300];
-    sprintf(mergedDiffFileName, "%s/diffIdx", dbDirectory);
-    sprintf(mergedInfoFileName, "%s/info", dbDirectory);
-    sprintf(diffIdxSplitFileName, "%s/split", dbDirectory);
-
-    FileMerger merger(mergedDiffFileName, mergedInfoFileName, diffIdxSplitFileName);
-    merger.mergeTargetFiles(diffSplits, infoSplits,taxIdListAtSpecies, taxIDs);
-
-    for(int split = 0; split < numOfSplits ; split++){
-        delete[] diffSplits[split];
-        delete[] infoSplits[split];
-    }
-    cout<<"done"<<endl;
-
+    // Write parameters used
+    ofstream params;
+    params.open(string(dbDirectory) + "/parameters");
+    params.write(("Mask for spaced k-mer: " + par.spaceMask).c_str(), (int)("Mask for spaced k-mer: " + par.spaceMask).length());
+    params.write(string("Number of alphabets for encoding amino acids: " + to_string(par.reducedAA)).c_str(),
+                 (int) ("Number of alphabets for encoding amino acids: " + to_string(par.reducedAA)).length());
     cout<<"Reference DB files you need are as below"<<endl;
-    cout<<mergedDiffFileName<<endl;
-    cout<<mergedInfoFileName<<endl;
-    cout<<taxIdFileName<<endl;
-    cout<<diffIdxSplitFileName<<endl;
 
     return 0;
 }

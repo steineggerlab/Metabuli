@@ -1,6 +1,3 @@
-//
-// Created by 김재범 on 2020/11/10.
-//
 #include "ProdigalWrapper.h"
 #include <iostream>
 ProdigalWrapper::~ProdigalWrapper() {
@@ -65,22 +62,13 @@ trainASpecies(char * genome){
     tinf.st_wt = 4.35;
     tinf.trans_table = 11;
 
-//    fprintf(stderr, "Request:  Single Genome, Phase:  Training\n");
-//    fprintf(stderr, "Reading in the sequence(s) to train...\n");
-
     slen = getNextSeq(genome, 1);
     if(slen == 0) {
         fprintf(stderr, "\n\nSequence read failed (file must be Fasta, ");
         fprintf(stderr, "Genbank, or EMBL format).\n\n");
         exit(9);
     }
-//    if(slen < MIN_SINGLE_GENOME) {
-//        fprintf(stderr, "\n\nError:  Sequence must be %d", MIN_SINGLE_GENOME);
-//        fprintf(stderr, " characters (only %d read).\n(Consider", slen);
-//        fprintf(stderr, " running with the -p meta option or finding");
-//        fprintf(stderr, " more contigs from the same genome.)\n\n");
-//        exit(10);
-//    }
+
     if(slen < IDEAL_SINGLE_GENOME) {
         fprintf(stderr, "\n\nWarning:  ideally Prodigal should be given at");
         fprintf(stderr, " least %d bases for ", IDEAL_SINGLE_GENOME);
@@ -88,17 +76,11 @@ trainASpecies(char * genome){
         fprintf(stderr, "-p meta option.\n\n");
     }
     rcom_seq(seq, rseq, useq, slen);
-//    if(quiet == 0) {
-//        fprintf(stderr, "%d bp seq created, %.2f pct GC\n", slen, tinf.gc*100.0);
-//    }
 
     /***********************************************************************
       Find all the potential starts and stops, sort them, and create a
       comprehensive list of nodes for dynamic programming.
     ***********************************************************************/
-//    if(quiet == 0) {
-//        fprintf(stderr, "Locating all potential starts and stops...");
-//    }
     if(slen > max_slen && slen > STT_NOD*8) {
         nodes = (struct _node *)realloc(nodes, (int)(slen/8)*sizeof(struct _node));
         if(nodes == NULL) {
@@ -109,28 +91,18 @@ trainASpecies(char * genome){
     }
     nn = add_nodes(seq, rseq, slen, nodes, closed, mlist, nmask, &tinf);
     qsort(nodes, nn, sizeof(struct _node), &compare_nodes);
-//    if(quiet == 0) {
-//        fprintf(stderr, "%d nodes\n", nn);
-//    }
 
     /***********************************************************************
       Scan all the ORFS looking for a potential GC bias in a particular
       codon position.  This information will be used to acquire a good
       initial set of genes.
     ***********************************************************************/
-//    if(quiet == 0) {
-//        fprintf(stderr, "Looking for GC bias in different frames...");
-//    }
     gc_frame = calc_most_gc_frame(seq, slen);
     if(gc_frame == NULL) {
         fprintf(stderr, "Malloc failed on gc frame plot\n\n");
         exit(11);
     }
     record_gc_bias(gc_frame, nodes, nn, &tinf);
-//    if(quiet == 0) {
-//        fprintf(stderr, "frame bias scores: %.2f %.2f %.2f\n", tinf.bias[0],
-//                tinf.bias[1], tinf.bias[2]);
-//    }
     free(gc_frame);
 
     /***********************************************************************
@@ -138,44 +110,27 @@ trainASpecies(char * genome){
       bias used as a scoring function.  This will get an initial set of
       genes to train on.
     ***********************************************************************/
-//    if(quiet == 0) {
-//        fprintf(stderr, "Building initial set of genes to train from...");
-//    }
     record_overlapping_starts(nodes, nn, &tinf, 0);
 
     ipath = dprog(nodes, nn, &tinf, 0);
-//    if(quiet == 0) {
-//        fprintf(stderr, "done!\n");
-//    }
 
     /***********************************************************************
       Gather dicodon statistics for the training set.  Score the entire set
       of nodes.
     ***********************************************************************/
-//    if(quiet == 0) {
-//        fprintf(stderr, "Creating coding model and scoring nodes...");
-//    }
     calc_dicodon_gene(&tinf, seq, rseq, slen, nodes, ipath);
     raw_coding_score(seq, rseq, slen, nodes, nn, &tinf);
-//    if(quiet == 0) {
-//        fprintf(stderr, "done!\n");
-//    }
 
     /***********************************************************************
       Determine if this organism uses Shine-Dalgarno or not and score the
       nodes appropriately.
     ***********************************************************************/
-//    if(quiet == 0) {
-//        fprintf(stderr, "Examining upstream regions and training starts...");
-//    }
+
     rbs_score(seq, rseq, slen, nodes, nn, &tinf);
     train_starts_sd(seq, rseq, slen, nodes, nn, &tinf);
     determine_sd_usage(&tinf);
     if(force_nonsd == 1) tinf.uses_sd = 0;
     if(tinf.uses_sd == 0) train_starts_nonsd(seq, rseq, slen, nodes, nn, &tinf);
-//    if(quiet == 0) {
-//        fprintf(stderr, "done!\n");
-//    }
 }
 
 void ProdigalWrapper::trainMeta(char *genome) {
@@ -202,8 +157,6 @@ void ProdigalWrapper::trainMeta(char *genome) {
     }
 
     slen = getNextSeq(genome, 1);
-
-//    cout<<"gc"<<gc<<" "<<tinf.gc<<endl;
 
     rcom_seq(seq, rseq, useq, slen);
 
@@ -241,19 +194,12 @@ void ProdigalWrapper::trainMeta(char *genome) {
         record_overlapping_starts(nodes, nn, meta[i].tinf, 1);
         ipath = dprog(nodes, nn, meta[i].tinf, 1);
         if(ipath == -1) continue;
-//        cout<<ipath<<endl;
-//        cout<<nn<<endl;
-//        cout<<nodes[ipath].score<<endl;
+
         if (nodes[ipath].score > max_score) {
             max_phase = i;
             max_score = nodes[ipath].score;
-//            eliminate_bad_genes(nodes, ipath, meta[i].tinf);
-//            ng = add_genes(genes, nodes, ipath);
-//            tweak_final_starts(genes, ng, nodes, nn, meta[i].tinf);
-//            record_gene_data(genes, ng, nodes, meta[i].tinf, num_seq);
         }
     }
-//    cout<<"251"<<endl;
 }
 void ProdigalWrapper::getPredictedGenes(char * genome){
 
@@ -271,10 +217,6 @@ void ProdigalWrapper::getPredictedGenes(char * genome){
         fprintf(stderr, "Genbank, or EMBL format).\n\n");
         exit(14);
     }
-
-//    if(1) {
-//        fprintf(stderr, "Finding genes in sequence #%d (%d bp)...\n", num_seq, slen);
-//    }
 
     /* Reallocate memory if this is the biggest sequence we've seen */
     if(slen > max_slen && slen > STT_NOD*8) {
@@ -311,7 +253,7 @@ void ProdigalWrapper::getPredictedGenes(char * genome){
     }
     else{
 
-    ///metagenomic version
+    /// metagenomic version
         fprintf(stderr, "Request:  Metagenomic, Phase:  Gene Finding\n");
 
         nn = add_nodes(seq, rseq, slen, nodes, closed, mlist, nmask,

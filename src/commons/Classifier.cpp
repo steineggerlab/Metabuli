@@ -1,32 +1,37 @@
-//
-// Created by KJB on 01/09/2020.
-//
-
 #include "Classifier.h"
 #include "LocalParameters.h"
 #include <ctime>
 
-Classifier::Classifier() {
-    //seqIterator = new SeqIterator();
+Classifier::Classifier(LocalParameters & par) {
+    MARKER = 16777215;
+    MARKER = ~ MARKER;
+    bitsForCodon = 3;
     numOfSplit = 0;
-    selectedMatchCount = 0;
-    queryCount = 0;
-    perfectMatchCount = 0;
+    minConsCnt = par.minConsCnt;
+    minSpScore = par.minSpScore;
 
-    correctCnt = 0;
-    perfectCnt = 0;
-    classifiedCnt = 0;
-    speciesCnt = 0;
-    subspCnt = 0;
-    genusCnt = 0;
-    phylumCnt = 0;
-    classCnt = 0;
-    orderCnt = 0;
-    familyCnt = 0;
-    superCnt = 0;
+    // Mask for spaced k-mer
+    size_t maskLen = par.spaceMask.length();
+    mask = new uint32_t[maskLen];
+    spaceNum = 0;
+    spaceNum_int = 0;
+    for(size_t i = 0, j = 0; i < maskLen; i++){
+        mask[i] = par.spaceMask[i] - 48;
+        spaceNum += (mask[i] == 0);
+        spaceNum_int += (mask[i] == 0);
+        if(mask[i]==1){
+            unmaskedPos[j] = (int) i;
+            j++;
+        }
+    }
+
+    // Hamming Dist. margin
+    hammingMargin = (uint8_t) par.hammingMargin;
 }
 
-Classifier::~Classifier() {}//delete seqIterator; }
+Classifier::~Classifier() {
+    delete[] mask;
+}
 
 void Classifier::startClassify(const char *queryFileName,
                                const char *targetDiffIdxFileName,
@@ -35,49 +40,15 @@ void Classifier::startClassify(const char *queryFileName,
                                vector<int> &taxIdList,
                                const LocalParameters &par,
                                NcbiTaxonomy &taxonomy) {
-//    ///-----------------------------------------------------
-//    unordered_map<int,int> genus;
-//    for(size_t i = 0 ; i < ncbiTaxonomy.taxonNodes.size(); i++){
-//        if(ncbiTaxonomy.taxonNodes[i].rank == "species"){
-//            genus[ncbiTaxonomy.taxonNodes[i].parentTaxId]++;
-//        }
-//    }
-//    auto it = genus.begin();
-//    size_t cnt = 0;
-//    int archeaCnt = 0;
-//    int bacteriaCnt = 0;
-//    for(auto it = genus.begin(); it != genus.end(); it++){
-//        if(it->second == 1){
-//            if(it->first < 5839)
-//                archeaCnt ++;
-//            else
-//                bacteriaCnt ++;
-//        }
-//        cnt ++;
-//    }
-//    cout<<archeaCnt<<" "<<bacteriaCnt<<" "<<cnt<<endl;
-//    return;
-    ///-------------------------------------------------------
+
     vector<int> speciesTaxIdList;
     vector<TaxID> genusTaxIdList;
     taxonomy.createTaxIdListAtRank(taxIdList, speciesTaxIdList, "species");
     taxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "genus");
-//    unordered_map<TaxID,int> spCnt;
-//    for(size_t i = 0; i < speciesTaxIdList.size(); i++){
-//        spCnt[speciesTaxIdList[i]] ++;
-//        if(spCnt[speciesTaxIdList[i]] == 1){
-//            cout<<taxonomy.taxonNode(taxIdList[i])->name<<endl;
-//        }
-//    }
-
-    //output file
-    char matchFileName[300];
-    sprintf(matchFileName, "%s_match2", queryFileName);
-    FILE *matchFile = fopen(matchFileName, "wb");
 
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
-    Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(10));
+    Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(20));
 
     // Load query file
     cout << "Indexing query file ...";
@@ -116,9 +87,9 @@ void Classifier::startClassify(const char *queryFileName,
     fill_n(processedSeqChecker, numOfSeq, false);
     size_t processedSeqCnt = 0;
 
-    // Timer
+    //
     size_t numOfTatalQueryKmerCnt = 0;
-
+    size_t totalMatchCnt = 0;
     // Extract k-mers from query sequences and compare them to target k-mer DB
     omp_set_num_threads(par.threads);
     while (processedSeqCnt < numOfSeq) {
@@ -129,33 +100,19 @@ void Classifier::startClassify(const char *queryFileName,
         matchBuffer.startIndexOfReserve = 0;
 
         // Extract query k-mer
-        cout<<"K-mer extraction ... "<<endl;
+        cout << "K-mer extraction ... " << endl;
         if (par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
-            fillQueryKmerBufferParallel(kmerBuffer,
-                                        queryFile,
-                                        sequences,
-                                        processedSeqChecker,
-                                        processedSeqCnt,
-                                        queryList,
-                                        par);
+            fillQueryKmerBufferParallel(kmerBuffer,queryFile,sequences,processedSeqChecker,processedSeqCnt,
+                                        queryList, par);
         } else if (par.seqMode == 2) {
-            fillQueryKmerBufferParallel_paired(kmerBuffer,
-                                               queryFile,
-                                               queryFile2,
-                                               sequences,
-                                               sequences2,
-                                               processedSeqChecker,
-                                               processedSeqCnt,
-                                               queryList,
-                                               numOfSeq,
-                                               par);
+            fillQueryKmerBufferParallel_paired(kmerBuffer,queryFile,queryFile2,sequences,sequences2,
+                                               processedSeqChecker, processedSeqCnt, queryList, numOfSeq, par);
         }
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
         cout << "Time spent for k-mer extraction: " << double(time(nullptr) - beforeKmerExtraction) << endl;
 
-
-        time_t beforeQueryKmerSort = time(nullptr);
         // Sort query k-mer
+        time_t beforeQueryKmerSort = time(nullptr);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
                       Classifier::compareForLinearSearch);
         cout << "Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
@@ -163,45 +120,25 @@ void Classifier::startClassify(const char *queryFileName,
         // Search matches between query and target k-mers
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxFileName,
                              targetInfoFileName,
-                             diffIdxSplitFileName, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList, matchFile,
+                             diffIdxSplitFileName, matchBuffer, taxIdList, speciesTaxIdList, genusTaxIdList,
                              par);
 
         // Sort matches
         time_t beforeSortMatches = time(nullptr);
+        totalMatchCnt += matchBuffer.startIndexOfReserve;
         SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve,
                       Classifier::sortByGenusAndSpecies2);
         cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
 
         // Classify queries based on the matches
         time_t beforeAnalyze = time(nullptr);
-        analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList, par);
+        analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList,
+                              par);
         cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
+        cout << "The number of processed sequences: " << processedSeqCnt << " (" << (double) processedSeqCnt / (double) numOfSeq << ")" << endl;
     }
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
-
-//    if (par.memoryMode == 1) {
-//        fclose(matchFile);
-//        free(matchBuffer.buffer);
-//        struct MmapedData<Match> matchList = mmapData<Match>(matchFileName);
-//        size_t numOfMatches = matchList.fileSize / sizeof(Match);
-//        time_t beforeSortMatches = time(nullptr);
-//        SORT_PARALLEL(matchList.data, matchList.data + numOfMatches, Classifier::sortByGenusAndSpecies2);
-//        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
-//        time_t beforeAnalyze = time(nullptr);
-//        analyseResultParallel(taxonomy, matchList.data, numOfMatches, (int) numOfSeq, queryList, par);
-//        cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
-//    } else {
-////        fclose(matchFile);
-//        time_t beforeSortMatches = time(nullptr);
-//        SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve,
-//                      Classifier::sortByGenusAndSpecies2);
-//        cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
-//        time_t beforeAnalyze = time(nullptr);
-//        analyseResultParallel(taxonomy, matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList, par);
-//        cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
-//        free(matchBuffer.buffer);
-//    }
-
+    cout << "The number of matches: " << totalMatchCnt << endl;
 
     // Write report files
     ofstream readClassificationFile;
@@ -243,8 +180,6 @@ void Classifier::startClassify(const char *queryFileName,
 //    wr.close();
 //    wr2.close();
 
-    free(kmerBuffer.buffer);
-
     munmap(queryFile.data, queryFile.fileSize + 1);
     if (par.seqMode == 2) {
         munmap(queryFile2.data, queryFile2.fileSize + 1);
@@ -260,9 +195,9 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                                              const LocalParameters &par) {
     bool hasOverflow = false;
     omp_set_num_threads(*(int *) par.PARAM_THREADS.value);
-#pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, cout, queryList)
+#pragma omp parallel default(none), shared(par, checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, cout, queryList)
     {
-        SeqIterator seqIterator;
+        SeqIterator seqIterator(par);
         size_t posToWrite;
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < seqs.size(); i++) {
@@ -308,7 +243,7 @@ int Classifier::getMaxCoveredLength(int queryLength) {
 }
 
 int Classifier::getQueryKmerNumber(int queryLength) {
-    return (getMaxCoveredLength(queryLength) / 3 - kmerLength + 1) * 6;
+    return (getMaxCoveredLength(queryLength) / 3 - kmerLength - spaceNum_int + 1) * 6;
 }
 
 void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
@@ -323,14 +258,14 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                                                     const LocalParameters &par) {
     bool hasOverflow = false;
 
-#pragma omp parallel default(none), shared(checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile1, seqFile2, seqs, seqs2, cout, queryList, numOfSeq)
+#pragma omp parallel default(none), shared(par, checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile1, seqFile2, seqs, seqs2, cout, queryList, numOfSeq)
     {
-        SeqIterator seqIterator;
-        SeqIterator seqIterator2;
+        SeqIterator seqIterator(par);
+        SeqIterator seqIterator2(par);
         size_t posToWrite;
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < numOfSeq; i++) {
-            if (checker[i] == false && !hasOverflow) {
+            if (!checker[i] && !hasOverflow) {
                 // Read 1
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile1.data[seqs[i].start]), seqs[i].length);
                 kseq_t *seq = kseq_init(&buffer);
@@ -344,7 +279,7 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                 int kmerCnt2 = getQueryKmerNumber((int) strlen(seq2->seq.s));
 
                 // Ignore short read
-                if(kmerCnt2 < 1 || kmerCnt < 1){
+                if (kmerCnt2 < 1 || kmerCnt < 1) {
                     processedSeqCnt++;
                     continue;
                 }
@@ -385,13 +320,14 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
                                       const char *targetInfoFileName, const char *diffIdxSplitsFileName,
                                       Buffer<Match> &matchBuffer, const vector<int> &taxIdList,
                                       const vector<int> &spTaxIdList, const vector<TaxID> &genusTaxIdList,
-                                      FILE *matchFile, const LocalParameters &par) {
+                                      const LocalParameters &par) {
 
     struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName, 2);
     struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName, 2);
     struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitsFileName);
 
     cout << "linearSearch start..." << endl;
+    SeqIterator seqIterator1(par);
     // Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
     for (size_t checkN = queryKmerCnt - 1; checkN > 0; checkN--) {
         if (queryKmerList[checkN].ADkmer != UINT64_MAX) {
@@ -400,7 +336,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
         }
     }
 
-    // Filter out meaningless target querySplits
+    // Filter out meaningless target splits
     size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
     size_t numOfDiffIdxSplits_use = numOfDiffIdxSplits;
     for (size_t i = 1; i < numOfDiffIdxSplits; i++) {
@@ -417,9 +353,6 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     vector<QueryKmerSplit> querySplits;
 
     int threadNum = par.threads;
-    if(threadNum != 1 && threadNum != 2){
-        threadNum = par.threads * 10;
-    }
     uint64_t queryAA;
     if (threadNum == 1) { //Single thread
         querySplits.emplace_back(0, queryKmerCnt - 1, queryKmerCnt, diffIdxSplits.data[0]);
@@ -427,8 +360,8 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
         size_t splitWidth = queryKmerCnt / 2;
         querySplits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
         for (size_t tSplitCnt = 0; tSplitCnt < numOfDiffIdxSplits_use; tSplitCnt++) {
-            queryAA = AminoAcid(queryKmerList[splitWidth].ADkmer);
-            if (queryAA <= AminoAcid(diffIdxSplits.data[tSplitCnt].ADkmer)) {
+            queryAA = AminoAcidPart(queryKmerList[splitWidth].ADkmer);
+            if (queryAA <= AminoAcidPart(diffIdxSplits.data[tSplitCnt].ADkmer)) {
                 tSplitCnt = tSplitCnt - (tSplitCnt != 0);
                 querySplits.emplace_back(splitWidth, queryKmerCnt - 1, queryKmerCnt - splitWidth,
                                          diffIdxSplits.data[tSplitCnt]);
@@ -439,10 +372,10 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
         size_t splitWidth = queryKmerCnt / (threadNum - 1);
         querySplits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
         for (int i = 1; i < threadNum; i++) {
-            queryAA = AminoAcid(queryKmerList[splitWidth * i].ADkmer);
+            queryAA = AminoAcidPart(queryKmerList[splitWidth * i].ADkmer);
             bool needLastTargetBlock = true;
             for (size_t j = 0; j < numOfDiffIdxSplits_use; j++) {
-                if (queryAA <= AminoAcid(diffIdxSplits.data[j].ADkmer)) {
+                if (queryAA <= AminoAcidPart(diffIdxSplits.data[j].ADkmer)) {
                     j = j - (j != 0);
                     if (i != threadNum - 1) {
                         querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth,
@@ -483,7 +416,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     while (completedSplitCnt < threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, \
-querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList, matchFile, sspOrSp)
+querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList, sspOrSp, par)
         {
             //query variables
             uint64_t currentQuery = UINT64_MAX;
@@ -497,11 +430,11 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
 
             //Match buffer for each thread
             int localBufferSize = 2000000; // 64 Mb
-            auto * matches = new Match[localBufferSize];
+            auto *matches = new Match[localBufferSize];
             int matchCnt = 0;
 
             // For debug
-            SeqIterator seqIterator;
+            SeqIterator seqIterator(par);
 
             //vectors for selected target k-mers
             vector<uint8_t> selectedHammingSum;
@@ -516,7 +449,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             size_t range;
 #pragma omp for schedule(dynamic, 1)
             for (size_t i = 0; i < querySplits.size(); i++) {
-
                 if (hasOverflow || splitCheckList[i]) {
                     continue;
                 }
@@ -546,8 +478,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                 hasOverflow = true;
 
                                 querySplits[i].start = lastMovedQueryIdx + 1;
-#pragma omp atomic
-                                matchBuffer.startIndexOfReserve -= matchCnt;
+                                __sync_fetch_and_sub(& matchBuffer.startIndexOfReserve, matchCnt);
                                 break;
                             } else { // not full -> copy matches to the shared buffer
                                 moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
@@ -563,14 +494,10 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
                                                  selectedHammingSum[k], queryKmerList[j].info.frame};
-//                            if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 46337){
-//                                cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t";
-//                                seqIterator.printKmerInDNAsequence(currentQuery);
-//                            }
                             matchCnt++;
                         }
 
-                        if (currMatchNum != 0){
+                        if (currMatchNum != 0) {
                         }
                         continue;
                     }
@@ -579,7 +506,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     selectedHammings.clear();
 
                     // Reuse the candidate target k-mers to compare in DNA level if queries are the same at amino acid level but not at DNA level
-                    if (currentQueryAA == AminoAcid(queryKmerList[j].ADkmer)) {
+                    if (currentQueryAA == AminoAcidPart(queryKmerList[j].ADkmer)) {
                         compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, startIdxOfAAmatch, selectedMatches,
                                    selectedHammingSum, selectedHammings, i);
                         currMatchNum = selectedMatches.size();
@@ -592,8 +519,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                 matchBuffer.bufferSize) { // full -> write matches to file first
                                 hasOverflow = true;
                                 querySplits[i].start = lastMovedQueryIdx + 1;
-#pragma omp atomic
-                                matchBuffer.startIndexOfReserve -= matchCnt;
+                                __sync_fetch_and_sub(& matchBuffer.startIndexOfReserve, matchCnt);
                                 break;
                             } else { // not full -> copy matches to the shared buffer
                                 moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
@@ -609,11 +535,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                                  spTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                                  queryKmerList[j].info.pos, selectedHammings[k],
-                                                 selectedHammingSum[k],queryKmerList[j].info.frame};
-//                            if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 46337){
-//                                cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t";
-//                                seqIterator.printKmerInDNAsequence(currentQuery);
-//                            }
+                                                 selectedHammingSum[k], queryKmerList[j].info.frame};
                             matchCnt++;
                         }
                         continue;
@@ -622,23 +544,23 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
 
                     // Get next query, and start to find
                     currentQuery = queryKmerList[j].ADkmer;
-                    currentQueryAA = AminoAcid(currentQuery);
+                    currentQueryAA = AminoAcidPart(currentQuery);
 
                     // Skip target k-mers that are not matched in amino acid level
-                    while (AminoAcid(currentQuery) > AminoAcid(currentTargetKmer) &&
+                    while (AminoAcidPart(currentQuery) > AminoAcidPart(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
                         targetInfoIdx++;
                     }
 
-                    if (AminoAcid(currentQuery) !=
-                        AminoAcid(currentTargetKmer)) // Move to next query k-mer if there isn't any match.
+                    if (AminoAcidPart(currentQuery) !=
+                            AminoAcidPart(currentTargetKmer)) // Move to next query k-mer if there isn't any match.
                         continue;
                     else
                         startIdxOfAAmatch = targetInfoIdx;
 
                     // Load target k-mers that are matched in amino acid level
-                    while (AminoAcid(currentQuery) == AminoAcid(currentTargetKmer) &&
+                    while (AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
                         cout<<"Q: ";seqIterator.printKmerInDNAsequence(currentQuery);
                         print_binary64(64,currentQuery);
@@ -672,8 +594,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         if (posToWrite + matchCnt >= matchBuffer.bufferSize) { // full -> write matches to file first
                             hasOverflow = true;
                             querySplits[i].start = lastMovedQueryIdx + 1;
-#pragma omp atomic
-                            matchBuffer.startIndexOfReserve -= matchCnt;
+                            __sync_fetch_and_sub(& matchBuffer.startIndexOfReserve, matchCnt);
                             break;
                         } else { // not full -> copy matches to the shared buffer
                             moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
@@ -689,11 +610,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                                              spTaxIdList[targetInfoList.data[idx].sequenceID],
                                              genusTaxIdList[targetInfoList.data[idx].sequenceID],
                                              queryKmerList[j].info.pos, selectedHammings[k],
-                                             selectedHammingSum[k],queryKmerList[j].info.frame};
-//                        if(genusTaxIdList[targetInfoList.data[idx].sequenceID] == 46337){
-//                            cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t";
-//                            seqIterator.printKmerInDNAsequence(currentQuery);
-//                        }
+                                             selectedHammingSum[k], queryKmerList[j].info.frame};
                         matchCnt++;
                     }
                 } // End of one split
@@ -701,27 +618,25 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 // Move matches in the local buffer to the shared buffer
                 posToWrite = matchBuffer.reserveMemory(matchCnt);
                 if (posToWrite + matchCnt >= matchBuffer.bufferSize) {
+                    hasOverflow = true;
                     querySplits[i].start = lastMovedQueryIdx + 1;
-#pragma omp atomic
-                    matchBuffer.startIndexOfReserve -= matchCnt;
+                    __sync_fetch_and_sub(& matchBuffer.startIndexOfReserve, matchCnt);
                 } else {
                     moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
                 }
 
-
                 // Check whether current split is completed or not
                 if (querySplits[i].start - 1 == querySplits[i].end) {
                     splitCheckList[i] = true;
-                    __sync_fetch_and_add(& completedSplitCnt, 1);
+                    __sync_fetch_and_add(&completedSplitCnt, 1);
                 }
             } // End of omp for (Iterating for splits)
             delete[] matches;
         } // end of omp parallel
-        if(hasOverflow){
-            cout<<"overflow!!!"<<endl;
+        if (hasOverflow) {
+            cout << "overflow!!!" << endl;
             break;
         }
-        //writeMatches(matchBuffer, matchFile);
     } // end of while(completeSplitCnt < threadNum)
     cout << "Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
 
@@ -732,14 +647,9 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
     queryKmerCnt = 0;
 }
 
-void Classifier::moveMatches(Match * dest, Match * src, int & matchNum) {
+void Classifier::moveMatches(Match *dest, Match *src, int &matchNum) {
     memcpy(dest, src, sizeof(Match) * matchNum);
     matchNum = 0;
-}
-
-void Classifier::writeMatches(Buffer<Match> &matchBuffer, FILE *matchFile) {
-    fwrite(matchBuffer.buffer, sizeof(Match), matchBuffer.startIndexOfReserve, matchFile);
-    matchBuffer.startIndexOfReserve = 0;
 }
 
 // It compares query k-mers to target k-mers.
@@ -749,14 +659,13 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
                             vector<uint16_t> &selectedHammings, int i2) {
 
     size_t size = targetKmersToCompare.size();
-    uint8_t * hammingSums = new uint8_t[size + 1];
+    uint8_t *hammingSums = new uint8_t[size + 1];
     uint8_t currentHammingSum;
     uint8_t minHammingSum = UINT8_MAX;
 
     // Calculate hamming distance
     for (size_t i = 0; i < size; i++) {
         currentHammingSum = getHammingDistanceSum(query, targetKmersToCompare[i]);
-
         if (currentHammingSum < minHammingSum) {
             minHammingSum = currentHammingSum;
         }
@@ -765,7 +674,7 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
 
     // Select target k-mers that passed hamming criteria
     for (size_t h = 0; h < size; h++) {
-        if (hammingSums[h] == minHammingSum) {
+        if (hammingSums[h] <= minHammingSum + hammingMargin) {
             selectedMatches.push_back(startIdx + h);
             selectedHammingSum.push_back(hammingSums[h]);
             selectedHammings.push_back(getHammings(query, targetKmersToCompare[h]));
@@ -827,7 +736,7 @@ void Classifier::analyseResultParallel(NcbiTaxonomy &ncbiTaxonomy,
 
 
 void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQuery,
-                                 size_t offset, size_t end, Match *matchList, Query * queryList,
+                                 size_t offset, size_t end, Match *matchList, Query *queryList,
                                  const LocalParameters &par) {
     int queryLength = queryList[currentQuery].queryLength; //queryList[currentQuery].queryLength; 13497
     TaxID selectedTaxon;
@@ -835,7 +744,7 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
         cout << "# " << currentQuery << endl;
         for (size_t i = offset; i < end + 1; i++) {
             cout << matchList[i].genusTaxID << " " << matchList[i].speciesTaxID << " " << matchList[i].taxID << " " <<
-            matchList[i].position << " " << int(matchList[i].hamming) << endl;
+                 matchList[i].position << " " << int(matchList[i].hamming) << endl;
         }
     }
 
@@ -875,22 +784,12 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
     }
 
     // If the score is too low, it is un-classified
-    if (ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID)){ // virus
-        if(highRankScore < 0.1){
-            queryList[currentQuery].isClassified = false;
-            queryList[currentQuery].classification = 0;
-            queryList[currentQuery].score = 0;
-            queryList[currentQuery].newSpecies = false;
-            return;
-        }
-    } else {
-        if (res == 3) {
-            queryList[currentQuery].isClassified = false;
-            queryList[currentQuery].classification = 0;
-            queryList[currentQuery].score = 0;
-            queryList[currentQuery].newSpecies = false;
-            return;
-        }
+    if (highRankScore < par.minScore) {
+        queryList[currentQuery].isClassified = false;
+        queryList[currentQuery].classification = 0;
+        queryList[currentQuery].score = 0;
+        queryList[currentQuery].newSpecies = false;
+        return;
     }
 
     for (size_t i = 0; i < matchesForLCA.size(); i++) {
@@ -940,22 +839,12 @@ void Classifier::chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy, uint32_t currentQue
                       species);
     }
 
-    // Classify at the genus rank if more than one species are selected.
-    // Classify at the genus rank if the score at species level is not enough.
+    // Classify at the genus rank if more than one species are selected or the score at species level is not enough.
     if (species.size() > 1
-        || (speciesScrCov.score < 0.9 && !ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID))) {
+        || (speciesScrCov.score < minSpScore && !ncbiTaxonomy.IsAncestor(par.virusTaxId, matchesForLCA[0].taxID))) {
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = ncbiTaxonomy.getTaxIdAtRank(matchesForLCA[0].taxID, "genus");
         queryList[currentQuery].score = highRankScore;
-
-//        if (queryList[currentQuery].classification == 150614) {
-////            sort(matchesForLCA.begin(), matchesForLCA.end(), Classifier::sortMatchesByPos);
-//            cout << "# " << currentQuery << endl;
-//            for (size_t i = 0; i < matchesForLCA.size(); i++) {
-//                cout << i << " " << matchesForLCA[i].position << " " <<
-//                     matchesForLCA[i].taxID << " " << int(matchesForLCA[i].hamming) << endl;
-//            }
-//        }
         return;
     }
 
@@ -1022,6 +911,7 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
     TaxID currentGenus;
     TaxID currentSpecies;
 
+    vector<Match> tempMatchContainer;
     vector<Match> filteredMatches;
     vector<vector<Match>> matchesForEachGenus;
     vector<bool> conservedWithinGenus;
@@ -1040,59 +930,55 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
         // For current genus
         while (currentGenus == matchList[i].genusTaxID && (i < end + 1)) {
             currentSpecies = matchList[i].speciesTaxID;
-//            currentFrame = matchList[i].
             // For current species
             // Filter un-consecutive matches (probably random matches)
-            // TODO: At least 4 consecutive diff pos !!!
             speciesMatchCnt = 0;
             speciesDiffPosCnt = 0;
             consecutiveCnt = 0;
             lastPos = -1;
             lastIn = false;
             while (currentSpecies == matchList[i + 1].speciesTaxID && (i < end + 1)) {
-                if(matchList[i].position + 3 >= matchList[i + 1].position){
-                    filteredMatches.push_back(matchList[i]);
-                    speciesMatchCnt ++;
-                    if (matchList[i].position / 3  != lastPos){
+                if (matchList[i].position + 3 >= matchList[i + 1].position) {
+                    tempMatchContainer.push_back(matchList[i]);
+                    speciesMatchCnt++;
+                    if (matchList[i].position / 3 != lastPos) {
                         lastPos = matchList[i].position / 3;
-                        speciesDiffPosCnt ++;
-                        consecutiveCnt ++;
+                        speciesDiffPosCnt++;
+                        consecutiveCnt++;
                     }
                     lastIn = true;
                 } else if (lastIn) {
                     lastIn = false;
-                    filteredMatches.push_back(matchList[i]);
-                    speciesMatchCnt ++;
-                    if (matchList[i].position / 3  != lastPos){
+                    tempMatchContainer.push_back(matchList[i]);
+                    speciesMatchCnt++;
+                    if (matchList[i].position / 3 != lastPos) {
                         lastPos = matchList[i].position / 3;
-                        speciesDiffPosCnt ++;
-                        consecutiveCnt ++;
+                        speciesDiffPosCnt++;
+                        consecutiveCnt++;
                     }
-                    if (consecutiveCnt < 4){
-                        for (size_t j = 0; j < speciesMatchCnt; j ++){
-                            filteredMatches.pop_back();
-                        }
+                    if (consecutiveCnt >= minConsCnt) {
+                        filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(), tempMatchContainer.end());
                     }
                     consecutiveCnt = 0;
                     speciesMatchCnt = 0;
+                    tempMatchContainer.clear();
                 }
-                i ++;
+                i++;
             }
-            if (lastIn){
-                filteredMatches.push_back(matchList[i]);
-                speciesMatchCnt ++;
-                if (matchList[i].position / 3 != lastPos){
+            if (lastIn) {
+                tempMatchContainer.push_back(matchList[i]);
+                speciesMatchCnt++;
+                if (matchList[i].position / 3 != lastPos) {
                     lastPos = matchList[i].position / 3;
-                    speciesDiffPosCnt ++;
-                    consecutiveCnt ++;
+                    speciesDiffPosCnt++;
+                    consecutiveCnt++;
                 }
-                if (consecutiveCnt < 4){
-                    for (size_t j = 0; j < speciesMatchCnt; j ++){
-                        filteredMatches.pop_back();
-                    }
+                if (consecutiveCnt >= minConsCnt) {
+                    filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(), tempMatchContainer.end());
                 }
+                tempMatchContainer.clear();
             }
-            i ++;
+            i++;
         }
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
@@ -1114,103 +1000,6 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorit
     vector<size_t> maxIdx;
     for (size_t g = 0; g < scoreOfEachGenus.size(); g++) {
         if (scoreOfEachGenus[g] > maxScore * 0.95f) {
-            maxIdx.push_back(g);
-        }
-    }
-    bestScore = maxScore;
-
-    for (size_t g = 0; g < maxIdx.size(); g++) {
-        matchesForMajorityLCA.insert(matchesForMajorityLCA.end(), matchesForEachGenus[maxIdx[g]].begin(),
-                                     matchesForEachGenus[maxIdx[g]].end());
-    }
-
-//    if (maxScore < 0.1)
-//        return 3;
-
-    if (maxIdx.size() > 1) {
-        return 2;
-    }
-    return 1;
-
-    //Three cases
-    //1. one genus
-    //2. more than one genus
-    //3. no genus
-}
-
-int Classifier::getMatchesOfTheBestGenus_index(vector<size_t> &matchesForMajorityLCA,
-                                               Match *matchList,
-                                               size_t end,
-                                               size_t offset,
-                                               int queryLength,
-                                               float &bestScore) {
-    int conCnt;
-    uint32_t hammingSum;
-    float hammingMean;
-    TaxID currentGenus;
-    TaxID currentSpecies;
-
-    vector<size_t> filteredMatches;
-    vector<vector<size_t>> matchesForEachGenus;
-    vector<bool> conservedWithinGenus;
-    vector<float> scoreOfEachGenus;
-    size_t i = offset;
-    size_t offsetIdx;
-    bool newOffset;
-    while (i < end + 1) {
-        currentGenus = matchList[i].genusTaxID;
-        // For current genus
-        while (currentGenus == matchList[i].genusTaxID && (i < end + 1)) {
-            currentSpecies = matchList[i].speciesTaxID;
-            // For current species
-            // Filter un-consecutive matches (probably random matches)
-            while (currentSpecies == matchList[i].speciesTaxID && (i < end + 1)) {
-                offsetIdx = i;
-                i++;
-                newOffset = true;
-                hammingSum = 0;
-                hammingMean = matchList[i - 1].hamming;
-                while ((i < end + 1) && currentSpecies == matchList[i].speciesTaxID &&
-                       matchList[i].position <= matchList[i - 1].position + 3) {
-                    if (newOffset && ((float) matchList[i].hamming) <= hammingMean + 3) {
-                        newOffset = false;
-                        hammingSum = matchList[offsetIdx].hamming;
-                        filteredMatches.push_back(offsetIdx);
-                        continue;
-                    } else if (!newOffset && ((float) matchList[i].hamming) <= hammingMean + 3) {
-                        filteredMatches.push_back(i);
-                        hammingSum += matchList[i].hamming;
-                        hammingMean = float(hammingSum) / float(filteredMatches.size());
-                    }
-                    i++;
-                }
-            }
-        }
-
-        // Construct a match combination using filtered matches of current genus
-        // so that it can best cover the query, and score the combination
-        if (!filteredMatches.empty()) {
-            constructMatchCombination_index(filteredMatches,
-                                            matchList,
-                                            matchesForEachGenus,
-                                            scoreOfEachGenus,
-                                            queryLength);
-        }
-        filteredMatches.clear();
-    }
-
-    // If there are no meaningful genus
-    if (scoreOfEachGenus.empty()) {
-        bestScore = 0;
-        return 3;
-    }
-
-    float maxScore = *max_element(scoreOfEachGenus.begin(), scoreOfEachGenus.end());
-    if (maxScore < 0.3)
-        return 3;
-    vector<size_t> maxIdx;
-    for (size_t g = 0; g < scoreOfEachGenus.size(); g++) {
-        if (scoreOfEachGenus[g] > maxScore * 0.9f) {
             maxIdx.push_back(g);
         }
     }
@@ -1247,6 +1036,12 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> &matchesForMajorityLCA, M
     size_t i = offset;
     size_t offsetIdx;
     bool newOffset;
+    bool lastIn;
+    size_t speciesMatchCnt;
+    size_t speciesDiffPosCnt;
+    size_t consecutiveCnt;
+    int lastPos;
+    uint8_t curFrame;
     while (i < end + 1) {
         currentGenus = matchList[i].genusTaxID;
         // For current genus
@@ -1254,27 +1049,55 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> &matchesForMajorityLCA, M
             currentSpecies = matchList[i].speciesTaxID;
             // For current species
             // Filter un-consecutive matches (probably random matches)
-            while ((i < end + 1) && currentSpecies == matchList[i].speciesTaxID) {
-                offsetIdx = i;
-                i++;
-                newOffset = true;
-                hammingSum = 0;
-                hammingMean = matchList[i - 1].hamming;
-                while ((i < end + 1) && currentSpecies == matchList[i].speciesTaxID &&
-                       matchList[i].position <= matchList[i - 1].position + 3) {
-                    if (newOffset && ((float) matchList[i].hamming) <= hammingMean + 3) {
-                        newOffset = false;
-                        hammingSum = matchList[offsetIdx].hamming;
-                        filteredMatches.push_back(matchList[offsetIdx]);
-                        continue;
-                    } else if (!newOffset && ((float) matchList[i].hamming) <= hammingMean + 3) {
-                        filteredMatches.push_back(matchList[i]);
-                        hammingSum += matchList[i].hamming;
-                        hammingMean = float(hammingSum) / float(filteredMatches.size());
+            speciesMatchCnt = 0;
+            speciesDiffPosCnt = 0;
+            consecutiveCnt = 0;
+            lastPos = -1;
+            lastIn = false;
+            while (currentSpecies == matchList[i + 1].speciesTaxID && (i < end + 1)) {
+                if (matchList[i].position + 3 >= matchList[i + 1].position) {
+                    filteredMatches.push_back(matchList[i]);
+                    speciesMatchCnt++;
+                    if (matchList[i].position / 3 != lastPos) {
+                        lastPos = matchList[i].position / 3;
+                        speciesDiffPosCnt++;
+                        consecutiveCnt++;
                     }
-                    i++;
+                    lastIn = true;
+                } else if (lastIn) {
+                    lastIn = false;
+                    filteredMatches.push_back(matchList[i]);
+                    speciesMatchCnt++;
+                    if (matchList[i].position / 3 != lastPos) {
+                        lastPos = matchList[i].position / 3;
+                        speciesDiffPosCnt++;
+                        consecutiveCnt++;
+                    }
+                    if (consecutiveCnt < minConsCnt) {
+                        for (size_t j = 0; j < speciesMatchCnt; j++) {
+                            filteredMatches.pop_back();
+                        }
+                    }
+                    consecutiveCnt = 0;
+                    speciesMatchCnt = 0;
+                }
+                i++;
+            }
+            if (lastIn) {
+                filteredMatches.push_back(matchList[i]);
+                speciesMatchCnt++;
+                if (matchList[i].position / 3 != lastPos) {
+                    lastPos = matchList[i].position / 3;
+                    speciesDiffPosCnt++;
+                    consecutiveCnt++;
+                }
+                if (consecutiveCnt < minConsCnt) {
+                    for (size_t j = 0; j < speciesMatchCnt; j++) {
+                        filteredMatches.pop_back();
+                    }
                 }
             }
+            i++;
         }
 
         // Construct a match combination using filtered matches of current genus
@@ -1292,11 +1115,10 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> &matchesForMajorityLCA, M
     }
 
     float maxScore = *max_element(scoreOfEachGenus.begin(), scoreOfEachGenus.end());
-    if (maxScore < 0.3)
-        return 3;
+
     vector<size_t> maxIdx;
     for (size_t g = 0; g < scoreOfEachGenus.size(); g++) {
-        if (scoreOfEachGenus[g] > maxScore * 0.9f) {
+        if (scoreOfEachGenus[g] > maxScore * 0.95f) {
             maxIdx.push_back(g);
         }
     }
@@ -1316,104 +1138,6 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> &matchesForMajorityLCA, M
     //1. one genus
     //2. more than one genus
     //3. no genus
-}
-
-void Classifier::constructMatchCombination_index(vector<size_t> &index,
-                                                 Match *matchList,
-                                                 vector<vector<size_t>> &matchesForEachGenus,
-                                                 vector<float> &scoreOfEachGenus,
-                                                 int queryLength) {
-    // Do not allow overlaps between the same species
-    vector<size_t> m;
-    size_t walker = 0;
-    size_t numOfFitMat = index.size();
-    Match *currentMatch = matchList;
-    size_t currIndex;
-    while (walker < numOfFitMat) {
-        TaxID currentSpecies = matchList[index[walker]].speciesTaxID;
-        int currentPosition = matchList[index[walker]].position / 3;
-        currentMatch = matchList + index[walker];
-        currIndex = walker;
-        // Look through overlaps within a species
-        while (matchList[index[walker]].speciesTaxID == currentSpecies
-               && matchList[index[walker]].position / 3 == currentPosition
-               && walker < numOfFitMat) {
-            // Take the match with lower hamming distance
-            if (matchList[index[walker]].hamming < currentMatch->hamming) {
-                currentMatch = matchList + index[walker];
-                currIndex = walker;
-            }
-                // Overlapping with same hamming distance but different subspecies taxonomy ID -> species level
-            else if (currentMatch->taxID != matchList[index[walker]].taxID &&
-                     currentMatch->hamming == matchList[index[walker]].hamming) {
-                currentMatch->taxID = currentMatch->speciesTaxID;
-            }
-            walker++;
-        }
-        m.push_back(currIndex);
-    }
-
-    // Calculate Hamming distance & covered length
-    int coveredPosCnt = 0;
-    uint16_t currHammings;
-    int aminoAcidNum = (int) queryLength / 3;
-    int currPos;
-    size_t matchNum = m.size();
-    size_t f = 0;
-
-    // Get the largest hamming distance at each position of query
-    auto *hammingsAtEachPos = new signed char[aminoAcidNum + 1];
-    memset(hammingsAtEachPos, -1, (aminoAcidNum + 1));
-    while (f < matchNum) {
-        currPos = matchList[m[f]].position / 3;
-        currHammings = matchList[m[f]].rightEndHamming;
-        if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos])
-            hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
-        if (GET_2_BITS(currHammings >> 2) > hammingsAtEachPos[currPos + 1])
-            hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings >> 2);
-        if (GET_2_BITS(currHammings >> 4) > hammingsAtEachPos[currPos + 2])
-            hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings >> 4);
-        if (GET_2_BITS(currHammings >> 6) > hammingsAtEachPos[currPos + 3])
-            hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings >> 6);
-        if (GET_2_BITS(currHammings >> 8) > hammingsAtEachPos[currPos + 4])
-            hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings >> 8);
-        if (GET_2_BITS(currHammings >> 10) > hammingsAtEachPos[currPos + 5])
-            hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings >> 10);
-        if (GET_2_BITS(currHammings >> 12) > hammingsAtEachPos[currPos + 6])
-            hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings >> 12);
-        if (GET_2_BITS(currHammings >> 14) > hammingsAtEachPos[currPos + 7])
-            hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings >> 14);
-        f++;
-    }
-
-    // Sum up hamming distances and count the number of position covered by the matches.
-    float hammingSum = 0;
-    for (int h = 0; h < aminoAcidNum; h++) {
-        if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
-            coveredPosCnt++;
-        } else if (hammingsAtEachPos[h] != -1) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
-            hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
-            coveredPosCnt++;
-        }
-    }
-    delete[] hammingsAtEachPos;
-
-    // Ignore too few matches
-    if (coveredPosCnt < 2) return;
-
-    // Score current genus
-    int coveredLength = coveredPosCnt * 3;
-    if (coveredLength > queryLength) coveredLength = queryLength;
-    float score = ((float) coveredLength - hammingSum) / (float) queryLength;
-    scoreOfEachGenus.push_back(score);
-    matchesForEachGenus.push_back(m);
-
-    if (PRINT) {
-        cout << matchList[index[0]].genusTaxID << " " << coveredLength << " " << hammingSum << " "
-             << ((float) coveredLength - hammingSum) / (float) queryLength <<
-             " " << m.size()
-             << endl;
-    }
 }
 
 void Classifier::constructMatchCombination(vector<Match> &filteredMatches,
@@ -1455,34 +1179,6 @@ void Classifier::constructMatchCombination(vector<Match> &filteredMatches,
     size_t matchNum = matches.size();
     size_t f = 0;
 
-//    // Get the smallest hamming distance at each position of query
-//    auto * hammingsAtEachPos = new signed char[aminoAcidNum + 1];
-//    memset(hammingsAtEachPos, 10, (aminoAcidNum + 1));
-//    while(f < matchNum){
-//        currPos = matches[f].position / 3;
-//        currHammings = matches[f].rightEndHamming;
-//        if(GET_2_BITS(currHammings) < hammingsAtEachPos[currPos]) hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
-//        if(GET_2_BITS(currHammings>>2) < hammingsAtEachPos[currPos + 1]) hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings>>2);
-//        if(GET_2_BITS(currHammings>>4) < hammingsAtEachPos[currPos + 2]) hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings>>4);
-//        if(GET_2_BITS(currHammings>>6) < hammingsAtEachPos[currPos + 3]) hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings>>6);
-//        if(GET_2_BITS(currHammings>>8) < hammingsAtEachPos[currPos + 4]) hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings>>8);
-//        if(GET_2_BITS(currHammings>>10) < hammingsAtEachPos[currPos + 5]) hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings>>10);
-//        if(GET_2_BITS(currHammings>>12) < hammingsAtEachPos[currPos + 6]) hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings>>12);
-//        if(GET_2_BITS(currHammings>>14) < hammingsAtEachPos[currPos + 7]) hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings>>14);
-//        f++;
-//    }
-//
-//    // Sum up hamming distances and count the number of position covered by the matches.
-//    float hammingSum = 0;
-//    for(int h = 0; h < aminoAcidNum; h++){
-//        if(hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
-//            coveredPosCnt++;
-//        }else if(hammingsAtEachPos[h] != 10){ // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
-//            hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
-//            coveredPosCnt ++;
-//        }
-//    }
-
     // Get the largest hamming distance at each position of query
     auto *hammingsAtEachPos = new signed char[aminoAcidNum + 1];
     memset(hammingsAtEachPos, -1, (aminoAcidNum + 1));
@@ -1490,21 +1186,21 @@ void Classifier::constructMatchCombination(vector<Match> &filteredMatches,
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
         if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos])
-            hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
+            hammingsAtEachPos[currPos + unmaskedPos[0]] = GET_2_BITS(currHammings);
         if (GET_2_BITS(currHammings >> 2) > hammingsAtEachPos[currPos + 1])
-            hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings >> 2);
+            hammingsAtEachPos[currPos + unmaskedPos[1]] = GET_2_BITS(currHammings >> 2);
         if (GET_2_BITS(currHammings >> 4) > hammingsAtEachPos[currPos + 2])
-            hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings >> 4);
+            hammingsAtEachPos[currPos + unmaskedPos[2]] = GET_2_BITS(currHammings >> 4);
         if (GET_2_BITS(currHammings >> 6) > hammingsAtEachPos[currPos + 3])
-            hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings >> 6);
+            hammingsAtEachPos[currPos + unmaskedPos[3]] = GET_2_BITS(currHammings >> 6);
         if (GET_2_BITS(currHammings >> 8) > hammingsAtEachPos[currPos + 4])
-            hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings >> 8);
+            hammingsAtEachPos[currPos + unmaskedPos[4]] = GET_2_BITS(currHammings >> 8);
         if (GET_2_BITS(currHammings >> 10) > hammingsAtEachPos[currPos + 5])
-            hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings >> 10);
+            hammingsAtEachPos[currPos + unmaskedPos[5]] = GET_2_BITS(currHammings >> 10);
         if (GET_2_BITS(currHammings >> 12) > hammingsAtEachPos[currPos + 6])
-            hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings >> 12);
+            hammingsAtEachPos[currPos + unmaskedPos[6]] = GET_2_BITS(currHammings >> 12);
         if (GET_2_BITS(currHammings >> 14) > hammingsAtEachPos[currPos + 7])
-            hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings >> 14);
+            hammingsAtEachPos[currPos + unmaskedPos[7]] = GET_2_BITS(currHammings >> 14);
         f++;
     }
 
@@ -1553,9 +1249,9 @@ void Classifier::constructMatchCombination_paired(vector<Match> &filteredMatches
         int currentPosition = filteredMatches[walker].position / 3;
         currentMatch = filteredMatches[walker];
         // Look through overlaps within a species
-        while (filteredMatches[walker].speciesTaxID == currentSpecies
+        while (walker < numOfFitMat && filteredMatches[walker].speciesTaxID == currentSpecies
                && filteredMatches[walker].position / 3 == currentPosition
-               && walker < numOfFitMat) {
+               ) {
             // Take the match with lower hamming distance
             if (filteredMatches[walker].hamming < currentMatch.hamming) {
                 currentMatch = filteredMatches[walker];
@@ -1581,27 +1277,27 @@ void Classifier::constructMatchCombination_paired(vector<Match> &filteredMatches
     size_t f = 0;
 
     // Get the largest hamming distance at each position of query
-    auto *hammingsAtEachPos = new signed char[aminoAcidNum_total + 1];
-    memset(hammingsAtEachPos, -1, (aminoAcidNum_total + 1));
+    auto *hammingsAtEachPos = new signed char[aminoAcidNum_total + 3];
+    memset(hammingsAtEachPos, -1, (aminoAcidNum_total + 3));
     while (f < matchNum) {
         currPos = matches[f].position / 3;
         currHammings = matches[f].rightEndHamming;
         if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos])
-            hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
+            hammingsAtEachPos[currPos + unmaskedPos[0]] = GET_2_BITS(currHammings);
         if (GET_2_BITS(currHammings >> 2) > hammingsAtEachPos[currPos + 1])
-            hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings >> 2);
+            hammingsAtEachPos[currPos + unmaskedPos[1]] = GET_2_BITS(currHammings >> 2);
         if (GET_2_BITS(currHammings >> 4) > hammingsAtEachPos[currPos + 2])
-            hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings >> 4);
+            hammingsAtEachPos[currPos + unmaskedPos[2]] = GET_2_BITS(currHammings >> 4);
         if (GET_2_BITS(currHammings >> 6) > hammingsAtEachPos[currPos + 3])
-            hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings >> 6);
+            hammingsAtEachPos[currPos + unmaskedPos[3]] = GET_2_BITS(currHammings >> 6);
         if (GET_2_BITS(currHammings >> 8) > hammingsAtEachPos[currPos + 4])
-            hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings >> 8);
+            hammingsAtEachPos[currPos + unmaskedPos[4]] = GET_2_BITS(currHammings >> 8);
         if (GET_2_BITS(currHammings >> 10) > hammingsAtEachPos[currPos + 5])
-            hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings >> 10);
+            hammingsAtEachPos[currPos + unmaskedPos[5]] = GET_2_BITS(currHammings >> 10);
         if (GET_2_BITS(currHammings >> 12) > hammingsAtEachPos[currPos + 6])
-            hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings >> 12);
+            hammingsAtEachPos[currPos + unmaskedPos[6]] = GET_2_BITS(currHammings >> 12);
         if (GET_2_BITS(currHammings >> 14) > hammingsAtEachPos[currPos + 7])
-            hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings >> 14);
+            hammingsAtEachPos[currPos + unmaskedPos[7]] = GET_2_BITS(currHammings >> 14);
         f++;
     }
 
@@ -1650,9 +1346,6 @@ void Classifier::constructMatchCombination_paired(vector<Match> &filteredMatches
     }
 }
 
-
-//TODO kmer count -> covered length
-//TODO hamming
 TaxID Classifier::classifyFurther2(const vector<Match> &matches,
                                    NcbiTaxonomy &taxonomy,
                                    float possibleKmerNum) {
@@ -1816,21 +1509,21 @@ Classifier::ScrCov Classifier::scoreTaxon(const vector<Match> &matches,
         currPos = matches[walker].position / 3;
         currHammings = matches[walker].rightEndHamming;
         if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos])
-            hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
+            hammingsAtEachPos[currPos + unmaskedPos[0]] = GET_2_BITS(currHammings);
         if (GET_2_BITS(currHammings >> 2) > hammingsAtEachPos[currPos + 1])
-            hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings >> 2);
+            hammingsAtEachPos[currPos + unmaskedPos[1]] = GET_2_BITS(currHammings >> 2);
         if (GET_2_BITS(currHammings >> 4) > hammingsAtEachPos[currPos + 2])
-            hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings >> 4);
+            hammingsAtEachPos[currPos + unmaskedPos[2]] = GET_2_BITS(currHammings >> 4);
         if (GET_2_BITS(currHammings >> 6) > hammingsAtEachPos[currPos + 3])
-            hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings >> 6);
+            hammingsAtEachPos[currPos + unmaskedPos[3]] = GET_2_BITS(currHammings >> 6);
         if (GET_2_BITS(currHammings >> 8) > hammingsAtEachPos[currPos + 4])
-            hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings >> 8);
+            hammingsAtEachPos[currPos + unmaskedPos[4]] = GET_2_BITS(currHammings >> 8);
         if (GET_2_BITS(currHammings >> 10) > hammingsAtEachPos[currPos + 5])
-            hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings >> 10);
+            hammingsAtEachPos[currPos + unmaskedPos[5]] = GET_2_BITS(currHammings >> 10);
         if (GET_2_BITS(currHammings >> 12) > hammingsAtEachPos[currPos + 6])
-            hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings >> 12);
+            hammingsAtEachPos[currPos + unmaskedPos[6]] = GET_2_BITS(currHammings >> 12);
         if (GET_2_BITS(currHammings >> 14) > hammingsAtEachPos[currPos + 7])
-            hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings >> 14);
+            hammingsAtEachPos[currPos + unmaskedPos[7]] = GET_2_BITS(currHammings >> 14);
         walker++;
     }
 
@@ -1859,8 +1552,8 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
     // Get the largest hamming distance at each position of query
     int aminoAcidNum_total = queryLength / 3 + queryLength2 / 3;
     int aminoAcidNum_read1 = queryLength / 3;
-    auto *hammingsAtEachPos = new signed char[aminoAcidNum_total + 1];
-    memset(hammingsAtEachPos, -1, (aminoAcidNum_total + 1));
+    auto *hammingsAtEachPos = new signed char[aminoAcidNum_total + 3];
+    memset(hammingsAtEachPos, -1, (aminoAcidNum_total + 3));
 
     int currPos;
     size_t walker = begin;
@@ -1869,21 +1562,21 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
         currPos = matches[walker].position / 3;
         currHammings = matches[walker].rightEndHamming;
         if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos])
-            hammingsAtEachPos[currPos] = GET_2_BITS(currHammings);
+            hammingsAtEachPos[currPos + unmaskedPos[0]] = GET_2_BITS(currHammings);
         if (GET_2_BITS(currHammings >> 2) > hammingsAtEachPos[currPos + 1])
-            hammingsAtEachPos[currPos + 1] = GET_2_BITS(currHammings >> 2);
+            hammingsAtEachPos[currPos + unmaskedPos[1]] = GET_2_BITS(currHammings >> 2);
         if (GET_2_BITS(currHammings >> 4) > hammingsAtEachPos[currPos + 2])
-            hammingsAtEachPos[currPos + 2] = GET_2_BITS(currHammings >> 4);
+            hammingsAtEachPos[currPos + unmaskedPos[2]] = GET_2_BITS(currHammings >> 4);
         if (GET_2_BITS(currHammings >> 6) > hammingsAtEachPos[currPos + 3])
-            hammingsAtEachPos[currPos + 3] = GET_2_BITS(currHammings >> 6);
+            hammingsAtEachPos[currPos + unmaskedPos[3]] = GET_2_BITS(currHammings >> 6);
         if (GET_2_BITS(currHammings >> 8) > hammingsAtEachPos[currPos + 4])
-            hammingsAtEachPos[currPos + 4] = GET_2_BITS(currHammings >> 8);
+            hammingsAtEachPos[currPos + unmaskedPos[4]] = GET_2_BITS(currHammings >> 8);
         if (GET_2_BITS(currHammings >> 10) > hammingsAtEachPos[currPos + 5])
-            hammingsAtEachPos[currPos + 5] = GET_2_BITS(currHammings >> 10);
+            hammingsAtEachPos[currPos + unmaskedPos[5]] = GET_2_BITS(currHammings >> 10);
         if (GET_2_BITS(currHammings >> 12) > hammingsAtEachPos[currPos + 6])
-            hammingsAtEachPos[currPos + 6] = GET_2_BITS(currHammings >> 12);
+            hammingsAtEachPos[currPos + unmaskedPos[6]] = GET_2_BITS(currHammings >> 12);
         if (GET_2_BITS(currHammings >> 14) > hammingsAtEachPos[currPos + 7])
-            hammingsAtEachPos[currPos + 7] = GET_2_BITS(currHammings >> 14);
+            hammingsAtEachPos[currPos + unmaskedPos[7]] = GET_2_BITS(currHammings >> 14);
         walker++;
     }
 
@@ -1901,7 +1594,7 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
                 coveredPosCnt_read1++;
             }
         }
-            // Read 2
+        // Read 2
         else {
             if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
                 coveredPosCnt_read2++;
@@ -1917,16 +1610,12 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
     hammingSum = 0;
     int coveredLength_read1 = coveredPosCnt_read1 * 3;
     int coveredLength_read2 = coveredPosCnt_read2 * 3;
-//    if (coveredLength_read1 >= queryLength) coveredLength_read1 = queryLength;
-//    if (coveredLength_read2 >= queryLength2) coveredLength_read2 = queryLength2;
     if (coveredLength_read1 >= queryLength) coveredLength_read1 = queryLength;
     if (coveredLength_read2 >= queryLength2) coveredLength_read2 = queryLength2;
 
     return {((float) coveredLength_read1 + coveredLength_read2 - hammingSum) / ((float) queryLength + queryLength2),
             ((float) coveredLength_read1 + coveredLength_read2) / ((float) queryLength + queryLength2)};
 }
-
-int Classifier::getNumOfSplits() const { return this->numOfSplit; }
 
 bool Classifier::compareForLinearSearch(const QueryKmer &a, const QueryKmer &b) {
     if (a.ADkmer < b.ADkmer) {
@@ -1969,7 +1658,8 @@ bool Classifier::sortMatchesByPos(const Match &a, const Match &b) {
 void Classifier::writeReadClassification(Query *queryList, int queryNum, ofstream &readClassificationFile) {
     for (int i = 0; i < queryNum; i++) {
         readClassificationFile << queryList[i].isClassified << "\t" << queryList[i].name << "\t"
-                               << queryList[i].classification << "\t" << queryList[i].queryLength + queryList[i].queryLength2 << "\t"
+                               << queryList[i].classification << "\t"
+                               << queryList[i].queryLength + queryList[i].queryLength2 << "\t"
                                << queryList[i].score << "\t";
         for (auto it = queryList[i].taxCnt.begin(); it != queryList[i].taxCnt.end(); ++it) {
             readClassificationFile << it->first << ":" << it->second << " ";
@@ -2026,199 +1716,4 @@ unsigned int Classifier::cladeCountVal(const std::unordered_map<TaxID, TaxonCoun
         return it->second.cladeCount;
     }
 }
-
-void Classifier::performanceTest(NcbiTaxonomy &ncbiTaxonomy, Query *queryList, int numOfquery, vector<int> &wrongs) {
-
-    ///Load the mapping file
-    const char *mappingFile = "../../gtdb_taxdmp/assacc_to_taxid_gtdb.tsv";
-    unordered_map<string, int> assacc2taxid;
-    string key, value;
-    ifstream map;
-    map.open(mappingFile);
-    if (map.is_open()) {
-        while (getline(map, key, '\t')) {
-            getline(map, value, '\n');
-            assacc2taxid[key] = stoi(value);
-        }
-    } else {
-        cout << "Cannot open file for mappig from assemlby accession to tax ID" << endl;
-    }
-    map.close();
-
-    regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
-    smatch assacc;
-    TaxID classificationResult;
-    int rightAnswer;
-    string queryName;
-
-
-    counts.classificationCnt = 0;
-    counts.correct = 0;
-    counts.highRank = 0;
-
-    //number of targets at each rank
-    counts.subspeciesTargetNumber = 0;
-    counts.speciesTargetNumber = 0;
-    counts.genusTargetNumber = 0;
-    counts.familyTargetNumber = 0;
-    counts.orderTargetNumber = 0;
-    counts.classTargetNumber = 0;
-    counts.phylumTargetNumber = 0;
-    counts.superkingdomTargetNumber = 0;
-
-    //number of classification at each rank
-    counts.subspeciesCnt_try = 0;
-    counts.speciesCnt_try = 0;
-    counts.genusCnt_try = 0;
-    counts.familyCnt_try = 0;
-    counts.orderCnt_try = 0;
-    counts.classCnt_try = 0;
-    counts.phylumCnt_try = 0;
-    counts.superkingdomCnt_try = 0;
-
-
-    //number of correct classifications at each rank
-    counts.subspeciesCnt_correct = 0;
-    counts.speciesCnt_correct = 0;
-    counts.genusCnt_correct = 0;
-    counts.familyCnt_correct = 0;
-    counts.orderCnt_correct = 0;
-    counts.classCnt_correct = 0;
-    counts.phylumCnt_correct = 0;
-    counts.superkingdomCnt_correct = 0;
-
-    for (int i = 0; i < numOfquery; i++) {
-        classificationResult = queryList[i].classification;
-        if (classificationResult == 0) {
-            cout << "here " << i << endl;
-            continue;
-        } else {
-            classifiedCnt++;
-            queryName = queryList[i].name;
-            regex_search(queryName, assacc, regex1);
-            if (assacc2taxid.count(assacc[0].str())) {
-                rightAnswer = assacc2taxid[assacc[0].str()];
-            } else {
-                cout << assacc[0].str() << " is not in the mapping file" << endl;
-                continue;
-            }
-            //cout<<"compareTaxon"<<" "<<i<<endl;
-            cout << i << " ";
-            compareTaxon(classificationResult, rightAnswer, ncbiTaxonomy, wrongs, i);
-
-        }
-    }
-
-    cout << "Num of queries: " << queryInfos.size() << endl;
-    cout << "Num of classifications: " << counts.classificationCnt << endl;
-    cout << "Num of correct classifications: " << counts.correct << endl;
-    cout << "Num of correct but too broad classifications: " << counts.highRank << endl;
-    cout << "classified/total = " << float(counts.classificationCnt) / float(queryInfos.size()) << endl;
-    cout << "correct   /total = " << float(counts.correct) / float(queryInfos.size()) << endl;
-    cout << "correct   /classifications = " << float(counts.correct) / float(counts.classificationCnt) << endl;
-    cout << "high rank /classifications = " << float(counts.highRank) / float(counts.classificationCnt) << endl << endl;
-
-    cout << "Number of targets at each rank / correct classification / tries" << endl;
-    cout << "Superkingdom: " << counts.superkingdomTargetNumber << " / " << counts.superkingdomCnt_correct << " / "
-         << counts.superkingdomCnt_try << endl;
-    cout << "Phylum      : " << counts.phylumTargetNumber << " / " << counts.phylumCnt_correct << " / "
-         << counts.phylumCnt_try << endl;
-    cout << "Class       : " << counts.classTargetNumber << " / " << counts.classCnt_correct << " / "
-         << counts.classCnt_try << endl;
-    cout << "Order       : " << counts.orderTargetNumber << " / " << counts.orderCnt_correct << " / "
-         << counts.orderCnt_try << endl;
-    cout << "Family      : " << counts.familyTargetNumber << " / " << counts.familyCnt_correct << " / "
-         << counts.familyCnt_try << endl;
-    cout << "Genus       : " << counts.genusTargetNumber << " / " << counts.genusCnt_correct << " / "
-         << counts.genusCnt_try << endl;
-    cout << "Species     : " << counts.speciesTargetNumber << " / " << counts.speciesCnt_correct << " / "
-         << counts.speciesCnt_try << endl;
-    cout << "Subspecies  : " << counts.subspeciesTargetNumber << " / " << counts.subspeciesCnt_correct << " / "
-         << counts.subspeciesCnt_try << endl;
-}
-
-void Classifier::compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy &ncbiTaxonomy, vector<int> &wrongs,
-                              int i) { ///target: subspecies or species
-    const TaxonNode *shotNode = ncbiTaxonomy.taxonNode(shot);
-    const TaxonNode *targetNode = ncbiTaxonomy.taxonNode(target);
-    string shotRank = shotNode->rank;
-    string targetRank = targetNode->rank;
-    cout << shot << " " << target << " " << shotRank << " " << targetRank << " ";
-
-    if (shot == 0) {
-        if (shotRank == "species" || shotRank == "subspecies")
-            wrongs.push_back(i);
-        cout << i << endl;
-        cout << "X" << endl;
-        return;
-    } else {
-        counts.classificationCnt++;
-    }
-
-    bool isCorrect = false;
-    if (shot == target) {
-        counts.correct++;
-        isCorrect = true;
-        cout << "O" << endl;
-    } else if (NcbiTaxonomy::findRankIndex(shotRank) <=
-               NcbiTaxonomy::findRankIndex(targetRank)) { //classified into wrong taxon or too specifically
-        if (shotRank == "species" || shotRank == "subspecies")
-            wrongs.push_back(i);
-        cout << "X" << endl;
-    } else { // classified at higher rank (too safe classification)
-        if (shotRank == "superkingdom") {
-            if (shotRank == "species" || shotRank == "subspecies")
-                wrongs.push_back(i);
-            cout << "X" << endl;
-        } else if (shot == ncbiTaxonomy.getTaxIdAtRank(target, shotRank)) { //on right branch
-            counts.correct++;
-            cout << "O" << endl;
-            isCorrect = true;
-        } else { //on wrong branch
-            if (shotRank == "species" || shotRank == "subspecies") wrongs.push_back(i);
-            cout << "X" << endl;
-        }
-    }
-
-    //count the number of classification at each rank
-    if (shotRank == "subspecies") {
-        counts.subspeciesCnt_try++;
-    } else if (shotRank == "species") {
-        counts.speciesCnt_try++;
-    } else if (shotRank == "genus") {
-        counts.genusCnt_try++;
-    } else if (shotRank == "family") {
-        counts.familyCnt_try++;
-    } else if (shotRank == "order") {
-        counts.orderCnt_try++;
-    } else if (shotRank == "class") {
-        counts.classCnt_try++;
-    } else if (shotRank == "phylum") {
-        counts.phylumCnt_try++;
-    } else if (shotRank == "superkingdom") {
-        counts.superkingdomCnt_try++;
-    }
-
-    if (!isCorrect) return;
-
-    //count the number of correct classification at each rank
-    if (shotRank == "subspecies") {
-        counts.subspeciesCnt_correct++;
-    } else if (shotRank == "species") {
-        counts.speciesCnt_correct++;
-    } else if (shotRank == "genus") {
-        counts.genusCnt_correct++;
-    } else if (shotRank == "family") {
-        counts.familyCnt_correct++;
-    } else if (shotRank == "order") {
-        counts.orderCnt_correct++;
-    } else if (shotRank == "class") {
-        counts.classCnt_correct++;
-    } else if (shotRank == "phylum") {
-        counts.phylumCnt_correct++;
-    } else if (shotRank == "superkingdom") {
-        counts.superkingdomCnt_correct++;
-    }
-}
-
 

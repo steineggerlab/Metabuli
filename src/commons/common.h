@@ -1,12 +1,10 @@
 #ifndef ADCLASSIFIER2_COMMON_H
 #define ADCLASSIFIER2_COMMON_H
 #include <utility>
-
-
 #include "NcbiTaxonomy.h"
-#define kmerBufSize 1'000'000'000 // 10000000000 | 286000000 (16 byte x 1 giga = 16 GB)
+#include <iostream>
+#define kmerBufSize 1'000'000'000 // 10'000'000'000 | 286000000 (16 byte x 1 giga = 16 GB)
                                 // 24 byte x 1 G x 10 = 240 GB
-#define ThreadNum 32
 #define SplitNum 4096
 #define PRINT true
 
@@ -28,8 +26,8 @@ struct Query{
     bool isClassified;
     bool newSpecies;
 
-    string name;
-    unordered_map<TaxID,int> taxCnt;
+    std::string name;
+    std::unordered_map<TaxID,int> taxCnt;
 
     bool operator==(int id) const { return queryId == id;}
 //    Query(int id, int classification_, float score, bool isClassified_, bool newSpecies, uint32_t len, string name_)

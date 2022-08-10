@@ -33,6 +33,12 @@ public:
     PARAMETER(VIRUS_TAX_ID)
     PARAMETER(SEQ_MODE)
     PARAMETER(MEMORY_MODE)
+    PARAMETER(REDUCED_AA)
+    PARAMETER(MIN_SCORE)
+    PARAMETER(SPACED)
+    PARAMETER(MIN_CONSECUTIVE)
+    PARAMETER(HAMMING_MARGIN)
+    PARAMETER(MIN_SP_SCORE)
 
     //creatTargetDB
     int gtdbOrNcbi;
@@ -41,6 +47,12 @@ public:
     int virusTaxId;
     int seqMode;
     int memoryMode;
+    int reducedAA;
+    float minScore;
+    std::string spaceMask;
+    int minConsCnt;
+    uint8_t hammingMargin;
+    float minSpScore;
 
 private:
     LocalParameters();

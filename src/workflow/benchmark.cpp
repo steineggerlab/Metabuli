@@ -9,7 +9,8 @@ void compareTaxonAtRank(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, C
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
     TaxID shotTaxIdAtRank = shotNode->taxId;
     TaxID targetTaxIdAtRank = targetNode->taxId;
-    if(shot == 1) return;
+    if(shot == 1 || shot == 0) return;
+
 
     // Classification at higher rank -> ignore
     if(NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank)){

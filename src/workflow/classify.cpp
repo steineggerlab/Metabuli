@@ -3,6 +3,7 @@
 //
 
 #include "Classifier.h"
+#include "ReducedClassifier.h"
 #include "Parameters.h"
 #include "LocalParameters.h"
 #include "NcbiTaxonomy.h"
@@ -11,7 +12,14 @@ void setClassifyDefaults(LocalParameters & par){
     par.virusTaxId = 10239;// Taxonomy ID of virus taxon in NCBI
     par.seqMode = 1;
     par.memoryMode = 1;
+    par.reducedAA = 0;
+    par.minScore = 0.0;
+    par.spaceMask = "11111111";
+    par.minConsCnt = 4;
+    par.hammingMargin = 0;
+    par.minSpScore = 0.7;
 }
+
 int classify(int argc, const char **argv, const Command& command)
 {
     LocalParameters & par = LocalParameters::getLocalInstance();
@@ -49,9 +57,14 @@ int classify(int argc, const char **argv, const Command& command)
     fclose(taxIdFile);
     cout<<"Done"<<endl;
 
-    Classifier classifier;
-    classifier.startClassify(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(),
+    Classifier * classifier;
+    if(par.reducedAA == 1){
+        classifier = new ReducedClassifier(par);
+    } else {
+        classifier = new Classifier(par);
+    }
+    classifier->startClassify(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(),
                              diffIdxSplitFileName.c_str(), taxIdList, par, taxonomy);
-
+    delete classifier;
     return 0;
 }
