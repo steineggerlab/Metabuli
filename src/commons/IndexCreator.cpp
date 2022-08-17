@@ -73,9 +73,9 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par) //bui
     for(auto & cnt : taxid2fasta){
         taxIdList<<cnt.taxid<<'\n';
     }
-    for(auto & cnt : taxid2fasta){
-        cout<<cnt.species<<" "<<cnt.taxid<<" "<<cnt.fasta<<endl;
-    }
+//    for(auto & cnt : taxid2fasta){
+//        cout<<cnt.species<<" "<<cnt.taxid<<" "<<cnt.fasta<<endl;
+//    }
     taxIdList.close();
 
     // Divide FASTA files
@@ -153,10 +153,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                     getSeqSegmentsWithHead(sequences, fastaForTraining);
                     sort(sequences.begin(), sequences.end(),
                          [](const Sequence &a, const Sequence &b) { return a.length > b.length; });
-//                    cout<<"Training"<<endl;
-//                    for(auto x : sequences){
-//                        cout<<x.start<<" "<<x.end<<" "<<x.length<<endl;
-//                    }
 
                     // Train Prodigal with a training sequence of i th split
                     kseq_buffer_t buffer(const_cast<char *>(&fastaForTraining.data[sequences[0].start]),
@@ -197,6 +193,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                     kseq_destroy(seq);
 
                     // Extract k-mers from the sequences which are not used for training but in the same file.
+                    // Ex) plasmid
                     if(sequences.size() > 1) {
                         extractKmerFromFasta(seqIterator, fastaForTraining, standardList, lengthOfTrainingSeq,
                                              sequences, prodigal, intergenicKmerList, kmerBuffer, posToWrite,

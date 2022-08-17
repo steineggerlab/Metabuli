@@ -445,10 +445,12 @@ SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock &block, const char
             tempKmer += aaFrames[0][kmerCnt + i] * powers[j] * mask[i];
         }
         if (checkN == 1) {
-            //    cout<<"N! "<<seqID<<" "<<posToWrite<<" "<<kmerCnt<<" "<<taxIdAtRank<<endl;
             kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0, false};
         } else {
             addDNAInfo_TargetKmer(tempKmer, seq, block, kmerCnt);
+            if(taxIdAtRank == 0){
+                cout<<"FFF"<<endl;
+            }
 //            printKmerInDNAsequence(tempKmer);
 //            print_binary64(64, tempKmer); cout<<endl;
             kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, false};
