@@ -236,7 +236,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
 
 void IndexCreator::extractKmerFromFasta(SeqIterator & seqIterator, MmapedData<char> & seqFile, priority_queue<uint64_t> & standardList,
                  size_t lengthOfTrainingSeq, const vector<Sequence> & sequences, ProdigalWrapper & prodigal,
-                 vector<uint64_t> & intergenicKmerList, TargetKmerBuffer & kmerBuffer, size_t posToWrite,
+                 vector<uint64_t> & intergenicKmerList, TargetKmerBuffer & kmerBuffer, size_t & posToWrite,
                  uint32_t seqID, int taxIdAtRank, size_t startIdx){
     priority_queue<uint64_t> currentList;
     vector<PredictedBlock> blocks;
@@ -406,7 +406,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
     // Find the first index of meaningful k-mer
     size_t startIdx = 0;
     for(size_t i = 0; i < kmerBuffer.startIndexOfReserve ; i++){
-        if(kmerBuffer.buffer[i].taxIdAtRank != 0){ // why 0?
+        if(kmerBuffer.buffer[i].taxIdAtRank != 0){ //
             startIdx = i;
             break;
         } else {
