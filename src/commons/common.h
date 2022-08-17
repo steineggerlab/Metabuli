@@ -3,7 +3,7 @@
 #include <utility>
 #include "NcbiTaxonomy.h"
 #include <iostream>
-#define kmerBufSize 1'000'000'000 // 10'000'000'000 | 286000000 (16 byte x 1 giga = 16 GB)
+#define kmerBufSize 10'000'000'000 // 10'000'000'000 | 286000000 (16 byte x 1 giga = 16 GB)
                                 // 24 byte x 1 G x 10 = 240 GB
 #define SplitNum 4096
 #define PRINT true

@@ -11,8 +11,8 @@ int build_fasta(int argc, const char **argv, const Command &command)
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
     const char * fastaName = par.filenames[0].c_str();
     const char * acc2taxidFile = par.filenames[1].c_str();
-    const char * dbDirectory = par.filenames[2].c_str();
-    const string taxonomyDirectory = par.filenames[3];
+    const string dbDirectory = par.filenames[2];
+    const string taxonomyDirectory = dbDirectory + "/taxonomy";
 
     string genome_fname;
     string taxIdList_fname;
@@ -97,7 +97,7 @@ int build_fasta(int argc, const char **argv, const Command &command)
     //Make files of differential indexing and information of k-mers
     cout<<"Start to creat reference DB file(s) ... ";
     IndexCreator idxCre(par);
-    idxCre.startIndexCreatingParallel(fastaName, dbDirectory, taxIdListAtSpecies, taxIDs, par);
+    idxCre.startIndexCreatingParallel(fastaName, dbDirectory.c_str(), taxIdListAtSpecies, taxIDs, par);
     cout<<"done"<<endl;
 
     //Merge files

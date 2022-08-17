@@ -43,7 +43,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 }
 
 // It reads a reference sequence file and write a differential index file and target k-mer info file.
-void IndexCreator::startIndexCreatingParallel(const LocalParameters & par)
+void IndexCreator::startIndexCreatingParallel(const LocalParameters & par) //build_dir
 {
     const string folder = par.filenames[0];
     const string dbDirectory = par.filenames[1];
@@ -67,11 +67,14 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par)
     mappingFromTaxIDtoFasta(folder + "/fasta_list_GTDB", assacc2taxid, taxid2fasta, taxonomy);
 
     // Write a file of tax ids
-    string taxIdList_fname = string(dbDirectory) + "/taxID_list";
+    string taxIdList_fname = dbDirectory + "/taxID_list";
     ofstream taxIdList;
     taxIdList.open(taxIdList_fname);
     for(auto & cnt : taxid2fasta){
         taxIdList<<cnt.taxid<<'\n';
+    }
+    for(auto & cnt : taxid2fasta){
+        cout<<cnt.species<<" "<<cnt.taxid<<" "<<cnt.fasta<<endl;
     }
     taxIdList.close();
 
@@ -336,7 +339,6 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     infoFileName = par.filenames[1] + "/info";
     splitFileName = par.filenames[1] + "/split";
 
-
     // Make splits
     FILE * diffIdxSplitFile = fopen(splitFileName.c_str(), "wb");
     DiffIdxSplit splitList[SplitNum];
@@ -404,10 +406,11 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
         }
     }
     cout<<"startIndexOfReserve: "<< kmerBuffer.startIndexOfReserve <<endl;
+
     // Find the first index of meaningful k-mer
     size_t startIdx = 0;
     for(size_t i = 0; i < kmerBuffer.startIndexOfReserve ; i++){
-        if(kmerBuffer.buffer[i].taxIdAtRank != 0){
+        if(kmerBuffer.buffer[i].taxIdAtRank != 0){ // why 0?
             startIdx = i;
             break;
         }
