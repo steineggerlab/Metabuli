@@ -82,7 +82,7 @@ private:
 
     static void extractKmerFromFasta(SeqIterator &seqIterator, MmapedData<char> &seqFile, priority_queue<uint64_t> &standardList,
                      size_t lengthOfTrainingSeq, const vector<Sequence> &sequences, ProdigalWrapper &prodigal,
-                     vector<uint64_t> &intergenicKmerList, TargetKmerBuffer &kmerBuffer, size_t posToWrite,
+                     vector<uint64_t> &intergenicKmerList, TargetKmerBuffer &kmerBuffer, size_t & posToWrite,
                      uint32_t seqID, int taxIdAtRank, size_t startIdx);
 
 
