@@ -87,7 +87,7 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par) //bui
     fill_n(splitChecker, numOfSplits, false);
     size_t processedSplitCnt = 0;
 
-    TargetKmerBuffer kmerBuffer(1'000'000'000);
+    TargetKmerBuffer kmerBuffer(kmerBufSize);
     while(processedSplitCnt < numOfSplits){ // Check this condition
         fillTargetKmerBuffer(kmerBuffer, splitChecker, processedSplitCnt, splits, taxid2fasta, par);
         time_t start = time(nullptr);
@@ -358,7 +358,7 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     numOfFlush++;
 
 
-    uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 10'000'000'000);
+    uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * size_t(kmerBufSize));
     size_t localBufIdx = 0;
     uint64_t lastKmer = 0;
     size_t write = 0;
