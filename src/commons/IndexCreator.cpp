@@ -87,7 +87,7 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par) //bui
     fill_n(splitChecker, numOfSplits, false);
     size_t processedSplitCnt = 0;
 
-    TargetKmerBuffer kmerBuffer(10'000'000'000);
+    TargetKmerBuffer kmerBuffer(1'000'000'000);
     while(processedSplitCnt < numOfSplits){ // Check this condition
         fillTargetKmerBuffer(kmerBuffer, splitChecker, processedSplitCnt, splits, taxid2fasta, par);
         time_t start = time(nullptr);
@@ -303,7 +303,6 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
     }
     numOfFlush++;
 
-
     uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 10'000'000'000);
     size_t localBufIdx = 0;
     uint64_t lastKmer = 0;
@@ -410,6 +409,8 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
         if(kmerBuffer.buffer[i].taxIdAtRank != 0){ // why 0?
             startIdx = i;
             break;
+        } else {
+            cout<<kmerBuffer.buffer[i].taxIdAtRank<<" "<<kmerBuffer.buffer[i].ADkmer<<" "<<kmerBuffer.buffer[i].info.sequenceID<<endl;
         }
     }
     cout<<"Start Index: "<<startIdx<<endl;
