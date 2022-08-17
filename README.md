@@ -31,9 +31,9 @@ You can choose between NCBI and GTDB
   - GTDB
   ```
   # In 'util' directory
-  ./make_assacc_to_gtdb_taxid.sh <o:outdir>
+  ./make_assacc_to_gtdb_taxid.sh <O:DBDIR>
   
-    - outdir : A directory where tax dump files will be generated. Make sure that the directory is exist and empty.
+    - DBDIR : A directory in which your DB will be created. Result files are stored in 'DBDIR/taxonomy'. Make sure that the DBDIR is exist and empty.
   ```
 
 ### 1. Build DB from the directory of genome assemblies
@@ -41,16 +41,13 @@ You can choose between NCBI and GTDB
   If you downloaded assemblies using "ncbi-genome-download", you probably don't have to care about it.
   The regular experssion is (GC[AF]_[0-9]*\.[0-9]*)
 ```
-./adclassifier build_dir <i:directory> <i:taxonomy dir> <o:output> <tmpDir> [options]
+./adclassifier build_dir <i:directory> <O: DBDIR> [options]
 
-  - directory: A directory that contains all FASTA files from which you want to make a database. 
+  - Directory: A directory that contains all FASTA files from which you want to make a database. 
                It may contain subdirectories of FASTA file.
-  - taxonomy dir: The directory where taxdump files & ass2taxID exist. 
-                  The final DB will follow the taxonomy of this directory.
-  - output : A directory where DB will be generated
-  - tmpDir : Temporary directory
+  - Output : A directory in which your DB will be created. (The same path used in step 0)
   * Option
-    - --threads : number of CPU-cores used (all by default)
+    - --threads : The number of CPU-cores used (all by default)
 
 ```
 
