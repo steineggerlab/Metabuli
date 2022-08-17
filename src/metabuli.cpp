@@ -17,10 +17,9 @@ std::vector<Command> commands = {
          "Building DB from multiple assemblies in input directory.",
          NULL,
          "Jaebeom Kim <jbeom0731@gmail.com>",
-         "<i:directory of FASTA files> <i:taxonomy dir> <o:output>",
+         "<i:directory of FASTA files> <o:DB directory>",
          CITATION_SPACEPHARER,
          {{"lowest directory including FASTA files", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::directory},
-          {"Mapping file (assembly accession to taxonomical ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory},
           {"Directory where the DB will be generated", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty}}},
 
           {"build_fasta", build_fasta, &localPar.build_fasta, COMMAND_MAIN,
