@@ -60,7 +60,7 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par) //bui
 
     // Load mapping from assembly accession to taxonomy ID
     unordered_map<string, int> assacc2taxid;
-    load_assacc2taxid( taxonomyDirectory + "/assacc_to_taxid.tsv", assacc2taxid);
+    load_assacc2taxid( taxonomyDirectory + "/taxid.map", assacc2taxid);
 
     // Make mapping from tax id to FASTA file
     vector<TaxId2Fasta> taxid2fasta;
@@ -73,9 +73,6 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par) //bui
     for(auto & cnt : taxid2fasta){
         taxIdList<<cnt.taxid<<'\n';
     }
-//    for(auto & cnt : taxid2fasta){
-//        cout<<cnt.species<<" "<<cnt.taxid<<" "<<cnt.fasta<<endl;
-//    }
     taxIdList.close();
 
     // Divide FASTA files
@@ -401,7 +398,6 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
             break;
         }
     }
-    cout<<"startIndexOfReserve: "<< kmerBuffer.startIndexOfReserve <<endl;
 
     // Find the first index of meaningful k-mer
     size_t startIdx = 0;
@@ -409,11 +405,8 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
         if(kmerBuffer.buffer[i].taxIdAtRank != 0){ //
             startIdx = i;
             break;
-        } else {
-            cout<<kmerBuffer.buffer[i].taxIdAtRank<<" "<<kmerBuffer.buffer[i].ADkmer<<" "<<kmerBuffer.buffer[i].info.sequenceID<<endl;
         }
     }
-    cout<<"Start Index: "<<startIdx<<endl;
 
     // Make splits
     vector<Split> splits;
@@ -428,9 +421,6 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
         }
     }
     splits.emplace_back(startIdx, kmerBuffer.startIndexOfReserve - 1);
-    for(auto x : splits){
-        cout<<x.offset<<" "<<x.end<<endl;
-    }
 
     //
     size_t ** idxOfEachSplit = new size_t * [par.threads];
@@ -687,9 +677,13 @@ void IndexCreator::load_assacc2taxid(const string & mappingFile, unordered_map<s
         while(getline(map,key,'\t')){
             getline(map, value, '\n');
             assacc2taxid[key] = stoi(value);
+            if(key[2] == 'F'){
+                key[2] = 'A';
+                assacc2taxid[key] = stoi(value);
+            }
         }
     } else{
-        cout<<"Cannot open file for mappig from assemlby accession to tax ID"<<endl;
+        cerr<<"Cannot open file for mappig from assemlby accession to tax ID"<<endl;
     }
     map.close();
 }
