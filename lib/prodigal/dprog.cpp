@@ -46,7 +46,7 @@ int dprog(struct _node *nod, int nn, struct _training *tinf, int flag) {
             min = 0;
         } else {
             min = i-MAX_NODE_DIST;
-        } //너무 먼 node랑은 연결 짓지 않겠다
+        }
 
         if(nod[i].strand == -1 && nod[i].type != STOP && nod[min].ndx >= nod[i].stop_val) {
             while (min > 0 && nod[min].ndx != nod[i].stop_val) min--;
@@ -56,6 +56,7 @@ int dprog(struct _node *nod, int nn, struct _training *tinf, int flag) {
             while (min > 0 && nod[min].ndx != nod[i].stop_val) min--;
         }
 
+        if(min < 0) min = 0;
         for(j = min; j < i; j++) {
             score_connection(nod, j, i, tinf, flag);
         }

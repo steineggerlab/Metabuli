@@ -18,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-#include "prodigalsequence.h"
+#include "sequence.h"
 
 /*******************************************************************************
   Read the sequence for training purposes.  If we encounter multiple
@@ -68,9 +68,6 @@ int read_seq_training(fptr fp, unsigned char *seq, unsigned char *useq,
         for(i = 0; i < gapsize; i++) line[i] = 'n';
         line[i] = '\0';
       }
-
-
-
       for(i = 0; i < strlen(line); i++) {
         if(line[i] < 'A' || line[i] > 'z') continue;
         if(do_mask == 1 && mask_beg != -1 && line[i] != 'N' && line[i] != 'n') {
@@ -199,7 +196,6 @@ int next_seq_multi(fptr fp, unsigned char *seq, unsigned char *useq,
         }
         if(do_mask == 1 && mask_beg == -1 && (line[i] == 'N' || line[i] == 'n'))
           mask_beg = len;
-
         if(line[i] == 'g' || line[i] == 'G') { set(seq, bctr); gc_cont++; }
         else if(line[i] == 't' || line[i] == 'T') {
           set(seq, bctr);
@@ -213,7 +209,6 @@ int next_seq_multi(fptr fp, unsigned char *seq, unsigned char *useq,
           set(seq, bctr+1);
           set(useq, len);
         }
-
         bctr+=2; len++;
       }
     }
