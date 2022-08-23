@@ -18,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-#include "sequence.h"
+#include "prodigalsequence.h"
 
 /*******************************************************************************
   Read the sequence for training purposes.  If we encounter multiple
