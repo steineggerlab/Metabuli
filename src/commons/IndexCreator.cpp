@@ -671,7 +671,6 @@ void IndexCreator::mappingFromTaxIDtoFasta(const string & fastaList_fname,
 
 void IndexCreator::load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid){
     string key, value;
-    cout<<mappingFile<<endl;
     ifstream map;
     map.open(mappingFile);
     if(map.is_open()){
