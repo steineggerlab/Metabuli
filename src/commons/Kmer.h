@@ -24,8 +24,8 @@ typedef struct QueryKmer {
 
 struct TargetKmerInfo{
     TargetKmerInfo(int seqID = 0, bool redundancy = false) : sequenceID(seqID), redundancy(redundancy) {}
-    uint32_t sequenceID;
-    bool redundancy;
+    uint32_t sequenceID : 31;
+    uint32_t redundancy : 1;
 };
 
 struct TargetKmer{
