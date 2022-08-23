@@ -50,27 +50,22 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par) //bui
     const string taxonomyDirectory = dbDirectory + "/taxonomy";
 
     // Taxonomy
-    cout << "Taxonomy" << endl;
     const string names = taxonomyDirectory + "/names.dmp";
     const string nodes = taxonomyDirectory + "/nodes.dmp";
     const string merged = taxonomyDirectory + "/merged.dmp";
     NcbiTaxonomy taxonomy(names, nodes, merged);
 
-    cout << "Unzip" << endl;
     // Unzip genomes and make a list of them
     unzipAndList(folder, folder + "/fasta_list_GTDB");
 
-    cout << "Load" << endl;
     // Load mapping from assembly accession to taxonomy ID
     unordered_map<string, int> assacc2taxid;
-    load_assacc2taxid( taxonomyDirectory + "/taxid.map", assacc2taxid);
+    load_assacc2taxid( taxonomyDirectory + "/assacc_to_taxid.tsv", assacc2taxid);
 
-    cout << "Make" << endl;
     // Make mapping from tax id to FASTA file
     vector<TaxId2Fasta> taxid2fasta;
     mappingFromTaxIDtoFasta(folder + "/fasta_list_GTDB", assacc2taxid, taxid2fasta, taxonomy);
 
-    cout << "Write" << endl;
     // Write a file of tax ids
     string taxIdList_fname = dbDirectory + "/taxID_list";
     ofstream taxIdList;
@@ -676,6 +671,7 @@ void IndexCreator::mappingFromTaxIDtoFasta(const string & fastaList_fname,
 
 void IndexCreator::load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid){
     string key, value;
+    cout<<mappingFile<<endl;
     ifstream map;
     map.open(mappingFile);
     if(map.is_open()){
