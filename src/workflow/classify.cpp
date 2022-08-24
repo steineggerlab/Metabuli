@@ -10,7 +10,7 @@
 
 void setClassifyDefaults(LocalParameters & par){
     par.virusTaxId = 10239;// Taxonomy ID of virus taxon in NCBI
-    par.seqMode = 1;
+    par.seqMode = 2;
     par.memoryMode = 1;
     par.reducedAA = 0;
     par.minScore = 0.0;
@@ -29,7 +29,7 @@ int classify(int argc, const char **argv, const Command& command)
     cout << "Number of threads: " << par.threads << endl;
     const char * queryFileName = par.filenames[0].c_str();
     const string databaseDirectory = par.filenames[1];
-    const string taxonomyDirectory = par.filenames[2];
+    const string taxonomyDirectory = databaseDirectory + "/taxonomy";
 
     const string names = taxonomyDirectory + "/names.dmp";
     const string nodes = taxonomyDirectory + "/nodes.dmp";

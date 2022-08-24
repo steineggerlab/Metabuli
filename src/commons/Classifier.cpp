@@ -142,10 +142,10 @@ void Classifier::startClassify(const char *queryFileName,
 
     // Write report files
     ofstream readClassificationFile;
-    readClassificationFile.open(par.filenames[3] + "/" + par.filenames[4] + "_ReadClassification.tsv");
+    readClassificationFile.open(par.filenames[2] + "/" + par.filenames[3] + "_ReadClassification.tsv");
     writeReadClassification(queryList, (int) numOfSeq, readClassificationFile);
     readClassificationFile.close();
-    writeReportFile(par.filenames[3] + "/" + par.filenames[4] + "_CompositionReport.tsv", taxonomy, numOfSeq);
+    writeReportFile(par.filenames[2] + "/" + par.filenames[3] + "_CompositionReport.tsv", taxonomy, numOfSeq);
 
     //Below is for developing
 //    ofstream wr;
