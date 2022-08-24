@@ -22,9 +22,8 @@ private:
     size_t queryLength;
     std::vector<Genus> genusList;
 
-    void getBestGenus();
+
 public:
-    void takeMatch(Match & match);
     void chooseBestTaxon2();
 };
 

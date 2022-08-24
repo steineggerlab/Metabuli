@@ -4,16 +4,6 @@
 
 #include "Query.h"
 
-void Query::takeMatch(Match & match) {
-    for(Genus genus : genusList){
-        if(match.genusTaxID == genus.getGenusID()){
-            genus.takeMatch(match);
-            return;
-        }
-    }
-    genusList.emplace_back(Genus(queryLength, match.genusTaxID));
-    genusList.back().takeMatch(match);
-}
 
 void Query::chooseBestTaxon2() {
 
