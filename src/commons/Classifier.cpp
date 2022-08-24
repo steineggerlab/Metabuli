@@ -138,7 +138,7 @@ void Classifier::startClassify(const char *queryFileName,
         time_t beforeSortMatches = time(nullptr);
         totalMatchCnt += matchBuffer.startIndexOfReserve;
         SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve,
-                      * this);
+                      sortMatch(this));
         cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
 
         // Classify queries based on the matches
