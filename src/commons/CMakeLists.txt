@@ -20,4 +20,6 @@ set(commons_source_files
 		commons/ProdigalWrapper.cpp
 		commons/ReducedClassifier.cpp
 		commons/ReducedClassifier.h
+		commons/Match.h
+		commons/common.cpp
         PARENT_SCOPE)
