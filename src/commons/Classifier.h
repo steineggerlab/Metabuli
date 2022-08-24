@@ -42,7 +42,7 @@ protected:
     int unmaskedPos[9];
     uint8_t hammingMargin;
     float minSpScore;
-    
+
     NcbiTaxonomy * taxonomy;
     vector<TaxID> taxIdList;
     vector<TaxID> speciesTaxIdList;
@@ -202,7 +202,8 @@ protected:
 //            return false;
 //        }
 //    };
-    bool operator() (Match & a, Match & b) ;
+    bool operator() (const Match * a, const Match * b) ;
+    bool operator() (const Match & a, const Match & b) ;
 //    {
 //        if (a.queryId < b.queryId) return true;
 //        else if (a.queryId == b.queryId) {
