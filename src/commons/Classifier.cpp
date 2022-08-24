@@ -449,9 +449,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             size_t posToWrite;
 
             int currMatchNum;
-            bool red;
             size_t idx;
-            size_t range;
 #pragma omp for schedule(dynamic, 1)
             for (size_t i = 0; i < querySplits.size(); i++) {
                 if (hasOverflow || splitCheckList[i]) {
@@ -714,7 +712,7 @@ void Classifier::analyseResultParallel(Match *matchList,
     if (PRINT) {
         omp_set_num_threads(1);
     } else {
-        omp_set_num_threads(1);
+        omp_set_num_threads(par.threads);
     }
 
     // Process each block
@@ -731,7 +729,7 @@ void Classifier::analyseResultParallel(Match *matchList,
         }
     }
 
-    cout << "b" << endl;
+
     for (size_t i = 0; i < blockIdx; i++) {
         ++taxCounts[queryList[matchBlocks[i].id].classification];
     }
@@ -766,7 +764,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                               queryList[currentQuery].queryLength,
                                               queryList[currentQuery].queryLength2,
                                               highRankScore);
-        cout << "1" << endl;
+//        cout << "1" << endl;
     } else {
         res = getMatchesOfTheBestGenus(matchesForLCA, matchList, end, offset, queryLength, highRankScore);
     }
@@ -788,7 +786,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         return;
     }
 
-    cout << "2" << endl;
+//    cout << "2" << endl;
 
     // If the score is too low, it is un-classified
     if (highRankScore < par.minScore) {
@@ -799,12 +797,12 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         return;
     }
 
-    cout << "3" << endl;
+//    cout << "3" << endl;
     for (size_t i = 0; i < matchesForLCA.size(); i++) {
         queryList[currentQuery].taxCnt[spORssp[matchesForLCA[i].redundacny]->operator[](matchesForLCA[i].targetId)]++;
     }
 
-    cout << "4" << endl;
+//    cout << "4" << endl;
     // If there are two or more good genus level candidates, find the LCA.
     if (res == 2) {
         vector<TaxID> genusList;
@@ -831,7 +829,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         return;
     }
 
-    cout << "5" << endl;
+//    cout << "5" << endl;
     // Choose the species with the highest coverage.
     TaxID selectedSpecies;
     ScrCov speciesScrCov(0.f, 0.f);
@@ -849,7 +847,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                       species);
     }
 
-    cout << "6" << endl;
+//    cout << "6" << endl;
 
     // Classify at the genus rank if more than one species are selected or the score at species level is not enough.
     if (species.size() > 1 || (speciesScrCov.score < minSpScore &&
@@ -862,7 +860,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         return;
     }
 
-    cout << "7" << endl;
+//    cout << "7" << endl;
     selectedSpecies = species[0];
 
     // Check if it can be classified at the subspecies rank.
@@ -900,7 +898,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         }
     }
 
-    cout << "8" << endl;
+//    cout << "8" << endl;
     // Store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedSpecies;
@@ -1363,11 +1361,10 @@ void Classifier::chooseSpecies(const vector<Match> &matches,
     TaxID currentSpeices;
     size_t numOfMatch = matches.size();
     size_t speciesBegin, speciesEnd;
-    float currScore, currCoverage;
     while (i < numOfMatch) {
         currentSpeices = speciesTaxIdList[matches[i].targetId];
         speciesBegin = i;
-        while (currentSpeices == speciesTaxIdList[matches[i].targetId] && (i < numOfMatch)) {
+        while ((i < numOfMatch) && currentSpeices == speciesTaxIdList[matches[i].targetId]) {
             i++;
         }
         speciesEnd = i;
@@ -1400,20 +1397,20 @@ void Classifier::classifyFurther_paired(const std::vector<Match> &matches,
     TaxID currentSpeices;
     size_t numOfMatch = matches.size();
     size_t speciesBegin, speciesEnd;
-    cout<<"A"<<endl;
+//    cout<<"A"<<endl;
     while (i < numOfMatch) {
         currentSpeices = speciesTaxIdList[matches[i].targetId];
         speciesBegin = i;
         while ((i < numOfMatch) && currentSpeices == speciesTaxIdList[matches[i].targetId]) {
             i++;
         }
-        cout<<"B"<<endl;
+//        cout<<"B"<<endl;
         speciesEnd = i;
         speciesScrCovs[currentSpeices] = scoreTaxon_paired(matches, speciesBegin, speciesEnd, read1Length, read2Length);
-        cout<<"C"<<endl;
+//        cout<<"C"<<endl;
     }
 
-    cout<<"D"<<endl;
+//    cout<<"D"<<endl;
     // Get the best species
     float bestCovergae = 0.f;
     for (auto sp = speciesScrCovs.begin(); sp != speciesScrCovs.end(); sp++) {
@@ -1427,7 +1424,7 @@ void Classifier::classifyFurther_paired(const std::vector<Match> &matches,
             species.push_back(sp->first);
         }
     }
-    cout<<"E"<<endl;
+//    cout<<"E"<<endl;
 
 }
 
