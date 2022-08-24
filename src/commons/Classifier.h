@@ -42,8 +42,7 @@ protected:
     int unmaskedPos[9];
     uint8_t hammingMargin;
     float minSpScore;
-
-    NcbiTaxonomy * taxonomy;
+    
     NcbiTaxonomy * taxonomy;
     vector<TaxID> taxIdList;
     vector<TaxID> speciesTaxIdList;
