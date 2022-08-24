@@ -710,7 +710,7 @@ void Classifier::analyseResultParallel(Match *matchList,
         matchBlocks[blockIdx].end = matchIdx - 1;
         blockIdx++;
     }
-
+    cout << "a" << endl;
     if (PRINT) {
         omp_set_num_threads(1);
     } else {
@@ -731,6 +731,7 @@ void Classifier::analyseResultParallel(Match *matchList,
         }
     }
 
+    cout << "b" << endl;
     for (size_t i = 0; i < blockIdx; i++) {
         ++taxCounts[queryList[matchBlocks[i].id].classification];
     }
