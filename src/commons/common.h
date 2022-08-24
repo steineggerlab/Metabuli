@@ -6,7 +6,7 @@
 #define kmerBufSize 1'000'000'000 // 10'000'000'000 | 286000000 (16 byte x 1 giga = 16 GB)
                                 // 10'000'000'000 -> build_dir 397G RAM
 #define SplitNum 4096
-#define PRINT true
+#define PRINT false
 
 struct Sequence{
     Sequence(size_t start, size_t end, size_t length) : start(start), end(end), length(length) { }
