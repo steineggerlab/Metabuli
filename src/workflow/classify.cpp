@@ -30,7 +30,6 @@ int classify(int argc, const char **argv, const Command& command)
     const char * queryFileName = par.filenames[0].c_str();
     const string databaseDirectory = par.filenames[1];
     const string taxonomyDirectory = databaseDirectory + "/taxonomy";
-
     const string names = taxonomyDirectory + "/names.dmp";
     const string nodes = taxonomyDirectory + "/nodes.dmp";
     const string merged = taxonomyDirectory + "/merged.dmp";
@@ -59,9 +58,9 @@ int classify(int argc, const char **argv, const Command& command)
 
     Classifier * classifier;
     if(par.reducedAA == 1){
-        classifier = new ReducedClassifier(par);
+        classifier = new ReducedClassifier(par, taxIdList);
     } else {
-        classifier = new Classifier(par);
+        classifier = new Classifier(par, taxIdList);
     }
     classifier->startClassify(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(),
                              diffIdxSplitFileName.c_str(), taxIdList, par, taxonomy);
