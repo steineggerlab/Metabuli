@@ -531,7 +531,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
 
                         for (int k = 0; k < currMatchNum; k++) {
                             idx = selectedMatches[k];
-                            red = targetInfoList.data[idx].redundancy;
                             matches[matchCnt] = {queryKmerList[j].info.sequenceID,
                                                  targetInfoList.data[idx].sequenceID,
                                                  queryKmerList[j].info.pos,
@@ -607,7 +606,6 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
 
                     for (int k = 0; k < currMatchNum; k++) {
                         idx = selectedMatches[k];
-                        red = targetInfoList.data[idx].redundancy;
                         matches[matchCnt] = {queryKmerList[j].info.sequenceID,
                                              targetInfoList.data[idx].sequenceID,
                                              queryKmerList[j].info.pos,
