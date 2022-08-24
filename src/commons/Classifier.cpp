@@ -1548,7 +1548,7 @@ bool Classifier::compareForLinearSearch(const QueryKmer &a, const QueryKmer &b) 
     return false;
 }
 
-bool Classifier::operator () (const Match & a, const Match & b) {
+bool Classifier::operator () (Match & a, Match & b) {
     if (a.queryId < b.queryId) return true;
     else if (a.queryId == b.queryId) {
         if (genusTaxIdList[a.targetId] < genusTaxIdList[b.targetId]) return true;

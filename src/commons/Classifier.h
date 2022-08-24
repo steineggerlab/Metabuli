@@ -203,7 +203,7 @@ protected:
 //            return false;
 //        }
 //    };
-    bool operator () (const Match & a, const Match & b) ;
+    bool operator() (Match & a, Match & b) ;
 //    {
 //        if (a.queryId < b.queryId) return true;
 //        else if (a.queryId == b.queryId) {
