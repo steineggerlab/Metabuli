@@ -788,6 +788,8 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         return;
     }
 
+    cout << "2" << endl;
+
     // If the score is too low, it is un-classified
     if (highRankScore < par.minScore) {
         queryList[currentQuery].isClassified = false;
@@ -797,10 +799,12 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         return;
     }
 
+    cout << "3" << endl;
     for (size_t i = 0; i < matchesForLCA.size(); i++) {
         queryList[currentQuery].taxCnt[spORssp[matchesForLCA[i].redundacny]->operator[](matchesForLCA[i].targetId)]++;
     }
 
+    cout << "4" << endl;
     // If there are two or more good genus level candidates, find the LCA.
     if (res == 2) {
         vector<TaxID> genusList;
@@ -827,6 +831,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         return;
     }
 
+    cout << "5" << endl;
     // Choose the species with the highest coverage.
     TaxID selectedSpecies;
     ScrCov speciesScrCov(0.f, 0.f);
@@ -844,6 +849,8 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                       species);
     }
 
+    cout << "6" << endl;
+
     // Classify at the genus rank if more than one species are selected or the score at species level is not enough.
     if (species.size() > 1 || (speciesScrCov.score < minSpScore &&
         !taxonomy->IsAncestor(par.virusTaxId, taxIdList[matchesForLCA[0].targetId]))) {
@@ -855,6 +862,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         return;
     }
 
+    cout << "7" << endl;
     selectedSpecies = species[0];
 
     // Check if it can be classified at the subspecies rank.
@@ -892,6 +900,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         }
     }
 
+    cout << "8" << endl;
     // Store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedSpecies;
