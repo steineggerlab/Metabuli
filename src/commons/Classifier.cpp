@@ -1404,7 +1404,7 @@ void Classifier::classifyFurther_paired(const std::vector<Match> &matches,
     while (i < numOfMatch) {
         currentSpeices = speciesTaxIdList[matches[i].targetId];
         speciesBegin = i;
-        while (currentSpeices == speciesTaxIdList[matches[i].targetId] && (i < numOfMatch)) {
+        while ((i < numOfMatch) && currentSpeices == speciesTaxIdList[matches[i].targetId]) {
             i++;
         }
         cout<<"B"<<endl;
@@ -1413,6 +1413,7 @@ void Classifier::classifyFurther_paired(const std::vector<Match> &matches,
         cout<<"C"<<endl;
     }
 
+    cout<<"D"<<endl;
     // Get the best species
     float bestCovergae = 0.f;
     for (auto sp = speciesScrCovs.begin(); sp != speciesScrCovs.end(); sp++) {
@@ -1426,7 +1427,8 @@ void Classifier::classifyFurther_paired(const std::vector<Match> &matches,
             species.push_back(sp->first);
         }
     }
-    cout<<"D"<<endl;
+    cout<<"E"<<endl;
+
 }
 
 Classifier::ScrCov Classifier::scoreTaxon(const vector<Match> &matches,
