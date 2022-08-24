@@ -418,11 +418,10 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
 
     time_t beforeSearch = time(nullptr);
 
-    vector<vector<TaxID>> sspOrSp;
     while (completedSplitCnt < threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, \
-querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout, genusTaxIdList, taxIdList, spTaxIdList, sspOrSp, par)
+querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout, par)
         {
             //query variables
             uint64_t currentQuery = UINT64_MAX;
