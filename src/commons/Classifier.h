@@ -1,7 +1,3 @@
-//
-// Created by KJB on 01/09/2020.
-//
-
 #ifndef ADKMER4_SEARCHER_H
 #define ADKMER4_SEARCHER_H
 
@@ -65,7 +61,7 @@ protected:
         string name;
         int taxId;
         float coverage;
-        unordered_map<TaxID, int> taxCnt; ///how about using it for REPORTFILE? --> k-mer count
+        unordered_map<TaxID, int> taxCnt;
         size_t queryLength;
 
         QueryInfo(int queryId, bool isClassified, string name, int taxId, float coverage, size_t queryLength)
@@ -80,7 +76,6 @@ protected:
             return false;
         }
     };
-
 
     struct MatchBlock {
         MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) {}
@@ -183,45 +178,6 @@ protected:
                                int seqNum,
                                Query *queryList,
                                const LocalParameters &par);
-
-//    struct MatchCmp {
-//        bool operator() (const Match & a, const Match & b) {
-//            if (a.queryId < b.queryId) return true;
-//            else if (a.queryId == b.queryId) {
-//                if (genusTaxIdList[a.targetId] < genusTaxIdList[b.targetId]) return true;
-//                else if (genusTaxIdList[a.targetId] == genusTaxIdList[b.targetId]) {
-//                    if (speciesTaxIdList[a.targetId] < speciesTaxIdList[b.targetId]) return true;
-//                    else if (speciesTaxIdList[a.targetId] == speciesTaxIdList[b.targetId]) {
-//                        if (a.position < b.position) return true;
-//                        else if (a.position == b.position) {
-//                            return a.hamming < b.hamming;
-//                        }
-//                    }
-//                }
-//            }
-//            return false;
-//        }
-//    };
-//    bool operator() (const Match * a, const Match * b) ;
-//    bool operator() (const Match & a, const Match & b) ;
-//    {
-//        if (a.queryId < b.queryId) return true;
-//        else if (a.queryId == b.queryId) {
-//            if (genusTaxIdList[a.targetId] < genusTaxIdList[b.targetId]) return true;
-//            else if (genusTaxIdList[a.targetId] == genusTaxIdList[b.targetId]) {
-//                if (speciesTaxIdList[a.targetId] < b.speciesTaxID) return true;
-//                else if (a.speciesTaxID == b.speciesTaxID) {
-//                    if (a.position < b.position) return true;
-//                    else if (a.position == b.position) {
-//                        return a.hamming < b.hamming;
-//                    }
-//                }
-//            }
-//        }
-//        return false;
-//    }
-
-//    static bool sortByGenusAndSpecies2(const Match &a, const Match &b);
 
     void chooseBestTaxon(uint32_t currentQuery,
                          size_t offset,

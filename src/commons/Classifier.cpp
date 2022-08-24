@@ -762,7 +762,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                               queryList[currentQuery].queryLength,
                                               queryList[currentQuery].queryLength2,
                                               highRankScore);
-//        cout << "1" << endl;
     } else {
         res = getMatchesOfTheBestGenus(matchesForLCA, matchList, end, offset, queryLength, highRankScore);
     }
@@ -783,8 +782,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         queryList[currentQuery].newSpecies = false;
         return;
     }
-
-//    cout << "2" << endl;
 
     // If the score is too low, it is un-classified
     if (highRankScore < par.minScore) {
@@ -827,7 +824,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         return;
     }
 
-//    cout << "5" << endl;
     // Choose the species with the highest coverage.
     TaxID selectedSpecies;
     ScrCov speciesScrCov(0.f, 0.f);
@@ -879,8 +875,8 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     if (NcbiTaxonomy::findRankIndex(taxonomy->taxonNode(selectedSpecies)->rank) == 4) {
         unordered_map<TaxID, int> strainMatchCnt;
         for (size_t i = 0; i < matchesForLCA.size(); i++) {
-            if (selectedSpecies != taxIdList[matchesForLCA[i].targetId]
-                && taxonomy->IsAncestor(selectedSpecies, taxIdList[matchesForLCA[i].targetId])) {
+            if (!matchesForLCA[i].redundacny
+                && taxonomy->IsAncestor2(selectedSpecies, taxIdList[matchesForLCA[i].targetId])) {
                 strainMatchCnt[taxIdList[matchesForLCA[i].targetId]]++;
             }
         }
@@ -1557,40 +1553,6 @@ bool Classifier::compareForLinearSearch(const QueryKmer &a, const QueryKmer &b) 
     }
     return false;
 }
-
-//bool Classifier::operator () (const Match & a, const Match & b) {
-//    if (a.queryId < b.queryId) return true;
-//    else if (a.queryId == b.queryId) {
-//        if (genusTaxIdList[a.targetId] < genusTaxIdList[b.targetId]) return true;
-//        else if (genusTaxIdList[a.targetId] == genusTaxIdList[b.targetId]) {
-//            if (speciesTaxIdList[a.targetId] < speciesTaxIdList[b.targetId]) return true;
-//            else if (speciesTaxIdList[a.targetId] == speciesTaxIdList[b.targetId]) {
-//                if (a.position < b.position) return true;
-//                else if (a.position == b.position) {
-//                    return a.hamming < b.hamming;
-//                }
-//            }
-//        }
-//    }
-//    return false;
-//}
-
-//bool Classifier::operator () (const Match * a, const Match * b) {
-//    if (a->queryId < b->queryId) return true;
-//    else if (a->queryId == b->queryId) {
-//        if (genusTaxIdList[a->targetId] < genusTaxIdList[b->targetId]) return true;
-//        else if (genusTaxIdList[a->targetId] == genusTaxIdList[b->targetId]) {
-//            if (speciesTaxIdList[a->targetId] < speciesTaxIdList[b->targetId]) return true;
-//            else if (speciesTaxIdList[a->targetId] == speciesTaxIdList[b->targetId]) {
-//                if (a->position < b->position) return true;
-//                else if (a->position == b->position) {
-//                    return a->hamming < b->hamming;
-//                }
-//            }
-//        }
-//    }
-//    return false;
-//}
 
 void Classifier::writeReadClassification(Query *queryList, int queryNum, ofstream &readClassificationFile) {
     for (int i = 0; i < queryNum; i++) {

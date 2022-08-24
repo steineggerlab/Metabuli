@@ -29,11 +29,6 @@ int classify(int argc, const char **argv, const Command& command)
     cout << "Number of threads: " << par.threads << endl;
     const char * queryFileName = par.filenames[0].c_str();
     const string databaseDirectory = par.filenames[1];
-//    const string taxonomyDirectory = databaseDirectory + "/taxonomy";
-//    const string names = taxonomyDirectory + "/names.dmp";
-//    const string nodes = taxonomyDirectory + "/nodes.dmp";
-//    const string merged = taxonomyDirectory + "/merged.dmp";
-//    NcbiTaxonomy taxonomy(names, nodes, merged);
 
     const string targetDiffIdxFileName = databaseDirectory+"/diffIdx";
     const string targetInfoFileName = databaseDirectory+"/info";
