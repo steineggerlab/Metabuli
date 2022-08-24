@@ -48,7 +48,7 @@ void Classifier::startClassify(const char *queryFileName,
 
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
-    Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(20));
+    Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(10));
 
     // Load query file
     cout << "Indexing query file ...";
@@ -562,20 +562,20 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     // Load target k-mers that are matched in amino acid level
                     while (AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
-                        cout<<"Q: ";seqIterator.printKmerInDNAsequence(currentQuery);
-                        print_binary64(64,currentQuery);
-                        cout<<"\n";
-                        print_binary64(64,AminoAcid(currentQuery));
-                        cout<<"\n";
-                        cout<<"T: ";seqIterator.printKmerInDNAsequence(currentTargetKmer);
-                        print_binary64(64,currentTargetKmer);
-                        cout<<"\n";
-                        print_binary64(64,AminoAcid(currentTargetKmer));
-                        cout<<"\n";
-                        print_binary64(64,currentQueryAA);
-                        cout<<"\n";
-                        print_binary64(64,AminoAcid(currentTargetKmer));
-                        cout<<"\n";
+//                        cout<<"Q: ";seqIterator.printKmerInDNAsequence(currentQuery);
+//                        print_binary64(64,currentQuery);
+//                        cout<<"\n";
+//                        print_binary64(64,AminoAcid(currentQuery));
+//                        cout<<"\n";
+//                        cout<<"T: ";seqIterator.printKmerInDNAsequence(currentTargetKmer);
+//                        print_binary64(64,currentTargetKmer);
+//                        cout<<"\n";
+//                        print_binary64(64,AminoAcid(currentTargetKmer));
+//                        cout<<"\n";
+//                        print_binary64(64,currentQueryAA);
+//                        cout<<"\n";
+//                        print_binary64(64,AminoAcid(currentTargetKmer));
+//                        cout<<"\n";
 
                         candidateTargetKmers.push_back(currentTargetKmer);
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
