@@ -185,24 +185,24 @@ protected:
                                Query *queryList,
                                const LocalParameters &par);
 
-    struct MatchCmp {
-        bool operator() (const Match & a, const Match & b) {
-            if (a.queryId < b.queryId) return true;
-            else if (a.queryId == b.queryId) {
-                if (genusTaxIdList[a.targetId] < genusTaxIdList[b.targetId]) return true;
-                else if (genusTaxIdList[a.targetId] == genusTaxIdList[b.targetId]) {
-                    if (speciesTaxIdList[a.targetId] < speciesTaxIdList[b.targetId]) return true;
-                    else if (speciesTaxIdList[a.targetId] == speciesTaxIdList[b.targetId]) {
-                        if (a.position < b.position) return true;
-                        else if (a.position == b.position) {
-                            return a.hamming < b.hamming;
-                        }
-                    }
-                }
-            }
-            return false;
-        }
-    };
+//    struct MatchCmp {
+//        bool operator() (const Match & a, const Match & b) {
+//            if (a.queryId < b.queryId) return true;
+//            else if (a.queryId == b.queryId) {
+//                if (genusTaxIdList[a.targetId] < genusTaxIdList[b.targetId]) return true;
+//                else if (genusTaxIdList[a.targetId] == genusTaxIdList[b.targetId]) {
+//                    if (speciesTaxIdList[a.targetId] < speciesTaxIdList[b.targetId]) return true;
+//                    else if (speciesTaxIdList[a.targetId] == speciesTaxIdList[b.targetId]) {
+//                        if (a.position < b.position) return true;
+//                        else if (a.position == b.position) {
+//                            return a.hamming < b.hamming;
+//                        }
+//                    }
+//                }
+//            }
+//            return false;
+//        }
+//    };
     bool operator () (const Match & a, const Match & b) ;
 //    {
 //        if (a.queryId < b.queryId) return true;
