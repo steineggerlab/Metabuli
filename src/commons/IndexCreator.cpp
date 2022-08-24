@@ -43,13 +43,13 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 }
 
 // It reads a reference sequence file and write a differential index file and target k-mer info file.
-void IndexCreator::startIndexCreatingParallel(const LocalParameters & par)
+void IndexCreator::startIndexCreatingParallel(const LocalParameters & par) //build_dir
 {
     const string folder = par.filenames[0];
-    const string taxonomyDirectory = par.filenames[1];
-    const char * dbDirectory = par.filenames[2].c_str();
+    const string dbDirectory = par.filenames[1];
+    const string taxonomyDirectory = dbDirectory + "/taxonomy";
 
-    //Taxonomy
+    // Taxonomy
     const string names = taxonomyDirectory + "/names.dmp";
     const string nodes = taxonomyDirectory + "/nodes.dmp";
     const string merged = taxonomyDirectory + "/merged.dmp";
@@ -67,7 +67,7 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par)
     mappingFromTaxIDtoFasta(folder + "/fasta_list_GTDB", assacc2taxid, taxid2fasta, taxonomy);
 
     // Write a file of tax ids
-    string taxIdList_fname = string(dbDirectory) + "/taxID_list";
+    string taxIdList_fname = dbDirectory + "/taxID_list";
     ofstream taxIdList;
     taxIdList.open(taxIdList_fname);
     for(auto & cnt : taxid2fasta){
@@ -84,7 +84,7 @@ void IndexCreator::startIndexCreatingParallel(const LocalParameters & par)
     fill_n(splitChecker, numOfSplits, false);
     size_t processedSplitCnt = 0;
 
-    TargetKmerBuffer kmerBuffer(10'000'000'000);
+    TargetKmerBuffer kmerBuffer(kmerBufSize);
     while(processedSplitCnt < numOfSplits){ // Check this condition
         fillTargetKmerBuffer(kmerBuffer, splitChecker, processedSplitCnt, splits, taxid2fasta, par);
         time_t start = time(nullptr);
@@ -150,10 +150,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                     getSeqSegmentsWithHead(sequences, fastaForTraining);
                     sort(sequences.begin(), sequences.end(),
                          [](const Sequence &a, const Sequence &b) { return a.length > b.length; });
-//                    cout<<"Training"<<endl;
-//                    for(auto x : sequences){
-//                        cout<<x.start<<" "<<x.end<<" "<<x.length<<endl;
-//                    }
 
                     // Train Prodigal with a training sequence of i th split
                     kseq_buffer_t buffer(const_cast<char *>(&fastaForTraining.data[sequences[0].start]),
@@ -194,6 +190,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                     kseq_destroy(seq);
 
                     // Extract k-mers from the sequences which are not used for training but in the same file.
+                    // Ex) plasmid
                     if(sequences.size() > 1) {
                         extractKmerFromFasta(seqIterator, fastaForTraining, standardList, lengthOfTrainingSeq,
                                              sequences, prodigal, intergenicKmerList, kmerBuffer, posToWrite,
@@ -236,7 +233,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
 
 void IndexCreator::extractKmerFromFasta(SeqIterator & seqIterator, MmapedData<char> & seqFile, priority_queue<uint64_t> & standardList,
                  size_t lengthOfTrainingSeq, const vector<Sequence> & sequences, ProdigalWrapper & prodigal,
-                 vector<uint64_t> & intergenicKmerList, TargetKmerBuffer & kmerBuffer, size_t posToWrite,
+                 vector<uint64_t> & intergenicKmerList, TargetKmerBuffer & kmerBuffer, size_t & posToWrite,
                  uint32_t seqID, int taxIdAtRank, size_t startIdx){
     priority_queue<uint64_t> currentList;
     vector<PredictedBlock> blocks;
@@ -287,99 +284,13 @@ void IndexCreator::extractKmerFromFasta(SeqIterator & seqIterator, MmapedData<ch
 
 }
 
-///This function sort the TargetKmerBuffer, do redundancy reducing task, write the differential index of them
-void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,
-                                    const vector<TaxId2Fasta> & taxid2fasta, const LocalParameters & par)
-{
-    // Write a split file, which will be merged later.
-    char suffixedDiffIdxFileName[300];
-    char suffixedInfoFileName[300];
-    sprintf(suffixedDiffIdxFileName, "%s/%zu_diffIdx", outputFileName, numOfFlush);
-    sprintf(suffixedInfoFileName, "%s/%zu_info", outputFileName, numOfFlush);
-
-    FILE * diffIdxFile = fopen(suffixedDiffIdxFileName, "wb");
-    FILE * infoFile = fopen(suffixedInfoFileName, "wb");
-    if (diffIdxFile == nullptr || infoFile == nullptr){
-        cout<<"Cannot open the file for writing target DB"<<endl;
-        return;
-    }
-    numOfFlush++;
-
-    uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 10'000'000'000);
-    size_t localBufIdx = 0;
-    uint64_t lastKmer = 0;
-
-    // Find the first index of garbage k-mer (UINT64_MAX)
-    for(size_t checkN = kmerNum - 1; checkN >= 0; checkN--){
-        if(kmerBuffer[checkN].ADkmer != UINT64_MAX){
-            kmerNum = checkN + 1;
-            break;
-        }
-    }
-
-    // Find the first index of meaningful k-mer
-    size_t startIdx = 0;
-    for(size_t i = 0; i < kmerNum ; i++){
-        if(kmerBuffer[i].taxIdAtRank != 0){
-            startIdx = i;
-            break;
-        }
-    }
-
-    // Redundancy reduction task
-    TargetKmer lookingKmer = kmerBuffer[0 + startIdx];
-    size_t write = 0;
-    int endFlag = 0;
-    int hasSeenOtherStrains;
-
-    for(size_t i = 1 + startIdx; i < kmerNum ; i++) {
-        hasSeenOtherStrains = 0;
-        while(lookingKmer.taxIdAtRank == kmerBuffer[i].taxIdAtRank){
-            if (lookingKmer.ADkmer != kmerBuffer[i].ADkmer) {
-                break;
-            }
-            hasSeenOtherStrains += (taxid2fasta[lookingKmer.info.sequenceID].taxid != taxid2fasta[kmerBuffer[i].info.sequenceID].taxid);
-            i++;
-            if(i == kmerNum){
-                endFlag = 1;
-                break;
-            }
-        }
-
-        lookingKmer.info.redundancy = (hasSeenOtherStrains > 0);
-
-        fwrite(&lookingKmer.info, sizeof(TargetKmerInfo), 1, infoFile);
-        write++;
-        getDiffIdx(lastKmer, lookingKmer.ADkmer, diffIdxFile, diffIdxBuffer, localBufIdx);
-
-        if(endFlag == 1) break;
-        lastKmer = lookingKmer.ADkmer;
-        lookingKmer = kmerBuffer[i];
-    }
-
-    //For the end part
-    if(!((kmerBuffer[kmerNum - 2].ADkmer == kmerBuffer[kmerNum - 1].ADkmer) &&
-         (kmerBuffer[kmerNum - 2].taxIdAtRank == kmerBuffer[kmerNum - 1].taxIdAtRank))){
-        fwrite(&lookingKmer.info, sizeof(TargetKmerInfo), 1, infoFile);
-        write++;
-        getDiffIdx(lastKmer, lookingKmer.ADkmer, diffIdxFile, diffIdxBuffer, localBufIdx);
-    }
-    cout<<"total k-mer count  : "<< kmerNum << endl;
-    cout<<"written k-mer count: "<<write<<endl;
-
-    flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
-    free(diffIdxBuffer);
-    fclose(diffIdxFile);
-    fclose(infoFile);
-    kmerNum = 0;
-}
-
+// This function sort the TargetKmerBuffer, do redundancy reducing task, write the differential index of them
 void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par,
                                     const size_t * uniqeKmerIdx, size_t & uniqKmerCnt){
     string diffIdxFileName;
     string infoFileName;
-    diffIdxFileName = par.filenames[2] + "/" + to_string(numOfFlush) + "_diffIdx";
-    infoFileName = par.filenames[2] + "/" + to_string(numOfFlush) + "_info";
+    diffIdxFileName = par.filenames[1] + "/" + to_string(numOfFlush) + "_diffIdx";
+    infoFileName = par.filenames[1] + "/" + to_string(numOfFlush) + "_info";
 
     FILE * diffIdxFile = fopen(diffIdxFileName.c_str(), "wb");
     FILE * infoFile = fopen(infoFileName.c_str(), "wb");
@@ -388,7 +299,6 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
         return;
     }
     numOfFlush++;
-
 
     uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 10'000'000'000);
     size_t localBufIdx = 0;
@@ -418,10 +328,9 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     string infoFileName;
     string splitFileName;
 
-    diffIdxFileName = par.filenames[2] + "/diffIdx";
-    infoFileName = par.filenames[2] + "/info";
-    splitFileName = par.filenames[2] + "/split";
-
+    diffIdxFileName = par.filenames[1] + "/diffIdx";
+    infoFileName = par.filenames[1] + "/info";
+    splitFileName = par.filenames[1] + "/split";
 
     // Make splits
     FILE * diffIdxSplitFile = fopen(splitFileName.c_str(), "wb");
@@ -446,7 +355,7 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     numOfFlush++;
 
 
-    uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 10'000'000'000);
+    uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * size_t(kmerBufSize));
     size_t localBufIdx = 0;
     uint64_t lastKmer = 0;
     size_t write = 0;
@@ -489,7 +398,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
             break;
         }
     }
-    cout<<"startIndexOfReserve: "<< kmerBuffer.startIndexOfReserve <<endl;
+
     // Find the first index of meaningful k-mer
     size_t startIdx = 0;
     for(size_t i = 0; i < kmerBuffer.startIndexOfReserve ; i++){
@@ -498,7 +407,6 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
             break;
         }
     }
-    cout<<"Start Index: "<<startIdx<<endl;
 
     // Make splits
     vector<Split> splits;
@@ -513,9 +421,6 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
         }
     }
     splits.emplace_back(startIdx, kmerBuffer.startIndexOfReserve - 1);
-    for(auto x : splits){
-        cout<<x.offset<<" "<<x.end<<endl;
-    }
 
     //
     size_t ** idxOfEachSplit = new size_t * [par.threads];
@@ -772,9 +677,13 @@ void IndexCreator::load_assacc2taxid(const string & mappingFile, unordered_map<s
         while(getline(map,key,'\t')){
             getline(map, value, '\n');
             assacc2taxid[key] = stoi(value);
+            if(key[2] == 'F'){
+                key[2] = 'A';
+                assacc2taxid[key] = stoi(value);
+            }
         }
     } else{
-        cout<<"Cannot open file for mappig from assemlby accession to tax ID"<<endl;
+        cerr<<"Cannot open file for mappig from assemlby accession to tax ID"<<endl;
     }
     map.close();
 }

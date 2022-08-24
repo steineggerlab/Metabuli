@@ -24,17 +24,17 @@ typedef struct QueryKmer {
 
 struct TargetKmerInfo{
     TargetKmerInfo(int seqID = 0, bool redundancy = false) : sequenceID(seqID), redundancy(redundancy) {}
-    uint32_t sequenceID;
-    bool redundancy;
+    uint32_t sequenceID : 31;
+    uint32_t redundancy : 1;
 };
 
 struct TargetKmer{
-    TargetKmer(): ADkmer(0), taxIdAtRank(0), info(0, false) { };
-    TargetKmer(uint64_t ADkmer, TaxID taxIdAtRank, uint32_t seqID, bool redundacy) : ADkmer(ADkmer), taxIdAtRank(taxIdAtRank),info(seqID, redundacy) {}
-    uint64_t ADkmer; //8
-    TaxID taxIdAtRank; //4
-    TargetKmerInfo info;
-
+    TargetKmer(): info(0, false), ADkmer(0), taxIdAtRank(0) { };
+    TargetKmer(uint64_t ADkmer, TaxID taxIdAtRank, uint32_t seqID, bool redundacy)
+        : info(seqID, redundacy), ADkmer(ADkmer), taxIdAtRank(taxIdAtRank) {}
+    TargetKmerInfo info; // 8
+    uint64_t ADkmer; // 8
+    TaxID taxIdAtRank; // 4
 };
 
 struct DiffIdxSplit{

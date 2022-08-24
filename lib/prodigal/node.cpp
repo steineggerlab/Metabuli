@@ -54,7 +54,6 @@ int add_nodes(unsigned char *seq, unsigned char *rseq, int slen, struct _node
       continue;
     }
     if(last[i%3] >= slen) continue;
-
     if(is_start(seq, i, tinf) == 1 && is_atg(seq, i)==1 && ((last[i%3]-i+3)
             >= min_dist[i%3]) && cross_mask(i, last[i%3], mlist, nm) == 0) {
       nodes[nn].ndx = i;

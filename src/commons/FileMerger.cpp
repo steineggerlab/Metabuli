@@ -1,7 +1,3 @@
-//
-// Created by KJB on 01/09/2020.
-//
-
 #include "FileMerger.h"
 
 FileMerger::FileMerger(const LocalParameters & par) {
@@ -180,15 +176,14 @@ FileMerger::~FileMerger() {
 // Merge differential index and k-mer information files, reducing redundancy
 void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) {
     size_t writtenKmerCnt = 0;
-    const string dbDirectory = par.filenames[2];
-    const string taxonomyDirectory = par.filenames[1];
+    const string dbDirectory = par.filenames[1];
+    const string taxonomyDirectory = dbDirectory + "/taxonomy";
 
     // Taxonomy
     NcbiTaxonomy taxonomy(taxonomyDirectory + "/names.dmp", taxonomyDirectory + "/nodes.dmp", taxonomyDirectory + "/merged.dmp");
 
     // Load taxonomy id list
     vector<TaxID> taxIdList;
-    //loadTaxIdList((string(dbDirectory) + "/taxID_list").c_str(), taxIdList);
     FILE * taxIdFile;
     if((taxIdFile = fopen((string(dbDirectory) + "/taxID_list").c_str(),"r")) == NULL){
         cout<<"Cannot open the taxID list file."<<endl;

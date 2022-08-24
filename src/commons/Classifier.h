@@ -1,7 +1,3 @@
-//
-// Created by KJB on 01/09/2020.
-//
-
 #ifndef ADKMER4_SEARCHER_H
 #define ADKMER4_SEARCHER_H
 
@@ -43,6 +39,12 @@ protected:
     uint8_t hammingMargin;
     float minSpScore;
 
+    NcbiTaxonomy * taxonomy;
+    vector<TaxID> taxIdList;
+    vector<TaxID> speciesTaxIdList;
+    vector<TaxID> genusTaxIdList;
+    vector<vector<TaxID> *> spORssp;
+
 
     struct ScrCov {
         float score;
@@ -59,7 +61,7 @@ protected:
         string name;
         int taxId;
         float coverage;
-        unordered_map<TaxID, int> taxCnt; ///how about using it for REPORTFILE? --> k-mer count
+        unordered_map<TaxID, int> taxCnt;
         size_t queryLength;
 
         QueryInfo(int queryId, bool isClassified, string name, int taxId, float coverage, size_t queryLength)
@@ -74,7 +76,6 @@ protected:
             return false;
         }
     };
-
 
     struct MatchBlock {
         MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) {}
@@ -158,9 +159,6 @@ protected:
             const char *targetInfoList,
             const char *diffIdxSplits,
             Buffer<Match> &matchBuffer,
-            const vector<int> &taxIdList,
-            const vector<int> &speciesTaxIdList,
-            const vector<TaxID> &genusTaxIdList,
             const LocalParameters &par);
 
     void compareDna(uint64_t query,
@@ -175,17 +173,13 @@ protected:
     void moveMatches(Match *dest, Match *src, int &matchNum);
 
     // Analyzing k-mer matches
-    void analyseResultParallel(NcbiTaxonomy &ncbiTaxonomy,
-                               Match *matchList,
+    void analyseResultParallel(Match *matchList,
                                size_t numOfMatches,
                                int seqNum,
                                Query *queryList,
                                const LocalParameters &par);
 
-    static bool sortByGenusAndSpecies2(const Match &a, const Match &b);
-
-    void chooseBestTaxon(NcbiTaxonomy &ncbiTaxonomy,
-                         uint32_t currentQuery,
+    void chooseBestTaxon(uint32_t currentQuery,
                          size_t offset,
                          size_t end,
                          Match *matchList,
@@ -210,19 +204,12 @@ protected:
 
     static bool sortMatchesByPos(const Match &a, const Match &b);
 
-
-    static TaxID classifyFurther2(const std::vector<Match> &matches,
-                                  NcbiTaxonomy &taxonomy,
-                                  float maxKmerCnt);
-
     void chooseSpecies(const std::vector<Match> &matches,
-                       NcbiTaxonomy &taxonomy,
                        int queryLength,
                        ScrCov &speciesScrCov,
                        vector<TaxID> &species);
 
     void classifyFurther_paired(const std::vector<Match> &matches,
-                                NcbiTaxonomy &taxonomy,
                                 int read1Length,
                                 int read2Length,
                                 ScrCov &speciesScrCov,
@@ -242,9 +229,9 @@ protected:
     // Write report
     void writeReadClassification(Query *queryList, int queryNum, ofstream &readClassificationFile);
 
-    void writeReportFile(const string &reportFileName, NcbiTaxonomy &ncbiTaxonomy, int numOfQuery);
+    void writeReportFile(const string &reportFileName, int numOfQuery);
 
-    void writeReport(FILE *fp, const NcbiTaxonomy &ncbiTaxonomy, const unordered_map<TaxID, TaxonCounts> &cladeCounts,
+    void writeReport(FILE *fp, const unordered_map<TaxID, TaxonCounts> &cladeCounts,
                      unsigned long totalReads, TaxID taxID = 0, int depth = 0);
 
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts> &map, TaxID key);
@@ -266,16 +253,37 @@ protected:
         bitsForCodon = num;
     }
 
+    friend struct sortMatch;
 public:
     void startClassify(const char *queryFileName, const char *targetDiffIdxFileName, const char *targetInfoFileName,
-                       const char *diffIdxSplitFileName, vector<int> &taxIdList, const LocalParameters &par,
-                       NcbiTaxonomy &taxonomy);
+                       const char *diffIdxSplitFileName, const LocalParameters &par);
 
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiffIdxList, size_t &diffIdxPos);
 
-    Classifier(LocalParameters &par);
+    Classifier(LocalParameters &par, const vector<TaxID> & taxIdList);
 
     virtual ~Classifier();
+};
+
+struct sortMatch {
+    sortMatch(const Classifier * classifier) : classifier(classifier) {}
+    bool operator() (const Match & a, const Match & b) const {
+        if (a.queryId < b.queryId) return true;
+        else if (a.queryId == b.queryId) {
+            if (classifier->genusTaxIdList[a.targetId] < classifier->genusTaxIdList[b.targetId]) return true;
+            else if (classifier->genusTaxIdList[a.targetId] == classifier->genusTaxIdList[b.targetId]) {
+                if (classifier->speciesTaxIdList[a.targetId] < classifier->speciesTaxIdList[b.targetId]) return true;
+                else if (classifier->speciesTaxIdList[a.targetId] == classifier->speciesTaxIdList[b.targetId]) {
+                    if (a.position < b.position) return true;
+                    else if (a.position == b.position) {
+                        return a.hamming < b.hamming;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    const Classifier *  classifier;
 };
 
 inline uint8_t Classifier::getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2) {//12345678

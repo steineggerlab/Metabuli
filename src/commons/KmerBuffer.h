@@ -1,7 +1,3 @@
-//
-// Created by 김재범 on 2020/11/04.
-//
-
 #ifndef ADCLASSIFIER2_KMERBUFFER_H
 #define ADCLASSIFIER2_KMERBUFFER_H
 #include <iostream>
