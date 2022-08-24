@@ -719,8 +719,7 @@ void Classifier::analyseResultParallel(Match *matchList,
     }
 
     // Process each block
-#pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqNum, ncbiTaxonomy, queryList, blockIdx,\
-par, taxIdList, speciesTaxIdList, genusTaxIdList)
+#pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqNum, queryList, blockIdx, par)
     {
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < blockIdx; ++i) {
