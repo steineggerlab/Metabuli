@@ -710,11 +710,11 @@ void Classifier::analyseResultParallel(Match *matchList,
         matchBlocks[blockIdx].end = matchIdx - 1;
         blockIdx++;
     }
-    cout << "a" << endl;
+
     if (PRINT) {
         omp_set_num_threads(1);
     } else {
-        omp_set_num_threads(par.threads);
+        omp_set_num_threads(1);
     }
 
     // Process each block
@@ -766,6 +766,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                               queryList[currentQuery].queryLength,
                                               queryList[currentQuery].queryLength2,
                                               highRankScore);
+        cout << "1" << endl;
     } else {
         res = getMatchesOfTheBestGenus(matchesForLCA, matchList, end, offset, queryLength, highRankScore);
     }
