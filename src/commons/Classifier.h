@@ -202,8 +202,8 @@ protected:
 //            return false;
 //        }
 //    };
-    bool operator() (const Match * a, const Match * b) ;
-    bool operator() (const Match & a, const Match & b) ;
+//    bool operator() (const Match * a, const Match * b) ;
+//    bool operator() (const Match & a, const Match & b) ;
 //    {
 //        if (a.queryId < b.queryId) return true;
 //        else if (a.queryId == b.queryId) {
@@ -297,6 +297,7 @@ protected:
         bitsForCodon = num;
     }
 
+    friend struct sortMatch;
 public:
     void startClassify(const char *queryFileName, const char *targetDiffIdxFileName, const char *targetInfoFileName,
                        const char *diffIdxSplitFileName, const LocalParameters &par);
@@ -306,6 +307,27 @@ public:
     Classifier(LocalParameters &par, const vector<TaxID> & taxIdList);
 
     virtual ~Classifier();
+};
+
+struct sortMatch {
+    sortMatch(const Classifier * classifier) : classifier(classifier) {}
+    bool operator() (const Match & a, const Match & b) const {
+        if (a.queryId < b.queryId) return true;
+        else if (a.queryId == b.queryId) {
+            if (classifier->genusTaxIdList[a.targetId] < classifier->genusTaxIdList[b.targetId]) return true;
+            else if (classifier->genusTaxIdList[a.targetId] == classifier->genusTaxIdList[b.targetId]) {
+                if (classifier->speciesTaxIdList[a.targetId] < classifier->speciesTaxIdList[b.targetId]) return true;
+                else if (classifier->speciesTaxIdList[a.targetId] == classifier->speciesTaxIdList[b.targetId]) {
+                    if (a.position < b.position) return true;
+                    else if (a.position == b.position) {
+                        return a.hamming < b.hamming;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    const Classifier *  classifier;
 };
 
 inline uint8_t Classifier::getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2) {//12345678
