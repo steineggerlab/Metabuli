@@ -1,9 +1,6 @@
 #include "IndexCreator.h"
 #include "FileMerger.h"
 #include "LocalParameters.h"
-#include "csv.hpp"
-
-//#include "../../lib/csv-parser/include/csv.hpp"
 #include <Command.h>
 #include <sstream>
 
@@ -29,20 +26,6 @@ int build_fasta(int argc, const char **argv, const Command &command) {
     // Make a tax ID list using mapping file (acc2taxID)
     // 1) Load mapping file
     cout << "Load mapping from accession ID to taxonomy ID" << endl;
-    csv::CSVFormat format;
-    format.delimiter('\t');
-    format.variable_columns(true);
-    csv::CSVReader reader(acc2taxidFile, format);
-    csv::CSVRow row;
-//    for (csv::CSVRow& row: reader){
-//        cout << row["accession.version"] << " \t" << row["taxid"] << endl;
-//
-//    }
-    while (reader.read_row(row)) {
-        cout << row["accession.version"] << " \t" << row["taxid"] << endl;
-    }
-    return 0;
-
     unordered_map<string, int> acc2taxid;
     string eachLine;
     string eachItem;
@@ -62,6 +45,8 @@ int build_fasta(int argc, const char **argv, const Command &command) {
         cout << "Cannot open file for mapping from accession to tax ID" << endl;
     }
     map.close();
+
+    return 0;
 
     // 2) Make a tax ID list
     cout << "Make a taxonomy ID list" << endl;
