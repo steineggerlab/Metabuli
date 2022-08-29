@@ -4,9 +4,15 @@
 #include <Command.h>
 #include <sstream>
 
+void setDefaults_build_fasta(LocalParameters & par){
+    par.reducedAA = 0;
+    par.spaceMask = "11111111";
+}
+
 
 int build_fasta(int argc, const char **argv, const Command &command) {
     LocalParameters &par = LocalParameters::getLocalInstance();
+    setDefaults_build_fasta(par);
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
     const char *fastaName = par.filenames[0].c_str();
     const char *acc2taxidFile = par.filenames[1].c_str();
@@ -41,6 +47,10 @@ int build_fasta(int argc, const char **argv, const Command &command) {
         cout << "Cannot open file for mapping from accession to tax ID" << endl;
     }
 
+    for(auto x : acc2taxid) {
+        cout<<x.first<< " " << x.second << "\n";
+    }
+    
     // 2) Make a tax ID list
     cout << "Make a taxonomy ID list" << endl;
     ifstream seqFile;
