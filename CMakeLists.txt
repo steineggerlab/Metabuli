@@ -8,8 +8,6 @@ set(FRAMEWORK_ONLY 1 CACHE INTERNAL "" FORCE)
 include(MMseqsSetupDerivedTarget)
 add_subdirectory(lib/mmseqs)
 add_subdirectory(lib/prodigal)
-add_subdirectory(lib/csv-parser)
-add_subdirectory(lib/string-view-lite)
 add_subdirectory(src)
 include_directories(lib)
 
