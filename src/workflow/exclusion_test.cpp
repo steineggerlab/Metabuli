@@ -1,8 +1,3 @@
-//
-// Created by 김재범 on 2021/7/12.
-//
-
-//#include "Classifier.h"
 #include "Parameters.h"
 #include "LocalParameters.h"
 #include "NcbiTaxonomy.h"
@@ -10,6 +5,8 @@
 #include <iostream>
 #include <regex>
 #include "benchmark.h"
+#include <string>
+#include <sstream>
 
 using namespace std;
 
@@ -46,8 +43,7 @@ int exclusiontest(int argc, const char **argv, const Command &command){
 //    }
 
 
-    Counts counts = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    cout<<"hi"<<endl;
+    Counts counts{};
 
     // Load the list of included genomes.
     ifstream includedGenomeList;

@@ -164,7 +164,7 @@ protected:
     void compareDna(uint64_t query,
                     vector<uint64_t> &targetKmersToCompare, size_t startIdx,
                     vector<size_t> &selectedMatches, vector<uint8_t> &selectedHammingSum,
-                    vector<uint16_t> &rightEndHammings, int i);
+                    vector<uint16_t> &rightEndHammings);
 
     virtual uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2);
 

@@ -15,8 +15,8 @@ int build_fasta(int argc, const char **argv, const Command &command) {
     setDefaults_build_fasta(par);
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
     const char *fastaName = par.filenames[0].c_str();
-    const char *acc2taxidFile = par.filenames[1].c_str();
-    const string dbDirectory = par.filenames[2];
+    const char *acc2taxidFile = par.filenames[2].c_str();
+    const string dbDirectory = par.filenames[1];
     const string taxonomyDirectory = dbDirectory + "/taxonomy";
 
     string genome_fname;
@@ -33,24 +33,24 @@ int build_fasta(int argc, const char **argv, const Command &command) {
     // 1) Load mapping file
     cout << "Load mapping from accession ID to taxonomy ID" << endl;
     unordered_map<string, int> acc2taxid;
-    acc2taxid.reserve(4'294'967'296); //2^32
+    cout << acc2taxid.max_size() << endl; //2^32
     string eachLine;
     string eachItem;
     if (FILE * mappingFile = fopen(acc2taxidFile, "r")) {
         char buffer[512];
         int taxID;
         fscanf(mappingFile, "%*s\t%*s\t%*s\t%*s");
-        while (fscanf(mappingFile, "%*s\t%s\t%d\t%*d", buffer, &taxID) == 2){
+        while (fscanf(mappingFile, "%*s\t%s\t%d\t%*d", buffer, &taxID) == 2 ){
             acc2taxid[string(buffer)] = taxID;
-            cout<<string(buffer)<<endl;
+//            cout<<string(buffer)<<endl;
         }
     } else {
         cout << "Cannot open file for mapping from accession to tax ID" << endl;
     }
-
-    for(auto x : acc2taxid) {
-        cout<<x.first<< " " << x.second << "\n";
-    }
+//
+//    for(auto x : acc2taxid) {
+//        cout<<x.first<< " " << x.second << "\n";
+//    }
 
     // 2) Make a tax ID list
     cout << "Make a taxonomy ID list" << endl;
@@ -116,7 +116,5 @@ int build_fasta(int argc, const char **argv, const Command &command) {
                  (int) ("Mask for spaced k-mer: " + par.spaceMask).length());
     params.write(string("Number of alphabets for encoding amino acids: " + to_string(par.reducedAA)).c_str(),
                  (int) ("Number of alphabets for encoding amino acids: " + to_string(par.reducedAA)).length());
-    cout << "Reference DB files you need are as below" << endl;
-
     return 0;
 }

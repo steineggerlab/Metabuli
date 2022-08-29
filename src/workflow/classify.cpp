@@ -21,7 +21,11 @@ int classify(int argc, const char **argv, const Command& command)
     LocalParameters & par = LocalParameters::getLocalInstance();
     setClassifyDefaults(par);
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
+
+#ifdef OPENMP
     omp_set_num_threads(par.threads);
+#endif
+
     cout << "Number of threads: " << par.threads << endl;
     const char * queryFileName = par.filenames[0].c_str();
     const string databaseDirectory = par.filenames[1];
