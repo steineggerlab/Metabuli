@@ -33,7 +33,7 @@ int build_fasta(int argc, const char **argv, const Command &command) {
         char buffer[512];
         int taxID;
         fscanf(mappingFile, "%*s\t%*s\t%*s\t%*s");
-        while (fscanf(mappingFile, "%*s\t%s\t%d\t%*d", buffer, &taxID) == 4){
+        while (fscanf(mappingFile, "%*s\t%s\t%d\t%*d", buffer, &taxID)){
             cout << buffer << " " << taxID << endl;
         }
     } else {
