@@ -63,7 +63,7 @@ namespace csv {
 #endif
 
 #ifdef CSV_HAS_CXX17
-#include <string_view>
+//#include <string_view>
      /** @typedef string_view
       *  The string_view class used by this library.
       */
