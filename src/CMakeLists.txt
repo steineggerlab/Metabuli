@@ -17,6 +17,5 @@ add_executable(metabuli
 mmseqs_setup_derived_target(metabuli)
 target_link_libraries(metabuli version)
 target_link_libraries(metabuli prodigal)
-target_link_libraries(metabuli csv)
 
 install(TARGETS metabuli DESTINATION bin)
