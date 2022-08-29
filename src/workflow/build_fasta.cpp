@@ -1,16 +1,18 @@
 #include "IndexCreator.h"
 #include "FileMerger.h"
 #include "LocalParameters.h"
+#include "csv.hpp"
+
+//#include "../../lib/csv-parser/include/csv.hpp"
 #include <Command.h>
 #include <sstream>
 
 
-int build_fasta(int argc, const char **argv, const Command &command)
-{
+int build_fasta(int argc, const char **argv, const Command &command) {
     LocalParameters &par = LocalParameters::getLocalInstance();
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
-    const char * fastaName = par.filenames[0].c_str();
-    const char * acc2taxidFile = par.filenames[1].c_str();
+    const char *fastaName = par.filenames[0].c_str();
+    const char *acc2taxidFile = par.filenames[1].c_str();
     const string dbDirectory = par.filenames[2];
     const string taxonomyDirectory = dbDirectory + "/taxonomy";
 
@@ -18,7 +20,7 @@ int build_fasta(int argc, const char **argv, const Command &command)
     string taxIdList_fname;
 
     // Taxonomy
-    cout<<"Loading Taxonomy"<<endl;
+    cout << "Loading Taxonomy" << endl;
     const string names = taxonomyDirectory + "/names.dmp";
     const string nodes = taxonomyDirectory + "/nodes.dmp";
     const string merged = taxonomyDirectory + "/merged.dmp";
@@ -26,92 +28,99 @@ int build_fasta(int argc, const char **argv, const Command &command)
 
     // Make a tax ID list using mapping file (acc2taxID)
     // 1) Load mapping file
-    cout<<"Load mapping from accession ID to taxonomy ID"<<endl;
+    cout << "Load mapping from accession ID to taxonomy ID" << endl;
+    csv::CSVReader reader(acc2taxidFile);
+    for (csv::CSVRow& row: reader){
+        cout << row["accession.version"] << " \t" << row["taxid"] << endl;
+
+    }
+    return 0;
+
     unordered_map<string, int> acc2taxid;
     string eachLine;
     string eachItem;
     ifstream map;
     map.open(acc2taxidFile);
     vector<string> items;
-    if(map.is_open()){
-        while(getline(map,eachLine,'\n')){
+    if (map.is_open()) {
+        while (getline(map, eachLine, '\n')) {
             istringstream ss(eachLine);
-            while (getline(ss, eachItem, '\t')){
+            while (getline(ss, eachItem, '\t')) {
                 items.push_back(eachItem);
             }
             acc2taxid[items[0]] = stoi(items[1]);
             items.clear();
         }
-    } else{
-        cout<<"Cannot open file for mapping from accession to tax ID"<<endl;
+    } else {
+        cout << "Cannot open file for mapping from accession to tax ID" << endl;
     }
     map.close();
 
     // 2) Make a tax ID list
-    cout<<"<Make a taxonomy ID list"<<endl;
+    cout << "Make a taxonomy ID list" << endl;
     ifstream seqFile;
     seqFile.open(fastaName);
     string accessionID;
     string accessionID2;
     vector<TaxID> taxIDs;
-    if (seqFile.is_open()){
-        while(getline(seqFile, eachLine, '\n')){
-            if(eachLine[0] == '>'){
+    if (seqFile.is_open()) {
+        while (getline(seqFile, eachLine, '\n')) {
+            if (eachLine[0] == '>') {
                 istringstream ss(eachLine);
                 getline(ss, accessionID, ' ');
                 accessionID2 = accessionID.substr(1);
-                if(acc2taxid.find(accessionID2) != acc2taxid.end()){
+                if (acc2taxid.find(accessionID2) != acc2taxid.end()) {
                     taxIDs.push_back(acc2taxid[accessionID2]);
                 } else {
-                    cout<<accessionID2<<" is not in the mapping file"<<endl;
+                    cout << accessionID2 << " is not in the mapping file" << endl;
                     taxIDs.push_back(0);
                 }
             }
         }
-    } else{
-        cout<<"Cannot open the FASTA file."<<endl;
+    } else {
+        cerr << "Cannot open the FASTA file." << endl;
         return 0;
     }
     seqFile.close();
 
     // 3) Write the list into a file
-    cout<<"Write the taxonomy list into a file"<<endl;
+    cout << "Write the taxonomy list into a file" << endl;
     const string taxIdFileName = string(dbDirectory) + "/taxID_list";
     ofstream taxIdFile;
     taxIdFile.open(taxIdFileName);
-    if(taxIdFile.is_open()){
-        for(int taxID : taxIDs){
+    if (taxIdFile.is_open()) {
+        for (int taxID: taxIDs) {
             taxIdFile << taxID << '\n';
         }
-    } else{
-        cout<<"Cannot open a file for writing taxonomy ID list."<<endl;
+    } else {
+        cerr << "Cannot open a file for writing taxonomy ID list." << endl;
+        return 0;
     }
     taxIdFile.close();
 
     //Create lists of species taxonomical IDs of each sequences.
-    cout<<"Create taxonomical ID list at species rank ... ";
     vector<int> taxIdListAtSpecies;
     ncbiTaxonomy.createTaxIdListAtRank(taxIDs, taxIdListAtSpecies, "species");
-    cout<<"done"<<endl;
 
     //Make files of differential indexing and information of k-mers
-    cout<<"Start to creat reference DB file(s) ... ";
+    cout << "Start to creat reference DB file(s) ... ";
     IndexCreator idxCre(par);
     idxCre.startIndexCreatingParallel(fastaName, dbDirectory.c_str(), taxIdListAtSpecies, taxIDs, par);
-    cout<<"done"<<endl;
+    cout << "done" << endl;
 
     //Merge files
-    cout<<"Merge reference DB files ... "<<endl;
+    cout << "Merge reference DB files ... " << endl;
     FileMerger merger(par);
     merger.mergeTargetFiles(par, idxCre.getNumOfFlush());
 
     // Write parameters used
     ofstream params;
     params.open(string(dbDirectory) + "/parameters");
-    params.write(("Mask for spaced k-mer: " + par.spaceMask).c_str(), (int)("Mask for spaced k-mer: " + par.spaceMask).length());
+    params.write(("Mask for spaced k-mer: " + par.spaceMask).c_str(),
+                 (int) ("Mask for spaced k-mer: " + par.spaceMask).length());
     params.write(string("Number of alphabets for encoding amino acids: " + to_string(par.reducedAA)).c_str(),
                  (int) ("Number of alphabets for encoding amino acids: " + to_string(par.reducedAA)).length());
-    cout<<"Reference DB files you need are as below"<<endl;
+    cout << "Reference DB files you need are as below" << endl;
 
     return 0;
 }

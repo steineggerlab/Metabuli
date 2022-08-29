@@ -1,6 +1,7 @@
 include_directories(commons)
 include_directories(workflow)
 include_directories(../lib/prodigal)
+include_directories(../lib/csv-parser)
 
 add_subdirectory(commons)
 add_subdirectory(util)
@@ -12,12 +13,11 @@ add_executable(metabuli
         ${util_source_files}
         ${workflow_source_files}
         metabuli.cpp
-        LocalCommandDeclarations.h  )
+        LocalCommandDeclarations.h)
 
 mmseqs_setup_derived_target(metabuli)
 target_link_libraries(metabuli version)
 target_link_libraries(metabuli prodigal)
-
-
+target_link_libraries(metabuli csv)
 
 install(TARGETS metabuli DESTINATION bin)
