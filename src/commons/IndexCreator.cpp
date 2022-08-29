@@ -15,7 +15,7 @@ IndexCreator::~IndexCreator() {
 }
 
 void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const char * outputFileName,
-                                              const vector<int> & taxIdListAtRank, const vector<int> & taxIdList,
+                                              const vector<int> & speciesTaxIDs, const vector<int> & taxIdList,
                                               const LocalParameters & par){
     // Mmap the input fasta file
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
@@ -26,7 +26,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
 
     // Sequences in the same split share the sequence to be used for training the prodigal.
     vector<FastaSplit> splits;
-    splitAFastaFile(taxIdListAtRank, splits, sequences);
+    splitAFastaFile(speciesTaxIDs, splits, sequences);
     size_t numOfSplits = splits.size();
 
     bool * splitChecker = new bool[numOfSplits];
@@ -34,7 +34,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     TargetKmerBuffer kmerBuffer(kmerBufSize);
     size_t processedSplitCnt = 0;
     while(processedSplitCnt < numOfSplits){
-        fillTargetKmerBuffer(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, taxIdListAtRank, par);
+        fillTargetKmerBuffer(kmerBuffer, seqFile, sequences, splitChecker,processedSplitCnt, splits, speciesTaxIDs, par);
         writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdList);
     }
 
@@ -593,7 +593,7 @@ void IndexCreator::groupFastaFiles(const vector<TaxId2Fasta> & taxIdListAtRank, 
         cout<<x.training<<" "<<x.offset<<" "<<x.cnt<<endl;
     }
 }
-void IndexCreator::splitAFastaFile(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqSegments){
+void IndexCreator::splitAFastaFile(const vector<int> & speciesTaxIDs, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqSegments){
     size_t training = 0;
     size_t idx = 0;
     uint32_t offset = 0;
@@ -601,15 +601,15 @@ void IndexCreator::splitAFastaFile(const vector<int> & taxIdListAtRank, vector<F
     int theLargest;
     int isLeftover;
 
-    int currentTaxId;
+    int currSpecies;
 
-    while(idx < taxIdListAtRank.size()){
+    while(idx < speciesTaxIDs.size()){
         offset = idx;
         training = idx;
         cnt = 0;
         isLeftover = 0;
-        currentTaxId = taxIdListAtRank[idx];
-        while(currentTaxId == taxIdListAtRank[idx] && idx < taxIdListAtRank.size()){
+        currSpecies = speciesTaxIDs[idx];
+        while(idx < speciesTaxIDs.size() && currSpecies == speciesTaxIDs[idx] ){
             cnt ++;
             idx ++;
             if(cnt > 100){ //The largest number of consecutive plasmid is the smallest. The smaller, the more training and the less time of single threading

@@ -1,7 +1,3 @@
-//
-// Created by KJB on 23/09/2020.
-//
-
 #include "Classifier.h"
 #include "ReducedClassifier.h"
 #include "Parameters.h"
