@@ -30,9 +30,13 @@ int build_fasta(int argc, const char **argv, const Command &command) {
     // 1) Load mapping file
     cout << "Load mapping from accession ID to taxonomy ID" << endl;
     csv::CSVReader reader(acc2taxidFile);
-    for (csv::CSVRow& row: reader){
+    csv::CSVRow row;
+//    for (csv::CSVRow& row: reader){
+//        cout << row["accession.version"] << " \t" << row["taxid"] << endl;
+//
+//    }
+    while (reader.read_row(row)) {
         cout << row["accession.version"] << " \t" << row["taxid"] << endl;
-
     }
     return 0;
 
