@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="String View Lite" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="default">
+				<Option output="any-lite" prefix_auto="1" extension_auto="1" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+			</Target>
+		</Build>
+		<Unit filename="../../.gitattributes" />
+		<Unit filename="../../.gitignore" />
+		<Unit filename="../../.travis.yml" />
+		<Unit filename="../../CMakeLists.txt" />
+		<Unit filename="../../LICENSE.txt" />
+		<Unit filename="../../README.md" />
+		<Unit filename="../../appveyor.yml" />
+		<Unit filename="../../cmake/string-view-lite-config-version.cmake.in" />
+		<Unit filename="../../cmake/string-view-lite-config.cmake.in" />
+		<Unit filename="../../conanfile.py" />
+		<Unit filename="../../example/01-basic.cpp" />
+		<Unit filename="../../example/02-no-exceptions.cpp" />
+		<Unit filename="../../include/nonstd/string_view.hpp" />
+		<Unit filename="../../script/create-cov-rpt.py" />
+		<Unit filename="../../script/create-vcpkg.py" />
+		<Unit filename="../../script/update-version.py" />
+		<Unit filename="../../script/upload-conan.py" />
+		<Unit filename="../../test/CMakeLists.txt" />
+		<Unit filename="../../test/lest_cpp03.hpp" />
+		<Unit filename="../../test/string-view-main.t.cpp" />
+		<Unit filename="../../test/string-view-main.t.hpp" />
+		<Unit filename="../../test/string-view.t.cpp" />
+		<Unit filename="../../test/t-std.bat" />
+		<Unit filename="../../test/t.bat" />
+		<Unit filename="../../test/tc.bat" />
+		<Unit filename="../../test/tg.bat" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
