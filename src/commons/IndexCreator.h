@@ -20,7 +20,7 @@
 #include "FastSort.h"
 #include "Classifier.h"
 #include "LocalParameters.h"
-#include <omp.h>
+
 #ifdef OPENMP
 #include <omp.h>
 #endif

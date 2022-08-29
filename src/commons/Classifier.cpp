@@ -65,7 +65,7 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
     vector<Sequence> sequences;
     vector<Sequence> sequences2;
     Query *queryList;
-    size_t numOfSeq;
+    size_t numOfSeq = 0;
     size_t numOfSeq2;
     if (par.seqMode == 1 || par.seqMode == 3) {
         queryFile = mmapData<char>(par.filenames[0].c_str());
@@ -99,7 +99,10 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
     size_t numOfTatalQueryKmerCnt = 0;
     size_t totalMatchCnt = 0;
     // Extract k-mers from query sequences and compare them to target k-mer DB
+#ifdef OPENMP
     omp_set_num_threads(par.threads);
+#endif
+
     while (processedSeqCnt < numOfSeq) {
         time_t beforeKmerExtraction = time(nullptr);
 
@@ -200,7 +203,11 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                                              Query *queryList,
                                              const LocalParameters &par) {
     bool hasOverflow = false;
-    omp_set_num_threads(*(int *) par.PARAM_THREADS.value);
+
+#ifdef OPENMP
+    omp_set_num_threads(par.threads);
+#endif
+
 #pragma omp parallel default(none), shared(par, checker, hasOverflow, processedSeqCnt, kmerBuffer, seqFile, seqs, cout, queryList)
     {
         SeqIterator seqIterator(par);
@@ -506,7 +513,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     // Reuse the candidate target k-mers to compare in DNA level if queries are the same at amino acid level but not at DNA level
                     if (currentQueryAA == AminoAcidPart(queryKmerList[j].ADkmer)) {
                         compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, startIdxOfAAmatch, selectedMatches,
-                                   selectedHammingSum, selectedHammings, i);
+                                   selectedHammingSum, selectedHammings);
                         currMatchNum = selectedMatches.size();
 
                         // If local buffer is full, copy them to the shared buffer.
@@ -582,7 +589,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
 
                     // Compare the current query and the loaded target k-mers and select
                     compareDna(currentQuery, candidateTargetKmers, startIdxOfAAmatch, selectedMatches,
-                               selectedHammingSum, selectedHammings, i);
+                               selectedHammingSum, selectedHammings);
 
                     // If local buffer is full, copy them to the shared buffer.
                     currMatchNum = selectedMatches.size();
@@ -654,7 +661,7 @@ void Classifier::moveMatches(Match *dest, Match *src, int &matchNum) {
 // If a query has matches, the matches with the smallest hamming distance will be selected
 void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompare, size_t startIdx,
                             vector<size_t> &selectedMatches, vector<uint8_t> &selectedHammingSum,
-                            vector<uint16_t> &selectedHammings, int i2) {
+                            vector<uint16_t> &selectedHammings) {
 
     size_t size = targetKmersToCompare.size();
     uint8_t *hammingSums = new uint8_t[size + 1];
@@ -703,11 +710,13 @@ void Classifier::analyseResultParallel(Match *matchList,
         blockIdx++;
     }
 
+#ifdef OPENMP
     if (PRINT) {
         omp_set_num_threads(1);
     } else {
         omp_set_num_threads(par.threads);
     }
+#endif
 
     // Process each block
 #pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqNum, queryList, blockIdx, par)
