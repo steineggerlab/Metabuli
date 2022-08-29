@@ -32,7 +32,7 @@ int build_fasta(int argc, const char **argv, const Command &command) {
     if (FILE * mappingFile = fopen(acc2taxidFile, "r")) {
         char buffer[512];
         int taxID;
-        while (fscanf(mappingFile, "%*s\t%s\t%d\t%*d", buffer, &taxID) == 2){
+        while (fscanf(mappingFile, "%*s\t%s\t%d\t%*d", buffer, &taxID) == 4){
             cout << buffer << " " << taxID << endl;
         }
     } else {
