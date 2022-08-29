@@ -4,7 +4,7 @@ project(csv)
 if(CSV_CXX_STANDARD)
 	set(CMAKE_CXX_STANDARD ${CSV_CXX_STANDARD})
 else()
-	set(CMAKE_CXX_STANDARD 17)
+	set(CMAKE_CXX_STANDARD 14)
 endif(CSV_CXX_STANDARD)
 
 option(BUILD_PYTHON "Build Python Binding" OFF)
