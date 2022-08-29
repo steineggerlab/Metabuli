@@ -29,7 +29,10 @@ int build_fasta(int argc, const char **argv, const Command &command) {
     // Make a tax ID list using mapping file (acc2taxID)
     // 1) Load mapping file
     cout << "Load mapping from accession ID to taxonomy ID" << endl;
-    csv::CSVReader reader(acc2taxidFile);
+    csv::CSVFormat format;
+    format.delimiter('\t');
+    format.variable_columns(true);
+    csv::CSVReader reader(acc2taxidFile, format);
     csv::CSVRow row;
 //    for (csv::CSVRow& row: reader){
 //        cout << row["accession.version"] << " \t" << row["taxid"] << endl;
