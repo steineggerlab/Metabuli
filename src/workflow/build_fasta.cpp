@@ -34,28 +34,11 @@ int build_fasta(int argc, const char **argv, const Command &command) {
         int taxID;
         fscanf(mappingFile, "%*s\t%*s\t%*s\t%*s");
         while (fscanf(mappingFile, "%*s\t%s\t%d\t%*d", buffer, &taxID) == 2){
-            cout << buffer << " " << taxID << endl;
+            acc2taxid[string(buffer)] = taxID;
         }
     } else {
         cout << "Cannot open file for mapping from accession to tax ID" << endl;
     }
-    ifstream map;
-    map.open(acc2taxidFile);
-    vector<string> items;
-    if (map.is_open()) {
-        getline(map, eachLine, '\n');
-        while (getline(map, eachLine, '\n')) {
-            istringstream ss(eachLine);
-            while (getline(ss, eachItem, '\t')) {
-                items.push_back(eachItem);
-            }
-            acc2taxid[items[1]] = stoi(items[2]);
-            items.clear();
-        }
-    } else {
-        cout << "Cannot open file for mapping from accession to tax ID" << endl;
-    }
-    map.close();
 
     for(auto x : acc2taxid) {
         cout<<x.first<< " " << x.second << "\n";
