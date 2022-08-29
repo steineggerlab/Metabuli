@@ -27,6 +27,7 @@ int build_fasta(int argc, const char **argv, const Command &command) {
     // 1) Load mapping file
     cout << "Load mapping from accession ID to taxonomy ID" << endl;
     unordered_map<string, int> acc2taxid;
+    acc2taxid.reserve(4'294'967'296); //2^32
     string eachLine;
     string eachItem;
     if (FILE * mappingFile = fopen(acc2taxidFile, "r")) {
@@ -39,12 +40,6 @@ int build_fasta(int argc, const char **argv, const Command &command) {
     } else {
         cout << "Cannot open file for mapping from accession to tax ID" << endl;
     }
-
-    for(auto x : acc2taxid) {
-        cout<<x.first<< " " << x.second << "\n";
-    }
-
-    return 0;
 
     // 2) Make a tax ID list
     cout << "Make a taxonomy ID list" << endl;
