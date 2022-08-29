@@ -53,7 +53,7 @@ int classify(int argc, const char **argv, const Command& command)
     } else {
         classifier = new Classifier(par, taxIdList);
     }
-    classifier->startClassify(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(),
+    classifier->startClassify(targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(),
                              diffIdxSplitFileName.c_str(), par);
     delete classifier;
     return 0;

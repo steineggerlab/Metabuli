@@ -33,18 +33,23 @@ int build_fasta(int argc, const char **argv, const Command &command) {
     map.open(acc2taxidFile);
     vector<string> items;
     if (map.is_open()) {
+        getline(map, eachLine, '\n');
         while (getline(map, eachLine, '\n')) {
             istringstream ss(eachLine);
             while (getline(ss, eachItem, '\t')) {
                 items.push_back(eachItem);
             }
-            acc2taxid[items[0]] = stoi(items[1]);
+            acc2taxid[items[1]] = stoi(items[2]);
             items.clear();
         }
     } else {
         cout << "Cannot open file for mapping from accession to tax ID" << endl;
     }
     map.close();
+
+    for(auto x : acc2taxid) {
+        cout<<x.first<< " " << x.second << "\n";
+    }
 
     return 0;
 
