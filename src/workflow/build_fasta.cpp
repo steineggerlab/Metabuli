@@ -29,6 +29,15 @@ int build_fasta(int argc, const char **argv, const Command &command) {
     unordered_map<string, int> acc2taxid;
     string eachLine;
     string eachItem;
+    if (FILE * mappingFile = fopen(acc2taxidFile, "r")) {
+        char buffer[512];
+        int taxID;
+        while (fscanf(mappingFile, "%*s\t%s\t%d\t%*d", buffer, &taxID) == 2){
+            cout << buffer << " " << taxID << endl;
+        }
+    } else {
+        cout << "Cannot open file for mapping from accession to tax ID" << endl;
+    }
     ifstream map;
     map.open(acc2taxidFile);
     vector<string> items;
