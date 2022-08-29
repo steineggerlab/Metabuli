@@ -42,6 +42,7 @@ int build_fasta(int argc, const char **argv, const Command &command) {
         fscanf(mappingFile, "%*s\t%*s\t%*s\t%*s");
         while (fscanf(mappingFile, "%*s\t%s\t%d\t%*d", buffer, &taxID) == 2){
             acc2taxid[string(buffer)] = taxID;
+            cout<<string(buffer)<<endl;
         }
     } else {
         cout << "Cannot open file for mapping from accession to tax ID" << endl;
@@ -50,7 +51,7 @@ int build_fasta(int argc, const char **argv, const Command &command) {
     for(auto x : acc2taxid) {
         cout<<x.first<< " " << x.second << "\n";
     }
-    
+
     // 2) Make a tax ID list
     cout << "Make a taxonomy ID list" << endl;
     ifstream seqFile;
