@@ -67,7 +67,7 @@ namespace csv {
      /** @typedef string_view
       *  The string_view class used by this library.
       */
-    using string_view = std::string_view;
+    using string_view = nonstd::string_view;
 #else
      /** @typedef string_view
       *  The string_view class used by this library.
