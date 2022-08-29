@@ -8,7 +8,7 @@ It is developed to achieve specificity of DNA based method and sensitivity of am
 Installation from Github source code.
 ```
 git clone --recursive GITHUB_LINK
-cd ADclassifier
+cd Metabuli
 mkdir build
 cd build
 cmake ..
@@ -61,12 +61,10 @@ You can choose between NCBI and GTDB
 
 ## Classification
 ```
-./adclassifier classify <i:FASTA> <i:DB dir> <i:taxonomy dir> <o:out dir> <job ID> <tmpDir> [options]
+./metabuli classify <i:FASTA> <i:DB dir> <o:out dir> <job ID> [options]
   
   - FASTA : A FASTA file of reads you want to classify.
-  - DB dir : The directory where you bulit the reference DB.
-  - taxonomy dir : The directory of taxdump files. 
-    !! Make sure that you are using the same taxonomy directory for DB build and classification !! 
+  - DB dir : The directory where you bulit the reference DB. 
   - out dir : The directory where the report files will be generated.
   - job ID: For the result files.
   * Option
