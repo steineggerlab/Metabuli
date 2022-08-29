@@ -62,20 +62,20 @@ namespace csv {
 #define CSV_HAS_CXX14
 #endif
 
-    using string_view = nonstd::string_view;
+//    using string_view = nonstd::string_view;
 
-//#ifdef CSV_HAS_CXX17
-//#include <string_view>
-//     /** @typedef string_view
-//      *  The string_view class used by this library.
-//      */
-//    using string_view = nonstd::string_view;
-//#else
-//     /** @typedef string_view
-//      *  The string_view class used by this library.
-//      */
-//    using string_view = nonstd::string_view;
-//#endif
+#ifdef CSV_HAS_CXX17
+#include <string_view>
+     /** @typedef string_view
+      *  The string_view class used by this library.
+      */
+    using string_view = std::string_view;
+#else
+     /** @typedef string_view
+      *  The string_view class used by this library.
+      */
+    using string_view = nonstd::string_view;
+#endif
 
 
 #ifdef CSV_HAS_CXX17
