@@ -451,8 +451,6 @@ SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock &block, const char
             if(taxIdAtRank == 0){
                 cout<<"FFF"<<endl;
             }
-//            printKmerInDNAsequence(tempKmer);
-//            print_binary64(64, tempKmer); cout<<endl;
             kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, false};
         }
         posToWrite++;
