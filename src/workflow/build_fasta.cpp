@@ -13,7 +13,7 @@ void setDefaults_build_fasta(LocalParameters & par){
 int build_fasta(int argc, const char **argv, const Command &command) {
     LocalParameters &par = LocalParameters::getLocalInstance();
     setDefaults_build_fasta(par);
-    par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
+    par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
     const char *fastaName = par.filenames[0].c_str();
     const char *acc2taxidFile = par.filenames[2].c_str();
     const string dbDirectory = par.filenames[1];

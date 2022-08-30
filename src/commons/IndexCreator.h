@@ -59,10 +59,10 @@ private:
     //SeqIterator * seqIterator;
     void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<int> & taxIdList);
     void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
+
     void writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
-
 
     static size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                                         MmapedData<char> & seqFile,
