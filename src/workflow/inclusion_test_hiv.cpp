@@ -80,7 +80,7 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
 
 
     // 1) Load mapping file
-    cout<<"Load mapping from accession ID to taxonomy ID ... "<<endl;
+    cout<<"Load mapping from accession ID to taxonomy ID ...";
     unordered_map<string, int> acc2taxid;
     string eachLine;
     string eachItem;
@@ -100,7 +100,7 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
         cout<<"Cannot open file for mapping from accession to tax ID"<<endl;
     }
     map.close();
-    cout << " done!" <<endl;
+    cout << "Done" <<endl;
 
     ///read classification
     vector<int> rightAnswers;
@@ -122,7 +122,7 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
         while(getline(lineStream, field, '\t')){
             fields.push_back(field);
         }
-        cout<<fields[2]<<endl;
+
         classInt = stoi(fields[2]);
         seqID = fields[1];
         pos = seqID.find("_");
