@@ -28,11 +28,6 @@ struct TargetKmerInfo{
     uint32_t redundancy : 1;
 };
 
-struct KmerInfo{
-    uint32_t sequenceID : 31;
-    uint32_t redundancy : 1;
-};
-
 struct TargetKmer{
     TargetKmer(): info(0, false), ADkmer(0), taxIdAtRank(0) { };
     TargetKmer(uint64_t ADkmer, TaxID taxIdAtRank, uint32_t seqID, bool redundacy)
