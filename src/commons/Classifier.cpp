@@ -430,8 +430,8 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             FILE * kmerInfoFp = fopen(targetInfoFileName, "rb");
 
             // Target K-mer buffer
-            uint16_t * diffIdxBuffer = (uint16_t *) malloc(sizeof(uint16_t) * 8'388'608);
-            TargetKmerInfo * kmerInfoBuffer = (TargetKmerInfo *) malloc(sizeof(TargetKmerInfo) * 8'388'608);
+            uint16_t * diffIdxBuffer = (uint16_t *) malloc(sizeof(uint16_t) * BufferSize); //8'388'608
+            TargetKmerInfo * kmerInfoBuffer = (TargetKmerInfo *) malloc(sizeof(TargetKmerInfo) * BufferSize);
             size_t kmerInfoBufferIdx = 0;
             size_t diffIdxBufferIdx = 0;
 
@@ -472,19 +472,23 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 //
                 fseek(kmerInfoFp,4 * (long)(querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0)), SEEK_SET);
                 fseek(diffIdxFp, 2 * (long) (querySplits[i].diffIdxSplit.diffIdxOffset), SEEK_SET);
-                loadBuffer(kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx, 8'388'608);
-                loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, 8'388'608);
-
+                loadBuffer(kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx, BufferSize);
+                loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize);
                 currentTargetKmer2 = querySplits[i].diffIdxSplit.ADkmer;
+                diffIdxBufferIdx = querySplits[i].diffIdxSplit.diffIdxOffset;
+
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
 
+
                 if (i == 0) {
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
-                    currentTargetKmer2 = getNextTargetKmer(currentTargetKmer2, targetDiffIdxList.data, diffIdxPos, 8'388'608, diffIdxFp);
+                    currentTargetKmer2 = getNextTargetKmer(currentTargetKmer2, diffIdxBuffer,
+                                                           diffIdxBufferIdx,BufferSize, diffIdxFp);
                     if(currentTargetKmer2 != currentTargetKmer){
-                        cout << "Here 3" << endl;
+                        print_binary64(64,currentTargetKmer); cout << endl;
+                        print_binary64(64,currentTargetKmer2); cout << endl;
                     }
                 }
                 currentQuery = UINT64_MAX;
@@ -577,7 +581,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     while (AminoAcidPart(currentQuery) > AminoAcidPart(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
-                        currentTargetKmer2 = getNextTargetKmer(currentTargetKmer2, targetDiffIdxList.data, diffIdxPos, 8'388'608, diffIdxFp);
+                        currentTargetKmer2 = getNextTargetKmer(currentTargetKmer2, diffIdxBuffer, diffIdxBufferIdx, BufferSize, diffIdxFp);
                         if(currentTargetKmer2 != currentTargetKmer){
                             cout << "Here 1" << endl;
                         }
@@ -610,7 +614,7 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
 
                         candidateTargetKmers.push_back(currentTargetKmer);
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
-                        currentTargetKmer2 = getNextTargetKmer(currentTargetKmer2, targetDiffIdxList.data, diffIdxPos, 8'388'608, diffIdxFp);
+                        currentTargetKmer2 = getNextTargetKmer(currentTargetKmer2, diffIdxBuffer, diffIdxBufferIdx, BufferSize, diffIdxFp);
                         if(currentTargetKmer2 != currentTargetKmer){
                             cout << "Here 2" << endl;
                         }

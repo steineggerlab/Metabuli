@@ -25,7 +25,7 @@
 #include "Match.h"
 
 
-#define AminoAcid(x) (size_t)((x) & (~0 & ~16777215))
+#define BufferSize 100
 using namespace std;
 
 class Classifier {
@@ -234,7 +234,8 @@ protected:
 
     template <typename T>
     static void loadBuffer(FILE * fp, T * buffer, size_t & bufferIdx, size_t size, size_t cnt = 0){
-        fseek(fp, -cnt, SEEK_CUR);
+        memset(buffer, 0, size);
+        fseek(fp, -(cnt * sizeof(T)), SEEK_CUR);
         fread(buffer, sizeof(T), size, fp);
         bufferIdx = 0;
     }
@@ -352,7 +353,7 @@ Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, 
     uint16_t check = (0x1u << 15u);
     uint64_t diffIn64bit = 0;
     if (unlikely(bufferSize - diffIdxPos < 4)){
-        loadBuffer(diffIdxFp, diffIdxBuffer, bufferSize, bufferSize - diffIdxPos);
+        loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxPos, bufferSize, bufferSize - diffIdxPos);
     }
     fragment = diffIdxBuffer[diffIdxPos];
     diffIdxPos++;
