@@ -225,6 +225,19 @@ protected:
                              size_t end,
                              int queryLength,
                              int queryLength2);
+//
+//    template <typename T>
+//    void loadBuffer(FILE * fp, T * buffer, size_t & bufferIdx, size_t size){
+//        fread(buffer, sizeof(T), size, fp);
+//        bufferIdx = 0;
+//    }
+
+    template <typename T>
+    void loadBuffer(FILE * fp, T * buffer, size_t & bufferIdx, size_t size, size_t cnt = 0){
+        fseek(fp, -cnt, SEEK_CUR);
+        fread(buffer, sizeof(T), size, fp);
+        bufferIdx = 0;
+    }
 
     // Write report
     void writeReadClassification(Query *queryList, int queryNum, ofstream &readClassificationFile);
@@ -259,6 +272,9 @@ public:
                        const char *diffIdxSplitFileName, const LocalParameters &par);
 
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiffIdxList, size_t &diffIdxPos);
+
+    static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiffIdxList, size_t & diffIdxPos,
+                                      size_t bufferSize, FILE * diffIdxFp);
 
     Classifier(LocalParameters &par, const vector<TaxID> & taxIdList);
 
@@ -328,5 +344,29 @@ Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiff
 
     return diffIn64bit + lookingTarget;
 }
+
+inline uint64_t
+Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t * diffIdxBuffer, size_t & diffIdxPos,
+                              size_t bufferSize, FILE * diffIdxFp) {
+    uint16_t fragment;
+    uint16_t check = (0x1u << 15u);
+    uint64_t diffIn64bit = 0;
+    if (unlikely(bufferSize - diffIdxPos < 4)){
+        loadBuffer(diffIdxFp, diffIdxBuffer, bufferSize, bufferSize - diffIdxPos);
+    }
+    fragment = targetDiffIdxList[diffIdxPos];
+    diffIdxPos++;
+    while (!(fragment & check)) { // 27 %
+        diffIn64bit |= fragment;
+        diffIn64bit <<= 15u;
+        fragment = targetDiffIdxList[diffIdxPos];
+        diffIdxPos++;
+    }
+    fragment &= ~check; // not; 8.47 %
+    diffIn64bit |= fragment; // or : 23.6%
+
+    return diffIn64bit + lookingTarget;
+}
+
 
 #endif //ADKMER4_SEARCHER_H

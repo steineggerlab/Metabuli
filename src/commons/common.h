@@ -8,6 +8,9 @@
 #define SplitNum 4096
 #define PRINT false
 
+#define likely(x) __builtin_expect((x),1)
+#define unlikely(x) __builtin_expect((x),0)
+
 struct Sequence{
     Sequence(size_t start, size_t end, size_t length) : start(start), end(end), length(length) { }
     Sequence() : start(0), end(0), length(0) { }
