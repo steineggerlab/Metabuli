@@ -128,6 +128,9 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
         cout << "Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
 
         // Search matches between query and target k-mers
+#ifdef OPENMP
+        omp_set_num_threads(1);
+#endif
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxFileName,
                              targetInfoFileName, diffIdxSplitFileName, matchBuffer, par);
 
@@ -475,7 +478,6 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     continue;
                 }
 
-                //
                 fseek(kmerInfoFp, 4 * (long)(querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0)), SEEK_SET);
                 fseek(diffIdxFp, 2 * (long) (querySplits[i].diffIdxSplit.diffIdxOffset), SEEK_SET);
                 loadBuffer(kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx, BufferSize);
@@ -483,10 +485,8 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 diffIdxBufferIdx = querySplits[i].diffIdxSplit.diffIdxOffset;
 
-
                 targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
-
 
                 if (i == 0) {
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
