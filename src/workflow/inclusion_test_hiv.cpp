@@ -80,8 +80,7 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
 
 
     // 1) Load mapping file
-    cout<<"Load mapping from accession ID to taxonomy ID"<<endl;
-
+    cout<<"Load mapping from accession ID to taxonomy ID ...";
     unordered_map<string, int> acc2taxid;
     string eachLine;
     string eachItem;
@@ -101,6 +100,7 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
         cout<<"Cannot open file for mapping from accession to tax ID"<<endl;
     }
     map.close();
+    cout << "Done" <<endl;
 
     ///read classification
     vector<int> rightAnswers;
@@ -122,6 +122,7 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
         while(getline(lineStream, field, '\t')){
             fields.push_back(field);
         }
+
         classInt = stoi(fields[2]);
         seqID = fields[1];
         pos = seqID.find("_");
@@ -133,37 +134,6 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
     }
     cout<<"hi"<<endl;
     cout<<"num of classification: "<< classList.size()<<endl;
-
-    ///Load query file -> name
-    //regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
-    //
-//    string queryName;
-//    ifstream query;
-//    query.open(queryFileName);
-//    string queryLine;
-//    vector<string> queryNameList;
-//    while(getline(query,queryLine,'\n')){
-//        if(queryLine[0] == '>'){
-//            regex_search(queryLine, assacc, regex1);
-//            queryNameList.push_back(assacc[0]);
-//        }else{
-//            continue;
-//        }
-//    }
-
-
-
-//    ///right answer list
-//    vector<int> rightAnswers;
-//    for(size_t i = 0; i < queryNameList.size(); i++){
-//        if (assacc2taxid.count(queryNameList[i])) {
-//            rightAnswers.push_back(assacc2taxid[queryNameList[i]]);
-//        } else{
-//            cout << queryNameList[i] << " is not in the mapping file" << endl;
-//            rightAnswers.push_back(-1);
-//            continue;
-//        }
-//    }
 
     Counts counts = {0,0,0,0,0,0,0,0};
     CountAtRank2 SS = {0, 0, 0, 0, 0};
@@ -348,7 +318,7 @@ void compareTaxonAtRank2(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, 
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
     TaxID shotTaxIdAtRank = shotNode->taxId;
     TaxID targetTaxIdAtRank = targetNode->taxId;
-    if(shot == 1) return;
+    if(shot == 1 || shot == 0) return;
 
     // Classification at higher rank -> ignore
     if(NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank)){

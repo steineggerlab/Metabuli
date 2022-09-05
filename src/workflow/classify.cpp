@@ -1,7 +1,3 @@
-//
-// Created by KJB on 23/09/2020.
-//
-
 #include "Classifier.h"
 #include "ReducedClassifier.h"
 #include "Parameters.h"
@@ -24,8 +20,12 @@ int classify(int argc, const char **argv, const Command& command)
 {
     LocalParameters & par = LocalParameters::getLocalInstance();
     setClassifyDefaults(par);
-    par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
+    par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
+
+#ifdef OPENMP
     omp_set_num_threads(par.threads);
+#endif
+
     cout << "Number of threads: " << par.threads << endl;
     const char * queryFileName = par.filenames[0].c_str();
     const string databaseDirectory = par.filenames[1];
@@ -57,7 +57,8 @@ int classify(int argc, const char **argv, const Command& command)
     } else {
         classifier = new Classifier(par, taxIdList);
     }
-    classifier->startClassify(queryFileName, targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(),
+
+    classifier->startClassify(targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(),
                              diffIdxSplitFileName.c_str(), par);
     delete classifier;
     return 0;
