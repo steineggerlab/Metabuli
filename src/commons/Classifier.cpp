@@ -430,8 +430,8 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             FILE * kmerInfoFp = fopen(targetInfoFileName, "rb");
 
             // Target K-mer buffer
-            auto diffIdxBuffer = (uint16_t *) malloc(sizeof(uint16_t) * 8'388'608);
-            auto kmerInfoBuffer = (TargetKmerInfo *) malloc(sizeof(TargetKmerInfo) * 8'388'608);
+            uint16_t * diffIdxBuffer = (uint16_t *) malloc(sizeof(uint16_t) * 8'388'608);
+            TargetKmerInfo * kmerInfoBuffer = (TargetKmerInfo *) malloc(sizeof(TargetKmerInfo) * 8'388'608);
             size_t kmerInfoBufferIdx = 0;
             size_t diffIdxBufferIdx = 0;
 
