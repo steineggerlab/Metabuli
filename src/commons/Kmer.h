@@ -26,6 +26,9 @@ struct TargetKmerInfo{
     TargetKmerInfo(int seqID = 0, bool redundancy = false) : sequenceID(seqID), redundancy(redundancy) {}
     uint32_t sequenceID : 31;
     uint32_t redundancy : 1;
+    bool operator == (const TargetKmerInfo & info) const{
+        return (this->sequenceID == info.sequenceID && this->redundancy==info.redundancy);
+    }
 };
 
 struct TargetKmer{
