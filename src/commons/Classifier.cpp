@@ -334,8 +334,16 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
 
     int threadNum = par.threads;
 
-    struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName, 2);
-    struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName, 2);
+    struct stat infoFileSt{};
+    int infoFile = open(targetInfoFileName, O_CREAT | O_RDWR);
+    stat(targetInfoFileName, &infoFileSt);
+    size_t numOfTargetKmer = infoFileSt.st_size / sizeof(TargetKmerInfo);
+
+    struct stat diffIdxFileSt{};
+    int diffIdxFile = open(targetDiffIdxFileName, O_CREAT | O_RDWR);
+    stat(targetDiffIdxFileName, &diffIdxFileSt);
+    size_t numOfDiffIdx = diffIdxFileSt.st_size / sizeof(uint16_t);
+
     struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitsFileName);
 
     cout << "linearSearch start..." << endl;
@@ -413,8 +421,6 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     bool *splitCheckList = (bool *) malloc(sizeof(bool) * threadNum);
     fill_n(splitCheckList, threadNum, false);
     int completedSplitCnt = 0;
-    size_t numOfTargetKmer = targetInfoList.fileSize / sizeof(TargetKmerInfo);
-    size_t numOfDiffIdx = targetDiffIdxList.fileSize / sizeof(uint16_t);
 
     cout << "The number of target k-mers: " << numOfTargetKmer << endl;
 
@@ -422,7 +428,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
 
     while (completedSplitCnt < threadNum) {
         bool hasOverflow = false;
-#pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, \
+#pragma omp parallel default(none), shared(completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, \
 querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout, par, targetDiffIdxFileName, targetInfoFileName)
         {
             // FILE
@@ -443,8 +449,8 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             size_t diffIdxPos = 0;
             size_t targetInfoIdx = 0;
             vector<uint64_t> candidateTargetKmers; //vector for candidate target k-mer, some of which are selected after based on hamming distance
+            vector<TargetKmerInfo> candidateKmerInfos;
             uint64_t currentTargetKmer;
-            uint64_t currentTargetKmer2;
 
             //Match buffer for each thread
             int localBufferSize = 2'000'000; // 64 Mb
@@ -470,26 +476,21 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 }
 
                 //
-                fseek(kmerInfoFp,4 * (long)(querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0)), SEEK_SET);
+                fseek(kmerInfoFp, 4 * (long)(querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0)), SEEK_SET);
                 fseek(diffIdxFp, 2 * (long) (querySplits[i].diffIdxSplit.diffIdxOffset), SEEK_SET);
                 loadBuffer(kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx, BufferSize);
                 loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize);
-                currentTargetKmer2 = querySplits[i].diffIdxSplit.ADkmer;
+                currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 diffIdxBufferIdx = querySplits[i].diffIdxSplit.diffIdxOffset;
 
-                currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
+
                 targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
 
 
                 if (i == 0) {
-                    currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
-                    currentTargetKmer2 = getNextTargetKmer(currentTargetKmer2, diffIdxBuffer,
-                                                           diffIdxBufferIdx,BufferSize, diffIdxFp);
-                    if(currentTargetKmer2 != currentTargetKmer){
-                        print_binary64(64,currentTargetKmer); cout << endl;
-                        print_binary64(64,currentTargetKmer2); cout << endl;
-                    }
+                    currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
+                                                          diffIdxBufferIdx, BufferSize, diffIdxFp);
                 }
                 currentQuery = UINT64_MAX;
                 currentQueryAA = UINT64_MAX;
@@ -520,11 +521,11 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         for (int k = 0; k < currMatchNum; k++) {
                             idx = selectedMatches[k];
                             matches[matchCnt] = {queryKmerList[j].info.sequenceID,
-                                                 targetInfoList.data[idx].sequenceID,
+                                                 candidateKmerInfos[idx].sequenceID,
                                                  queryKmerList[j].info.pos,
                                                  selectedHammings[k],
                                                  selectedHammingSum[k],
-                                                 (bool) targetInfoList.data[idx].redundancy};
+                                                 (bool) candidateKmerInfos[idx].redundancy};
                             matchCnt++;
                         }
 
@@ -561,17 +562,18 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                         for (int k = 0; k < currMatchNum; k++) {
                             idx = selectedMatches[k];
                             matches[matchCnt] = {queryKmerList[j].info.sequenceID,
-                                                 targetInfoList.data[idx].sequenceID,
+                                                 candidateKmerInfos[idx].sequenceID,
                                                  queryKmerList[j].info.pos,
                                                  selectedHammings[k],
                                                  selectedHammingSum[k],
-                                                 (bool) targetInfoList.data[idx].redundancy};
+                                                 (bool) candidateKmerInfos[idx].redundancy};
 
                             matchCnt++;
                         }
                         continue;
                     }
                     candidateTargetKmers.clear();
+                    candidateKmerInfos.clear();
 
                     // Get next query, and start to find
                     currentQuery = queryKmerList[j].ADkmer;
@@ -580,12 +582,9 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     // Skip target k-mers that are not matched in amino acid level
                     while (AminoAcidPart(currentQuery) > AminoAcidPart(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
-                        currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
-                        currentTargetKmer2 = getNextTargetKmer(currentTargetKmer2, diffIdxBuffer, diffIdxBufferIdx, BufferSize, diffIdxFp);
-                        if(currentTargetKmer2 != currentTargetKmer){
-                            cout << "Here 1" << endl;
-                        }
+                        currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer, diffIdxBufferIdx, BufferSize, diffIdxFp);
                         targetInfoIdx++;
+                        kmerInfoBufferIdx ++;
                     }
 
                     if (AminoAcidPart(currentQuery) !=
@@ -597,28 +596,11 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     // Load target k-mers that are matched in amino acid level
                     while (AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
-//                        cout<<"Q: ";seqIterator.printKmerInDNAsequence(currentQuery);
-//                        print_binary64(64,currentQuery);
-//                        cout<<"\n";
-//                        print_binary64(64,AminoAcid(currentQuery));
-//                        cout<<"\n";
-//                        cout<<"T: ";seqIterator.printKmerInDNAsequence(currentTargetKmer);
-//                        print_binary64(64,currentTargetKmer);
-//                        cout<<"\n";
-//                        print_binary64(64,AminoAcid(currentTargetKmer));
-//                        cout<<"\n";
-//                        print_binary64(64,currentQueryAA);
-//                        cout<<"\n";
-//                        print_binary64(64,AminoAcid(currentTargetKmer));
-//                        cout<<"\n";
-
                         candidateTargetKmers.push_back(currentTargetKmer);
-                        currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
-                        currentTargetKmer2 = getNextTargetKmer(currentTargetKmer2, diffIdxBuffer, diffIdxBufferIdx, BufferSize, diffIdxFp);
-                        if(currentTargetKmer2 != currentTargetKmer){
-                            cout << "Here 2" << endl;
-                        }
+                        candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
+                        currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer, diffIdxBufferIdx, BufferSize, diffIdxFp);
                         targetInfoIdx++;
+                        kmerInfoBufferIdx ++;
                     }
 
                     // Compare the current query and the loaded target k-mers and select
@@ -644,12 +626,11 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     for (int k = 0; k < currMatchNum; k++) {
                         idx = selectedMatches[k];
                         matches[matchCnt] = {queryKmerList[j].info.sequenceID,
-                                             targetInfoList.data[idx].sequenceID,
+                                             candidateKmerInfos[idx].sequenceID,
                                              queryKmerList[j].info.pos,
                                              selectedHammings[k],
                                              selectedHammingSum[k],
-                                             (bool) targetInfoList.data[idx].redundancy};
-
+                                             (bool) candidateKmerInfos[idx].redundancy};
                         matchCnt++;
                     }
                 } // End of one split
@@ -671,16 +652,17 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                 }
             } // End of omp for (Iterating for splits)
             delete[] matches;
-        } // end of omp parallel
+            fclose(diffIdxFp);
+            fclose(kmerInfoFp);
+            free(diffIdxBuffer);
+            free(kmerInfoBuffer);
+        } // End of omp parallel
         if (hasOverflow) {
             cout << "overflow!!!" << endl;
             break;
         }
     } // end of while(completeSplitCnt < threadNum)
     cout << "Time spent for linearSearch: " << double(time(nullptr) - beforeSearch) << endl;
-
-    munmap(targetDiffIdxList.data, targetDiffIdxList.fileSize + 1);
-    munmap(targetInfoList.data, targetInfoList.fileSize + 1);
     munmap(diffIdxSplits.data, diffIdxSplits.fileSize + 1);
     free(splitCheckList);
     queryKmerCnt = 0;
@@ -714,7 +696,8 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
     // Select target k-mers that passed hamming criteria
     for (size_t h = 0; h < size; h++) {
         if (hammingSums[h] <= minHammingSum + hammingMargin) {
-            selectedMatches.push_back(startIdx + h);
+//            selectedMatches.push_back(startIdx + h);
+            selectedMatches.push_back(h);
             selectedHammingSum.push_back(hammingSums[h]);
             selectedHammings.push_back(getHammings(query, targetKmersToCompare[h]));
         }

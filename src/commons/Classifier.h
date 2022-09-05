@@ -25,7 +25,7 @@
 #include "Match.h"
 
 
-#define BufferSize 100
+#define BufferSize 8'388'608
 using namespace std;
 
 class Classifier {
@@ -233,9 +233,9 @@ protected:
 //    }
 
     template <typename T>
-    static void loadBuffer(FILE * fp, T * buffer, size_t & bufferIdx, size_t size, size_t cnt = 0){
-        memset(buffer, 0, size);
-        fseek(fp, -(cnt * sizeof(T)), SEEK_CUR);
+    static void loadBuffer(FILE * fp, T * buffer, size_t & bufferIdx, size_t size, int cnt = 0){
+//        memset(buffer, 0, size);
+        fseek(fp, cnt * sizeof(T), SEEK_CUR);
         fread(buffer, sizeof(T), size, fp);
         bufferIdx = 0;
     }
@@ -276,6 +276,9 @@ public:
 
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, uint16_t *targetDiffIdxList, size_t & diffIdxPos,
                                       size_t bufferSize, FILE * diffIdxFp);
+
+    static TargetKmerInfo getKmerInfo(size_t bufferSize, FILE * kmerInfoFp, TargetKmerInfo * infoBuffer,
+                              size_t & infoBufferIdx);
 
     Classifier(LocalParameters &par, const vector<TaxID> & taxIdList);
 
@@ -353,7 +356,7 @@ Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, 
     uint16_t check = (0x1u << 15u);
     uint64_t diffIn64bit = 0;
     if (unlikely(bufferSize - diffIdxPos < 4)){
-        loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxPos, bufferSize, bufferSize - diffIdxPos);
+        loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxPos, bufferSize, diffIdxPos - bufferSize);
     }
     fragment = diffIdxBuffer[diffIdxPos];
     diffIdxPos++;
@@ -369,5 +372,13 @@ Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, 
     return diffIn64bit + lookingTarget;
 }
 
+inline
+TargetKmerInfo Classifier::getKmerInfo(size_t bufferSize, FILE * kmerInfoFp, TargetKmerInfo * infoBuffer,
+                                       size_t & infoBufferIdx){
+    if (unlikely(infoBufferIdx >= bufferSize)) {
+        loadBuffer(kmerInfoFp, infoBuffer, infoBufferIdx, bufferSize, infoBufferIdx - bufferSize);
+    }
+    return infoBuffer[infoBufferIdx];
+}
 
 #endif //ADKMER4_SEARCHER_H
