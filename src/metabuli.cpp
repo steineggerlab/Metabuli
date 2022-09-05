@@ -31,6 +31,7 @@ std::vector<Command> commands = {
                 {{"A FASTA file", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::flatfile},
                         {"Directory where the DB will be generated", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty},
                         {"Mapping file (accession to tax ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
+
         {"classify", classify, &localPar.classify, COMMAND_MAIN,
          "Assigning taxonomy label to query reads",
          NULL,

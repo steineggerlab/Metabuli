@@ -53,7 +53,6 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
                                const char *targetInfoFileName,
                                const char *diffIdxSplitFileName,
                                const LocalParameters &par) {
-
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
     Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(10));
@@ -794,16 +793,19 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         return;
     }
 
+
     for (size_t i = 0; i < genusMatches.size(); i++) {
         queryList[currentQuery].taxCnt[spORssp[genusMatches[i].redundacny]->operator[](genusMatches[i].targetId)]++;
     }
 
+//    cout << "4" << endl;
     // If there are two or more good genus level candidates, find the LCA.
     if (res == 2) {
         vector<TaxID> genusList;
         genusList.reserve(genusMatches.size());
         for (size_t i = 0; i < genusMatches.size(); i++) {
             genusList.push_back(genusTaxIdList[genusMatches[i].targetId]);
+
         }
         selectedTaxon = taxonomy->LCA(genusList)->taxId;
         queryList[currentQuery].isClassified = true;
@@ -834,16 +836,18 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     else chooseSpecies(genusMatches, queryLength, speciesScrCov, species);
 
 
+//    cout << "6" << endl;
+
     // Classify at the genus rank if more than one species are selected or the score at species level is not enough.
     if (species.size() > 1 || (speciesScrCov.score < minSpScore &&
         !taxonomy->IsAncestor(par.virusTaxId, taxIdList[genusMatches[0].targetId]))) {
-
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = genusTaxIdList[genusMatches[0].targetId];
         queryList[currentQuery].score = highRankScore;
         return;
     }
 
+//    cout << "7" << endl;
     selectedSpecies = species[0];
 
     // Check if it can be classified at the subspecies rank.
@@ -867,6 +871,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
             if (!genusMatches[i].redundacny
                 && taxonomy->IsAncestor2(selectedSpecies, taxIdList[genusMatches[i].targetId])) {
                 strainMatchCnt[taxIdList[genusMatches[i].targetId]]++;
+
             }
         }
         for (auto strainIt = strainMatchCnt.begin(); strainIt != strainMatchCnt.end(); strainIt++) {
@@ -881,6 +886,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         }
     }
 
+//    cout << "8" << endl;
     // Store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedSpecies;
@@ -892,8 +898,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         for (size_t i = 0; i < genusMatches.size(); i++) {
             cout << i << " " << genusMatches[i].position << " " <<
             taxIdList[genusMatches[i].targetId] << " " << int(genusMatches[i].hamming) << endl;
-
-
         }
         cout << "Score: " << speciesScrCov.score << "  " << selectedSpecies << " "
              << taxonomy->taxonNode(selectedSpecies)->rank
@@ -1379,17 +1383,19 @@ void Classifier::chooseSpecies(const vector<Match> &matches, int read1Length, in
     TaxID currentSpeices;
     size_t numOfMatch = matches.size();
     size_t speciesBegin, speciesEnd;
-
     while (i < numOfMatch) {
         currentSpeices = speciesTaxIdList[matches[i].targetId];
         speciesBegin = i;
         while ((i < numOfMatch) && currentSpeices == speciesTaxIdList[matches[i].targetId]) {
             i++;
         }
+//        cout<<"B"<<endl;
         speciesEnd = i;
         speciesScrCovs[currentSpeices] = scoreTaxon_paired(matches, speciesBegin, speciesEnd, read1Length, read2Length);
+//        cout<<"C"<<endl;
     }
 
+//    cout<<"D"<<endl;
     // Get the best species
     float bestCovergae = 0.f;
     for (auto sp = speciesScrCovs.begin(); sp != speciesScrCovs.end(); sp++) {
@@ -1403,6 +1409,8 @@ void Classifier::chooseSpecies(const vector<Match> &matches, int read1Length, in
             species.push_back(sp->first);
         }
     }
+//    cout<<"E"<<endl;
+
 }
 
 Classifier::ScrCov Classifier::scoreTaxon(const vector<Match> &matches,
