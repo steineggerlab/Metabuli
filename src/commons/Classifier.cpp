@@ -429,7 +429,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     while (completedSplitCnt < threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, \
-querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout, par, targetDiffIdxFileName, targetInfoFileName)
+querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOfDiffIdx, targetInfoFileName)
         {
             // FILE
             FILE * diffIdxFp = fopen(targetDiffIdxFileName, "rb");
