@@ -332,6 +332,8 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
                                       const char *targetInfoFileName, const char *diffIdxSplitsFileName,
                                       Buffer<Match> &matchBuffer, const LocalParameters &par) {
 
+    int threadNum = par.threads;
+
     struct MmapedData<uint16_t> targetDiffIdxList = mmapData<uint16_t>(targetDiffIdxFileName, 2);
     struct MmapedData<TargetKmerInfo> targetInfoList = mmapData<TargetKmerInfo>(targetInfoFileName, 2);
     struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitsFileName);
@@ -361,8 +363,6 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     // Divide query k-mer list into blocks for multi threading.
     // Each split has start and end points of query list + proper offset point of target k-mer list
     vector<QueryKmerSplit> querySplits;
-
-    int threadNum = par.threads;
     uint64_t queryAA;
     if (threadNum == 1) { //Single thread
         querySplits.emplace_back(0, queryKmerCnt - 1, queryKmerCnt, diffIdxSplits.data[0]);
@@ -423,8 +423,18 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     while (completedSplitCnt < threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(numOfDiffIdx, completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, \
-querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout, par)
+querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout, par, targetDiffIdxFileName, targetInfoFileName)
         {
+            // FILE
+            FILE * diffIdxFp = fopen(targetDiffIdxFileName, "rb");
+            FILE * kmerInfoFp = fopen(targetInfoFileName, "rb");
+
+            // Target K-mer buffer
+            uint16_t * diffIdxBuffer = (uint16_t *) malloc(sizeof(uint16_t) * 8'388'608);
+            TargetKmerInfo * kmerInfoBuffer = (TargetKmerInfo *) malloc(sizeof(TargetKmerInfo) * 8'388'608);
+            size_t kmerInfoBufferIdx = 0;
+            size_t diffIdxBufferIdx = 0;
+
             //query variables
             uint64_t currentQuery = UINT64_MAX;
             uint64_t currentQueryAA = UINT64_MAX;
@@ -434,9 +444,10 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
             size_t targetInfoIdx = 0;
             vector<uint64_t> candidateTargetKmers; //vector for candidate target k-mer, some of which are selected after based on hamming distance
             uint64_t currentTargetKmer;
+            uint64_t currentTargetKmer2;
 
             //Match buffer for each thread
-            int localBufferSize = 2000000; // 64 Mb
+            int localBufferSize = 2'000'000; // 64 Mb
             auto *matches = new Match[localBufferSize];
             int matchCnt = 0;
 
@@ -458,11 +469,23 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     continue;
                 }
 
+                //
+                fseek(kmerInfoFp,4 * (long)(querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0)), SEEK_SET);
+                fseek(diffIdxFp, 2 * (long) (querySplits[i].diffIdxSplit.diffIdxOffset), SEEK_SET);
+                loadBuffer(kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx, 8'388'608);
+                loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, 8'388'608);
+
+                currentTargetKmer2 = querySplits[i].diffIdxSplit.ADkmer;
+                currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
-                currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
+
                 if (i == 0) {
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
+                    currentTargetKmer2 = getNextTargetKmer(currentTargetKmer2, targetDiffIdxList.data, diffIdxPos, 8'388'608, diffIdxFp);
+                    if(currentTargetKmer2 != currentTargetKmer){
+                        cout << "Here 3" << endl;
+                    }
                 }
                 currentQuery = UINT64_MAX;
                 currentQueryAA = UINT64_MAX;
@@ -554,6 +577,10 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
                     while (AminoAcidPart(currentQuery) > AminoAcidPart(currentTargetKmer) &&
                            (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
+                        currentTargetKmer2 = getNextTargetKmer(currentTargetKmer2, targetDiffIdxList.data, diffIdxPos, 8'388'608, diffIdxFp);
+                        if(currentTargetKmer2 != currentTargetKmer){
+                            cout << "Here 1" << endl;
+                        }
                         targetInfoIdx++;
                     }
 
@@ -583,6 +610,10 @@ querySplits, queryKmerList, targetDiffIdxList, targetInfoList, matchBuffer, cout
 
                         candidateTargetKmers.push_back(currentTargetKmer);
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, targetDiffIdxList.data, diffIdxPos);
+                        currentTargetKmer2 = getNextTargetKmer(currentTargetKmer2, targetDiffIdxList.data, diffIdxPos, 8'388'608, diffIdxFp);
+                        if(currentTargetKmer2 != currentTargetKmer){
+                            cout << "Here 2" << endl;
+                        }
                         targetInfoIdx++;
                     }
 

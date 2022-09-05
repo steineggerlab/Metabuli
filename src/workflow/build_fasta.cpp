@@ -42,15 +42,10 @@ int build_fasta(int argc, const char **argv, const Command &command) {
         fscanf(mappingFile, "%*s\t%*s\t%*s\t%*s");
         while (fscanf(mappingFile, "%*s\t%s\t%d\t%*d", buffer, &taxID) == 2 ){
             acc2taxid[string(buffer)] = taxID;
-//            cout<<string(buffer)<<endl;
         }
     } else {
         cout << "Cannot open file for mapping from accession to tax ID" << endl;
     }
-//
-//    for(auto x : acc2taxid) {
-//        cout<<x.first<< " " << x.second << "\n";
-//    }
 
     // 2) Make a tax ID list
     cout << "Make a taxonomy ID list" << endl;
@@ -80,7 +75,7 @@ int build_fasta(int argc, const char **argv, const Command &command) {
     seqFile.close();
 
     // 3) Write the list into a file
-    cout << "Write the taxonomy list into a file" << endl;
+    cout << "Write the taxonomy list into a file ... ";
     const string taxIdFileName = string(dbDirectory) + "/taxID_list";
     ofstream taxIdFile;
     taxIdFile.open(taxIdFileName);
@@ -93,6 +88,7 @@ int build_fasta(int argc, const char **argv, const Command &command) {
         return 0;
     }
     taxIdFile.close();
+    cout << "Done" << endl;
 
     //Create lists of species taxonomical IDs of each sequences.
     vector<int> taxIdListAtSpecies;
