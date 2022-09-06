@@ -128,9 +128,6 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
         cout << "Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
 
         // Search matches between query and target k-mers
-//#ifdef OPENMP
-//        omp_set_num_threads(1);
-//#endif
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxFileName,
                              targetInfoFileName, diffIdxSplitFileName, matchBuffer, par);
 
@@ -335,7 +332,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
                                       const char *targetInfoFileName, const char *diffIdxSplitsFileName,
                                       Buffer<Match> &matchBuffer, const LocalParameters &par) {
 
-    int threadNum = 4;
+    int threadNum = par.threads;
 
     struct stat infoFileSt{};
     int infoFile = open(targetInfoFileName, O_CREAT | O_RDWR);
