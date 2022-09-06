@@ -18,7 +18,7 @@ LocalParameters::LocalParameters() :
                      "[^[1-9]\\d*$]"),
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
-                 "Taxonomy ID of virus taxon",
+                 "Sequencing type",
                  "Single-end: 1 \nPaired-end: 2\nLong read: 3",
                  typeid(int),
                  (void *) &seqMode,
@@ -77,13 +77,11 @@ LocalParameters::LocalParameters() :
                      "^0(\\.[0-9]+)?|1(\\.0+)?$"){
     //build_dir
     build_dir.push_back(&PARAM_THREADS);
-    build_dir.push_back(&PARAM_GTDB_OR_NCBI);
     build_dir.push_back(&REDUCED_AA);
     build_dir.push_back(&SPACED);
 
     //build_fasta
     build_fasta.push_back(&PARAM_THREADS);
-    build_fasta.push_back(&PARAM_GTDB_OR_NCBI);
     build_fasta.push_back(&REDUCED_AA);
     build_fasta.push_back(&SPACED);
 
