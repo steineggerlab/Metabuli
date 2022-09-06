@@ -345,9 +345,7 @@ Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, 
     uint16_t fragment;
     uint16_t check = (0x1u << 15u);
     uint64_t diffIn64bit = 0;
-    if (unlikely(BufferSize < diffBufferIdx + 7)){
-        loadBuffer(diffIdxFp, diffIdxBuffer, diffBufferIdx, BufferSize, ((int)(BufferSize - diffBufferIdx)) * -1 );
-    }
+
     fragment = diffIdxBuffer[diffBufferIdx++];
     totalPos ++;
     while (!(fragment & check)) { // 27 %

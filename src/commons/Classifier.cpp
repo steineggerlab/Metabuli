@@ -331,13 +331,7 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
 void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKmerCnt, const char *targetDiffIdxFileName,
                                       const char *targetInfoFileName, const char *diffIdxSplitsFileName,
                                       Buffer<Match> &matchBuffer, const LocalParameters &par) {
-
     int threadNum = par.threads;
-
-    struct stat infoFileSt{};
-    int infoFile = open(targetInfoFileName, O_CREAT | O_RDWR);
-    stat(targetInfoFileName, &infoFileSt);
-    size_t numOfTargetKmer = infoFileSt.st_size / sizeof(TargetKmerInfo);
 
     struct stat diffIdxFileSt{};
     int diffIdxFile = open(targetDiffIdxFileName, O_CREAT | O_RDWR);
@@ -422,13 +416,11 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     fill_n(splitCheckList, threadNum, false);
     int completedSplitCnt = 0;
 
-    cout << "The number of target k-mers: " << numOfTargetKmer << endl;
-
     time_t beforeSearch = time(nullptr);
 
     while (completedSplitCnt < threadNum) {
         bool hasOverflow = false;
-#pragma omp parallel default(none), shared(completedSplitCnt, splitCheckList, numOfTargetKmer, hasOverflow, \
+#pragma omp parallel default(none), shared(completedSplitCnt, splitCheckList, hasOverflow, \
 querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOfDiffIdx, targetInfoFileName)
         {
             // FILE
@@ -436,7 +428,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
             FILE * kmerInfoFp = fopen(targetInfoFileName, "rb");
 
             // Target K-mer buffer
-            uint16_t * diffIdxBuffer = (uint16_t *) malloc(sizeof(uint16_t) * (BufferSize + 1)); //8'388'608
+            uint16_t * diffIdxBuffer = (uint16_t *) malloc(sizeof(uint16_t) * (BufferSize + 1));
             TargetKmerInfo * kmerInfoBuffer = (TargetKmerInfo *) malloc(sizeof(TargetKmerInfo) * (BufferSize+1));
             size_t kmerInfoBufferIdx = 0;
             size_t diffIdxBufferIdx = 0;
@@ -576,6 +568,11 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     // Skip target k-mers that are not matched in amino acid level
                     while (diffIdxPos != numOfDiffIdx
                         && (AminoAcidPart(currentQuery) > AminoAcidPart(currentTargetKmer))) {
+
+                        if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
+                            loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
+                        }
+
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
                                                               diffIdxBufferIdx, diffIdxPos, BufferSize, diffIdxFp);
                         kmerInfoBufferIdx ++;
@@ -590,6 +587,12 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                         AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer)) {
                         candidateTargetKmers.push_back(currentTargetKmer);
                         candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
+
+                        if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
+                            loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx,
+                                       BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
+                        }
+                        
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
                                                               diffIdxBufferIdx, diffIdxPos, BufferSize, diffIdxFp);
                         kmerInfoBufferIdx ++;
