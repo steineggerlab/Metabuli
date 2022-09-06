@@ -478,15 +478,15 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     continue;
                 }
 
-                fseek(kmerInfoFp, 4 * (long)(querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0)), SEEK_SET);
-                fseek(diffIdxFp, 2 * (long) (querySplits[i].diffIdxSplit.diffIdxOffset), SEEK_SET);
-                loadBuffer(kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx, BufferSize);
-                loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize);
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 diffIdxBufferIdx = querySplits[i].diffIdxSplit.diffIdxOffset;
-
-                targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
+                kmerInfoBufferIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
+
+                fseek(kmerInfoFp, 4 * (long)(kmerInfoBufferIdx), SEEK_SET);
+                loadBuffer(kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx, BufferSize);
+                fseek(diffIdxFp, 2 * (long) (diffIdxBufferIdx), SEEK_SET);
+                loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize);
 
                 if (i == 0) {
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
@@ -498,7 +498,6 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                 size_t lastMovedQueryIdx;
                 for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
                     querySplits[i].start++;
-
                     // Reuse the comparison data if queries are exactly identical
                     if (currentQuery == queryKmerList[j].ADkmer) {
                         currMatchNum = selectedMatches.size();
