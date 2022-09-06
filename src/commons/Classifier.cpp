@@ -492,10 +492,8 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                         if (matchCnt + currMatchNum > localBufferSize) {
                             // Check if the shared buffer is full.
                             posToWrite = matchBuffer.reserveMemory(matchCnt);
-                            if (posToWrite + matchCnt >=
-                                matchBuffer.bufferSize) { // full -> write matches to file first
+                            if (posToWrite + matchCnt >= matchBuffer.bufferSize) {
                                 hasOverflow = true;
-
                                 querySplits[i].start = lastMovedQueryIdx + 1;
                                 __sync_fetch_and_sub(& matchBuffer.startIndexOfReserve, matchCnt);
                                 break;
@@ -533,8 +531,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                         if (matchCnt + currMatchNum > localBufferSize) {
                             // Check if the shared buffer is full.
                             posToWrite = matchBuffer.reserveMemory(matchCnt);
-                            if (posToWrite + matchCnt >=
-                                matchBuffer.bufferSize) { // full -> write matches to file first
+                            if (posToWrite + matchCnt >= matchBuffer.bufferSize) {
                                 hasOverflow = true;
                                 querySplits[i].start = lastMovedQueryIdx + 1;
                                 __sync_fetch_and_sub(& matchBuffer.startIndexOfReserve, matchCnt);
@@ -569,12 +566,13 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     while (diffIdxPos != numOfDiffIdx
                         && (AminoAcidPart(currentQuery) > AminoAcidPart(currentTargetKmer))) {
 
-                        if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
-                            loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
-                        }
+//                        if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
+//                            loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
+//                        }
 
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
-                                                              diffIdxBufferIdx, diffIdxPos, BufferSize, diffIdxFp);
+                                                              diffIdxBufferIdx, diffIdxPos,
+                                                              BufferSize, diffIdxFp);
                         kmerInfoBufferIdx ++;
                     }
 
@@ -588,11 +586,11 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                         candidateTargetKmers.push_back(currentTargetKmer);
                         candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
 
-                        if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
-                            loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx,
-                                       BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
-                        }
-                        
+//                        if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
+//                            loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx,
+//                                       BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
+//                        }
+
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
                                                               diffIdxBufferIdx, diffIdxPos, BufferSize, diffIdxFp);
                         kmerInfoBufferIdx ++;
@@ -690,7 +688,6 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
     // Select target k-mers that passed hamming criteria
     for (size_t h = 0; h < size; h++) {
         if (hammingSums[h] <= minHammingSum + hammingMargin) {
-//            selectedMatches.push_back(startIdx + h);
             selectedMatches.push_back(h);
             selectedHammingSum.push_back(hammingSums[h]);
             selectedHammings.push_back(getHammings(query, targetKmersToCompare[h]));
