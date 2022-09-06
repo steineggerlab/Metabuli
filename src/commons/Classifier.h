@@ -348,16 +348,20 @@ Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, 
     uint16_t fragment;
     uint16_t check = (0x1u << 15u);
     uint64_t diffIn64bit = 0;
-    if (unlikely(bufferSize < diffIdxPos + 5)){
-        loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxPos, bufferSize, diffIdxPos - bufferSize);
+    if (unlikely(BufferSize < diffIdxPos + 5)){
+        loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxPos, BufferSize, ((int)(BufferSize - diffIdxPos)) * -1 );
     }
-    fragment = diffIdxBuffer[diffIdxPos]; /// ERROR HERE
-    diffIdxPos++;
+    if (diffIdxPos > BufferSize) {
+        cout<< "It happened" << endl;
+    }
+    fragment = diffIdxBuffer[diffIdxPos++]; /// ERROR HERE
     while (!(fragment & check)) { // 27 %
         diffIn64bit |= fragment;
         diffIn64bit <<= 15u;
-        fragment = diffIdxBuffer[diffIdxPos];
-        diffIdxPos++;
+        if (diffIdxPos > BufferSize) {
+            cout<< "It happened 2" << endl;
+        }
+        fragment = diffIdxBuffer[diffIdxPos++]; /// ERROR HERE
     }
     fragment &= ~check; // not; 8.47 %
     diffIn64bit |= fragment; // or : 23.6%

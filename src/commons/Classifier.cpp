@@ -335,7 +335,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
                                       const char *targetInfoFileName, const char *diffIdxSplitsFileName,
                                       Buffer<Match> &matchBuffer, const LocalParameters &par) {
 
-    int threadNum = par.threads;
+    int threadNum = 4;
 
     struct stat infoFileSt{};
     int infoFile = open(targetInfoFileName, O_CREAT | O_RDWR);
@@ -481,6 +481,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 diffIdxBufferIdx = querySplits[i].diffIdxSplit.diffIdxOffset;
                 kmerInfoBufferIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
+                targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
 
                 fseek(kmerInfoFp, 4 * (long)(kmerInfoBufferIdx), SEEK_SET);
