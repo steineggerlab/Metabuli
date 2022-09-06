@@ -25,7 +25,7 @@
 #include "Match.h"
 
 
-#define BufferSize 8'388'608
+#define BufferSize 8'388'608 //8'384'276
 using namespace std;
 
 class Classifier {
@@ -268,7 +268,7 @@ public:
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiffIdxList, size_t &diffIdxPos);
 
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, uint16_t *targetDiffIdxList, size_t & diffIdxPos,
-                                      size_t bufferSize, FILE * diffIdxFp);
+                                      size_t & totalPos, size_t bufferSize, FILE * diffIdxFp);
 
     static TargetKmerInfo getKmerInfo(size_t bufferSize, FILE * kmerInfoFp, TargetKmerInfo * infoBuffer,
                               size_t & infoBufferIdx);
@@ -342,7 +342,7 @@ Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiff
 }
 
 inline uint64_t
-Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, size_t & diffIdxPos,
+Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, size_t & diffBufferIdx, size_t & totalPos,
                               size_t bufferSize, FILE * diffIdxFp) {
     uint16_t fragment;
     uint16_t check = (0x1u << 15u);
@@ -355,6 +355,7 @@ Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, 
     }
     int i2 = 0;
     fragment = diffIdxBuffer[diffIdxPos++]; /// ERROR HERE
+    totalPos ++;
     i2 ++;
     while (!(fragment & check)) { // 27 %
         diffIn64bit |= fragment;
@@ -363,7 +364,8 @@ Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, 
             cout<< "It happened 2 "<< i2 << endl;
 
         }
-        fragment = diffIdxBuffer[diffIdxPos++]; /// ERROR HERE
+        fragment = diffIdxBuffer[diffIdxPos++];
+        totalPos ++;/// ERROR HERE
         i2++;
     }
     fragment &= ~check; // not; 8.47 %

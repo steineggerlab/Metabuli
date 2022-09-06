@@ -583,7 +583,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     while ((targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx) &&
                         (AminoAcidPart(currentQuery) > AminoAcidPart(currentTargetKmer))) {
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
-                                                              diffIdxBufferIdx, BufferSize, diffIdxFp);
+                                                              diffIdxBufferIdx, diffIdxPos, BufferSize, diffIdxFp);
                         targetInfoIdx++;
                         kmerInfoBufferIdx ++;
                     }
@@ -599,7 +599,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                         candidateTargetKmers.push_back(currentTargetKmer);
                         candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
-                                                              diffIdxBufferIdx, BufferSize, diffIdxFp);
+                                                              diffIdxBufferIdx, diffIdxPos, BufferSize, diffIdxFp);
                         targetInfoIdx++;
                         kmerInfoBufferIdx ++;
                     }
