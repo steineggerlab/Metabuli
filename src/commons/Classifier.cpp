@@ -580,25 +580,26 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     currentQueryAA = AminoAcidPart(currentQuery);
 
                     // Skip target k-mers that are not matched in amino acid level
-                    while (AminoAcidPart(currentQuery) > AminoAcidPart(currentTargetKmer) &&
-                           (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
-                        currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer, diffIdxBufferIdx, BufferSize, diffIdxFp);
+                    while ((targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx) &&
+                        (AminoAcidPart(currentQuery) > AminoAcidPart(currentTargetKmer))) {
+                        currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
+                                                              diffIdxBufferIdx, BufferSize, diffIdxFp);
                         targetInfoIdx++;
                         kmerInfoBufferIdx ++;
                     }
 
-                    if (AminoAcidPart(currentQuery) !=
-                            AminoAcidPart(currentTargetKmer)) // Move to next query k-mer if there isn't any match.
+                    if (AminoAcidPart(currentQuery) != AminoAcidPart(currentTargetKmer)) // Move to next query k-mer if there isn't any match.
                         continue;
                     else
                         startIdxOfAAmatch = targetInfoIdx;
 
                     // Load target k-mers that are matched in amino acid level
-                    while (AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer) &&
-                           (targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx)) {
+                    while ((targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx) &&
+                        AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer)) {
                         candidateTargetKmers.push_back(currentTargetKmer);
                         candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
-                        currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer, diffIdxBufferIdx, BufferSize, diffIdxFp);
+                        currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
+                                                              diffIdxBufferIdx, BufferSize, diffIdxFp);
                         targetInfoIdx++;
                         kmerInfoBufferIdx ++;
                     }
