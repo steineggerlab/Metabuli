@@ -327,7 +327,6 @@ Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiff
     uint16_t fragment;
     uint16_t check = (0x1u << 15u);
     uint64_t diffIn64bit = 0;
-
     fragment = targetDiffIdxList[diffIdxPos];
     diffIdxPos++;
     while (!(fragment & check)) { // 27 %
@@ -354,14 +353,18 @@ Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, 
     if (diffIdxPos > BufferSize) {
         cout<< "It happened" << endl;
     }
+    int i2 = 0;
     fragment = diffIdxBuffer[diffIdxPos++]; /// ERROR HERE
+    i2 ++;
     while (!(fragment & check)) { // 27 %
         diffIn64bit |= fragment;
         diffIn64bit <<= 15u;
         if (diffIdxPos > BufferSize) {
-            cout<< "It happened 2" << endl;
+            cout<< "It happened 2 "<< i2 << endl;
+
         }
         fragment = diffIdxBuffer[diffIdxPos++]; /// ERROR HERE
+        i2++;
     }
     fragment &= ~check; // not; 8.47 %
     diffIn64bit |= fragment; // or : 23.6%
