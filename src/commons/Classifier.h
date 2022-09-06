@@ -361,9 +361,9 @@ Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, 
 inline
 TargetKmerInfo Classifier::getKmerInfo(size_t bufferSize, FILE * kmerInfoFp, TargetKmerInfo * infoBuffer,
                                        size_t & infoBufferIdx){
-    if (unlikely(infoBufferIdx >= bufferSize)) {
-        loadBuffer(kmerInfoFp, infoBuffer, infoBufferIdx, bufferSize, infoBufferIdx - bufferSize);
-    }
+//    if (unlikely(infoBufferIdx >= bufferSize)) {
+//        loadBuffer(kmerInfoFp, infoBuffer, infoBufferIdx, bufferSize, infoBufferIdx - bufferSize);
+//    }
     return infoBuffer[infoBufferIdx];
 }
 
