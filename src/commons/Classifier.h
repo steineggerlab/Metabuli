@@ -161,10 +161,8 @@ protected:
             Buffer<Match> &matchBuffer,
             const LocalParameters &par);
 
-    void compareDna(uint64_t query,
-                    vector<uint64_t> &targetKmersToCompare, size_t startIdx,
-                    vector<size_t> &selectedMatches, vector<uint8_t> &selectedHammingSum,
-                    vector<uint16_t> &rightEndHammings);
+    void compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompare, vector<size_t> &selectedMatches,
+                    vector<uint8_t> &selectedHammingSum, vector<uint16_t> &rightEndHammings);
 
     virtual uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2);
 
@@ -350,27 +348,16 @@ Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, 
     if (unlikely(BufferSize < diffBufferIdx + 7)){
         loadBuffer(diffIdxFp, diffIdxBuffer, diffBufferIdx, BufferSize, ((int)(BufferSize - diffBufferIdx)) * -1 );
     }
-    if (diffBufferIdx > BufferSize) {
-        cout<< "It happened" << endl;
-    }
-    int i2 = 0;
-    fragment = diffIdxBuffer[diffBufferIdx++]; /// ERROR HERE
+    fragment = diffIdxBuffer[diffBufferIdx++];
     totalPos ++;
-    i2 ++;
     while (!(fragment & check)) { // 27 %
         diffIn64bit |= fragment;
         diffIn64bit <<= 15u;
-        if (diffBufferIdx > BufferSize) {
-            cout<< "It happened 2 "<< i2 << endl;
-
-        }
         fragment = diffIdxBuffer[diffBufferIdx++];
-        totalPos ++;/// ERROR HERE
-        i2++;
+        totalPos ++;
     }
     fragment &= ~check; // not; 8.47 %
     diffIn64bit |= fragment; // or : 23.6%
-
     return diffIn64bit + lookingTarget;
 }
 

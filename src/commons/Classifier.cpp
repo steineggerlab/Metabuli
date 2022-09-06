@@ -450,7 +450,6 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
 
             //target variables
             size_t diffIdxPos = 0;
-            size_t targetInfoIdx = 0;
             vector<uint64_t> candidateTargetKmers; //vector for candidate target k-mer, some of which are selected after based on hamming distance
             vector<TargetKmerInfo> candidateKmerInfos;
             uint64_t currentTargetKmer;
@@ -467,7 +466,6 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
             vector<uint8_t> selectedHammingSum;
             vector<size_t> selectedMatches;
             vector<uint16_t> selectedHammings;
-            size_t startIdxOfAAmatch = 0;
             size_t posToWrite;
 
             int currMatchNum;
@@ -481,7 +479,6 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 diffIdxBufferIdx = querySplits[i].diffIdxSplit.diffIdxOffset;
                 kmerInfoBufferIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
-                targetInfoIdx = querySplits[i].diffIdxSplit.infoIdxOffset - (i != 0);
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
 
                 fseek(kmerInfoFp, 4 * (long)(kmerInfoBufferIdx), SEEK_SET);
@@ -539,7 +536,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
 
                     // Reuse the candidate target k-mers to compare in DNA level if queries are the same at amino acid level but not at DNA level
                     if (currentQueryAA == AminoAcidPart(queryKmerList[j].ADkmer)) {
-                        compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, startIdxOfAAmatch, selectedMatches,
+                        compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, selectedMatches,
                                    selectedHammingSum, selectedHammings);
                         currMatchNum = selectedMatches.size();
 
@@ -580,33 +577,29 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     currentQueryAA = AminoAcidPart(currentQuery);
 
                     // Skip target k-mers that are not matched in amino acid level
-                    while ((targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx) &&
-                        (AminoAcidPart(currentQuery) > AminoAcidPart(currentTargetKmer))) {
+                    while (diffIdxPos != numOfDiffIdx
+                        && (AminoAcidPart(currentQuery) > AminoAcidPart(currentTargetKmer))) {
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
                                                               diffIdxBufferIdx, diffIdxPos, BufferSize, diffIdxFp);
-                        targetInfoIdx++;
                         kmerInfoBufferIdx ++;
                     }
 
                     if (AminoAcidPart(currentQuery) != AminoAcidPart(currentTargetKmer)) // Move to next query k-mer if there isn't any match.
                         continue;
                     else
-                        startIdxOfAAmatch = targetInfoIdx;
 
                     // Load target k-mers that are matched in amino acid level
-                    while ((targetInfoIdx < numOfTargetKmer) && (diffIdxPos != numOfDiffIdx) &&
+                    while (diffIdxPos != numOfDiffIdx &&
                         AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer)) {
                         candidateTargetKmers.push_back(currentTargetKmer);
                         candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
                                                               diffIdxBufferIdx, diffIdxPos, BufferSize, diffIdxFp);
-                        targetInfoIdx++;
                         kmerInfoBufferIdx ++;
                     }
 
                     // Compare the current query and the loaded target k-mers and select
-                    compareDna(currentQuery, candidateTargetKmers, startIdxOfAAmatch, selectedMatches,
-                               selectedHammingSum, selectedHammings);
+                    compareDna(currentQuery, candidateTargetKmers, selectedMatches, selectedHammingSum, selectedHammings);
 
                     // If local buffer is full, copy them to the shared buffer.
                     currMatchNum = selectedMatches.size();
@@ -676,7 +669,7 @@ void Classifier::moveMatches(Match *dest, Match *src, int &matchNum) {
 
 // It compares query k-mers to target k-mers.
 // If a query has matches, the matches with the smallest hamming distance will be selected
-void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompare, size_t startIdx,
+void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompare,
                             vector<size_t> &selectedMatches, vector<uint8_t> &selectedHammingSum,
                             vector<uint16_t> &selectedHammings) {
 
