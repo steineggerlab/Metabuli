@@ -491,7 +491,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
 
                 if (i == 0) {
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
-                                                          diffIdxBufferIdx, BufferSize, diffIdxFp);
+                                                          diffIdxBufferIdx, diffIdxPos, BufferSize, diffIdxFp);
                 }
                 currentQuery = UINT64_MAX;
                 currentQueryAA = UINT64_MAX;
