@@ -225,16 +225,9 @@ protected:
                              size_t end,
                              int queryLength,
                              int queryLength2);
-//
-//    template <typename T>
-//    void loadBuffer(FILE * fp, T * buffer, size_t & bufferIdx, size_t size){
-//        fread(buffer, sizeof(T), size, fp);
-//        bufferIdx = 0;
-//    }
 
     template <typename T>
     static void loadBuffer(FILE * fp, T * buffer, size_t & bufferIdx, size_t size, int cnt = 0){
-//        memset(buffer, 0, size);
         fseek(fp, cnt * sizeof(T), SEEK_CUR);
         fread(buffer, sizeof(T), size, fp);
         bufferIdx = 0;
@@ -358,7 +351,7 @@ Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, 
     if (unlikely(bufferSize - diffIdxPos < 4)){
         loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxPos, bufferSize, diffIdxPos - bufferSize);
     }
-    fragment = diffIdxBuffer[diffIdxPos];
+    fragment = diffIdxBuffer[diffIdxPos]; /// ERROR HERE
     diffIdxPos++;
     while (!(fragment & check)) { // 27 %
         diffIn64bit |= fragment;
