@@ -348,7 +348,7 @@ Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, 
     uint16_t fragment;
     uint16_t check = (0x1u << 15u);
     uint64_t diffIn64bit = 0;
-    if (unlikely(bufferSize < diffIdxPos + 4)){
+    if (unlikely(bufferSize < diffIdxPos + 5)){
         loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxPos, bufferSize, diffIdxPos - bufferSize);
     }
     fragment = diffIdxBuffer[diffIdxPos]; /// ERROR HERE
