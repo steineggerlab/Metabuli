@@ -21,10 +21,12 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
 
     // Getting start and end position of each sequence
+    cerr<< "Get start and end position of each sequence" << endl;
     vector<Sequence> sequences;
     getSeqSegmentsWithHead(sequences, seqFile);
 
     // Sequences in the same split share the sequence to be used for training the prodigal.
+    cerr<< "Split the FASTA into blocks for prodigal" << endl;
     vector<FastaSplit> splits;
     splitAFastaFile(speciesTaxIDs, splits, sequences);
     size_t numOfSplits = splits.size();
