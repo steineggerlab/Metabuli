@@ -566,9 +566,9 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     while (diffIdxPos != numOfDiffIdx
                         && (AminoAcidPart(currentQuery) > AminoAcidPart(currentTargetKmer))) {
 
-//                        if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
-//                            loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
-//                        }
+                        if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
+                            loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
+                        }
 
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
                                                               diffIdxBufferIdx, diffIdxPos,
@@ -586,10 +586,10 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                         candidateTargetKmers.push_back(currentTargetKmer);
                         candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
 
-//                        if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
-//                            loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx,
-//                                       BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
-//                        }
+                        if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
+                            loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx,
+                                       BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
+                        }
 
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
                                                               diffIdxBufferIdx, diffIdxPos, BufferSize, diffIdxFp);
