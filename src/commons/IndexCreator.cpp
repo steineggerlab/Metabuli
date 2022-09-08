@@ -17,13 +17,11 @@ IndexCreator::~IndexCreator() {
 void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const char * outputFileName,
                                               const vector<int> & speciesTaxIDs, const vector<int> & taxIdList,
                                               const LocalParameters & par){ //build_fasta
-    // Mmap the input fasta file
-    struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
 
     // Getting start and end position of each sequence
     cerr<< "Get start and end position of each sequence" << endl;
     vector<Sequence> sequences;
-    getSeqSegmentsWithHead(sequences, seqFile);
+    getSeqSegmentsWithHead(sequences, seqFileName);
 
     // Sequences in the same split share the sequence to be used for training the prodigal.
     cerr<< "Split the FASTA into blocks for prodigal" << endl;
@@ -35,6 +33,9 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     fill_n(splitChecker, numOfSplits, false);
     TargetKmerBuffer kmerBuffer(kmerBufSize);
     size_t processedSplitCnt = 0;
+
+    // Mmap the input fasta file
+    struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
     while(processedSplitCnt < numOfSplits) {
         fillTargetKmerBuffer(kmerBuffer, seqFile, sequences, splitChecker, processedSplitCnt, splits, speciesTaxIDs,
                              par);
@@ -572,6 +573,33 @@ void IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, Mmaped
         }
     }
     seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
+}
+
+void IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const char * seqFileName) {
+    struct stat stat1{};
+    int file = open(seqFileName, O_RDONLY);
+    int a = stat(seqFileName, &stat1);
+    size_t numOfChar = stat1.st_size;
+
+    ifstream seqFile;
+    seqFile.open(seqFileName);
+    string eachLine;
+    size_t start = 0;
+    size_t pos;
+    if (seqFile.is_open()) {
+        getline(seqFile, eachLine, '\n');
+        while (getline(seqFile, eachLine, '\n')) {
+            if (eachLine[0] == '>') {
+                pos = (size_t) seqFile.tellg();
+                seqSegments.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
+                start = pos - eachLine.length() - 1;
+            }
+        }
+        seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
+    } else {
+        cerr << "Cannot open the FASTA file." << endl;
+    }
+    seqFile.close();
 }
 
 void IndexCreator::groupFastaFiles(const vector<TaxId2Fasta> & taxIdListAtRank, vector<FastaSplit> & fastaSplit){

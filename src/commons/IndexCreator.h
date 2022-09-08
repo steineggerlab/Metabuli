@@ -110,7 +110,7 @@ private:
 
 public:
     static void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
-    static void getSeqSegmentsWithHead2(vector<Sequence> & seqSegments, const char * seqFileName);
+    static void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const char * seqFileName);
     IndexCreator(const LocalParameters & par);
     ~IndexCreator();
     int getNumOfFlush();
