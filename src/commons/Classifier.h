@@ -25,7 +25,7 @@
 #include "Match.h"
 
 
-#define BufferSize 1024*1024*1024 //8'384'276
+#define BufferSize 16 * 1024 * 1024
 using namespace std;
 
 class Classifier {
