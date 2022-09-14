@@ -317,6 +317,7 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
 
         if(AminoAcidPart(lastWrittenKmer) != AAofTempSplitOffset && splitCheck == 1){
             splitList[splitListIdx++] = {lastWrittenKmer, totalBufferIdx, totalInfoIdx};
+            cout<<splitList<< "\t" <<lastWrittenKmer<<"\t"<<totalBufferIdx<<"\t"<<totalInfoIdx<<endl;
             splitCheck = 0;
         }
 
