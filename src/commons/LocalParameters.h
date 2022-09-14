@@ -24,12 +24,9 @@ public:
 
     std::vector<MMseqsParameter*> build_dir;
     std::vector<MMseqsParameter*> build_fasta;
-    std::vector<MMseqsParameter*> prepareForTargetDB_GTDB;
-    std::vector<MMseqsParameter*> prepareForTargetDB;
     std::vector<MMseqsParameter*> classify;
     std::vector<MMseqsParameter*> seqHeader2TaxId;
 
-    PARAMETER(PARAM_GTDB_OR_NCBI)
     PARAMETER(VIRUS_TAX_ID)
     PARAMETER(SEQ_MODE)
     PARAMETER(MEMORY_MODE)
@@ -40,8 +37,6 @@ public:
     PARAMETER(HAMMING_MARGIN)
     PARAMETER(MIN_SP_SCORE)
 
-    //creatTargetDB
-    int gtdbOrNcbi;
 
     // Classify
     int virusTaxId;

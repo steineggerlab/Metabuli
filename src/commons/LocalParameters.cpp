@@ -2,13 +2,6 @@
 
 LocalParameters::LocalParameters() :
         Parameters(),
-        PARAM_GTDB_OR_NCBI(PARAM_GTDB_OR_NCBI_ID,
-                           "--tax-mode",
-                           "Creating target database Mode",
-                           "Creating target database based on taxonomy of GTDB or NCBI:\n1: GTDB\t2:NCBI ",
-                           typeid(int),
-                           (void *) &gtdbOrNcbi,
-                           "[1-2]"),
         VIRUS_TAX_ID(VIRUS_TAX_ID_ID,
                      "--virus-taxid",
                      "Taxonomy ID of virus taxon",

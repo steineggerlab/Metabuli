@@ -425,9 +425,9 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
     splits.emplace_back(startIdx, kmerBuffer.startIndexOfReserve - 1);
 
     //
-    size_t ** idxOfEachSplit = new size_t * [par.threads];
-    size_t * cntOfEachSplit = new size_t[par.threads];
-    for(int i = 0; i < par.threads; i++){
+    size_t ** idxOfEachSplit = new size_t * [splits.size()];
+    size_t * cntOfEachSplit = new size_t[splits.size()];
+    for(size_t i = 0; i < splits.size(); i++){
         idxOfEachSplit[i] = new size_t[splits[i].end - splits[i].offset + 2];
         cntOfEachSplit[i] = 0;
     }
