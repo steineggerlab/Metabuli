@@ -472,16 +472,17 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
     }
 
     // Merge
-    for(int i = 0; i < par.threads; i++){
+    for(size_t i = 0; i < splits.size(); i++){
         memcpy(uniqeKmerIdx + uniqueKmerCnt, idxOfEachSplit[i], cntOfEachSplit[i] * sizeof(size_t));
         uniqueKmerCnt += cntOfEachSplit[i];
     }
 
-    for(int i = 0; i < par.threads; i++){
+    for(size_t i = 0; i < splits.size(); i++){
         delete[] idxOfEachSplit[i];
     }
     delete[] cntOfEachSplit;
 }
+
 void IndexCreator::getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx ){
     uint64_t kmerdiff = entryToWrite - lastKmer;
     uint16_t buffer[5];
