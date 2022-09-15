@@ -343,7 +343,7 @@ inline uint64_t
 Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, size_t & diffBufferIdx, size_t & totalPos,
                               size_t bufferSize, FILE * diffIdxFp) {
     uint16_t fragment;
-    uint16_t check = (0x1u << 15u);
+    uint16_t check = 32768; // 2^15
     uint64_t diffIn64bit = 0;
     fragment = diffIdxBuffer[diffBufferIdx++];
     totalPos ++;

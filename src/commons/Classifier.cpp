@@ -53,6 +53,24 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
                                const char *targetInfoFileName,
                                const char *diffIdxSplitFileName,
                                const LocalParameters &par) {
+
+
+    unordered_map<TaxID, unsigned int> taxonCnt;
+
+    for(TaxID x : taxIdList){
+        taxonCnt[x] = 1;
+    }
+
+    unordered_map<TaxID, TaxonCounts> cladeCnt = taxonomy->getCladeCounts(taxonCnt);
+    for(auto it = cladeCnt.begin(); it != cladeCnt.end(); it ++){
+        if(taxonomy->taxonNode(it->first)->rank == "species" && it->second.children.size() > 1){
+            cout<<taxonomy->taxonNode(it->first)->name<<"\t"<<taxonomy->taxonNode(it->first)->taxId<<"\t"
+            <<it->second.cladeCount<<endl;
+        }
+    }
+
+    return;
+
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
     Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(10));
