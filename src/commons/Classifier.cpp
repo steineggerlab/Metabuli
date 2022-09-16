@@ -67,7 +67,7 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
         if(taxonomy->taxonNode(it->first)->rank == "genus" && it->second.children.size() > 1){
             genusWithMultipleSpecies.push_back(it->first);
             // Iterate species
-            size_t selectedSp = 0;
+            size_t selectedSp = 10000000;
             for(size_t i = 0; i < it->second.children.size(); i++){
                 if(cladeCnt[it->second.children[i]].children.size() > 1){
                     cout << taxonomy->taxonNode(it->second.children[i])->name << "\t" <<
@@ -76,10 +76,12 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
                     break;
                 }
             }
-            for(size_t i = 0; i < it->second.children.size(); i++){
-                if (i != selectedSp){
-                    cout << taxonomy->taxonNode(cladeCnt[it->second.children[i]].children[0])->name << endl;
-                    break;
+            if(selectedSp != 10000000) {
+                for (size_t i = 0; i < it->second.children.size(); i++) {
+                    if (i != selectedSp) {
+                        cout << taxonomy->taxonNode(cladeCnt[it->second.children[i]].children[0])->name << endl;
+                        break;
+                    }
                 }
             }
 //            cout<<taxonomy->taxonNode(it->first)->name<<"\t"<<taxonomy->taxonNode(it->first)->taxId<<"\t"
