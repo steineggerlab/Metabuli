@@ -54,45 +54,37 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
                                const char *diffIdxSplitFileName,
                                const LocalParameters &par) {
 
-
-    unordered_map<TaxID, unsigned int> taxonCnt;
-
-    for(TaxID x : taxIdList){
-        taxonCnt[x] = 1;
-    }
-
-    unordered_map<TaxID, TaxonCounts> cladeCnt = taxonomy->getCladeCounts(taxonCnt);
-    vector<TaxID> genusWithMultipleSpecies;
-    for(auto it = cladeCnt.begin(); it != cladeCnt.end(); it ++){
-        if(taxonomy->taxonNode(it->first)->rank == "genus" && it->second.children.size() > 1){
-            genusWithMultipleSpecies.push_back(it->first);
-            // Iterate species
-            size_t selectedSp = 10000000;
-            for(size_t i = 0; i < it->second.children.size(); i++){
-                if(cladeCnt[it->second.children[i]].children.size() > 1){
-                    cout << taxonomy->taxonNode(it->second.children[i])->name << "\t" <<
-                            taxonomy->taxonNode(cladeCnt[it->second.children[i]].children[0])->name << "\t" <<
-                            taxonomy->taxonNode(cladeCnt[it->second.children[i]].children[1])->name << "\t";
-                            selectedSp = i;
-                    break;
-                }
-            }
-            if(selectedSp != 10000000) {
-                for (size_t i = 0; i < it->second.children.size(); i++) {
-                    if (i != selectedSp) {
-                        cout << taxonomy->taxonNode(cladeCnt[it->second.children[i]].children[0])->name << endl;
-                        break;
-                    }
-                }
-            }
-//            cout<<taxonomy->taxonNode(it->first)->name<<"\t"<<taxonomy->taxonNode(it->first)->taxId<<"\t"
-//            <<it->second.cladeCount<<"\t"<<taxonomy->taxonNode(it->second.children[0])->name<<endl;
-        }
-    }
-
-
-
-    return;
+//    unordered_map<TaxID, unsigned int> taxonCnt;
+//    for(TaxID x : taxIdList){
+//        taxonCnt[x] = 1;
+//    }
+//    unordered_map<TaxID, TaxonCounts> cladeCnt = taxonomy->getCladeCounts(taxonCnt);
+//    vector<TaxID> genusWithMultipleSpecies;
+//    for(auto it = cladeCnt.begin(); it != cladeCnt.end(); it ++){
+//        if(taxonomy->taxonNode(it->first)->rank == "genus" && it->second.children.size() > 1){
+//            genusWithMultipleSpecies.push_back(it->first);
+//            // Iterate species
+//            size_t selectedSp = 10000000;
+//            for(size_t i = 0; i < it->second.children.size(); i++){
+//                if(cladeCnt[it->second.children[i]].children.size() > 1){
+//                    cout << taxonomy->taxonNode(it->second.children[i])->name << "\t" <<
+//                            taxonomy->taxonNode(cladeCnt[it->second.children[i]].children[0])->name << "\t" <<
+//                            taxonomy->taxonNode(cladeCnt[it->second.children[i]].children[1])->name << "\t";
+//                            selectedSp = i;
+//                    break;
+//                }
+//            }
+//            if(selectedSp != 10000000) {
+//                for (size_t i = 0; i < it->second.children.size(); i++) {
+//                    if (i != selectedSp) {
+//                        cout << taxonomy->taxonNode(cladeCnt[it->second.children[i]].children[0])->name << endl;
+//                        break;
+//                    }
+//                }
+//            }
+//        }
+//    }
+//    return;
 
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
