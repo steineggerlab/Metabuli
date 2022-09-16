@@ -57,13 +57,13 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
 
     unordered_map<TaxID, unsigned int> taxonCnt;
 
-    for(TaxID x : taxIdList){
+    for(TaxID x : speciesTaxIdList){
         taxonCnt[x] = 1;
     }
 
     unordered_map<TaxID, TaxonCounts> cladeCnt = taxonomy->getCladeCounts(taxonCnt);
     for(auto it = cladeCnt.begin(); it != cladeCnt.end(); it ++){
-        if(taxonomy->taxonNode(it->first)->rank == "species" && it->second.children.size() > 1){
+        if(taxonomy->taxonNode(it->first)->rank == "genus" && it->second.children.size() > 1){
             cout<<taxonomy->taxonNode(it->first)->name<<"\t"<<taxonomy->taxonNode(it->first)->taxId<<"\t"
             <<it->second.cladeCount<<"\t"<<taxonomy->taxonNode(it->second.children[0])->name<<endl;
         }
