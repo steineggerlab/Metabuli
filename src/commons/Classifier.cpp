@@ -219,8 +219,9 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
 //    }
 //    wr.close();
 //    wr2.close();
-
+    free(matchBuffer.buffer);
     delete[] queryList;
+    delete[] processedSeqChecker;
     munmap(queryFile.data, queryFile.fileSize + 1);
     if (par.seqMode == 2) {
         munmap(queryFile2.data, queryFile2.fileSize + 1);
