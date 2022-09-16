@@ -71,8 +71,9 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
             for(size_t i = 0; i < it->second.children.size(); i++){
                 if(cladeCnt[it->second.children[i]].children.size() > 1){
                     cout << taxonomy->taxonNode(it->second.children[i])->name << "\t" <<
-                            taxonomy->taxonNode(cladeCnt[it->second.children[i]].children[0])->name << "\t";
-                    selectedSp = i;
+                            taxonomy->taxonNode(cladeCnt[it->second.children[i]].children[0])->name << "\t" <<
+                            taxonomy->taxonNode(cladeCnt[it->second.children[i]].children[1])->name << "\t";
+                            selectedSp = i;
                     break;
                 }
             }
