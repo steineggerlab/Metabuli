@@ -119,11 +119,13 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
         accession = fields[1];
         int pos = accession.find("_");
         accession = accession.substr(0,pos);
+        cout << accession << "\n";
 
         // 5th field -> score
         scores.push_back(stof(fields[4]));
 
         // Accession to right answer
+        cout << acc2taxid[accession] << "\n";
         rightAnswer = ncbiTaxonomy.getTaxIdAtRank(acc2taxid[accession], "genus");
         rightAnswers.push_back(rightAnswer);
 
