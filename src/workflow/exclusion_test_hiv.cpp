@@ -117,8 +117,8 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
 
         // 2nd field -> accession
         accession = fields[1];
-        int pos = accession.find("_");
-        accession = accession.substr(0,pos);
+        int pos = accession.find(".");
+        accession = accession.substr(0,pos+2);
         cout << accession << "\n";
 
         // 5th field -> score
