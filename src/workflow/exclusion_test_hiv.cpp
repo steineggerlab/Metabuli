@@ -90,7 +90,6 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
         cout<<"Cannot open file for mapping from accession to tax ID"<<endl;
     }
     map.close();
-    cout<<"Here"<<endl;
 
     // Load read classification
     vector<int> rightAnswers;
@@ -113,20 +112,18 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
             fields.push_back(field);
         }
         taxID = stoi(fields[2]);
-        classifications.push_back(ncbiTaxonomy.getTaxIdAtRank(taxID, "genus"));
+        classifications.push_back(ncbiTaxonomy.getTaxIdAtRank(taxID, "species"));
 
         // 2nd field -> accession
         accession = fields[1];
         int pos = accession.find(".");
         accession = accession.substr(0,pos+2);
-        cout << accession << "\n";
 
         // 5th field -> score
         scores.push_back(stof(fields[4]));
 
         // Accession to right answer
-        cout << acc2taxid[accession] << "\n";
-        rightAnswer = ncbiTaxonomy.getTaxIdAtRank(acc2taxid[accession], "genus");
+        rightAnswer = ncbiTaxonomy.getTaxIdAtRank(acc2taxid[accession], "species");
         rightAnswers.push_back(rightAnswer);
 
     }
