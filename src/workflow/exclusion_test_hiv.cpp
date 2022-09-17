@@ -135,6 +135,7 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
     fp.open(readClassificationFileName + "_FP");
     tp.open(readClassificationFileName + "_TP");
     for(size_t i = 0; i < classifications.size(); i++){
+        cout << classifications[i] << "\t" << rightAnswers[i] << "\n";
         if(classifications[i] == rightAnswers[i]){
             tp << scores[i] << "\n";
         } else {
