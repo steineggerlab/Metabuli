@@ -98,6 +98,6 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MIN_SP_SCORE);
 
     //updateTargetDB
-    exclusiontest_hiv.push_back(&TEST_RANK)
+    exclusiontest_hiv.push_back(&TEST_RANK);
 
 }
