@@ -25,6 +25,7 @@ public:
     std::vector<MMseqsParameter*> build_dir;
     std::vector<MMseqsParameter*> build_fasta;
     std::vector<MMseqsParameter*> classify;
+    std::vector<MMseqsParameter*> exclusiontest_hiv;
     std::vector<MMseqsParameter*> seqHeader2TaxId;
 
     PARAMETER(VIRUS_TAX_ID)
@@ -36,6 +37,7 @@ public:
     PARAMETER(MIN_CONSECUTIVE)
     PARAMETER(HAMMING_MARGIN)
     PARAMETER(MIN_SP_SCORE)
+    PARAMETER(TEST_RANK)
 
 
     // Classify
@@ -49,6 +51,7 @@ public:
     uint8_t hammingMargin;
     float minSpScore;
 
+    std::string testRank;
 private:
     LocalParameters();
 

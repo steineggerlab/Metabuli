@@ -36,12 +36,6 @@ int exclusiontest(int argc, const char **argv, const Command &command){
     }
 
     unordered_map<TaxID, TaxonCounts> cladeCnt = ncbiTaxonomy.getCladeCounts(taxCnt);
-//    for(auto it = cladeCnt.begin(); it != cladeCnt.end(); it ++){
-//        if(ncbiTaxonomy.taxonNode(it->first)->rank == "genus") {
-//            cout << it->second.cladeCount << " " << it->second.taxCount << endl;
-//        }
-//    }
-
 
     Counts counts{};
 

@@ -67,7 +67,14 @@ LocalParameters::LocalParameters() :
                        "Minimum score to be classified at the species level.",
                        typeid(float),
                        (void *) &minSpScore,
-                     "^0(\\.[0-9]+)?|1(\\.0+)?$"){
+                     "^0(\\.[0-9]+)?|1(\\.0+)?$"),
+        TEST_RANK(TEST_RANK_ID,
+                  "--test-rank",
+                  ".",
+                  "Test Rank",
+                  typeid(std::string),
+                  (void *) &testRank,
+                  ""){
     //build_dir
     build_dir.push_back(&PARAM_THREADS);
     build_dir.push_back(&REDUCED_AA);
@@ -91,5 +98,6 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MIN_SP_SCORE);
 
     //updateTargetDB
+    exclusiontest_hiv.push_back(&TEST_RANK)
 
 }
