@@ -1299,8 +1299,6 @@ void Classifier::constructMatchCombination_paired(vector<Match> &filteredMatches
     }
 
     // Calculate Hamming distance & covered length
-    int coveredPosCnt_read1 = 0;
-    int coveredPosCnt_read2 = 0;
     uint16_t currHammings;
     int aminoAcidNum_total = ((int) readLength1 / 3) + ((int) readLength2 / 3);
     int aminoAcidNum_read1 = ((int) readLength1 / 3);
@@ -1335,13 +1333,15 @@ void Classifier::constructMatchCombination_paired(vector<Match> &filteredMatches
 
     // Sum up hamming distances and count the number of position covered by the matches.
     float hammingSum = 0;
+    int coveredPosCnt_read1 = 0;
+    int coveredPosCnt_read2 = 0;
     for (int h = 0; h < aminoAcidNum_total; h++) {
         // Read 1
         if (h < aminoAcidNum_read1) {
             if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
                 coveredPosCnt_read1++;
             } else if (hammingsAtEachPos[h] != -1) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
-                hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
+                hammingSum += 1.0f + (0.5f * (float) hammingsAtEachPos[h]);
                 coveredPosCnt_read1++;
             }
         }
@@ -1350,15 +1350,12 @@ void Classifier::constructMatchCombination_paired(vector<Match> &filteredMatches
             if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
                 coveredPosCnt_read2++;
             } else if (hammingsAtEachPos[h] != -1) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
-                hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
+                hammingSum += 1.0f + (0.5f * (float) hammingsAtEachPos[h]);
                 coveredPosCnt_read2++;
             }
         }
     }
     delete[] hammingsAtEachPos;
-
-    // Ignore too few matches
-    if (coveredPosCnt_read1 + coveredPosCnt_read2 < 2) return;
 
     // Score current genus
     int coveredLength_read1 = coveredPosCnt_read1 * 3;
@@ -1547,7 +1544,7 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
             if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
                 coveredPosCnt_read1++;
             } else if (hammingsAtEachPos[h] != -1) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
-                hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
+                hammingSum += 1.0f + (0.5f * (float) hammingsAtEachPos[h]);
                 coveredPosCnt_read1++;
             }
         }
@@ -1556,7 +1553,7 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
             if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
                 coveredPosCnt_read2++;
             } else if (hammingsAtEachPos[h] != -1) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
-                hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
+                hammingSum += 1.0f + (0.5f * (float) hammingsAtEachPos[h]);
                 coveredPosCnt_read2++;
             }
         }
@@ -1564,7 +1561,6 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
     delete[] hammingsAtEachPos;
 
     // Score
-    hammingSum = 0;
     int coveredLength_read1 = coveredPosCnt_read1 * 3;
     int coveredLength_read2 = coveredPosCnt_read2 * 3;
     if (coveredLength_read1 >= queryLength) coveredLength_read1 = queryLength;
