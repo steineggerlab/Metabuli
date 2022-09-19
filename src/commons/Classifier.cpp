@@ -886,7 +886,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         }
         return;
     }
-    cout << "Species score: " << speciesScrCov.score << "\n";
 
     selectedSpecies = species[0];
     // Check if it can be classified at the subspecies rank.
@@ -1512,10 +1511,8 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
     int currPos;
     size_t walker = begin;
     uint16_t currHammings;
-    cout << "Species scoring "<< taxIdList[matches[walker].targetId] << "\n";
+
     while (walker < end) {
-        cout << genusTaxIdList[matches[walker].targetId] << " " << speciesTaxIdList[matches[walker].targetId] << " " <<
-             taxIdList[matches[walker].targetId] << " " << matches[walker].position << " " << int(matches[walker].hamming) << endl;
         currPos = matches[walker].position / 3;
         currHammings = matches[walker].rightEndHamming;
         if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos])
