@@ -841,7 +841,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         queryList[currentQuery].taxCnt[spORssp[genusMatches[i].redundacny]->operator[](genusMatches[i].targetId)]++;
     }
 
-//    cout << "4" << endl;
     // If there are two or more good genus level candidates, find the LCA.
     if (res == 2) {
         vector<TaxID> genusList;
@@ -877,9 +876,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
          chooseSpecies(genusMatches,queryLength,queryList[currentQuery].queryLength2,
                       speciesScrCov, species);
     else chooseSpecies(genusMatches, queryLength, speciesScrCov, species);
-
-
-//    cout << "6" << endl;
 
     // Classify at the genus rank if more than one species are selected or the score at species level is not enough.
     if (species.size() > 1 || (speciesScrCov.score < minSpScore &&
@@ -1432,13 +1428,10 @@ void Classifier::chooseSpecies(const vector<Match> &matches, int read1Length, in
         while ((i < numOfMatch) && currentSpeices == speciesTaxIdList[matches[i].targetId]) {
             i++;
         }
-//        cout<<"B"<<endl;
         speciesEnd = i;
         speciesScrCovs[currentSpeices] = scoreTaxon_paired(matches, speciesBegin, speciesEnd, read1Length, read2Length);
-//        cout<<"C"<<endl;
     }
 
-//    cout<<"D"<<endl;
     // Get the best species
     float bestCovergae = 0.f;
     for (auto sp = speciesScrCovs.begin(); sp != speciesScrCovs.end(); sp++) {
