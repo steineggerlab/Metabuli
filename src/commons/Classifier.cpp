@@ -811,11 +811,12 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     }
 
     if (PRINT) {
-        cout << "# " << currentQuery << " filtered" << endl;
+        cout << "# " << currentQuery << " filtered\n";
         for (size_t i = 0; i < genusMatches.size(); i++) {
             cout << genusTaxIdList[genusMatches[i].targetId] << " " << speciesTaxIdList[genusMatches[i].targetId] << " " <<
-                 taxIdList[genusMatches[i].targetId] << " " << genusMatches[i].position << " " << int(genusMatches[i].hamming) << endl;
+                 taxIdList[genusMatches[i].targetId] << " " << genusMatches[i].position << " " << int(genusMatches[i].hamming) << "\n";
         }
+        cout << "Genus score: " << highRankScore << "\n";
     }
 
     // If there is no proper genus for current query, it is un-classified.
@@ -862,7 +863,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                      taxIdList[genusMatches[i].targetId] << " " << int(genusMatches[i].hamming) << " "
                      << endl;
             }
-            cout << "Score: " << highRankScore << " " << selectedTaxon << " "
+            cout << "Genus score: " << highRankScore << " " << selectedTaxon << " "
                  << taxonomy->taxonNode(selectedTaxon)->rank << endl;
         }
         return;
@@ -885,6 +886,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         queryList[currentQuery].score = highRankScore;
         return;
     }
+    cout << "Species score: " << speciesScrCov.score << "\n";
 
     selectedSpecies = species[0];
     // Check if it can be classified at the subspecies rank.
