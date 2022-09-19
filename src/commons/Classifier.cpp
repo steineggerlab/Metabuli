@@ -837,24 +837,21 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         return;
     }
 
-
-    for (size_t i = 0; i < genusMatches.size(); i++) {
-        queryList[currentQuery].taxCnt[spORssp[genusMatches[i].redundacny]->operator[](genusMatches[i].targetId)]++; /// TODO it's wrong
-    }
-
     // If there are two or more good genus level candidates, find the LCA.
     if (res == 2) {
         vector<TaxID> genusList;
         genusList.reserve(genusMatches.size());
-        for (size_t i = 0; i < genusMatches.size(); i++) {
-            genusList.push_back(genusTaxIdList[genusMatches[i].targetId]);
+        for (auto & genusMatch : genusMatches) {
+            genusList.push_back(genusTaxIdList[genusMatch.targetId]);
 
         }
         selectedTaxon = taxonomy->LCA(genusList)->taxId;
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
         queryList[currentQuery].score = highRankScore;
-
+        for (auto & genusMatch : genusMatches) {
+            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++; /// TODO it's wrong
+        }
 
         if (PRINT) {
             cout << "# " << currentQuery << " " << res << endl;
@@ -884,6 +881,9 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = genusTaxIdList[genusMatches[0].targetId];
         queryList[currentQuery].score = highRankScore;
+        for (auto & genusMatch : genusMatches) {
+            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++; /// TODO it's wrong
+        }
         return;
     }
     cout << "Species score: " << speciesScrCov.score << "\n";
@@ -920,27 +920,30 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                 count = strainIt->second;
             }
         }
-        if (numOfstrains == 1 && count > minStrainSpecificCnt + 1) {
-            selectedSpecies = strainID;
-        }
     }
+
+    if (numOfstrains == 1 && count > minStrainSpecificCnt + 1) {selectedSpecies = strainID;}
 
     // Store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedSpecies;
     queryList[currentQuery].score = speciesScrCov.score;
     queryList[currentQuery].newSpecies = false;
-
-    if (PRINT) {
-        cout << "# " << currentQuery << endl;
-        for (size_t i = 0; i < genusMatches.size(); i++) {
-            cout << i << " " << genusMatches[i].position << " " <<
-            taxIdList[genusMatches[i].targetId] << " " << int(genusMatches[i].hamming) << endl;
-        }
-        cout << "Score: " << speciesScrCov.score << "  " << selectedSpecies << " "
-             << taxonomy->taxonNode(selectedSpecies)->rank
-             << endl;
-    }
+//    for (auto & genusMatch : genusMatches) {
+//        if(speciesTaxIdList[genusMatch.targetId] == selectedSpecies){
+//            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++; /// TODO it's wrong
+//        }
+//    }
+//    if (PRINT) {
+//        cout << "# " << currentQuery << endl;
+//        for (size_t i = 0; i < genusMatches.size(); i++) {
+//            cout << i << " " << genusMatches[i].position << " " <<
+//            taxIdList[genusMatches[i].targetId] << " " << int(genusMatches[i].hamming) << endl;
+//        }
+//        cout << "Score: " << speciesScrCov.score << "  " << selectedSpecies << " "
+//             << taxonomy->taxonNode(selectedSpecies)->rank
+//             << endl;
+//    }
 }
 
 int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> & genusMatches, Match *matchList, size_t end,
