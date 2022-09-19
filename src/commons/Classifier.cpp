@@ -838,7 +838,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
 
 
     for (size_t i = 0; i < genusMatches.size(); i++) {
-        queryList[currentQuery].taxCnt[spORssp[genusMatches[i].redundacny]->operator[](genusMatches[i].targetId)]++;
+        queryList[currentQuery].taxCnt[spORssp[genusMatches[i].redundacny]->operator[](genusMatches[i].targetId)]++; /// TODO it's wrong
     }
 
     // If there are two or more good genus level candidates, find the LCA.
@@ -886,9 +886,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         return;
     }
 
-//    cout << "7" << endl;
     selectedSpecies = species[0];
-
     // Check if it can be classified at the subspecies rank.
     int numOfstrains = 0;
     TaxID strainID = 0;
@@ -925,7 +923,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         }
     }
 
-//    cout << "8" << endl;
     // Store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedSpecies;
@@ -1513,7 +1510,10 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
     int currPos;
     size_t walker = begin;
     uint16_t currHammings;
+    cout << "Species scoring "<< taxIdList[matches[walker].targetId] << "\n";
     while (walker < end) {
+        cout << genusTaxIdList[matches[walker].targetId] << " " << speciesTaxIdList[matches[walker].targetId] << " " <<
+             taxIdList[matches[walker].targetId] << " " << matches[walker].position << " " << int(matches[walker].hamming) << endl;
         currPos = matches[walker].position / 3;
         currHammings = matches[walker].rightEndHamming;
         if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos])
