@@ -29,7 +29,7 @@ struct TargetKmerInfo{
     bool operator == (const TargetKmerInfo & info) const{
         return (this->sequenceID == info.sequenceID && this->redundancy==info.redundancy);
     }
-};
+}; // 4 bytes
 
 struct TargetKmer{
     TargetKmer(): info(0, false), ADkmer(0), taxIdAtRank(0) { };

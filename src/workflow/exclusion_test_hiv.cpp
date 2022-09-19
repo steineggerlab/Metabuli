@@ -112,7 +112,7 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
             fields.push_back(field);
         }
         taxID = stoi(fields[2]);
-        classifications.push_back(ncbiTaxonomy.getTaxIdAtRank(taxID, "species"));
+        classifications.push_back(ncbiTaxonomy.getTaxIdAtRank(taxID, par.testRank));
 
         // 2nd field -> accession
         accession = fields[1];
@@ -123,7 +123,7 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
         scores.push_back(stof(fields[4]));
 
         // Accession to right answer
-        rightAnswer = ncbiTaxonomy.getTaxIdAtRank(acc2taxid[accession], "species");
+        rightAnswer = ncbiTaxonomy.getTaxIdAtRank(acc2taxid[accession], par.testRank);
         rightAnswers.push_back(rightAnswer);
 
     }
