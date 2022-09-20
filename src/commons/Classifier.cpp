@@ -54,16 +54,17 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
                                const char *diffIdxSplitFileName,
                                const LocalParameters &par) {
 
-//    unordered_map<TaxID, unsigned int> taxonCnt;
-//    for(TaxID x : taxIdList){
-//        taxonCnt[x] = 1;
-//    }
-//    unordered_map<TaxID, TaxonCounts> cladeCnt = taxonomy->getCladeCounts(taxonCnt);
-//    vector<TaxID> genusWithMultipleSpecies;
-//    for(auto it = cladeCnt.begin(); it != cladeCnt.end(); it ++){
-//        if(taxonomy->taxonNode(it->first)->rank == "genus" && it->second.children.size() > 1){
-//            genusWithMultipleSpecies.push_back(it->first);
-//            // Iterate species
+    unordered_map<TaxID, unsigned int> taxonCnt;
+    for(TaxID x : taxIdList){
+        taxonCnt[x] = 1;
+    }
+    unordered_map<TaxID, TaxonCounts> cladeCnt = taxonomy->getCladeCounts(taxonCnt);
+    vector<TaxID> genusWithMultipleSpecies;
+    for(auto it = cladeCnt.begin(); it != cladeCnt.end(); it ++){
+        if(taxonomy->taxonNode(it->first)->rank == "species" && it->second.children.size() > 1){
+            genusWithMultipleSpecies.push_back(it->first);
+            cout << taxonomy->taxonNode(it->first)->name << endl;
+            // Iterate species
 //            size_t selectedSp = 10000000;
 //            for(size_t i = 0; i < it->second.children.size(); i++){
 //                if(cladeCnt[it->second.children[i]].children.size() > 1){
@@ -82,9 +83,9 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
 //                    }
 //                }
 //            }
-//        }
-//    }
-//    return;
+        }
+    }
+    return;
 
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
@@ -828,8 +829,9 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         return;
     }
 
-    // If the score is too low, it is un-classified
-    if (highRankScore < par.minScore) {
+    // If the score is too low and matches are not of virus, it is un-classified
+    if (highRankScore < par.minScore &&
+        !taxonomy->IsAncestor(par.virusTaxId, taxIdList[genusMatches[0].targetId])) {
         queryList[currentQuery].isClassified = false;
         queryList[currentQuery].classification = 0;
         queryList[currentQuery].score = 0;
@@ -850,7 +852,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         queryList[currentQuery].classification = selectedTaxon;
         queryList[currentQuery].score = highRankScore;
         for (auto & genusMatch : genusMatches) {
-            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++; /// TODO it's wrong
+            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
         }
 
         if (PRINT) {
