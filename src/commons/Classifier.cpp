@@ -886,12 +886,19 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         queryList[currentQuery].classification = genusTaxIdList[genusMatches[0].targetId];
         queryList[currentQuery].score = highRankScore;
         for (auto & genusMatch : genusMatches) {
-            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++; /// TODO it's wrong
+            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
         }
         return;
     }
 
     selectedSpecies = species[0];
+    // Record matches of selected species
+    for (auto & genusMatch : genusMatches) {
+        if(speciesTaxIdList[genusMatch.targetId] == selectedSpecies){
+            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
+        }
+    }
+
     // Check if it can be classified at the subspecies rank.
     int numOfstrains = 0;
     TaxID strainID = 0;
@@ -913,7 +920,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
             if (!genusMatches[i].redundacny
                 && taxonomy->IsAncestor2(selectedSpecies, taxIdList[genusMatches[i].targetId])) {
                 strainMatchCnt[taxIdList[genusMatches[i].targetId]]++;
-
             }
         }
         for (auto strainIt = strainMatchCnt.begin(); strainIt != strainMatchCnt.end(); strainIt++) {
@@ -932,11 +938,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     queryList[currentQuery].classification = selectedSpecies;
     queryList[currentQuery].score = speciesScrCov.score;
     queryList[currentQuery].newSpecies = false;
-//    for (auto & genusMatch : genusMatches) {
-//        if(speciesTaxIdList[genusMatch.targetId] == selectedSpecies){
-//            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++; /// TODO it's wrong
-//        }
-//    }
 //    if (PRINT) {
 //        cout << "# " << currentQuery << endl;
 //        for (size_t i = 0; i < genusMatches.size(); i++) {
