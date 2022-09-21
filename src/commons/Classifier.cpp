@@ -64,6 +64,9 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
         if(taxonomy->taxonNode(it->first)->rank == "species" && it->second.children.size() > 1){
             genusWithMultipleSpecies.push_back(it->first);
             cout << taxonomy->taxonNode(it->first)->name << endl;
+            for(size_t i = 0; i < it->second.children.size(); i++){
+                cout << taxonomy->taxonNode(it->second.children[i])->name << endl;
+            }
             // Iterate species
 //            size_t selectedSp = 10000000;
 //            for(size_t i = 0; i < it->second.children.size(); i++){
