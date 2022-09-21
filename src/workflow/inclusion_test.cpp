@@ -89,7 +89,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
         classList.push_back(classInt);
 //        scores.push_back(stof(fields[4]));
         regex_search(fields[1], assacc, regex1);
-        cout << assacc[0] << endl;
+        cout << assacc[0] << "\t" << assacc2taxid[assacc[0]] << endl;
         rightAnswers.push_back(assacc2taxid[assacc[0]]);
     }
     cout<<"num of classification: "<< classList.size()<<endl;
