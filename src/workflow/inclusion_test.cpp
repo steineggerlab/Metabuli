@@ -89,29 +89,10 @@ int inclusiontest(int argc, const char **argv, const Command &command){
         classList.push_back(classInt);
 //        scores.push_back(stof(fields[4]));
         regex_search(fields[1], assacc, regex1);
+        cout << assacc[0] << endl;
         rightAnswers.push_back(assacc2taxid[assacc[0]]);
     }
-    cout<<"hi"<<endl;
     cout<<"num of classification: "<< classList.size()<<endl;
-
-    ///Load query file -> name
-    //regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
-    //
-//    string queryName;
-//    ifstream query;
-//    query.open(queryFileName);
-//    string queryLine;
-//    vector<string> queryNameList;
-//    while(getline(query,queryLine,'\n')){
-//        if(queryLine[0] == '>'){
-//            regex_search(queryLine, assacc, regex1);
-//            queryNameList.push_back(assacc[0]);
-//        }else{
-//            continue;
-//        }
-//    }
-
-
 
 //    ///right answer list
 //    vector<int> rightAnswers;
@@ -130,7 +111,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     CountAtRank S = {0, 0, 0, 0, 0};
     CountAtRank G = {0, 0, 0, 0, 0};
     CountAtRank F = {0, 0, 0, 0, 0};
-    ///score the classification
+    // Score the classification
     for(size_t i = 0; i < classList.size(); i++){
 //        cout<<i<<" ";
         compareTaxon(classList[i], rightAnswers[i], ncbiTaxonomy, counts, tpOrFp, 3.0f);
