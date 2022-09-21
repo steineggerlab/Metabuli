@@ -442,11 +442,11 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
             endFlag = 0;
             for(size_t i = 1 + splits[split].offset; i < splits[split].end + 1 ; i++) {
                 hasSeenOtherStrains = 0;
-                while(lookingKmer.taxIdAtRank == kmerBuffer.buffer[i].taxIdAtRank){
-                    if (lookingKmer.ADkmer != kmerBuffer.buffer[i].ADkmer) {
+                while(lookingKmer->taxIdAtRank == kmerBuffer.buffer[i].taxIdAtRank){
+                    if (lookingKmer->ADkmer != kmerBuffer.buffer[i].ADkmer) {
                         break;
                     }
-                    hasSeenOtherStrains += (taxid2fasta[lookingKmer.info.sequenceID].taxid
+                    hasSeenOtherStrains += (taxid2fasta[lookingKmer->info.sequenceID].taxid
                             != taxid2fasta[kmerBuffer.buffer[i].info.sequenceID].taxid);
                     i++;
                     if(i == splits[split].end + 1){
