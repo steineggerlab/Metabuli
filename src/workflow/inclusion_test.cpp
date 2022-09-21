@@ -87,7 +87,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
         }
         classInt = stoi(fields[2]);
         classList.push_back(classInt);
-        regex_search(fields[0], assacc, regex1);
+        regex_search(fields[1], assacc, regex1);
 //        cout << assacc[0] << "\t" << assacc2taxid[assacc[0]] << endl;
         rightAnswers.push_back(assacc2taxid[assacc[0]]);
     }
