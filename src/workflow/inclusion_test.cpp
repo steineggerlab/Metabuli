@@ -87,9 +87,8 @@ int inclusiontest(int argc, const char **argv, const Command &command){
         }
         classInt = stoi(fields[2]);
         classList.push_back(classInt);
-//        scores.push_back(stof(fields[4]));
         regex_search(fields[1], assacc, regex1);
-        cout << assacc[0] << "\t" << assacc2taxid[assacc[0]] << endl;
+//        cout << assacc[0] << "\t" << assacc2taxid[assacc[0]] << endl;
         rightAnswers.push_back(assacc2taxid[assacc[0]]);
     }
     cout<<"num of classification: "<< classList.size()<<endl;
@@ -114,19 +113,19 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     // Score the classification
     for(size_t i = 0; i < classList.size(); i++){
 //        cout<<i<<" ";
-        compareTaxon(classList[i], rightAnswers[i], ncbiTaxonomy, counts, tpOrFp, 3.0f);
+//        compareTaxon(classList[i], rightAnswers[i], ncbiTaxonomy, counts, tpOrFp, 3.0f);
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, SS, "subspecies");
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, S, "species");
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, G, "genus");
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, F, "family");
     }
 
-    ofstream scoreFile;
-    scoreFile.open(scoreFileName);
-    for(size_t i = 0; i < tpOrFp.size(); i ++){
-        scoreFile << tpOrFp[i].tf << "\t" << tpOrFp[i].rank << "\t" <<endl;
-    }
-    scoreFile.close();
+//    ofstream scoreFile;
+//    scoreFile.open(scoreFileName);
+//    for(size_t i = 0; i < tpOrFp.size(); i ++){
+//        scoreFile << tpOrFp[i].tf << "\t" << tpOrFp[i].rank << "\t" <<endl;
+//    }
+//    scoreFile.close();
 
     SS.precision = (float)SS.TP / (float)SS.total;
     S.precision = (float)S.TP / (float)S.total;
