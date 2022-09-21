@@ -30,14 +30,6 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     string merged =  taxonomy + "/merged.dmp";
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
 
-    unordered_map<TaxID, unsigned int> taxCnt;
-    for(int i = 0 ; i < ncbiTaxonomy.taxonNodes.size() ; i++) {
-        taxCnt[ncbiTaxonomy.taxonNodes[i].taxId] = 1;
-    }
-
-    unordered_map<TaxID, TaxonCounts> cladeCnt = ncbiTaxonomy.getCladeCounts(taxCnt);
-
-
 //    ///Load taxDB of kraken
 //    unordered_map<int, int> child2parent;
 //    string childString, parentString, throwaway;
@@ -58,7 +50,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
 //    }
 //    taxDB.close();
 
-    ///Load the mapping file (assacc to taxID)
+    // Load the mapping file (assacc to taxID)
     unordered_map<string, int> assacc2taxid;
     string key, value;
     ifstream map;
@@ -74,23 +66,19 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     map.close();
 
 
-    ///read classification
+    // Read classification
     vector<int> rightAnswers;
     vector<int> classList;
-
     string classString;
     ifstream readClassification;
     readClassification.open(readClassificationFileName);
     vector<string> fields;
     string field;
     int classInt;
-
     vector<float> scores;
     vector<Score2> tpOrFp;
-
     regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
     smatch assacc;
-
     while(getline(readClassification,classString,'\n')){
         istringstream lineStream(classString);
         fields.clear();

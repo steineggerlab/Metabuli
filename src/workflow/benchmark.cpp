@@ -43,10 +43,10 @@ void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts&
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
     string shotRank = shotNode->rank;
     string targetRank = targetNode->rank;
-    cout<<shot<<" "<<target<<" "<<shotRank<<" "<<targetRank<<" ";
+//    cout<<shot<<" "<<target<<" "<<shotRank<<" "<<targetRank<<" ";
 
     if(shot == 0){
-        cout<<"X"<<endl;
+//        cout<<"X"<<endl;
         return;
     } else{
         counts.classificationCnt++;
@@ -57,20 +57,20 @@ void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts&
         counts.correct ++;
         scores.emplace_back(1, shotRank, score);
         isCorrect = true;
-        cout<<"O"<<endl;
+//        cout<<"O"<<endl;
     } else if(NcbiTaxonomy::findRankIndex(shotRank) <= NcbiTaxonomy::findRankIndex(targetRank)){ //classified into wrong taxon or too specifically
-        cout<<"X"<<endl;
+//        cout<<"X"<<endl;
         scores.emplace_back(2, shotRank, score);
     } else { // classified at higher rank (too safe classification)
         if(shotRank == "superkingdom"){
-            cout<<"X"<<endl;
+//            cout<<"X"<<endl;
         } else if(shot == ncbiTaxonomy.getTaxIdAtRank(target, shotRank)){ //on right branch
             counts.correct ++;
-            cout<<"0"<<endl;
+//            cout<<"0"<<endl;
             isCorrect = true;
             scores.emplace_back(1, shotRank, score);
         } else{ //on wrong branch
-            cout<<"X"<<endl;
+//            cout<<"X"<<endl;
             scores.emplace_back(2, shotRank, score);
         }
     }
