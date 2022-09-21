@@ -87,7 +87,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
         }
         classInt = stoi(fields[2]);
         classList.push_back(classInt);
-        regex_search(fields[1], assacc, regex1);
+        regex_search(fields[0], assacc, regex1);
 //        cout << assacc[0] << "\t" << assacc2taxid[assacc[0]] << endl;
         rightAnswers.push_back(assacc2taxid[assacc[0]]);
     }
@@ -112,8 +112,6 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     CountAtRank F = {0, 0, 0, 0, 0};
     // Score the classification
     for(size_t i = 0; i < classList.size(); i++){
-//        cout<<i<<" ";
-//        compareTaxon(classList[i], rightAnswers[i], ncbiTaxonomy, counts, tpOrFp, 3.0f);
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, SS, "subspecies");
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, S, "species");
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, G, "genus");
