@@ -22,10 +22,12 @@ int inclusiontest(int argc, const char **argv, const Command &command){
 
     const string readClassificationFileName = par.filenames[0];
     string scoreFileName = readClassificationFileName + "_SC";
+    const string mappingFile = par.filenames[1];
+    const string taxonomy = par.filenames[2];
 
-    string names = "../../gtdb_taxdmp/names.dmp";
-    string nodes = "../../gtdb_taxdmp/nodes.dmp";
-    string merged = "../../gtdb_taxdmp/merged.dmp";
+    string names = taxonomy + "/names.dmp";
+    string nodes =  taxonomy + "/nodes.dmp";
+    string merged =  taxonomy + "/merged.dmp";
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
 
     unordered_map<TaxID, unsigned int> taxCnt;
@@ -57,7 +59,6 @@ int inclusiontest(int argc, const char **argv, const Command &command){
 //    taxDB.close();
 
     ///Load the mapping file (assacc to taxID)
-    const char * mappingFile = "../../gtdb_taxdmp/assacc_to_taxid.tsv";
     unordered_map<string, int> assacc2taxid;
     string key, value;
     ifstream map;
@@ -143,7 +144,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     CountAtRank F = {0, 0, 0, 0, 0};
     ///score the classification
     for(size_t i = 0; i < classList.size(); i++){
-        cout<<i<<" ";
+//        cout<<i<<" ";
         compareTaxon(classList[i], rightAnswers[i], ncbiTaxonomy, counts, tpOrFp, 3.0f);
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, SS, "subspecies");
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, S, "species");
@@ -155,7 +156,6 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     scoreFile.open(scoreFileName);
     for(size_t i = 0; i < tpOrFp.size(); i ++){
         scoreFile << tpOrFp[i].tf << "\t" << tpOrFp[i].rank << "\t" <<endl;
-//<< tpOrFp[0].score << "\n";
     }
     scoreFile.close();
 
@@ -178,15 +178,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     cout<<"correct   /classifications = "<<float(counts.correct) / float(counts.classificationCnt) <<endl;
     cout<<"high rank /classifications = "<<float(counts.highRank) / float(counts.classificationCnt) <<endl << endl;
 
-    cout<<"Number of targets at each rank / correct classification / tries"<<endl;
-    cout<<"Superkingdom: " << counts.superkingdomTargetNumber << " / " << counts.superkingdomCnt_correct << " / "<<counts.superkingdomCnt_try<<endl;
-    cout<<"Phylum      : " << counts.phylumTargetNumber << " / " << counts.phylumCnt_correct << " / "<<counts.phylumCnt_try<<endl;
-    cout<<"Class       : " << counts.classTargetNumber << " / " << counts.classCnt_correct << " / "<<counts.classCnt_try<<endl;
-    cout<<"Order       : " << counts.orderTargetNumber<<" / "<<counts.orderCnt_correct<<" / "<<counts.orderCnt_try<<endl;
-    cout<<"Family      : " << counts.familyTargetNumber << " / " << counts.familyCnt_correct << " / "<<counts.familyCnt_try<<endl;
-    cout<<"Genus       : " << counts.genusTargetNumber<<" / "<<counts.genusCnt_correct<<" / "<<counts.genusCnt_try<<endl;
-    cout<<"Species     : " << counts.speciesTargetNumber<<" / "<<counts.speciesCnt_correct<<" / "<<counts.speciesCnt_try<<endl;
-    cout<<"Subspecies  : " << counts.subspeciesTargetNumber<<" / "<<counts.subspeciesCnt_correct<<" / "<<counts.subspeciesCnt_try<<endl;
+
 
     cout<<"False positive at each rank"<<endl;
     cout<<counts.fp_phylum<<endl;
