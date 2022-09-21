@@ -434,11 +434,13 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
 #pragma omp parallel default(none), shared(kmerBuffer, taxid2fasta, idxOfEachSplit, cntOfEachSplit, splits)
     {
         TargetKmer * lookingKmer;
+        size_t lookingIndex;
         int endFlag;
         int hasSeenOtherStrains;
 #pragma omp for schedule(dynamic, 1)
         for(size_t split = 0; split < splits.size(); split ++){
             lookingKmer = & kmerBuffer.buffer[splits[split].offset];
+            lookingIndex = splits[split].offset;
             endFlag = 0;
             for(size_t i = 1 + splits[split].offset; i < splits[split].end + 1 ; i++) {
                 hasSeenOtherStrains = 0;
@@ -456,10 +458,11 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
                 }
 
                 lookingKmer->info.redundancy = (hasSeenOtherStrains > 0);
-                idxOfEachSplit[split][cntOfEachSplit[split]] = i - 1;
+                idxOfEachSplit[split][cntOfEachSplit[split]] = lookingIndex;
                 cntOfEachSplit[split] ++;
                 if(endFlag == 1) break;
                 lookingKmer = & kmerBuffer.buffer[i];
+                lookingIndex = i;
             }
 
             //For the end part
