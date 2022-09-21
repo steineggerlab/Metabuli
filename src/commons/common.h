@@ -6,7 +6,7 @@
 #define kmerBufSize 10'000'000'000  // 1'000'000'000 //286'000'000 //   10'000'000'000 | 286'000'000 (16 byte x 1 giga = 16 GB)
                                 // 10'000'000'000 -> build_dir 397G RAM
 #define SplitNum 4096
-#define PRINT true
+#define PRINT false
 
 #define likely(x) __builtin_expect((x),1)
 #define unlikely(x) __builtin_expect((x),0)
