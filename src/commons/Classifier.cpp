@@ -64,10 +64,11 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
         if(taxonomy->taxonNode(it->first)->rank == "genus" && it->second.children.size() > 1){
             genusWithMultipleSpecies.push_back(it->first);
             for(size_t i = 0; i < it->second.children.size(); i++){
-                cout << taxonomy->taxonNode(it->second.children[i])->name << endl;
+                cout << taxonomy->taxonNode(it->second.children[i])->name << "\t";
                 for(size_t j = 0; j < cladeCnt[it->second.children[i]].children.size(); j++){
-                    cout << taxonomy->taxonNode(cladeCnt[it->second.children[i]].children[j])->name << endl;
+                    cout << taxonomy->taxonNode(cladeCnt[it->second.children[i]].children[j])->name << "\t";
                 }
+                cout << endl;
             }
 
 //            for(size_t i = 0; i < 2; i++){
