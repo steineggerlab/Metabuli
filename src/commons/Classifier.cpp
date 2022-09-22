@@ -65,7 +65,7 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
             genusWithMultipleSpecies.push_back(it->first);
             for(size_t i = 0; i < it->second.children.size(); i++){
                 cout << taxonomy->taxonNode(it->second.children[i])->name << endl;
-                for(size_t j = 0; j < cladeCnt[it->second.children[0]].children.size(); j++){
+                for(size_t j = 0; j < cladeCnt[it->second.children[i]].children.size(); j++){
                     cout << taxonomy->taxonNode(cladeCnt[it->second.children[i]].children[j])->name << endl;
                 }
             }
