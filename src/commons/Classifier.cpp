@@ -63,13 +63,17 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
     for(auto it = cladeCnt.begin(); it != cladeCnt.end(); it ++){
         if(taxonomy->taxonNode(it->first)->rank == "genus" && it->second.children.size() > 1){
             genusWithMultipleSpecies.push_back(it->first);
-            for(size_t i = 0; i < it->second.children.size(); i++){
-                cout << taxonomy->taxonNode(it->second.children[i])->name << "\t";
-                for(size_t j = 0; j < cladeCnt[it->second.children[i]].children.size(); j++){
-                    cout << taxonomy->taxonNode(cladeCnt[it->second.children[i]].children[j])->name << "\t";
-                }
-                cout << endl;
-            }
+            cout << taxonomy->taxonNode(it->first)-> name << "\t";
+            cout << it->second.children.size() << "\t";
+            cout << taxonomy->taxonNode(it->second.children[0])->name << "\t";
+            cout << taxonomy->taxonNode(cladeCnt[it->second.children[0]].children[0])->name << "\t";
+//            for(size_t i = 0; i < it->second.children.size(); i++){
+//
+//                for(size_t j = 0; j < cladeCnt[it->second.children[i]].children.size(); j++){
+//                    cout << taxonomy->taxonNode(cladeCnt[it->second.children[i]].children[j])->name << "\t";
+//                }
+//                cout << endl;
+//            }
 
 //            for(size_t i = 0; i < 2; i++){
 //                cout << taxonomy->taxonNode(it->second.children[0])->name << "\t" << taxonomy->taxonNode(it->second.children[i])->name << endl;
