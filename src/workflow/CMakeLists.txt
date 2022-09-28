@@ -6,7 +6,7 @@ set(workflow_source_files
         workflow/benchmark.cpp
         workflow/benchmark.h
         workflow/inclusion_test.cpp
-        workflow/exclusion_test.cpp
+        workflow/genus_level_test.cpp
         workflow/inclusion_test_hiv.cpp
         workflow/exclusion_test_hiv.cpp
         PARENT_SCOPE)

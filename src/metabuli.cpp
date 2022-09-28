@@ -62,7 +62,7 @@ std::vector<Command> commands = {
                         {"Mapping file (accession to tax ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                         {"taxonomy dir", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::directory}}},
 
-        {"exclusiontest", exclusiontest, &localPar.classify, COMMAND_MAIN,
+        {"genus_level_test", genus_level_test, &localPar.classify, COMMAND_MAIN,
                 "It extracts k-mers from query sequences, and compares them to the target database",
                 NULL,
                 "Jaebeom Kim <jbeom0731@gmail.com>",
