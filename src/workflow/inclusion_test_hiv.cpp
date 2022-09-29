@@ -88,14 +88,14 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
     fclose(taxIdFile);
 
     vector<TaxID> genusTaxIdList;
-    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "genus");
+    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "species");
     // Print TaxIDs in genusTaxIdList
     for(int i = 0; i < genusTaxIdList.size(); i++){
-        cout << genusTaxIdList[i] << endl;
+        cout << taxIdList[i] << "\t" << genusTaxIdList[i] << endl;
     }
 
     return 0;
-    
+
     unordered_map<TaxID, unsigned int> taxonCnt;
     for(TaxID x : taxIdList){
         taxonCnt[x] = 1;
