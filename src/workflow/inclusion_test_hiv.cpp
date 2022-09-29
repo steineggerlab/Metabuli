@@ -95,14 +95,16 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
     unordered_map<TaxID, TaxonCounts> cladeCnt = taxonomy->getCladeCounts(taxonCnt);
     vector<TaxID> genusWithMultipleSpecies;
     for(auto it = cladeCnt.begin(); it != cladeCnt.end(); it ++){
-        if(taxonomy->taxonNode(it->first)->rank == "species" && it->second.children.size() > 1){
+        if(taxonomy->taxonNode(it->first)->rank == "genus" && it->second.children.size() > 1){
             genusWithMultipleSpecies.push_back(it->first);
             cout << taxonomy->taxonNode(it->first)-> name << "\t";
             cout << it->second.children.size() << "\t";
-            cout << taxonomy->taxonNode(it->second.children[0])->name << "\t";
-            cout << it->second.children[0] << "\t";
-            cout << taxonomy->taxonNode(it->second.children[1])->name << "\t";
-            cout << it->second.children[1] << "\t";
+            cout << taxonomy->taxonNode(it->second.children[0])->name << "\t"; //species
+            cout << taxonomy->taxonNode(cladeCnt[it->second.children[0]].children[0])->name << "\t"; //subspecies
+            cout << cladeCnt[it->second.children[0]].children[0] << "\t"; //subspecies
+            cout << taxonomy->taxonNode(it->second.children[1])->name << "\t"; //species
+            cout << cladeCnt[it->second.children[1]].children[0] << "\t"; //subspecies
+            cout << taxonomy->taxonNode(cladeCnt[it->second.children[1]].children[0])->name << "\t"; //subspecies
             cout << endl;
 //            cout << taxonomy->taxonNode(cladeCnt[it->second.children[0]].children[0])->name << endl;
 //            for(size_t i = 0; i < it->second.children.size(); i++){
