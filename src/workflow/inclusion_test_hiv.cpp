@@ -100,7 +100,9 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
             cout << taxonomy->taxonNode(it->first)-> name << "\t";
             cout << it->second.children.size() << "\t";
             cout << taxonomy->taxonNode(it->second.children[0])->name << "\t";
+            cout << it->second.children[0] << "\t";
             cout << taxonomy->taxonNode(it->second.children[1])->name << "\t";
+            cout << it->second.children[1] << "\t";
             cout << endl;
 //            cout << taxonomy->taxonNode(cladeCnt[it->second.children[0]].children[0])->name << endl;
 //            for(size_t i = 0; i < it->second.children.size(); i++){
