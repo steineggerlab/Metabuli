@@ -1,6 +1,3 @@
-//
-// Created by 김재범 on 2022/04/11.
-//
 #include "benchmark.h"
 
 using namespace std;
