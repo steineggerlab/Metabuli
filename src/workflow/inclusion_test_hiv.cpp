@@ -66,9 +66,9 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
     const string readClassificationFileName = par.filenames[0];
     const char * mappingFile = par.filenames[1].c_str();
     string taxonomyPath = par.filenames[2];
-    string names = taxonomyPath + "names.dmp";
-    string nodes = taxonomyPath + "nodes.dmp";
-    string merged = taxonomyPath + "merged.dmp";
+    string names = taxonomyPath + "/names.dmp";
+    string nodes = taxonomyPath + "/nodes.dmp";
+    string merged = taxonomyPath + "/merged.dmp";
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
     NcbiTaxonomy * taxonomy = & ncbiTaxonomy;
 
@@ -101,6 +101,7 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
             cout << it->second.children.size() << "\t";
             cout << taxonomy->taxonNode(it->second.children[0])->name << "\t";
             cout << taxonomy->taxonNode(it->second.children[1])->name << "\t";
+            cout << endl;
 //            cout << taxonomy->taxonNode(cladeCnt[it->second.children[0]].children[0])->name << endl;
 //            for(size_t i = 0; i < it->second.children.size(); i++){
 //
