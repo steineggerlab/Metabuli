@@ -99,12 +99,22 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
             genusWithMultipleSpecies.push_back(it->first);
             cout << taxonomy->taxonNode(it->first)-> name << "\t";
             cout << it->second.children.size() << "\t";
-            cout << taxonomy->taxonNode(it->second.children[0])->name << "\t"; //species
-            cout << taxonomy->taxonNode(cladeCnt[it->second.children[0]].children[0])->name << "\t"; //subspecies
-            cout << cladeCnt[it->second.children[0]].children[0] << "\t"; //subspecies
-            cout << taxonomy->taxonNode(it->second.children[1])->name << "\t"; //species
-            cout << cladeCnt[it->second.children[1]].children[0] << "\t"; //subspecies
-            cout << taxonomy->taxonNode(cladeCnt[it->second.children[1]].children[0])->name << "\t"; //subspecies
+            cout << taxonomy->taxonNode(it->second.children[0])->name << "\t"; //species 1
+            if (cladeCnt[it->second.children[0]].children.size() != 0){
+                cout << cladeCnt[it->second.children[0]].children[0] << "\t"; //subspecies 1
+                cout << taxonomy->taxonNode(cladeCnt[it->second.children[0]].children[0])->name << "\t"; //subspecies
+            } else {
+                cout << it->second.children[0] << "\t"; //subspecies 1
+                cout << taxonomy->taxonNode(it->second.children[0])->name << "\t"; //subspecies
+            }
+
+            if (cladeCnt[it->second.children[1]].children.size() != 0){
+                cout << cladeCnt[it->second.children[1]].children[0] << "\t"; //subspecies 2
+                cout << taxonomy->taxonNode(cladeCnt[it->second.children[1]].children[0])->name << "\t"; //subspecies
+            } else {
+                cout << it->second.children[1] << "\t"; //subspecies 2
+                cout << taxonomy->taxonNode(it->second.children[1])->name << "\t"; //subspecies
+            }
             cout << endl;
 //            cout << taxonomy->taxonNode(cladeCnt[it->second.children[0]].children[0])->name << endl;
 //            for(size_t i = 0; i < it->second.children.size(); i++){
