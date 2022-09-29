@@ -49,10 +49,6 @@ struct Counts13{
     int superkingdomCnt_correct;
 };
 
-void compareTaxon112(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts13 & counts);
-
-
-
 int exclusiontest_hiv(int argc, const char **argv, const Command &command){
 
     LocalParameters &par = LocalParameters::getLocalInstance();
@@ -161,77 +157,3 @@ int exclusiontest_hiv(int argc, const char **argv, const Command &command){
     cout<<"Subspecies  : " << counts.subspeciesTargetNumber<<" / "<<counts.subspeciesCnt_correct<<" / "<<counts.subspeciesCnt_try<<endl;
     return 0;
 }
-
-void compareTaxon112(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts13 & counts) { ///target: subspecies or species
-    const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
-    const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
-    string shotRank = shotNode->rank;
-    string targetRank = targetNode->rank;
-    cout<<shot<<" "<<target<<" "<<shotRank<<" "<<targetRank<<" ";
-
-    if(shot == 0){
-        cout<<"X"<<endl;
-        return;
-    } else{
-        counts.classificationCnt++;
-    }
-
-    bool isCorrect = false;
-    if(shot == target){
-        counts.correct ++;
-        isCorrect = true;
-        cout<<"O"<<endl;
-    } else if(NcbiTaxonomy::findRankIndex(shotRank) <= NcbiTaxonomy::findRankIndex(targetRank)){ //classified into wrong taxon or too specifically
-        cout<<"X"<<endl;
-    } else { // classified at higher rank (too safe classification)
-        if(shotRank == "superkingdom"){
-            cout<<"X"<<endl;
-        } else if(shot == ncbiTaxonomy.getTaxIdAtRank(target, shotRank)){ //on right branch
-            counts.highRank ++;
-            cout<<"U"<<endl;
-        } else{ //on wrong branch
-            cout<<"X"<<endl;
-        }
-    }
-
-    //count the number of classification at each rank
-    if(shotRank == "subspecies") {
-        counts.subspeciesCnt_try++;
-    } else if(shotRank == "species") {
-        counts.speciesCnt_try ++;
-    } else if(shotRank == "genus"){
-        counts.genusCnt_try ++;
-    } else if(shotRank == "family"){
-        counts.familyCnt_try++;
-    } else if(shotRank == "order") {
-        counts.orderCnt_try++;
-    } else if(shotRank == "class") {
-        counts.classCnt_try++;
-    } else if(shotRank == "phylum") {
-        counts.phylumCnt_try++;
-    } else if(shotRank == "superkingdom"){
-        counts.superkingdomCnt_try++;
-    }
-
-    if(!isCorrect) return;
-
-    //count the number of correct classification at each rank
-    if(shotRank == "subspecies"){
-        counts.subspeciesCnt_correct ++;
-    } else if(shotRank == "species") {
-        counts.speciesCnt_correct ++;
-    } else if(shotRank == "genus"){
-        counts.genusCnt_correct ++;
-    } else if(shotRank == "family"){
-        counts.familyCnt_correct++;
-    } else if(shotRank == "order") {
-        counts.orderCnt_correct++;
-    } else if(shotRank == "class") {
-        counts.classCnt_correct++;
-    } else if(shotRank == "phylum") {
-        counts.phylumCnt_correct++;
-    } else if(shotRank == "superkingdom"){
-        counts.superkingdomCnt_correct++;
-    }
-}
-
