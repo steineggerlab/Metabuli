@@ -88,7 +88,7 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
     fclose(taxIdFile);
 
     vector<TaxID> genusTaxIdList;
-    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "species");
+    ncbiTaxonomy.createTaxIdListAtRank(taxIdList, genusTaxIdList, "genus");
     // Print TaxIDs in genusTaxIdList
     for(int i = 0; i < genusTaxIdList.size(); i++){
         cout << taxIdList[i] << "\t" << genusTaxIdList[i] << endl;
