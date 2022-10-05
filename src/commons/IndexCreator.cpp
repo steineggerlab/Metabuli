@@ -633,15 +633,17 @@ void IndexCreator::splitAFastaFile(const vector<int> & speciesTaxIDs, vector<Fas
     uint32_t cnt = 0;
     int theLargest;
     int isLeftover;
-
     int currSpecies;
-
     while(idx < speciesTaxIDs.size()){
         offset = idx;
         training = idx;
         cnt = 0;
         isLeftover = 0;
         currSpecies = speciesTaxIDs[idx];
+        if (currSpecies == 0) {
+            idx++;
+            continue;
+        }
         while(idx < speciesTaxIDs.size() && currSpecies == speciesTaxIDs[idx] ){
             cnt ++;
             idx ++;
