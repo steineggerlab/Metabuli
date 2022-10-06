@@ -43,7 +43,7 @@ std::vector<Command> commands = {
           {"out dir", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory},
           {"job ID", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
 
-        {"inclusiontest", inclusiontest, &localPar.classify, COMMAND_MAIN,
+        {"inclusiontest", inclusiontest, &localPar.inclusiontest, COMMAND_MAIN,
                 "It extracts k-mers from query sequences, and compares them to the target database",
                 NULL,
                 "Jaebeom Kim <jbeom0731@gmail.com>",
