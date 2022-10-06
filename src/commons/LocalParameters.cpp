@@ -47,7 +47,7 @@ LocalParameters::LocalParameters() :
                ""),
         MIN_CONSECUTIVE(MIN_CONSECUTIVE_ID,
                         "--min-consecutive",
-                        ".",
+                        "Matches that are not consecutive for the specified number of times are ignored.",
                         "Matched k-mers from the same genus are pulled and aligned to query.\n"
                         "Matches that are not consecutive for the specified number of times are ignored.",
                         typeid(int),
@@ -55,7 +55,8 @@ LocalParameters::LocalParameters() :
                         ""),
         HAMMING_MARGIN(HAMMING_MARGIN_ID,
                        "--hamming-margin",
-                       ".",
+                       "If a query k-mer has multiple matches, the matches with hamming distance lower than sum of \n"
+                       "the minimum distance and this margin are selected for later steps.",
                        "If a query k-mer has multiple matches, the matches with hamming distance lower than sum of \n"
                        "the minimum distance and this margin are selected for later steps.",
                        typeid(int),
@@ -63,7 +64,7 @@ LocalParameters::LocalParameters() :
                        ""),
         MIN_SP_SCORE(MIN_SP_SCORE_ID,
                        "--min-sp-score",
-                       ".",
+                       "Minimum score to be classified at species or lower rank.",
                        "Minimum score to be classified at the species level.",
                        typeid(float),
                        (void *) &minSpScore,
@@ -74,7 +75,14 @@ LocalParameters::LocalParameters() :
                   "Test Rank",
                   typeid(std::string),
                   (void *) &testRank,
-                  ""){
+                  ""),
+        TEST_TYPE(TEST_TYPE_ID,
+                  "--test-type",
+                  ".",
+                  "Test Type",
+                  typeid(std::string),
+                    (void *) &testType,
+                    ""){
     //build_dir
     build_dir.push_back(&PARAM_THREADS);
     build_dir.push_back(&REDUCED_AA);
@@ -99,5 +107,6 @@ LocalParameters::LocalParameters() :
 
     //updateTargetDB
     exclusiontest_hiv.push_back(&TEST_RANK);
+    inclusiontest.push_back(&TEST_TYPE);
 
 }

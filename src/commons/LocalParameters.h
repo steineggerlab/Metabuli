@@ -27,6 +27,7 @@ public:
     std::vector<MMseqsParameter*> classify;
     std::vector<MMseqsParameter*> exclusiontest_hiv;
     std::vector<MMseqsParameter*> seqHeader2TaxId;
+    std::vector<MMseqsParameter*> inclusiontest;
 
     PARAMETER(VIRUS_TAX_ID)
     PARAMETER(SEQ_MODE)
@@ -38,7 +39,7 @@ public:
     PARAMETER(HAMMING_MARGIN)
     PARAMETER(MIN_SP_SCORE)
     PARAMETER(TEST_RANK)
-
+    PARAMETER(TEST_TYPE)
 
     // Classify
     int virusTaxId;
@@ -52,6 +53,7 @@ public:
     float minSpScore;
 
     std::string testRank;
+    std::string testType;
 private:
     LocalParameters();
 

@@ -21,7 +21,6 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
 
     const string readClassificationFileName = par.filenames[0];
-    string scoreFileName = readClassificationFileName + "_SC";
     const string mappingFile = par.filenames[1];
     const string taxonomy = par.filenames[2];
 
@@ -29,26 +28,6 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     string nodes =  taxonomy + "/nodes.dmp";
     string merged =  taxonomy + "/merged.dmp";
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
-
-//    ///Load taxDB of kraken
-//    unordered_map<int, int> child2parent;
-//    string childString, parentString, throwaway;
-//    int childInt, parentInt;
-//    ifstream taxDB;
-//    taxDB.open(krakenTaxDB);
-//    if(taxDB.is_open()){
-//        while(getline(taxDB,childString,'\t')){
-//            getline(taxDB, parentString, '\t');
-//            getline(taxDB, throwaway,'\n');
-//            childInt = stoi(childString);
-//            parentInt = stoi(parentString);
-//            if(childInt > 1000000000)
-//                child2parent[childInt] = parentInt;
-//        }
-//    } else{
-//        cout<<"Cannot open taxDB"<<endl;
-//    }
-//    taxDB.close();
 
     // Load the mapping file (assacc to taxID)
     unordered_map<string, int> assacc2taxid;
@@ -66,7 +45,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     map.close();
 
 
-    // Read classification
+    // Load classification results
     vector<int> rightAnswers;
     vector<int> classList;
     string classString;
@@ -85,30 +64,33 @@ int inclusiontest(int argc, const char **argv, const Command &command){
         while(getline(lineStream, field, '\t')){
             fields.push_back(field);
         }
+        // Read ID -> right answer
+        string id = fields[1];
+        if (par.testType == "gtdb") {
+            regex_search(fields[1], assacc, regex1);
+            rightAnswers.push_back(assacc2taxid[assacc[0]]);
+        } else if (par.testType == "hiv"){
+            size_t pos = id.find('_');
+            id = id.substr(0,pos);
+            rightAnswers.push_back(assacc2taxid[id]);
+        } else if (par.testType == "cami"){
+            size_t pos = id.find('/');
+            id = id.substr(0,pos);
+            rightAnswers.push_back(assacc2taxid[id]);
+        }
+
+        // Read classification
         classInt = stoi(fields[2]);
         classList.push_back(classInt);
-        regex_search(fields[1], assacc, regex1);
-        rightAnswers.push_back(assacc2taxid[assacc[0]]);
     }
-    cout<<"num of classification: "<< classList.size()<<endl;
-
-//    ///right answer list
-//    vector<int> rightAnswers;
-//    for(size_t i = 0; i < queryNameList.size(); i++){
-//        if (assacc2taxid.count(queryNameList[i])) {
-//            rightAnswers.push_back(assacc2taxid[queryNameList[i]]);
-//        } else{
-//            cout << queryNameList[i] << " is not in the mapping file" << endl;
-//            rightAnswers.push_back(-1);
-//            continue;
-//        }
-//    }
+    cout<<"The number of reads: "<< classList.size()<<endl;
 
     Counts counts = {0,0,0,0,0,0,0,0};
     CountAtRank SS = {0, 0, 0, 0, 0};
     CountAtRank S = {0, 0, 0, 0, 0};
     CountAtRank G = {0, 0, 0, 0, 0};
     CountAtRank F = {0, 0, 0, 0, 0};
+
     // Score the classification
     for(size_t i = 0; i < classList.size(); i++){
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, SS, "subspecies");
@@ -117,12 +99,6 @@ int inclusiontest(int argc, const char **argv, const Command &command){
         compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, F, "family");
     }
 
-//    ofstream scoreFile;
-//    scoreFile.open(scoreFileName);
-//    for(size_t i = 0; i < tpOrFp.size(); i ++){
-//        scoreFile << tpOrFp[i].tf << "\t" << tpOrFp[i].rank << "\t" <<endl;
-//    }
-//    scoreFile.close();
 
     SS.precision = (float)SS.TP / (float)SS.total;
     S.precision = (float)S.TP / (float)S.total;
@@ -144,21 +120,11 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     cout<<"high rank /classifications = "<<float(counts.highRank) / float(counts.classificationCnt) <<endl << endl;
 
 
-
-    cout<<"False positive at each rank"<<endl;
-    cout<<counts.fp_phylum<<endl;
-    cout<<counts.fp_class<<endl;
-    cout<<counts.fp_order<<endl;
-    cout<<counts.fp_family<<endl;
-    cout<<counts.fp_genus<<endl;
-    cout<<counts.fp_species<<endl;
-    cout<<counts.fp_subspecies<<endl;
-
-    cout<<"NEW"<<endl;
     cout<<"Family      : " << F.total << " / " << F.TP << " / "<< F.FP << " / " << F.precision << " / "<< F.sensitivity << endl;
     cout<<"Genus       : " << G.total << " / " << G.TP << " / "<< G.FP << " / " << G.precision << " / "<< G.sensitivity << endl;
     cout<<"Species     : " << S.total << " / " << S.TP << " / "<< S.FP << " / " << S.precision << " / "<< S.sensitivity << endl;
     cout<<"Subspecies  : " << SS.total << " / " << SS.TP << " / "<< SS.FP << " / " << SS.precision << " / "<< SS.sensitivity << endl;
 
+    return 0;
 }
 
