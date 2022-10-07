@@ -105,6 +105,9 @@ int build_fasta(int argc, const char **argv, const Command &command) {
     }
     fclose(taxIdFile);
     cout<<"Done"<<endl;
+    for(auto x : taxIDs){
+        cout<<x<<endl;
+    }
 
     //Create lists of species taxonomical IDs of each sequences.
     vector<int> taxIdListAtSpecies;
