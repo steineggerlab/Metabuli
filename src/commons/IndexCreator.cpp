@@ -31,7 +31,6 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     for (auto x : splits){
         cout << x.training << " " << x.offset << " " << x.cnt << " " << x.taxid << endl;
     }
-    return;
 
     bool * splitChecker = new bool[numOfSplits];
     fill_n(splitChecker, numOfSplits, false);
