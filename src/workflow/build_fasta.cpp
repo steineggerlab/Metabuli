@@ -103,6 +103,7 @@ int build_fasta(int argc, const char **argv, const Command &command) {
         fscanf(taxIdFile,"%s",taxID);
         taxIDs.push_back(atol(taxID));
     }
+    taxIDs.pop_back();
     fclose(taxIdFile);
     cout<<"Done"<<endl;
     for(auto x : taxIDs){
@@ -122,7 +123,7 @@ int build_fasta(int argc, const char **argv, const Command &command) {
     //Merge files
     cout << "Merge reference DB files ... " << endl;
     FileMerger merger(par);
-    merger.mergeTargetFiles(par, 68);
+    merger.mergeTargetFiles(par, idxCre.getNumOfFlush());
 
     // Write parameters used
     ofstream params;
