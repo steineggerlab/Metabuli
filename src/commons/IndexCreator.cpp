@@ -29,7 +29,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     splitAFastaFile(speciesTaxIDs, splits, sequences);
     size_t numOfSplits = splits.size();
     for (auto x : splits){
-        cout << x.training << " " << x.offset << " " << x.cnt << endl;
+        cout << x.training << " " << x.offset << " " << x.cnt << " " << x.taxid << endl;
     }
     return;
 
@@ -623,62 +623,55 @@ void IndexCreator::groupFastaFiles(const vector<TaxId2Fasta> & taxIdListAtRank, 
             splitSize ++;
             i++;
         }
-        fastaSplit.emplace_back(training, offset, splitSize);
+        fastaSplit.emplace_back(training, offset, splitSize, currentSpecies);
     }
     for(auto x : fastaSplit){
         cout<<x.training<<" "<<x.offset<<" "<<x.cnt<<endl;
     }
 }
-void IndexCreator::splitAFastaFile(const vector<int> & speciesTaxIDs, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqSegments){
+void IndexCreator::splitAFastaFile(const vector<int> & speciesTaxIDs,
+                                   vector<FastaSplit> & fastaSplit, // Each split is processed by a thread
+                                   vector<Sequence> & seqSegments // Start and end position of each sequence
+                                   ){
     size_t training = 0;
     size_t idx = 0;
     uint32_t offset = 0;
     uint32_t cnt = 0;
-    int theLargest;
     int isLeftover;
     int currSpecies;
     unordered_map<TaxID, size_t> species2training;
+    unordered_map<TaxID, int> maxLenOfSpecies;
 
     while(idx < speciesTaxIDs.size()){
         offset = idx;
-        training = idx;
         cnt = 0;
-        isLeftover = 0;
         currSpecies = speciesTaxIDs[idx];
-        if (currSpecies == 0) {
+        if(currSpecies == 0) {
             idx++;
             continue;
         }
+        if(maxLenOfSpecies.find(currSpecies) == maxLenOfSpecies.end()){ // First time to see this species
+            maxLenOfSpecies[currSpecies] = 0;
+        }
         while(idx < speciesTaxIDs.size() && currSpecies == speciesTaxIDs[idx] ){
+            if(seqSegments[idx].length > maxLenOfSpecies[currSpecies]){ // Find the longest sequence of this species to be the training sequence
+                maxLenOfSpecies[currSpecies] = seqSegments[idx].length;
+                species2training[currSpecies] = idx;
+            }
             cnt ++;
-            idx ++;
-            if(cnt > 100){ //The largest number of consecutive plasmid is the smallest. The smaller, the more training and the less time of single threading
-                theLargest = 0;
-                for(uint32_t i = 0; i < cnt - 1; i++){
-                    if(seqSegments[offset + i].length > theLargest){
-                        training = offset + i;
-                        theLargest = seqSegments[offset + i].length;
-                    }
-                }
-                fastaSplit.emplace_back(training, offset, cnt - 1);
+            if(cnt > 30){
+                fastaSplit.emplace_back(0, offset, cnt - 1, currSpecies);
                 offset += cnt - 1;
                 cnt = 1;
-                isLeftover = 1;
             }
+            idx ++;
         }
+        fastaSplit.emplace_back(0, offset, cnt, currSpecies);
+    }
 
-        if(isLeftover == 1){
-            fastaSplit.emplace_back(training, offset, cnt);
-        }else {
-            theLargest = 0;
-            for (uint32_t i = 0; i < cnt; i++) {
-                if (seqSegments[offset + i].length > theLargest) {
-                    training = offset + i;
-                    theLargest = seqSegments[offset + i].length;
-                }
-            }
-            fastaSplit.emplace_back(training, offset, cnt);
-        }
+    // Update the training sequence
+    for(auto & x : fastaSplit){
+        x.training = species2training[x.taxid];
     }
 }
 

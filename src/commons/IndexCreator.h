@@ -42,10 +42,12 @@ private:
     uint64_t MARKER;
 
     struct FastaSplit{
-        FastaSplit(size_t training, uint32_t offset, uint32_t cnt): training(training), offset(offset), cnt(cnt) {}
+        FastaSplit(size_t training, uint32_t offset, uint32_t cnt, TaxID taxid):
+            training(training), offset(offset), cnt(cnt), taxid(taxid) {}
         size_t training;
         uint32_t offset;
         uint32_t cnt;
+        TaxID taxid;
     };
 
    struct Split{
