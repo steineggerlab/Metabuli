@@ -28,6 +28,10 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     vector<FastaSplit> splits;
     splitAFastaFile(speciesTaxIDs, splits, sequences);
     size_t numOfSplits = splits.size();
+    for (auto x : splits){
+        cout << x.training << " " << x.offset << " " << x.cnt << endl;
+    }
+    return;
 
     bool * splitChecker = new bool[numOfSplits];
     fill_n(splitChecker, numOfSplits, false);
@@ -39,7 +43,6 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     while(processedSplitCnt < numOfSplits) {
         fillTargetKmerBuffer(kmerBuffer, seqFile, sequences, splitChecker, processedSplitCnt, splits, speciesTaxIDs,
                              par);
-
         writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdList);
     }
 
@@ -634,6 +637,8 @@ void IndexCreator::splitAFastaFile(const vector<int> & speciesTaxIDs, vector<Fas
     int theLargest;
     int isLeftover;
     int currSpecies;
+    unordered_map<TaxID, size_t> species2training;
+
     while(idx < speciesTaxIDs.size()){
         offset = idx;
         training = idx;
