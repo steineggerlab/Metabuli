@@ -862,7 +862,8 @@ processedSplitCnt, cout, taxIdListAtRank, superkingdoms)
                 posToWrite = kmerBuffer.reserveMemory(estimatedKmerCnt);
                 if (posToWrite + estimatedKmerCnt < kmerBuffer.bufferSize){
                     // Prokaryotes and viruses
-                    if (superkingdoms[i] == 2 || superkingdoms[i] == 10239 || superkingdoms[i] == 2157) {
+                    if (superkingdoms[splits[i].training] == 2 || superkingdoms[splits[i].training] == 10239
+                        || superkingdoms[splits[i].training] == 2157) {
                         // Train Prodigal
                         buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].training].start]),
                                 static_cast<size_t>(seqs[splits[i].training].length)};
