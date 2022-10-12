@@ -11,7 +11,7 @@
 
 using namespace std;
 
-int grade_at_ranks(int argc, const char **argv, const Command &command){
+int grade(int argc, const char **argv, const Command &command){
 
     LocalParameters &par = LocalParameters::getLocalInstance();
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
