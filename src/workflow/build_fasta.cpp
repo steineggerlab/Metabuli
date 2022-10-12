@@ -7,6 +7,10 @@
 void setDefaults_build_fasta(LocalParameters & par){
     par.reducedAA = 0;
     par.spaceMask = "11111111";
+    par.virusTaxId = 10239;
+    par.bacteriaTaxId = 2;
+    par.archaeaTaxId = 2157;
+    par.eukaryotaTaxId = 2759;
 }
 
 
@@ -113,12 +117,6 @@ int build_fasta(int argc, const char **argv, const Command &command) {
     ncbiTaxonomy.createTaxIdListAtRank(taxIDs, taxIdListAtSpecies, "species");
     ncbiTaxonomy.getSuperKingdoms(taxIdListAtSpecies, taxIdListAtSuperkingdom);
 
-    for(int i = 0; i < taxIdListAtSpecies.size(); i++){
-        cout << taxIdListAtSpecies[i] << " " << taxIdListAtSuperkingdom[i] << endl;
-    }
-
-    return 0;
-    
     //Make files of differential indexing and information of k-mers
     cout << "Start to create reference DB file(s) ... " << endl;
     IndexCreator idxCre(par);
