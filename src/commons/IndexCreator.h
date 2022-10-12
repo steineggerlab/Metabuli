@@ -73,6 +73,7 @@ private:
                                         size_t & processedTaxIdCnt,
                                         const vector<FastaSplit> & splits,
                                         const vector<int> & taxIdList,
+                                        const vector<TaxID> & superkingdoms,
                                         const LocalParameters & par);
 
     static size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
@@ -118,7 +119,8 @@ public:
     int getNumOfFlush();
     void startIndexCreatingParallel(const LocalParameters & par);
     void startIndexCreatingParallel(const char * seqFileName, const char * outputFileName,
-                                    const vector<int> & taxIdListAtRank, const vector<int> & taxIdList,
+                                    const vector<int> & superkingdom, const vector<int> & taxIdListAtRank,
+                                    const vector<int> & taxIdList,
                                     const LocalParameters & par);
     void startIndexCreatingParallel2(const char * seqFileName, const char * outputFileName, const vector<int> & taxIdListAtSpecies, const vector<int> & taxIdListAtGenus, const vector<int> & taxIdList);
 

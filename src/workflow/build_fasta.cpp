@@ -112,12 +112,17 @@ int build_fasta(int argc, const char **argv, const Command &command) {
 
     //Create lists of species taxonomical IDs of each sequences.
     vector<int> taxIdListAtSpecies;
+    vector<int> taxIdListAtSuperkingdom;
     ncbiTaxonomy.createTaxIdListAtRank(taxIDs, taxIdListAtSpecies, "species");
+    ncbiTaxonomy.createTaxIdListAtRank(taxIdListAtSpecies, taxIdListAtSuperkingdom, "superkingdom");
+    cout <<  ncbiTaxonomy.taxonNode(taxIdListAtSuperkingdom[0])->name << endl;
+
 
     //Make files of differential indexing and information of k-mers
-    cout << "Start to creat reference DB file(s) ... " << endl;
+    cout << "Start to create reference DB file(s) ... " << endl;
     IndexCreator idxCre(par);
-    idxCre.startIndexCreatingParallel(fastaName, dbDirectory.c_str(), taxIdListAtSpecies, taxIDs, par);
+    idxCre.startIndexCreatingParallel(fastaName, dbDirectory.c_str(), taxIdListAtSuperkingdom,
+                                      taxIdListAtSpecies, taxIDs, par);
     cout << "done" << endl;
 
     //Merge files

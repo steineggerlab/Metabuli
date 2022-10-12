@@ -1,7 +1,3 @@
-//
-// Created by KJB on 25/09/2020.
-//
-
 #ifndef ADCLASSIFIER2_LOCALPARAMETERS_H
 #define ADCLASSIFIER2_LOCALPARAMETERS_H
 
@@ -27,7 +23,7 @@ public:
     std::vector<MMseqsParameter*> classify;
     std::vector<MMseqsParameter*> exclusiontest_hiv;
     std::vector<MMseqsParameter*> seqHeader2TaxId;
-    std::vector<MMseqsParameter*> inclusiontest;
+    std::vector<MMseqsParameter*> grade;
 
     PARAMETER(VIRUS_TAX_ID)
     PARAMETER(SEQ_MODE)

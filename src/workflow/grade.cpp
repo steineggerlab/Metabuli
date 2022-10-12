@@ -1,7 +1,3 @@
-//
-// Created by 김재범 on 2021/05/10.
-//
-
 #include "NcbiTaxonomy.h"
 #include "Parameters.h"
 #include "LocalParameters.h"
@@ -15,7 +11,7 @@
 
 using namespace std;
 
-int inclusiontest(int argc, const char **argv, const Command &command){
+int grade_at_ranks(int argc, const char **argv, const Command &command){
 
     LocalParameters &par = LocalParameters::getLocalInstance();
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
@@ -29,7 +25,7 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     string merged =  taxonomy + "/merged.dmp";
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
 
-    // Load the mapping file (assacc to taxID)
+    // Load the mapping file (answer sheet) (assacc to taxID)
     unordered_map<string, int> assacc2taxid;
     string key, value;
     ifstream map;
@@ -43,7 +39,6 @@ int inclusiontest(int argc, const char **argv, const Command &command){
         cout<<"Cannot open file for mappig from assemlby accession to tax ID"<<endl;
     }
     map.close();
-
 
     // Load classification results
     vector<int> rightAnswers;
@@ -85,7 +80,6 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     }
     cout<<"The number of reads: "<< classList.size()<<endl;
 
-    Counts counts = {0,0,0,0,0,0,0,0};
     CountAtRank SS = {0, 0, 0, 0, 0};
     CountAtRank S = {0, 0, 0, 0, 0};
     CountAtRank G = {0, 0, 0, 0, 0};
@@ -109,16 +103,6 @@ int inclusiontest(int argc, const char **argv, const Command &command){
     S.sensitivity = (float)S.TP / classList.size();
     G.sensitivity = (float)G.TP / classList.size();
     F.sensitivity = (float)F.TP / classList.size();
-
-    cout<<"Num of queries: " << classList.size() << endl;
-    cout<<"Num of classifications: "<< counts.classificationCnt << endl;
-    cout<<"Num of correct classifications: "<<counts.correct<<endl;
-    cout<<"Num of correct but too broad classifications: "<<counts.highRank<<endl;
-    cout<<"classified/total = " << float(counts.classificationCnt)/float(classList.size()) << endl;
-    cout<<"correct   /total = "<< float(counts.correct) / float(classList.size())<<endl;
-    cout<<"correct   /classifications = "<<float(counts.correct) / float(counts.classificationCnt) <<endl;
-    cout<<"high rank /classifications = "<<float(counts.highRank) / float(counts.classificationCnt) <<endl << endl;
-
 
     cout<<"Family      : " << F.total << " / " << F.TP << " / "<< F.FP << " / " << F.precision << " / "<< F.sensitivity << endl;
     cout<<"Genus       : " << G.total << " / " << G.TP << " / "<< G.FP << " / " << G.precision << " / "<< G.sensitivity << endl;
