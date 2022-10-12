@@ -15,6 +15,7 @@ IndexCreator::~IndexCreator() {
 }
 
 void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const char * outputFileName,
+                                              const vector<TaxID> & superkingdom,
                                               const vector<int> & speciesTaxIDs, const vector<int> & taxIdList,
                                               const LocalParameters & par){ //build_fasta
 
@@ -41,7 +42,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
     while(processedSplitCnt < numOfSplits) {
         fillTargetKmerBuffer(kmerBuffer, seqFile, sequences, splitChecker, processedSplitCnt, splits, speciesTaxIDs,
-                             par);
+                             superkingdom, par);
         writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, outputFileName, taxIdList);
     }
 
@@ -606,6 +607,11 @@ void IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const 
         cerr << "Cannot open the FASTA file." << endl;
     }
     seqFile.close();
+
+    // Print the sequence segments
+     for (auto & seqSegment : seqSegments) {
+         cout << seqSegment.start << " " << seqSegment.end << " " << seqSegment.length << endl;
+     }
 }
 
 void IndexCreator::groupFastaFiles(const vector<TaxId2Fasta> & taxIdListAtRank, vector<FastaSplit> & fastaSplit){
@@ -815,6 +821,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                           size_t &processedSplitCnt,
                                           const vector<FastaSplit> &splits,
                                           const vector<int> &taxIdListAtRank,
+                                          const vector<TaxID> & superkingdoms,
                                           const LocalParameters &par) {
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
@@ -860,7 +867,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     lengthOfTrainingSeq = strlen(seq->seq.s);
                     prodigal.is_meta = 0;
 
-                    if(strlen(seq->seq.s) < 100000){
+                    if(lengthOfTrainingSeq < 100000){
                         prodigal.is_meta = 1;
                         prodigal.trainMeta(seq->seq.s);
                     }else{
