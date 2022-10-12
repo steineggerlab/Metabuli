@@ -106,18 +106,19 @@ int build_fasta(int argc, const char **argv, const Command &command) {
     taxIDs.pop_back();
     fclose(taxIdFile);
     cout<<"Done"<<endl;
-    for(auto x : taxIDs){
-        cout<<x<<endl;
-    }
 
     //Create lists of species taxonomical IDs of each sequences.
     vector<int> taxIdListAtSpecies;
     vector<int> taxIdListAtSuperkingdom;
     ncbiTaxonomy.createTaxIdListAtRank(taxIDs, taxIdListAtSpecies, "species");
-    ncbiTaxonomy.createTaxIdListAtRank(taxIdListAtSpecies, taxIdListAtSuperkingdom, "superkingdom");
-    cout <<  ncbiTaxonomy.taxonNode(taxIdListAtSuperkingdom[0])->name << endl;
+    ncbiTaxonomy.getSuperKingdoms(taxIdListAtSpecies, taxIdListAtSuperkingdom);
 
+    for(int i = 0; i < taxIdListAtSpecies.size(); i++){
+        cout << taxIdListAtSpecies[i] << " " << taxIdListAtSuperkingdom[i] << endl;
+    }
 
+    return 0;
+    
     //Make files of differential indexing and information of k-mers
     cout << "Start to create reference DB file(s) ... " << endl;
     IndexCreator idxCre(par);
