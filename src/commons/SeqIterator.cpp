@@ -392,8 +392,11 @@ SeqIterator::addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev,
     }
 }
 
-bool SeqIterator::translateBlock(const char *seq, PredictedBlock &block) {
+bool SeqIterator::translateBlock(const char *seq, PredictedBlock block) {
     aaFrames[0].clear();
+    if(aaFrames->capacity() < strlen(seq) / 3 + 1) {
+        aaFrames->reserve(strlen(seq) / 3 + 1);
+    }
     if (block.strand == 1) {
         for (int i = block.start; i + 2 <= block.end; i = i + 3) {
             aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[i]])][nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])]);

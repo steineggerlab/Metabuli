@@ -25,7 +25,12 @@ public:
     std::vector<MMseqsParameter*> seqHeader2TaxId;
     std::vector<MMseqsParameter*> grade;
 
+    // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
+    PARAMETER(BACTERIA_TAX_ID)
+    PARAMETER(ARCHAEA_TAX_ID)
+    PARAMETER(EUKARYOTA_TAX_ID)
+
     PARAMETER(SEQ_MODE)
     PARAMETER(MEMORY_MODE)
     PARAMETER(REDUCED_AA)
@@ -37,8 +42,14 @@ public:
     PARAMETER(TEST_RANK)
     PARAMETER(TEST_TYPE)
 
-    // Classify
+
+    // Superkingdom taxonomy id
     int virusTaxId;
+    int bacteriaTaxId;
+    int archaeaTaxId;
+    int eukaryotaTaxId;
+
+    // Classify
     int seqMode;
     int memoryMode;
     int reducedAA;

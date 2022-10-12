@@ -9,6 +9,27 @@ LocalParameters::LocalParameters() :
                      typeid(int),
                      (void *) &virusTaxId,
                      "[^[1-9]\\d*$]"),
+        BACTERIA_TAX_ID(BACTERIA_TAX_ID_ID,
+                     "--bacteria-taxid",
+                     "Taxonomy ID of bacteria taxon",
+                     "NCBI: 2 [Default]\nCUSTOM: Check names.dmp file ",
+                     typeid(int),
+                     (void *) &bacteriaTaxId,
+                     "[^[1-9]\\d*$]"),
+        ARCHAEA_TAX_ID(ARCHAEA_TAX_ID_ID,
+                     "--archaea-taxid",
+                     "Taxonomy ID of archaea taxon",
+                     "NCBI: 2157 [Default]\nCUSTOM: Check names.dmp file ",
+                     typeid(int),
+                     (void *) &archaeaTaxId,
+                     "[^[1-9]\\d*$]"),
+        EUKARYOTA_TAX_ID(VIRUS_TAX_ID_ID,
+                     "--eukaryota-taxid",
+                     "Taxonomy ID of eukaryota taxon",
+                     "NCBI: 2759 [Default]\nCUSTOM: Check names.dmp file ",
+                     typeid(int),
+                     (void *) &eukaryotaTaxId,
+                     "[^[1-9]\\d*$]"),
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
                  "Sequencing type",
@@ -82,7 +103,8 @@ LocalParameters::LocalParameters() :
                   "Test Type",
                   typeid(std::string),
                     (void *) &testType,
-                    ""){
+                    "")
+                    {
     //build_dir
     build_dir.push_back(&PARAM_THREADS);
     build_dir.push_back(&REDUCED_AA);
@@ -92,6 +114,10 @@ LocalParameters::LocalParameters() :
     build_fasta.push_back(&PARAM_THREADS);
     build_fasta.push_back(&REDUCED_AA);
     build_fasta.push_back(&SPACED);
+    build_fasta.push_back(&VIRUS_TAX_ID);
+    build_fasta.push_back(&BACTERIA_TAX_ID);
+    build_fasta.push_back(&ARCHAEA_TAX_ID);
+    build_fasta.push_back(&EUKARYOTA_TAX_ID);
 
     //classify
     classify.push_back(&PARAM_THREADS);

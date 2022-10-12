@@ -75,7 +75,7 @@ public:
 
     void sixFrameTranslation(const char *seq);
 
-    bool translateBlock(const char *seq, PredictedBlock &block);
+    bool translateBlock(const char *seq, PredictedBlock block);
 
     void generateIntergenicKmerList(struct _gene *genes, struct _node *nodes, int numberOfGenes,
                                     vector<uint64_t> &intergenicKmerList, const char *seq);
