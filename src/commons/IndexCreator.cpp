@@ -862,7 +862,7 @@ processedSplitCnt, cout, taxIdListAtRank, superkingdoms)
                 posToWrite = kmerBuffer.reserveMemory(estimatedKmerCnt);
                 if (posToWrite + estimatedKmerCnt < kmerBuffer.bufferSize){
                     // Prokaryotes and viruses
-                    if (superkingdoms[i] == 2 || superkingdoms[i] == 10239) {
+                    if (superkingdoms[i] == 2 || superkingdoms[i] == 10239 || superkingdoms[i] == 2157) {
                         // Train Prodigal
                         buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].training].start]),
                                 static_cast<size_t>(seqs[splits[i].training].length)};
@@ -870,6 +870,9 @@ processedSplitCnt, cout, taxIdListAtRank, superkingdoms)
                         kseq_read(seq);
                         lengthOfTrainingSeq = strlen(seq->seq.s);
                         prodigal.is_meta = 0;
+                        if (lengthOfTrainingSeq > 32000000) {
+                            cout << seq->name.s << " is too long for training." << endl;
+                        }
                         if(lengthOfTrainingSeq < 100000){
                             prodigal.is_meta = 1;
                             prodigal.trainMeta(seq->seq.s);
