@@ -828,7 +828,8 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
 #endif
     bool hasOverflow = false;
 
-#pragma omp parallel default(none), shared(checker, hasOverflow,par, splits, seqFile, seqs, kmerBuffer, processedSplitCnt, cout, taxIdListAtRank)
+#pragma omp parallel default(none), shared(checker, hasOverflow,par, splits, seqFile, seqs, kmerBuffer, \
+processedSplitCnt, cout, taxIdListAtRank, superkingdoms)
     {
         ProdigalWrapper prodigal;
         SeqIterator seqIterator(par);
