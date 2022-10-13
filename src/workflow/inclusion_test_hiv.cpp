@@ -94,7 +94,7 @@ int inclusiontest_hiv(int argc, const char **argv, const Command &command){
         cout << taxIdList[i] << "\t" << genusTaxIdList[i] << endl;
     }
 
-    return 0;
+
 
     unordered_map<TaxID, unsigned int> taxonCnt;
     for(TaxID x : taxIdList){

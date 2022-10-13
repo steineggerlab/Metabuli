@@ -11,6 +11,7 @@ void setDefaults_build_fasta(LocalParameters & par){
     par.bacteriaTaxId = 2;
     par.archaeaTaxId = 2157;
     par.eukaryotaTaxId = 2759;
+    par.tinfoPath = "";
 }
 
 
