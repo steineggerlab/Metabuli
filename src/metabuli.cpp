@@ -87,7 +87,16 @@ std::vector<Command> commands = {
                 "<i:read-classification> <i:mapping>",
                 CITATION_SPACEPHARER,
                 {{"read-classification", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-                        {"Mapping file (accession to tax ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}}
-
+                        {"Mapping file (accession to tax ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
+        {"add_to_library", addToLibrary, &localPar.addToLibrary, COMMAND_MAIN,
+                    "It bins sequences into distinct files according to their species referring their accession number.\n "
+                    "It requires a mapping file (accession to tax ID) and NCBI style tax dump files in a taxonomy directory.",
+                    NULL,
+                    "Jaebeom Kim <jbeom0731@gmail.com>",
+                    "<i:FASTA list> <i:DB DIR>",
+                    CITATION_SPACEPHARER,
+                    {{"List of absolute paths of files to be added. One path per line.", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                     {"NCBI style accession2taxid file. It should be consistent to tax dump files.", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                     {"DB directory", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}}
 };
 
