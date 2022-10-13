@@ -94,7 +94,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
 
             // Write to file
             FILE * file = fopen((dbDir + "/library/" + to_string(speciesTaxID)).c_str(), "a");
-            fprintf(file, "%s %s\n", seq->name.s, seq->comment.s);
+            fprintf(file, ">%s %s\n", seq->name.s, seq->comment.s);
             fprintf(file, "%s\n", seq->seq.s);
             fclose(file);
 
