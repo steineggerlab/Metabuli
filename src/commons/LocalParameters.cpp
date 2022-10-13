@@ -103,8 +103,16 @@ LocalParameters::LocalParameters() :
                   "Test Type",
                   typeid(std::string),
                     (void *) &testType,
-                    "")
-                    {
+                    ""),
+        TINFO_PATH(TINFO_PATH_ID,
+                   "--tinfo-path",
+                   "Path to prodigal training information files",
+                   "Path to prodigal training information files",
+                   typeid(std::string),
+                   (void *) &tinfoPath,
+                   ""){
+    //add_to_library
+
     //build_dir
     build_dir.push_back(&PARAM_THREADS);
     build_dir.push_back(&REDUCED_AA);

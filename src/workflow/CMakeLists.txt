@@ -9,4 +9,5 @@ set(workflow_source_files
         workflow/genus_level_test.cpp
         workflow/inclusion_test_hiv.cpp
         workflow/exclusion_test_hiv.cpp
+        workflow/add_to_library.cpp
         PARENT_SCOPE)

@@ -1,7 +1,3 @@
-//
-// Created by KJB on 01/09/2020.
-//
-
 #ifndef ADKMER4_INDEXCREATOR_H
 #define ADKMER4_INDEXCREATOR_H
 #include <iostream>
@@ -40,6 +36,11 @@ using namespace std;
 class IndexCreator{
 private:
     uint64_t MARKER;
+    string tinfo_path;
+    string tinfo_list;
+    vector<TaxID> trainedSpecies;
+    unordered_map<TaxID, _training> trainingInfo;
+
 
     struct FastaSplit{
         FastaSplit(size_t training, uint32_t offset, uint32_t cnt, TaxID taxid):
@@ -58,7 +59,10 @@ private:
 
     size_t availableMemory;
     size_t numOfFlush=0;
-    //SeqIterator * seqIterator;
+
+    void trainProdigal(const vector<FastaSplit> & splits, const vector<Sequence> & seq, MmapedData<char> & seqFile, const LocalParameters & par);
+    void loadTrainingInfo();
+
     void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<int> & taxIdList);
     void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
 
@@ -66,15 +70,15 @@ private:
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
 
-    static size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
-                                        MmapedData<char> & seqFile,
-                                        vector<Sequence> & seqs,
-                                        bool * checker,
-                                        size_t & processedTaxIdCnt,
-                                        const vector<FastaSplit> & splits,
-                                        const vector<int> & taxIdList,
-                                        const vector<TaxID> & superkingdoms,
-                                        const LocalParameters & par);
+    size_t fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
+                                MmapedData<char> &seqFile,
+                                vector<Sequence> &seqs,
+                                bool *checker,
+                                size_t &processedTaxIdCnt,
+                                const vector<FastaSplit> &splits,
+                                const vector<int> &taxIdList,
+                                const vector<TaxID> &superkingdoms,
+                                const LocalParameters &par);
 
     static size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                                         bool * checker,
@@ -115,6 +119,7 @@ public:
     static void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
     static void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const char * seqFileName);
     IndexCreator(const LocalParameters & par);
+    IndexCreator() {}
     ~IndexCreator();
     int getNumOfFlush();
     void startIndexCreatingParallel(const LocalParameters & par);

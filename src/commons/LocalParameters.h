@@ -24,6 +24,7 @@ public:
     std::vector<MMseqsParameter*> exclusiontest_hiv;
     std::vector<MMseqsParameter*> seqHeader2TaxId;
     std::vector<MMseqsParameter*> grade;
+    std::vector<MMseqsParameter*> addToLibrary;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
@@ -41,7 +42,7 @@ public:
     PARAMETER(MIN_SP_SCORE)
     PARAMETER(TEST_RANK)
     PARAMETER(TEST_TYPE)
-
+    PARAMETER(TINFO_PATH)
 
     // Superkingdom taxonomy id
     int virusTaxId;
@@ -58,6 +59,10 @@ public:
     int minConsCnt;
     uint8_t hammingMargin;
     float minSpScore;
+
+    // Database creation
+    std::string tinfoPath;
+
 
     std::string testRank;
     std::string testType;
