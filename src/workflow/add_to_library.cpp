@@ -79,10 +79,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             seq = kseq_init(&buffer);
             kseq_read(seq);
             // Extract accession
-            string header = seq->name.s;
-            cout << header << endl;
-            size_t pos = header.find(' ');
-            string accession = header.substr(0, pos);
+            string accession = seq->name.s;
 
             // Skip if accession is not in the mapping file
             if (acc2taxid.find(accession) == acc2taxid.end()){
@@ -97,8 +94,8 @@ int addToLibrary(int argc, const char **argv, const Command &command){
 
             // Write to file
             FILE * file = fopen((dbDir + "/library/" + to_string(speciesTaxID)).c_str(), "a");
-            fprintf(file, "%s", seq->name.s);
-            fprintf(file, "%s", seq->seq.s);
+            fprintf(file, "%s %s", seq->name.s, seq->comment.s);
+            fprintf(file, "%s\n", seq->seq.s);
             fclose(file);
 
             kseq_destroy(seq);
