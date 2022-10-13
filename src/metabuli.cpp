@@ -93,7 +93,7 @@ std::vector<Command> commands = {
                     "It requires a mapping file (accession to tax ID) and NCBI style tax dump files in a taxonomy directory.",
                     NULL,
                     "Jaebeom Kim <jbeom0731@gmail.com>",
-                    "<i:FASTA list> <i:DB DIR>",
+                    "<I: FASTA list> <I: accession2taxid> <I: DB DIR>",
                     CITATION_SPACEPHARER,
                     {{"List of absolute paths of files to be added. One path per line.", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                      {"NCBI style accession2taxid file. It should be consistent to tax dump files.", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},

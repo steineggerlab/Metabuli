@@ -82,6 +82,15 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             string header = seq->name.s;
             size_t pos = header.find(' ');
             string accession = header.substr(0, pos);
+
+            // Skip if accession is not in the mapping file
+            if (acc2taxid.find(accession) == acc2taxid.end()){
+                cout << "During processing " << fileName << ", accession " << accession <<
+                " is not found in the mapping file. It is skipped." << endl;
+                kseq_destroy(seq);
+                continue;
+            }
+
             // Get species taxID
             int speciesTaxID = ncbiTaxonomy.getTaxIdAtRank(acc2taxid[accession], "species");
 
