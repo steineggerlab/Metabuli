@@ -48,6 +48,8 @@ public:
     struct _gene *genes;
     struct _gene *finalGenes;
     int getNumberOfPredictedGenes();
+    void updateTrainingInfo(_training &tinf);
+    _training * getTrainingInfo();
     void getPredictedGenes(char * genome);
     void removeCompletelyOverlappingGenes();
     void trainASpecies(char * genome);

@@ -703,7 +703,7 @@ bool SeqIterator::compareMinHashList(priority_queue <uint64_t> list1, priority_q
             list2.pop();
         }
     }
-    if (identicalCount > list1Size * lengthRatio * 0.7) {
+    if (identicalCount > list1Size * lengthRatio * 0.5) {
         return true;
     } else {
         return false;
