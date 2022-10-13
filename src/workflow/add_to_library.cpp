@@ -80,6 +80,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             kseq_read(seq);
             // Extract accession
             string header = seq->name.s;
+            cout << header << endl;
             size_t pos = header.find(' ');
             string accession = header.substr(0, pos);
 
