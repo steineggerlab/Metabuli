@@ -18,8 +18,8 @@ int addToLibrary(int argc, const char **argv, const Command &command){
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
 
     const string fileList = par.filenames[0];
-    const string dbDir = par.filenames[1];
-    const string mappingFileName = par.filenames[2];
+    const string mappingFileName = par.filenames[1];
+    const string dbDir = par.filenames[2];
     const string taxonomy = dbDir + "/taxonomy";
 
     // Load taxonomy
