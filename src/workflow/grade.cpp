@@ -147,6 +147,7 @@ int grade(int argc, const char **argv, const Command &command){
         cout<<"Subspecies  : " << SS.total << " / " << SS.TP << " / "<< SS.FP << " / " << SS.precision << " / "<< SS.sensitivity << endl;
         cout<<endl;
     }
+
     return 0;
 }
 

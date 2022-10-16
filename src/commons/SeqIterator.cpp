@@ -488,7 +488,7 @@ size_t SeqIterator::getNumOfKmerForBlock(const PredictedBlock &block) {
 
 // It makes the blocks for translation
 // Each block has a predicted gene part and an intergenic region. When another gene shows up, new block starts.
-void SeqIterator::getTranslationBlocks(struct _gene *genes, struct _node *nodes, vector<PredictedBlock> &blocks,
+void SeqIterator::getExtendedORFs(struct _gene *genes, struct _node *nodes, vector<PredictedBlock> &blocks,
                                        size_t numOfGene, size_t length,
                                        size_t &blockIdx, vector<uint64_t> &intergenicKmerList, const char *seq) {
 

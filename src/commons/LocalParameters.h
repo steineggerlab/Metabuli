@@ -25,6 +25,7 @@ public:
     std::vector<MMseqsParameter*> seqHeader2TaxId;
     std::vector<MMseqsParameter*> grade;
     std::vector<MMseqsParameter*> addToLibrary;
+    std::vector<MMseqsParameter*> build;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
@@ -44,6 +45,11 @@ public:
     PARAMETER(TEST_TYPE)
     PARAMETER(TINFO_PATH)
 
+    // DB build parameters
+    PARAMETER(LIBRARY_PATH)
+    PARAMETER(TAXONOMY_PATH)
+
+
     // Superkingdom taxonomy id
     int virusTaxId;
     int bacteriaTaxId;
@@ -62,6 +68,8 @@ public:
 
     // Database creation
     std::string tinfoPath;
+    std::string libraryPath;
+    std::string taxonomyPath;
 
 
     std::string testRank;
