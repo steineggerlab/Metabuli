@@ -1069,7 +1069,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
 #endif
     bool hasOverflow = false;
 
-#pragma omp parallel default(none), shared(kmerBuffer, checker, processedSplitCnt, hasOverflow, par)
+#pragma omp parallel default(none), shared(kmerBuffer, checker, processedSplitCnt, hasOverflow, par, cout)
     {
         ProdigalWrapper prodigal;
         SeqIterator seqIterator(par);
