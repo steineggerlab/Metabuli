@@ -80,7 +80,7 @@ public:
     void generateIntergenicKmerList(struct _gene *genes, struct _node *nodes, int numberOfGenes,
                                     vector<uint64_t> &intergenicKmerList, const char *seq);
 
-    void getTranslationBlocks(struct _gene *genes, struct _node *nodes, vector<PredictedBlock> &blocks, size_t numOfGene,
+    void getExtendedORFs(struct _gene *genes, struct _node *nodes, vector<PredictedBlock> &blocks, size_t numOfGene,
             size_t length, size_t &numOfBlocks, vector<uint64_t> &intergenicKmerList, const char *seq);
 
     void getMinHashList(priority_queue<uint64_t> &sortedHashQue, const char *seq);

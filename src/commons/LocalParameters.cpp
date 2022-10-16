@@ -1,4 +1,5 @@
 #include "LocalParameters.h"
+#include "Parameters.h"
 
 LocalParameters::LocalParameters() :
         Parameters(),
@@ -110,8 +111,29 @@ LocalParameters::LocalParameters() :
                    "Path to prodigal training information files",
                    typeid(std::string),
                    (void *) &tinfoPath,
-                   ""){
+                   ""),
+        LIBRARY_PATH(LIBRARY_PATH_ID,
+                     "--library-path",
+                     "Path to library where the FASTA files are stored",
+                        "Path to library where the FASTA files are stored",
+                        typeid(std::string),
+                        (void *) &libraryPath,
+                        ""),
+        TAXONOMY_PATH(TAXONOMY_PATH_ID,
+                      "--taxonomy-path",
+                      "Directory where the taxonomy dump files are stored",
+                      "Directory where the taxonomy dump files are stored",
+                      typeid(std::string),
+                      (void *) &taxonomyPath,
+                      ""){
     //add_to_library
+
+    // build
+    build.push_back(&LIBRARY_PATH);
+    build.push_back(&PARAM_THREADS);
+    build.push_back(&REDUCED_AA);
+    build.push_back(&SPACED);
+    build.push_back(&TAXONOMY_PATH);
 
     //build_dir
     build_dir.push_back(&PARAM_THREADS);

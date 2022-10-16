@@ -4,14 +4,9 @@
 #include <string>
 #include "KSeqWrapper.h"
 #include <iostream>
-#include <fstream>
 #include "IndexCreator.h"
 
 using namespace std;
-
-void setDefaults_addToLibrary(LocalParameters & par){
-
-}
 
 int addToLibrary(int argc, const char **argv, const Command &command){
     LocalParameters &par = LocalParameters::getLocalInstance();
@@ -56,7 +51,6 @@ int addToLibrary(int argc, const char **argv, const Command &command){
         cerr << "Cannot open file for mapping from accession to tax ID" << endl;
     }
 
-
     IndexCreator idxCreator;
     vector<Sequence> sequences;
     // Process each file
@@ -92,8 +86,15 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             // Get species taxID
             int speciesTaxID = ncbiTaxonomy.getTaxIdAtRank(acc2taxid[accession], "species");
 
+            if (speciesTaxID == 0){
+                cout << "During processing " << fileName << ", accession " << accession <<
+                " is not matched to any species. It is skipped." << endl;
+                kseq_destroy(seq);
+                continue;
+            }
+
             // Write to file
-            FILE * file = fopen((dbDir + "/library/" + to_string(speciesTaxID)).c_str(), "a");
+            FILE * file = fopen((dbDir + "/library/" + to_string(speciesTaxID) + ".fna").c_str(), "a");
             fprintf(file, ">%s %s\n", seq->name.s, seq->comment.s);
             fprintf(file, "%s\n", seq->seq.s);
             fclose(file);

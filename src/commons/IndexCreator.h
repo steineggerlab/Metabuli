@@ -41,6 +41,27 @@ private:
     vector<TaxID> trainedSpecies;
     unordered_map<TaxID, _training> trainingInfo;
 
+    NcbiTaxonomy * taxonomy;
+    string dbDir;
+    string taxonomyDir;
+    string fnaListFileName;
+
+    vector<string> fnaList;
+    vector<string> fastaSplits;
+    vector<vector<Sequence>> sequenceOfFastas;
+    vector<TaxID> taxIdList;
+
+    struct FnaSplit{
+        // species, file_idx, training, offset, cnt
+        size_t training;
+        size_t offset;
+        size_t cnt;
+        TaxID speciesID;
+        int file_idx;
+        FnaSplit(size_t training, size_t offset, size_t cnt, TaxID speciesID, int file_idx):
+                training(training), offset(offset), cnt(cnt), speciesID(speciesID), file_idx(file_idx) {}
+    };
+    vector<FnaSplit> fnaSplits;
 
     struct FastaSplit{
         FastaSplit(size_t training, uint32_t offset, uint32_t cnt, TaxID taxid):
@@ -87,15 +108,21 @@ private:
                                         const vector<TaxId2Fasta> & taxid2fasta,
                                         const LocalParameters & par);
 
+    size_t fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
+                                bool *checker,
+                                size_t &processedSplitCnt,
+                                const LocalParameters &par);
+
     static void extractKmerFromFasta(SeqIterator &seqIterator, MmapedData<char> &seqFile, priority_queue<uint64_t> &standardList,
                      size_t lengthOfTrainingSeq, const vector<Sequence> &sequences, ProdigalWrapper &prodigal,
                      vector<uint64_t> &intergenicKmerList, TargetKmerBuffer &kmerBuffer, size_t & posToWrite,
                      uint32_t seqID, int taxIdAtRank, size_t startIdx);
 
 
-
+    void makeBlocksForParallelProcessing();
     static void getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
     void splitAFastaFile(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqSegments);
+    void splitFasta(int file_idx, TaxID speciesID);
     void groupFastaFiles(const vector<TaxId2Fasta> & taxIdListAtRank, vector<FastaSplit> & fastaSplit);
     void mappingFromTaxIDtoFasta(const string & fastaList_fname,
                                  unordered_map<string, int> & assacc2taxid,
@@ -107,22 +134,36 @@ private:
     }
 
     void load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
+    void load_accession2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
 
     static size_t estimateKmerNum(const vector<TaxId2Fasta> & taxid2fasta, const FastaSplit & split);
     void reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniqeKmerIdx, size_t & uniqKmerCnt, const LocalParameters & par,
                           const vector<TaxId2Fasta> & taxid2fasta);
+    void reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniqeKmerIdx, size_t & uniqKmerCnt,
+                          const LocalParameters & par);
     size_t AminoAcidPart(size_t kmer) {
         return (kmer) & MARKER;
     }
 
+    int getNumberOfLines(const string & filename){
+        ifstream file(filename);
+        int cnt = 0;
+        string line;
+        while (getline(file, line)) {
+            cnt++;
+        }
+        return cnt;
+    }
+
 public:
     static void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
-    static void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const char * seqFileName);
+    string getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const char * seqFileName);
     IndexCreator(const LocalParameters & par);
     IndexCreator() {}
     ~IndexCreator();
     int getNumOfFlush();
     void startIndexCreatingParallel(const LocalParameters & par);
+    void createIndex(const LocalParameters & par);
     void startIndexCreatingParallel(const char * seqFileName, const char * outputFileName,
                                     const vector<int> & superkingdom, const vector<int> & taxIdListAtRank,
                                     const vector<int> & taxIdList,
