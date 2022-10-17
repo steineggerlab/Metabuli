@@ -877,7 +877,7 @@ string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, cons
         seqSegmentsTmp.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
     } else {
         cerr << "Unable to open file: " << seqFileName << endl;
-        EXIT(EXIT_FAILURE);
+//        EXIT(EXIT_FAILURE);
     }
     seqFile.close();
     seqSegments = move(seqSegmentsTmp);
