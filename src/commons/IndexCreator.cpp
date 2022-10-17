@@ -203,7 +203,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     // Getting start and end position of each sequence
     cerr<< "Get start and end position of each sequence" << endl;
     vector<Sequence> sequences;
-//    getSeqSegmentsWithHead(sequences, seqFileName);
+    getSeqSegmentsWithHead(sequences, seqFileName);
 
     // Sequences in the same split share the sequence to be used for training the prodigal.
     cerr<< "Split the FASTA into blocks for prodigal" << endl;
@@ -898,6 +898,32 @@ string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, cons
     seqFile.close();
     seqSegments = move(seqSegmentsTmp);
     return firstLine;
+}
+
+void IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const char * seqFileName) {
+    struct stat stat1{};
+    int a = stat(seqFileName, &stat1);
+    size_t numOfChar = stat1.st_size;
+
+    ifstream seqFile;
+    seqFile.open(seqFileName);
+    string eachLine;
+    size_t start = 0;
+    size_t pos;
+    if (seqFile.is_open()) {
+        getline(seqFile, eachLine, '\n');
+        while (getline(seqFile, eachLine, '\n')) {
+            if (eachLine[0] == '>') {
+                pos = (size_t) seqFile.tellg();
+                seqSegments.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
+                start = pos - eachLine.length() - 1;
+            }
+        }
+        seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
+    } else {
+        cerr << "Cannot open the FASTA file." << endl;
+    }
+    seqFile.close();
 }
 
 void IndexCreator::groupFastaFiles(const vector<TaxId2Fasta> & taxIdListAtRank, vector<FastaSplit> & fastaSplit){
