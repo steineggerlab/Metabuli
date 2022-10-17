@@ -129,7 +129,7 @@ LocalParameters::LocalParameters() :
     //add_to_library
 
     // build
-    build.push_back(&LIBRARY_PATH);
+//    build.push_back(&LIBRARY_PATH);
     build.push_back(&PARAM_THREADS);
     build.push_back(&REDUCED_AA);
     build.push_back(&SPACED);
