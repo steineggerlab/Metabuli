@@ -6,7 +6,7 @@
 void setDefaults_build(LocalParameters & par){
     par.reducedAA = 0;
     par.spaceMask = "11111111";
-    par.taxonomyPath = "";
+    par.taxonomyPath = "" ;
 }
 
 int build(int argc, const char **argv, const Command &command){
@@ -18,7 +18,7 @@ int build(int argc, const char **argv, const Command &command){
     string fastaListPath = par.filenames[1];
     string taxonomyDirectory = dbDirectory + "/taxonomy";
     string mappingFile = par.filenames[2];
-
+    cout << par.taxonomyPath << endl;
     if (par.taxonomyPath != "") taxonomyDirectory = par.taxonomyPath;
 
     IndexCreator idxCre(par, dbDirectory, fastaListPath, taxonomyDirectory, mappingFile);
