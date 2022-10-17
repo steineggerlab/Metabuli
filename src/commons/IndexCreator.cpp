@@ -123,7 +123,7 @@ void IndexCreator::makeBlocksForParallelProcessing(){
         getline(fnaListFile, eachFile);
         cout << eachFile << endl;
         fnaList.push_back(eachFile);
-        seqHeader = getSeqSegmentsWithHead(sequenceOfFastas[i], eachFile.c_str()); //TODO : get the accession and taxid here
+        seqHeader = getSeqSegmentsWithHead(sequenceOfFastas[i], eachFile); //TODO : get the accession and taxid here
         seqHeader = seqHeader.substr(0, seqHeader.find(' '));
         TaxID taxid = acc2taxid[seqHeader];
         TaxID speciesTaxid = taxonomy->getTaxIdAtRank(taxid, "species");
@@ -853,11 +853,12 @@ void IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, Mmaped
     seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
 }
 
-string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const char * seqFileName) {
+string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const string & seqFileName) {
     struct stat stat1{};
-    int file = open(seqFileName, O_RDONLY);
-    int a = stat(seqFileName, &stat1);
+    int file = open(seqFileName.c_str(), O_RDONLY);
+    int a = stat(seqFileName.c_str(), &stat1);
     size_t numOfChar = stat1.st_size;
+    close(file);
     string firstLine;
     ifstream seqFile;
     seqFile.open(seqFileName);

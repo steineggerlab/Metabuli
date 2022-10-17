@@ -159,7 +159,7 @@ private:
 
 public:
     static void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
-    string getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const char * seqFileName);
+    string getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const string & seqFileName);
     IndexCreator(const LocalParameters & par);
     IndexCreator(const LocalParameters & par, string dbDir, string fnaListFileName,
                  string taxonomyDir, string acc2taxidFile);
