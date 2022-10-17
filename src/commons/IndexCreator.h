@@ -153,7 +153,7 @@ private:
         while (getline(file, line)) {
             cnt++;
         }
-        close(file);
+        file.close();
         return cnt;
     }
 
