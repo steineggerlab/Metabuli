@@ -52,6 +52,9 @@ IndexCreator::IndexCreator(const LocalParameters &par, string dbDir, string fnaL
           taxonomyDir(move(taxonomyDir)), acc2taxidFileName(std::move(acc2taxidFile))
 {
     // Load taxonomy
+    cout << "1" << taxonomyDir << endl;
+    cout << "1" << this->taxonomyDir << endl;
+
     taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp",
                                 taxonomyDir + "/nodes.dmp",
                                 taxonomyDir + "/merged.dmp");
