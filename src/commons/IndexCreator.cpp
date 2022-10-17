@@ -863,23 +863,24 @@ string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, cons
     string eachLine;
     size_t start = 0;
     size_t pos;
+    vector<Sequence> seqSegmentsTmp;
     if (seqFile.is_open()) {
         getline(seqFile, firstLine, '\n');
         while (getline(seqFile, eachLine, '\n')) {
             if (eachLine[0] == '>') {
                 pos = (size_t) seqFile.tellg();
-                seqSegments.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
+                seqSegmentsTmp.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
                 cout << "start: " << start << " end: " << pos - eachLine.length() - 3 << " length: " << pos - eachLine.length() - start - 2 << endl;
                 start = pos - eachLine.length() - 1;
             }
         }
-        seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
+        seqSegmentsTmp.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
     } else {
         cerr << "Cannot open the FASTA file." << endl;
         EXIT(EXIT_FAILURE);
     }
     seqFile.close();
-
+    seqSegments = move(seqSegmentsTmp);
     // TODO SORT?
     return firstLine;
 }
