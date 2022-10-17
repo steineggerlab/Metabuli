@@ -128,6 +128,7 @@ void IndexCreator::makeBlocksForParallelProcessing(){
         TaxID taxid = acc2taxid[seqHeader];
         TaxID speciesTaxid = taxonomy->getTaxIdAtRank(taxid, "species");
         taxIdList.push_back(taxid);
+        cout << "sp " << speciesTaxid << endl;
         // Split current file into blocks for parallel processing
         splitFasta(i, speciesTaxid);
     }
@@ -151,7 +152,6 @@ void IndexCreator::splitFasta(int fnaIdx, TaxID speciesTaxid) {
     vector<FnaSplit> tempSplits;
     size_t seqIdx = 0;
     while(seqIdx < sequenceOfFastas[fnaIdx].size()){
-        offset = seqIdx;
         if(speciesTaxid == 0) {
             seqIdx++;
             continue;
