@@ -1,5 +1,7 @@
 #include "IndexCreator.h"
 
+#include <utility>
+
 IndexCreator::IndexCreator(const LocalParameters & par)
 {
     dbDir = par.filenames[0];
@@ -44,6 +46,26 @@ IndexCreator::IndexCreator(const LocalParameters & par)
     }
 }
 
+IndexCreator::IndexCreator(const LocalParameters &par, string dbDir, string fnaListFileName,
+                           string taxonomyDir, string acc2taxidFile)
+        : dbDir(std::move(dbDir)), fnaListFileName(move(fnaListFileName)),
+          taxonomyDir(move(taxonomyDir)), acc2taxidFileName(std::move(acc2taxidFile))
+{
+    // Load taxonomy
+    taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp",
+                                taxonomyDir + "/nodes.dmp",
+                                taxonomyDir + "/merged.dmp");
+
+    if (par.reducedAA == 1){
+        MARKER = 0Xffffffff;
+        MARKER = ~ MARKER;
+    } else {
+        MARKER = 16777215;
+        MARKER = ~ MARKER;
+    }
+}
+
+
 IndexCreator::~IndexCreator() {
     delete taxonomy;
 }
@@ -82,7 +104,7 @@ void IndexCreator::createIndex(const LocalParameters &par) {
 
 void IndexCreator::makeBlocksForParallelProcessing(){
     unordered_map<string, TaxID> acc2taxid;
-    load_accession2taxid(dbDir + "/taxonomy/accession2taxid.map", acc2taxid);
+    load_accession2taxid(acc2taxidFileName, acc2taxid);
 
     // Make blocks of sequences that can be processed in parallel
     int fileNum = getNumberOfLines(fnaListFileName);
