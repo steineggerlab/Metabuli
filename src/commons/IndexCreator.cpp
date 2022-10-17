@@ -97,9 +97,15 @@ void IndexCreator::createIndex(const LocalParameters &par) {
             writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par,uniqKmerIdx, uniqKmerCnt);
         }
     }
-
     delete[] splitChecker;
 
+    // Write taxonomy id list
+    string taxidListFileName = dbDir + "/taxID_list";
+    FILE * taxidListFile = fopen(taxidListFileName.c_str(), "w");
+    for (auto & taxid : taxIdList) {
+        fprintf(taxidListFile, "%d\n", taxid);
+    }
+    fclose(taxidListFile);
 }
 
 void IndexCreator::makeBlocksForParallelProcessing(){
@@ -121,17 +127,12 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     for (int i = 0; i < fileNum; ++i) {
         // Get start and end position of each sequence in the file
         getline(fnaListFile, eachFile);
-        cout << eachFile << endl;
         fnaList.push_back(eachFile);
-        seqHeader = getSeqSegmentsWithHead(sequenceOfFastas[i], eachFile); //TODO : get the accession and taxid here
+        seqHeader = getSeqSegmentsWithHead(sequenceOfFastas[i], eachFile);
         seqHeader = seqHeader.substr(1, seqHeader.find(' ') - 1);
-        cout<<seqHeader<<endl;
-
         TaxID taxid = acc2taxid[seqHeader];
-        cout<<taxid<<endl;
         TaxID speciesTaxid = taxonomy->getTaxIdAtRank(taxid, "species");
         taxIdList.push_back(taxid);
-        cout << "sp " << speciesTaxid << endl;
         // Split current file into blocks for parallel processing
         splitFasta(i, speciesTaxid);
     }
