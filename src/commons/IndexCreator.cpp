@@ -124,7 +124,7 @@ void IndexCreator::makeBlocksForParallelProcessing(){
         cout << eachFile << endl;
         fnaList.push_back(eachFile);
         seqHeader = getSeqSegmentsWithHead(sequenceOfFastas[i], eachFile); //TODO : get the accession and taxid here
-        seqHeader = seqHeader.substr(0, seqHeader.find(' '));
+        seqHeader = seqHeader.substr(1, seqHeader.find(' ') - 1);
         cout<<seqHeader<<endl;
 
         TaxID taxid = acc2taxid[seqHeader];
