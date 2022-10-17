@@ -131,6 +131,11 @@ void IndexCreator::makeBlocksForParallelProcessing(){
         // Split current file into blocks for parallel processing
         splitFasta(i, speciesTaxid);
     }
+    for (int i = 0; i < fileNum; ++i) {
+        for (int j = 0; j < sequenceOfFastas[i].size(); ++j) {
+            cout << sequenceOfFastas[i][j].start << " " << sequenceOfFastas[i][j].end << " " << sequenceOfFastas[i][j].length << endl;
+        }
+    }
     fnaListFile.close();
 }
 
@@ -857,6 +862,7 @@ string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, cons
     struct stat stat1{};
     stat(seqFileName.c_str(), &stat1);
     size_t numOfChar = stat1.st_size;
+    cout << seqFileName << ": " << numOfChar << endl;
     string firstLine;
     ifstream seqFile;
     seqFile.open(seqFileName);
