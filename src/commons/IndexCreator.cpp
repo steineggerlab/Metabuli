@@ -133,8 +133,12 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     }
     for (int i = 0; i < fileNum; ++i) {
         for (int j = 0; j < sequenceOfFastas[i].size(); ++j) {
-            cout << sequenceOfFastas[i][j].start << " " << sequenceOfFastas[i][j].end << " " << sequenceOfFastas[i][j].length << endl;
+            cout << i << sequenceOfFastas[i][j].start << " " << sequenceOfFastas[i][j].end << " " << sequenceOfFastas[i][j].length << endl;
         }
+    }
+
+    for (int i = 0; i < fnaSplits.size(); ++i) {
+        cout << fnaSplits[i].file_idx << " " << fnaSplits[i].offset << " " << fnaSplits[i].cnt << " " << fnaSplits[i].training << endl;
     }
     fnaListFile.close();
 }
