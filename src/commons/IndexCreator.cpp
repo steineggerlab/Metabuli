@@ -111,7 +111,10 @@ void IndexCreator::createIndex(const LocalParameters &par) {
 void IndexCreator::makeBlocksForParallelProcessing(){
     unordered_map<string, TaxID> acc2taxid;
     load_accession2taxid(acc2taxidFileName, acc2taxid);
-
+    // pritn acc2taxid
+    for (auto & acc : acc2taxid) {
+        cout << acc.first << " " << acc.second << endl;
+    }
     // Make blocks of sequences that can be processed in parallel
     int fileNum = getNumberOfLines(fnaListFileName);
     ifstream fnaListFile;
@@ -882,10 +885,12 @@ string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, cons
     size_t seqCnt = taxIdList.size();
     if (seqFile.is_open()) {
         getline(seqFile, firstLine, '\n');
-        taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find(' ') - 1)));
+        cout << eachLine.substr(1, eachLine.find(' ') - 1) << endl;
+//        taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find(' ') - 1)));
         while (getline(seqFile, eachLine, '\n')) {
             if (eachLine[0] == '>') {
-                taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find(' ') - 1)));
+//                taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find(' ') - 1)));
+                cout << eachLine.substr(1, eachLine.find(' ') - 1) << endl;
                 pos = (size_t) seqFile.tellg();
                 seqSegmentsTmp.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
                 start = pos - eachLine.length() - 1;
