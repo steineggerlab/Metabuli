@@ -1,7 +1,3 @@
-//
-// Created by KJB on 25/08/2020.
-//
-
 #ifndef ADKMER3_KMER_H
 #define ADKMER3_KMER_H
 #include <iostream>

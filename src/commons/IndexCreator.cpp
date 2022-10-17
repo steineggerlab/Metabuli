@@ -128,11 +128,10 @@ void IndexCreator::makeBlocksForParallelProcessing(){
         // Get start and end position of each sequence in the file
         getline(fnaListFile, eachFile);
         fnaList.push_back(eachFile);
-        seqHeader = getSeqSegmentsWithHead(sequenceOfFastas[i], eachFile);
+        processedSeqCnt.push_back(taxIdList.size());
+        seqHeader = getSeqSegmentsWithHead(sequenceOfFastas[i], eachFile, acc2taxid);
         seqHeader = seqHeader.substr(1, seqHeader.find(' ') - 1);
-        TaxID taxid = acc2taxid[seqHeader];
-        TaxID speciesTaxid = taxonomy->getTaxIdAtRank(taxid, "species");
-        taxIdList.push_back(taxid);
+        TaxID speciesTaxid = taxonomy->getTaxIdAtRank(acc2taxid[seqHeader], "species");
         // Split current file into blocks for parallel processing
         splitFasta(i, speciesTaxid);
     }
@@ -204,7 +203,7 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     // Getting start and end position of each sequence
     cerr<< "Get start and end position of each sequence" << endl;
     vector<Sequence> sequences;
-    getSeqSegmentsWithHead(sequences, seqFileName);
+//    getSeqSegmentsWithHead(sequences, seqFileName);
 
     // Sequences in the same split share the sequence to be used for training the prodigal.
     cerr<< "Split the FASTA into blocks for prodigal" << endl;
@@ -866,7 +865,8 @@ void IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, Mmaped
     seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
 }
 
-string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const string & seqFileName) {
+string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const string & seqFileName,
+                                            const unordered_map<string, TaxID> & acc2taxid) {
     struct stat stat1{};
     stat(seqFileName.c_str(), &stat1);
     size_t numOfChar = stat1.st_size;
@@ -878,23 +878,25 @@ string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, cons
     size_t start = 0;
     size_t pos;
     vector<Sequence> seqSegmentsTmp;
+    vector<string> headers;
+    size_t seqCnt = taxIdList.size();
     if (seqFile.is_open()) {
         getline(seqFile, firstLine, '\n');
+        taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find(' ') - 1)));
         while (getline(seqFile, eachLine, '\n')) {
             if (eachLine[0] == '>') {
+                taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find(' ') - 1)));
                 pos = (size_t) seqFile.tellg();
                 seqSegmentsTmp.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
                 start = pos - eachLine.length() - 1;
             }
         }
-        seqSegmentsTmp.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
+        seqSegmentsTmp.emplace_back(start, numOfChar - 2, numOfChar - start - 1, seqCnt);
     } else {
         cerr << "Unable to open file: " << seqFileName << endl;
-//        EXIT(EXIT_FAILURE);
     }
     seqFile.close();
     seqSegments = move(seqSegmentsTmp);
-    // TODO SORT?
     return firstLine;
 }
 
@@ -1167,13 +1169,11 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
 
                     // Extract k-mer from the rest of the sequences of current split
                     for (size_t s_cnt = 0; s_cnt < fnaSplits[i].cnt; ++s_cnt) {
-                        buffer = {const_cast<char *>(&fastaFile.data[sequenceOfFastas[fnaSplits[i].file_idx][
-                                fnaSplits[i].offset + s_cnt].start]),
-                                  static_cast<size_t>(sequenceOfFastas[fnaSplits[i].file_idx][fnaSplits[i].offset +
-                                                                                              s_cnt].length)};
+                        buffer = {const_cast<char *>(&fastaFile.data[sequenceOfFastas[fnaSplits[i].file_idx][fnaSplits[i].offset + s_cnt].start]),
+                                  static_cast<size_t>(sequenceOfFastas[fnaSplits[i].file_idx][fnaSplits[i].offset + s_cnt].length)};
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
-
+                        currentList = priority_queue<uint64_t>();
                         seqIterator.getMinHashList(currentList, seq->seq.s);
                         orfNum = 0;
                         extendedORFs.clear();
@@ -1187,7 +1187,8 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                             for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
                                 seqIterator.translateBlock(seq->seq.s, extendedORFs[orfCnt]);
                                 seqIterator.fillBufferWithKmerFromBlock(extendedORFs[orfCnt], seq->seq.s, kmerBuffer, posToWrite,
-                                                                        fnaSplits[i].file_idx, fnaSplits[i].speciesID);
+                                                                        processedSeqCnt[fnaSplits[i].file_idx] + fnaSplits[i].offset + s_cnt,
+                                                                        fnaSplits[i].speciesID);
                             }
                         } else {
                             reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, strlen(seq->seq.s));
@@ -1199,11 +1200,11 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                             for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
                                 seqIterator.translateBlock(reverseCompliment, extendedORFs[orfCnt]);
                                 seqIterator.fillBufferWithKmerFromBlock(extendedORFs[orfCnt], reverseCompliment, kmerBuffer,
-                                                                        posToWrite, fnaSplits[i].file_idx,fnaSplits[i].speciesID);
+                                                                        posToWrite, processedSeqCnt[fnaSplits[i].file_idx] + fnaSplits[i].offset + s_cnt,
+                                                                        fnaSplits[i].speciesID);
                             }
                             free(reverseCompliment);
                         }
-                        currentList = priority_queue<uint64_t>();
                         kseq_destroy(seq);
                     }
                     checker[i] = true;
