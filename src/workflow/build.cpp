@@ -15,8 +15,12 @@ int build(int argc, const char **argv, const Command &command){
     LocalParameters &par = LocalParameters::getLocalInstance();
     setDefaults_build(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
-    IndexCreator idxCre(par);
-    idxCre.startIndexCreatingParallel(par);
+    string dbDirectory = par.filenames[0];
+    string fastaListPath = par.filenames[1];
+    string taxonomyDirectory = par.filenames[2];
+    string mappingFile = par.filenames[3];
+    IndexCreator idxCre(par, dbDirectory, fastaListPath, taxonomyDirectory, mappingFile);
+    idxCre.createIndex(par);
 
     if(idxCre.getNumOfFlush() == 1) {
         cerr << "Index creation completed." << endl;
