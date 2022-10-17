@@ -573,7 +573,7 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
 void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniqeKmerIdx, size_t & uniqueKmerCnt,
                                     const LocalParameters & par) {
     // Find the first index of garbage k-mer (UINT64_MAX)
-    for(size_t checkN = kmerBuffer.startIndexOfReserve - 1; checkN >= 0; checkN--){
+    for(size_t checkN = kmerBuffer.startIndexOfReserve - 1; checkN != 0; checkN--){
         if(kmerBuffer.buffer[checkN].ADkmer != UINT64_MAX){
             kmerBuffer.startIndexOfReserve = checkN + 1;
             break;
@@ -855,10 +855,8 @@ void IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, Mmaped
 
 string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const string & seqFileName) {
     struct stat stat1{};
-    int file = open(seqFileName.c_str(), O_RDONLY);
-    int a = stat(seqFileName.c_str(), &stat1);
+    stat(seqFileName.c_str(), &stat1);
     size_t numOfChar = stat1.st_size;
-    close(file);
     string firstLine;
     ifstream seqFile;
     seqFile.open(seqFileName);
@@ -1196,15 +1194,17 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     }
                     checker[i] = true;
                     __sync_fetch_and_add(&processedSplitCnt, 1);
+                    munmap(fastaFile.data, fastaFile.fileSize + 1);
                 }else {
                     // Withdraw the reservation if the buffer is full.
                     hasOverflow = true;
                     __sync_fetch_and_sub(&kmerBuffer.startIndexOfReserve, estimatedKmerCnt);
-                    cout << "buffer is full: " << kmerBuffer.startIndexOfReserve << endl;
                 }
             }
         }
     }
+
+    cout << "Before return: " << kmerBuffer.startIndexOfReserve << endl;
     return 0;
 }
 
