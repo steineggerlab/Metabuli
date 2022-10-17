@@ -125,7 +125,10 @@ void IndexCreator::makeBlocksForParallelProcessing(){
         fnaList.push_back(eachFile);
         seqHeader = getSeqSegmentsWithHead(sequenceOfFastas[i], eachFile); //TODO : get the accession and taxid here
         seqHeader = seqHeader.substr(0, seqHeader.find(' '));
+        cout<<seqHeader<<endl;
+
         TaxID taxid = acc2taxid[seqHeader];
+        cout<<taxid<<endl;
         TaxID speciesTaxid = taxonomy->getTaxIdAtRank(taxid, "species");
         taxIdList.push_back(taxid);
         cout << "sp " << speciesTaxid << endl;
