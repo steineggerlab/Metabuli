@@ -18,7 +18,7 @@ int build(int argc, const char **argv, const Command &command){
     string fastaListPath = par.filenames[1];
     string taxonomyDirectory = dbDirectory + "/taxonomy";
     string mappingFile = par.filenames[2];
-    cout << 'a ' << par.taxonomyPath << endl;
+    cout << 'a' << par.taxonomyPath << endl;
     if (par.taxonomyPath != "") taxonomyDirectory = par.taxonomyPath;
 
     IndexCreator idxCre(par, dbDirectory, fastaListPath, taxonomyDirectory, mappingFile);
