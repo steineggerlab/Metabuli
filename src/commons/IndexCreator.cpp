@@ -483,8 +483,8 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
                                     const size_t * uniqeKmerIdx, size_t & uniqKmerCnt){
     string diffIdxFileName;
     string infoFileName;
-    diffIdxFileName = par.filenames[1] + "/" + to_string(numOfFlush) + "_diffIdx";
-    infoFileName = par.filenames[1] + "/" + to_string(numOfFlush) + "_info";
+    diffIdxFileName = dbDir + "/" + to_string(numOfFlush) + "_diffIdx";
+    infoFileName = dbDir + "/" + to_string(numOfFlush) + "_info";
 
     FILE * diffIdxFile = fopen(diffIdxFileName.c_str(), "wb");
     FILE * infoFile = fopen(infoFileName.c_str(), "wb");
@@ -522,9 +522,9 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     string infoFileName;
     string splitFileName;
 
-    diffIdxFileName = par.filenames[1] + "/diffIdx";
-    infoFileName = par.filenames[1] + "/info";
-    splitFileName = par.filenames[1] + "/split";
+    diffIdxFileName = dbDir + "/diffIdx";
+    infoFileName = dbDir + "/info";
+    splitFileName = dbDir + "/split";
 
     // Make splits
     FILE * diffIdxSplitFile = fopen(splitFileName.c_str(), "wb");
