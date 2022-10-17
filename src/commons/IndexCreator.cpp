@@ -112,7 +112,7 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     fnaListFile.open(fnaListFileName);
     string eachFile;
     string seqHeader;
-    sequenceOfFastas.reserve(fileNum);
+    sequenceOfFastas.resize(fileNum);
 
     if (!fnaListFile.is_open()) {
         Debug(Debug::ERROR) << "Cannot open file for file list" << "\n";
