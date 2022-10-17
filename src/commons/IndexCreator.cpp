@@ -121,6 +121,7 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     for (int i = 0; i < fileNum; ++i) {
         // Get start and end position of each sequence in the file
         getline(fnaListFile, eachFile);
+        cout << eachFile << endl;
         fnaList.push_back(eachFile);
         seqHeader = getSeqSegmentsWithHead(sequenceOfFastas[i], eachFile.c_str()); //TODO : get the accession and taxid here
         seqHeader = seqHeader.substr(0, seqHeader.find(' '));
@@ -870,7 +871,6 @@ string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, cons
             if (eachLine[0] == '>') {
                 pos = (size_t) seqFile.tellg();
                 seqSegmentsTmp.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
-                cout << "start: " << start << " end: " << pos - eachLine.length() - 3 << " length: " << pos - eachLine.length() - start - 2 << endl;
                 start = pos - eachLine.length() - 1;
             }
         }
