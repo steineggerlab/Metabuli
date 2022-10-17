@@ -51,6 +51,7 @@ private:
     vector<string> fastaSplits;
     vector<vector<Sequence>> sequenceOfFastas;
     vector<TaxID> taxIdList;
+    vector<size_t> processedSeqCnt; // Index of this vector is the same as the index of fnaList
 
     struct FnaSplit{
         // species, file_idx, training, offset, cnt
@@ -159,7 +160,8 @@ private:
 
 public:
     static void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
-    string getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const string & seqFileName);
+    string getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const string & seqFileName,
+                                  const unordered_map<string, TaxID> & acc2taxid);
     IndexCreator(const LocalParameters & par);
     IndexCreator(const LocalParameters & par, string dbDir, string fnaListFileName,
                  string taxonomyDir, string acc2taxidFile);
