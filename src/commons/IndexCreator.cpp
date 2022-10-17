@@ -146,7 +146,7 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     }
 
     for (int i = 0; i < fnaSplits.size(); ++i) {
-        cout << fnaSplits[i].file_idx << " " << fnaSplits[i].offset << " " << fnaSplits[i].cnt << " " << fnaSplits[i].training << endl;
+        cout << fnaSplits[i].file_idx << " " << fnaSplits[i].offset << " " << fnaSplits[i].cnt << " " << fnaSplits[i].training << " " << fnaSplits[i].speciesID << endl;
     }
     fnaListFile.close();
 }
