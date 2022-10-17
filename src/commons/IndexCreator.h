@@ -48,7 +48,7 @@ private:
     string acc2taxidFileName;
 
     vector<string> fnaList;
-    vector<string> fastaSplits;
+    vector<vector<uint64_t>> intergenicKmerLists;
     vector<vector<Sequence>> sequenceOfFastas;
     vector<TaxID> taxIdList;
     vector<size_t> processedSeqCnt; // Index of this vector is the same as the index of fnaList

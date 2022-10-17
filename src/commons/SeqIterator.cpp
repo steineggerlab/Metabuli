@@ -549,8 +549,6 @@ void SeqIterator::getExtendedORFs(struct _gene *genes, struct _node *nodes, vect
         blockIdx++;
     }
 
-
-
     // From the second gene to the second last gene
     for (size_t geneIdx = 1; geneIdx < numOfGene - 1; geneIdx++) {
         isReverse = false;
