@@ -607,6 +607,10 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
         }
     }
 
+    cout << "After removing garbage k-mers" << endl;
+    for (size_t i = 0; i < 1000; i++) {
+        cout << kmerBuffer.buffer[i].ADkmer << " " << kmerBuffer.buffer[i].info.sequenceID << " " << kmerBuffer.buffer[i].taxIdAtRank << endl;
+    }
     // Make splits
     vector<Split> splits;
     size_t splitWidth = (kmerBuffer.startIndexOfReserve - startIdx) / par.threads;
