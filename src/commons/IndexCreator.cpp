@@ -109,22 +109,23 @@ void IndexCreator::createIndex(const LocalParameters &par) {
 }
 
 void IndexCreator::makeBlocksForParallelProcessing(){
+
     unordered_map<string, TaxID> acc2taxid;
     load_accession2taxid(acc2taxidFileName, acc2taxid);
 
     // Make blocks of sequences that can be processed in parallel
     int fileNum = getNumberOfLines(fnaListFileName);
-    ifstream fnaListFile;
-    fnaListFile.open(fnaListFileName);
-    string eachFile;
-    string seqHeader;
     sequenceOfFastas.resize(fileNum);
     intergenicKmerLists.resize(fileNum);
 
+    ifstream fnaListFile;
+    fnaListFile.open(fnaListFileName);
     if (!fnaListFile.is_open()) {
         Debug(Debug::ERROR) << "Cannot open file for file list" << "\n";
         EXIT(EXIT_FAILURE);
     }
+    string eachFile;
+    string seqHeader;
     for (int i = 0; i < fileNum; ++i) {
         // Get start and end position of each sequence in the file
         getline(fnaListFile, eachFile);
@@ -135,15 +136,6 @@ void IndexCreator::makeBlocksForParallelProcessing(){
         TaxID speciesTaxid = taxonomy->getTaxIdAtRank(acc2taxid[seqHeader], "species");
         // Split current file into blocks for parallel processing
         splitFasta(i, speciesTaxid);
-    }
-    for (int i = 0; i < fileNum; ++i) {
-        for (int j = 0; j < sequenceOfFastas[i].size(); ++j) {
-            cout << i << sequenceOfFastas[i][j].start << " " << sequenceOfFastas[i][j].end << " " << sequenceOfFastas[i][j].length << endl;
-        }
-    }
-
-    for (int i = 0; i < fnaSplits.size(); ++i) {
-        cout << fnaSplits[i].file_idx << " " << fnaSplits[i].offset << " " << fnaSplits[i].cnt << " " << fnaSplits[i].training << " " << fnaSplits[i].speciesID << endl;
     }
     fnaListFile.close();
 }
@@ -559,7 +551,6 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     size_t totalDiffIdx = 0;
     cout << "Writing k-mers to disk" << endl;
     for(size_t i = 0; i < uniqKmerCnt ; i++) {
-        cout << kmerBuffer[uniqKmerIdx[i]].info.sequenceID << " " << kmerBuffer[uniqKmerIdx[i]].ADkmer << " " << kmerBuffer[uniqKmerIdx[i]].taxIdAtRank << endl;
         fwrite(& kmerBuffer[uniqKmerIdx[i]].info, sizeof (TargetKmerInfo), 1, infoFile);
         write++;
         getDiffIdx(lastKmer, kmerBuffer[uniqKmerIdx[i]].ADkmer, diffIdxFile,
@@ -595,11 +586,6 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
         }
     }
 
-    // TODO Check here
-    // TODO Print the first 1000 k-mers
-    for (size_t i = 0; i < 1000; i++) {
-        cout << kmerBuffer.buffer[i].ADkmer << " " << kmerBuffer.buffer[i].info.sequenceID << " " << kmerBuffer.buffer[i].taxIdAtRank << endl;
-    }
     // Find the first index of meaningful k-mer
     size_t startIdx = 0;
     for(size_t i = 0; i < kmerBuffer.startIndexOfReserve ; i++){
@@ -609,10 +595,6 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
         }
     }
 
-    cout << "After removing garbage k-mers" << endl;
-    for (size_t i = startIdx - 10; i < startIdx + 1000; i++) {
-        cout << kmerBuffer.buffer[i].ADkmer << " " << kmerBuffer.buffer[i].info.sequenceID << " " << kmerBuffer.buffer[i].taxIdAtRank << endl;
-    }
     // Make splits
     vector<Split> splits;
     size_t splitWidth = (kmerBuffer.startIndexOfReserve - startIdx) / par.threads;
