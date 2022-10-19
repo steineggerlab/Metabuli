@@ -518,7 +518,7 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, c
 }
 
 void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par,
-                                    const size_t * uniqeKmerIdx, size_t & uniqKmerCnt){
+                                    const size_t * uniqKmerIdx, size_t & uniqKmerCnt){
     string diffIdxFileName;
     string infoFileName;
     string splitFileName;
@@ -533,7 +533,7 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     memset(splitList, 0, sizeof(DiffIdxSplit) * SplitNum);
     size_t splitWidth = uniqKmerCnt / par.threads;
     for (size_t i = 1; i < (size_t) par.threads; i++) {
-        for (size_t j = uniqeKmerIdx[0] + splitWidth * i; j + 1 < uniqKmerCnt; j++) {
+        for (size_t j = uniqKmerIdx[0] + splitWidth * i; j + 1 < uniqKmerCnt; j++) {
             if (AminoAcidPart(kmerBuffer[j].ADkmer) != AminoAcidPart(kmerBuffer[j + 1].ADkmer)) {
                 splitList[i].ADkmer = kmerBuffer[j].ADkmer;
                 break;
@@ -557,12 +557,14 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
 
     size_t splitIdx = 1;
     size_t totalDiffIdx = 0;
+    cout << "Writing k-mers to disk" << endl;
     for(size_t i = 0; i < uniqKmerCnt ; i++) {
-        fwrite(& kmerBuffer[uniqeKmerIdx[i]].info, sizeof (TargetKmerInfo), 1, infoFile);
+        cout << kmerBuffer[uniqKmerIdx[i]].info.sequenceID << " " << kmerBuffer[uniqKmerIdx[i]].ADkmer << " " << kmerBuffer[uniqKmerIdx[i]].taxIdAtRank << endl;
+        fwrite(& kmerBuffer[uniqKmerIdx[i]].info, sizeof (TargetKmerInfo), 1, infoFile);
         write++;
-        getDiffIdx(lastKmer, kmerBuffer[uniqeKmerIdx[i]].ADkmer, diffIdxFile,
+        getDiffIdx(lastKmer, kmerBuffer[uniqKmerIdx[i]].ADkmer, diffIdxFile,
                    diffIdxBuffer, localBufIdx, totalDiffIdx);
-        lastKmer = kmerBuffer[uniqeKmerIdx[i]].ADkmer;
+        lastKmer = kmerBuffer[uniqKmerIdx[i]].ADkmer;
         if(lastKmer == splitList[splitIdx].ADkmer){
             splitList[splitIdx].diffIdxOffset = totalDiffIdx;
             splitList[splitIdx].infoIdxOffset = write;
