@@ -157,7 +157,7 @@ void IndexCreator::splitFasta(int fnaIdx, TaxID speciesTaxid) {
             seqForTraining = seqIdx;
         }
         cnt ++;
-        if(cnt > 30){
+        if(cnt > 100){
             tempSplits.emplace_back(0, offset, cnt - 1, speciesTaxid, fnaIdx);
             offset += cnt - 1;
             cnt = 1;
