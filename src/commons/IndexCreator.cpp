@@ -169,6 +169,11 @@ void IndexCreator::splitFasta(int fnaIdx, TaxID speciesTaxid) {
         x.training = seqForTraining;
         fnaSplits.push_back(x);
     }
+
+    // Print elements of fnaSplits
+    for(auto & x : fnaSplits){
+        cout << x.file_idx << " " << x.speciesID << " " << x.training << " " << x.offset << " " << x.cnt << endl;
+    }
 }
 
 void IndexCreator::load_accession2taxid(const string & mappingFileName, unordered_map<string, int> & acc2taxid) {
@@ -1140,9 +1145,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
         kseq_buffer_t buffer;
         kseq_t *seq;
         vector<uint64_t> intergenicKmers;
-#pragma omp for schedule(dynamic, 1)
+#pragma omp for schedule(guided, 10)
         for (size_t i = 0; i < fnaSplits.size(); i++) {
             if (!checker[i] && !hasOverflow) {
+                checker[i] = true;
                 intergenicKmers.clear();
                 strandness.clear();
                 standardList = priority_queue<uint64_t>();
@@ -1226,11 +1232,11 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                         }
                         kseq_destroy(seq);
                     }
-                    checker[i] = true;
                     __sync_fetch_and_add(&processedSplitCnt, 1);
                     munmap(fastaFile.data, fastaFile.fileSize + 1);
                 }else {
                     // Withdraw the reservation if the buffer is full.
+                    checker[i] = false;
                     hasOverflow = true;
                     __sync_fetch_and_sub(&kmerBuffer.startIndexOfReserve, estimatedKmerCnt);
                 }
