@@ -1,7 +1,3 @@
-//
-// Created by KJB on 01/09/2020.
-//
-
 #ifndef ADKMER4_KMEREXTRACTOR_H
 #define ADKMER4_KMEREXTRACTOR_H
 

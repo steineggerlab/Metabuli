@@ -48,7 +48,6 @@ private:
     string acc2taxidFileName;
 
     vector<string> fnaList;
-    vector<vector<uint64_t>> intergenicKmerLists;
     vector<vector<Sequence>> sequenceOfFastas;
     vector<TaxID> taxIdList;
     vector<size_t> processedSeqCnt; // Index of this vector is the same as the index of fnaList
@@ -136,7 +135,7 @@ private:
     }
 
     void load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
-    void load_accession2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
+    static void load_accession2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
 
     static size_t estimateKmerNum(const vector<TaxId2Fasta> & taxid2fasta, const FastaSplit & split);
     void reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniqeKmerIdx, size_t & uniqKmerCnt, const LocalParameters & par,
