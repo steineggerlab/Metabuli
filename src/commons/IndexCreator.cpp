@@ -116,7 +116,6 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     // Make blocks of sequences that can be processed in parallel
     int fileNum = getNumberOfLines(fnaListFileName);
     sequenceOfFastas.resize(fileNum);
-    intergenicKmerLists.resize(fileNum);
 
     ifstream fnaListFile;
     fnaListFile.open(fnaListFileName);
@@ -157,7 +156,7 @@ void IndexCreator::splitFasta(int fnaIdx, TaxID speciesTaxid) {
             seqForTraining = seqIdx;
         }
         cnt ++;
-        if(cnt > 100){
+        if(cnt > 30){
             tempSplits.emplace_back(0, offset, cnt - 1, speciesTaxid, fnaIdx);
             offset += cnt - 1;
             cnt = 1;
@@ -1140,9 +1139,11 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
         vector<bool> strandness;
         kseq_buffer_t buffer;
         kseq_t *seq;
+        vector<uint64_t> intergenicKmers;
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < fnaSplits.size(); i++) {
             if (!checker[i] && !hasOverflow) {
+                intergenicKmers.clear();
                 strandness.clear();
                 standardList = priority_queue<uint64_t>();
 
@@ -1162,7 +1163,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     // Train Prodigal with a training sequence of i th split
                     buffer = {const_cast<char *>(&fastaFile.data[sequenceOfFastas[fnaSplits[i].file_idx][fnaSplits[i].training].start]),
                               static_cast<size_t>(sequenceOfFastas[fnaSplits[i].file_idx][fnaSplits[i].training].length)};
-                    kseq_t *seq = kseq_init(&buffer);
+                    seq = kseq_init(&buffer);
                     kseq_read(seq);
                     lengthOfTrainingSeq = strlen(seq->seq.s);
                     prodigal.is_meta = 0;
@@ -1175,12 +1176,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
 
                     // Generate intergenic 23-mer list. It is used to strandness of intergenic sequences.
                     prodigal.getPredictedGenes(seq->seq.s);
-                    if(intergenicKmerLists[fnaSplits[i].file_idx].empty()){
-                        seqIterator.generateIntergenicKmerList(prodigal.genes, prodigal.nodes,
-                                                               prodigal.getNumberOfPredictedGenes(),
-                                                               intergenicKmerLists[fnaSplits[i].file_idx],
-                                                               seq->seq.s);
-                    }
+
+                    seqIterator.generateIntergenicKmerList(prodigal.genes, prodigal.nodes,
+                                                           prodigal.getNumberOfPredictedGenes(),
+                                                           intergenicKmers,seq->seq.s);
 
 
                     // Get min k-mer hash list for determining strandness
@@ -1203,7 +1202,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                             prodigal.removeCompletelyOverlappingGenes();
                             seqIterator.getExtendedORFs(prodigal.finalGenes, prodigal.nodes, extendedORFs,
                                                              prodigal.fng, strlen(seq->seq.s),
-                                                        orfNum, intergenicKmerLists[fnaSplits[i].file_idx], seq->seq.s);
+                                                        orfNum, intergenicKmers, seq->seq.s);
                             for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
                                 seqIterator.translateBlock(seq->seq.s, extendedORFs[orfCnt]);
                                 seqIterator.fillBufferWithKmerFromBlock(extendedORFs[orfCnt], seq->seq.s, kmerBuffer, posToWrite,
@@ -1216,7 +1215,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                             prodigal.removeCompletelyOverlappingGenes();
                             seqIterator.getExtendedORFs(prodigal.finalGenes, prodigal.nodes, extendedORFs,
                                                              prodigal.fng, strlen(reverseCompliment),
-                                                        orfNum, intergenicKmerLists[fnaSplits[i].file_idx], reverseCompliment);
+                                                        orfNum, intergenicKmers, reverseCompliment);
                             for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
                                 seqIterator.translateBlock(reverseCompliment, extendedORFs[orfCnt]);
                                 seqIterator.fillBufferWithKmerFromBlock(extendedORFs[orfCnt], reverseCompliment, kmerBuffer,
