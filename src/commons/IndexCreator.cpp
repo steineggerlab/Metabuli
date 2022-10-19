@@ -111,10 +111,7 @@ void IndexCreator::createIndex(const LocalParameters &par) {
 void IndexCreator::makeBlocksForParallelProcessing(){
     unordered_map<string, TaxID> acc2taxid;
     load_accession2taxid(acc2taxidFileName, acc2taxid);
-    // pritn acc2taxid
-    for (auto & acc : acc2taxid) {
-        cout << acc.first << " " << acc.second << endl;
-    }
+
     // Make blocks of sequences that can be processed in parallel
     int fileNum = getNumberOfLines(fnaListFileName);
     ifstream fnaListFile;
@@ -596,6 +593,11 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
         }
     }
 
+    // TODO Check here
+    // TODO Print the first 1000 k-mers
+    for (size_t i = 0; i < 1000; i++) {
+        cout << kmerBuffer.buffer[i].ADkmer << " " << kmerBuffer.buffer[i].info.sequenceID << " " << kmerBuffer.buffer[i].taxIdAtRank << endl;
+    }
     // Find the first index of meaningful k-mer
     size_t startIdx = 0;
     for(size_t i = 0; i < kmerBuffer.startIndexOfReserve ; i++){
@@ -674,7 +676,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
     }
 
     for(size_t i = 0; i < splits.size(); i++){
-        delete[] idxOfEachSplit[i];
+        delete [] idxOfEachSplit[i];
     }
     delete[] cntOfEachSplit;
 }
