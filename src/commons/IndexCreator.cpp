@@ -137,6 +137,11 @@ void IndexCreator::makeBlocksForParallelProcessing(){
         splitFasta(i, speciesTaxid);
     }
     fnaListFile.close();
+
+    // Print elements of fnaSplits
+    for(auto & x : fnaSplits){
+        cout << x.file_idx << " " << x.speciesID << " " << x.training << " " << x.offset << " " << x.cnt << endl;
+    }
 }
 
 void IndexCreator::splitFasta(int fnaIdx, TaxID speciesTaxid) {
@@ -170,10 +175,7 @@ void IndexCreator::splitFasta(int fnaIdx, TaxID speciesTaxid) {
         fnaSplits.push_back(x);
     }
 
-    // Print elements of fnaSplits
-    for(auto & x : fnaSplits){
-        cout << x.file_idx << " " << x.speciesID << " " << x.training << " " << x.offset << " " << x.cnt << endl;
-    }
+
 }
 
 void IndexCreator::load_accession2taxid(const string & mappingFileName, unordered_map<string, int> & acc2taxid) {
