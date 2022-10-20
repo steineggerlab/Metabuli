@@ -72,30 +72,38 @@ IndexCreator::~IndexCreator() {
 
 void IndexCreator::createIndex(const LocalParameters &par) {
 
-    // Load the taxonomical ID list
-    cout << "Loading taxonomy ID list ... ";
-    FILE * taxIdFile;
-    if((taxIdFile = fopen(string(dbDir + "/taxID_list").c_str(),"r")) == NULL){
-        cout<<"Cannot open the taxID list file."<<endl;
-        return;
-    }
-    char taxID[100];
-    while(feof(taxIdFile) == 0)
-    {
-        fscanf(taxIdFile,"%s",taxID);
-        taxIdList.push_back(atol(taxID));
-    }
-    taxIdList.pop_back();
-    fclose(taxIdFile);
-    cout<<"Done"<<endl;
+//    // Load the taxonomical ID list
+//    cout << "Loading taxonomy ID list ... ";
+//    FILE * taxIdFile;
+//    if((taxIdFile = fopen(string(dbDir + "/taxID_list").c_str(),"r")) == NULL){
+//        cout<<"Cannot open the taxID list file."<<endl;
+//        return;
+//    }
+//    char taxID[100];
+//    while(feof(taxIdFile) == 0)
+//    {
+//        fscanf(taxIdFile,"%s",taxID);
+//        taxIdList.push_back(atol(taxID));
+//    }
+//    taxIdList.pop_back();
+//    fclose(taxIdFile);
+//    cout<<"Done"<<endl;
 
     makeBlocksForParallelProcessing();
 
+    // Write taxonomy id list
+    string taxidListFileName = dbDir + "/taxID_list";
+    FILE * taxidListFile = fopen(taxidListFileName.c_str(), "w");
+    for (auto & taxid : taxIdList) {
+        fprintf(taxidListFile, "%d\n", taxid);
+    }
+    fclose(taxidListFile);
+
+    // Process the splits until all are processed
     size_t numOfSplits = fnaSplits.size();
     bool * splitChecker = new bool[numOfSplits];
     fill_n(splitChecker, numOfSplits, false);
     size_t processedSplitCnt = 0;
-
     TargetKmerBuffer kmerBuffer(kmerBufSize);
     while(processedSplitCnt < numOfSplits){ // Check this condition
         fillTargetKmerBuffer(kmerBuffer, splitChecker, processedSplitCnt, par);
@@ -118,13 +126,7 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     }
     delete[] splitChecker;
 
-    // Write taxonomy id list
-    string taxidListFileName = dbDir + "/taxID_list";
-    FILE * taxidListFile = fopen(taxidListFileName.c_str(), "w");
-    for (auto & taxid : taxIdList) {
-        fprintf(taxidListFile, "%d\n", taxid);
-    }
-    fclose(taxidListFile);
+
 }
 
 void IndexCreator::makeBlocksForParallelProcessing(){
