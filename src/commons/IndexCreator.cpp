@@ -1219,6 +1219,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                   static_cast<size_t>(sequenceOfFastas[fnaSplits[i].file_idx][fnaSplits[i].offset + s_cnt].length)};
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
+                        cout << "Processing " << seq->name.s << endl;
                         currentList = priority_queue<uint64_t>();
                         seqIterator.getMinHashList(currentList, seq->seq.s);
                         orfNum = 0;
