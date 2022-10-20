@@ -71,6 +71,24 @@ IndexCreator::~IndexCreator() {
 }
 
 void IndexCreator::createIndex(const LocalParameters &par) {
+
+    // Load the taxonomical ID list
+    cout << "Loading taxonomy ID list ... ";
+    FILE * taxIdFile;
+    if((taxIdFile = fopen(string(dbDir + "/taxID_list").c_str(),"r")) == NULL){
+        cout<<"Cannot open the taxID list file."<<endl;
+        return;
+    }
+    char taxID[100];
+    while(feof(taxIdFile) == 0)
+    {
+        fscanf(taxIdFile,"%s",taxID);
+        taxIdList.push_back(atol(taxID));
+    }
+    taxIdList.pop_back();
+    fclose(taxIdFile);
+    cout<<"Done"<<endl;
+
     makeBlocksForParallelProcessing();
 
     size_t numOfSplits = fnaSplits.size();
@@ -82,7 +100,8 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     while(processedSplitCnt < numOfSplits){ // Check this condition
         fillTargetKmerBuffer(kmerBuffer, splitChecker, processedSplitCnt, par);
         time_t start = time(nullptr);
-        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, IndexCreator::compareForDiffIdx);
+        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
+                      IndexCreator::compareForDiffIdx);
         time_t sort = time(nullptr);
         cout << "Sort time: " << sort - start << endl;
         auto * uniqKmerIdx = new size_t[kmerBuffer.startIndexOfReserve + 1];
@@ -139,8 +158,8 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     fnaListFile.close();
 
     // Print elements of fnaSplits
-    for(auto & x : fnaSplits){
-        cout << x.file_idx << " " << x.speciesID << " " << x.training << " " << x.offset << " " << x.cnt << endl;
+    for(size_t i = 0; i < fnaSplits.size(); ++i){
+        cout << fnaSplits[i].file_idx << " " << fnaSplits[i].speciesID << " " << fnaSplits[i].training << " " << fnaSplits[i].offset << " " << fnaSplits[i].cnt << endl;
     }
 }
 
@@ -161,7 +180,7 @@ void IndexCreator::splitFasta(int fnaIdx, TaxID speciesTaxid) {
             seqForTraining = seqIdx;
         }
         cnt ++;
-        if(cnt > 30){
+        if(cnt > 100){
             tempSplits.emplace_back(0, offset, cnt - 1, speciesTaxid, fnaIdx);
             offset += cnt - 1;
             cnt = 1;
@@ -880,10 +899,10 @@ string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, cons
     size_t seqCnt = taxIdList.size();
     if (seqFile.is_open()) {
         getline(seqFile, firstLine, '\n');
-        taxIdList.push_back(acc2taxid.at(firstLine.substr(1, firstLine.find(' ') - 1)));
+//        taxIdList.push_back(acc2taxid.at(firstLine.substr(1, firstLine.find(' ') - 1)));
         while (getline(seqFile, eachLine, '\n')) {
             if (eachLine[0] == '>') {
-                taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find(' ') - 1)));
+//                taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find(' ') - 1)));
                 pos = (size_t) seqFile.tellg();
                 seqSegmentsTmp.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
                 start = pos - eachLine.length() - 1;
