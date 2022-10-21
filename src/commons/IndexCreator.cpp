@@ -46,6 +46,25 @@ IndexCreator::IndexCreator(const LocalParameters & par)
     }
 }
 
+IndexCreator::IndexCreator(const LocalParameters &par, string dbDir, string fnaListFileName,
+                           string taxonomyDir, string acc2taxidFile)
+        : dbDir(std::move(dbDir)), fnaListFileName(move(fnaListFileName)),
+          taxonomyDir(move(taxonomyDir)), acc2taxidFileName(std::move(acc2taxidFile))
+{
+    // Load taxonomy
+    taxonomy = new NcbiTaxonomy(this->taxonomyDir + "/names.dmp",
+                                this->taxonomyDir + "/nodes.dmp",
+                                this->taxonomyDir + "/merged.dmp");
+
+    if (par.reducedAA == 1){
+        MARKER = 0Xffffffff;
+        MARKER = ~ MARKER;
+    } else {
+        MARKER = 16777215;
+        MARKER = ~ MARKER;
+    }
+}
+
 IndexCreator::~IndexCreator() {
     delete taxonomy;
 }
@@ -138,6 +157,14 @@ void IndexCreator::makeBlocksForParallelProcessing(){
         splitFasta(i, speciesTaxid);
     }
     fnaListFile.close();
+
+    // Write accession to taxid map to file
+    string acc2taxidFileName = dbDir + "/acc2taxid.map";
+    FILE * acc2taxidFile = fopen(acc2taxidFileName.c_str(), "w");
+    for (auto & it : acc2taxid) {
+        fprintf(acc2taxidFile, "%s\t%d\n", it.first.c_str(), it.second);
+    }
+    fclose(acc2taxidFile);
 
     // Print elements of fnaSplits
     for(size_t i = 0; i < fnaSplits.size(); ++i){
