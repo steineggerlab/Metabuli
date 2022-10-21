@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <time.h>
+#include <ctime>
 #include <fstream>
 #include "printBinary.h"
 #include "Mmap.h"
@@ -79,7 +79,6 @@ private:
        size_t end;
    };
 
-    size_t availableMemory;
     size_t numOfFlush=0;
 
     void trainProdigal(const vector<FastaSplit> & splits, const vector<Sequence> & seq, MmapedData<char> & seqFile, const LocalParameters & par);
@@ -163,8 +162,6 @@ public:
                                   const unordered_map<string, TaxID> & acc2taxid);
     void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const char * seqFileName);
     IndexCreator(const LocalParameters & par);
-    IndexCreator(const LocalParameters & par, string dbDir, string fnaListFileName,
-                 string taxonomyDir, string acc2taxidFile);
     IndexCreator() {}
     ~IndexCreator();
     int getNumOfFlush();

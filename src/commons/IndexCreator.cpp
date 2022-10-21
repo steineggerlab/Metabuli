@@ -46,48 +46,28 @@ IndexCreator::IndexCreator(const LocalParameters & par)
     }
 }
 
-IndexCreator::IndexCreator(const LocalParameters &par, string dbDir, string fnaListFileName,
-                           string taxonomyDir, string acc2taxidFile)
-        : dbDir(std::move(dbDir)), fnaListFileName(move(fnaListFileName)),
-          taxonomyDir(move(taxonomyDir)), acc2taxidFileName(std::move(acc2taxidFile))
-{
-    // Load taxonomy
-    taxonomy = new NcbiTaxonomy(this->taxonomyDir + "/names.dmp",
-                                this->taxonomyDir + "/nodes.dmp",
-                                this->taxonomyDir + "/merged.dmp");
-
-    if (par.reducedAA == 1){
-        MARKER = 0Xffffffff;
-        MARKER = ~ MARKER;
-    } else {
-        MARKER = 16777215;
-        MARKER = ~ MARKER;
-    }
-}
-
-
 IndexCreator::~IndexCreator() {
     delete taxonomy;
 }
 
 void IndexCreator::createIndex(const LocalParameters &par) {
 
-//    // Load the taxonomical ID list
-//    cout << "Loading taxonomy ID list ... ";
-//    FILE * taxIdFile;
-//    if((taxIdFile = fopen(string(dbDir + "/taxID_list").c_str(),"r")) == NULL){
-//        cout<<"Cannot open the taxID list file."<<endl;
-//        return;
-//    }
-//    char taxID[100];
-//    while(feof(taxIdFile) == 0)
-//    {
-//        fscanf(taxIdFile,"%s",taxID);
-//        taxIdList.push_back(atol(taxID));
-//    }
-//    taxIdList.pop_back();
-//    fclose(taxIdFile);
-//    cout<<"Done"<<endl;
+    // Load the taxonomical ID list
+    cout << "Loading taxonomy ID list ... ";
+    FILE * taxIdFile;
+    if((taxIdFile = fopen(string(dbDir + "/taxID_list").c_str(),"r")) == NULL){
+        cout<<"Cannot open the taxID list file."<<endl;
+        return;
+    }
+    char taxID[100];
+    while(feof(taxIdFile) == 0)
+    {
+        fscanf(taxIdFile,"%s",taxID);
+        taxIdList.push_back(atol(taxID));
+    }
+    taxIdList.pop_back();
+    fclose(taxIdFile);
+    cout<<"Done"<<endl;
 
     makeBlocksForParallelProcessing();
 
@@ -168,23 +148,26 @@ void IndexCreator::makeBlocksForParallelProcessing(){
 void IndexCreator::splitFasta(int fnaIdx, TaxID speciesTaxid) {
     uint32_t offset = 0;
     uint32_t cnt = 0;
-    int maxLength = 0;
+    size_t maxLength = 0;
     size_t seqForTraining = 0;
     vector<FnaSplit> tempSplits;
     size_t seqIdx = 0;
+    size_t currLength = 0;
+    size_t lengthSum = 0;
     while(seqIdx < sequenceOfFastas[fnaIdx].size()){
-        if(speciesTaxid == 0) {
-            seqIdx++;
-            continue;
-        }
-        if (sequenceOfFastas[fnaIdx][seqIdx].length > maxLength){
-            maxLength = sequenceOfFastas[fnaIdx][seqIdx].length;
+        if(speciesTaxid == 0) { seqIdx++; continue;}
+
+        currLength = sequenceOfFastas[fnaIdx][seqIdx].length;
+        if (currLength > maxLength){
+            maxLength = currLength;
             seqForTraining = seqIdx;
         }
+        lengthSum += currLength;
         cnt ++;
-        if(cnt > 100){
+        if(lengthSum > 100'000'000 || cnt > 100){
             tempSplits.emplace_back(0, offset, cnt - 1, speciesTaxid, fnaIdx);
             offset += cnt - 1;
+            lengthSum = 0;
             cnt = 1;
         }
         seqIdx ++;
@@ -1258,6 +1241,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     munmap(fastaFile.data, fastaFile.fileSize + 1);
                 }else {
                     // Withdraw the reservation if the buffer is full.
+                    cout << "Buffer is full. Withdraw the reservation." << endl;
                     checker[i] = false;
                     hasOverflow = true;
                     __sync_fetch_and_sub(&kmerBuffer.startIndexOfReserve, estimatedKmerCnt);
