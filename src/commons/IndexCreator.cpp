@@ -208,6 +208,11 @@ void IndexCreator::load_accession2taxid(const string & mappingFileName, unordere
         cerr << "Cannot open file for mapping from accession to tax ID" << endl;
     }
     cerr << "Done" << endl;
+
+    // Print all elements in acc2taxid
+    for(auto it = acc2taxid.begin(); it != acc2taxid.end(); ++it){
+        cout << it->first << " " << it->second << endl;
+    }
 }
 
 void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const char * outputFileName,
