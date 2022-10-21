@@ -905,6 +905,7 @@ string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, cons
         taxIdList.push_back(acc2taxid.at(firstLine.substr(1, firstLine.find(' ') - 1)));
         while (getline(seqFile, eachLine, '\n')) {
             if (eachLine[0] == '>') {
+                cout << firstLine.substr(1, eachLine.find(' ') - 1) << endl;
                 taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find(' ') - 1)));
                 pos = (size_t) seqFile.tellg();
                 seqSegmentsTmp.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
