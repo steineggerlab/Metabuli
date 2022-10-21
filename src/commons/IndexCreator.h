@@ -162,6 +162,8 @@ public:
                                   const unordered_map<string, TaxID> & acc2taxid);
     void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const char * seqFileName);
     IndexCreator(const LocalParameters & par);
+    IndexCreator(const LocalParameters & par, string dbDir, string fnaListFileName,
+                 string taxonomyDir, string acc2taxidFile);
     IndexCreator() {}
     ~IndexCreator();
     int getNumOfFlush();

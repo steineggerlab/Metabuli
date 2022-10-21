@@ -46,6 +46,25 @@ IndexCreator::IndexCreator(const LocalParameters & par)
     }
 }
 
+IndexCreator::IndexCreator(const LocalParameters &par, string dbDir, string fnaListFileName,
+                           string taxonomyDir, string acc2taxidFile)
+        : dbDir(std::move(dbDir)), fnaListFileName(move(fnaListFileName)),
+          taxonomyDir(move(taxonomyDir)), acc2taxidFileName(std::move(acc2taxidFile))
+{
+    // Load taxonomy
+    taxonomy = new NcbiTaxonomy(this->taxonomyDir + "/names.dmp",
+                                this->taxonomyDir + "/nodes.dmp",
+                                this->taxonomyDir + "/merged.dmp");
+
+    if (par.reducedAA == 1){
+        MARKER = 0Xffffffff;
+        MARKER = ~ MARKER;
+    } else {
+        MARKER = 16777215;
+        MARKER = ~ MARKER;
+    }
+}
+
 IndexCreator::~IndexCreator() {
     delete taxonomy;
 }
