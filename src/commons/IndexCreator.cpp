@@ -145,6 +145,8 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     }
     string eachFile;
     string seqHeader;
+
+    unordered_map<string, TaxID> foundAcc2taxid;
     for (int i = 0; i < fileNum; ++i) {
         // Get start and end position of each sequence in the file
         getline(fnaListFile, eachFile);
@@ -153,15 +155,16 @@ void IndexCreator::makeBlocksForParallelProcessing(){
         seqHeader = getSeqSegmentsWithHead(sequenceOfFastas[i], eachFile, acc2taxid);
         seqHeader = seqHeader.substr(1, seqHeader.find(' ') - 1);
         TaxID speciesTaxid = taxonomy->getTaxIdAtRank(acc2taxid[seqHeader], "species");
+        foundAcc2taxid[seqHeader] = acc2taxid[seqHeader];
         // Split current file into blocks for parallel processing
         splitFasta(i, speciesTaxid);
     }
     fnaListFile.close();
 
     // Write accession to taxid map to file
-    string acc2taxidFileName = dbDir + "/acc2taxid.map";
-    FILE * acc2taxidFile = fopen(acc2taxidFileName.c_str(), "w");
-    for (auto & it : acc2taxid) {
+    string acc2taxidFileName2 = dbDir + "/acc2taxid.map";
+    FILE * acc2taxidFile = fopen(acc2taxidFileName2.c_str(), "w");
+    for (auto & it : foundAcc2taxid) {
         fprintf(acc2taxidFile, "%s\t%d\n", it.first.c_str(), it.second);
     }
     fclose(acc2taxidFile);
@@ -208,7 +211,7 @@ void IndexCreator::splitFasta(int fnaIdx, TaxID speciesTaxid) {
 }
 
 void IndexCreator::load_accession2taxid(const string & mappingFileName, unordered_map<string, int> & acc2taxid) {
-    cerr << "Load mapping from accession ID to taxonomy ID" << endl;
+    cerr << "Load mapping from accession ID to taxonomy ID ... ";
     string eachLine;
     string eachItem;
     if (FILE * mappingFile = fopen(mappingFileName.c_str(), "r")) {
@@ -221,6 +224,7 @@ void IndexCreator::load_accession2taxid(const string & mappingFileName, unordere
     } else {
         cerr << "Cannot open file for mapping from accession to tax ID" << endl;
     }
+    cerr << "Done" << endl;
 }
 
 void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const char * outputFileName,
@@ -1203,6 +1207,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
                     lengthOfTrainingSeq = strlen(seq->seq.s);
+                    cout << "Training " << seq->name.s << " " << lengthOfTrainingSeq << "\n";
                     prodigal.is_meta = 0;
                     if (strlen(seq->seq.s) < 100000) {
                         prodigal.is_meta = 1;
@@ -1229,7 +1234,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                   static_cast<size_t>(sequenceOfFastas[fnaSplits[i].file_idx][fnaSplits[i].offset + s_cnt].length)};
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
-                        cout << "Processing " << seq->name.s << endl;
+                        cout << "Processing " << seq->name.s << "\n";
                         currentList = priority_queue<uint64_t>();
                         seqIterator.getMinHashList(currentList, seq->seq.s);
                         orfNum = 0;
