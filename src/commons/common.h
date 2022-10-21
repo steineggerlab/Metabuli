@@ -17,7 +17,7 @@ struct Sequence{
     Sequence() : start(0), end(0), length(0), totalSeqCnt(0) { }
     size_t start;
     size_t end;
-    int length;
+    size_t length;
     size_t totalSeqCnt;
 };
 
