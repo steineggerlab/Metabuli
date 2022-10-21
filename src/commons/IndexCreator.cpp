@@ -147,8 +147,8 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     // Write accession to taxid map to file
     string acc2taxidFileName2 = dbDir + "/acc2taxid.map";
     FILE * acc2taxidFile = fopen(acc2taxidFileName2.c_str(), "w");
-    for (auto & it : foundAcc2taxid) {
-        fprintf(acc2taxidFile, "%s\t%d\n", it.first.c_str(), it.second);
+    for (auto it = foundAcc2taxid.begin(); it != foundAcc2taxid.end(); ++it) {
+        fprintf(acc2taxidFile, "%s\t%d\n", it->first.c_str(), it->second);
     }
     fclose(acc2taxidFile);
 
@@ -896,6 +896,7 @@ string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, cons
     size_t seqCnt = taxIdList.size();
     if (seqFile.is_open()) {
         getline(seqFile, firstLine, '\n');
+        cout << firstLine.substr(1, firstLine.find(' ') - 1) << endl;
         taxIdList.push_back(acc2taxid.at(firstLine.substr(1, firstLine.find(' ') - 1)));
         while (getline(seqFile, eachLine, '\n')) {
             if (eachLine[0] == '>') {
