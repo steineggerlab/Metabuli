@@ -71,23 +71,6 @@ IndexCreator::~IndexCreator() {
 
 void IndexCreator::createIndex(const LocalParameters &par) {
 
-    // Load the taxonomical ID list
-    cout << "Loading taxonomy ID list ... ";
-    FILE * taxIdFile;
-    if((taxIdFile = fopen(string(dbDir + "/taxID_list").c_str(),"r")) == NULL){
-        cout<<"Cannot open the taxID list file."<<endl;
-        return;
-    }
-    char taxID[100];
-    while(feof(taxIdFile) == 0)
-    {
-        fscanf(taxIdFile,"%s",taxID);
-        taxIdList.push_back(atol(taxID));
-    }
-    taxIdList.pop_back();
-    fclose(taxIdFile);
-    cout<<"Done"<<endl;
-
     makeBlocksForParallelProcessing();
 
     // Write taxonomy id list
@@ -1180,7 +1163,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
         kseq_buffer_t buffer;
         kseq_t *seq;
         vector<uint64_t> intergenicKmers;
-#pragma omp for schedule(guided, 10)
+#pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < fnaSplits.size(); i++) {
             if (!checker[i] && !hasOverflow) {
                 checker[i] = true;
@@ -1207,7 +1190,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
                     lengthOfTrainingSeq = strlen(seq->seq.s);
-                    cout << "Training " << seq->name.s << " " << lengthOfTrainingSeq << "\n";
+                    cout << "Training " << seq->name.s << " " << lengthOfTrainingSeq << endl;
                     prodigal.is_meta = 0;
                     if (strlen(seq->seq.s) < 100000) {
                         prodigal.is_meta = 1;
@@ -1234,7 +1217,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                   static_cast<size_t>(sequenceOfFastas[fnaSplits[i].file_idx][fnaSplits[i].offset + s_cnt].length)};
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
-                        cout << "Processing " << seq->name.s << "\n";
+                        cout << "Processing " << seq->name.s << endl;
                         currentList = priority_queue<uint64_t>();
                         seqIterator.getMinHashList(currentList, seq->seq.s);
                         orfNum = 0;
@@ -1270,6 +1253,9 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                         kseq_destroy(seq);
                     }
                     __sync_fetch_and_add(&processedSplitCnt, 1);
+#ifdef OPENMP
+                    cout << omp_get_thread_num() << " Processed " << i << "th splits (" << processedSplitCnt << ")" << endl;
+#endif
                     munmap(fastaFile.data, fastaFile.fileSize + 1);
                 }else {
                     // Withdraw the reservation if the buffer is full.
