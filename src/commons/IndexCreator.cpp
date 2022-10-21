@@ -135,10 +135,9 @@ void IndexCreator::makeBlocksForParallelProcessing(){
         getline(fnaListFile, eachFile);
         fnaList.push_back(eachFile);
         processedSeqCnt.push_back(taxIdList.size());
-        seqHeader = getSeqSegmentsWithHead(sequenceOfFastas[i], eachFile, acc2taxid);
+        seqHeader = getSeqSegmentsWithHead(sequenceOfFastas[i], eachFile, acc2taxid, foundAcc2taxid);
         seqHeader = seqHeader.substr(1, seqHeader.find(' ') - 1);
         TaxID speciesTaxid = taxonomy->getTaxIdAtRank(acc2taxid[seqHeader], "species");
-        foundAcc2taxid[seqHeader] = acc2taxid[seqHeader];
         // Split current file into blocks for parallel processing
         splitFasta(i, speciesTaxid);
     }
@@ -886,7 +885,8 @@ void IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, Mmaped
 }
 
 string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const string & seqFileName,
-                                            const unordered_map<string, TaxID> & acc2taxid) {
+                                            const unordered_map<string, TaxID> & acc2taxid,
+                                            unordered_map<string, TaxID> & foundAcc2taxid) {
     struct stat stat1{};
     stat(seqFileName.c_str(), &stat1);
     size_t numOfChar = stat1.st_size;
@@ -901,12 +901,12 @@ string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, cons
     size_t seqCnt = taxIdList.size();
     if (seqFile.is_open()) {
         getline(seqFile, firstLine, '\n');
-        cout << firstLine.substr(1, firstLine.find(' ') - 1) << endl;
         taxIdList.push_back(acc2taxid.at(firstLine.substr(1, firstLine.find(' ') - 1)));
+        foundAcc2taxid[firstLine.substr(1, firstLine.find(' ') - 1)] = taxIdList.back();
         while (getline(seqFile, eachLine, '\n')) {
             if (eachLine[0] == '>') {
-                cout << eachLine.substr(1, eachLine.find(' ') - 1) << endl;
                 taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find(' ') - 1)));
+                foundAcc2taxid[eachLine.substr(1, eachLine.find(' ') - 1)] = taxIdList.back();
                 pos = (size_t) seqFile.tellg();
                 seqSegmentsTmp.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
                 start = pos - eachLine.length() - 1;
