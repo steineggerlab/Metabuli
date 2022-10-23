@@ -50,6 +50,8 @@ public:
     int getNumberOfPredictedGenes();
     void updateTrainingInfo(_training &tinf);
     _training * getTrainingInfo();
+    _training getTrainingInfoCopy() { return tinf; }
+    void setTrainingInfo(_training &tinf);
     void getPredictedGenes(char * genome);
     void removeCompletelyOverlappingGenes();
     void trainASpecies(char * genome);

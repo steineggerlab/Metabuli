@@ -329,6 +329,10 @@ void ProdigalWrapper::removeCompletelyOverlappingGenes() {
 
 _training * ProdigalWrapper::getTrainingInfo() { return & tinf; }
 
+void ProdigalWrapper::setTrainingInfo(_training &tinf) {
+    this->tinf = tinf;
+}
+
 void ProdigalWrapper::updateTrainingInfo(_training &tinf2) {
     this->tinf = tinf2;
 }
