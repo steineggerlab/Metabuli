@@ -1470,23 +1470,23 @@ void IndexCreator::trainProdigal() {
             write_training_file(const_cast<char *>(fileName.c_str()), tinfo);
 
             // Add species to trainedSpecies.
-            newSpeciesList[omp_get_thread_num()].push_back(currentSpecies);
+//            newSpeciesList[omp_get_thread_num()].push_back(currentSpecies);
             kseq_destroy(seq);
             munmap(fastaFile.data, fastaFile.fileSize + 1);
         }
     }
-    // TODO: Write species ID of newly trained species into a file.
-    // Write trained species into a file.
-    for (int i = 0; i < threadNum; i++) {
-        for (auto &species : newSpeciesList[i]) {
-            trainedSpecies.push_back(species);
-        }
-    }
-    FILE *fp = fopen((tinfo_path + "/species-list.txt").c_str(), "w");
-    for (int trainedSpecie: trainedSpecies) {
-        fprintf(fp, "%d\n", trainedSpecie);
-    }
-    fclose(fp);
+//    // TODO: Write species ID of newly trained species into a file.
+//    // Write trained species into a file.
+//    for (int i = 0; i < threadNum; i++) {
+//        for (auto &species : newSpeciesList[i]) {
+//            trainedSpecies.push_back(species);
+//        }
+//    }
+//    FILE *fp = fopen((tinfo_path + "/species-list.txt").c_str(), "w");
+//    for (int trainedSpecie: trainedSpecies) {
+//        fprintf(fp, "%d\n", trainedSpecie);
+//    }
+//    fclose(fp);
 }
 
 void IndexCreator::loadTrainingInfo() {
