@@ -1427,7 +1427,7 @@ void IndexCreator::trainProdigal() {
     // TODO: 1. Check if the training file for current species exists. -> load the model
     //       2. If not, train the model and save it.
     // Train prodigal for each FASTA.
-#pragma omp parallel default(none), shared()
+#pragma omp parallel default(none)
     {
         ProdigalWrapper prodigal;
         kseq_buffer_t buffer;
