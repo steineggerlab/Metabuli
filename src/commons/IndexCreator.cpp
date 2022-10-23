@@ -75,7 +75,10 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     makeBlocksForParallelProcessing();
 
     // Train Prodigal for each species
+    time_t prodigalStart = time(nullptr);
     trainProdigal();
+    time_t prodigalEnd = time(nullptr);
+    cout << "Prodigal training time: " << prodigalEnd - prodigalStart << " seconds" << endl;
 
     // Write taxonomy id list
     string taxidListFileName = dbDir + "/taxID_list";
@@ -1472,18 +1475,18 @@ void IndexCreator::trainProdigal() {
             munmap(fastaFile.data, fastaFile.fileSize + 1);
         }
     }
-        // TODO: Write species ID of newly trained species into a file.
-        // Write trained species into a file.
-        for(int i = 0; i < threadNum; i ++){
-            trainedSpecies.insert(trainedSpecies.end(),
-                                  newSpeciesList[i].begin(),
-                                  newSpeciesList[i].end());
+    // TODO: Write species ID of newly trained species into a file.
+    // Write trained species into a file.
+    for (int i = 0; i < threadNum; i++) {
+        for (auto &species : newSpeciesList[i]) {
+            trainedSpecies.push_back(species);
         }
-        FILE *fp = fopen((tinfo_path + "/species-list.txt").c_str(), "w");
-        for (int trainedSpecie: trainedSpecies) {
-            fprintf(fp, "%d\n", trainedSpecie);
-        }
-        fclose(fp);
+    }
+    FILE *fp = fopen((tinfo_path + "/species-list.txt").c_str(), "w");
+    for (int trainedSpecie: trainedSpecies) {
+        fprintf(fp, "%d\n", trainedSpecie);
+    }
+    fclose(fp);
 }
 
 void IndexCreator::loadTrainingInfo() {
