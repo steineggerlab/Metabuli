@@ -176,11 +176,13 @@ FileMerger::~FileMerger() {
 // Merge differential index and k-mer information files, reducing redundancy
 void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) {
     size_t writtenKmerCnt = 0;
-    const string dbDirectory = par.filenames[1];
+    const string dbDirectory = par.filenames[0];
     const string taxonomyDirectory = dbDirectory + "/taxonomy";
 
     // Taxonomy
-    NcbiTaxonomy taxonomy(taxonomyDirectory + "/names.dmp", taxonomyDirectory + "/nodes.dmp", taxonomyDirectory + "/merged.dmp");
+    NcbiTaxonomy taxonomy(taxonomyDirectory + "/names.dmp",
+                          taxonomyDirectory + "/nodes.dmp",
+                          taxonomyDirectory + "/merged.dmp");
 
     // Load taxonomy id list
     vector<TaxID> taxIdList;

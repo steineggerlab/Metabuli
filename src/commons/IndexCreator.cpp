@@ -46,10 +46,9 @@ IndexCreator::IndexCreator(const LocalParameters & par)
     }
 }
 
-IndexCreator::IndexCreator(const LocalParameters &par, string dbDir, string fnaListFileName,
-                           string taxonomyDir, string acc2taxidFile)
+IndexCreator::IndexCreator(const LocalParameters &par, string dbDir, string fnaListFileName, string acc2taxidFile)
         : dbDir(std::move(dbDir)), fnaListFileName(move(fnaListFileName)),
-          taxonomyDir(move(taxonomyDir)), acc2taxidFileName(std::move(acc2taxidFile))
+          taxonomyDir(par.taxonomyPath), acc2taxidFileName(std::move(acc2taxidFile))
 {
     // Load taxonomy
     taxonomy = new NcbiTaxonomy(this->taxonomyDir + "/names.dmp",
@@ -71,7 +70,11 @@ IndexCreator::~IndexCreator() {
 
 void IndexCreator::createIndex(const LocalParameters &par) {
 
+    // Read through FASTA files and make blocks of sequences to be processed by each thread
     makeBlocksForParallelProcessing();
+
+    // Train Prodigal for each species
+    trainProdigal();
 
     // Write taxonomy id list
     string taxidListFileName = dbDir + "/taxID_list";
@@ -87,6 +90,9 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     fill_n(splitChecker, numOfSplits, false);
     size_t processedSplitCnt = 0;
     TargetKmerBuffer kmerBuffer(kmerBufSize);
+#ifdef OPENMP
+    omp_set_num_threads(par.threads);
+#endif
     while(processedSplitCnt < numOfSplits){ // Check this condition
         fillTargetKmerBuffer(kmerBuffer, splitChecker, processedSplitCnt, par);
         time_t start = time(nullptr);
@@ -118,7 +124,7 @@ void IndexCreator::makeBlocksForParallelProcessing(){
 
     // Make blocks of sequences that can be processed in parallel
     int fileNum = getNumberOfLines(fnaListFileName);
-    sequenceOfFastas.resize(fileNum);
+    fastaList.resize(fileNum);
 
     ifstream fnaListFile;
     fnaListFile.open(fnaListFileName);
@@ -133,13 +139,15 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     for (int i = 0; i < fileNum; ++i) {
         // Get start and end position of each sequence in the file
         getline(fnaListFile, eachFile);
-        fnaList.push_back(eachFile);
+        fastaList[i].path = eachFile;
         processedSeqCnt.push_back(taxIdList.size());
-        seqHeader = getSeqSegmentsWithHead(sequenceOfFastas[i], eachFile, acc2taxid, foundAcc2taxid);
+        seqHeader = getSeqSegmentsWithHead(fastaList[i].sequences, eachFile, acc2taxid, foundAcc2taxid);
         seqHeader = seqHeader.substr(1, seqHeader.find(' ') - 1);
         TaxID speciesTaxid = taxonomy->getTaxIdAtRank(acc2taxid[seqHeader], "species");
+
         // Split current file into blocks for parallel processing
         splitFasta(i, speciesTaxid);
+        fastaList[i].speciesID = speciesTaxid;
     }
     fnaListFile.close();
 
@@ -166,17 +174,17 @@ void IndexCreator::splitFasta(int fnaIdx, TaxID speciesTaxid) {
     size_t seqIdx = 0;
     size_t currLength = 0;
     size_t lengthSum = 0;
-    while(seqIdx < sequenceOfFastas[fnaIdx].size()){
+    while(seqIdx < fastaList[fnaIdx].sequences.size()){
         if(speciesTaxid == 0) { seqIdx++; continue;}
 
-        currLength = sequenceOfFastas[fnaIdx][seqIdx].length;
+        currLength = fastaList[fnaIdx].sequences[seqIdx].length;
         if (currLength > maxLength){
             maxLength = currLength;
             seqForTraining = seqIdx;
         }
         lengthSum += currLength;
         cnt ++;
-        if(lengthSum > 100'000'000 || cnt > 100){
+        if(lengthSum > 100'000'000 || cnt > 300 || (cnt > 100 && lengthSum > 50'000'000)){
             tempSplits.emplace_back(0, offset, cnt - 1, speciesTaxid, fnaIdx);
             offset += cnt - 1;
             lengthSum = 0;
@@ -190,10 +198,11 @@ void IndexCreator::splitFasta(int fnaIdx, TaxID speciesTaxid) {
         x.training = seqForTraining;
         fnaSplits.push_back(x);
     }
+    fastaList[fnaIdx].trainingSeqIdx = seqForTraining;
 }
 
 void IndexCreator::load_accession2taxid(const string & mappingFileName, unordered_map<string, int> & acc2taxid) {
-    cerr << "Load mapping from accession ID to taxonomy ID ... ";
+    cerr << "Load mapping from accession ID to taxonomy ID ... " << flush;
     string eachLine;
     string eachItem;
     if (FILE * mappingFile = fopen(mappingFileName.c_str(), "r")) {
@@ -207,11 +216,6 @@ void IndexCreator::load_accession2taxid(const string & mappingFileName, unordere
         cerr << "Cannot open file for mapping from accession to tax ID" << endl;
     }
     cerr << "Done" << endl;
-
-    // Print all elements in acc2taxid
-    for(auto it = acc2taxid.begin(); it != acc2taxid.end(); ++it){
-        cout << it->first << " " << it->second << endl;
-    }
 }
 
 void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const char * outputFileName,
@@ -242,8 +246,8 @@ void IndexCreator::startIndexCreatingParallel(const char * seqFileName, const ch
     // Mmap the input fasta file
     struct MmapedData<char> seqFile = mmapData<char>(seqFileName);
 
-    // Training prodigal
-    trainProdigal(splits, sequences, seqFile, par);
+//    // Training prodigal
+//    trainProdigal(splits, sequences, seqFile, par);
 
     // Load the trained prodigal model
     loadTrainingInfo();
@@ -1150,9 +1154,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                           bool *checker,
                                           size_t &processedSplitCnt,
                                           const LocalParameters &par) {
-#ifdef OPENMP
-    omp_set_num_threads(par.threads);
-#endif
     bool hasOverflow = false;
 
 #pragma omp parallel default(none), shared(kmerBuffer, checker, processedSplitCnt, hasOverflow, par, cout)
@@ -1181,7 +1182,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                 // Estimate the number of k-mers to be extracted from current split
                 size_t totalLength = 0;
                 for (size_t p = 0; p < fnaSplits[i].cnt; p++) {
-                    totalLength += sequenceOfFastas[fnaSplits[i].file_idx][fnaSplits[i].offset + p].length;
+                    totalLength += fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].offset + p].length;
                 }
                 size_t estimatedKmerCnt = totalLength / 3;
 
@@ -1189,30 +1190,21 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                 posToWrite = kmerBuffer.reserveMemory(estimatedKmerCnt);
                 if (posToWrite + estimatedKmerCnt < kmerBuffer.bufferSize) {
                     // MMap FASTA file of current split
-                    struct MmapedData<char> fastaFile = mmapData<char>(fnaList[fnaSplits[i].file_idx].c_str());
+                    struct MmapedData<char> fastaFile = mmapData<char>(fastaList[fnaSplits[i].file_idx].path.c_str());
 
-                    // Train Prodigal with a training sequence of i th split
-                    buffer = {const_cast<char *>(&fastaFile.data[sequenceOfFastas[fnaSplits[i].file_idx][fnaSplits[i].training].start]),
-                              static_cast<size_t>(sequenceOfFastas[fnaSplits[i].file_idx][fnaSplits[i].training].length)};
+                    // Load training information
+                    prodigal.setTrainingInfo(trainingInfo[fnaSplits[i].speciesID]);
+
+                    // Generate intergenic 23-mer list. It is used to determine extension direction of intergenic sequences.
+                    buffer = {const_cast<char *>(&fastaFile.data[fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].training].start]),
+                              static_cast<size_t>(fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].training].length)};
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
                     lengthOfTrainingSeq = strlen(seq->seq.s);
-                    cout << "Training " << seq->name.s << " " << lengthOfTrainingSeq << endl;
-                    prodigal.is_meta = 0;
-                    if (strlen(seq->seq.s) < 100000) {
-                        prodigal.is_meta = 1;
-                        prodigal.trainMeta(seq->seq.s);
-                    } else {
-                        prodigal.trainASpecies(seq->seq.s);
-                    }
-
-                    // Generate intergenic 23-mer list. It is used to strandness of intergenic sequences.
                     prodigal.getPredictedGenes(seq->seq.s);
-
                     seqIterator.generateIntergenicKmerList(prodigal.genes, prodigal.nodes,
                                                            prodigal.getNumberOfPredictedGenes(),
                                                            intergenicKmers,seq->seq.s);
-
 
                     // Get min k-mer hash list for determining strandness
                     seqIterator.getMinHashList(standardList, seq->seq.s);
@@ -1220,8 +1212,8 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
 
                     // Extract k-mer from the rest of the sequences of current split
                     for (size_t s_cnt = 0; s_cnt < fnaSplits[i].cnt; ++s_cnt) {
-                        buffer = {const_cast<char *>(&fastaFile.data[sequenceOfFastas[fnaSplits[i].file_idx][fnaSplits[i].offset + s_cnt].start]),
-                                  static_cast<size_t>(sequenceOfFastas[fnaSplits[i].file_idx][fnaSplits[i].offset + s_cnt].length)};
+                        buffer = {const_cast<char *>(&fastaFile.data[fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].offset + s_cnt].start]),
+                                  static_cast<size_t>(fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].offset + s_cnt].length)};
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
                         cout << "Processing " << seq->name.s << endl;
@@ -1431,50 +1423,60 @@ size_t IndexCreator::estimateKmerNum(const vector<TaxId2Fasta> & taxid2fasta, co
     return kmerNum;
 }
 
-void IndexCreator::trainProdigal(const vector<FastaSplit> &splits, const vector<Sequence> & seqs,
-                                 MmapedData<char> &seqFile, const LocalParameters &par) {
-    // Train prodigal for species of each split.
-    ProdigalWrapper prodigal;
-    kseq_buffer_t buffer;
-    kseq_t * seq;
-    size_t lengthOfTrainingSeq;
-    for (size_t i = 0; i < splits.size(); i++){
-        TaxID currentSpecies = splits[i].taxid;
-        // Check if the species was trained before.
-        if (std::find(trainedSpecies.begin(), trainedSpecies.end(), currentSpecies) != trainedSpecies.end()) {
-            continue;
+void IndexCreator::trainProdigal() {
+    // TODO: 1. Check if the training file for current species exists. -> load the model
+    //       2. If not, train the model and save it.
+    // Train prodigal for each FASTA.
+#pragma omp parallel default(none), shared()
+    {
+        ProdigalWrapper prodigal;
+        kseq_buffer_t buffer;
+        kseq_t *seq;
+        size_t lengthOfTrainingSeq;
+#pragma omp for schedule(dynamic, 1)
+        for (size_t i = 0; i < fastaList.size(); i++) {
+            FASTA &currentFasta = fastaList[i];
+            TaxID currentSpecies = currentFasta.speciesID;
+            struct MmapedData<char> fastaFile = mmapData<char>(currentFasta.path.c_str());
+            // Load sequence for training.
+            buffer = {const_cast<char *>(&fastaFile.data[currentFasta.sequences[currentFasta.trainingSeqIdx].start]),
+                      static_cast<size_t>(currentFasta.sequences[currentFasta.trainingSeqIdx].length)};
+            seq = kseq_init(&buffer);
+            kseq_read(seq);
+
+            // Train prodigal.
+            prodigal.is_meta = 0;
+            lengthOfTrainingSeq = strlen(seq->seq.s);
+            if (lengthOfTrainingSeq < 100'000) {
+                prodigal.is_meta = 1;
+                prodigal.trainMeta(seq->seq.s);
+            } else {
+                prodigal.trainASpecies(seq->seq.s);
+            }
+
+            // Save the model.
+            trainingInfo[currentSpecies] = prodigal.getTrainingInfoCopy();
+
+            // TODO: If newly trained model, save it.
+            // Write training result into a file for later use.
+            string fileName = dbDir + "/prodigal/" + to_string(currentSpecies) + ".tinfo";
+            _training *tinfo = prodigal.getTrainingInfo();
+            write_training_file(const_cast<char *>(fileName.c_str()), tinfo);
+
+            // Add species to trainedSpecies.
+            trainedSpecies.push_back(currentSpecies);
+
+            kseq_destroy(seq);
+            munmap(fastaFile.data, fastaFile.fileSize + 1);
         }
-
-        // Load sequence for species.
-        buffer = {const_cast<char *>(&seqFile.data[seqs[splits[i].training].start]),
-                  static_cast<size_t>(seqs[splits[i].training].length)};
-        seq = kseq_init(&buffer);
-        kseq_read(seq);
-
-        // Train prodigal.
-        prodigal.is_meta = 0;
-        lengthOfTrainingSeq = strlen(seq->seq.s);
-        if(lengthOfTrainingSeq < 100000){
-            prodigal.is_meta = 1;
-            prodigal.trainMeta(seq->seq.s);
-        }else{
-            prodigal.trainASpecies(seq->seq.s);
+        // TODO: Write species ID of newly trained species into a file.
+        // Write trained species into a file.
+        FILE *fp = fopen((tinfo_path + "/species-list.txt").c_str(), "w");
+        for (int trainedSpecie: trainedSpecies) {
+            fprintf(fp, "%d\n", trainedSpecie);
         }
-
-        // Write training result into a file.
-        string fileName = to_string(currentSpecies)+ ".tinfo";
-        _training * trainingInfo = prodigal.getTrainingInfo();
-        write_training_file( const_cast<char *>(fileName.c_str()), trainingInfo);
-
-        // Add species to trainedSpecies.
-        trainedSpecies.push_back(currentSpecies);
+        fclose(fp);
     }
-    // Write trained species into a file.
-    FILE * fp = fopen(tinfo_path.c_str(), "w");
-    for (int trainedSpecie : trainedSpecies){
-        fprintf(fp, "%d", trainedSpecie);
-    }
-    fclose(fp);
 }
 
 void IndexCreator::loadTrainingInfo() {

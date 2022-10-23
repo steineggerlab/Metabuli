@@ -47,10 +47,17 @@ private:
     string taxonomyDir;
     string acc2taxidFileName;
 
-    vector<string> fnaList;
-    vector<vector<Sequence>> sequenceOfFastas;
+    struct FASTA {
+        string path;
+        TaxID speciesID;
+        size_t trainingSeqIdx;
+        vector<Sequence> sequences;
+    };
+
+    vector<FASTA> fastaList;
     vector<TaxID> taxIdList;
     vector<size_t> processedSeqCnt; // Index of this vector is the same as the index of fnaList
+
 
     struct FnaSplit{
         // species, file_idx, training, offset, cnt
@@ -81,7 +88,7 @@ private:
 
     size_t numOfFlush=0;
 
-    void trainProdigal(const vector<FastaSplit> & splits, const vector<Sequence> & seq, MmapedData<char> & seqFile, const LocalParameters & par);
+    void trainProdigal();
     void loadTrainingInfo();
 
     void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<int> & taxIdList);
@@ -163,8 +170,7 @@ public:
                                   unordered_map<string, TaxID> & foundAcc2taxid);
     void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const char * seqFileName);
     IndexCreator(const LocalParameters & par);
-    IndexCreator(const LocalParameters & par, string dbDir, string fnaListFileName,
-                 string taxonomyDir, string acc2taxidFile);
+    IndexCreator(const LocalParameters & par, string dbDir, string fnaListFileName, string acc2taxidFile);
     IndexCreator() {}
     ~IndexCreator();
     int getNumOfFlush();
