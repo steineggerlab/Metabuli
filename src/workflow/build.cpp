@@ -18,7 +18,7 @@ int build(int argc, const char **argv, const Command &command){
     string dbDirectory = par.filenames[0];
     string fastaListPath = par.filenames[1];
     string mappingFile = par.filenames[2];
-    if (par.taxonomyPath.empty()) par.taxonomyPath = par.taxonomyPath;
+    if (par.taxonomyPath.empty()) par.taxonomyPath = dbDirectory + "/taxonomy/";
     if (par.tinfoPath.empty()) par.tinfoPath = dbDirectory + "/prodigal/";
 
     IndexCreator idxCre(par, dbDirectory, fastaListPath, mappingFile);
