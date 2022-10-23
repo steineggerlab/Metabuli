@@ -7,6 +7,7 @@ IndexCreator::IndexCreator(const LocalParameters & par)
     dbDir = par.filenames[0];
     fnaListFileName = par.filenames[1];
     taxonomyDir = par.filenames[0] + "/taxonomy";
+    threadNum = par.threads;
 
 
     // Load taxonomy
@@ -1427,7 +1428,9 @@ void IndexCreator::trainProdigal() {
     // TODO: 1. Check if the training file for current species exists. -> load the model
     //       2. If not, train the model and save it.
     // Train prodigal for each FASTA.
-#pragma omp parallel default(none)
+    vector<vector<TaxID>> newSpeciesList;
+    newSpeciesList.resize(threadNum);
+#pragma omp parallel default(none), shared(newSpeciesList)
     {
         ProdigalWrapper prodigal;
         kseq_buffer_t buffer;
@@ -1464,19 +1467,23 @@ void IndexCreator::trainProdigal() {
             write_training_file(const_cast<char *>(fileName.c_str()), tinfo);
 
             // Add species to trainedSpecies.
-            trainedSpecies.push_back(currentSpecies);
-
+            newSpeciesList[omp_get_thread_num()].push_back(currentSpecies);
             kseq_destroy(seq);
             munmap(fastaFile.data, fastaFile.fileSize + 1);
         }
+    }
         // TODO: Write species ID of newly trained species into a file.
         // Write trained species into a file.
+        for(int i = 0; i < threadNum; i ++){
+            trainedSpecies.insert(trainedSpecies.end(),
+                                  newSpeciesList[i].begin(),
+                                  newSpeciesList[i].end());
+        }
         FILE *fp = fopen((tinfo_path + "/species-list.txt").c_str(), "w");
         for (int trainedSpecie: trainedSpecies) {
             fprintf(fp, "%d\n", trainedSpecie);
         }
         fclose(fp);
-    }
 }
 
 void IndexCreator::loadTrainingInfo() {

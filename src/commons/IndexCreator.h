@@ -40,6 +40,7 @@ private:
     string tinfo_list;
     vector<TaxID> trainedSpecies;
     unordered_map<TaxID, _training> trainingInfo;
+    int threadNum;
 
     NcbiTaxonomy * taxonomy;
     string dbDir;
