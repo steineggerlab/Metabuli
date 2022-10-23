@@ -1197,8 +1197,9 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     struct MmapedData<char> fastaFile = mmapData<char>(fastaList[fnaSplits[i].file_idx].path.c_str());
 
                     // Load training information
-                    prodigal.setTrainingInfo(trainingInfo[fnaSplits[i].speciesID]);
-
+//                    prodigal.setTrainingInfo(trainingInfo[fnaSplits[i].speciesID]);
+                    read_training_file(const_cast<char *>((par.tinfoPath + to_string(fnaSplits[i].speciesID)).c_str()),
+                                       prodigal.getTrainingInfo());
                     // Generate intergenic 23-mer list. It is used to determine extension direction of intergenic sequences.
                     buffer = {const_cast<char *>(&fastaFile.data[fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].training].start]),
                               static_cast<size_t>(fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].training].length)};
@@ -1461,7 +1462,7 @@ void IndexCreator::trainProdigal() {
             }
 
             // Save the model.
-            trainingInfo[currentSpecies] = prodigal.getTrainingInfoCopy();
+//            trainingInfo[currentSpecies] = prodigal.getTrainingInfoCopy();
 
             // TODO: If newly trained model, save it.
             // Write training result into a file for later use.
