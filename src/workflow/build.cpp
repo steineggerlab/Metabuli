@@ -7,7 +7,6 @@ void setDefaults_build(LocalParameters & par){
     par.reducedAA = 0;
     par.spaceMask = "11111111";
     par.taxonomyPath = "" ;
-
 }
 
 int build(int argc, const char **argv, const Command &command){
