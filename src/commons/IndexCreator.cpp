@@ -164,6 +164,13 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     }
     fclose(acc2taxidFile);
 
+    // Print out fasta list
+    for (int i = 0; i < fastaList.size(); ++i) {
+        for (int j = 0; j < fastaList[i].sequences.size(); ++j) {
+            cout << fastaList[i].sequences[j].start << " " << fastaList[i].sequences[j].end << " " << fastaList[i].sequences[j].length << endl;
+        }
+    }
+
 //    // Print elements of fnaSplits
 //    for(size_t i = 0; i < fnaSplits.size(); ++i){
 //        cout << fnaSplits[i].file_idx << " " << fnaSplits[i].speciesID << " " << fnaSplits[i].training << " " << fnaSplits[i].offset << " " << fnaSplits[i].cnt << endl;
