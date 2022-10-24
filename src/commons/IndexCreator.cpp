@@ -166,6 +166,7 @@ void IndexCreator::makeBlocksForParallelProcessing(){
 
     // Print out fasta list
     for (int i = 0; i < fastaList.size(); ++i) {
+        cout << fastaList[i].path << endl;
         for (int j = 0; j < fastaList[i].sequences.size(); ++j) {
             cout << fastaList[i].sequences[j].start << " " << fastaList[i].sequences[j].end << " " << fastaList[i].sequences[j].length << endl;
         }
@@ -1265,6 +1266,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                             }
                             free(reverseCompliment);
                         }
+                        cout << "Processed " << seq->name.s << endl;
                         kseq_destroy(seq);
                     }
                     __sync_fetch_and_add(&processedSplitCnt, 1);
