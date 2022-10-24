@@ -139,6 +139,7 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     string eachFile;
     string seqHeader;
 
+
     unordered_map<string, TaxID> foundAcc2taxid;
     for (int i = 0; i < fileNum; ++i) {
         // Get start and end position of each sequence in the file
@@ -1198,8 +1199,12 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
 
                     // Load training information
 //                    prodigal.setTrainingInfo(trainingInfo[fnaSplits[i].speciesID]);
-                    read_training_file(const_cast<char *>((par.tinfoPath + to_string(fnaSplits[i].speciesID)).c_str()),
-                                       prodigal.getTrainingInfo());
+                    int read_check = read_training_file(const_cast<char *>((par.tinfoPath + to_string(fnaSplits[i].speciesID)).c_str()),
+                                                        prodigal.getTrainingInfo());
+                    if (read_check != 0) {
+                        cout << "Cannot read training information for species " << fnaSplits[i].speciesID << endl;
+                        exit(1);
+                    }
                     // Generate intergenic 23-mer list. It is used to determine extension direction of intergenic sequences.
                     buffer = {const_cast<char *>(&fastaFile.data[fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].training].start]),
                               static_cast<size_t>(fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].training].length)};
