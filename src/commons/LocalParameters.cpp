@@ -134,6 +134,7 @@ LocalParameters::LocalParameters() :
     build.push_back(&REDUCED_AA);
     build.push_back(&SPACED);
     build.push_back(&TAXONOMY_PATH);
+    build.push_back(&TINFO_PATH);
 
     //build_dir
     build_dir.push_back(&PARAM_THREADS);

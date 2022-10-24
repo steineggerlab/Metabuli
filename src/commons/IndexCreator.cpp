@@ -164,10 +164,10 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     }
     fclose(acc2taxidFile);
 
-    // Print elements of fnaSplits
-    for(size_t i = 0; i < fnaSplits.size(); ++i){
-        cout << fnaSplits[i].file_idx << " " << fnaSplits[i].speciesID << " " << fnaSplits[i].training << " " << fnaSplits[i].offset << " " << fnaSplits[i].cnt << endl;
-    }
+//    // Print elements of fnaSplits
+//    for(size_t i = 0; i < fnaSplits.size(); ++i){
+//        cout << fnaSplits[i].file_idx << " " << fnaSplits[i].speciesID << " " << fnaSplits[i].training << " " << fnaSplits[i].offset << " " << fnaSplits[i].cnt << endl;
+//    }
 }
 
 void IndexCreator::splitFasta(int fnaIdx, TaxID speciesTaxid) {
@@ -1198,7 +1198,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     struct MmapedData<char> fastaFile = mmapData<char>(fastaList[fnaSplits[i].file_idx].path.c_str());
 
                     // Load training information
-//                    prodigal.setTrainingInfo(trainingInfo[fnaSplits[i].speciesID]);
                     int read_check = read_training_file(const_cast<char *>((par.tinfoPath + to_string(fnaSplits[i].speciesID)).c_str()),
                                                         prodigal.getTrainingInfo());
                     if (read_check != 0) {
@@ -1226,7 +1225,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                   static_cast<size_t>(fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].offset + s_cnt].length)};
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
-                        cout << "Processing " << seq->name.s << endl;
                         currentList = priority_queue<uint64_t>();
                         seqIterator.getMinHashList(currentList, seq->seq.s);
                         orfNum = 0;
