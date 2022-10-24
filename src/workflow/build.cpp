@@ -20,6 +20,8 @@ int build(int argc, const char **argv, const Command &command){
     string mappingFile = par.filenames[2];
     if (par.taxonomyPath.empty()) par.taxonomyPath = dbDirectory + "/taxonomy/";
     if (par.tinfoPath.empty()) par.tinfoPath = dbDirectory + "/prodigal/";
+    cout << "Taxonomy path: " << par.taxonomyPath << endl;
+    cout << "Tinfo path: " << par.tinfoPath << endl;
 
     IndexCreator idxCre(par, dbDirectory, fastaListPath, mappingFile);
     idxCre.createIndex(par);
