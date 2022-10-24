@@ -70,10 +70,12 @@ int grade(int argc, const char **argv, const Command &command){
         string key, value;
         ifstream map;
         map.open(mappingFile);
+        size_t numberOfAnswers = 0;
         if(map.is_open()){
             while(getline(map,key,'\t')){
                 getline(map, value, '\n');
                 assacc2taxid[key] = stoi(value);
+                numberOfAnswers ++;
             }
         } else{
             cout<<"Cannot open file for mappig from assemlby accession to tax ID"<<endl;
@@ -134,17 +136,21 @@ int grade(int argc, const char **argv, const Command &command){
         G.precision = (float)G.TP / (float)G.total;
         F.precision = (float)F.TP / (float)F.total;
 
-        SS.sensitivity = (float)SS.TP / classList.size();
-        S.sensitivity = (float)S.TP / classList.size();
-        G.sensitivity = (float)G.TP / classList.size();
-        F.sensitivity = (float)F.TP / classList.size();
+        size_t totalNumberOfReads = classList.size();
+        if (par.testType == "cami"){
+            totalNumberOfReads = numberOfAnswers;
+        }
+        SS.sensitivity = (float)SS.TP / (float)totalNumberOfReads;
+        S.sensitivity = (float)S.TP / (float)totalNumberOfReads;
+        G.sensitivity = (float)G.TP / (float)totalNumberOfReads;
+        F.sensitivity = (float)F.TP / (float)totalNumberOfReads;
 
         cout<<readClassificationFileName<<endl;
-        cout<<"The number of reads: "<< classList.size()<<endl;
-        cout<<"Family      : " << F.total << " / " << F.TP << " / "<< F.FP << " / " << F.precision << " / "<< F.sensitivity << endl;
-        cout<<"Genus       : " << G.total << " / " << G.TP << " / "<< G.FP << " / " << G.precision << " / "<< G.sensitivity << endl;
-        cout<<"Species     : " << S.total << " / " << S.TP << " / "<< S.FP << " / " << S.precision << " / "<< S.sensitivity << endl;
-        cout<<"Subspecies  : " << SS.total << " / " << SS.TP << " / "<< SS.FP << " / " << SS.precision << " / "<< SS.sensitivity << endl;
+        cout<<"The number of reads: "<< totalNumberOfReads<<endl;
+        cout<<"Family      : " << F.total << " / " << F.TP << " / "<< F.FP << " / " << F.precision << " / "<< F.sensitivity << " / " << 2 * F.precision * F.sensitivity / (F.precision + F.sensitivity) << endl;
+        cout<<"Genus       : " << G.total << " / " << G.TP << " / "<< G.FP << " / " << G.precision << " / "<< G.sensitivity << " / " << 2 * G.precision * G.sensitivity / (G.precision + G.sensitivity) << endl;
+        cout<<"Species     : " << S.total << " / " << S.TP << " / "<< S.FP << " / " << S.precision << " / "<< S.sensitivity << " / " << 2 * S.precision * S.sensitivity / (S.precision + S.sensitivity) << endl;
+        cout<<"Subspecies  : " << SS.total << " / " << SS.TP << " / "<< SS.FP << " / " << SS.precision << " / "<< SS.sensitivity << " / " << 2 * SS.precision * SS.sensitivity / (SS.precision + SS.sensitivity) << endl;
         cout<<endl;
     }
 
