@@ -1198,10 +1198,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     struct MmapedData<char> fastaFile = mmapData<char>(fastaList[fnaSplits[i].file_idx].path.c_str());
 
                     // Load training information
-                    int read_check = read_training_file(const_cast<char *>((par.tinfoPath + to_string(fnaSplits[i].speciesID)).c_str()),
+                    int read_check = read_training_file(const_cast<char *>((par.tinfoPath + to_string(fnaSplits[i].speciesID) + ".tinfo").c_str()),
                                                         prodigal.getTrainingInfo());
                     if (read_check != 0) {
-                        cout << "Cannot read training information for species " << fnaSplits[i].speciesID << endl;
+                        cout << "Cannot read training information for species " << par.tinfoPath + to_string(fnaSplits[i].speciesID) + ".tinfo" << endl;
                         exit(1);
                     }
                     // Generate intergenic 23-mer list. It is used to determine extension direction of intergenic sequences.
