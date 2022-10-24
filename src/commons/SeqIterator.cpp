@@ -435,7 +435,7 @@ void
 SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock &block, const char *seq, TargetKmerBuffer &kmerBuffer,
                                          size_t &posToWrite, const uint32_t &seqID, int taxIdAtRank) {
     uint64_t tempKmer = 0;
-    int len = aaFrames[0].size();
+    int len = (int) aaFrames[0].size();
     int checkN;
     for (int kmerCnt = 0; kmerCnt < len - kmerLength - spaceNum_int + 1; kmerCnt++) {
         tempKmer = 0;

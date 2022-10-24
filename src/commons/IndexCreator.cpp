@@ -1225,6 +1225,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                   static_cast<size_t>(fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].offset + s_cnt].length)};
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
+                        cout << "Processing " << seq->name.s << endl;
                         currentList = priority_queue<uint64_t>();
                         seqIterator.getMinHashList(currentList, seq->seq.s);
                         orfNum = 0;
@@ -1251,7 +1252,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                                         orfNum, intergenicKmers, reverseCompliment);
                             for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
                                 seqIterator.translateBlock(reverseCompliment, extendedORFs[orfCnt]);
-                                seqIterator.fillBufferWithKmerFromBlock(extendedORFs[orfCnt], reverseCompliment, kmerBuffer,
+                                seqIterator.fillBufferWithKmerFromBlock(extendedORFs[orfCnt], reverseCompliment, kmerBuffer, // TODO ERROR HERE
                                                                         posToWrite, processedSeqCnt[fnaSplits[i].file_idx] + fnaSplits[i].offset + s_cnt,
                                                                         fnaSplits[i].speciesID);
                             }
@@ -1291,7 +1292,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
 #endif
-    bool hasOverflow = false;
+    int hasOverflow = 0;
 
 #pragma omp parallel default(none), shared(checker, hasOverflow,par, splits, seqFile, seqs, kmerBuffer, \
 processedSplitCnt, cout, taxIdListAtRank, superkingdoms)
@@ -1311,7 +1312,7 @@ processedSplitCnt, cout, taxIdListAtRank, superkingdoms)
         kseq_t * seq;
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < splits.size() ; i++) {
-            if(!checker[i] && !hasOverflow) {
+            if(!checker[i] && hasOverflow == 0) {
                 intergenicKmerList.clear();
                 strandness.clear();
                 standardList = priority_queue<uint64_t>();
@@ -1409,7 +1410,7 @@ processedSplitCnt, cout, taxIdListAtRank, superkingdoms)
                     __sync_fetch_and_add(&processedSplitCnt, 1);
                 } else {
                     // Withdraw the reservation if the buffer is full.
-                    hasOverflow = true;
+                    __sync_fetch_and_add(&hasOverflow, 1);
                     __sync_fetch_and_sub(&kmerBuffer.startIndexOfReserve, estimatedKmerCnt);
                     cout << "buffer is full" << endl;
                 }
