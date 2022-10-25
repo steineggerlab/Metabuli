@@ -72,6 +72,7 @@ struct CountAtRank {
     int TP;
     float precision;
     float sensitivity;
+    float f1;
 };
 
 void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts,
