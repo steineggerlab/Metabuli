@@ -128,7 +128,7 @@ int grade(int argc, const char **argv, const Command &command){
 
         // Print ID and classification
         if (par.testType == "cami") {
-            for (size_t idx = 0; i < readIds.size(); ++i) {
+            for (size_t idx = 0; idx < readIds.size(); ++idx) {
                 cout << readIds[idx] << "\t" << classList[idx] << endl;
             }
         }
