@@ -66,7 +66,9 @@ IndexCreator::IndexCreator(const LocalParameters &par, string dbDir, string fnaL
 }
 
 IndexCreator::~IndexCreator() {
-    delete taxonomy;
+    if (taxonomy != nullptr){
+        delete taxonomy;
+    }
 }
 
 void IndexCreator::createIndex(const LocalParameters &par) {
