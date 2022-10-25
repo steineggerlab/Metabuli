@@ -76,11 +76,11 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     // Read through FASTA files and make blocks of sequences to be processed by each thread
     makeBlocksForParallelProcessing();
 
-//     Train Prodigal for each species
-    time_t prodigalStart = time(nullptr);
-    trainProdigal();
-    time_t prodigalEnd = time(nullptr);
-    cout << "Prodigal training time: " << prodigalEnd - prodigalStart << " seconds" << endl;
+    // Train Prodigal for each species
+//    time_t prodigalStart = time(nullptr);
+//    trainProdigal();
+//    time_t prodigalEnd = time(nullptr);
+//    cout << "Prodigal training time: " << prodigalEnd - prodigalStart << " seconds" << endl;
 
     // Write taxonomy id list
     string taxidListFileName = dbDir + "/taxID_list";
@@ -1239,6 +1239,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                         seqIterator.getMinHashList(currentList, seq->seq.s);
                         orfNum = 0;
                         extendedORFs.clear();
+                        int tempCheck = 0;
                         if (seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq,
                                                            strlen(seq->seq.s))) {
                             prodigal.getPredictedGenes(seq->seq.s);
@@ -1248,9 +1249,12 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                                         orfNum, intergenicKmers, seq->seq.s);
                             for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
                                 seqIterator.translateBlock(seq->seq.s, extendedORFs[orfCnt]);
-                                seqIterator.fillBufferWithKmerFromBlock(extendedORFs[orfCnt], seq->seq.s, kmerBuffer, posToWrite,
+                                tempCheck = seqIterator.fillBufferWithKmerFromBlock(extendedORFs[orfCnt], seq->seq.s, kmerBuffer, posToWrite,
                                                                         processedSeqCnt[fnaSplits[i].file_idx] + fnaSplits[i].offset + s_cnt,
                                                                         fnaSplits[i].speciesID);
+                                if (tempCheck == -1) {
+                                    cout << "ERROR: Buffer overflow " << seq->name.s << strlen(seq->seq.s) << endl;
+                                }
                             }
                         } else {
                             reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, strlen(seq->seq.s));
@@ -1261,9 +1265,12 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                                         orfNum, intergenicKmers, reverseCompliment);
                             for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
                                 seqIterator.translateBlock(reverseCompliment, extendedORFs[orfCnt]);
-                                seqIterator.fillBufferWithKmerFromBlock(extendedORFs[orfCnt], reverseCompliment, kmerBuffer, // TODO ERROR HERE
+                                tempCheck = seqIterator.fillBufferWithKmerFromBlock(extendedORFs[orfCnt], reverseCompliment, kmerBuffer, // TODO ERROR HERE
                                                                         posToWrite, processedSeqCnt[fnaSplits[i].file_idx] + fnaSplits[i].offset + s_cnt,
                                                                         fnaSplits[i].speciesID);
+                                if (tempCheck == -1) {
+                                    cout << "ERROR: Buffer overflow " << seq->name.s << strlen(seq->seq.s) << endl;
+                                }
                             }
                             free(reverseCompliment);
                         }

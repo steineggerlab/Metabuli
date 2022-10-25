@@ -88,7 +88,7 @@ public:
 
     size_t getNumOfKmerForBlock(const PredictedBlock &block);
 
-    void fillBufferWithKmerFromBlock(const PredictedBlock &block, const char *seq, TargetKmerBuffer &kmerBuffer,
+    int fillBufferWithKmerFromBlock(const PredictedBlock &block, const char *seq, TargetKmerBuffer &kmerBuffer,
                                      size_t &posToWrite, const uint32_t &seqID, int taxIdAtRank);
 
     void printKmerInDNAsequence(uint64_t kmer);
