@@ -76,11 +76,11 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     // Read through FASTA files and make blocks of sequences to be processed by each thread
     makeBlocksForParallelProcessing();
 
-    // Train Prodigal for each species
-//    time_t prodigalStart = time(nullptr);
-//    trainProdigal();
-//    time_t prodigalEnd = time(nullptr);
-//    cout << "Prodigal training time: " << prodigalEnd - prodigalStart << " seconds" << endl;
+//     Train Prodigal for each species
+    time_t prodigalStart = time(nullptr);
+    trainProdigal();
+    time_t prodigalEnd = time(nullptr);
+    cout << "Prodigal training time: " << prodigalEnd - prodigalStart << " seconds" << endl;
 
     // Write taxonomy id list
     string taxidListFileName = dbDir + "/taxID_list";
