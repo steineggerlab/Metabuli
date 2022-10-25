@@ -127,11 +127,11 @@ int grade(int argc, const char **argv, const Command &command){
         readClassification.close();
 
         // Print ID and classification
-        if (par.testType == "cami") {
-            for (size_t idx = 0; idx < readIds.size(); ++idx) {
-                cout << readIds[idx] << "\t" << classList[idx] << "\t" << rightAnswers[idx] << "\t" << ncbiTaxonomy.taxonNode(classList[idx])->rank << "\t" << ncbiTaxonomy.taxonNode(rightAnswers[idx])->rank << endl;
-            }
-        }
+//        if (par.testType == "cami") {
+//            for (size_t idx = 0; idx < readIds.size(); ++idx) {
+//                cout << readIds[idx] << "\t" << classList[idx] << "\t" << rightAnswers[idx] << "\t" << ncbiTaxonomy.taxonNode(classList[idx])->rank << "\t" << ncbiTaxonomy.taxonNode(rightAnswers[idx])->rank << endl;
+//            }
+//        }
 
         // Score the classification
         CountAtRank SS = {0, 0, 0, 0, 0};
