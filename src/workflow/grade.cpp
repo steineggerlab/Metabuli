@@ -129,7 +129,7 @@ int grade(int argc, const char **argv, const Command &command){
         // Print ID and classification
         if (par.testType == "cami") {
             for (size_t idx = 0; idx < readIds.size(); ++idx) {
-                cout << readIds[idx] << "\t" << classList[idx] << endl;
+                cout << readIds[idx] << "\t" << classList[idx] << "\t" << rightAnswers[idx] << "\t" << ncbiTaxonomy.taxonNode(classList[idx])->rank << endl;
             }
         }
 
@@ -138,11 +138,11 @@ int grade(int argc, const char **argv, const Command &command){
         CountAtRank S = {0, 0, 0, 0, 0};
         CountAtRank G = {0, 0, 0, 0, 0};
         CountAtRank F = {0, 0, 0, 0, 0};
-        for(size_t i = 0; i < classList.size(); i++){
-            compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, SS, "subspecies");
-            compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, S, "species");
-            compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, G, "genus");
-            compareTaxonAtRank(classList[i], rightAnswers[i], ncbiTaxonomy, F, "family");
+        for(size_t j = 0; j < classList.size(); j++){
+            compareTaxonAtRank(classList[j], rightAnswers[j], ncbiTaxonomy, SS, "subspecies");
+            compareTaxonAtRank(classList[j], rightAnswers[j], ncbiTaxonomy, S, "species");
+            compareTaxonAtRank(classList[j], rightAnswers[j], ncbiTaxonomy, G, "genus");
+            compareTaxonAtRank(classList[j], rightAnswers[j], ncbiTaxonomy, F, "family");
         }
         SS.precision = (float)SS.TP / (float)SS.total;
         S.precision = (float)S.TP / (float)S.total;
