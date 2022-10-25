@@ -231,7 +231,9 @@ int grade_cami(const LocalParameters & par){
     vector<CAMI_RESULT> camiResults;
     camiResults.resize(numberOfFiles);
 
-
+#ifdef OPENMP
+    omp_set_num_threads(par.threads);
+#endif
 
 #pragma omp parallel dafault(none), shared(camiResults, numberOfFiles, mappingFileNames, readClassificationFileNames, ncbiTaxonomy, par)
     {

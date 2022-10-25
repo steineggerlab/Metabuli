@@ -1170,6 +1170,8 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                           const LocalParameters &par) {
     bool hasOverflow = false;
 
+
+
 #pragma omp parallel default(none), shared(kmerBuffer, checker, processedSplitCnt, hasOverflow, par, cout)
     {
         ProdigalWrapper prodigal;

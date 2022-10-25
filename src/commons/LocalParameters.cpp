@@ -164,6 +164,7 @@ LocalParameters::LocalParameters() :
 
     //updateTargetDB
     exclusiontest_hiv.push_back(&TEST_RANK);
-    grade.push_back(&TEST_TYPE);
 
+    grade.push_back(&TEST_TYPE);
+    grade.push_back(&PARAM_THREADS);
 }
