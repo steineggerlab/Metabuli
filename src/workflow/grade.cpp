@@ -93,6 +93,8 @@ int grade(int argc, const char **argv, const Command &command){
         vector<Score2> tpOrFp;
         regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
         smatch assacc;
+        size_t numberOfClassifications = 0;
+        vector<string> readIds;
         while(getline(readClassification,classString,'\n')){
             istringstream lineStream(classString);
             fields.clear();
@@ -112,13 +114,24 @@ int grade(int argc, const char **argv, const Command &command){
                 size_t pos = id.find('/');
                 id = id.substr(0,pos);
                 rightAnswers.push_back(assacc2taxid[id]);
+                readIds.push_back(id);
             }
 
             // Read classification
             classInt = stoi(fields[2]);
             classList.push_back(classInt);
+            if (classInt != 0) {
+                numberOfClassifications++;
+            }
         }
         readClassification.close();
+
+        // Print ID and classification
+        if (par.testType == "cami") {
+            for (size_t idx = 0; i < readIds.size(); ++i) {
+                cout << readIds[idx] << "\t" << classList[idx] << endl;
+            }
+        }
 
         // Score the classification
         CountAtRank SS = {0, 0, 0, 0, 0};
@@ -147,6 +160,7 @@ int grade(int argc, const char **argv, const Command &command){
 
         cout<<readClassificationFileName<<endl;
         cout<<"The number of reads: "<< totalNumberOfReads<<endl;
+        cout<<"The number of reads classified: "<<numberOfClassifications<<endl;
         cout<<"Family      : " << F.total << " / " << F.TP << " / "<< F.FP << " / " << F.precision << " / "<< F.sensitivity << " / " << 2 * F.precision * F.sensitivity / (F.precision + F.sensitivity) << endl;
         cout<<"Genus       : " << G.total << " / " << G.TP << " / "<< G.FP << " / " << G.precision << " / "<< G.sensitivity << " / " << 2 * G.precision * G.sensitivity / (G.precision + G.sensitivity) << endl;
         cout<<"Species     : " << S.total << " / " << S.TP << " / "<< S.FP << " / " << S.precision << " / "<< S.sensitivity << " / " << 2 * S.precision * S.sensitivity / (S.precision + S.sensitivity) << endl;

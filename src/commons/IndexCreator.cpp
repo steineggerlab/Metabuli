@@ -139,7 +139,6 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     string eachFile;
     string seqHeader;
 
-
     unordered_map<string, TaxID> foundAcc2taxid;
     for (int i = 0; i < fileNum; ++i) {
         // Get start and end position of each sequence in the file
@@ -1233,7 +1232,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                   static_cast<size_t>(fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].offset + s_cnt].length)};
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
-                        cout << "Processing " << seq->name.s << endl;
+                        cout << "Processing " << seq->name.s << "\t" << strlen(seq->seq.s) << endl;
                         currentList = priority_queue<uint64_t>();
                         seqIterator.getMinHashList(currentList, seq->seq.s);
                         orfNum = 0;
