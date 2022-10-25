@@ -236,7 +236,7 @@ int grade_cami(const LocalParameters & par){
     omp_set_num_threads(par.threads);
 #endif
 
-#pragma omp parallel default(none), shared(camiResults, numberOfFiles, mappingFileNames, readClassificationFileNames, ncbiTaxonomy, par)
+#pragma omp parallel default(none), shared(camiResults, numberOfFiles, mappingFileNames, readClassificationFileNames, ncbiTaxonomy, par, cout)
     {
         // Grade each file
         unordered_map<string, int> assacc2taxid;
