@@ -11,6 +11,15 @@
 
 using namespace std;
 
+struct CAMI_RESULT{
+    string path;
+    CountAtRank species;
+    CountAtRank genus;
+    CountAtRank family;
+    CountAtRank order;
+    CountAtRank class_;
+};
+
 int grade_cami(const LocalParameters & par);
 
 void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count, const string & rank);
@@ -216,6 +225,10 @@ int grade_cami(const LocalParameters & par){
 
     size_t numberOfFiles = mappingFileNames.size();
 
+    // Container for storing grading results
+    vector<CAMI_RESULT> camiResults;
+    camiResults.resize(numberOfFiles);
+
     // Grade each file
     unordered_map<string, int> assacc2taxid;
     vector<int> rightAnswers;
@@ -331,6 +344,18 @@ int grade_cami(const LocalParameters & par){
         O.sensitivity = (float)O.TP / (float) (S_answer_cnt + G_answer_cnt + F_answer_cnt + O_answer_cnt);
         C.sensitivity = (float)C.TP / (float) (S_answer_cnt + G_answer_cnt + F_answer_cnt + O_answer_cnt + C_answer_cnt);
 
+        S.f1 = 2 * S.precision * S.sensitivity / (S.precision + S.sensitivity);
+        G.f1 = 2 * G.precision * G.sensitivity / (G.precision + G.sensitivity);
+        F.f1 = 2 * F.precision * F.sensitivity / (F.precision + F.sensitivity);
+        O.f1 = 2 * O.precision * O.sensitivity / (O.precision + O.sensitivity);
+        C.f1 = 2 * C.precision * C.sensitivity / (C.precision + C.sensitivity);
+
+        camiResults[i].species = S;
+        camiResults[i].genus = G;
+        camiResults[i].family = F;
+        camiResults[i].order = O;
+        camiResults[i].class_ = C;
+
         cout<<readClassificationFileName<<endl;
         cout<<"The number of reads: "<< rightAnswers.size()<<endl;
         cout<<"The number of reads classified: "<<numberOfClassifications<<endl;
@@ -341,6 +366,8 @@ int grade_cami(const LocalParameters & par){
         cout<<"Species     : " << S.total << " / " << S.TP << " / "<< S.FP << " / " << S.precision << " / "<< S.sensitivity << " / " << 2 * S.precision * S.sensitivity / (S.precision + S.sensitivity) << endl;
         cout<<endl;
     }
+
+
     return 0;
 }
 
@@ -371,6 +398,7 @@ void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
             }
         }
         shotNode = ncbiTaxonomy.taxonNode(shotNode->parentTaxId);
+        shotTaxIdAtRank = shotNode->taxId;
         subspecies = true;
     }
 
