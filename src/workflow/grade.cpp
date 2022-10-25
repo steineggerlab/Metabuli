@@ -367,7 +367,43 @@ int grade_cami(const LocalParameters & par){
         cout<<endl;
     }
 
+    cout << "Rank\t";
+    for(size_t i = 0; i < camiResults.size(); i++){
+        cout << "Precision\tSensitivity\tF1\t";
+    }
+    // Print Class
+    cout<< "Class\t";
+    for(size_t i = 0; i < camiResults.size(); i++){
+        cout << camiResults[i].class_.precision << "\t" << camiResults[i].class_.sensitivity << "\t" << camiResults[i].class_.f1 << "\t";
+    }
+    cout << endl;
 
+    // Print Order
+    cout<< "Order\t";
+    for(size_t i = 0; i < camiResults.size(); i++){
+        cout << camiResults[i].order.precision << "\t" << camiResults[i].order.sensitivity << "\t" << camiResults[i].order.f1 << "\t";
+    }
+    cout << endl;
+
+    // Print Family
+    cout<< "Family\t";
+    for(size_t i = 0; i < camiResults.size(); i++){
+        cout << camiResults[i].family.precision << "\t" << camiResults[i].family.sensitivity << "\t" << camiResults[i].family.f1 << "\t";
+    }
+    cout << endl;
+
+    // Print Genus
+    cout<< "Genus\t";
+    for(size_t i = 0; i < camiResults.size(); i++){
+        cout << camiResults[i].genus.precision << "\t" << camiResults[i].genus.sensitivity << "\t" << camiResults[i].genus.f1 << "\t";
+    }
+    cout << endl;
+
+    // Print Species
+    cout<< "Species\t";
+    for(size_t i = 0; i < camiResults.size(); i++){
+        cout << camiResults[i].species.precision << "\t" << camiResults[i].species.sensitivity << "\t" << camiResults[i].species.f1 << "\t";
+    }
     return 0;
 }
 
