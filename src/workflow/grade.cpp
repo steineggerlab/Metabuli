@@ -371,6 +371,7 @@ int grade_cami(const LocalParameters & par){
     for(size_t i = 0; i < camiResults.size(); i++){
         cout << "Precision\tSensitivity\tF1\t";
     }
+    cout << endl;
     // Print Class
     cout<< "Class\t";
     for(size_t i = 0; i < camiResults.size(); i++){
