@@ -8,9 +8,14 @@ void compareTaxonAtRank(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, C
     TaxID targetTaxIdAtRank = targetNode->taxId;
     if(shot == 1 || shot == 0) return;
 
+    // Check if no-rank is subspecies
+    if (shotNode -> rank == "no rank" && ncbiTaxonomy.taxonNode(shotNode->parentTaxId)->rank == "species") {
+
+    }
+
 
     // Classification at higher rank -> ignore
-    if(NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank)){
+    if(NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank) && shotNode->rank != "no rank") {
         return;
     }
 
