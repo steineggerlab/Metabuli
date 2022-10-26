@@ -297,17 +297,20 @@ int grade_cami(const LocalParameters & par){
                 string id = fields[1];
                 id = id.substr(0, fields[1].find('/'));
                 TaxID rightAnswer = assacc2taxid[id];
-                if (ncbiTaxonomy.taxonNode(rightAnswer)->rank == "species") {
+                string rightAnswerRank = ncbiTaxonomy.taxonNode(rightAnswer)->rank;
+                if (rightAnswerRank == "species") {
                     S_answer_cnt++;
-                } else if (ncbiTaxonomy.taxonNode(rightAnswer)->rank == "genus") {
+                } else if (rightAnswerRank == "genus") {
                     G_answer_cnt++;
-                } else if (ncbiTaxonomy.taxonNode(rightAnswer)->rank == "family") {
+                } else if (rightAnswerRank == "family") {
                     F_answer_cnt++;
-                } else if (ncbiTaxonomy.taxonNode(rightAnswer)->rank == "order") {
+                } else if (rightAnswerRank == "order") {
                     O_answer_cnt++;
-                } else if (ncbiTaxonomy.taxonNode(rightAnswer)->rank == "class") {
+                } else if (rightAnswerRank == "class") {
                     C_answer_cnt++;
                 }
+//                cout << "right answer: " << rightAnswer << " " << rightAnswerRank << endl;
+//
                 rightAnswers.push_back(rightAnswer);
                 readIds.push_back(id);
 
@@ -321,11 +324,11 @@ int grade_cami(const LocalParameters & par){
             readClassification.close();
 
             // Print ID and classification
-//        if (par.testType == "cami") {
-//            for (size_t idx = 0; idx < readIds.size(); ++idx) {
-//                cout << readIds[idx] << "\t" << classList[idx] << "\t" << rightAnswers[idx] << "\t" << ncbiTaxonomy.taxonNode(classList[idx])->rank << "\t" << ncbiTaxonomy.taxonNode(rightAnswers[idx])->rank << endl;
-//            }
-//        }
+        if (par.testType == "cami") {
+            for (size_t idx = 0; idx < readIds.size(); ++idx) {
+                cout << readIds[idx] << "\t" << classList[idx] << "\t" << rightAnswers[idx] << "\t" << ncbiTaxonomy.taxonNode(classList[idx])->rank << "\t" << ncbiTaxonomy.taxonNode(rightAnswers[idx])->rank << endl;
+            }
+        }
 
             // Score the classification
             CountAtRank S = {0, 0, 0, 0, 0};
@@ -381,7 +384,7 @@ int grade_cami(const LocalParameters & par){
             cout << "Species     : " << S_answer_cnt << " / " << S.total << " / " << S.TP << " / " << S.FP << " / " << S.precision << " / "
                     << S.sensitivity << " / " << S.f1 << endl;
             cout << endl;
-          
+
         }
     }
 
