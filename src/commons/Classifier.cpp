@@ -811,7 +811,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         genusList.reserve(genusMatches.size());
         for (auto & genusMatch : genusMatches) {
             genusList.push_back(genusTaxIdList[genusMatch.targetId]);
-
         }
         selectedTaxon = taxonomy->LCA(genusList)->taxId;
         queryList[currentQuery].isClassified = true;
@@ -1397,6 +1396,7 @@ void Classifier::chooseSpecies(const vector<Match> &matches, int read1Length, in
         }
         speciesEnd = i;
         speciesScrCovs[currentSpeices] = scoreTaxon_paired(matches, speciesBegin, speciesEnd, read1Length, read2Length);
+        cout << currentSpeices << " " << speciesScrCovs[currentSpeices].score << " " << speciesScrCovs[currentSpeices].coverage << endl;
     }
 
     // Get the best species
@@ -1412,8 +1412,6 @@ void Classifier::chooseSpecies(const vector<Match> &matches, int read1Length, in
             species.push_back(sp->first);
         }
     }
-//    cout<<"E"<<endl;
-
 }
 
 Classifier::ScrCov Classifier::scoreTaxon(const vector<Match> &matches,
