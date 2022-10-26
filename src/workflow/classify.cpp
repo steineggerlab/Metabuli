@@ -13,7 +13,7 @@ void setClassifyDefaults(LocalParameters & par){
     par.spaceMask = "11111111";
     par.minConsCnt = 4;
     par.hammingMargin = 0;
-    par.minSpScore = 0.7;
+    par.minSpScore = 0.5;
 }
 
 int classify(int argc, const char **argv, const Command& command)
