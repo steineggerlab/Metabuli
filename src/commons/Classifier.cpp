@@ -39,11 +39,7 @@ Classifier::Classifier(LocalParameters & par, const vector<TaxID> & taxIdList) {
     // Taxonomy ID list
     this->taxIdList = taxIdList;
     taxonomy->createTaxIdListAtRank(this->taxIdList, speciesTaxIdList, "species");
-    taxonomy->createTaxIdListAtRank(this->taxIdList, genusTaxIdList, "genus");
-    // Print the taxID list
-    for(size_t i = 0; i < taxIdList.size(); i++) {
-        cout << taxonomy->taxonNode(taxIdList[i])->rank << " " << taxIdList[i] << " " << speciesTaxIdList[i] << " " << genusTaxIdList[i] << endl;
-    }
+    taxonomy->createTaxIdListAtRank(speciesTaxIdList, genusTaxIdList, "genus");
     spORssp.push_back(&this->taxIdList);
     spORssp.push_back(&this->speciesTaxIdList);
 }

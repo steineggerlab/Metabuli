@@ -103,6 +103,5 @@ int addToLibrary(int argc, const char **argv, const Command &command){
         }
         munmap(seqFile.data, seqFile.fileSize + 1);
     }
-
     return EXIT_SUCCESS;
 }
