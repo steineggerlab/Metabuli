@@ -1553,7 +1553,8 @@ void Classifier::writeReadClassification(Query *queryList, int queryNum, ofstrea
         readClassificationFile << queryList[i].isClassified << "\t" << queryList[i].name << "\t"
                                << queryList[i].classification << "\t"
                                << queryList[i].queryLength + queryList[i].queryLength2 << "\t"
-                               << queryList[i].score << "\t";
+                               << queryList[i].score << "\t"
+                               << taxonomy->taxonNode(queryList[i].classification)->rank << "\t"
         for (auto it = queryList[i].taxCnt.begin(); it != queryList[i].taxCnt.end(); ++it) {
             readClassificationFile << it->first << ":" << it->second << " ";
         }
