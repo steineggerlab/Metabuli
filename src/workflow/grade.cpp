@@ -370,17 +370,18 @@ int grade_cami(const LocalParameters & par){
             cout << readClassificationFileName << endl;
             cout << "The number of reads: " << rightAnswers.size() << endl;
             cout << "The number of reads classified: " << numberOfClassifications << endl;
-            cout << "Class       : " << C.total << " / " << C.TP << " / " << C.FP << " / " << C.precision << " / "
-                 << C.sensitivity << " / " << 2 * C.precision * C.sensitivity / (C.precision + C.sensitivity) << endl;
-            cout << "Order       : " << O.total << " / " << O.TP << " / " << O.FP << " / " << O.precision << " / "
-                 << O.sensitivity << " / " << 2 * O.precision * O.sensitivity / (O.precision + O.sensitivity) << endl;
-            cout << "Family      : " << F.total << " / " << F.TP << " / " << F.FP << " / " << F.precision << " / "
-                 << F.sensitivity << " / " << 2 * F.precision * F.sensitivity / (F.precision + F.sensitivity) << endl;
-            cout << "Genus       : " << G.total << " / " << G.TP << " / " << G.FP << " / " << G.precision << " / "
-                 << G.sensitivity << " / " << 2 * G.precision * G.sensitivity / (G.precision + G.sensitivity) << endl;
-            cout << "Species     : " << S.total << " / " << S.TP << " / " << S.FP << " / " << S.precision << " / "
-                 << S.sensitivity << " / " << 2 * S.precision * S.sensitivity / (S.precision + S.sensitivity) << endl;
+            cout << "Class       : " << S_answer_cnt + G_answer_cnt + F_answer_cnt + O_answer_cnt + C_answer_cnt << " / " << C.total << " / " << C.TP << " / " << C.FP << " / " << C.precision << " / "
+                 << C.sensitivity << " / " << C.f1 << endl;
+            cout << "Order       : " << O_answer_cnt + F_answer_cnt + G_answer_cnt + S_answer_cnt << " / " << O.total << " / " << O.TP << " / " << O.FP << " / " << O.precision << " / "
+                    << O.sensitivity << " / " << O.f1 << endl;
+            cout << "Family      : " << F_answer_cnt + G_answer_cnt + S_answer_cnt << " / " << F.total << " / " << F.TP << " / " << F.FP << " / " << F.precision << " / "
+                    << F.sensitivity << " / " << F.f1 << endl;
+            cout << "Genus       : " << G_answer_cnt + S_answer_cnt << " / " << G.total << " / " << G.TP << " / " << G.FP << " / " << G.precision << " / "
+                    << G.sensitivity << " / " << G.f1 << endl;
+            cout << "Species     : " << S_answer_cnt << " / " << S.total << " / " << S.TP << " / " << S.FP << " / " << S.precision << " / "
+                    << S.sensitivity << " / " << S.f1 << endl;
             cout << endl;
+          
         }
     }
 
@@ -433,28 +434,26 @@ void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
     if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)){
         return;
     }
-
     // Ignore if the shot is meaningless
     if(shot == 1 || shot == 0) return;
 
-    TaxID shotTaxIdAtRank = shotNode->taxId;
+
+    TaxID shotTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(shot, rank);
     TaxID targetTaxIdAtRank = targetNode->taxId;
 
-    // Check if no-rank is subspecies
-    bool subspecies = false;
-    if (shotNode -> rank == "no rank" && ncbiTaxonomy.taxonNode(shotNode->parentTaxId)->rank == "species") {
-        if (rank == "subspecies") {
-            count.total++;
-            if (shot == target) {
-                count.TP++;
-            } else {
-                count.FP++;
-            }
-        }
-        shotNode = ncbiTaxonomy.taxonNode(shotNode->parentTaxId);
-        shotTaxIdAtRank = shotNode->taxId;
-        subspecies = true;
-    }
+//    // Check if no-rank is subspecies
+//    if (shotNode -> rank == "no rank" && ncbiTaxonomy.taxonNode(shotNode->parentTaxId)->rank == "species") {
+//        if (rank == "subspecies") {
+//            count.total++;
+//            if (shot == target) {
+//                count.TP++;
+//            } else {
+//                count.FP++;
+//            }
+//        }
+//        shotNode = ncbiTaxonomy.taxonNode(shotNode->parentTaxId);
+//        shotTaxIdAtRank = shotNode->taxId;
+//    }
 
     // Ignore if the rank of shot is higher than current rank
     if(NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank) && shotNode->rank != "no rank") {
