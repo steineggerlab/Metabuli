@@ -70,6 +70,7 @@ struct CountAtRank {
     int total;
     int FP;
     int TP;
+    int FN;
     float precision;
     float sensitivity;
     float f1;
