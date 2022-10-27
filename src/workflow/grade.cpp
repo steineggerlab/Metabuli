@@ -421,8 +421,8 @@ void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
 //            return;
 //        }
 //    }
-    // Ignore if the shot is meaningless
-    if(shot == 1 || shot == 0) return;
+
+
 
 //
 //    if(NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank) && shotNode->rank != "no rank") {
@@ -432,16 +432,21 @@ void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
 //        }
 //    }
 
-    TaxID shotTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(shot, rank);
-    TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
-
-    const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shotTaxIdAtRank);
-    const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
-
     // Do not count if the rank of target is higher than current rank
+    TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
+    const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
     if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)) { return;}
 
+    // False negative; no classification or meanigless classification
+    if(shot == 1 || shot == 0) {
+        count.FN ++;
+        count.total ++;
+        return;
+    }
+
     // False negative if the rank of shot is higher than current rank
+    TaxID shotTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(shot, rank);
+    const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shotTaxIdAtRank);
     if (NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank)) {
         count.FN ++;
         count.total ++;
@@ -479,5 +484,4 @@ void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
 //    }
 
     // Correct classification at the rank
-
 }
