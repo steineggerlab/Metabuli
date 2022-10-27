@@ -433,16 +433,27 @@ void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
 
-    // Ignore if the rank of target is higher than current rank
+    // Do not count if the rank of target is higher than current rank
     if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)){
         return;
     }
     // Ignore if the shot is meaningless
     if(shot == 1 || shot == 0) return;
 
-
+    // False negative if the rank of shot is higher than current rank
+    if(NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank) && shotNode->rank != "no rank") {
+        return;
+    }
+    
     TaxID shotTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(shot, rank);
-    TaxID targetTaxIdAtRank = targetNode->taxId;
+    TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
+
+    if(shotTaxIdAtRank == targetTaxIdAtRank){
+        count.TP++;
+    } else {
+        count.FP++;
+    }
+    count.total++;
 
 //    // Check if no-rank is subspecies
 //    if (shotNode -> rank == "no rank" && ncbiTaxonomy.taxonNode(shotNode->parentTaxId)->rank == "species") {
@@ -458,23 +469,15 @@ void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
 //        shotTaxIdAtRank = shotNode->taxId;
 //    }
 
-    // Ignore if the rank of shot is higher than current rank
-    if(NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank) && shotNode->rank != "no rank") {
-        return;
-    }
 
-    if(NcbiTaxonomy::findRankIndex(shotNode->rank) < NcbiTaxonomy::findRankIndex(rank)){
-        shotTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(shotNode->taxId, rank);
-    }
-    if(NcbiTaxonomy::findRankIndex(targetNode->rank) < NcbiTaxonomy::findRankIndex(rank)){
-        targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(targetNode->taxId, rank);
-    }
+
+//    if(NcbiTaxonomy::findRankIndex(shotNode->rank) < NcbiTaxonomy::findRankIndex(rank)){
+//        shotTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(shotNode->taxId, rank);
+//    }
+//    if(NcbiTaxonomy::findRankIndex(targetNode->rank) < NcbiTaxonomy::findRankIndex(rank)){
+//        targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(targetNode->taxId, rank);
+//    }
 
     // Correct classification at the rank
-    if(shotTaxIdAtRank == targetTaxIdAtRank){
-        count.TP++;
-    } else {
-        count.FP++;
-    }
-    count.total++;
+
 }
