@@ -172,7 +172,7 @@ public:
     void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const char * seqFileName);
     IndexCreator(const LocalParameters & par);
     IndexCreator(const LocalParameters & par, string dbDir, string fnaListFileName, string acc2taxidFile);
-    IndexCreator() {}
+    IndexCreator() {taxonomy = nullptr;}
     ~IndexCreator();
     int getNumOfFlush();
     void startIndexCreatingParallel(const LocalParameters & par);
