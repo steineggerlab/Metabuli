@@ -361,9 +361,9 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
 void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKmerCnt,
                                       Buffer<Match> &matchBuffer, const LocalParameters &par) {
     int threadNum = par.threads;
-    const string targetDiffIdxFileName = dbDir + "/diffIdx";
-    const string targetInfoFileName = dbDir + "/info";
-    const string diffIdxSplitFileName = dbDir + "/split";;
+    string targetDiffIdxFileName = dbDir + "/diffIdx";
+    string targetInfoFileName = dbDir + "/info";
+    string diffIdxSplitFileName = dbDir + "/split";;
 
     struct stat diffIdxFileSt{};
 //    int diffIdxFile = open(targetDiffIdxFileName.c_str(), O_CREAT | O_RDWR);
