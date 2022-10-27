@@ -1426,7 +1426,6 @@ void Classifier::chooseSpecies(const vector<Match> &matches, int read1Length, in
         }
         speciesEnd = i;
         speciesScrCovs[currentSpeices] = scoreTaxon_paired(matches, speciesBegin, speciesEnd, read1Length, read2Length);
-        cout << currentSpeices << " " << speciesScrCovs[currentSpeices].score << " " << speciesScrCovs[currentSpeices].coverage << endl;
     }
 
     // Get the best species
