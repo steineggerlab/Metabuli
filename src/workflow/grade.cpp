@@ -25,9 +25,15 @@ int grade_cami(const LocalParameters & par);
 
 void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count, const string & rank);
 
+void setGradeDefault(LocalParameters & par){
+    par.accessionCol = 1;
+    par.taxidCol = 2;
+}
+
 int grade(int argc, const char **argv, const Command &command){
 
     LocalParameters &par = LocalParameters::getLocalInstance();
+    setGradeDefault(par);
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
 
     if (par.testType == "cami") {
@@ -120,7 +126,7 @@ int grade(int argc, const char **argv, const Command &command){
                 fields.push_back(field);
             }
             // Read ID -> right answer
-            string id = fields[1];
+            string id = fields[par.accessionCol];
             if (par.testType == "gtdb") {
                 regex_search(fields[1], assacc, regex1);
                 rightAnswers.push_back(assacc2taxid[assacc[0]]);
@@ -136,7 +142,7 @@ int grade(int argc, const char **argv, const Command &command){
             }
 
             // Read classification
-            classInt = stoi(fields[2]);
+            classInt = stoi(fields[par.taxidCol]);
             classList.push_back(classInt);
             if (classInt != 0) {
                 numberOfClassifications++;
