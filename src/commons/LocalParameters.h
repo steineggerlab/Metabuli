@@ -41,14 +41,17 @@ public:
     PARAMETER(MIN_CONSECUTIVE)
     PARAMETER(HAMMING_MARGIN)
     PARAMETER(MIN_SP_SCORE)
-    PARAMETER(TEST_RANK)
-    PARAMETER(TEST_TYPE)
     PARAMETER(TINFO_PATH)
 
     // DB build parameters
     PARAMETER(LIBRARY_PATH)
     PARAMETER(TAXONOMY_PATH)
 
+    // Test parameters
+    PARAMETER(TEST_RANK)
+    PARAMETER(TEST_TYPE)
+    PARAMETER(ACCESSION_COL)
+    PARAMETER(TAXID_COL)
 
     // Superkingdom taxonomy id
     int virusTaxId;
@@ -71,9 +74,12 @@ public:
     std::string libraryPath;
     std::string taxonomyPath;
 
-
+    // Test parameters
     std::string testRank;
     std::string testType;
+    int accessionCol;
+    int taxidCol;
+
 private:
     LocalParameters();
 
