@@ -76,7 +76,6 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     // Read through FASTA files and make blocks of sequences to be processed by each thread
     makeBlocksForParallelProcessing();
 
-    // Print
 
     // Train Prodigal for each species
     time_t prodigalStart = time(nullptr);

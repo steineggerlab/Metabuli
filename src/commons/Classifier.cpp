@@ -2,7 +2,30 @@
 #include "LocalParameters.h"
 #include <ctime>
 
-Classifier::Classifier(LocalParameters & par, const vector<TaxID> & taxIdList) {
+Classifier::Classifier(LocalParameters & par) {
+    if (par.seqMode == 2){
+        queryPath_1 = par.filenames[0];
+        queryPath_2 = par.filenames[1];
+        dbDir = par.filenames[2];
+        outDir = par.filenames[3];
+        jobId = par.filenames[4];
+        cout << "Query file 1: " << queryPath_1 << endl;
+        cout << "Query file 2: " << queryPath_2 << endl;
+        cout << "Database directory: " << dbDir << endl;
+        cout << "Output directory: " << outDir << endl;
+        cout << "Job ID: " << jobId << endl;
+
+    } else {
+        queryPath_1 = par.filenames[0];
+        dbDir = par.filenames[1];
+        outDir = par.filenames[2];
+        jobId = par.filenames[3];
+        cout << "Query file: " << queryPath_1 << endl;
+        cout << "Database directory: " << dbDir << endl;
+        cout << "Output directory: " << outDir << endl;
+        cout << "Job ID: " << jobId << endl;
+    }
+
     MARKER = 16777215;
     MARKER = ~ MARKER;
     bitsForCodon = 3;
@@ -37,7 +60,19 @@ Classifier::Classifier(LocalParameters & par, const vector<TaxID> & taxIdList) {
     taxonomy = new NcbiTaxonomy(names, nodes, merged);
 
     // Taxonomy ID list
-    this->taxIdList = taxIdList;
+    // Load the taxonomical ID list
+    FILE * taxIdFile;
+    if((taxIdFile = fopen((dbDir + "/taxID_list").c_str(),"r")) == NULL){
+        cout<<"Cannot open the taxID list file."<<endl;
+        return;
+    }
+    char taxID[100];
+    while(feof(taxIdFile) == 0)
+    {
+        fscanf(taxIdFile,"%s",taxID);
+        this->taxIdList.push_back(atol(taxID));
+    }
+    fclose(taxIdFile);
     taxonomy->createTaxIdListAtRank(this->taxIdList, speciesTaxIdList, "species");
     taxonomy->createTaxIdListAtRank(speciesTaxIdList, genusTaxIdList, "genus");
     spORssp.push_back(&this->taxIdList);
@@ -49,10 +84,7 @@ Classifier::~Classifier() {
     delete taxonomy;
 }
 
-void Classifier::startClassify(const char *targetDiffIdxFileName,
-                               const char *targetInfoFileName,
-                               const char *diffIdxSplitFileName,
-                               const LocalParameters &par) {
+void Classifier::startClassify(const LocalParameters &par) {
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
     Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(10));
@@ -67,15 +99,13 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
     size_t numOfSeq = 0;
     size_t numOfSeq2;
     if (par.seqMode == 1 || par.seqMode == 3) {
-        queryFile = mmapData<char>(par.filenames[0].c_str());
+        queryFile = mmapData<char>(queryPath_1.c_str());
         IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
         numOfSeq = sequences.size();
         queryList = new Query[numOfSeq];
     } else if (par.seqMode == 2) {
-        string queryFileName1 = par.filenames[0] + "_1";
-        string queryFileName2 = par.filenames[0] + "_2";
-        queryFile = mmapData<char>(queryFileName1.c_str());
-        queryFile2 = mmapData<char>(queryFileName2.c_str());
+        queryFile = mmapData<char>(queryPath_1.c_str());
+        queryFile2 = mmapData<char>(queryPath_2.c_str());
         IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
         IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
         numOfSeq = sequences.size();
@@ -128,8 +158,7 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
         cout << "Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
 
         // Search matches between query and target k-mers
-        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, targetDiffIdxFileName,
-                             targetInfoFileName, diffIdxSplitFileName, matchBuffer, par);
+        linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, matchBuffer, par);
 
         // Sort matches
         time_t beforeSortMatches = time(nullptr);
@@ -149,10 +178,10 @@ void Classifier::startClassify(const char *targetDiffIdxFileName,
 
     // Write report files
     ofstream readClassificationFile;
-    readClassificationFile.open(par.filenames[2] + "/" + par.filenames[3] + "_ReadClassification.tsv");
+    readClassificationFile.open(outDir + "/" + jobId + "_ReadClassification.tsv");
     writeReadClassification(queryList, (int) numOfSeq, readClassificationFile);
     readClassificationFile.close();
-    writeReportFile(par.filenames[2] + "/" + par.filenames[3] + "_CompositionReport.tsv", numOfSeq);
+    writeReportFile(outDir + "/" + jobId + "_CompositionReport.tsv", numOfSeq);
 
     //Below is for developing
 //    ofstream wr;
@@ -329,17 +358,19 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
     }
 }
 
-void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKmerCnt, const char *targetDiffIdxFileName,
-                                      const char *targetInfoFileName, const char *diffIdxSplitsFileName,
+void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKmerCnt,
                                       Buffer<Match> &matchBuffer, const LocalParameters &par) {
     int threadNum = par.threads;
+    const string targetDiffIdxFileName = dbDir + "/diffIdx";
+    const string targetInfoFileName = dbDir + "/info";
+    const string diffIdxSplitFileName = dbDir + "/split";;
 
     struct stat diffIdxFileSt{};
-    int diffIdxFile = open(targetDiffIdxFileName, O_CREAT | O_RDWR);
-    stat(targetDiffIdxFileName, &diffIdxFileSt);
+//    int diffIdxFile = open(targetDiffIdxFileName.c_str(), O_CREAT | O_RDWR);
+    stat(targetDiffIdxFileName.c_str(), &diffIdxFileSt);
     size_t numOfDiffIdx = diffIdxFileSt.st_size / sizeof(uint16_t);
 
-    struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitsFileName);
+    struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str());
 
     cout << "linearSearch start..." << endl;
     SeqIterator seqIterator1(par);
@@ -425,8 +456,8 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
 querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOfDiffIdx, targetInfoFileName)
         {
             // FILE
-            FILE * diffIdxFp = fopen(targetDiffIdxFileName, "rb");
-            FILE * kmerInfoFp = fopen(targetInfoFileName, "rb");
+            FILE * diffIdxFp = fopen(targetDiffIdxFileName.c_str(), "rb");
+            FILE * kmerInfoFp = fopen(targetInfoFileName.c_str(), "rb");
 
             // Target K-mer buffer
             uint16_t * diffIdxBuffer = (uint16_t *) malloc(sizeof(uint16_t) * (BufferSize + 1));
