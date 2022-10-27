@@ -412,26 +412,6 @@ int grade_cami(const LocalParameters & par){
 }
 
 void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count, const string & rank) {
-
-
-//
-//    if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)){
-//        if (!(ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(target,rank)) -> rank == rank
-//        && targetNode->rank == "no rank")){
-//            return;
-//        }
-//    }
-
-
-
-//
-//    if(NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank) && shotNode->rank != "no rank") {
-//        if (!(ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(shot, rank)) -> rank == rank
-//              && shotNode->rank == "no rank")){
-//            return;
-//        }
-//    }
-
     // Do not count if the rank of target is higher than current rank
     TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
@@ -459,29 +439,4 @@ void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
         count.FP++;
     }
     count.total++;
-
-//    // Check if no-rank is subspecies
-//    if (shotNode -> rank == "no rank" && ncbiTaxonomy.taxonNode(shotNode->parentTaxId)->rank == "species") {
-//        if (rank == "subspecies") {
-//            count.total++;
-//            if (shot == target) {
-//                count.TP++;
-//            } else {
-//                count.FP++;
-//            }
-//        }
-//        shotNode = ncbiTaxonomy.taxonNode(shotNode->parentTaxId);
-//        shotTaxIdAtRank = shotNode->taxId;
-//    }
-
-
-
-//    if(NcbiTaxonomy::findRankIndex(shotNode->rank) < NcbiTaxonomy::findRankIndex(rank)){
-//        shotTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(shotNode->taxId, rank);
-//    }
-//    if(NcbiTaxonomy::findRankIndex(targetNode->rank) < NcbiTaxonomy::findRankIndex(rank)){
-//        targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(targetNode->taxId, rank);
-//    }
-
-    // Correct classification at the rank
 }

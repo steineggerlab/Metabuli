@@ -31,13 +31,22 @@ using namespace std;
 class Classifier {
 protected:
 
-    size_t minConsCnt;
+    string queryPath_1;
+    string queryPath_2;
+    string dbDir;
+    string outDir;
+    string jobId;
+
+    // For spaced k-mer
     uint32_t * mask;
     uint32_t spaceNum;
     int spaceNum_int;
     int unmaskedPos[9];
+
+
     uint8_t hammingMargin;
     float minSpScore;
+    size_t minConsCnt;
 
     NcbiTaxonomy * taxonomy;
     vector<TaxID> taxIdList;
@@ -155,9 +164,6 @@ protected:
     void linearSearchParallel(
             QueryKmer *queryKmerList,
             size_t &queryKmerCnt,
-            const char *targetDiffIdxList,
-            const char *targetInfoList,
-            const char *diffIdxSplits,
             Buffer<Match> &matchBuffer,
             const LocalParameters &par);
 
@@ -260,8 +266,7 @@ protected:
 
     friend struct sortMatch;
 public:
-    void startClassify(const char *targetDiffIdxFileName, const char *targetInfoFileName,
-                       const char *diffIdxSplitFileName, const LocalParameters &par);
+    void startClassify(const LocalParameters &par);
 
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiffIdxList, size_t &diffIdxPos);
 
@@ -271,7 +276,7 @@ public:
     static TargetKmerInfo getKmerInfo(size_t bufferSize, FILE * kmerInfoFp, TargetKmerInfo * infoBuffer,
                               size_t & infoBufferIdx);
 
-    Classifier(LocalParameters &par, const vector<TaxID> & taxIdList);
+    Classifier(LocalParameters & par);
 
     virtual ~Classifier();
 };

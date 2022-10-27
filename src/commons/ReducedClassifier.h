@@ -47,7 +47,7 @@ public:
         return hammings;
     }
 
-    ReducedClassifier(LocalParameters & par, const vector<TaxID> & taxIdList);
+    ReducedClassifier(LocalParameters & par);
 };
 
 
