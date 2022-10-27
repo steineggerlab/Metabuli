@@ -430,23 +430,36 @@ int grade_cami(const LocalParameters & par){
 }
 
 void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count, const string & rank) {
-    const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
-    const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
 
-    // Do not count if the rank of target is higher than current rank
-    if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)){
-        return;
-    }
+
+//    // Do not count if the rank of target is higher than current rank
+//    if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)){
+//        if (!(ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(target,rank)) -> rank == rank
+//        && targetNode->rank == "no rank")){
+//            return;
+//        }
+//    }
     // Ignore if the shot is meaningless
     if(shot == 1 || shot == 0) return;
 
-    // False negative if the rank of shot is higher than current rank
-    if(NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank) && shotNode->rank != "no rank") {
-        return;
-    }
-    
+//    // False negative if the rank of shot is higher than current rank
+//    if(NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank) && shotNode->rank != "no rank") {
+//        if (!(ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(shot, rank)) -> rank == rank
+//              && shotNode->rank == "no rank")){
+//            return;
+//        }
+//    }
+
     TaxID shotTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(shot, rank);
     TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
+
+    const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shotTaxIdAtRank);
+    const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
+
+    if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)) { return;}
+    if (NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank)) { return;}
+
+
 
     if(shotTaxIdAtRank == targetTaxIdAtRank){
         count.TP++;
