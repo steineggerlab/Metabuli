@@ -296,7 +296,7 @@ int grade_cami(const LocalParameters & par){
                 }
                 // Read ID -> right answer
                 string id = fields[par.accessionCol];
-                id = id.substr(0, fields[1].find('/'));
+                id = id.substr(0, id.find('/'));
                 TaxID rightAnswer = assacc2taxid[id];
                 string rightAnswerRank = ncbiTaxonomy.taxonNode(rightAnswer)->rank;
                 rightAnswers.push_back(rightAnswer);
