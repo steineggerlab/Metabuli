@@ -52,8 +52,7 @@ Classifier::Classifier(LocalParameters & par) {
     hammingMargin = (uint8_t) par.hammingMargin;
 
     // Taxonomy
-    const string databaseDirectory = par.filenames[1];
-    const string taxonomyDirectory = databaseDirectory + "/taxonomy";
+    const string taxonomyDirectory = dbDir + "/taxonomy";
     const string names = taxonomyDirectory + "/names.dmp";
     const string nodes = taxonomyDirectory + "/nodes.dmp";
     const string merged = taxonomyDirectory + "/merged.dmp";
