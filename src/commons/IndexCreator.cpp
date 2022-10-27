@@ -76,6 +76,8 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     // Read through FASTA files and make blocks of sequences to be processed by each thread
     makeBlocksForParallelProcessing();
 
+    // Print
+
     // Train Prodigal for each species
     time_t prodigalStart = time(nullptr);
     trainProdigal();
@@ -188,7 +190,9 @@ void IndexCreator::splitFasta(int fnaIdx, TaxID speciesTaxid) {
     size_t seqIdx = 0;
     size_t currLength = 0;
     size_t lengthSum = 0;
+    bool stored = false;
     while(seqIdx < fastaList[fnaIdx].sequences.size()){
+        stored = false;
         if(speciesTaxid == 0) { seqIdx++; continue;}
 
         currLength = fastaList[fnaIdx].sequences[seqIdx].length;
@@ -203,10 +207,13 @@ void IndexCreator::splitFasta(int fnaIdx, TaxID speciesTaxid) {
             offset += cnt - 1;
             lengthSum = 0;
             cnt = 1;
+            stored = true;
         }
         seqIdx ++;
     }
-    tempSplits.emplace_back(0, offset, cnt, speciesTaxid, fnaIdx);
+    if(!stored){
+        tempSplits.emplace_back(0, offset, cnt, speciesTaxid, fnaIdx);
+    }
     // Update the training sequence
     for(auto & x : tempSplits){
         x.training = seqForTraining;
