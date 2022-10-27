@@ -295,7 +295,7 @@ int grade_cami(const LocalParameters & par){
                     fields.push_back(field);
                 }
                 // Read ID -> right answer
-                string id = fields[1];
+                string id = fields[par.accessionCol];
                 id = id.substr(0, fields[1].find('/'));
                 TaxID rightAnswer = assacc2taxid[id];
                 string rightAnswerRank = ncbiTaxonomy.taxonNode(rightAnswer)->rank;
@@ -303,7 +303,7 @@ int grade_cami(const LocalParameters & par){
                 readIds.push_back(id);
 
                 // Read classification
-                classInt = stoi(fields[2]);
+                classInt = stoi(fields[par.taxidCol]);
                 classList.push_back(classInt);
                 if (classInt != 0) {
                     numberOfClassifications++;
