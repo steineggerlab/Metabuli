@@ -345,18 +345,17 @@ int grade_cami(const LocalParameters & par){
                 compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, O, "order");
                 compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, C, "class");
             }
-            S.precision = (float) S.TP / (float) S.total;
-            G.precision = (float) G.TP / (float) G.total;
-            F.precision = (float) F.TP / (float) F.total;
-            O.precision = (float) O.TP / (float) O.total;
-            C.precision = (float) C.TP / (float) C.total;
+            S.precision = (float) S.TP / (float) (S.TP + S.FP);
+            G.precision = (float) G.TP / (float) (G.TP + G.FP);
+            F.precision = (float) F.TP / (float) (F.TP + F.FP);
+            O.precision = (float) O.TP / (float) (O.TP + O.FP);
+            C.precision = (float) C.TP / (float) (C.TP + C.FP);
 
-            S.sensitivity = (float) S.TP / (float) (S_answer_cnt);
-            G.sensitivity = (float) G.TP / (float) (S_answer_cnt + G_answer_cnt);
-            F.sensitivity = (float) F.TP / (float) (S_answer_cnt + G_answer_cnt + F_answer_cnt);
-            O.sensitivity = (float) O.TP / (float) (S_answer_cnt + G_answer_cnt + F_answer_cnt + O_answer_cnt);
-            C.sensitivity =
-                    (float) C.TP / (float) (S_answer_cnt + G_answer_cnt + F_answer_cnt + O_answer_cnt + C_answer_cnt);
+            S.sensitivity = (float) S.TP / (float) S.total;
+            G.sensitivity = (float) G.TP / (float) G.total;
+            F.sensitivity = (float) F.TP / (float) F.total;
+            O.sensitivity = (float) O.TP / (float) O.total;
+            C.sensitivity = (float) C.TP / (float) C.total;
 
             S.f1 = 2 * S.precision * S.sensitivity / (S.precision + S.sensitivity);
             G.f1 = 2 * G.precision * G.sensitivity / (G.precision + G.sensitivity);
@@ -373,15 +372,15 @@ int grade_cami(const LocalParameters & par){
             cout << readClassificationFileName << endl;
             cout << "The number of reads: " << rightAnswers.size() << endl;
             cout << "The number of reads classified: " << numberOfClassifications << endl;
-            cout << "Class       : " << S_answer_cnt + G_answer_cnt + F_answer_cnt + O_answer_cnt + C_answer_cnt << " / " << C.total << " / " << C.TP << " / " << C.FP << " / " << C.precision << " / "
+            cout << "Class       : " << C.total << " / " << C.TP + C.FP << " / " << C.TP << " / " << C.FP << " / " << C.precision << " / "
                  << C.sensitivity << " / " << C.f1 << endl;
-            cout << "Order       : " << O_answer_cnt + F_answer_cnt + G_answer_cnt + S_answer_cnt << " / " << O.total << " / " << O.TP << " / " << O.FP << " / " << O.precision << " / "
+            cout << "Order       : " << O.total << " / " << O.TP + O.FP << " / " << O.TP << " / " << O.FP << " / " << O.precision << " / "
                     << O.sensitivity << " / " << O.f1 << endl;
-            cout << "Family      : " << F_answer_cnt + G_answer_cnt + S_answer_cnt << " / " << F.total << " / " << F.TP << " / " << F.FP << " / " << F.precision << " / "
+            cout << "Family      : " << F.total << " / " << F.TP + F.FP << " / " << F.TP << " / " << F.FP << " / " << F.precision << " / "
                     << F.sensitivity << " / " << F.f1 << endl;
-            cout << "Genus       : " << G_answer_cnt + S_answer_cnt << " / " << G.total << " / " << G.TP << " / " << G.FP << " / " << G.precision << " / "
+            cout << "Genus       : " << G.total << " / " << G.TP + G.FP << " / " << G.TP << " / " << G.FP << " / " << G.precision << " / "
                     << G.sensitivity << " / " << G.f1 << endl;
-            cout << "Species     : " << S_answer_cnt << " / " << S.total << " / " << S.TP << " / " << S.FP << " / " << S.precision << " / "
+            cout << "Species     : " << S.total << " / " << S.TP + S.FP << " / " << S.TP << " / " << S.FP << " / " << S.precision << " / "
                     << S.sensitivity << " / " << S.f1 << endl;
             cout << endl;
 
@@ -432,7 +431,7 @@ int grade_cami(const LocalParameters & par){
 void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count, const string & rank) {
 
 
-//    // Do not count if the rank of target is higher than current rank
+//
 //    if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)){
 //        if (!(ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(target,rank)) -> rank == rank
 //        && targetNode->rank == "no rank")){
@@ -442,7 +441,7 @@ void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
     // Ignore if the shot is meaningless
     if(shot == 1 || shot == 0) return;
 
-//    // False negative if the rank of shot is higher than current rank
+//
 //    if(NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank) && shotNode->rank != "no rank") {
 //        if (!(ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(shot, rank)) -> rank == rank
 //              && shotNode->rank == "no rank")){
@@ -456,10 +455,15 @@ void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shotTaxIdAtRank);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
 
+    // Do not count if the rank of target is higher than current rank
     if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)) { return;}
-    if (NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank)) { return;}
 
-
+    // False negative if the rank of shot is higher than current rank
+    if (NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank)) {
+        count.FN ++;
+        count.total ++;
+        return;
+    }
 
     if(shotTaxIdAtRank == targetTaxIdAtRank){
         count.TP++;
