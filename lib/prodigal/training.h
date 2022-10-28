@@ -27,27 +27,27 @@
 
 
 struct _training {
-  double gc;                    /* GC Content */
-  int trans_table;              /* 11 = Standard Microbial, NCBI Trans Table to
-                                   use */
-  double st_wt;                 /* Start weight */
-  double bias[3];               /* GC frame bias for each of the 3 positions */
-  double type_wt[3];            /* Weights for ATG vs GTG vs TTG */
-  int uses_sd;                  /* 0 if doesn't use SD motif, 1 if it does */
-  double rbs_wt[28];            /* Set of weights for RBS scores */
-  double ups_comp[32][4];       /* Base composition weights for non-RBS-distance
-                                   motifs.  0-1 are the -1/-2 position, 2-31 are
-                                   the -15 to -44 positions.  Second array is
-                                   the base A,C,T,G,etc. */
-  double mot_wt[4][4][4096];    /* Weights for upstream motifs.  First index is
+    double mot_wt[4][4][4096];    /* Weights for upstream motifs.  First index is
                                    the motif length (3-6), the second is the
                                    spacer distance (0 = 5-10bp, 1 = 3-4bp, 2 =
                                    11-12bp, 3 = 13-15bp), and the last is the
                                    numerical value of the motif (ranging from 0
                                    to 4095 for 6-mers, less for shorter
                                    motifs) */
-  double no_mot;                /* Weight for the case of no motif */
-  double gene_dc[4096];         /* Coding statistics for the genome */
+    double gene_dc[4096];         /* Coding statistics for the genome */
+    double ups_comp[32][4];       /* Base composition weights for non-RBS-distance
+                                   motifs.  0-1 are the -1/-2 position, 2-31 are
+                                   the -15 to -44 positions.  Second array is
+                                   the base A,C,T,G,etc. */
+    double rbs_wt[28];            /* Set of weights for RBS scores */
+    double bias[3];               /* GC frame bias for each of the 3 positions */
+    double type_wt[3];            /* Weights for ATG vs GTG vs TTG */
+    double gc;                    /* GC Content */ // 4
+    int trans_table;              /* 11 = Standard Microbial, NCBI Trans Table to
+                                   use */ // 4
+    double st_wt;                 /* Start weight */ // 4
+    int uses_sd;                  /* 0 if doesn't use SD motif, 1 if it does */
+    double no_mot;                /* Weight for the case of no motif */
 };
 
 int write_training_file(char *, struct _training *);
