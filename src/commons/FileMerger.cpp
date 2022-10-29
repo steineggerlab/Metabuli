@@ -281,9 +281,9 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
 
         // update looking k-mers
         lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
-        lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
+        lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]]; // TODO SEGV here
         infoFileIdx[idxOfMin] ++;
-        if( diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] ){
+        if( diffFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin] ){
             lookingKmers[idxOfMin] = UINT64_MAX;
             numOfincompletedFiles--;
             if(numOfincompletedFiles == 0) break;
@@ -300,7 +300,7 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
             lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
             infoFileIdx[idxOfMin] ++;
 
-            if(diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] ){
+            if(diffFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin] ){
                 lookingKmers[idxOfMin] = UINT64_MAX;
                 numOfincompletedFiles--;
                 if(numOfincompletedFiles == 0){
