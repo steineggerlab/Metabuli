@@ -96,23 +96,23 @@ int applyThreshold(int argc, const char **argv, const Command &command) {
     ofstream new_report_file;
     new_report_file.open(outDir + "/" + jobid + "_report.tsv");
     if (new_report_file.is_open()) {
-        writeReportFile(outDir + "/" + jobid + "_report.tsv", newResults.size(), taxonCounts, ncbiTaxonomy);
+        write_report_file(outDir + "/" + jobid + "_report.tsv", newResults.size(), taxonCounts, ncbiTaxonomy);
     } else {
         cerr << "Cannot open file for new report" << endl;
     }
     return 0;
 }
 
-void writeReportFile(const string &reportFileName, int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt,
+void write_report_file(const string &reportFileName, int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt,
                      NcbiTaxonomy & taxonomy) {
     unordered_map<TaxID, TaxonCounts> cladeCounts = taxonomy.getCladeCounts(taxCnt);
     FILE *fp;
     fp = fopen(reportFileName.c_str(), "w");
-    writeReport(fp, cladeCounts, numOfQuery, taxonomy);
+    write_report(fp, cladeCounts, numOfQuery, taxonomy);
     fclose(fp);
 }
 
-void writeReport(FILE *fp, const unordered_map<TaxID, TaxonCounts> &cladeCounts, unsigned long totalReads,
+void write_report(FILE *fp, const unordered_map<TaxID, TaxonCounts> &cladeCounts, unsigned long totalReads,
                  NcbiTaxonomy & taxonomy, TaxID taxID, int depth) {
     auto it = cladeCounts.find(taxID);
     unsigned int cladeCount = (it == cladeCounts.end() ? 0 : it->second.cladeCount);
@@ -122,7 +122,7 @@ void writeReport(FILE *fp, const unordered_map<TaxID, TaxonCounts> &cladeCounts,
             fprintf(fp, "%.2f\t%i\t%i\t0\tno rank\tunclassified\n", 100 * cladeCount / double(totalReads), cladeCount,
                     taxCount);
         }
-        writeReport(fp, cladeCounts, totalReads, taxonomy, 1);
+        write_report(fp, cladeCounts, totalReads, taxonomy, 1);
     } else {
         if (cladeCount == 0) {
             return;
@@ -132,10 +132,10 @@ void writeReport(FILE *fp, const unordered_map<TaxID, TaxonCounts> &cladeCounts,
                 taxon->rank.c_str(), string(2 * depth, ' ').c_str(), taxon->name.c_str());
         vector<TaxID> children = it->second.children;
         sort(children.begin(), children.end(),
-             [&](int a, int b) { return cladeCountVal(cladeCounts, a) > cladeCountVal(cladeCounts, b); });
+             [&](int a, int b) { return clade_count_val(cladeCounts, a) > clade_count_val(cladeCounts, b); });
         for (TaxID childTaxId: children) {
             if (cladeCounts.count(childTaxId)) {
-                writeReport(fp,  cladeCounts, totalReads, taxonomy, childTaxId, depth + 1);
+                write_report(fp,  cladeCounts, totalReads, taxonomy, childTaxId, depth + 1);
             } else {
                 break;
             }
@@ -143,7 +143,7 @@ void writeReport(FILE *fp, const unordered_map<TaxID, TaxonCounts> &cladeCounts,
     }
 }
 
-unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts> &map, TaxID key) {
+unsigned int clade_count_val(const std::unordered_map<TaxID, TaxonCounts> &map, TaxID key) {
     typename std::unordered_map<TaxID, TaxonCounts>::const_iterator it = map.find(key);
     if (it == map.end()) {
         return 0;
