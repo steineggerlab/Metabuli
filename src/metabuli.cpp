@@ -21,16 +21,6 @@ std::vector<Command> commands = {
          CITATION_SPACEPHARER,
          {{"lowest directory including FASTA files", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::directory},
           {"Directory where the DB will be generated", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty}}},
-
-          {"build_fasta", build_fasta, &localPar.build_fasta, COMMAND_MAIN,
-                "Building DB from a single FASTA file. ",
-                NULL,
-                "Jaebeom Kim <jbeom0731@gmail.com>",
-                "<i:FASTA file> <DB directory> <i:mapping>",
-                CITATION_SPACEPHARER,
-                {{"A FASTA file", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::flatfile},
-                        {"Directory where the DB will be generated", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty},
-                        {"Mapping file (accession to tax ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
         {"build", build, &localPar.build, COMMAND_MAIN,
                 "Building DB from a single FASTA file. ",
                 NULL,
@@ -105,6 +95,16 @@ std::vector<Command> commands = {
                     CITATION_SPACEPHARER,
                     {{"List of absolute paths of files to be added. One path per line.", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                      {"NCBI style accession2taxid file. It should be consistent to tax dump files.", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-                     {"DB directory", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}}
+                     {"DB directory", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}},
+        {"apply-threshold", applyThreshold, &localPar.applyThreshold, COMMAND_MAIN,
+                "Assigning taxonomy label to query reads",
+                NULL,
+                "Jaebeom Kim <jbeom0731@gmail.com>",
+                "<i:Old readclassification> <o:OUT DIR> <o:JOB ID> <i: TAXONOMY DIR> ",
+                CITATION_SPACEPHARER,
+                {{"Old Results", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                        {"OUT DIR", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory},
+                        {"JOB ID", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                        {"AXONOMY DIR", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}}
 };
 

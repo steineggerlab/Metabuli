@@ -292,8 +292,8 @@ int ProdigalWrapper::getNextSeq(char * line, int training) {
         bctr+=2; len++;
 
         if(len >= MAX_SEQ) {
-            fprintf(stderr, "\n\nWarning:  Sequence is long (max %d for training).\n", MAX_SEQ);
-            fprintf(stderr, "Training on the first %d bases.\n\n", MAX_SEQ);
+            fprintf(stderr, "\n\nWarning:  Sequence is long (max %d).\n", MAX_SEQ);
+            fprintf(stderr, "Use the first %d bases.\n\n", MAX_SEQ);
             break;
         }
     }

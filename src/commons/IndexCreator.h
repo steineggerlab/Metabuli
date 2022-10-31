@@ -99,16 +99,6 @@ private:
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
 
-    size_t fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
-                                MmapedData<char> &seqFile,
-                                vector<Sequence> &seqs,
-                                bool *checker,
-                                size_t &processedTaxIdCnt,
-                                const vector<FastaSplit> &splits,
-                                const vector<int> &taxIdList,
-                                const vector<TaxID> &superkingdoms,
-                                const LocalParameters &par);
-
     static size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                                         bool * checker,
                                         size_t & processedTaxIdCnt,
@@ -177,11 +167,6 @@ public:
     int getNumOfFlush();
     void startIndexCreatingParallel(const LocalParameters & par);
     void createIndex(const LocalParameters & par);
-    void startIndexCreatingParallel(const char * seqFileName, const char * outputFileName,
-                                    const vector<int> & superkingdom, const vector<int> & taxIdListAtRank,
-                                    const vector<int> & taxIdList,
-                                    const LocalParameters & par);
-    void startIndexCreatingParallel2(const char * seqFileName, const char * outputFileName, const vector<int> & taxIdListAtSpecies, const vector<int> & taxIdListAtGenus, const vector<int> & taxIdList);
 
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
                     uint16_t *kmerBuf, size_t & localBufIdx );

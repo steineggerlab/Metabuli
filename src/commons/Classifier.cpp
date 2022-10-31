@@ -180,7 +180,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     readClassificationFile.open(outDir + "/" + jobId + "_ReadClassification.tsv");
     writeReadClassification(queryList, (int) numOfSeq, readClassificationFile);
     readClassificationFile.close();
-    writeReportFile(outDir + "/" + jobId + "_CompositionReport.tsv", numOfSeq);
+    writeReportFile(outDir + "/" + jobId + "_CompositionReport.tsv", numOfSeq, taxCounts);
 
     //Below is for developing
 //    ofstream wr;
@@ -1589,8 +1589,8 @@ void Classifier::writeReadClassification(Query *queryList, int queryNum, ofstrea
     }
 }
 
-void Classifier::writeReportFile(const string &reportFileName, int numOfQuery) {
-    unordered_map<TaxID, TaxonCounts> cladeCounts = taxonomy->getCladeCounts(taxCounts);
+void Classifier::writeReportFile(const string &reportFileName, int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt) {
+    unordered_map<TaxID, TaxonCounts> cladeCounts = taxonomy->getCladeCounts(taxCnt);
     FILE *fp;
     fp = fopen(reportFileName.c_str(), "w");
     writeReport(fp, cladeCounts, numOfQuery);
