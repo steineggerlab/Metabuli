@@ -1259,6 +1259,17 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
     return 0;
 }
 
+size_t IndexCreator::estimateKmerNum(const vector<TaxId2Fasta> & taxid2fasta, const FastaSplit & split){
+    struct stat stat1{};
+    size_t kmerNum = 0;
+    for(size_t i = split.offset ; i < split.offset + split.cnt; i ++){
+        stat(taxid2fasta[i].fasta.c_str(), &stat1);
+        size_t charNum = stat1.st_size;
+        kmerNum += charNum/3 - kmerLength + 1;
+    }
+    return kmerNum;
+}
+
 void IndexCreator::trainProdigal() {
     // TODO: 1. Check if the training file for current species exists. -> load the model
     //       2. If not, train the model and save it.
