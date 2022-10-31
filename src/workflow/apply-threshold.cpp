@@ -19,13 +19,13 @@ using namespace std;
  * It replaces a classification at species or lower rank to genus rank if the score is not qualified by the threshold 2.
  */
 
-void writeReport(FILE *fp, const unordered_map<TaxID, TaxonCounts> &cladeCounts, unsigned long totalReads,
+void write_report(FILE *fp, const unordered_map<TaxID, TaxonCounts> &cladeCounts, unsigned long totalReads,
                  NcbiTaxonomy & taxonomy, TaxID taxID = 0, int depth = 0);
 
-void writeReportFile(const string &reportFileName, int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt,
+void write_report_file(const string &reportFileName, int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt,
                      NcbiTaxonomy & taxonomy);
 
-unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts> &map, TaxID key);
+unsigned int clade_count_val(const std::unordered_map<TaxID, TaxonCounts> &map, TaxID key);
 
 void setDefaults_applyThreshold(LocalParameters & par){
     par.minScore = 0;
