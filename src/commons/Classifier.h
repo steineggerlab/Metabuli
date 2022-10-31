@@ -28,6 +28,28 @@
 #define BufferSize 16'777'216 //16 * 1024 * 1024
 using namespace std;
 
+struct QueryInfo {
+    int queryId;
+    bool isClassified;
+    string name;
+    int taxId;
+    float coverage;
+    size_t queryLength;
+    unordered_map<TaxID, int> taxCnt;
+
+    QueryInfo(int queryId, bool isClassified, string name, int taxId, float coverage, size_t queryLength)
+            : queryId(queryId), isClassified(isClassified), name(name), taxId(taxId), coverage(coverage),
+              queryLength(queryLength) {}
+
+    QueryInfo() {}
+
+    bool operator==(const int Id) const {
+        if (Id == queryId)
+            return true;
+        return false;
+    }
+};
+
 class Classifier {
 protected:
 
@@ -62,28 +84,6 @@ protected:
         ScrCov(float score, float coverage) : score(score), coverage(coverage) {}
 
         ScrCov() : score(0.f), coverage(0.f) {}
-    };
-
-    struct QueryInfo {
-        int queryId;
-        bool isClassified;
-        string name;
-        int taxId;
-        float coverage;
-        unordered_map<TaxID, int> taxCnt;
-        size_t queryLength;
-
-        QueryInfo(int queryId, bool isClassified, string name, int taxId, float coverage, size_t queryLength)
-                : queryId(queryId), isClassified(isClassified), name(name), taxId(taxId), coverage(coverage),
-                  queryLength(queryLength) {}
-
-        QueryInfo() {}
-
-        bool operator==(const int Id) const {
-            if (Id == queryId)
-                return true;
-            return false;
-        }
     };
 
     struct MatchBlock {
@@ -240,7 +240,7 @@ protected:
     // Write report
     void writeReadClassification(Query *queryList, int queryNum, ofstream &readClassificationFile);
 
-    void writeReportFile(const string &reportFileName, int numOfQuery);
+    void writeReportFile(const string &reportFileName, int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt);
 
     void writeReport(FILE *fp, const unordered_map<TaxID, TaxonCounts> &cladeCounts,
                      unsigned long totalReads, TaxID taxID = 0, int depth = 0);
@@ -266,6 +266,7 @@ protected:
 
     friend struct sortMatch;
 public:
+
     void startClassify(const LocalParameters &par);
 
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiffIdxList, size_t &diffIdxPos);

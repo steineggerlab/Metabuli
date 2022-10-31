@@ -19,13 +19,13 @@ public:
     }
 
     std::vector<MMseqsParameter*> build_dir;
-    std::vector<MMseqsParameter*> build_fasta;
     std::vector<MMseqsParameter*> classify;
     std::vector<MMseqsParameter*> exclusiontest_hiv;
     std::vector<MMseqsParameter*> seqHeader2TaxId;
     std::vector<MMseqsParameter*> grade;
     std::vector<MMseqsParameter*> addToLibrary;
     std::vector<MMseqsParameter*> build;
+    std::vector<MMseqsParameter*> applyThreshold;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)

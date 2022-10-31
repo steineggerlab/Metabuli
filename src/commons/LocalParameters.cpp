@@ -155,15 +155,6 @@ LocalParameters::LocalParameters() :
     build_dir.push_back(&REDUCED_AA);
     build_dir.push_back(&SPACED);
 
-    //build_fasta
-    build_fasta.push_back(&PARAM_THREADS);
-    build_fasta.push_back(&REDUCED_AA);
-    build_fasta.push_back(&SPACED);
-    build_fasta.push_back(&VIRUS_TAX_ID);
-    build_fasta.push_back(&BACTERIA_TAX_ID);
-    build_fasta.push_back(&ARCHAEA_TAX_ID);
-    build_fasta.push_back(&EUKARYOTA_TAX_ID);
-
     //classify
     classify.push_back(&PARAM_THREADS);
     classify.push_back(&SEQ_MODE);
@@ -184,4 +175,8 @@ LocalParameters::LocalParameters() :
     grade.push_back(&PARAM_THREADS);
     grade.push_back(&ACCESSION_COL);
     grade.push_back(&TAXID_COL);
+
+    // Apply thresholds
+    applyThreshold.push_back(&MIN_SP_SCORE);
+    applyThreshold.push_back(&MIN_SCORE);
 }

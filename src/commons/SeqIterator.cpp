@@ -457,9 +457,7 @@ SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock &block, const char
             }
             kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, false};
         }
-
         posToWrite++;
-
     }
     return 0;
 }
