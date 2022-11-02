@@ -26,6 +26,8 @@ public:
     std::vector<MMseqsParameter*> addToLibrary;
     std::vector<MMseqsParameter*> build;
     std::vector<MMseqsParameter*> applyThreshold;
+    std::vector<MMseqsParameter*> binning2report;
+
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
