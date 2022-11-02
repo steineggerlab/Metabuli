@@ -8,7 +8,7 @@
 
 using namespace std;
 
-void setGradeDefault(LocalParameters & par){
+void setBinning2ReportDefault(LocalParameters & par){
     par.accessionCol = 1;
     par.taxidCol = 2;
 }
