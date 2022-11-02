@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <NcbiTaxonomy.h>
+#include <algorithm>
 
 using namespace std;
 void write_report(FILE *fp, const unordered_map<TaxID, TaxonCounts> &cladeCounts, unsigned long totalReads,
