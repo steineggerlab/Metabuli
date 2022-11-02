@@ -10,5 +10,4 @@ set(workflow_source_files
         workflow/exclusion_test_hiv.cpp
         workflow/add_to_library.cpp
         workflow/build.cpp
-        workflow/apply-threshold.cpp
         PARENT_SCOPE)

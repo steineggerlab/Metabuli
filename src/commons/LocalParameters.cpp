@@ -179,4 +179,8 @@ LocalParameters::LocalParameters() :
     // Apply thresholds
     applyThreshold.push_back(&MIN_SP_SCORE);
     applyThreshold.push_back(&MIN_SCORE);
+
+    // Binning to report
+    binning2report.push_back(&ACCESSION_COL);
+    binning2report.push_back(&TAXID_COL);
 }
