@@ -15,6 +15,7 @@ void setBinning2ReportDefault(LocalParameters & par){
 
 int binning2report(int argc, const char **argv, const Command &command){
     LocalParameters &par = LocalParameters::getLocalInstance();
+    setBinning2ReportDefault(par);
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
     string binning = par.filenames[0];
     string outDir = par.filenames[1];

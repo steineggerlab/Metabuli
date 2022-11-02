@@ -106,7 +106,7 @@ std::vector<Command> commands = {
                         {"OUT DIR", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory},
                         {"JOB ID", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                         {"TAXONOMY DIR", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
-        {"binning2report", binning2report, &localPar.binning2report, COMMAND_MAIN,
+        {"binning2report", binning2report, &localPar.binning2report, COMMAND_FORMAT_CONVERSION,
                 "It generates Kraken style report file from binning results",
                 NULL,
                 "Jaebeom Kim <jbeom0731@gmail.com>",
