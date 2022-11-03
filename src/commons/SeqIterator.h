@@ -62,7 +62,7 @@ private:
     void addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const PredictedBlock &block, const int &kmerCnt);
 
 public:
-    void fillQueryKmerBuffer(const char *seq, QueryKmerBuffer &kmerBuffer, size_t &posToWrite, const int &seqID,
+    void fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite, const int &seqID,
                              uint32_t offset = 0);
 
     string reverseCompliment(string &read) const;
