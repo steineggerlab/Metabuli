@@ -83,6 +83,15 @@ Classifier::~Classifier() {
     delete taxonomy;
 }
 
+static inline bool compareForLinearSearch(const QueryKmer &a, const QueryKmer &b) {
+    if (a.ADkmer < b.ADkmer) {
+        return true;
+    } else if (a.ADkmer == b.ADkmer) {
+        return (a.info.sequenceID < b.info.sequenceID);
+    }
+    return false;
+}
+
 void Classifier::startClassify(const LocalParameters &par) {
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
@@ -105,6 +114,13 @@ void Classifier::startClassify(const LocalParameters &par) {
     } else if (par.seqMode == 2) {
         queryFile = mmapData<char>(queryPath_1.c_str());
         queryFile2 = mmapData<char>(queryPath_2.c_str());
+
+        madvise(queryFile.data, queryFile.fileSize, MADV_SEQUENTIAL);
+        madvise(queryFile2.data, queryFile2.fileSize, MADV_SEQUENTIAL);
+
+        Util::touchMemory(queryFile.data, queryFile.fileSize);
+        Util::touchMemory(queryFile2.data, queryFile2.fileSize);
+
         IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
         IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
         numOfSeq = sequences.size();
@@ -152,8 +168,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 
         // Sort query k-mer
         time_t beforeQueryKmerSort = time(nullptr);
-        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
-                      Classifier::compareForLinearSearch);
+        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, compareForLinearSearch);
         cout << "Time spent for sorting query k-mer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
 
         // Search matches between query and target k-mers
@@ -247,23 +262,22 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
                 seqIterator.sixFrameTranslation(seq->seq.s);
-                int kmerCnt = getQueryKmerNumber((int) strlen(seq->seq.s));
+                int kmerCnt = getQueryKmerNumber((int) seq->seq.l);
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt);
 
                 // Ignore short read
                 if (kmerCnt < 1) continue;
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
-                    seqIterator.fillQueryKmerBuffer(seq->seq.s, kmerBuffer, posToWrite, i);
+                    seqIterator.fillQueryKmerBuffer(seq->seq.s, seq->seq.l, kmerBuffer, posToWrite, i);
                     checker[i] = true;
-                    queryList[i].queryLength = getMaxCoveredLength((int) strlen(seq->seq.s));
+                    queryList[i].queryLength = getMaxCoveredLength((int) seq->seq.l);
                     queryList[i].queryId = i;
                     queryList[i].name = string(seq->name.s);
                     queryList[i].kmerCnt = kmerCnt;
-#pragma omp atomic
-                    processedSeqCnt++;
+
+                    __sync_fetch_and_add(&processedSeqCnt, 1);
                 } else {
-#pragma omp atomic
-                    kmerBuffer.startIndexOfReserve -= kmerCnt;
+                    __sync_fetch_and_add(&(kmerBuffer.startIndexOfReserve), -kmerCnt);
                     hasOverflow = true;
                 }
                 kseq_destroy(seq);
@@ -311,13 +325,13 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile1.data[seqs[i].start]), seqs[i].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
-                int kmerCnt = getQueryKmerNumber((int) strlen(seq->seq.s));
+                int kmerCnt = getQueryKmerNumber((int) seq->seq.l);
 
                 // Read 2
                 kseq_buffer_t buffer2(const_cast<char *>(&seqFile2.data[seqs2[i].start]), seqs2[i].length);
                 kseq_t *seq2 = kseq_init(&buffer2);
                 kseq_read(seq2);
-                int kmerCnt2 = getQueryKmerNumber((int) strlen(seq2->seq.s));
+                int kmerCnt2 = getQueryKmerNumber((int) seq2->seq.l);
 
                 // Ignore short read
                 if (kmerCnt2 < 1 || kmerCnt < 1) {
@@ -330,16 +344,16 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                     checker[i] = true;
                     // Read 1
                     seqIterator.sixFrameTranslation(seq->seq.s);
-                    seqIterator.fillQueryKmerBuffer(seq->seq.s, kmerBuffer, posToWrite, (int) i);
-                    queryList[i].queryLength = getMaxCoveredLength((int) strlen(seq->seq.s));
+                    seqIterator.fillQueryKmerBuffer(seq->seq.s, seq->seq.l, kmerBuffer, posToWrite, (int) i);
+                    queryList[i].queryLength = getMaxCoveredLength((int) seq->seq.l);
 
                     // Read 2
                     seqIterator2.sixFrameTranslation(seq2->seq.s);
-                    seqIterator2.fillQueryKmerBuffer(seq2->seq.s, kmerBuffer, posToWrite, (int) i,
+                    seqIterator2.fillQueryKmerBuffer(seq2->seq.s, seq2->seq.l, kmerBuffer, posToWrite, (int) i,
                                                      queryList[i].queryLength);
 
                     // Query Info
-                    queryList[i].queryLength2 = getMaxCoveredLength((int) strlen(seq2->seq.s));
+                    queryList[i].queryLength2 = getMaxCoveredLength((int) seq2->seq.l);
                     queryList[i].queryId = (int) i;
                     queryList[i].name = string(seq->name.s);
                     queryList[i].kmerCnt = kmerCnt + kmerCnt2;
@@ -870,14 +884,27 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                       speciesScrCov, species);
     else chooseSpecies(genusMatches, queryLength, speciesScrCov, species);
 
-    // Classify at the genus rank if more than one species are selected or the score at species level is not enough.
-    if (species.size() > 1 || (speciesScrCov.score < minSpScore &&
-        !taxonomy->IsAncestor(par.virusTaxId, taxIdList[genusMatches[0].targetId]))) {
+    // Classify to LCA if more than one species are selected
+    if (species.size() > 1) {
         queryList[currentQuery].isClassified = true;
-        queryList[currentQuery].classification = taxonomy->taxonNode(speciesTaxIdList[genusMatches[0].targetId])->parentTaxId;
+        queryList[currentQuery].classification = taxonomy->LCA(species)->taxId;
         queryList[currentQuery].score = highRankScore;
         for (auto & genusMatch : genusMatches) {
             queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
+        }
+        return;
+    }
+
+    // If score is not enough, classify to the parent of the selected species
+    if (speciesScrCov.score < minSpScore) {
+        queryList[currentQuery].isClassified = true;
+        queryList[currentQuery].classification = taxonomy->taxonNode(
+                taxonomy->getTaxIdAtRank(species[0], "species"))->parentTaxId;
+        queryList[currentQuery].score = highRankScore;
+        for (auto & genusMatch : genusMatches) {
+            if(speciesTaxIdList[genusMatch.targetId] == species[0]){
+                queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
+            }
         }
         return;
     }
@@ -1562,15 +1589,6 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
 
     return {((float) (coveredLength_read1 + coveredLength_read2) - hammingSum) / (float) (queryLength + queryLength2),
             ((float) coveredLength_read1 + coveredLength_read2) / ((float) queryLength + queryLength2)};
-}
-
-bool Classifier::compareForLinearSearch(const QueryKmer &a, const QueryKmer &b) {
-    if (a.ADkmer < b.ADkmer) {
-        return true;
-    } else if (a.ADkmer == b.ADkmer) {
-        return (a.info.sequenceID < b.info.sequenceID);
-    }
-    return false;
 }
 
 void Classifier::writeReadClassification(Query *queryList, int queryNum, ofstream &readClassificationFile) {

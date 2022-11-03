@@ -158,9 +158,6 @@ protected:
     int getQueryKmerNumber(int queryLength);
 
 
-    // Linear search
-    static bool compareForLinearSearch(const QueryKmer &a, const QueryKmer &b);
-
     void linearSearchParallel(
             QueryKmer *queryKmerList,
             size_t &queryKmerCnt,
