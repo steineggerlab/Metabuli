@@ -2,10 +2,6 @@ set(workflow_source_files
         workflow/build_dir.cpp
         workflow/classify.cpp
         workflow/updateTargetDB.cpp
-        workflow/benchmark.cpp
-        workflow/benchmark.h
-        workflow/grade.cpp
-        workflow/genus_level_test.cpp
         workflow/inclusion_test_hiv.cpp
         workflow/exclusion_test_hiv.cpp
         workflow/add_to_library.cpp
