@@ -829,17 +829,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     }
 
     // If there is no proper genus for current query, it is un-classified.
-    if (res == 4) {
-        queryList[currentQuery].isClassified = false;
-        queryList[currentQuery].classification = 0;
-        queryList[currentQuery].score = 0;
-        queryList[currentQuery].newSpecies = false;
-        return;
-    }
-
-    // If the score is too low and matches are not of virus, it is un-classified
-    if (highRankScore < par.minScore &&
-        !taxonomy->IsAncestor(par.virusTaxId, taxIdList[genusMatches[0].targetId])) {
+    if (res == 4 || highRankScore < par.minScore) {
         queryList[currentQuery].isClassified = false;
         queryList[currentQuery].classification = 0;
         queryList[currentQuery].score = 0;
