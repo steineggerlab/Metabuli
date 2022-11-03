@@ -30,7 +30,7 @@ MmapedData<T> mmapData(const char* filename, int mode = 1)
     if(mode == 2) {
         file = open(filename, O_RDONLY);
     } else {
-        file = open(filename, O_CREAT | O_RDWR);
+        file = open(filename, O_CREAT | O_RDWR, 0644);
     }
     int a;
     a = stat(filename, &stat1);

@@ -105,6 +105,14 @@ void Classifier::startClassify(const LocalParameters &par) {
     } else if (par.seqMode == 2) {
         queryFile = mmapData<char>(queryPath_1.c_str());
         queryFile2 = mmapData<char>(queryPath_2.c_str());
+
+	madvise(queryFile.data, queryFile.fileSize, MADV_SEQUENTIAL);
+        madvise(queryFile2.data, queryFile2.fileSize, MADV_SEQUENTIAL);
+
+        Util::touchMemory(queryFile.data, queryFile.fileSize);
+        Util::touchMemory(queryFile2.data, queryFile2.fileSize);
+
+
         IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
         IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
         numOfSeq = sequences.size();
