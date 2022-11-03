@@ -268,7 +268,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                 // Ignore short read
                 if (kmerCnt < 1) continue;
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
-                    seqIterator.fillQueryKmerBuffer(seq->seq.s, seq->seq.l, kmerBuffer, posToWrite, i);
+                    seqIterator.fillQueryKmerBuffer(seq->seq.s, (int)seq->seq.l, kmerBuffer, posToWrite, i);
                     checker[i] = true;
                     queryList[i].queryLength = getMaxCoveredLength((int) seq->seq.l);
                     queryList[i].queryId = i;
@@ -344,12 +344,12 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                     checker[i] = true;
                     // Read 1
                     seqIterator.sixFrameTranslation(seq->seq.s);
-                    seqIterator.fillQueryKmerBuffer(seq->seq.s, seq->seq.l, kmerBuffer, posToWrite, (int) i);
+                    seqIterator.fillQueryKmerBuffer(seq->seq.s, (int)seq->seq.l, kmerBuffer, posToWrite, (int) i);
                     queryList[i].queryLength = getMaxCoveredLength((int) seq->seq.l);
 
                     // Read 2
                     seqIterator2.sixFrameTranslation(seq2->seq.s);
-                    seqIterator2.fillQueryKmerBuffer(seq2->seq.s, seq2->seq.l, kmerBuffer, posToWrite, (int) i,
+                    seqIterator2.fillQueryKmerBuffer(seq2->seq.s, (int)seq2->seq.l, kmerBuffer, posToWrite, (int) i,
                                                      queryList[i].queryLength);
 
                     // Query Info
