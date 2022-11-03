@@ -318,7 +318,7 @@ void SeqIterator::sixFrameTranslation(const char *seq) {
 }
 
 
-void SeqIterator::fillQueryKmerBuffer(const char *seq, size_t seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite, const int &seqID,
+void SeqIterator::fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite, const int &seqID,
                                  uint32_t offset) {
     int forOrRev;
     uint64_t tempKmer = 0;
