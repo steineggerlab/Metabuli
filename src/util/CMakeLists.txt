@@ -4,4 +4,8 @@ set(util_source_files
         util/apply-threshold.cpp
         util/report.h
         util/report.cpp
+        util/grade.cpp
+        util/benchmark.cpp
+        util/benchmark.h
+        util/genus_level_test.cpp
         PARENT_SCOPE)

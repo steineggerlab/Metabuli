@@ -62,8 +62,9 @@ int applyThreshold(int argc, const char **argv, const Command &command) {
                 newResults.emplace_back(lineCnt, false, columns[1], 0, 0, stoi(columns[3]));
                 taxonCounts[0]++;
             } else if (stof(columns[4]) < par.minSpScore && ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(stoi(columns[2]), "species"))->rank == "species") {
-                newResults.emplace_back(lineCnt, true, columns[1], ncbiTaxonomy.getTaxIdAtRank(stoi(columns[2]), "genus"), stof(columns[4]), stoi(columns[3]));
-                taxonCounts[ncbiTaxonomy.getTaxIdAtRank(stoi(columns[2]), "genus")]++;
+                TaxID parentTaxId = ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(stoi(columns[2]), "species"))->parentTaxId;
+                newResults.emplace_back(lineCnt, true, columns[1], parentTaxId, stof(columns[4]), stoi(columns[3]));
+                taxonCounts[parentTaxId]++;
             } else {
                 newResults.emplace_back(lineCnt, stoi(columns[0]), columns[1], stof(columns[2]), stof(columns[4]), stoi(columns[3]));
                 taxonCounts[stoi(columns[2])]++;

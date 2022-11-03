@@ -874,7 +874,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     if (species.size() > 1 || (speciesScrCov.score < minSpScore &&
         !taxonomy->IsAncestor(par.virusTaxId, taxIdList[genusMatches[0].targetId]))) {
         queryList[currentQuery].isClassified = true;
-        queryList[currentQuery].classification = genusTaxIdList[genusMatches[0].targetId];
+        queryList[currentQuery].classification = taxonomy->taxonNode(speciesTaxIdList[genusMatches[0].targetId])->parentTaxId;
         queryList[currentQuery].score = highRankScore;
         for (auto & genusMatch : genusMatches) {
             queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
