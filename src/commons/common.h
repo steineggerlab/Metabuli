@@ -7,7 +7,7 @@
 // 10'000'000'000 -> build_dir 397G RAM
 // 1'000'000'000 -> build_dir 39.7G RAM
 #define SplitNum 4096
-#define PRINT false
+#define PRINT true
 
 #define likely(x) __builtin_expect((x),1)
 #define unlikely(x) __builtin_expect((x),0)
