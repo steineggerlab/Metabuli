@@ -625,9 +625,10 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     while (diffIdxPos != numOfDiffIdx &&
                         AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer)) {
                         // Print the target k-mer
-
-                        cout << "Target k-mer: " ; seqIterator.printKmerInDNAsequence(currentTargetKmer);
+                        cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t" << queryKmerList[j].info.frame << endl;
                         cout << "Query k-mer: " ; seqIterator.printKmerInDNAsequence(currentQuery);
+                        cout << "Target k-mer: " ; seqIterator.printKmerInDNAsequence(currentTargetKmer);
+
 
                         candidateTargetKmers.push_back(currentTargetKmer);
                         candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
