@@ -608,11 +608,9 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     // Skip target k-mers that are not matched in amino acid level
                     while (diffIdxPos != numOfDiffIdx
                         && (AminoAcidPart(currentQuery) > AminoAcidPart(currentTargetKmer))) {
-
                         if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
                             loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
                         }
-
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
                                                               diffIdxBufferIdx, diffIdxPos,
                                                               BufferSize, diffIdxFp);
@@ -626,6 +624,11 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     // Load target k-mers that are matched in amino acid level
                     while (diffIdxPos != numOfDiffIdx &&
                         AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer)) {
+                        // Print the target k-mer
+
+                        cout << "Target k-mer: " ; seqIterator.printKmerInDNAsequence(currentTargetKmer);
+                        cout << "Query k-mer: " ; seqIterator.printKmerInDNAsequence(currentQuery);
+
                         candidateTargetKmers.push_back(currentTargetKmer);
                         candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
 
