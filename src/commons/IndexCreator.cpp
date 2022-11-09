@@ -63,6 +63,7 @@ IndexCreator::IndexCreator(const LocalParameters &par, string dbDir, string fnaL
         MARKER = 16777215;
         MARKER = ~ MARKER;
     }
+    tinfo_path = par.tinfoPath;
 }
 
 IndexCreator::~IndexCreator() {
@@ -1293,27 +1294,22 @@ void IndexCreator::trainProdigal() {
             seq = kseq_init(&buffer);
             kseq_read(seq);
 
-            // Train prodigal.
-            prodigal.is_meta = 0;
-            lengthOfTrainingSeq = strlen(seq->seq.s);
-            if (lengthOfTrainingSeq < 100'000) {
-                prodigal.is_meta = 1;
-                prodigal.trainMeta(seq->seq.s);
-            } else {
-                prodigal.trainASpecies(seq->seq.s);
+            // Train only if the training file for current species does not exist.
+            string fileName =  tinfo_path + to_string(currentSpecies) + ".tinfo";
+            if (!fileExist(fileName)) {
+                // Train prodigal.
+                prodigal.is_meta = 0;
+                lengthOfTrainingSeq = strlen(seq->seq.s);
+                if (lengthOfTrainingSeq < 100'000) {
+                    prodigal.is_meta = 1;
+                    prodigal.trainMeta(seq->seq.s);
+                } else {
+                    prodigal.trainASpecies(seq->seq.s);
+                }
+                // Write training result into a file for later use.
+                _training *tinfo = prodigal.getTrainingInfo();
+                write_training_file(const_cast<char *>(fileName.c_str()), tinfo);
             }
-
-            // Save the model.
-//            trainingInfo[currentSpecies] = prodigal.getTrainingInfoCopy();
-
-            // TODO: If newly trained model, save it.
-            // Write training result into a file for later use.
-            string fileName = dbDir + "/prodigal/" + to_string(currentSpecies) + ".tinfo";
-            _training *tinfo = prodigal.getTrainingInfo();
-            write_training_file(const_cast<char *>(fileName.c_str()), tinfo);
-
-            // Add species to trainedSpecies.
-//            newSpeciesList[omp_get_thread_num()].push_back(currentSpecies);
             kseq_destroy(seq);
             munmap(fastaFile.data, fastaFile.fileSize + 1);
         }
