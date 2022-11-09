@@ -797,9 +797,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
         for (int i = 0; i < 8; i++) {
             cout << aminoacid[aa8mer[i]];
         }
-        cout << endl;
-
-
+        cout << "\t";
 
         for (int i = 0; i < 8; i++) {
             if (bitsForCodon == 4) {
@@ -1082,7 +1080,6 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
         for (int i = 0; i < 8; i++) {
             cout << dna24mer[7 - i];
         }
-        cout << endl;
     }
     else {
         uint64_t copy = kmer;
