@@ -1396,6 +1396,5 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
         for (int i = 0; i < 8; i++) {
             cout << dna24mer[7-i];
         }
-        cout << endl;
     }
 }
