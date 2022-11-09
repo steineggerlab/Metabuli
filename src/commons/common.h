@@ -42,6 +42,15 @@ struct Query{
     Query():queryId(0), classification(0), score(0.0f), queryLength(0), queryLength2(0), isClassified(false), newSpecies(false) {}
 };
 
+inline bool fileExist(const std::string& name) {
+    if (FILE *file = fopen(name.c_str(), "r")) {
+        fclose(file);
+        return true;
+    } else {
+        return false;
+    }
+}
+
 
 
 #endif //ADCLASSIFIER2_COMMON_H
