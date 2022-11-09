@@ -627,10 +627,10 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                         // Print the target k-mer
                         cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t" << queryKmerList[j].info.frame << endl;
                         cout << "Query  k-mer: " ;
-                        print_binary64(currentQuery, 64); cout << "\t";
+                        print_binary64(64, currentQuery); cout << "\t";
                         seqIterator.printKmerInDNAsequence(currentQuery); cout << endl;
                         cout << "Target k-mer: " ;
-                        print_binary64(currentTargetKmer, 64); cout << "\t";
+                        print_binary64(64, currentTargetKmer); cout << "\t";
                         seqIterator.printKmerInDNAsequence(currentTargetKmer); cout << "\t" << kmerInfoBuffer[kmerInfoBufferIdx].sequenceID << endl;
 
                         candidateTargetKmers.push_back(currentTargetKmer);
