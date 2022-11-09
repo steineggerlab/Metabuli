@@ -4,6 +4,10 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/lib/mmseqs/cmake")
 
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif ()
+
 set(FRAMEWORK_ONLY 1 CACHE INTERNAL "" FORCE)
 include(MMseqsSetupDerivedTarget)
 add_subdirectory(lib/mmseqs)
