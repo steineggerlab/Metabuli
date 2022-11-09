@@ -631,7 +631,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                         seqIterator.printKmerInDNAsequence(currentQuery); cout << endl;
                         cout << "Target k-mer: " ;
                         print_binary64(64, currentTargetKmer); cout << "\t";
-                        seqIterator.printKmerInDNAsequence(currentTargetKmer); cout << "\t" << kmerInfoBuffer[kmerInfoBufferIdx].sequenceID << endl;
+                        seqIterator.printKmerInDNAsequence(currentTargetKmer); cout << "\t" << taxIdList[kmerInfoBuffer[kmerInfoBufferIdx].sequenceID] << endl;
                         cout << (int) getHammingDistanceSum(currentQuery, currentTargetKmer) << endl;
                         candidateTargetKmers.push_back(currentTargetKmer);
                         candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
