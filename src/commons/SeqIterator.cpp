@@ -1107,7 +1107,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
         for (int i = 0; i < 8; i++) {
             cout << aminoacid[aa8mer[i]];
         }
-        cout<<endl;
+        cout<<"\t";
         for (int i = 0; i < 8; i++) {
             dnaInfo = copy & 7u;
             copy >>= 3;
