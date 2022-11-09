@@ -624,15 +624,15 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     // Load target k-mers that are matched in amino acid level
                     while (diffIdxPos != numOfDiffIdx &&
                         AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer)) {
-                        // Print the target k-mer
-                        cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t" << (int) queryKmerList[j].info.frame << endl;
-                        cout << "Query  k-mer: " ;
-                        print_binary64(64, currentQuery); cout << "\t";
-                        seqIterator.printKmerInDNAsequence(currentQuery); cout << endl;
-                        cout << "Target k-mer: " ;
-                        print_binary64(64, currentTargetKmer); cout << "\t";
-                        seqIterator.printKmerInDNAsequence(currentTargetKmer); cout << "\t" << taxIdList[kmerInfoBuffer[kmerInfoBufferIdx].sequenceID] << endl;
-                        cout << (int) getHammingDistanceSum(currentQuery, currentTargetKmer) << endl;
+//                        // Print the target k-mer
+//                        cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t" << (int) queryKmerList[j].info.frame << endl;
+//                        cout << "Query  k-mer: " ;
+//                        print_binary64(64, currentQuery); cout << "\t";
+//                        seqIterator.printKmerInDNAsequence(currentQuery); cout << endl;
+//                        cout << "Target k-mer: " ;
+//                        print_binary64(64, currentTargetKmer); cout << "\t";
+//                        seqIterator.printKmerInDNAsequence(currentTargetKmer); cout << "\t" << taxIdList[kmerInfoBuffer[kmerInfoBufferIdx].sequenceID] << endl;
+//                        cout << (int) getHammingDistanceSum(currentQuery, currentTargetKmer) << endl;
                         candidateTargetKmers.push_back(currentTargetKmer);
                         candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
 
