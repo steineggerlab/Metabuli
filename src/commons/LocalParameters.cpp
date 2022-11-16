@@ -166,6 +166,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MIN_CONSECUTIVE);
     classify.push_back(&HAMMING_MARGIN);
     classify.push_back(&MIN_SP_SCORE);
+    classify.push_back(&PARAM_V);
 
     //updateTargetDB
     exclusiontest_hiv.push_back(&TEST_RANK);
