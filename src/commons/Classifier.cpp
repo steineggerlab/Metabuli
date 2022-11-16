@@ -32,6 +32,7 @@ Classifier::Classifier(LocalParameters & par) {
     numOfSplit = 0;
     minConsCnt = par.minConsCnt;
     minSpScore = par.minSpScore;
+    verbosity = par.verbosity;
 
     // Mask for spaced k-mer
     size_t maskLen = par.spaceMask.length();
@@ -769,7 +770,7 @@ void Classifier::analyseResultParallel(Match *matchList,
     }
 
 #ifdef OPENMP
-    if (PRINT) {
+    if (verbosity == 3) {
         omp_set_num_threads(1);
     } else {
         omp_set_num_threads(par.threads);
@@ -804,7 +805,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                  const LocalParameters &par) {
     int queryLength = queryList[currentQuery].queryLength;
     TaxID selectedTaxon;
-    if (PRINT) {
+    if (par.verbosity == 3) {
         cout << "# " << currentQuery << endl;
         for (size_t i = offset; i < end + 1; i++) {
             cout << genusTaxIdList[matchList[i].targetId] << " " << speciesTaxIdList[matchList[i].targetId] << " " <<
@@ -826,7 +827,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         res = getMatchesOfTheBestGenus(genusMatches, matchList, end, offset, queryLength, highRankScore);
     }
 
-    if (PRINT) {
+    if (par.verbosity == 3) {
         cout << "# " << currentQuery << " filtered\n";
         for (size_t i = 0; i < genusMatches.size(); i++) {
             cout << genusTaxIdList[genusMatches[i].targetId] << " " << speciesTaxIdList[genusMatches[i].targetId] << " " <<
@@ -859,7 +860,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
             queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
         }
 
-        if (PRINT) {
+        if (par.verbosity == 3) {
             cout << "# " << currentQuery << " " << res << endl;
             for (size_t i = 0; i < genusMatches.size(); i++) {
                 cout << i << " " << genusMatches[i].position << " " <<
@@ -953,16 +954,16 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     queryList[currentQuery].classification = selectedSpecies;
     queryList[currentQuery].score = speciesScrCov.score;
     queryList[currentQuery].newSpecies = false;
-//    if (PRINT) {
-//        cout << "# " << currentQuery << endl;
-//        for (size_t i = 0; i < genusMatches.size(); i++) {
-//            cout << i << " " << genusMatches[i].position << " " <<
-//            taxIdList[genusMatches[i].targetId] << " " << int(genusMatches[i].hamming) << endl;
-//        }
-//        cout << "Score: " << speciesScrCov.score << "  " << selectedSpecies << " "
-//             << taxonomy->taxonNode(selectedSpecies)->rank
-//             << endl;
-//    }
+    if (par.verbosity == 3) {
+        cout << "# " << currentQuery << endl;
+        for (size_t i = 0; i < genusMatches.size(); i++) {
+            cout << i << " " << genusMatches[i].position << " " <<
+            taxIdList[genusMatches[i].targetId] << " " << int(genusMatches[i].hamming) << endl;
+        }
+        cout << "Score: " << speciesScrCov.score << "  " << selectedSpecies << " "
+             << taxonomy->taxonNode(selectedSpecies)->rank
+             << endl;
+    }
 }
 
 int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> & genusMatches, Match *matchList, size_t end,
@@ -1280,7 +1281,7 @@ void Classifier::constructMatchCombination(vector<Match> &filteredMatches,
     scoreOfEachGenus.push_back(score);
     matchesForEachGenus.push_back(matches);
 
-    if (PRINT) {
+    if (verbosity == 3) {
         cout << genusTaxIdList[filteredMatches[0].targetId] << " " << coveredLength << " " << hammingSum << " "
              << ((float) coveredLength - hammingSum) / (float) queryLength <<
              " " << matches.size()
@@ -1367,7 +1368,7 @@ void Classifier::constructMatchCombination_paired(vector<Match> &filteredMatches
                 coveredPosCnt_read1++;
             }
         }
-            // Read 2
+        // Read 2
         else {
             if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
                 coveredPosCnt_read2++;
@@ -1389,7 +1390,7 @@ void Classifier::constructMatchCombination_paired(vector<Match> &filteredMatches
     scoreOfEachGenus.push_back(score);
     matchesForEachGenus.push_back(matches);
 
-    if (PRINT) {
+    if (verbosity == 3) {
         cout << genusTaxIdList[filteredMatches[0].targetId] << " " << coveredLength_read1 + coveredLength_read2 << " " << hammingSum
              << " " << score <<
              " " << matches.size()

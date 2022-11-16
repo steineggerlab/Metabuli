@@ -52,6 +52,8 @@ struct QueryInfo {
 
 class Classifier {
 protected:
+    // Parameters
+    int verbosity;
 
     string queryPath_1;
     string queryPath_2;
@@ -75,6 +77,8 @@ protected:
     vector<TaxID> speciesTaxIdList;
     vector<TaxID> genusTaxIdList;
     vector<vector<TaxID> *> spORssp;
+
+
 
 
     struct ScrCov {
