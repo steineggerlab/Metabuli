@@ -176,6 +176,7 @@ LocalParameters::LocalParameters() :
     grade.push_back(&PARAM_THREADS);
     grade.push_back(&ACCESSION_COL);
     grade.push_back(&TAXID_COL);
+    grade.push_back(&PARAM_V);
 
     // Apply thresholds
     applyThreshold.push_back(&MIN_SP_SCORE);
