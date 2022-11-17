@@ -23,11 +23,13 @@ struct CAMI_RESULT{
 
 int grade_cami(const LocalParameters & par);
 
-void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count, const string & rank);
+void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
+                             const string & rank, const LocalParameters & par);
 
 void setGradeDefault(LocalParameters & par){
     par.accessionCol = 1;
     par.taxidCol = 2;
+    par.verbosity = 0;
 }
 
 int grade(int argc, const char **argv, const Command &command){
@@ -326,13 +328,12 @@ int grade_cami(const LocalParameters & par){
             CountAtRank O = {0, 0, 0, 0, 0};
             CountAtRank C = {0, 0, 0, 0, 0};
 
-
             for (size_t j = 0; j < classList.size(); j++) {
-                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, S, "species");
-                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, G, "genus");
-                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, F, "family");
-                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, O, "order");
-                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, C, "class");
+                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, S, "species", par);
+                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, G, "genus", par);
+                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, F, "family", par);
+                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, O, "order", par);
+                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, C, "class", par);
             }
             S.precision = (float) S.TP / (float) (S.TP + S.FP);
             G.precision = (float) G.TP / (float) (G.TP + G.FP);
@@ -417,11 +418,17 @@ int grade_cami(const LocalParameters & par){
     return 0;
 }
 
-void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count, const string & rank) {
+void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
+                             const string & rank, const LocalParameters & par) {
     // Do not count if the rank of target is higher than current rank
     TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
-    if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)) { return;}
+    if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)) {
+        if (rank == "class" && par.verbosity == 1) {
+            cout << "Target: " << target << " " << targetNode->rank << " " << targetTaxIdAtRank << endl;
+        }
+        return;
+    }
 
     // False negative; no classification or meanigless classification
     if(shot == 1 || shot == 0) {
