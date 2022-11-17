@@ -425,7 +425,8 @@ void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
     if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)) {
         if (rank == "class" && par.verbosity == 1) {
-            cout << "Target: " << target << " " << targetNode->rank << " " << targetTaxIdAtRank << endl;
+            cout << "Target: " << target << " " << ncbiTaxonomy.taxonNode(target)->rank << " " <<
+            targetTaxIdAtRank << " " << targetNode->rank << endl;
         }
         return;
     }
