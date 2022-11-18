@@ -24,7 +24,7 @@ struct CAMI_RESULT{
 int grade_cami(const LocalParameters & par);
 
 void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
-                             const string & rank, const LocalParameters & par, size_t idx = 0, string readId = "");
+                             const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
 
 void setGradeDefault(LocalParameters & par){
     par.accessionCol = 1;
@@ -420,7 +420,7 @@ int grade_cami(const LocalParameters & par){
 }
 
 void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
-                             const string & rank, const LocalParameters & par, size_t idx) {
+                             const string & rank, const LocalParameters & par, size_t idx, const string& readId) {
     // Do not count if the rank of target is higher than current rank
     TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
@@ -450,7 +450,7 @@ void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
 
     if(shotTaxIdAtRank == targetTaxIdAtRank){
         if (rank == "class" && par.verbosity == 3) {
-            cout << idx << " " << shot << " " << target << " " << targetTaxIdAtRank << endl;
+            cout << readId << " " << shot << " " << target << " " << targetTaxIdAtRank << endl;
         }
         count.TP++;
     } else {
