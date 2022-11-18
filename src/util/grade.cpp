@@ -24,7 +24,7 @@ struct CAMI_RESULT{
 int grade_cami(const LocalParameters & par);
 
 void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
-                             const string & rank, const LocalParameters & par, size_t idx = 0);
+                             const string & rank, const LocalParameters & par, size_t idx = 0, string readId = "");
 
 void setGradeDefault(LocalParameters & par){
     par.accessionCol = 1;
@@ -250,6 +250,7 @@ int grade_cami(const LocalParameters & par){
         unordered_map<string, int> assacc2taxid;
         vector<int> rightAnswers;
         vector<int> classList;
+        vector<string> readIds;
         string mappingFile;
         string readClassificationFileName;
 #pragma omp for schedule(dynamic)
@@ -258,6 +259,7 @@ int grade_cami(const LocalParameters & par){
             assacc2taxid.clear();
             rightAnswers.clear();
             classList.clear();
+            readIds.clear();
             mappingFile = mappingFileNames[i];
             readClassificationFileName = readClassificationFileNames[i];
 
@@ -289,7 +291,6 @@ int grade_cami(const LocalParameters & par){
             regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
             smatch assacc;
             size_t numberOfClassifications = 0;
-            vector<string> readIds;
             while (getline(readClassification, classString, '\n')) {
                 istringstream lineStream(classString);
                 fields.clear();
@@ -333,7 +334,7 @@ int grade_cami(const LocalParameters & par){
                 compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, G, "genus", par);
                 compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, F, "family", par);
                 compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, O, "order", par);
-                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, C, "class", par, j);
+                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, C, "class", par, j, readIds[j]);
             }
             S.precision = (float) S.TP / (float) (S.TP + S.FP);
             G.precision = (float) G.TP / (float) (G.TP + G.FP);
