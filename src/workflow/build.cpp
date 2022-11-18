@@ -32,9 +32,9 @@ int build(int argc, const char **argv, const Command &command){
 
     //Merge files
     cout << "Merge reference DB files ... " << endl;
-//    int numOfSplits = idxCre.getNumOfFlush();
+    int numOfSplits = idxCre.getNumOfFlush();
     FileMerger merger(par);
-    merger.mergeTargetFiles(par, 67);
+    merger.mergeTargetFiles(par, numOfSplits);
     cerr << "Index creation completed." << endl;
     return 0;
 }

@@ -76,7 +76,7 @@ void IndexCreator::createIndex(const LocalParameters &par) {
 
     // Read through FASTA files and make blocks of sequences to be processed by each thread
     makeBlocksForParallelProcessing();
-
+    cout << "Made blocks for each thread" << endl;
 
     // Train Prodigal for each species
     time_t prodigalStart = time(nullptr);
@@ -1275,9 +1275,7 @@ void IndexCreator::trainProdigal() {
     // TODO: 1. Check if the training file for current species exists. -> load the model
     //       2. If not, train the model and save it.
     // Train prodigal for each FASTA.
-    vector<vector<TaxID>> newSpeciesList;
-    newSpeciesList.resize(threadNum);
-#pragma omp parallel default(none), shared(newSpeciesList)
+#pragma omp parallel default(none)
     {
         ProdigalWrapper prodigal;
         kseq_buffer_t buffer;
