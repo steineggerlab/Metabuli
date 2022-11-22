@@ -1,7 +1,3 @@
-//
-// Created by 김재범 on 2022/01/04.
-//
-
 #include <string>
 #include <fstream>
 #include <unordered_map>
