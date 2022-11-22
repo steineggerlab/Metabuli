@@ -36,5 +36,6 @@ int build(int argc, const char **argv, const Command &command){
     FileMerger merger(par);
     merger.mergeTargetFiles(par, numOfSplits);
     cerr << "Index creation completed." << endl;
+
     return 0;
 }

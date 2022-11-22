@@ -53,6 +53,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
 
     IndexCreator idxCreator;
     vector<Sequence> sequences;
+    vector<string> unmapped;
     // Process each file
     size_t numberOfFiles = fileNames.size();
     for (size_t i = 0;  i < numberOfFiles; ++i) {
@@ -80,6 +81,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
                 cout << "During processing " << fileName << ", accession " << accession <<
                 " is not found in the mapping file. It is skipped." << endl;
                 kseq_destroy(seq);
+                unmapped.push_back(accession);
                 continue;
             }
 
@@ -103,5 +105,12 @@ int addToLibrary(int argc, const char **argv, const Command &command){
         }
         munmap(seqFile.data, seqFile.fileSize + 1);
     }
+    // Write unmapped accession to file
+    FILE * file = fopen((dbDir + "/unmapped.txt").c_str(), "w");
+    for (size_t i = 0; i < unmapped.size(); ++i){
+        fprintf(file, "%s\n", unmapped[i].c_str());
+    }
+    fclose(file);
+    
     return EXIT_SUCCESS;
 }
