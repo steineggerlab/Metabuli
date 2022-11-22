@@ -14,7 +14,7 @@ void setClassifyDefaults(LocalParameters & par){
     par.minConsCnt = 4;
     par.hammingMargin = 0;
     par.minSpScore = 0.5;
-    par.verbosity = 0;
+    par.verbosity = 1;
 }
 
 int classify(int argc, const char **argv, const Command& command)

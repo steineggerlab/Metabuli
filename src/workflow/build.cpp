@@ -22,19 +22,19 @@ int build(int argc, const char **argv, const Command &command){
     cout << "Taxonomy path: " << par.taxonomyPath << endl;
     cout << "Tinfo path: " << par.tinfoPath << endl;
 
-    IndexCreator idxCre(par, dbDirectory, fastaListPath, mappingFile);
-    idxCre.createIndex(par);
-
-    if(idxCre.getNumOfFlush() == 1) {
-        cerr << "Index creation completed." << endl;
-        return 0;
-    }
-
-    //Merge files
-    cout << "Merge reference DB files ... " << endl;
+//    IndexCreator idxCre(par, dbDirectory, fastaListPath, mappingFile);
+//    idxCre.createIndex(par);
+//
+//    if(idxCre.getNumOfFlush() == 1) {
+//        cerr << "Index creation completed." << endl;
+//        return 0;
+//    }
+//
+//    //Merge files
+//    cout << "Merge reference DB files ... " << endl;
 //    int numOfSplits = idxCre.getNumOfFlush();
     FileMerger merger(par);
-    merger.mergeTargetFiles(par, 67);
+    merger.mergeTargetFiles(par, 4);
     cerr << "Index creation completed." << endl;
     return 0;
 }
