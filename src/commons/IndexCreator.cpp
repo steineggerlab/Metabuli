@@ -151,7 +151,7 @@ void IndexCreator::makeBlocksForParallelProcessing(){
         fastaList[i].path = eachFile;
         processedSeqCnt.push_back(taxIdList.size());
         seqHeader = getSeqSegmentsWithHead(fastaList[i].sequences, eachFile, acc2taxid, foundAcc2taxid);
-        seqHeader = seqHeader.substr(1, seqHeader.find(' ') - 1);
+        seqHeader = seqHeader.substr(1, seqHeader.find('.') - 1);
         TaxID speciesTaxid = taxonomy->getTaxIdAtRank(acc2taxid[seqHeader], "species");
 
         // Split current file into blocks for parallel processing
@@ -231,7 +231,7 @@ void IndexCreator::load_accession2taxid(const string & mappingFileName, unordere
         char buffer[512];
         int taxID;
         fscanf(mappingFile, "%*s\t%*s\t%*s\t%*s");
-        while (fscanf(mappingFile, "%*s\t%s\t%d\t%*d", buffer, &taxID) == 2 ){
+        while (fscanf(mappingFile, "%s\t%*s\t%d\t%*d", buffer, &taxID) == 2 ){
             acc2taxid[string(buffer)] = taxID;
         }
     } else {
@@ -883,11 +883,11 @@ string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, cons
     size_t seqCnt = taxIdList.size();
     if (seqFile.is_open()) {
         getline(seqFile, firstLine, '\n');
-        taxIdList.push_back(acc2taxid.at(firstLine.substr(1, firstLine.find(' ') - 1)));
+        taxIdList.push_back(acc2taxid.at(firstLine.substr(1, firstLine.find('.') - 1)));
         foundAcc2taxid[firstLine.substr(1, firstLine.find(' ') - 1)] = taxIdList.back();
         while (getline(seqFile, eachLine, '\n')) {
             if (eachLine[0] == '>') {
-                taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find(' ') - 1)));
+                taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find('.') - 1)));
                 foundAcc2taxid[eachLine.substr(1, eachLine.find(' ') - 1)] = taxIdList.back();
                 pos = (size_t) seqFile.tellg();
                 seqSegmentsTmp.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
