@@ -74,11 +74,12 @@ int addToLibrary(int argc, const char **argv, const Command &command){
                       static_cast<size_t>(sequences[j].length)};
             seq = kseq_init(&buffer);
             kseq_read(seq);
-            // Extract accession
-            string accession = string(seq->name.s;
-            // Remove the version number
+
+            // Extract accession and Remove the version number
+            string accession = string(seq->name.s);
             size_t pos = accession.find('.');
             if (pos != string::npos) { accession = accession.substr(0, pos); }
+
             // Skip if accession is not in the mapping file
             if (acc2taxid.find(accession) == acc2taxid.end()){
                 cout << "During processing " << fileName << ", accession " << accession <<
