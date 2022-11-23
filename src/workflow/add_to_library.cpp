@@ -5,6 +5,7 @@
 #include "KSeqWrapper.h"
 #include <iostream>
 #include "IndexCreator.h"
+#include <string>
 
 using namespace std;
 
@@ -44,7 +45,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
         char buffer[512];
         int taxID;
         fscanf(mappingFile, "%*s\t%*s\t%*s\t%*s");
-        while (fscanf(mappingFile, "%*s\t%s\t%d\t%*d", buffer, &taxID) == 2 ){
+        while (fscanf(mappingFile, "%s\t%*s\t%d\t%*d", buffer, &taxID) == 2 ){
             acc2taxid[string(buffer)] = taxID;
         }
     } else {
@@ -74,8 +75,10 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             seq = kseq_init(&buffer);
             kseq_read(seq);
             // Extract accession
-            string accession = seq->name.s;
-
+            string accession = string(seq->name.s;
+            // Remove the version number
+            size_t pos = accession.find('.');
+            if (pos != string::npos) { accession = accession.substr(0, pos); }
             // Skip if accession is not in the mapping file
             if (acc2taxid.find(accession) == acc2taxid.end()){
                 cout << "During processing " << fileName << ", accession " << accession <<
@@ -111,6 +114,6 @@ int addToLibrary(int argc, const char **argv, const Command &command){
         fprintf(file, "%s\n", unmapped[i].c_str());
     }
     fclose(file);
-    
+
     return EXIT_SUCCESS;
 }
