@@ -23,13 +23,13 @@ struct CAMI_RESULT{
 
 int grade_cami(const LocalParameters & par);
 
-void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
+char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
                              const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
 
 void setGradeDefault(LocalParameters & par){
     par.accessionCol = 1;
     par.taxidCol = 2;
-    par.verbosity = 1;
+    par.verbosity = 2;
 }
 
 int grade(int argc, const char **argv, const Command &command){
@@ -330,11 +330,15 @@ int grade_cami(const LocalParameters & par){
             CountAtRank C = {0, 0, 0, 0, 0};
 
             for (size_t j = 0; j < classList.size(); j++) {
-                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, S, "species", par);
-                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, G, "genus", par);
-                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, F, "family", par);
-                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, O, "order", par);
-                compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, C, "class", par, j, readIds[j]);
+
+                char s = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, S, "species", par);
+                char g = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, G, "genus", par);
+                char f = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, F, "family", par);
+                char o = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, O, "order", par);
+                char c = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, C, "class", par, j, readIds[j]);
+                if (par.verbosity == 4) {
+                    cout << readIds[j] << " " << classList[j] << " " << rightAnswers[j] << " " << s << " " << g << " " << f << " " << o << " " << c << endl;
+                }
             }
             S.precision = (float) S.TP / (float) (S.TP + S.FP);
             G.precision = (float) G.TP / (float) (G.TP + G.FP);
@@ -419,7 +423,7 @@ int grade_cami(const LocalParameters & par){
     return 0;
 }
 
-void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
+char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
                              const string & rank, const LocalParameters & par, size_t idx, const string& readId) {
     // Do not count if the rank of target is higher than current rank
     TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
@@ -429,14 +433,14 @@ void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
             cout << "Target: " << target << " " << ncbiTaxonomy.taxonNode(target)->rank << " " <<
             targetTaxIdAtRank << " " << targetNode->rank << endl;
         }
-        return;
+        return '-';
     }
 
-    // False negative; no classification or meanigless classification
+    // False negative; no classification or meaningless classification
     if(shot == 1 || shot == 0) {
         count.FN ++;
         count.total ++;
-        return;
+        return 'N';
     }
 
     // False negative if the rank of shot is higher than current rank
@@ -445,16 +449,18 @@ void compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
     if (NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank)) {
         count.FN ++;
         count.total ++;
-        return;
+        return 'N';
     }
 
+    count.total++;
     if(shotTaxIdAtRank == targetTaxIdAtRank){
         if (rank == "class" && par.verbosity == 3) {
             cout << readId << " " << shot << " " << target << " " << targetTaxIdAtRank << endl;
         }
         count.TP++;
+        return 'O';
     } else {
         count.FP++;
+        return 'X';
     }
-    count.total++;
 }
