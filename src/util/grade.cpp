@@ -336,7 +336,7 @@ int grade_cami(const LocalParameters & par){
                 char f = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, F, "family", par);
                 char o = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, O, "order", par);
                 char c = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, C, "class", par, j, readIds[j]);
-                if (par.verbosity == 4) {
+                if (par.verbosity == 3) {
                     cout << readIds[j] << " " << classList[j] << " " << rightAnswers[j] << " " << s << " " << g << " " << f << " " << o << " " << c << endl;
                 }
             }
@@ -429,10 +429,10 @@ char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
     TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
     if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)) {
-        if (rank == "class" && par.verbosity == 3) {
-            cout << "Target: " << target << " " << ncbiTaxonomy.taxonNode(target)->rank << " " <<
-            targetTaxIdAtRank << " " << targetNode->rank << endl;
-        }
+//        if (rank == "class" && par.verbosity == 3) {
+//            cout << "Target: " << target << " " << ncbiTaxonomy.taxonNode(target)->rank << " " <<
+//            targetTaxIdAtRank << " " << targetNode->rank << endl;
+//        }
         return '-';
     }
 
@@ -454,9 +454,9 @@ char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
 
     count.total++;
     if(shotTaxIdAtRank == targetTaxIdAtRank){
-        if (rank == "class" && par.verbosity == 3) {
-            cout << readId << " " << shot << " " << target << " " << targetTaxIdAtRank << endl;
-        }
+//        if (rank == "class" && par.verbosity == 3) {
+//            cout << readId << " " << shot << " " << target << " " << targetTaxIdAtRank << endl;
+//        }
         count.TP++;
         return 'O';
     } else {
