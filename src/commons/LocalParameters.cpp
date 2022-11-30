@@ -94,7 +94,7 @@ LocalParameters::LocalParameters() :
         TEST_RANK(TEST_RANK_ID,
                   "--test-rank",
                   ".",
-                  "Test Rank",
+                  "csv of ranks to be tested",
                   typeid(std::string),
                   (void *) &testRank,
                   ""),
@@ -139,6 +139,13 @@ LocalParameters::LocalParameters() :
                   "Column number of taxonomy ID in classification result",
                   typeid(int),
                   (void *) &taxidCol,
+                  ""),
+        SCORE_COL(SCORE_COL_ID,
+                  "--score-col",
+                  "Column number of score in classification result",
+                  "Column number of score in classification result",
+                  typeid(int),
+                  (void *) &scoreCol,
                   "") {
     //add_to_library
 
@@ -172,11 +179,12 @@ LocalParameters::LocalParameters() :
     exclusiontest_hiv.push_back(&TEST_RANK);
 
     // grade
-    grade.push_back(&TEST_TYPE);
+    grade.push_back(&TEST_RANK);
     grade.push_back(&PARAM_THREADS);
     grade.push_back(&ACCESSION_COL);
     grade.push_back(&TAXID_COL);
     grade.push_back(&PARAM_V);
+    grade.push_back(&SCORE_COL);
 
     // Apply thresholds
     applyThreshold.push_back(&MIN_SP_SCORE);

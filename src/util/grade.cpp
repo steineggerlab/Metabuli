@@ -12,7 +12,8 @@
 
 using namespace std;
 
-struct CAMI_RESULT{
+struct GradeResult{
+    unordered_map<string, CountAtRank> countsAtRanks;
     string path;
     CountAtRank species;
     CountAtRank genus;
@@ -21,7 +22,7 @@ struct CAMI_RESULT{
     CountAtRank class_;
 };
 
-int grade_cami(const LocalParameters & par);
+int grade_cami(const LocalParameters & par, vector<string> & ranks);
 
 char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
                              const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
@@ -30,6 +31,8 @@ void setGradeDefault(LocalParameters & par){
     par.accessionCol = 1;
     par.taxidCol = 2;
     par.verbosity = 2;
+    par.scoreCol = 0;
+    par.testRank = "";
 }
 
 int grade(int argc, const char **argv, const Command &command){
@@ -38,8 +41,16 @@ int grade(int argc, const char **argv, const Command &command){
     setGradeDefault(par);
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
 
+    // Parse ranks
+    vector<string> ranks;
+    if (!par.testRank.empty()) {
+        ranks = Util::split(par.testRank, ",");
+    } else {
+        ranks = {"species", "genus", "family", "order", "class"};
+    }
+
     if (par.testType == "cami") {
-        return grade_cami(par);
+        return grade_cami(par, ranks);
     }
 
     const string readClassificationFileList = par.filenames[0];
@@ -196,7 +207,7 @@ int grade(int argc, const char **argv, const Command &command){
     return 0;
 }
 
-int grade_cami(const LocalParameters & par){
+int grade_cami(const LocalParameters & par, vector<string> & ranks){
 
     const string readClassificationFileList = par.filenames[0];
     const string mappingFileList = par.filenames[1];
@@ -237,14 +248,14 @@ int grade_cami(const LocalParameters & par){
 
     size_t numberOfFiles = mappingFileNames.size();
     // Container for storing grading results
-    vector<CAMI_RESULT> camiResults;
-    camiResults.resize(numberOfFiles);
+    vector<GradeResult> results;
+    results.resize(numberOfFiles);
 
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
 #endif
 
-#pragma omp parallel default(none), shared(camiResults, numberOfFiles, mappingFileNames, readClassificationFileNames, ncbiTaxonomy, par, cout)
+#pragma omp parallel default(none), shared(results, numberOfFiles, mappingFileNames, readClassificationFileNames, ncbiTaxonomy, par, cout)
     {
         // Grade each file
         unordered_map<string, int> assacc2taxid;
@@ -330,96 +341,106 @@ int grade_cami(const LocalParameters & par){
             CountAtRank C = {0, 0, 0, 0, 0};
 
             for (size_t j = 0; j < classList.size(); j++) {
-
-                char s = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, S, "species", par);
-                char g = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, G, "genus", par);
-                char f = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, F, "family", par);
-                char o = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, O, "order", par);
-                char c = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, C, "class", par, j, readIds[j]);
                 if (par.verbosity == 3) {
-                    cout << readIds[j] << " " << classList[j] << " " << rightAnswers[j] << " " << s << " " << g << " " << f << " " << o << " " << c << endl;
+                    cout << readIds[j] << " " << classList[j] << " " << rightAnswers[j];
+                }
+                for (const string& rank : ranks){
+                    char p = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, results[i].countsAtRanks[rank], rank, par);
+                    if (par.verbosity == 3) {
+                        cout << " " << p;
+                    }
+                }
+                if (par.verbosity == 3) {
+                    cout << endl;
                 }
             }
-            S.precision = (float) S.TP / (float) (S.TP + S.FP);
-            G.precision = (float) G.TP / (float) (G.TP + G.FP);
-            F.precision = (float) F.TP / (float) (F.TP + F.FP);
-            O.precision = (float) O.TP / (float) (O.TP + O.FP);
-            C.precision = (float) C.TP / (float) (C.TP + C.FP);
 
-            S.sensitivity = (float) S.TP / (float) S.total;
-            G.sensitivity = (float) G.TP / (float) G.total;
-            F.sensitivity = (float) F.TP / (float) F.total;
-            O.sensitivity = (float) O.TP / (float) O.total;
-            C.sensitivity = (float) C.TP / (float) C.total;
+            // Calculate the scores
+            for (const string& rank : ranks){
+                results[i].countsAtRanks[rank].calculate();
+            }
+//            S.precision = (float) S.TP / (float) (S.TP + S.FP);
+//            G.precision = (float) G.TP / (float) (G.TP + G.FP);
+//            F.precision = (float) F.TP / (float) (F.TP + F.FP);
+//            O.precision = (float) O.TP / (float) (O.TP + O.FP);
+//            C.precision = (float) C.TP / (float) (C.TP + C.FP);
+//
+//            S.sensitivity = (float) S.TP / (float) S.total;
+//            G.sensitivity = (float) G.TP / (float) G.total;
+//            F.sensitivity = (float) F.TP / (float) F.total;
+//            O.sensitivity = (float) O.TP / (float) O.total;
+//            C.sensitivity = (float) C.TP / (float) C.total;
+//
+//            S.f1 = 2 * S.precision * S.sensitivity / (S.precision + S.sensitivity);
+//            G.f1 = 2 * G.precision * G.sensitivity / (G.precision + G.sensitivity);
+//            F.f1 = 2 * F.precision * F.sensitivity / (F.precision + F.sensitivity);
+//            O.f1 = 2 * O.precision * O.sensitivity / (O.precision + O.sensitivity);
+//            C.f1 = 2 * C.precision * C.sensitivity / (C.precision + C.sensitivity);
 
-            S.f1 = 2 * S.precision * S.sensitivity / (S.precision + S.sensitivity);
-            G.f1 = 2 * G.precision * G.sensitivity / (G.precision + G.sensitivity);
-            F.f1 = 2 * F.precision * F.sensitivity / (F.precision + F.sensitivity);
-            O.f1 = 2 * O.precision * O.sensitivity / (O.precision + O.sensitivity);
-            C.f1 = 2 * C.precision * C.sensitivity / (C.precision + C.sensitivity);
-
-            camiResults[i].species = S;
-            camiResults[i].genus = G;
-            camiResults[i].family = F;
-            camiResults[i].order = O;
-            camiResults[i].class_ = C;
+//            results[i].species = S;
+//            results[i].genus = G;
+//            results[i].family = F;
+//            results[i].order = O;
+//            results[i].class_ = C;
 
             cout << readClassificationFileName << endl;
             cout << "The number of reads: " << rightAnswers.size() << endl;
             cout << "The number of reads classified: " << numberOfClassifications << endl;
-            cout << "Class       : " << C.total << " / " << C.TP + C.FP << " / " << C.TP << " / " << C.FP << " / " << C.precision << " / "
-                 << C.sensitivity << " / " << C.f1 << endl;
-            cout << "Order       : " << O.total << " / " << O.TP + O.FP << " / " << O.TP << " / " << O.FP << " / " << O.precision << " / "
-                    << O.sensitivity << " / " << O.f1 << endl;
-            cout << "Family      : " << F.total << " / " << F.TP + F.FP << " / " << F.TP << " / " << F.FP << " / " << F.precision << " / "
-                    << F.sensitivity << " / " << F.f1 << endl;
-            cout << "Genus       : " << G.total << " / " << G.TP + G.FP << " / " << G.TP << " / " << G.FP << " / " << G.precision << " / "
-                    << G.sensitivity << " / " << G.f1 << endl;
-            cout << "Species     : " << S.total << " / " << S.TP + S.FP << " / " << S.TP << " / " << S.FP << " / " << S.precision << " / "
-                    << S.sensitivity << " / " << S.f1 << endl;
+            for (const string& rank : ranks){
+                cout << rank << " " << results[i].countsAtRanks[rank].total << " " << results[i].countsAtRanks[rank].TP + results[i].countsAtRanks[rank].FP << " "
+                     << results[i].countsAtRanks[rank].TP << " " << results[i].countsAtRanks[rank].FP << " " << results[i].countsAtRanks[rank].precision << " "
+                     << results[i].countsAtRanks[rank].sensitivity << " " << results[i].countsAtRanks[rank].f1 << endl;
+            }
             cout << endl;
-
         }
     }
 
     cout << "Rank\t";
-    for(size_t i = 0; i < camiResults.size(); i++){
+    for(size_t i = 0; i < results.size(); i++){
         cout << "Precision\tSensitivity\tF1\t";
     }
     cout << endl;
-    // Print Class
-    cout<< "Class\t";
-    for(size_t i = 0; i < camiResults.size(); i++){
-        cout << camiResults[i].class_.precision << "\t" << camiResults[i].class_.sensitivity << "\t" << camiResults[i].class_.f1 << "\t";
+    for (const string& rank : ranks){
+        cout << rank << "\t";
+        for(size_t i = 0; i < results.size(); i++){
+            cout << results[i].countsAtRanks[rank].precision << "\t" << results[i].countsAtRanks[rank].sensitivity << "\t" << results[i].countsAtRanks[rank].f1 << "\t";
+        }
+        cout << endl;
     }
-    cout << endl;
 
-    // Print Order
-    cout<< "Order\t";
-    for(size_t i = 0; i < camiResults.size(); i++){
-        cout << camiResults[i].order.precision << "\t" << camiResults[i].order.sensitivity << "\t" << camiResults[i].order.f1 << "\t";
-    }
-    cout << endl;
-
-    // Print Family
-    cout<< "Family\t";
-    for(size_t i = 0; i < camiResults.size(); i++){
-        cout << camiResults[i].family.precision << "\t" << camiResults[i].family.sensitivity << "\t" << camiResults[i].family.f1 << "\t";
-    }
-    cout << endl;
-
-    // Print Genus
-    cout<< "Genus\t";
-    for(size_t i = 0; i < camiResults.size(); i++){
-        cout << camiResults[i].genus.precision << "\t" << camiResults[i].genus.sensitivity << "\t" << camiResults[i].genus.f1 << "\t";
-    }
-    cout << endl;
-
-    // Print Species
-    cout<< "Species\t";
-    for(size_t i = 0; i < camiResults.size(); i++){
-        cout << camiResults[i].species.precision << "\t" << camiResults[i].species.sensitivity << "\t" << camiResults[i].species.f1 << "\t";
-    }
+//    // Print Class
+//    cout<< "Class\t";
+//    for(size_t i = 0; i < results.size(); i++){
+//        cout << results[i].class_.precision << "\t" << results[i].class_.sensitivity << "\t" << results[i].class_.f1 << "\t";
+//    }
+//    cout << endl;
+//
+//    // Print Order
+//    cout<< "Order\t";
+//    for(size_t i = 0; i < results.size(); i++){
+//        cout << results[i].order.precision << "\t" << results[i].order.sensitivity << "\t" << results[i].order.f1 << "\t";
+//    }
+//    cout << endl;
+//
+//    // Print Family
+//    cout<< "Family\t";
+//    for(size_t i = 0; i < results.size(); i++){
+//        cout << results[i].family.precision << "\t" << results[i].family.sensitivity << "\t" << results[i].family.f1 << "\t";
+//    }
+//    cout << endl;
+//
+//    // Print Genus
+//    cout<< "Genus\t";
+//    for(size_t i = 0; i < results.size(); i++){
+//        cout << results[i].genus.precision << "\t" << results[i].genus.sensitivity << "\t" << results[i].genus.f1 << "\t";
+//    }
+//    cout << endl;
+//
+//    // Print Species
+//    cout<< "Species\t";
+//    for(size_t i = 0; i < results.size(); i++){
+//        cout << results[i].species.precision << "\t" << results[i].species.sensitivity << "\t" << results[i].species.f1 << "\t";
+//    }
     return 0;
 }
 
@@ -429,10 +450,6 @@ char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
     TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
     if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)) {
-//        if (rank == "class" && par.verbosity == 3) {
-//            cout << "Target: " << target << " " << ncbiTaxonomy.taxonNode(target)->rank << " " <<
-//            targetTaxIdAtRank << " " << targetNode->rank << endl;
-//        }
         return '-';
     }
 
@@ -454,9 +471,6 @@ char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
 
     count.total++;
     if(shotTaxIdAtRank == targetTaxIdAtRank){
-//        if (rank == "class" && par.verbosity == 3) {
-//            cout << readId << " " << shot << " " << target << " " << targetTaxIdAtRank << endl;
-//        }
         count.TP++;
         return 'O';
     } else {

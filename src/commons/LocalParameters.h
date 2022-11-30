@@ -54,6 +54,7 @@ public:
     PARAMETER(TEST_TYPE)
     PARAMETER(ACCESSION_COL)
     PARAMETER(TAXID_COL)
+    PARAMETER(SCORE_COL)
 
     // Superkingdom taxonomy id
     int virusTaxId;
@@ -81,6 +82,7 @@ public:
     std::string testType;
     int accessionCol;
     int taxidCol;
+    int scoreCol;
 
 private:
     LocalParameters();
