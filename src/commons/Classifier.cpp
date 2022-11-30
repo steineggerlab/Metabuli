@@ -816,15 +816,15 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     // Get the best genus for current query
     vector<Match> genusMatches;
     genusMatches.reserve(end - offset + 1);
-    float highRankScore;
+
     int res;
+    TaxonScore genusScore(0, 0, 0, 0);
     if (par.seqMode == 2) {
-        res = getMatchesOfTheBestGenus_paired(genusMatches, matchList, end, offset,
-                                              queryList[currentQuery].queryLength,
-                                              queryList[currentQuery].queryLength2,
-                                              highRankScore);
+        genusScore = getBestGenusMatches(genusMatches, matchList, end, offset,
+                                         queryList[currentQuery].queryLength,
+                                         queryList[currentQuery].queryLength2);
     } else {
-        res = getMatchesOfTheBestGenus(genusMatches, matchList, end, offset, queryLength, highRankScore);
+        genusScore = getBestGenusMatches(genusMatches, matchList, end, offset, queryLength);
     }
 
     if (par.verbosity == 3) {
@@ -833,20 +833,22 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
             cout << genusTaxIdList[genusMatches[i].targetId] << " " << speciesTaxIdList[genusMatches[i].targetId] << " " <<
                  taxIdList[genusMatches[i].targetId] << " " << genusMatches[i].position << " " << int(genusMatches[i].hamming) << "\n";
         }
-        cout << "Genus score: " << highRankScore << "\n";
+        cout << "Genus score: " << genusScore.score << "\n";
     }
 
     // If there is no proper genus for current query, it is un-classified.
-    if (res == 4 || highRankScore < par.minScore) {
+    if (genusScore.score == 0 || genusScore.score < par.minScore) {
         queryList[currentQuery].isClassified = false;
         queryList[currentQuery].classification = 0;
-        queryList[currentQuery].score = 0;
+        queryList[currentQuery].score = genusScore.score;
+        queryList[currentQuery].coverage = genusScore.coverage;
+        queryList[currentQuery].hammingDist = genusScore.hammingDist;
         queryList[currentQuery].newSpecies = false;
         return;
     }
 
     // If there are two or more good genus level candidates, find the LCA.
-    if (res == 2) {
+    if (genusScore.taxId == 0) {
         vector<TaxID> genusList;
         genusList.reserve(genusMatches.size());
         for (auto & genusMatch : genusMatches) {
@@ -855,7 +857,9 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         selectedTaxon = taxonomy->LCA(genusList)->taxId;
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = selectedTaxon;
-        queryList[currentQuery].score = highRankScore;
+        queryList[currentQuery].score = genusScore.score;
+        queryList[currentQuery].coverage = genusScore.coverage;
+        queryList[currentQuery].hammingDist = genusScore.hammingDist;
         for (auto & genusMatch : genusMatches) {
             queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
         }
@@ -867,7 +871,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                      taxIdList[genusMatches[i].targetId] << " " << int(genusMatches[i].hamming) << " "
                      << endl;
             }
-            cout << "Genus score: " << highRankScore << " " << selectedTaxon << " "
+            cout << "Genus score: " << genusScore.score << " " << selectedTaxon << " "
                  << taxonomy->taxonNode(selectedTaxon)->rank << endl;
         }
         return;
@@ -875,18 +879,25 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
 
     // Choose the species with the highest coverage.
     TaxID selectedSpecies;
-    ScrCov speciesScrCov(0.f, 0.f);
+    TaxonScore speciesScore;
     vector<TaxID> species;
-    if (par.seqMode == 2)
-         chooseSpecies(genusMatches,queryLength,queryList[currentQuery].queryLength2,
-                      speciesScrCov, species);
-    else chooseSpecies(genusMatches, queryLength, speciesScrCov, species);
+    if (par.seqMode == 2) {
+        speciesScore = chooseSpecies(genusMatches,
+                                     queryList[currentQuery].queryLength,
+                                     queryList[currentQuery].queryLength2,
+                                     species);
+    } else {
+        speciesScore = chooseSpecies(genusMatches, queryLength, species);
+    }
+
 
     // Classify to LCA if more than one species are selected
     if (species.size() > 1) {
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = taxonomy->LCA(species)->taxId;
-        queryList[currentQuery].score = highRankScore;
+        queryList[currentQuery].score = genusScore.score;
+        queryList[currentQuery].coverage = genusScore.coverage;
+        queryList[currentQuery].hammingDist = genusScore.hammingDist;
         for (auto & genusMatch : genusMatches) {
             queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
         }
@@ -894,11 +905,13 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     }
 
     // If score is not enough, classify to the parent of the selected species
-    if (speciesScrCov.score < minSpScore) {
+    if (speciesScore.score < minSpScore) {
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = taxonomy->taxonNode(
                 taxonomy->getTaxIdAtRank(species[0], "species"))->parentTaxId;
-        queryList[currentQuery].score = highRankScore;
+        queryList[currentQuery].score = genusScore.score;
+        queryList[currentQuery].coverage = genusScore.coverage;
+        queryList[currentQuery].hammingDist = genusScore.hammingDist;
         for (auto & genusMatch : genusMatches) {
             if(speciesTaxIdList[genusMatch.targetId] == species[0]){
                 queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
@@ -952,7 +965,9 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     // Store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = selectedSpecies;
-    queryList[currentQuery].score = speciesScrCov.score;
+    queryList[currentQuery].score = speciesScore.score;
+    queryList[currentQuery].coverage = speciesScore.coverage;
+    queryList[currentQuery].hammingDist = speciesScore.hammingDist;
     queryList[currentQuery].newSpecies = false;
     if (par.verbosity == 3) {
         cout << "# " << currentQuery << endl;
@@ -960,22 +975,25 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
             cout << i << " " << genusMatches[i].position << " " <<
             taxIdList[genusMatches[i].targetId] << " " << int(genusMatches[i].hamming) << endl;
         }
-        cout << "Score: " << speciesScrCov.score << "  " << selectedSpecies << " "
+        cout << "Score: " << speciesScore.score << "  " << selectedSpecies << " "
              << taxonomy->taxonNode(selectedSpecies)->rank
              << endl;
     }
 }
 
-int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> & genusMatches, Match *matchList, size_t end,
-                                                size_t offset, int readLength1, int readLength2, float &bestScore) {
+TaxonScore Classifier::getBestGenusMatches(vector<Match> & genusMatches,
+                                           Match *matchList,
+                                           size_t end, size_t offset,
+                                           int readLength1,
+                                           int readLength2) {
     TaxID currentGenus;
     TaxID currentSpecies;
-
+    TaxonScore bestScore;
     vector<Match> tempMatchContainer;
     vector<Match> filteredMatches;
     vector<vector<Match>> matchesForEachGenus;
     vector<bool> conservedWithinGenus;
-    vector<float> scoreOfEachGenus;
+    vector<TaxonScore> genusScores;
     size_t i = offset;
     bool lastIn;
     size_t speciesMatchCnt;
@@ -1043,37 +1061,41 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> & genusMatches, Ma
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
         if (!filteredMatches.empty()) {
-            constructMatchCombination_paired(filteredMatches, matchesForEachGenus, scoreOfEachGenus, readLength1,
-                                             readLength2);
+            genusScores.push_back(scoreGenus(filteredMatches, matchesForEachGenus, readLength1, readLength2));
         }
         filteredMatches.clear();
     }
 
     // If there are no meaningful genus
-    if (scoreOfEachGenus.empty()) {
-        bestScore = 0;
-        return 4;
+    if (genusScores.empty()) {
+        bestScore.score = 0;
+        return bestScore;
     }
 
-    float maxScore = *max_element(scoreOfEachGenus.begin(), scoreOfEachGenus.end());
+    TaxonScore maxScore = *max_element(genusScores.begin(), genusScores.end(),
+                                       [](const TaxonScore & a, const TaxonScore & b) { return a.score < b.score; });
 
     vector<size_t> maxIdx;
-    for (size_t g = 0; g < scoreOfEachGenus.size(); g++) {
-        if (scoreOfEachGenus[g] > maxScore * 0.95f) {
+
+    for (size_t g = 0; g < genusScores.size(); g++) {
+        if (genusScores[g].score > maxScore.score * 0.95f) {
             maxIdx.push_back(g);
         }
     }
     bestScore = maxScore;
 
-    for (size_t g = 0; g < maxIdx.size(); g++) {
-        genusMatches.insert(genusMatches.end(), matchesForEachGenus[maxIdx[g]].begin(),
-                                     matchesForEachGenus[maxIdx[g]].end());
+    for (unsigned long g : maxIdx) {
+        genusMatches.insert(genusMatches.end(),
+                            matchesForEachGenus[g].begin(),
+                            matchesForEachGenus[g].end());
     }
 
+    // More than one genus
     if (maxIdx.size() > 1) {
-        return 2;
+        bestScore.taxId = 0;
+        return bestScore;
     }
-    return 1;
+    return bestScore;
 
     //Three cases
     //1. one genus
@@ -1081,8 +1103,8 @@ int Classifier::getMatchesOfTheBestGenus_paired(vector<Match> & genusMatches, Ma
     //4. no genus
 }
 
-int Classifier::getMatchesOfTheBestGenus(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
-                                         size_t offset, int queryLength, float &bestScore) {
+TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *matchList, size_t end,
+                                           size_t offset, int queryLength) {
     TaxID currentGenus;
     TaxID currentSpecies;
 
@@ -1090,7 +1112,8 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> &matchesForMajorityLCA, M
     vector<Match> filteredMatches;
     vector<vector<Match>> matchesForEachGenus;
     vector<bool> conservedWithinGenus;
-    vector<float> scoreOfEachGenus;
+    vector<TaxonScore> genusScores;
+    TaxonScore bestScore;
     size_t i = offset;
     bool lastIn;
     size_t speciesMatchCnt;
@@ -1158,36 +1181,40 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> &matchesForMajorityLCA, M
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
         if (!filteredMatches.empty()) {
-            constructMatchCombination(filteredMatches, matchesForEachGenus, scoreOfEachGenus, queryLength);
+            genusScores.push_back(scoreGenus(filteredMatches, matchesForEachGenus, queryLength));
         }
         filteredMatches.clear();
     }
 
     // If there are no meaningful genus
-    if (scoreOfEachGenus.empty()) {
-        bestScore = 0;
-        return 4;
+    if (genusScores.empty()) {
+        bestScore.score = 0;
+        return bestScore;
     }
 
-    float maxScore = *max_element(scoreOfEachGenus.begin(), scoreOfEachGenus.end());
+    TaxonScore maxScore = *max_element(genusScores.begin(), genusScores.end(),
+                                       [](const TaxonScore & a, const TaxonScore & b) { return a.score < b.score; });
 
     vector<size_t> maxIdx;
-    for (size_t g = 0; g < scoreOfEachGenus.size(); g++) {
-        if (scoreOfEachGenus[g] > maxScore * 0.95f) {
+    for (size_t g = 0; g < genusScores.size(); g++) {
+        if (genusScores[g].score > maxScore.score * 0.95f) {
             maxIdx.push_back(g);
         }
     }
     bestScore = maxScore;
 
-    for (size_t g = 0; g < maxIdx.size(); g++) {
-        matchesForMajorityLCA.insert(matchesForMajorityLCA.end(), matchesForEachGenus[maxIdx[g]].begin(),
-                                     matchesForEachGenus[maxIdx[g]].end());
+    for (unsigned long g : maxIdx) {
+        genusMatches.insert(genusMatches.end(),
+                            matchesForEachGenus[g].begin(),
+                            matchesForEachGenus[g].end());
     }
 
+    // More than one genus
     if (maxIdx.size() > 1) {
-        return 2;
+        bestScore.taxId = 0;
+        return bestScore;
     }
-    return 1;
+    return bestScore;
 
     //Three cases
     //1. one genus
@@ -1195,10 +1222,9 @@ int Classifier::getMatchesOfTheBestGenus(vector<Match> &matchesForMajorityLCA, M
     //4. no genus
 }
 
-void Classifier::constructMatchCombination(vector<Match> &filteredMatches,
-                                           vector<vector<Match>> &matchesForEachGenus,
-                                           vector<float> &scoreOfEachGenus,
-                                           int queryLength) {
+TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
+                                  vector<vector<Match>> &matchesForEachGenus,
+                                  int queryLength) {
     // Do not allow overlaps between the same species
     vector<Match> matches;
     size_t walker = 0;
@@ -1271,15 +1297,11 @@ void Classifier::constructMatchCombination(vector<Match> &filteredMatches,
     }
     delete[] hammingsAtEachPos;
 
-    // Ignore too few matches
-    if (coveredPosCnt < 2) return;
-
     // Score current genus
     int coveredLength = coveredPosCnt * 3;
     if (coveredLength > queryLength) coveredLength = queryLength;
     float score = ((float) coveredLength - hammingSum) / (float) queryLength;
-    scoreOfEachGenus.push_back(score);
-    matchesForEachGenus.push_back(matches);
+
 
     if (verbosity == 3) {
         cout << genusTaxIdList[filteredMatches[0].targetId] << " " << coveredLength << " " << hammingSum << " "
@@ -1287,13 +1309,13 @@ void Classifier::constructMatchCombination(vector<Match> &filteredMatches,
              " " << matches.size()
              << endl;
     }
+    matchesForEachGenus.push_back(move(matches));
 }
 
-void Classifier::constructMatchCombination_paired(vector<Match> &filteredMatches,
-                                                  vector<vector<Match>> &matchesForEachGenus,
-                                                  vector<float> &scoreOfEachGenus,
-                                                  int readLength1,
-                                                  int readLength2) {
+TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
+                                  vector<vector<Match>> &matchesForEachGenus,
+                                  int readLength1,
+                                  int readLength2) {
     // Do not allow overlaps between the same species
     vector<Match> matches;
     size_t walker = 0;
@@ -1387,8 +1409,7 @@ void Classifier::constructMatchCombination_paired(vector<Match> &filteredMatches
     if (coveredLength_read2 > readLength2) coveredLength_read2 = readLength2;
     float score =
             ((float) (coveredLength_read1 + coveredLength_read2) - hammingSum) / (float) (readLength1 + readLength2);
-    scoreOfEachGenus.push_back(score);
-    matchesForEachGenus.push_back(matches);
+    float coverage = (float) (coveredLength_read1 + coveredLength_read2) / (float) (readLength1 + readLength2);
 
     if (verbosity == 3) {
         cout << genusTaxIdList[filteredMatches[0].targetId] << " " << coveredLength_read1 + coveredLength_read2 << " " << hammingSum
@@ -1396,14 +1417,13 @@ void Classifier::constructMatchCombination_paired(vector<Match> &filteredMatches
              " " << matches.size()
              << endl;
     }
+    matchesForEachGenus.push_back(move(matches));
+    return {genusTaxIdList[filteredMatches[0].targetId], score, coverage, (int) hammingSum};
 }
 
-void Classifier::chooseSpecies(const vector<Match> &matches,
-                               int queryLength,
-                               ScrCov &speciesScrCov,
-                               vector<TaxID> &species) {
+TaxonScore Classifier::chooseSpecies(const vector<Match> &matches, int queryLength, vector<TaxID> &species) {
     // Score each species
-    std::unordered_map<TaxID, ScrCov> speciesScrCovs;
+    std::unordered_map<TaxID, TaxonScore> speciesScores;
     size_t i = 0;
     TaxID currentSpeices;
     size_t numOfMatch = matches.size();
@@ -1415,28 +1435,30 @@ void Classifier::chooseSpecies(const vector<Match> &matches,
             i++;
         }
         speciesEnd = i;
-        speciesScrCovs[currentSpeices] = scoreTaxon(matches, speciesBegin, speciesEnd, queryLength);
+        speciesScores[currentSpeices] = scoreTaxon(matches, speciesBegin, speciesEnd, queryLength);
+        speciesScores[currentSpeices].taxId = currentSpeices;
     }
 
     // Get the best species
-    float bestCoverage = 0.f;
-    for (auto sp = speciesScrCovs.begin(); sp != speciesScrCovs.end(); sp++) {
-        if (sp->second.coverage > bestCoverage) {
+    TaxonScore bestScore;
+    for (auto & sp : speciesScores) {
+        if (sp.second.score > bestScore.score) {
             species.clear();
-            species.push_back(sp->first);
-            bestCoverage = sp->second.coverage;
-            speciesScrCov.coverage = sp->second.coverage;
-            speciesScrCov.score = sp->second.score;
-        } else if (sp->second.coverage == bestCoverage) {
-            species.push_back(sp->first);
+            species.push_back(sp.first);
+            bestScore = sp.second;
+        } else if (sp.second.coverage == bestScore.coverage) {
+            species.push_back(sp.first);
         }
     }
+    return bestScore;
 }
 
-void Classifier::chooseSpecies(const vector<Match> &matches, int read1Length, int read2Length,
-                               ScrCov &speciesScrCov, vector<TaxID> &species) {
+TaxonScore Classifier::chooseSpecies(const vector<Match> &matches,
+                                     int read1Length,
+                                     int read2Length,
+                                     vector<TaxID> &species) {
     // Score each species
-    std::unordered_map<TaxID, ScrCov> speciesScrCovs;
+    std::unordered_map<TaxID, TaxonScore> speciesScores;
     size_t i = 0;
     TaxID currentSpeices;
     size_t numOfMatch = matches.size();
@@ -1448,28 +1470,28 @@ void Classifier::chooseSpecies(const vector<Match> &matches, int read1Length, in
             i++;
         }
         speciesEnd = i;
-        speciesScrCovs[currentSpeices] = scoreTaxon_paired(matches, speciesBegin, speciesEnd, read1Length, read2Length);
+        speciesScores[currentSpeices] = scoreTaxon(matches, speciesBegin, speciesEnd, read1Length, read2Length);
+        speciesScores[currentSpeices].taxId = currentSpeices;
     }
 
     // Get the best species
-    float bestCovergae = 0.f;
-    for (auto sp = speciesScrCovs.begin(); sp != speciesScrCovs.end(); sp++) {
-        if (sp->second.coverage > bestCovergae) {
+    TaxonScore bestScore;
+    for (auto & sp : speciesScores) {
+        if (sp.second.score > bestScore.score) {
             species.clear();
-            species.push_back(sp->first);
-            bestCovergae = sp->second.coverage;
-            speciesScrCov.coverage = sp->second.coverage;
-            speciesScrCov.score = sp->second.score;
-        } else if (sp->second.coverage == bestCovergae) {
-            species.push_back(sp->first);
+            species.push_back(sp.first);
+            bestScore = sp.second;
+        } else if (sp.second.coverage == bestScore.coverage) {
+            species.push_back(sp.first);
         }
     }
+    return bestScore;
 }
 
-Classifier::ScrCov Classifier::scoreTaxon(const vector<Match> &matches,
-                                          size_t begin,
-                                          size_t end,
-                                          int queryLength) {
+TaxonScore Classifier::scoreTaxon(const vector<Match> &matches,
+                                  size_t begin,
+                                  size_t end,
+                                  int queryLength) {
     // Get the largest hamming distance at each position of query
     int aminoAcidNum = queryLength / 3;
     auto *hammingsAtEachPos = new signed char[aminoAcidNum + 1];
@@ -1501,12 +1523,14 @@ Classifier::ScrCov Classifier::scoreTaxon(const vector<Match> &matches,
 
     // Sum up hamming distances and count the number of position covered by the matches.
     float hammingSum = 0;
+    int hammingDist = 0;
     int coveredPosCnt = 0;
     for (int h = 0; h < aminoAcidNum; h++) {
         if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
             coveredPosCnt++;
         } else if (hammingsAtEachPos[h] != -1) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
-            hammingSum += 1.0f + (0.5f * hammingsAtEachPos[h]);
+            hammingSum += 1.0f + (0.5f * (float) hammingsAtEachPos[h]);
+            hammingDist += hammingsAtEachPos[h];
             coveredPosCnt++;
         }
     }
@@ -1514,12 +1538,18 @@ Classifier::ScrCov Classifier::scoreTaxon(const vector<Match> &matches,
     // Score
     int coveredLength = coveredPosCnt * 3;
     if (coveredLength >= queryLength) coveredLength = queryLength;
-    return {((float) coveredLength - hammingSum) / (float) queryLength, (float) coveredLength / (float) queryLength};
+
+    float score = ((float)coveredLength - hammingSum) / (float) queryLength;
+    float coverage = (float) coveredLength / (float) (queryLength);
+
+    return {0, score, coverage, hammingDist};
 }
 
-Classifier::ScrCov
-Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t end, int queryLength,
-                              int queryLength2) {
+TaxonScore Classifier::scoreTaxon(const vector<Match> &matches,
+                                  size_t begin,
+                                  size_t end,
+                                  int queryLength,
+                                  int queryLength2) {
 
     // Get the largest hamming distance at each position of query
     int aminoAcidNum_total = queryLength / 3 + queryLength2 / 3;
@@ -1555,6 +1585,7 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
 
     // Sum up hamming distances and count the number of position covered by the matches.
     float hammingSum = 0;
+    int hammingDist = 0;
     int coveredPosCnt_read1 = 0;
     int coveredPosCnt_read2 = 0;
     for (int h = 0; h < aminoAcidNum_total; h++) {
@@ -1564,6 +1595,7 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
                 coveredPosCnt_read1++;
             } else if (hammingsAtEachPos[h] != -1) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
                 hammingSum += 1.0f + (0.5f * (float) hammingsAtEachPos[h]);
+                hammingDist += hammingsAtEachPos[h];
                 coveredPosCnt_read1++;
             }
         }
@@ -1573,6 +1605,7 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
                 coveredPosCnt_read2++;
             } else if (hammingsAtEachPos[h] != -1) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
                 hammingSum += 1.0f + (0.5f * (float) hammingsAtEachPos[h]);
+                hammingDist += hammingsAtEachPos[h];
                 coveredPosCnt_read2++;
             }
         }
@@ -1585,8 +1618,10 @@ Classifier::scoreTaxon_paired(const vector<Match> &matches, size_t begin, size_t
     if (coveredLength_read1 >= queryLength) coveredLength_read1 = queryLength;
     if (coveredLength_read2 >= queryLength2) coveredLength_read2 = queryLength2;
 
-    return {((float) (coveredLength_read1 + coveredLength_read2) - hammingSum) / (float) (queryLength + queryLength2),
-            ((float) coveredLength_read1 + coveredLength_read2) / ((float) queryLength + queryLength2)};
+    float score = ((float) (coveredLength_read1 + coveredLength_read2) - hammingSum) / (float) (queryLength + queryLength2);
+    float coverage = (float) (coveredLength_read1 + coveredLength_read2) / (float) (queryLength + queryLength2);
+
+    return {0, score, coverage, hammingDist};
 }
 
 void Classifier::writeReadClassification(Query *queryList, int queryNum, ofstream &readClassificationFile) {
@@ -1595,6 +1630,8 @@ void Classifier::writeReadClassification(Query *queryList, int queryNum, ofstrea
                                << queryList[i].classification << "\t"
                                << queryList[i].queryLength + queryList[i].queryLength2 << "\t"
                                << queryList[i].score << "\t"
+                               << queryList[i].coverage << "\t"
+                               << queryList[i].hammingDist << "\t"
                                << taxonomy->taxonNode(queryList[i].classification)->rank << "\t";
         for (auto it = queryList[i].taxCnt.begin(); it != queryList[i].taxCnt.end(); ++it) {
             readClassificationFile << it->first << ":" << it->second << " ";
