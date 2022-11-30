@@ -28,26 +28,14 @@
 #define BufferSize 16'777'216 //16 * 1024 * 1024
 using namespace std;
 
-struct QueryInfo {
-    int queryId;
-    bool isClassified;
-    string name;
-    int taxId;
+struct TaxonScore {
+    TaxID taxId;
+    float score;
     float coverage;
-    size_t queryLength;
-    unordered_map<TaxID, int> taxCnt;
-
-    QueryInfo(int queryId, bool isClassified, string name, int taxId, float coverage, size_t queryLength)
-            : queryId(queryId), isClassified(isClassified), name(name), taxId(taxId), coverage(coverage),
-              queryLength(queryLength) {}
-
-    QueryInfo() {}
-
-    bool operator==(const int Id) const {
-        if (Id == queryId)
-            return true;
-        return false;
-    }
+    int hammingDist;
+    TaxonScore(TaxID taxId, float score, float coverage, int hammingDist) :
+                taxId(taxId), score(score), coverage(coverage), hammingDist(hammingDist) {}
+    TaxonScore() : taxId(0), score(0.0f), coverage(0.0f), hammingDist(0) {}
 };
 
 class Classifier {
@@ -191,45 +179,47 @@ protected:
                          Query *queryList,
                          const LocalParameters &par);
 
-    int getMatchesOfTheBestGenus(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
-                                        size_t offset, int queryLength, float &bestScore);
+    TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
+                                   size_t offset, int queryLength);
 
-    int getMatchesOfTheBestGenus_paired(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
-                                               size_t offset, int readLength1, int readLength2, float &bestScore);
+    TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end, size_t offset,
+                                   int readLength1, int readLength2);
 
-    void constructMatchCombination(vector<Match> &filteredMatches,
-                                          vector<vector<Match>> &matchesForEachGenus,
-                                          vector<float> &scoreOfEachGenus,
-                                          int queryLength);
+    TaxonScore scoreGenus(vector<Match> &filteredMatches,
+                          vector<vector<Match>> &matchesForEachGenus,
+                          int queryLength);
 
-    void constructMatchCombination_paired(vector<Match> &filteredMatches,
-                                                 vector<vector<Match>> &matchesForEachGenus,
-                                                 vector<float> &scoreOfEachGenus,
-                                                 int readLength1, int readLength2);
+    TaxonScore scoreGenus(vector<Match> &filteredMatches,
+                          vector<vector<Match>> &matchesForEachGenus,
+                          int readLength1,
+                          int readLength2);
+
+    void scoreGenus_ExtensionScore(vector<Match> &filteredMatches,
+                                   vector<vector<Match>> &matchesForEachGenus,
+                                   vector<float> &scoreOfEachGenus,
+                                   int readLength1, int readLength2);
 
     static bool sortMatchesByPos(const Match &a, const Match &b);
 
-    void chooseSpecies(const std::vector<Match> &matches,
+    TaxonScore chooseSpecies(const std::vector<Match> &matches,
                        int queryLength,
-                       ScrCov &speciesScrCov,
                        vector<TaxID> &species);
 
-    void chooseSpecies(const std::vector<Match> &matches,
+    TaxonScore chooseSpecies(const std::vector<Match> &matches,
                        int read1Length,
                        int read2Length,
-                       ScrCov &speciesScrCov,
                        vector<TaxID> &species);
 
-    ScrCov scoreTaxon(const vector<Match> &matches,
-                             size_t begin,
-                             size_t end,
-                             int queryLength);
+    TaxonScore scoreTaxon(const vector<Match> &matches,
+                          size_t begin,
+                          size_t end,
+                          int queryLength);
 
-    ScrCov scoreTaxon_paired(const vector<Match> &matches,
-                             size_t begin,
-                             size_t end,
-                             int queryLength,
-                             int queryLength2);
+    TaxonScore scoreTaxon(const vector<Match> &matches,
+                          size_t begin,
+                          size_t end,
+                          int queryLength,
+                          int queryLength2);
 
     template <typename T>
     static void loadBuffer(FILE * fp, T * buffer, size_t & bufferIdx, size_t size, int cnt = 0){
