@@ -27,7 +27,7 @@ int binning2report(int argc, const char **argv, const Command &command){
                               taxonomy + "/nodes.dmp",
                               taxonomy + "/merged.dmp");
 
-    vector<QueryInfo> binnings;
+    vector<Query> binnings;
     unordered_map<TaxID, unsigned int> taxonCounts;
     // Load old result
     ifstream binnings_file;
@@ -43,8 +43,8 @@ int binning2report(int argc, const char **argv, const Command &command){
             while (getline(lineStream, eachItem, '\t')) {
                 columns.push_back(eachItem);
             }
-
-            binnings.emplace_back(lineCnt, stoi(columns[par.taxidCol]), columns[par.accessionCol], stoi(columns[par.taxidCol]), 0, 0);
+            binnings.emplace_back(lineCnt, stoi(columns[par.taxidCol]), 0, 0, 0,
+                                  0,0, 0, stoi(columns[par.taxidCol]), false, columns[par.accessionCol]);
             taxonCounts[stoi(columns[par.taxidCol])]++;
             lineCnt++;
         }

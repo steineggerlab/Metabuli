@@ -66,18 +66,6 @@ protected:
     vector<TaxID> genusTaxIdList;
     vector<vector<TaxID> *> spORssp;
 
-
-
-
-    struct ScrCov {
-        float score;
-        float coverage;
-
-        ScrCov(float score, float coverage) : score(score), coverage(coverage) {}
-
-        ScrCov() : score(0.f), coverage(0.f) {}
-    };
-
     struct MatchBlock {
         MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) {}
         MatchBlock() : start(0), end(0), id(0) {}
@@ -115,7 +103,6 @@ protected:
     };
 
     int numOfSplit;
-    vector<QueryInfo> queryInfos;
     unordered_map<TaxID, unsigned int> taxCounts;
     uint64_t MARKER;
     int bitsForCodon;
