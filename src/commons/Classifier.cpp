@@ -837,7 +837,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     }
 
     // If there is no proper genus for current query, it is un-classified.
-    if (genusScore.score == 0 || genusScore.score < par.minScore) {
+    if (genusScore.score == 0 || genusScore.coverage < par.minScore) {
         queryList[currentQuery].isClassified = false;
         queryList[currentQuery].classification = 0;
         queryList[currentQuery].score = genusScore.score;
