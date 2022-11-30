@@ -196,7 +196,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     readClassificationFile.open(outDir + "/" + jobId + "_ReadClassification.tsv");
     writeReadClassification(queryList, (int) numOfSeq, readClassificationFile);
     readClassificationFile.close();
-    writeReportFile(outDir + "/" + jobId + "_CompositionReport.tsv", numOfSeq, taxCounts);
+    writeReportFile(outDir + "/" + jobId + "_report.tsv", numOfSeq, taxCounts);
 
     //Below is for developing
 //    ofstream wr;

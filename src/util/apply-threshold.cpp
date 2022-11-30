@@ -41,7 +41,7 @@ int applyThreshold(int argc, const char **argv, const Command &command) {
                               taxonomy + "/nodes.dmp",
                               taxonomy + "/merged.dmp");
 
-    vector<QueryInfo> newResults;
+    vector<Query> newResults;
     unordered_map<TaxID, unsigned int> taxonCounts;
     // Load old result
     ifstream old_result_file;
@@ -59,14 +59,19 @@ int applyThreshold(int argc, const char **argv, const Command &command) {
                 columns.push_back(eachItem);
             }
             if (stof(columns[4]) < par.minScore) {
-                newResults.emplace_back(lineCnt, false, columns[1], 0, 0, stoi(columns[3]));
+                newResults.emplace_back(lineCnt, 0, stof(columns[4]), stof(columns[5]), stoi(columns[6]),
+                                        stoi(columns[3]),0, 0, false, false, columns[1]);
+                //int queryId, int classification, float score, float coverage, int hammingDist, int queryLength,
+                        //          int queryLength2, int kmerCnt, bool isClassified, bool newSpecies, std::string name
                 taxonCounts[0]++;
             } else if (stof(columns[4]) < par.minSpScore && ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(stoi(columns[2]), "species"))->rank == "species") {
                 TaxID parentTaxId = ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(stoi(columns[2]), "species"))->parentTaxId;
-                newResults.emplace_back(lineCnt, true, columns[1], parentTaxId, stof(columns[4]), stoi(columns[3]));
+                newResults.emplace_back(lineCnt, parentTaxId, stof(columns[4]), stof(columns[5]), stoi(columns[6]),
+                                        stoi(columns[3]),0, 0, true, false, columns[1]);
                 taxonCounts[parentTaxId]++;
             } else {
-                newResults.emplace_back(lineCnt, stoi(columns[0]), columns[1], stof(columns[2]), stof(columns[4]), stoi(columns[3]));
+                newResults.emplace_back(lineCnt, stoi(columns[2]), stof(columns[4]), stof(columns[5]), stoi(columns[6]),
+                                        stoi(columns[3]),0, 0, stoi(columns[0]), false, columns[1]);
                 taxonCounts[stoi(columns[2])]++;
             }
             lineCnt++;
@@ -81,7 +86,9 @@ int applyThreshold(int argc, const char **argv, const Command &command) {
     new_result_file.open(outDir + "/" + jobid + "_ReadClassification.tsv");
     if (new_result_file.is_open()) {
         for (auto &result : newResults) {
-            new_result_file << result.isClassified << "\t" << result.name << "\t" << result.taxId << "\t" << result.queryLength << "\t" << result.coverage << "\t" << ncbiTaxonomy.taxonNode(result.taxId)->rank << "\n";
+            new_result_file << result.isClassified << "\t" << result.name << "\t" << result.classification << "\t"
+            << result.queryLength << "\t" << result.score << "\t" << result.coverage << "\t" << result.hammingDist <<
+            "\t" << ncbiTaxonomy.taxonNode(result.classification)->rank << endl;
         }
     } else {
         cerr << "Cannot open file for new result" << endl;
