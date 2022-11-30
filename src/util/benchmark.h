@@ -74,6 +74,11 @@ struct CountAtRank {
     float precision;
     float sensitivity;
     float f1;
+    void calculate() {
+        precision = (float)TP / (float)(TP + FP);
+        sensitivity = (float)TP / (float)(TP + FN);
+        f1 = 2 * precision * sensitivity / (precision + sensitivity);
+    }
 };
 
 void compareTaxon(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, Counts & counts,
