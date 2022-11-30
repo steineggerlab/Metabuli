@@ -180,6 +180,7 @@ LocalParameters::LocalParameters() :
 
     // grade
     grade.push_back(&TEST_RANK);
+    grade.push_back(&TEST_TYPE);
     grade.push_back(&PARAM_THREADS);
     grade.push_back(&ACCESSION_COL);
     grade.push_back(&TAXID_COL);
