@@ -76,7 +76,7 @@ struct CountAtRank {
     float f1;
     void calculate() {
         precision = (float)TP / (float)(TP + FP);
-        sensitivity = (float)TP / (float)(TP + FN);
+        sensitivity = (float)TP / (float)(total);
         f1 = 2 * precision * sensitivity / (precision + sensitivity);
     }
 };
