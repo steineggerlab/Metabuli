@@ -94,7 +94,8 @@ int grade(int argc, const char **argv, const Command &command) {
     omp_set_num_threads(par.threads);
 #endif
 
-#pragma omp parallel default(none), shared(results, ranks, numberOfFiles, mappingFileNames, readClassificationFileNames, ncbiTaxonomy, par, cout)
+#pragma omp parallel default(none), shared(results, ranks, numberOfFiles, mappingFileNames, readClassificationFileNames,\
+ncbiTaxonomy, par, cout, rank2TpIdx, rank2FpIdx, rank2FnIdx)
     {
         // Grade each file
         unordered_map<string, int> assacc2taxid;
