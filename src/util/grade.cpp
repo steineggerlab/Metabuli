@@ -4,8 +4,6 @@
 #include "IndexCreator.h"
 
 #include <string>
-#include <sstream>
-#include <fstream>
 #include <iostream>
 #include <regex>
 #include "benchmark.h"
@@ -15,14 +13,7 @@ using namespace std;
 struct GradeResult{
     unordered_map<string, CountAtRank> countsAtRanks;
     string path;
-    CountAtRank species;
-    CountAtRank genus;
-    CountAtRank family;
-    CountAtRank order;
-    CountAtRank class_;
 };
-
-int grade_cami(const LocalParameters & par, vector<string> & ranks);
 
 char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
                              const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
@@ -34,7 +25,7 @@ void setGradeDefault(LocalParameters & par){
     par.scoreCol = 0;
     par.testRank = "";
 }
-
+// TODO score distribution
 int grade(int argc, const char **argv, const Command &command) {
 
     LocalParameters &par = LocalParameters::getLocalInstance();
@@ -83,6 +74,18 @@ int grade(int argc, const char **argv, const Command &command) {
         cerr << "Cannot open file for read classification file list" << endl;
     }
 
+    // Print scores of TP and FP
+    unordered_map<string, vector<size_t>> rank2TpIdx;
+    unordered_map<string, vector<size_t>> rank2FpIdx;
+    unordered_map<string, vector<size_t>> rank2FnIdx;
+    if (par.scoreCol != 0){
+        for (const auto & rank : ranks) {
+            rank2TpIdx[rank] = vector<size_t>();
+            rank2FpIdx[rank] = vector<size_t>();
+            rank2FnIdx[rank] = vector<size_t>();
+        }
+    }
+
     size_t numberOfFiles = mappingFileNames.size();
     vector<GradeResult> results;
     results.resize(numberOfFiles);
@@ -98,6 +101,7 @@ int grade(int argc, const char **argv, const Command &command) {
         vector<int> rightAnswers;
         vector<int> classList;
         vector<string> readIds;
+        vector<float> scores;
         string mappingFile;
         string readClassificationFileName;
 #pragma omp for schedule(dynamic)
@@ -107,6 +111,7 @@ int grade(int argc, const char **argv, const Command &command) {
             rightAnswers.clear();
             classList.clear();
             readIds.clear();
+            scores.clear();
             mappingFile = mappingFileNames[i];
             readClassificationFileName = readClassificationFileNames[i];
 
@@ -127,24 +132,21 @@ int grade(int argc, const char **argv, const Command &command) {
             map.close();
 
             // Load classification results
-            string classString;
+            string resultLine;
             ifstream readClassification;
             readClassification.open(readClassificationFileName);
             vector<string> fields;
             string field;
             int classInt;
-            vector<float> scores;
+
             vector<Score2> tpOrFp;
             regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
             smatch assacc;
             size_t numberOfClassifications = 0;
-            vector<string> readIds;
-            while (getline(readClassification, classString, '\n')) {
-                istringstream lineStream(classString);
-                fields.clear();
-                while (getline(lineStream, field, '\t')) {
-                    fields.push_back(field);
-                }
+            while (getline(readClassification, resultLine, '\n')) {
+                // Parse classification result
+                fields = Util::split(resultLine, "\t");
+
                 // Read ID -> right answer
                 string id = fields[par.accessionCol];
                 if (par.testType == "gtdb") {
@@ -167,6 +169,12 @@ int grade(int argc, const char **argv, const Command &command) {
                 if (classInt != 0) {
                     numberOfClassifications++;
                 }
+
+                // Read score
+                if (par.scoreCol != 0) {
+                    float score = stof(fields[par.scoreCol]);
+                    scores.push_back(score);
+                }
             }
             readClassification.close();
 
@@ -179,25 +187,56 @@ int grade(int argc, const char **argv, const Command &command) {
 
             // Score the classification
             for (size_t j = 0; j < classList.size(); j++) {
-                if (par.verbosity == 3) {
-                    cout << readIds[j] << " " << classList[j] << " " << rightAnswers[j];
-                }
+                if (par.verbosity == 3) cout << readIds[j] << " " << classList[j] << " " << rightAnswers[j];
                 for (const string &rank: ranks) {
                     char p = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy,
                                                      results[i].countsAtRanks[rank], rank, par);
-                    if (par.verbosity == 3) {
-                        cout << " " << p;
+                    if (par.scoreCol != 0) {
+                        if (p == 'O') rank2TpIdx[rank].push_back(j);
+                        else if (p == 'X') rank2FpIdx[rank].push_back(j);
+                        else if (p == 'N') rank2FnIdx[rank].push_back(j);
                     }
+                    if (par.verbosity == 3) cout << " " << p;
                 }
-                if (par.verbosity == 3) {
-                    cout << endl;
-                }
+                if (par.verbosity == 3) cout << endl;
             }
 
             // Calculate the scores
             for (const string &rank: ranks) {
                 results[i].countsAtRanks[rank].calculate();
             }
+
+            // Write the scores of TP, FP, and FN
+            if (par.scoreCol != 0) {
+                for (const string & rank : ranks) {
+                    // TP
+                    ofstream tpFile;
+                    tpFile.open(readClassificationFileName + "." + rank + ".tp");
+                    for (const auto & idx : rank2TpIdx[rank]) {
+                        tpFile << idx << "\t" << scores[idx] << endl;
+                    }
+                    tpFile.close();
+
+                    // FP
+                    ofstream fpFile;
+                    fpFile.open(readClassificationFileName + "." + rank + ".fp");
+                    for (const auto & idx : rank2FpIdx[rank]) {
+                        fpFile << idx << "\t" << scores[idx] << endl;
+                    }
+                    fpFile.close();
+
+                    // FN
+                    ofstream fnFile;
+                    fnFile.open(readClassificationFileName + "." + rank + ".fn");
+                    for (const auto & idx : rank2FnIdx[rank]) {
+                        fnFile << idx << "\t" << scores[idx] << endl;
+                    }
+                    fnFile.close();
+                }
+            }
+
+
+            // Print Grade Result of each file
             cout << readClassificationFileName << endl;
             cout << "The number of reads: " << rightAnswers.size() << endl;
             cout << "The number of reads classified: " << numberOfClassifications << endl;
@@ -210,229 +249,21 @@ int grade(int argc, const char **argv, const Command &command) {
             }
             cout << endl;
         }
-        cout << "Rank\t";
-        for (size_t i = 0; i < results.size(); i++) {
-            cout << "Precision\tSensitivity\tF1\t";
-        }
-        cout << endl;
-        for (const string &rank: ranks) {
-            cout << rank << "\t";
-            for (size_t i = 0; i < results.size(); i++) {
-                cout << results[i].countsAtRanks[rank].precision << "\t" << results[i].countsAtRanks[rank].sensitivity
-                     << "\t" << results[i].countsAtRanks[rank].f1 << "\t";
-            }
-            cout << endl;
-        }
-    }
-    return 0;
-}
-
-int grade_cami(const LocalParameters & par, vector<string> & ranks){
-
-    const string readClassificationFileList = par.filenames[0];
-    const string mappingFileList = par.filenames[1];
-    const string taxonomy = par.filenames[2];
-
-    string names = taxonomy + "/names.dmp";
-    string nodes =  taxonomy + "/nodes.dmp";
-    string merged =  taxonomy + "/merged.dmp";
-    NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
-
-    // Load mapping file names
-    ifstream mappingFileListFile;
-    mappingFileListFile.open(mappingFileList);
-    string eachLine;
-    vector<string> mappingFileNames;
-    if (mappingFileListFile.is_open()) {
-        while (getline(mappingFileListFile, eachLine)) {
-            mappingFileNames.push_back(eachLine);
-        }
-    } else {
-        cerr << "Cannot open file for mapping file list" << endl;
-    }
-    mappingFileListFile.close();
-
-    // Load classification file names
-    ifstream readClassificationFileListFile;
-    readClassificationFileListFile.open(readClassificationFileList);
-    vector<string> readClassificationFileNames;
-    if (readClassificationFileListFile.is_open()) {
-        while (getline(readClassificationFileListFile, eachLine)) {
-            readClassificationFileNames.push_back(eachLine);
-        }
-    } else {
-        cerr << "Cannot open file for read classification file list" << endl;
-    }
-    readClassificationFileListFile.close();
-
-
-    size_t numberOfFiles = mappingFileNames.size();
-    // Container for storing grading results
-    vector<GradeResult> results;
-    results.resize(numberOfFiles);
-
-#ifdef OPENMP
-    omp_set_num_threads(par.threads);
-#endif
-
-#pragma omp parallel default(none), shared(results, ranks, numberOfFiles, mappingFileNames, readClassificationFileNames, ncbiTaxonomy, par, cout)
-    {
-        // Grade each file
-        unordered_map<string, int> assacc2taxid;
-        vector<int> rightAnswers;
-        vector<int> classList;
-        vector<string> readIds;
-        string mappingFile;
-        string readClassificationFileName;
-#pragma omp for schedule(dynamic)
-        for (size_t i = 0; i < numberOfFiles; ++i) {
-            // Initialize
-            assacc2taxid.clear();
-            rightAnswers.clear();
-            classList.clear();
-            readIds.clear();
-            mappingFile = mappingFileNames[i];
-            readClassificationFileName = readClassificationFileNames[i];
-
-            // Load the mapping file (answer sheet) (accession to taxID)
-            string key, value;
-            ifstream map;
-            map.open(mappingFile);
-            size_t numberOfAnswers = 0;
-            if (map.is_open()) {
-                while (getline(map, key, '\t')) {
-                    getline(map, value, '\n');
-                    assacc2taxid[key] = stoi(value);
-                    numberOfAnswers++;
-                }
-            } else {
-                cout << "Cannot open file for mappig from assemlby accession to tax ID" << endl;
-            }
-            map.close();
-
-            // Load classification results
-            string classString;
-            ifstream readClassification;
-            readClassification.open(readClassificationFileName);
-            vector<string> fields;
-            string field;
-            int classInt;
-            vector<float> scores;
-            vector<Score2> tpOrFp;
-            regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
-            smatch assacc;
-            size_t numberOfClassifications = 0;
-            while (getline(readClassification, classString, '\n')) {
-                istringstream lineStream(classString);
-                fields.clear();
-                while (getline(lineStream, field, '\t')) {
-                    fields.push_back(field);
-                }
-                // Read ID -> right answer
-                string id = fields[par.accessionCol];
-                id = id.substr(0, id.find('/'));
-                TaxID rightAnswer = assacc2taxid[id];
-//                string rightAnswerRank = ncbiTaxonomy.taxonNode(rightAnswer)->rank;
-                rightAnswers.push_back(rightAnswer);
-                readIds.push_back(id);
-
-                // Read classification
-                classInt = stoi(fields[par.taxidCol]);
-                classList.push_back(classInt);
-                if (classInt != 0) {
-                    numberOfClassifications++;
-                }
-            }
-            readClassification.close();
-            // Print ID and classification
-//            if (par.testType == "cami") {
-//                for (size_t idx = 0; idx < readIds.size(); ++idx) {
-//                    cout << readIds[idx] << "\t" << classList[idx] << "\t" << rightAnswers[idx] << "\t"
-//                         << ncbiTaxonomy.taxonNode(classList[idx])->rank << "\t"
-//                         << ncbiTaxonomy.taxonNode(rightAnswers[idx])->rank << endl;
-//                }
-//            }
-
-            // Score the classification
-            for (size_t j = 0; j < classList.size(); j++) {
-                if (par.verbosity == 3) {
-                    cout << readIds[j] << " " << classList[j] << " " << rightAnswers[j];
-                }
-                for (const string& rank : ranks){
-                    char p = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy, results[i].countsAtRanks[rank], rank, par);
-                    if (par.verbosity == 3) {
-                        cout << " " << p;
-                    }
-                }
-                if (par.verbosity == 3) {
-                    cout << endl;
-                }
-            }
-
-            // Calculate the scores
-            for (const string& rank : ranks){
-                results[i].countsAtRanks[rank].calculate();
-            }
-
-
-            cout << readClassificationFileName << endl;
-            cout << "The number of reads: " << rightAnswers.size() << endl;
-            cout << "The number of reads classified: " << numberOfClassifications << endl;
-            for (const string& rank : ranks){
-                cout << rank << " " << results[i].countsAtRanks[rank].total << " " << results[i].countsAtRanks[rank].TP + results[i].countsAtRanks[rank].FP << " "
-                     << results[i].countsAtRanks[rank].TP << " " << results[i].countsAtRanks[rank].FP << " " << results[i].countsAtRanks[rank].precision << " "
-                     << results[i].countsAtRanks[rank].sensitivity << " " << results[i].countsAtRanks[rank].f1 << endl;
-            }
-            cout << endl;
-        }
     }
 
     cout << "Rank\t";
-    for(size_t i = 0; i < results.size(); i++){
+    for (size_t i = 0; i < results.size(); i++) {
         cout << "Precision\tSensitivity\tF1\t";
     }
     cout << endl;
-    for (const string& rank : ranks){
+    for (const string &rank: ranks) {
         cout << rank << "\t";
-        for(size_t i = 0; i < results.size(); i++){
-            cout << results[i].countsAtRanks[rank].precision << "\t" << results[i].countsAtRanks[rank].sensitivity << "\t" << results[i].countsAtRanks[rank].f1 << "\t";
+        for (auto & result : results) {
+            cout << result.countsAtRanks[rank].precision << "\t" << result.countsAtRanks[rank].sensitivity
+                 << "\t" << result.countsAtRanks[rank].f1 << "\t";
         }
         cout << endl;
     }
-
-//    // Print Class
-//    cout<< "Class\t";
-//    for(size_t i = 0; i < results.size(); i++){
-//        cout << results[i].class_.precision << "\t" << results[i].class_.sensitivity << "\t" << results[i].class_.f1 << "\t";
-//    }
-//    cout << endl;
-//
-//    // Print Order
-//    cout<< "Order\t";
-//    for(size_t i = 0; i < results.size(); i++){
-//        cout << results[i].order.precision << "\t" << results[i].order.sensitivity << "\t" << results[i].order.f1 << "\t";
-//    }
-//    cout << endl;
-//
-//    // Print Family
-//    cout<< "Family\t";
-//    for(size_t i = 0; i < results.size(); i++){
-//        cout << results[i].family.precision << "\t" << results[i].family.sensitivity << "\t" << results[i].family.f1 << "\t";
-//    }
-//    cout << endl;
-//
-//    // Print Genus
-//    cout<< "Genus\t";
-//    for(size_t i = 0; i < results.size(); i++){
-//        cout << results[i].genus.precision << "\t" << results[i].genus.sensitivity << "\t" << results[i].genus.f1 << "\t";
-//    }
-//    cout << endl;
-//
-//    // Print Species
-//    cout<< "Species\t";
-//    for(size_t i = 0; i < results.size(); i++){
-//        cout << results[i].species.precision << "\t" << results[i].species.sensitivity << "\t" << results[i].species.f1 << "\t";
-//    }
     return 0;
 }
 
