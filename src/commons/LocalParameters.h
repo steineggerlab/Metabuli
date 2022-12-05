@@ -53,10 +53,11 @@ public:
     // Test parameters
     PARAMETER(TEST_RANK)
     PARAMETER(TEST_TYPE)
-    PARAMETER(ACCESSION_COL)
+    PARAMETER(READID_COL)
     PARAMETER(TAXID_COL)
     PARAMETER(SCORE_COL)
     PARAMETER(COVERAGE_COL)
+    PARAMETER(PRINT_COLUMNS)
 
     // Superkingdom taxonomy id
     int virusTaxId;
@@ -83,7 +84,8 @@ public:
     // Test parameters
     std::string testRank;
     std::string testType;
-    int accessionCol;
+    std::string printColumns;
+    int readIdCol;
     int taxidCol;
     int scoreCol;
     int coverageCol;

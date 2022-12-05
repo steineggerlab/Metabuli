@@ -133,12 +133,12 @@ LocalParameters::LocalParameters() :
                       typeid(std::string),
                       (void *) &taxonomyPath,
                       ""),
-        ACCESSION_COL(ACCESSION_COL_ID,
+        READID_COL(READID_COL_ID,
                       "--accession-col",
                       "Column number of accession in classification result",
                       "Column number of accession in classification result",
                       typeid(int),
-                      (void *) &accessionCol,
+                      (void *) &readIdCol,
                       ""),
         TAXID_COL(TAXID_COL_ID,
                   "--taxid-col",
@@ -153,7 +153,21 @@ LocalParameters::LocalParameters() :
                   "Column number of score in classification result",
                   typeid(int),
                   (void *) &scoreCol,
-                  "") {
+                  ""),
+                  COVERAGE_COL(COVERAGE_COL_ID,
+                     "--coverage-col",
+                     "Column number of coverage in classification result",
+                     "Column number of coverage in classification result",
+                     typeid(int),
+                     (void *) &coverageCol,
+                     ""),
+        PRINT_COLUMNS(PRINT_COLUMNS_ID,
+                      "--print-columns",
+                      "CSV of column numbers to be printed",
+                      "CSV of column numbers to be printed",
+                      typeid(std::string),
+                      (void *) &printColumns,
+                      ""){
     //add_to_library
 
     // build
@@ -191,10 +205,12 @@ LocalParameters::LocalParameters() :
     grade.push_back(&TEST_RANK);
     grade.push_back(&TEST_TYPE);
     grade.push_back(&PARAM_THREADS);
-    grade.push_back(&ACCESSION_COL);
+    grade.push_back(&READID_COL);
     grade.push_back(&TAXID_COL);
     grade.push_back(&PARAM_V);
     grade.push_back(&SCORE_COL);
+    grade.push_back(&COVERAGE_COL);
+    grade.push_back(&PRINT_COLUMNS);
 
     // Apply thresholds
     grade.push_back(&SCORE_COL);
@@ -205,6 +221,6 @@ LocalParameters::LocalParameters() :
 
 
     // Binning to report
-    binning2report.push_back(&ACCESSION_COL);
+    binning2report.push_back(&READID_COL);
     binning2report.push_back(&TAXID_COL);
 }
