@@ -213,8 +213,6 @@ LocalParameters::LocalParameters() :
     grade.push_back(&PRINT_COLUMNS);
 
     // Apply thresholds
-    grade.push_back(&SCORE_COL);
-    grade.push_back(&COVERAGE_COL);
     applyThreshold.push_back(&MIN_SP_SCORE);
     applyThreshold.push_back(&MIN_SCORE);
     applyThreshold.push_back(&MIN_COVERAGE);
