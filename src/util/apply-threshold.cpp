@@ -1,11 +1,8 @@
 #include "IndexCreator.h"
-#include <sstream>
-#include <fstream>
 #include <iostream>
 #include <istream>
 #include <string>
 #include <vector>
-#include "Classifier.h"
 #include "report.h"
 
 using namespace std;
@@ -25,6 +22,9 @@ using namespace std;
 void setDefaults_applyThreshold(LocalParameters & par){
     par.minScore = 0;
     par.minSpScore = 0;
+    par.minCoverage = 0;
+    par.coverageCol = 5;
+    par.scoreCol = 4;
 }
 
 int applyThreshold(int argc, const char **argv, const Command &command) {
@@ -58,13 +58,16 @@ int applyThreshold(int argc, const char **argv, const Command &command) {
             while (getline(lineStream, eachItem, '\t')) {
                 columns.push_back(eachItem);
             }
-            if (stof(columns[4]) < par.minScore) {
-                newResults.emplace_back(lineCnt, 0, stof(columns[4]), stof(columns[5]), stoi(columns[6]),
+            // Low coverage or low score
+            if (stof(columns[par.coverageCol]) < par.minCoverage || stof(columns[par.scoreCol]) < par.minScore) {
+                newResults.emplace_back(lineCnt, 0, stof(columns[par.scoreCol]), stof(columns[par.coverageCol]), stoi(columns[6]),
                                         stoi(columns[3]),0, 0, false, false, columns[1]);
                 //int queryId, int classification, float score, float coverage, int hammingDist, int queryLength,
                         //          int queryLength2, int kmerCnt, bool isClassified, bool newSpecies, std::string name
                 taxonCounts[0]++;
-            } else if (stof(columns[4]) < par.minSpScore && ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(stoi(columns[2]), "species"))->rank == "species") {
+            }
+            // Not enough to be classified as species
+            else if (stof(columns[par.scoreCol]) < par.minSpScore && ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(stoi(columns[2]), "species"))->rank == "species") {
                 TaxID parentTaxId = ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(stoi(columns[2]), "species"))->parentTaxId;
                 newResults.emplace_back(lineCnt, parentTaxId, stof(columns[4]), stof(columns[5]), stoi(columns[6]),
                                         stoi(columns[3]),0, 0, true, false, columns[1]);

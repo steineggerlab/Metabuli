@@ -39,6 +39,7 @@ public:
     PARAMETER(MEMORY_MODE)
     PARAMETER(REDUCED_AA)
     PARAMETER(MIN_SCORE)
+    PARAMETER(MIN_COVERAGE)
     PARAMETER(SPACED)
     PARAMETER(MIN_CONSECUTIVE)
     PARAMETER(HAMMING_MARGIN)
@@ -55,6 +56,7 @@ public:
     PARAMETER(ACCESSION_COL)
     PARAMETER(TAXID_COL)
     PARAMETER(SCORE_COL)
+    PARAMETER(COVERAGE_COL)
 
     // Superkingdom taxonomy id
     int virusTaxId;
@@ -71,6 +73,7 @@ public:
     int minConsCnt;
     uint8_t hammingMargin;
     float minSpScore;
+    float minCoverage;
 
     // Database creation
     std::string tinfoPath;
@@ -83,6 +86,7 @@ public:
     int accessionCol;
     int taxidCol;
     int scoreCol;
+    int coverageCol;
 
 private:
     LocalParameters();

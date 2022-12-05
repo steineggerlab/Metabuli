@@ -59,6 +59,13 @@ LocalParameters::LocalParameters() :
                   typeid(float),
                   (void *) &minScore,
                   "^0(\\.[0-9]+)?|1(\\.0+)?$"),
+        MIN_COVERAGE(MIN_COVERAGE_ID,
+                     "--min-cov",
+                     "The minimum coverage for classification",
+                     "You can set a value from 0.0 to 1.0",
+                     typeid(float),
+                     (void *) &minCoverage,
+                     "^0(\\.[0-9]+)?|1(\\.0+)?$"),
         SPACED(SPACED_ID,
                "--spacing-mask",
                "Binary patterned mask for spaced k-mer.\nThe same mask must be used for DB creation and classification",
@@ -169,11 +176,13 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MEMORY_MODE);
     classify.push_back(&REDUCED_AA);
     classify.push_back(&MIN_SCORE);
+    classify.push_back(&MIN_COVERAGE);
     classify.push_back(&SPACED);
     classify.push_back(&MIN_CONSECUTIVE);
     classify.push_back(&HAMMING_MARGIN);
     classify.push_back(&MIN_SP_SCORE);
     classify.push_back(&PARAM_V);
+
 
     //updateTargetDB
     exclusiontest_hiv.push_back(&TEST_RANK);
@@ -188,8 +197,12 @@ LocalParameters::LocalParameters() :
     grade.push_back(&SCORE_COL);
 
     // Apply thresholds
+    grade.push_back(&SCORE_COL);
+    grade.push_back(&COVERAGE_COL);
     applyThreshold.push_back(&MIN_SP_SCORE);
     applyThreshold.push_back(&MIN_SCORE);
+    applyThreshold.push_back(&MIN_COVERAGE);
+
 
     // Binning to report
     binning2report.push_back(&ACCESSION_COL);

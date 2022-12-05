@@ -9,11 +9,12 @@ void setClassifyDefaults(LocalParameters & par){
     par.seqMode = 2;
     par.memoryMode = 1;
     par.reducedAA = 0;
-    par.minScore = 0.1;
+    par.minScore = 0;
+    par.minCoverage = 0.15;
+    par.minSpScore = 0.5;
     par.spaceMask = "11111111";
     par.minConsCnt = 4;
     par.hammingMargin = 0;
-    par.minSpScore = 0.5;
     par.verbosity = 1;
 }
 
