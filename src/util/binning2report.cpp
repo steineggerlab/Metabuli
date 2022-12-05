@@ -9,7 +9,7 @@
 using namespace std;
 
 void setBinning2ReportDefault(LocalParameters & par){
-    par.accessionCol = 1;
+    par.readIdCol = 1;
     par.taxidCol = 2;
 }
 
@@ -44,7 +44,7 @@ int binning2report(int argc, const char **argv, const Command &command){
                 columns.push_back(eachItem);
             }
             binnings.emplace_back(lineCnt, stoi(columns[par.taxidCol]), 0, 0, 0,
-                                  0,0, 0, stoi(columns[par.taxidCol]), false, columns[par.accessionCol]);
+                                  0,0, 0, stoi(columns[par.taxidCol]), false, columns[par.readIdCol]);
             taxonCounts[stoi(columns[par.taxidCol])]++;
             lineCnt++;
         }
