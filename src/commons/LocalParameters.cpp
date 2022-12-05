@@ -59,6 +59,13 @@ LocalParameters::LocalParameters() :
                   typeid(float),
                   (void *) &minScore,
                   "^0(\\.[0-9]+)?|1(\\.0+)?$"),
+        MIN_COVERAGE(MIN_COVERAGE_ID,
+                     "--min-cov",
+                     "The minimum coverage for classification",
+                     "You can set a value from 0.0 to 1.0",
+                     typeid(float),
+                     (void *) &minCoverage,
+                     "^0(\\.[0-9]+)?|1(\\.0+)?$"),
         SPACED(SPACED_ID,
                "--spacing-mask",
                "Binary patterned mask for spaced k-mer.\nThe same mask must be used for DB creation and classification",
@@ -126,12 +133,12 @@ LocalParameters::LocalParameters() :
                       typeid(std::string),
                       (void *) &taxonomyPath,
                       ""),
-        ACCESSION_COL(ACCESSION_COL_ID,
+        READID_COL(READID_COL_ID,
                       "--accession-col",
                       "Column number of accession in classification result",
                       "Column number of accession in classification result",
                       typeid(int),
-                      (void *) &accessionCol,
+                      (void *) &readIdCol,
                       ""),
         TAXID_COL(TAXID_COL_ID,
                   "--taxid-col",
@@ -146,7 +153,21 @@ LocalParameters::LocalParameters() :
                   "Column number of score in classification result",
                   typeid(int),
                   (void *) &scoreCol,
-                  "") {
+                  ""),
+                  COVERAGE_COL(COVERAGE_COL_ID,
+                     "--coverage-col",
+                     "Column number of coverage in classification result",
+                     "Column number of coverage in classification result",
+                     typeid(int),
+                     (void *) &coverageCol,
+                     ""),
+        PRINT_COLUMNS(PRINT_COLUMNS_ID,
+                      "--print-columns",
+                      "CSV of column numbers to be printed",
+                      "CSV of column numbers to be printed",
+                      typeid(std::string),
+                      (void *) &printColumns,
+                      ""){
     //add_to_library
 
     // build
@@ -169,11 +190,13 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MEMORY_MODE);
     classify.push_back(&REDUCED_AA);
     classify.push_back(&MIN_SCORE);
+    classify.push_back(&MIN_COVERAGE);
     classify.push_back(&SPACED);
     classify.push_back(&MIN_CONSECUTIVE);
     classify.push_back(&HAMMING_MARGIN);
     classify.push_back(&MIN_SP_SCORE);
     classify.push_back(&PARAM_V);
+
 
     //updateTargetDB
     exclusiontest_hiv.push_back(&TEST_RANK);
@@ -182,16 +205,22 @@ LocalParameters::LocalParameters() :
     grade.push_back(&TEST_RANK);
     grade.push_back(&TEST_TYPE);
     grade.push_back(&PARAM_THREADS);
-    grade.push_back(&ACCESSION_COL);
+    grade.push_back(&READID_COL);
     grade.push_back(&TAXID_COL);
     grade.push_back(&PARAM_V);
     grade.push_back(&SCORE_COL);
+    grade.push_back(&COVERAGE_COL);
+    grade.push_back(&PRINT_COLUMNS);
 
     // Apply thresholds
+    grade.push_back(&SCORE_COL);
+    grade.push_back(&COVERAGE_COL);
     applyThreshold.push_back(&MIN_SP_SCORE);
     applyThreshold.push_back(&MIN_SCORE);
+    applyThreshold.push_back(&MIN_COVERAGE);
+
 
     // Binning to report
-    binning2report.push_back(&ACCESSION_COL);
+    binning2report.push_back(&READID_COL);
     binning2report.push_back(&TAXID_COL);
 }

@@ -19,7 +19,7 @@ char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
                              const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
 
 void setGradeDefault(LocalParameters & par){
-    par.accessionCol = 1;
+    par.readIdCol = 1;
     par.taxidCol = 2;
     par.verbosity = 2;
     par.scoreCol = 0;
@@ -149,7 +149,7 @@ ncbiTaxonomy, par, cout, rank2TpIdx, rank2FpIdx, rank2FnIdx)
                 fields = Util::split(resultLine, "\t");
 
                 // Read ID -> right answer
-                string id = fields[par.accessionCol];
+                string id = fields[par.readIdCol];
                 if (par.testType == "gtdb") {
                     regex_search(fields[1], assacc, regex1);
                     rightAnswers.push_back(assacc2taxid[assacc[0]]);
@@ -214,7 +214,7 @@ ncbiTaxonomy, par, cout, rank2TpIdx, rank2FpIdx, rank2FnIdx)
                     ofstream tpFile;
                     tpFile.open(readClassificationFileName + "." + rank + ".tp");
                     for (const auto & idx : rank2TpIdx[rank]) {
-                        tpFile << idx << "\t" << scores[idx] << endl;
+                        tpFile << idx << "\t" << readIds[idx] << "\t" << scores[idx] << endl;
                     }
                     tpFile.close();
 
@@ -222,7 +222,7 @@ ncbiTaxonomy, par, cout, rank2TpIdx, rank2FpIdx, rank2FnIdx)
                     ofstream fpFile;
                     fpFile.open(readClassificationFileName + "." + rank + ".fp");
                     for (const auto & idx : rank2FpIdx[rank]) {
-                        fpFile << idx << "\t" << scores[idx] << endl;
+                        fpFile << idx << "\t" << readIds[idx] << "\t" << scores[idx] << endl;
                     }
                     fpFile.close();
 
@@ -230,7 +230,7 @@ ncbiTaxonomy, par, cout, rank2TpIdx, rank2FpIdx, rank2FnIdx)
                     ofstream fnFile;
                     fnFile.open(readClassificationFileName + "." + rank + ".fn");
                     for (const auto & idx : rank2FnIdx[rank]) {
-                        fnFile << idx << "\t" << scores[idx] << endl;
+                        fnFile << idx << "\t" << readIds[idx] << "\t" << scores[idx] << endl;
                     }
                     fnFile.close();
                 }
