@@ -178,11 +178,6 @@ LocalParameters::LocalParameters() :
     build.push_back(&TAXONOMY_PATH);
     build.push_back(&TINFO_PATH);
 
-    //build_dir
-    build_dir.push_back(&PARAM_THREADS);
-    build_dir.push_back(&REDUCED_AA);
-    build_dir.push_back(&SPACED);
-
     //classify
     classify.push_back(&PARAM_THREADS);
     classify.push_back(&SEQ_MODE);
