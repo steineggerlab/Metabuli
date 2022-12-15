@@ -13,15 +13,7 @@ bool hide_base_commands = true;
 
 LocalParameters& localPar = LocalParameters::getLocalInstance();
 std::vector<Command> commands = {
-        {"build_dir", build_dir, &localPar.build_dir, COMMAND_MAIN,
-         "Building DB from multiple assemblies in input directory.",
-         NULL,
-         "Jaebeom Kim <jbeom0731@gmail.com>",
-         "<i:directory of FASTA files> <o:DB directory>",
-         CITATION_SPACEPHARER,
-         {{"lowest directory including FASTA files", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::directory},
-          {"Directory where the DB will be generated", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty}}},
-        {"build", build, &localPar.build, COMMAND_MAIN,
+       {"build", build, &localPar.build, COMMAND_MAIN,
                 "Building DB from a single FASTA file. ",
                 NULL,
                 "Jaebeom Kim <jbeom0731@gmail.com>",
