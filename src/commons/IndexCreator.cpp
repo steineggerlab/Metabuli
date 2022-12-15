@@ -175,11 +175,6 @@ void IndexCreator::makeBlocksForParallelProcessing(){
             cout << fastaList[i].sequences[j].start << " " << fastaList[i].sequences[j].end << " " << fastaList[i].sequences[j].length << endl;
         }
     }
-
-//    // Print elements of fnaSplits
-//    for(size_t i = 0; i < fnaSplits.size(); ++i){
-//        cout << fnaSplits[i].file_idx << " " << fnaSplits[i].speciesID << " " << fnaSplits[i].training << " " << fnaSplits[i].offset << " " << fnaSplits[i].cnt << endl;
-//    }
 }
 
 void IndexCreator::splitFasta(int fnaIdx, TaxID speciesTaxid) {
@@ -883,10 +878,12 @@ string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, cons
     size_t seqCnt = taxIdList.size();
     if (seqFile.is_open()) {
         getline(seqFile, firstLine, '\n');
+        cout << firstLine << endl;
         taxIdList.push_back(acc2taxid.at(firstLine.substr(1, firstLine.find('.') - 1)));
         foundAcc2taxid[firstLine.substr(1, firstLine.find(' ') - 1)] = taxIdList.back();
         while (getline(seqFile, eachLine, '\n')) {
             if (eachLine[0] == '>') {
+                cout << eachLine << endl;
                 taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find('.') - 1)));
                 foundAcc2taxid[eachLine.substr(1, eachLine.find(' ') - 1)] = taxIdList.back();
                 pos = (size_t) seqFile.tellg();
@@ -1272,8 +1269,6 @@ size_t IndexCreator::estimateKmerNum(const vector<TaxId2Fasta> & taxid2fasta, co
 }
 
 void IndexCreator::trainProdigal() {
-    // TODO: 1. Check if the training file for current species exists. -> load the model
-    //       2. If not, train the model and save it.
     // Train prodigal for each FASTA.
 #pragma omp parallel default(none)
     {
