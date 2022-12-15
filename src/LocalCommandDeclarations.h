@@ -7,7 +7,6 @@
 #include "Command.h"
 
 extern int build(int argc, const char **argv, const Command& command);
-extern int build_dir(int argc, const char **argv, const Command& command);
 extern int classify(int argc, const char **argv, const Command& command);
 extern int grade(int argc, const char **argv, const Command& command);
 extern int inclusiontest_hiv(int argc, const char **argv, const Command& command);

@@ -1,5 +1,4 @@
 set(workflow_source_files
-        workflow/build_dir.cpp
         workflow/classify.cpp
         workflow/updateTargetDB.cpp
         workflow/inclusion_test_hiv.cpp

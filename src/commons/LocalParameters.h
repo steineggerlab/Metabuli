@@ -18,7 +18,6 @@ public:
         return static_cast<LocalParameters&>(LocalParameters::getInstance());
     }
 
-    std::vector<MMseqsParameter*> build_dir;
     std::vector<MMseqsParameter*> classify;
     std::vector<MMseqsParameter*> exclusiontest_hiv;
     std::vector<MMseqsParameter*> seqHeader2TaxId;
