@@ -116,9 +116,13 @@ ncbiTaxonomy, par, cout)
             classList.clear();
             readIds.clear();
             scores.clear();
-            rank2FnIdx.clear();
-            rank2FpIdx.clear();
-            rank2TpIdx.clear();
+            if (par.scoreCol != 0){
+                for (const auto & rank : ranks) {
+                    rank2TpIdx[rank].clear();
+                    rank2FpIdx[rank].clear();
+                    rank2FnIdx[rank].clear();
+                }
+            }
             mappingFile = mappingFileNames[i];
             readClassificationFileName = readClassificationFileNames[i];
 
