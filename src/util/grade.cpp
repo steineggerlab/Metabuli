@@ -161,7 +161,8 @@ ncbiTaxonomy, par, cout)
                 // Read ID -> right answer
                 string id = fields[par.readIdCol];
                 if (par.testType == "gtdb") {
-                    regex_search(fields[1], assacc, regex1);
+                    regex_search(id, assacc, regex1);
+                    readIds.push_back(assacc[0]);
                     rightAnswers.push_back(assacc2taxid[assacc[0]]);
                 } else if (par.testType == "hiv") {
                     size_t pos = id.find('_');
@@ -188,13 +189,6 @@ ncbiTaxonomy, par, cout)
                 }
             }
             readClassification.close();
-
-            // Print ID and classification
-//        if (par.testType == "cami") {
-//            for (size_t idx = 0; idx < readIds.size(); ++idx) {
-//                cout << readIds[idx] << "\t" << classList[idx] << "\t" << rightAnswers[idx] << "\t" << ncbiTaxonomy.taxonNode(classList[idx])->rank << "\t" << ncbiTaxonomy.taxonNode(rightAnswers[idx])->rank << endl;
-//            }
-//        }
 
             // Score the classification
             for (size_t j = 0; j < classList.size(); j++) {
