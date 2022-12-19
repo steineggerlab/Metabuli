@@ -74,17 +74,7 @@ int grade(int argc, const char **argv, const Command &command) {
         cerr << "Cannot open file for read classification file list" << endl;
     }
 
-    // Print scores of TP and FP
-    unordered_map<string, vector<size_t>> rank2TpIdx;
-    unordered_map<string, vector<size_t>> rank2FpIdx;
-    unordered_map<string, vector<size_t>> rank2FnIdx;
-    if (par.scoreCol != 0){
-        for (const auto & rank : ranks) {
-            rank2TpIdx[rank] = vector<size_t>();
-            rank2FpIdx[rank] = vector<size_t>();
-            rank2FnIdx[rank] = vector<size_t>();
-        }
-    }
+
 
     size_t numberOfFiles = mappingFileNames.size();
     vector<GradeResult> results;
@@ -95,7 +85,7 @@ int grade(int argc, const char **argv, const Command &command) {
 #endif
 
 #pragma omp parallel default(none), shared(results, ranks, numberOfFiles, mappingFileNames, readClassificationFileNames,\
-ncbiTaxonomy, par, cout, rank2TpIdx, rank2FpIdx, rank2FnIdx)
+ncbiTaxonomy, par, cout)
     {
         // Grade each file
         unordered_map<string, int> assacc2taxid;
@@ -105,6 +95,19 @@ ncbiTaxonomy, par, cout, rank2TpIdx, rank2FpIdx, rank2FnIdx)
         vector<float> scores;
         string mappingFile;
         string readClassificationFileName;
+
+        // Print scores of TP and FP
+        unordered_map<string, vector<size_t>> rank2TpIdx;
+        unordered_map<string, vector<size_t>> rank2FpIdx;
+        unordered_map<string, vector<size_t>> rank2FnIdx;
+        if (par.scoreCol != 0){
+            for (const auto & rank : ranks) {
+                rank2TpIdx[rank] = vector<size_t>();
+                rank2FpIdx[rank] = vector<size_t>();
+                rank2FnIdx[rank] = vector<size_t>();
+            }
+        }
+
 #pragma omp for schedule(dynamic)
         for (size_t i = 0; i < numberOfFiles; ++i) {
             // Initialize
@@ -113,6 +116,9 @@ ncbiTaxonomy, par, cout, rank2TpIdx, rank2FpIdx, rank2FnIdx)
             classList.clear();
             readIds.clear();
             scores.clear();
+            rank2FnIdx.clear();
+            rank2FpIdx.clear();
+            rank2TpIdx.clear();
             mappingFile = mappingFileNames[i];
             readClassificationFileName = readClassificationFileNames[i];
 
