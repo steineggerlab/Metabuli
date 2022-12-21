@@ -18,6 +18,9 @@ struct GradeResult{
 char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
                              const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
 
+char compareTaxon_overclassification(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
+                                     const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
+
 void setGradeDefault(LocalParameters & par){
     par.readIdCol = 1;
     par.taxidCol = 2;
@@ -25,7 +28,7 @@ void setGradeDefault(LocalParameters & par){
     par.scoreCol = 0;
     par.testRank = "";
 }
-// TODO score distribution
+
 int grade(int argc, const char **argv, const Command &command) {
 
     LocalParameters &par = LocalParameters::getLocalInstance();
@@ -173,6 +176,10 @@ ncbiTaxonomy, par, cout)
                     id = id.substr(0, pos);
                     rightAnswers.push_back(assacc2taxid[id]);
                     readIds.push_back(id);
+                } else if (par.testType == "over") {
+                    regex_search(id, assacc, regex1);
+                    readIds.push_back(assacc[0]);
+                    rightAnswers.push_back(ncbiTaxonomy.getTaxIdAtRank(assacc2taxid[assacc[0]], par.testRank));
                 }
 
                 // Read classification
@@ -191,11 +198,17 @@ ncbiTaxonomy, par, cout)
             readClassification.close();
 
             // Score the classification
+            char p;
             for (size_t j = 0; j < classList.size(); j++) {
                 if (par.verbosity == 3) cout << readIds[j] << " " << classList[j] << " " << rightAnswers[j];
                 for (const string &rank: ranks) {
-                    char p = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy,
-                                                     results[i].countsAtRanks[rank], rank, par);
+                    if (par.testType == "over") {
+                        p = compareTaxon_overclassification(classList[j], rightAnswers[j], ncbiTaxonomy,
+                                                            results[i].countsAtRanks[rank], rank, par);
+                    } else {
+                        p = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy,
+                                                         results[i].countsAtRanks[rank], rank, par);
+                    }
                     if (par.scoreCol != 0) {
                         if (p == 'O') rank2TpIdx[rank].push_back(j);
                         else if (p == 'X') rank2FpIdx[rank].push_back(j);
@@ -299,6 +312,40 @@ char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
 
     count.total++;
     if(shotTaxIdAtRank == targetTaxIdAtRank){
+        count.TP++;
+        return 'O';
+    } else {
+        count.FP++;
+        return 'X';
+    }
+}
+
+char compareTaxon_overclassification(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
+                                     const string & rank, const LocalParameters & par, size_t idx, const string& readId){
+    // Do not count if the rank of target is higher than current rank
+//    TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
+    const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
+    if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)) {
+        return '-';
+    }
+
+    // False negative; no classification or meaningless classification
+    if(shot == 1 || shot == 0) {
+        count.FN ++;
+        count.total ++;
+        return 'N';
+    }
+
+    // False negative if the rank of shot is higher than current rank
+    const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
+    if (NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank)) {
+        count.FN ++;
+        count.total ++;
+        return 'N';
+    }
+
+    count.total++;
+    if(shot == target){
         count.TP++;
         return 'O';
     } else {
