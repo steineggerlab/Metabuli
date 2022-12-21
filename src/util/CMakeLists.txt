@@ -7,5 +7,4 @@ set(util_source_files
         util/grade.cpp
         util/benchmark.cpp
         util/benchmark.h
-        util/genus_level_test.cpp
         PARENT_SCOPE)
