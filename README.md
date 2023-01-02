@@ -19,12 +19,12 @@ The built binary can be found in ./build/src
 ## Database building
 To build your Metabuli database, you need three things.
 1. **FASTA files** : Each sequence of your FASTA files must be separated by '>accession.version' like '>CP001849.1'
-2. **accession2taxid.map** : Mapping from acession to taxonomy identifier. Sequences whose accessions are not listed in this file will be skipped.
-3. **NCBI-style taxonomy dump files** : 'names.dmp' , 'nodes.dmp', and 'merged.dmp' are required. Sequences whose taxid are not included here will be skipped.
+2. **accession2taxid** : Mapping from acession to taxonomy identifier. Sequences whose accessions are not listed in this file will be skipped.
+3. **NCBI-style taxonomy dump** : 'names.dmp' , 'nodes.dmp', and 'merged.dmp' are required. Sequences whose taxid are not included here will be skipped.
 
 Here, steps for creating a database based on a taxonomy of NCBI or GTDB are described.
 
-### 1. Prepare taxonomy and accession2taxid.map
+### 1. Prepare taxonomy and accession2taxid
   #### NCBI taxonomy
   
   * accession2taxid can be downloaded from
@@ -58,7 +58,7 @@ Here, steps for creating a database based on a taxonomy of NCBI or GTDB are desc
     - accession2taxid : 'assacc_to_taxid.tsv' from the previous step
     - DBDIR : The same DBDIR from the previous step.
   ```
-  It will add your FASTA files to 'DBDIR/library' according to their species taxonomy ID and generate 'accession2taxid.map' 
+  It will add your FASTA files to 'DBDIR/library' according to their species taxonomy ID and generate 'my.accession2taxid' 
 
   
 ### 2. Add to libarary (optional)
@@ -70,7 +70,7 @@ Here, steps for creating a database based on a taxonomy of NCBI or GTDB are desc
 ```
 This command groups your FASTA files of the same species and add stores them in separate files to DBDIR/library.  
 You can skip this step in the case of
-1. You have already used this command to generate 'accession2taxid.map'.
+1. You have already used this command to generate 'my.accession2taxid'.
 2. Your FASTA list includes only one FASTA file per species.
 
 
@@ -89,7 +89,7 @@ You can skip this step in the case of
     --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids.
     --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
 ```
-
+It will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
 ## Classification
 ```
 ./metabuli classify <i:FASTA> <i:DBDIR> <o:OUTDIR> <Job ID> [options]
