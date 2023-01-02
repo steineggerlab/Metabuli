@@ -6,7 +6,7 @@
 typedef struct QueryKmerInfo {
     QueryKmerInfo(int seqID = 0, uint32_t pos = 0, uint8_t frame = 0 ) : sequenceID(seqID), pos(pos), frame(frame) {}
     uint32_t sequenceID; // 4 byte
-    uint16_t pos; // 2 byte
+    uint16_t pos; // 2 byte, 0~65535
     uint8_t frame; // 0, 1, 2 are forward, and 3, 4, 5 are reverse 1 byte
 } QueryKmerInfo;
 

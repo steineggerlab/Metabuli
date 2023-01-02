@@ -96,8 +96,10 @@ static inline bool compareForLinearSearch(const QueryKmer &a, const QueryKmer &b
 void Classifier::startClassify(const LocalParameters &par) {
     // Allocate memory for buffers
     QueryKmerBuffer kmerBuffer(kmerBufSize);
+    cout << sizeof(QueryKmer) << endl;
     Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(10));
-
+    cout << sizeof(Match) << endl;
+    
     // Load query file
     cout << "Indexing query file ...";
     MmapedData<char> queryFile{};
@@ -193,7 +195,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 
     // Write report files
     ofstream readClassificationFile;
-    readClassificationFile.open(outDir + "/" + jobId + "_ReadClassification.tsv");
+    readClassificationFile.open(outDir + "/" + jobId + "_classifications.tsv");
     writeReadClassification(queryList, (int) numOfSeq, readClassificationFile);
     readClassificationFile.close();
     writeReportFile(outDir + "/" + jobId + "_report.tsv", numOfSeq, taxCounts);
@@ -488,7 +490,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
             uint64_t currentTargetKmer;
 
             //Match buffer for each thread
-            int localBufferSize = 2'000'000; // 64 Mb
+            int localBufferSize = 2'000'000; // 32 Mb
             auto *matches = new Match[localBufferSize];
             int matchCnt = 0;
 

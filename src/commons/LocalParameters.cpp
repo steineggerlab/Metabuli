@@ -174,7 +174,14 @@ LocalParameters::LocalParameters() :
                     "Input is an assembly",
                     typeid(bool),
                     (void *) &assembly,
-                    ""){
+                    ""),
+        RAM_USAGE(RAM_USAGE_ID,
+                  "--ram-usage",
+                  "RAM usage in GB",
+                  "RAM usage in GB",
+                  typeid(int),
+                  (void *) &ramUsage,
+                  ""){
     //add_to_library
 
     // build
@@ -197,6 +204,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&HAMMING_MARGIN);
     classify.push_back(&MIN_SP_SCORE);
     classify.push_back(&PARAM_V);
+    classify.push_back(&RAM_USAGE);
 
 
     //updateTargetDB

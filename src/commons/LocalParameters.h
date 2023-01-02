@@ -34,6 +34,7 @@ public:
     PARAMETER(ARCHAEA_TAX_ID)
     PARAMETER(EUKARYOTA_TAX_ID)
 
+    // Classify
     PARAMETER(SEQ_MODE)
     PARAMETER(MEMORY_MODE)
     PARAMETER(REDUCED_AA)
@@ -44,6 +45,7 @@ public:
     PARAMETER(HAMMING_MARGIN)
     PARAMETER(MIN_SP_SCORE)
     PARAMETER(TINFO_PATH)
+    PARAMETER(RAM_USAGE)
 
     // DB build parameters
     PARAMETER(LIBRARY_PATH)
@@ -75,6 +77,7 @@ public:
     uint8_t hammingMargin;
     float minSpScore;
     float minCoverage;
+    int ramUsage;
 
     // Database creation
     std::string tinfoPath;
