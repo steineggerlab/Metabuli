@@ -16,6 +16,8 @@ void setClassifyDefaults(LocalParameters & par){
     par.minConsCnt = 4;
     par.hammingMargin = 0;
     par.verbosity = 3;
+    par.ramUsage = 0;
+
 }
 
 int classify(int argc, const char **argv, const Command& command)
@@ -23,6 +25,10 @@ int classify(int argc, const char **argv, const Command& command)
     LocalParameters & par = LocalParameters::getLocalInstance();
     setClassifyDefaults(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
+
+    if (par.ramUsage == 0) {
+        par.ramUsage = 128;
+    }
 
 #ifdef OPENMP
     omp_set_num_threads(par.threads);

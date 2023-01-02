@@ -60,6 +60,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
         } else {
             cerr << "Cannot open file for mapping from accession to tax ID" << endl;
         }
+        cout << "done" << endl;
 
         IndexCreator idxCreator;
         vector<Sequence> sequences;
@@ -167,7 +168,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             // Get assembly accession from file name using regex and remove the version number
             smatch match;
             regex_search(fileName, match, regex1);
-            string assemblyID = match[1];
+            string assemblyID = match[0];
             size_t pos = assemblyID.find('.');
             if (pos != string::npos) { assemblyID = assemblyID.substr(0, pos); }
 
@@ -216,9 +217,14 @@ int addToLibrary(int argc, const char **argv, const Command &command){
 
         // Write mapping file
         cout << "Write mapping from accession to taxonomy ID" << endl;
-        file = fopen((dbDir + "/accession2taxid.map").c_str(), "w");
+        file = fopen((dbDir + "/my.accession2taxid").c_str(), "w");
+        fprintf(file, "accession\taccession.version\ttaxid\tgi");
         for (auto it = acc2taxid.begin(); it != acc2taxid.end(); ++it) {
-            fprintf(file, "%s\t%d\n", it->first.c_str(), it->second);
+            // Get accession without a version number
+            string accession = it->first;
+            size_t pos = accession.find('.');
+            if (pos != string::npos) { accession = accession.substr(0, pos);}
+            fprintf(file, "%s\t%s\t%d\t0", accession.c_str(), it->first.c_str(), it->second);
         }
         fclose(file);
     }

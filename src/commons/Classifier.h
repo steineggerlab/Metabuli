@@ -25,7 +25,7 @@
 #include "Match.h"
 
 
-#define BufferSize 16'777'216 //16 * 1024 * 1024
+#define BufferSize 16'777'216 //16 * 1024 * 1024 // 16 MB
 using namespace std;
 
 struct TaxonScore {
