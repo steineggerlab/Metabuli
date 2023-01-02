@@ -93,13 +93,11 @@ static inline bool compareForLinearSearch(const QueryKmer &a, const QueryKmer &b
     return false;
 }
 
-void Classifier::startClassify(const LocalParameters &par) {
+void Classifier::startClassify(const LocalParameters &par, size_t maxCount) {
     // Allocate memory for buffers
-    QueryKmerBuffer kmerBuffer(kmerBufSize);
-    cout << sizeof(QueryKmer) << endl;
-    Buffer<Match> matchBuffer(size_t(kmerBufSize) * size_t(10));
-    cout << sizeof(Match) << endl;
-    
+    QueryKmerBuffer kmerBuffer(maxCount);
+    Buffer<Match> matchBuffer(size_t(maxCount) * size_t(10));
+
     // Load query file
     cout << "Indexing query file ...";
     MmapedData<char> queryFile{};
@@ -382,7 +380,6 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     string diffIdxSplitFileName = dbDir + "/split";;
 
     struct stat diffIdxFileSt{};
-//    int diffIdxFile = open(targetDiffIdxFileName.c_str(), O_CREAT | O_RDWR);
     stat(targetDiffIdxFileName.c_str(), &diffIdxFileSt);
     size_t numOfDiffIdx = diffIdxFileSt.st_size / sizeof(uint16_t);
 
@@ -807,7 +804,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                  const LocalParameters &par) {
     int queryLength = queryList[currentQuery].queryLength;
     TaxID selectedTaxon;
-    if (par.verbosity == 3) {
+    if (par.verbosity == 4) {
         cout << "# " << currentQuery << endl;
         for (size_t i = offset; i < end + 1; i++) {
             cout << genusTaxIdList[matchList[i].targetId] << " " << speciesTaxIdList[matchList[i].targetId] << " " <<
@@ -829,7 +826,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         genusScore = getBestGenusMatches(genusMatches, matchList, end, offset, queryLength);
     }
 
-    if (par.verbosity == 3) {
+    if (par.verbosity == 4) {
         cout << "# " << currentQuery << " filtered\n";
         for (size_t i = 0; i < genusMatches.size(); i++) {
             cout << genusTaxIdList[genusMatches[i].targetId] << " " << speciesTaxIdList[genusMatches[i].targetId] << " " <<

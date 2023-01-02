@@ -16,7 +16,7 @@ void setClassifyDefaults(LocalParameters & par){
     par.minConsCnt = 4;
     par.hammingMargin = 0;
     par.verbosity = 3;
-    par.ramUsage = 0;
+    par.ramUsage = 128;
 
 }
 
@@ -26,9 +26,8 @@ int classify(int argc, const char **argv, const Command& command)
     setClassifyDefaults(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
 
-    if (par.ramUsage == 0) {
-        par.ramUsage = 128;
-    }
+    size_t maxCount = (size_t) (((double)par.ramUsage - 0.128 * (double) par.threads) / 176) * 1'000'000'000;
+
 
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
@@ -42,7 +41,7 @@ int classify(int argc, const char **argv, const Command& command)
         classifier = new Classifier(par);
     }
 
-    classifier->startClassify(par);
+    classifier->startClassify(par, maxCount);
     delete classifier;
     return 0;
 }
