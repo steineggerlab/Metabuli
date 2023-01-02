@@ -17,76 +17,107 @@ make -j 16
 The built binary can be found in ./build/src
 
 ## Database building
-You can build DB from a directory of FASTA files or from a sinlge FASTA file with taxonomy of NCBI or GTDB
-### 0. Generate taxonomy dump files & a mapping from assebmly accession to tax ID
-You can choose between NCBI and GTDB
-  - NCBI (WIP)
-  ```
-  # In 'util' directory
-  ./make_assacc_to_ncbi_taxid.sh <o:outdir>
-  
-    - outdir : A directory where tax dump files will be generated. Make sure that the directory is exist and empty.
-  ```
-  
-  - GTDB
-  ```
-  # In 'util' directory
-  ./make_assacc_to_gtdb_taxid.sh <O:DBDIR>
-  
-    - DBDIR : A directory in which your DB will be created. Result files are stored in 'DBDIR/taxonomy'. Make sure that the DBDIR is exist and empty. The same path should be used in step 1.
-  ```
+To build your Metabuli database, you need three things.
+1. **FASTA files** : Each sequence of your FASTA files must be separated by '>accession.version' like '>CP001849.1'
+2. **accession2taxid** : Mapping from acession to taxonomy identifier. Sequences whose accessions are not listed in this file will be skipped.
+3. **NCBI-style taxonomy dump** : 'names.dmp' , 'nodes.dmp', and 'merged.dmp' are required. Sequences whose taxid are not included here will be skipped.
 
-### 1. Build DB from a directory of genome assemblies
-- Requirements: The names of FASTA files must include their assembly accession.
-  If you downloaded assemblies using "ncbi-genome-download", you probably don't have to care about it.
-  The regular experssion is (GC[AF]_[0-9]*\.[0-9]*)
-```
-./metabuli build_dir <i:directory> <O: DBDIR> [options]
+Here, steps for creating a database based on a taxonomy of NCBI or GTDB are described.
 
-  - Directory: A directory that contains all FASTA files from which you want to make a database. 
-               It may contain subdirectories of FASTA file.
-  - Output : A directory in which your DB will be created. (The same path used in step 0)
-  * Option
-    - --threads : The number of CPU-cores used (all by default)
-    - --tax-mode : 1. Use GTDB taxonomy 2. Use NCBI taxonomy
-    - --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids.
-    - --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
+### 1. Prepare taxonomy and accession2taxid
+  #### NCBI taxonomy
+  
+  * accession2taxid can be downloaded from
+  https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/
+  
+  * Taxonomy dump files can be downloaded from 
+  https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/
+  
+  #### GTDB taxonomy
+  
+  Please follow two steps below to generate NCBI style taxonomy dump and accession2taxid file.
+  * Requirements: The FASTA file name must include the assembly accession.  
+    If you downloaded assemblies using "ncbi-genome-download", you probably don't have to care about it.  
+    The regular experssion is (GC[AF]_[0-9].[0-9])
     
+  ```
+  # 1. 
+  In 'util' directory
+  ./prepare_gtdb_taxonomy.sh <DBDIR>
+    - DBDIR : Result files are stored in 'DBDIR/taxonomy'. 
+      Make sure that 'DBDIR/taxonomy' is exist and empty. 
+      The same path should be used in step 1.
+  ```
+  It will generate taxonomy dump files and 'assacc_to_taxid.tsv' with other files.
+    
+  ```
+  # 2. 
+  ./metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR> --assembly true
+    - FASTA list : A list of absolute paths of each assembly files.
+      Each absolute path must include assembly accession. 
+    - accession2taxid : 'assacc_to_taxid.tsv' from the previous step
+    - DBDIR : The same DBDIR from the previous step.
+  ```
+  It will add your FASTA files to 'DBDIR/library' according to their species taxonomy ID and generate 'my.accession2taxid' 
+
+  
+### 2. Add to libarary (optional)
+```
+./metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR>
+  - FASTA list: A list of absolute paths of each FASTA files.
+  - accession2taxid: A path to NCBI-style accession2taxid
+  - DBDIR: The same DBDIR from the previous step.
+```
+This command groups your FASTA files of the same species and add stores them in separate files to DBDIR/library.  
+You can skip this step in the case of
+1. You have already used this command to generate 'my.accession2taxid'.
+2. Your FASTA list includes only one FASTA file per species.
+
+
+### 3. Build
 
 ```
-
-### 2. Build DB from a FASTA file. (WIP)
-- Requirements
-
-
+./metabuli build <DBDIR> <FASTA list> <accession2taxid> [options]
+  - DBDIR: The same DBDIR from the previous step.
+  - FASTA list: A list of absolute paths to your FASTA files (in DBDIR/library)
+  - accession2taxid : accession2taxid file
+  
+  * Options
+    --threads : The number of CPU-cores used (all by default)
+    --tinfo-path : Path to prodigal training information files. (DBDIR/prodigal by default)
+    --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
+    --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids.
+    --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
+```
+It will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
 ## Classification
 ```
-./metabuli classify <i:FASTA> <i:DB dir> <o:out dir> <job ID> [options]
-  
+./metabuli classify <i:FASTA> <i:DBDIR> <o:OUTDIR> <Job ID> [options]
   - FASTA : A FASTA file of reads you want to classify.
-  - DB dir : The directory where you bulit the reference DB. 
-  - out dir : The directory where the report files will be generated.
-  - job ID: For the result files.
-  * Option
-    - --threads : number of CPU-cores used (all by default)
+  - DBDIR : The directory where you bulit the reference DB. 
+  - OUTDIR : The directory where the report files will be generated.
+  - Job ID: For the result files.  
 ```
-
-### Output format
-#### Read Classification
-- Classified or Not
-- Sequence name
-- Taxonomical ID
-- Length of read
-- Classification score (0.0-1)
-- List of "taxID : k-mer match count"
+It will generate two result files: 'Job ID_classifications.tsv' and 'Job ID_report.tsv'
+### Classifications
+1. Classified or not
+2. Read ID
+3. Taxonomy identifier
+4. Effective read length
+5. Classification score
+6. Classification query coverage
+7. Hamming distance
+8. Classification Rank
+9. List of "taxID : k-mer match count"
 
 ```
 #Example
-1       read1       1337    150     1       5334:16 1337:42
-1       read2       139585  150     0.70    172034:5 167827:2 148906:3 148931:2 286486:5 139586:7
-0       read3       0       150     0
+1       read_1     2688    294     0.627551        0.806122        35      subspecies      2688:65
+1       read_2     2688    294     0.816327        1       36      subspecies      2688:78
+0       read_3     0       294     0       0       0       no rank
 ```
-#### Composition Report
+
+### Report
 Proportion of reads that are assigned to each taxon.
 ```
 #Example
