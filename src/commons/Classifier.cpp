@@ -769,7 +769,7 @@ void Classifier::analyseResultParallel(Match *matchList,
     }
 
 #ifdef OPENMP
-    if (verbosity == 3) {
+    if (verbosity == 4) {
         omp_set_num_threads(1);
     } else {
         omp_set_num_threads(par.threads);
@@ -863,7 +863,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
             queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
         }
 
-        if (par.verbosity == 3) {
+        if (par.verbosity == 4) {
             cout << "# " << currentQuery << " " << res << endl;
             for (size_t i = 0; i < genusMatches.size(); i++) {
                 cout << i << " " << genusMatches[i].position << " " <<
@@ -968,7 +968,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     queryList[currentQuery].coverage = speciesScore.coverage;
     queryList[currentQuery].hammingDist = speciesScore.hammingDist;
     queryList[currentQuery].newSpecies = false;
-    if (par.verbosity == 3) {
+    if (par.verbosity == 4) {
         cout << "# " << currentQuery << endl;
         for (size_t i = 0; i < genusMatches.size(); i++) {
             cout << i << " " << genusMatches[i].position << " " <<
@@ -1302,7 +1302,7 @@ TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
     float score = ((float) coveredLength - hammingSum) / (float) queryLength;
 
 
-    if (verbosity == 3) {
+    if (verbosity == 4) {
         cout << genusTaxIdList[filteredMatches[0].targetId] << " " << coveredLength << " " << hammingSum << " "
              << ((float) coveredLength - hammingSum) / (float) queryLength <<
              " " << matches.size()
@@ -1410,7 +1410,7 @@ TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
             ((float) (coveredLength_read1 + coveredLength_read2) - hammingSum) / (float) (readLength1 + readLength2);
     float coverage = (float) (coveredLength_read1 + coveredLength_read2) / (float) (readLength1 + readLength2);
 
-    if (verbosity == 3) {
+    if (verbosity == 4) {
         cout << genusTaxIdList[filteredMatches[0].targetId] << " " << coveredLength_read1 + coveredLength_read2 << " " << hammingSum
              << " " << score <<
              " " << matches.size()
