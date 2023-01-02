@@ -6,6 +6,7 @@
 #include <iostream>
 #include "IndexCreator.h"
 #include <string>
+#include "FileUtil.h"
 
 using namespace std;
 
@@ -17,6 +18,12 @@ int addToLibrary(int argc, const char **argv, const Command &command){
     const string mappingFileName = par.filenames[1];
     const string dbDir = par.filenames[2];
     const string taxonomy = dbDir + "/taxonomy";
+
+    string libraryPath = dbDir + "/library";
+    // If the library directory does not exist, create it
+    if (FileUtil::directoryExists(libraryPath.c_str()) == false) {
+        FileUtil::makeDir(libraryPath.c_str());
+    }
 
     // Load taxonomy
     string names = taxonomy + "/names.dmp";
