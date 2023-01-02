@@ -71,47 +71,43 @@ You can skip this step in the case of
   - DBDIR: The same DBDIR from the previous step.
   - FASTA list: A list of absolute paths to your FASTA files (in DBDIR/library)
   - accession2taxid : accession2taxid.map
-  * Option
-    - --threads : The number of CPU-cores used (all by default)
-    - --tinfo-path : Path to prodigal training information files.
-    - --taxonomy-path
-    - --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids.
-    - --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
-    
-    
-
+  
+  * Options
+    --threads : The number of CPU-cores used (all by default)
+    --tinfo-path : Path to prodigal training information files. (DBDIR/prodigal by default)
+    --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
+    --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids.
+    --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
 ```
-
-
 
 ## Classification
 ```
-./metabuli classify <i:FASTA> <i:DB dir> <o:out dir> <job ID> [options]
-  
+./metabuli classify <i:FASTA> <i:DBDIR> <o:OUTDIR> <Job ID> [options]
   - FASTA : A FASTA file of reads you want to classify.
-  - DB dir : The directory where you bulit the reference DB. 
-  - out dir : The directory where the report files will be generated.
-  - job ID: For the result files.
-  * Option
-    - --threads : number of CPU-cores used (all by default)
+  - DBDIR : The directory where you bulit the reference DB. 
+  - OUTDIR : The directory where the report files will be generated.
+  - Job ID: For the result files.  
 ```
-
-### Output format
-#### Read Classification
-- Classified or Not
-- Sequence name
-- Taxonomical ID
-- Length of read
-- Classification score (0.0-1)
-- List of "taxID : k-mer match count"
+It will generate two result files: 'Job ID_classifications.tsv' and 'Job ID_report.tsv'
+### Classifications
+1. Classified or not
+2. Read ID
+3. Taxonomy identifier
+4. Effective read length
+5. Classification score
+6. Classification query coverage
+7. Hamming distance
+8. Classification Rank
+9. List of "taxID : k-mer match count"
 
 ```
 #Example
-1       read1       1337    150     1       5334:16 1337:42
-1       read2       139585  150     0.70    172034:5 167827:2 148906:3 148931:2 286486:5 139586:7
-0       read3       0       150     0
+1       read_1     2688    294     0.627551        0.806122        35      subspecies      2688:65
+1       read_2     2688    294     0.816327        1       36      subspecies      2688:78
+0       read_3     0       294     0       0       0       no rank
 ```
-#### Composition Report
+
+### Report
 Proportion of reads that are assigned to each taxon.
 ```
 #Example
