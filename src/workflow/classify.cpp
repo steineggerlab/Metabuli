@@ -26,7 +26,7 @@ int classify(int argc, const char **argv, const Command& command)
     setClassifyDefaults(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
 
-    size_t maxCount = (size_t) (((double)par.ramUsage - 0.128 * (double) par.threads) / 176) * 1'000'000'000;
+    size_t maxCount = (size_t) (((double)par.ramUsage - 0.128 * (double) par.threads) / (double) 176) * 1'000'000'000;
     cout << maxCount << endl;
 
 
