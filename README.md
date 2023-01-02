@@ -17,15 +17,25 @@ make -j 16
 The built binary can be found in ./build/src
 
 ## Database building
-You can build DB from a directory of FASTA files or from a sinlge FASTA file with taxonomy of NCBI or GTDB
+To build your Metabuli database, you need three things.
+1. **FASTA files** : Each sequence of your FASTA files must be separated by '>accession.version' like '>CP001849.1'
+2. **accession2taxid.map** : Mapping from acession to taxonomy identifier. Sequences whose accessions are not listed in this file will be skipped.
+3. **NCBI-style taxonomy dump files** : 'names.dmp' , 'nodes.dmp', and 'merged.dmp' are required. Sequences whose taxid are not included here will be skipped.
+
+Here, steps for creating a database based on a taxonomy of NCBI or GTDB are described.
+
 ### 1. Prepare taxonomy and accession2taxid.map
   #### NCBI taxonomy
   
-  Downlaod
+  * accession2taxid can be downloaded from
+  https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/
+  
+  * Taxonomy dump files can be downloaded from 
+  https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/
   
   #### GTDB taxonomy
   
-  Please follow two steps below to generate NCBI style taxonomy dump and accession2taxid.map file.
+  Please follow two steps below to generate NCBI style taxonomy dump and accession2taxid file.
   * Requirements: The FASTA file name must include the assembly accession.  
     If you downloaded assemblies using "ncbi-genome-download", you probably don't have to care about it.  
     The regular experssion is (GC[AF]_[0-9].[0-9])
@@ -55,7 +65,7 @@ You can build DB from a directory of FASTA files or from a sinlge FASTA file wit
 ```
 ./metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR>
   - FASTA list: A list of absolute paths of each FASTA files.
-  - accession2taxid: A path to NCBI-style accession2taxid.map
+  - accession2taxid: A path to NCBI-style accession2taxid
   - DBDIR: The same DBDIR from the previous step.
 ```
 This command groups your FASTA files of the same species and add stores them in separate files to DBDIR/library.  
@@ -70,7 +80,7 @@ You can skip this step in the case of
 ./metabuli build <DBDIR> <FASTA list> <accession2taxid> [options]
   - DBDIR: The same DBDIR from the previous step.
   - FASTA list: A list of absolute paths to your FASTA files (in DBDIR/library)
-  - accession2taxid : accession2taxid.map
+  - accession2taxid : accession2taxid file
   
   * Options
     --threads : The number of CPU-cores used (all by default)
