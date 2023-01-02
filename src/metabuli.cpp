@@ -68,7 +68,7 @@ std::vector<Command> commands = {
                 CITATION_SPACEPHARER,
                 {{"read-classification", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                         {"Mapping file (accession to tax ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
-        {"add_to_library", addToLibrary, &localPar.addToLibrary, COMMAND_MAIN,
+        {"add-to-library", addToLibrary, &localPar.addToLibrary, COMMAND_MAIN,
                     "It bins sequences into distinct files according to their species referring their accession number.\n "
                     "It requires a mapping file (accession to tax ID) and NCBI style tax dump files in a taxonomy directory.",
                     NULL,

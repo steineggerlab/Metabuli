@@ -167,11 +167,17 @@ LocalParameters::LocalParameters() :
                       "CSV of column numbers to be printed",
                       typeid(std::string),
                       (void *) &printColumns,
-                      ""){
+                      ""),
+        IS_ASSEMBLY(IS_ASSEMBLY_ID,
+                    "--assembly",
+                    "Input is an assembly",
+                    "Input is an assembly",
+                    typeid(bool),
+                    (void *) &assembly,
+                    ""){
     //add_to_library
 
     // build
-//    build.push_back(&LIBRARY_PATH);
     build.push_back(&PARAM_THREADS);
     build.push_back(&REDUCED_AA);
     build.push_back(&SPACED);
@@ -212,8 +218,10 @@ LocalParameters::LocalParameters() :
     applyThreshold.push_back(&MIN_SCORE);
     applyThreshold.push_back(&MIN_COVERAGE);
 
-
     // Binning to report
     binning2report.push_back(&READID_COL);
     binning2report.push_back(&TAXID_COL);
+
+    // add to library
+    addToLibrary.push_back(&IS_ASSEMBLY);
 }

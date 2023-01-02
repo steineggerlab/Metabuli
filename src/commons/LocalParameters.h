@@ -48,6 +48,7 @@ public:
     // DB build parameters
     PARAMETER(LIBRARY_PATH)
     PARAMETER(TAXONOMY_PATH)
+    PARAMETER(IS_ASSEMBLY)
 
     // Test parameters
     PARAMETER(TEST_RANK)
@@ -88,6 +89,9 @@ public:
     int taxidCol;
     int scoreCol;
     int coverageCol;
+
+    // Add to library
+    bool assembly;
 
 private:
     LocalParameters();
