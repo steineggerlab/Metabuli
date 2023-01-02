@@ -160,7 +160,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             // Get assembly accession from file name using regex and remove the version number
             smatch match;
             regex_search(fileName, match, regex1);
-            string assemblyID = match[0];
+            string assemblyID = match[1];
             size_t pos = assemblyID.find('.');
             if (pos != string::npos) { assemblyID = assemblyID.substr(0, pos); }
 
