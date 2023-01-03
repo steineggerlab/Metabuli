@@ -150,7 +150,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     // 1. Calculate estimated maximum RAM usage
     size_t estimatedNumOfKmer = 2 * totalReadLength - 84 * numOfSeq;
     size_t memoryForReads = 200 * numOfSeq; // 200 bytes per read
-    size_t memoryForThreads = 128'000'000 * par.threads; // 128 MB per thread
+    size_t memoryForThreads = (size_t) 128'000'000 * (size_t) par.threads; // 128 MB per thread
     size_t memoryForQueryKmer = estimatedNumOfKmer * sizeof(QueryKmer);
     size_t memoryForKmerMatch = estimatedNumOfKmer * sizeof(Match) * 7;
     size_t estimatedMaxRamUsage = memoryForReads + memoryForThreads + memoryForQueryKmer + memoryForKmerMatch;
