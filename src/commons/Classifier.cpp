@@ -166,6 +166,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     }
 
     cout << memoryForReads << " " << memoryForThreads << " " << memoryForQueryKmer << " " << memoryForKmerMatch << endl;
+    cout << maxCount << endl;
 
     QueryKmerBuffer kmerBuffer(maxCount);
     Buffer<Match> matchBuffer(size_t(maxCount) * size_t(7));
