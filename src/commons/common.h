@@ -31,7 +31,7 @@ struct Query{
     int queryLength2;
     int kmerCnt;
     bool isClassified;
-    bool newSpecies;
+    bool newSpecies; // 36 byte
 
     std::string name;
     std::unordered_map<TaxID,int> taxCnt;

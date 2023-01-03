@@ -42,7 +42,7 @@ int classify(int argc, const char **argv, const Command& command)
         classifier = new Classifier(par);
     }
 
-    classifier->startClassify(par, maxCount);
+    classifier->startClassify(par);
     delete classifier;
     return 0;
 }
