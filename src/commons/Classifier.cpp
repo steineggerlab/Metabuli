@@ -159,9 +159,13 @@ void Classifier::startClassify(const LocalParameters &par) {
     size_t maxCount = 0;
     if (estimatedMaxRamUsage / 1'000'000'000 >= (size_t) par.ramUsage ) {
         maxCount = ((size_t) par.ramUsage * 1'000'000'000 - memoryForReads - memoryForThreads) / 128;
+        memoryForQueryKmer = maxCount * sizeof(QueryKmer);
+        memoryForKmerMatch = maxCount * sizeof(Match) * 7;
     } else {
         maxCount = estimatedNumOfKmer;
     }
+
+    cout << memoryForReads << " " << memoryForThreads << " " << memoryForQueryKmer << " " << memoryForKmerMatch << endl;
 
     QueryKmerBuffer kmerBuffer(maxCount);
     Buffer<Match> matchBuffer(size_t(maxCount) * size_t(7));
