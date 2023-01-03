@@ -245,7 +245,7 @@ protected:
     friend struct sortMatch;
 public:
 
-    void startClassify(const LocalParameters &par, size_t maxCount);
+    void startClassify(const LocalParameters &par);
 
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiffIdxList, size_t &diffIdxPos);
 

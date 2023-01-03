@@ -93,13 +93,13 @@ static inline bool compareForLinearSearch(const QueryKmer &a, const QueryKmer &b
     return false;
 }
 
-void Classifier::startClassify(const LocalParameters &par, size_t maxCount) {
-    // Allocate memory for buffers
-    QueryKmerBuffer kmerBuffer(maxCount);
-    Buffer<Match> matchBuffer(size_t(maxCount) * size_t(10));
+void Classifier::startClassify(const LocalParameters &par) {
+
+    size_t totalNumOfQueryKmer = 0;
 
     // Load query file
     cout << "Indexing query file ...";
+    size_t totalReadLength = 0;
     MmapedData<char> queryFile{};
     MmapedData<char> queryFile2{};
     vector<Sequence> sequences;
@@ -112,6 +112,10 @@ void Classifier::startClassify(const LocalParameters &par, size_t maxCount) {
         IndexCreator::getSeqSegmentsWithHead(sequences, queryFile);
         numOfSeq = sequences.size();
         queryList = new Query[numOfSeq];
+        // Calculate the total read length
+        for (size_t i = 0; i < numOfSeq; i++) {
+            totalReadLength += sequences[i].length;
+        }
     } else if (par.seqMode == 2) {
         queryFile = mmapData<char>(queryPath_1.c_str());
         queryFile2 = mmapData<char>(queryPath_2.c_str());
@@ -126,6 +130,13 @@ void Classifier::startClassify(const LocalParameters &par, size_t maxCount) {
         IndexCreator::getSeqSegmentsWithHead(sequences2, queryFile2);
         numOfSeq = sequences.size();
         numOfSeq2 = sequences2.size();
+        // Calculate the total read length
+        for (size_t i = 0; i < numOfSeq; i++) {
+            totalReadLength += sequences[i].length;
+        }
+        for (size_t i = 0; i < numOfSeq2; i++) {
+            totalReadLength += sequences2[i].length;
+        }
         if (numOfSeq > numOfSeq2) {
             queryList = new Query[numOfSeq];
         } else {
@@ -134,6 +145,27 @@ void Classifier::startClassify(const LocalParameters &par, size_t maxCount) {
         }
     }
     cout << "Done" << endl;
+
+    // Allocate memory for buffers
+    // 1. Calculate estimated maximum RAM usage
+    size_t estimatedNumOfKmer = 2 * totalReadLength - 84 * numOfSeq;
+    size_t memoryForReads = 200 * numOfSeq; // 200 bytes per read
+    size_t memoryForThreads = 128'000'000 * par.threads; // 128 MB per thread
+    size_t memoryForQueryKmer = estimatedNumOfKmer * sizeof(QueryKmer);
+    size_t memoryForKmerMatch = estimatedNumOfKmer * sizeof(Match) * 7;
+    size_t estimatedMaxRamUsage = memoryForReads + memoryForThreads + memoryForQueryKmer + memoryForKmerMatch;
+
+    // 2. Check if the estimated memory usage is larger than the available memory
+    size_t maxCount = 0;
+    if (estimatedMaxRamUsage / 1'000'000'000 >= (size_t) par.ramUsage ) {
+        maxCount = ((size_t) par.ramUsage * 1'000'000'000 - memoryForReads - memoryForThreads) / 128;
+    } else {
+        maxCount = estimatedNumOfKmer;
+    }
+
+    QueryKmerBuffer kmerBuffer(maxCount);
+    Buffer<Match> matchBuffer(size_t(maxCount) * size_t(7));
+
 
     // Checker for multi-threading
     bool *processedSeqChecker = new bool[numOfSeq];
@@ -769,11 +801,7 @@ void Classifier::analyseResultParallel(Match *matchList,
     }
 
 #ifdef OPENMP
-    if (verbosity == 4) {
-        omp_set_num_threads(1);
-    } else {
-        omp_set_num_threads(par.threads);
-    }
+    omp_set_num_threads(par.threads);
 #endif
 
     // Process each block
@@ -804,13 +832,13 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                  const LocalParameters &par) {
     int queryLength = queryList[currentQuery].queryLength;
     TaxID selectedTaxon;
-    if (par.verbosity == 4) {
-        cout << "# " << currentQuery << endl;
-        for (size_t i = offset; i < end + 1; i++) {
-            cout << genusTaxIdList[matchList[i].targetId] << " " << speciesTaxIdList[matchList[i].targetId] << " " <<
-            taxIdList[matchList[i].targetId] << " " << matchList[i].position << " " << int(matchList[i].hamming) << endl;
-        }
-    }
+//    if (par.verbosity == 4) {
+//        cout << "# " << currentQuery << endl;
+//        for (size_t i = offset; i < end + 1; i++) {
+//            cout << genusTaxIdList[matchList[i].targetId] << " " << speciesTaxIdList[matchList[i].targetId] << " " <<
+//            taxIdList[matchList[i].targetId] << " " << matchList[i].position << " " << int(matchList[i].hamming) << endl;
+//        }
+//    }
 
     // Get the best genus for current query
     vector<Match> genusMatches;
@@ -826,14 +854,14 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         genusScore = getBestGenusMatches(genusMatches, matchList, end, offset, queryLength);
     }
 
-    if (par.verbosity == 4) {
-        cout << "# " << currentQuery << " filtered\n";
-        for (size_t i = 0; i < genusMatches.size(); i++) {
-            cout << genusTaxIdList[genusMatches[i].targetId] << " " << speciesTaxIdList[genusMatches[i].targetId] << " " <<
-                 taxIdList[genusMatches[i].targetId] << " " << genusMatches[i].position << " " << int(genusMatches[i].hamming) << "\n";
-        }
-        cout << "Genus score: " << genusScore.score << "\n";
-    }
+//    if (par.verbosity == 4) {
+//        cout << "# " << currentQuery << " filtered\n";
+//        for (size_t i = 0; i < genusMatches.size(); i++) {
+//            cout << genusTaxIdList[genusMatches[i].targetId] << " " << speciesTaxIdList[genusMatches[i].targetId] << " " <<
+//                 taxIdList[genusMatches[i].targetId] << " " << genusMatches[i].position << " " << int(genusMatches[i].hamming) << "\n";
+//        }
+//        cout << "Genus score: " << genusScore.score << "\n";
+//    }
 
     // If there is no proper genus for current query, it is un-classified.
     if (genusScore.score == 0 || genusScore.coverage < par.minCoverage || genusScore.score < par.minScore) {
@@ -863,16 +891,16 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
             queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
         }
 
-        if (par.verbosity == 4) {
-            cout << "# " << currentQuery << " " << res << endl;
-            for (size_t i = 0; i < genusMatches.size(); i++) {
-                cout << i << " " << genusMatches[i].position << " " <<
-                     taxIdList[genusMatches[i].targetId] << " " << int(genusMatches[i].hamming) << " "
-                     << endl;
-            }
-            cout << "Genus score: " << genusScore.score << " " << selectedTaxon << " "
-                 << taxonomy->taxonNode(selectedTaxon)->rank << endl;
-        }
+//        if (par.verbosity == 4) {
+//            cout << "# " << currentQuery << " " << res << endl;
+//            for (size_t i = 0; i < genusMatches.size(); i++) {
+//                cout << i << " " << genusMatches[i].position << " " <<
+//                     taxIdList[genusMatches[i].targetId] << " " << int(genusMatches[i].hamming) << " "
+//                     << endl;
+//            }
+//            cout << "Genus score: " << genusScore.score << " " << selectedTaxon << " "
+//                 << taxonomy->taxonNode(selectedTaxon)->rank << endl;
+//        }
         return;
     }
 
@@ -968,16 +996,16 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     queryList[currentQuery].coverage = speciesScore.coverage;
     queryList[currentQuery].hammingDist = speciesScore.hammingDist;
     queryList[currentQuery].newSpecies = false;
-    if (par.verbosity == 4) {
-        cout << "# " << currentQuery << endl;
-        for (size_t i = 0; i < genusMatches.size(); i++) {
-            cout << i << " " << genusMatches[i].position << " " <<
-            taxIdList[genusMatches[i].targetId] << " " << int(genusMatches[i].hamming) << endl;
-        }
-        cout << "Score: " << speciesScore.score << "  " << selectedSpecies << " "
-             << taxonomy->taxonNode(selectedSpecies)->rank
-             << endl;
-    }
+//    if (par.verbosity == 4) {
+//        cout << "# " << currentQuery << endl;
+//        for (size_t i = 0; i < genusMatches.size(); i++) {
+//            cout << i << " " << genusMatches[i].position << " " <<
+//            taxIdList[genusMatches[i].targetId] << " " << int(genusMatches[i].hamming) << endl;
+//        }
+//        cout << "Score: " << speciesScore.score << "  " << selectedSpecies << " "
+//             << taxonomy->taxonNode(selectedSpecies)->rank
+//             << endl;
+//    }
 }
 
 TaxonScore Classifier::getBestGenusMatches(vector<Match> & genusMatches,
@@ -1302,12 +1330,12 @@ TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
     float score = ((float) coveredLength - hammingSum) / (float) queryLength;
 
 
-    if (verbosity == 4) {
-        cout << genusTaxIdList[filteredMatches[0].targetId] << " " << coveredLength << " " << hammingSum << " "
-             << ((float) coveredLength - hammingSum) / (float) queryLength <<
-             " " << matches.size()
-             << endl;
-    }
+//    if (verbosity == 4) {
+//        cout << genusTaxIdList[filteredMatches[0].targetId] << " " << coveredLength << " " << hammingSum << " "
+//             << ((float) coveredLength - hammingSum) / (float) queryLength <<
+//             " " << matches.size()
+//             << endl;
+//    }
     matchesForEachGenus.push_back(move(matches));
 }
 
@@ -1410,12 +1438,12 @@ TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
             ((float) (coveredLength_read1 + coveredLength_read2) - hammingSum) / (float) (readLength1 + readLength2);
     float coverage = (float) (coveredLength_read1 + coveredLength_read2) / (float) (readLength1 + readLength2);
 
-    if (verbosity == 4) {
-        cout << genusTaxIdList[filteredMatches[0].targetId] << " " << coveredLength_read1 + coveredLength_read2 << " " << hammingSum
-             << " " << score <<
-             " " << matches.size()
-             << endl;
-    }
+//    if (verbosity == 4) {
+//        cout << genusTaxIdList[filteredMatches[0].targetId] << " " << coveredLength_read1 + coveredLength_read2 << " " << hammingSum
+//             << " " << score <<
+//             " " << matches.size()
+//             << endl;
+//    }
     matchesForEachGenus.push_back(move(matches));
     return {genusTaxIdList[filteredMatches[0].targetId], score, coverage, (int) hammingSum};
 }
