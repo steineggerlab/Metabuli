@@ -159,7 +159,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     size_t maxCount = 0;
     if (estimatedMaxRamUsage / 1'000'000'000 >= (size_t) par.ramUsage ) {
         maxCount = ((size_t) par.ramUsage * 1'000'000'000 - memoryForReads - memoryForThreads) /
-                (96 * (par.threads + 16) / par.threads);
+                (96 * (par.ramUsage + 16) / par.ramUsage);
         memoryForQueryKmer = maxCount * sizeof(QueryKmer);
         memoryForKmerMatch = maxCount * sizeof(Match) * 7;
     } else {
