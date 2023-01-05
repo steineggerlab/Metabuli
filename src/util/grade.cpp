@@ -132,7 +132,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx)
             classList.clear();
             readIds.clear();
             scores.clear();
-            if (!printColumns.empty()){
+            if (!printColumnsIdx.empty()){
                 for (const auto & rank : ranks) {
                     rank2TpIdx[rank].clear();
                     rank2FpIdx[rank].clear();
@@ -225,7 +225,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx)
                         p = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy,
                                                          results[i].countsAtRanks[rank], rank, par);
                     }
-                    if (!printColumns.empty()) {
+                    if (!printColumnsIdx.empty()) {
                         if (p == 'O') rank2TpIdx[rank].push_back(j);
                         else if (p == 'X') rank2FpIdx[rank].push_back(j);
                         else if (p == 'N') rank2FnIdx[rank].push_back(j);
@@ -241,7 +241,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx)
             }
 
             // Write the values of TP, FP, and FN
-            if (!printColumns.empty()) {
+            if (!printColumnsIdx.empty()) {
                 for (const string & rank : ranks) {
                     // TP
                     ofstream tpFile;
