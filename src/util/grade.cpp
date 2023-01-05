@@ -46,6 +46,18 @@ int grade(int argc, const char **argv, const Command &command) {
         ranks = {"class", "order", "family", "genus", "species"};
     }
 
+    // Parse print columns
+    vector<string> printColumns;
+    vector<size_t> printColumnsIdx;
+    if (!par.printColumns.empty()) {
+        printColumns = Util::split(par.printColumns, ",");
+        // stoi
+        for (const auto &printColumn : printColumns) {
+            printColumnsIdx.push_back(stoi(printColumn));
+        }
+    }
+
+
     // Load Taxonomy
     string names = taxonomy + "/names.dmp";
     string nodes = taxonomy + "/nodes.dmp";
@@ -88,7 +100,7 @@ int grade(int argc, const char **argv, const Command &command) {
 #endif
 
 #pragma omp parallel default(none), shared(results, ranks, numberOfFiles, mappingFileNames, readClassificationFileNames,\
-ncbiTaxonomy, par, cout)
+ncbiTaxonomy, par, cout, printColumnsIdx)
     {
         // Grade each file
         unordered_map<string, int> assacc2taxid;
@@ -103,7 +115,8 @@ ncbiTaxonomy, par, cout)
         unordered_map<string, vector<size_t>> rank2TpIdx;
         unordered_map<string, vector<size_t>> rank2FpIdx;
         unordered_map<string, vector<size_t>> rank2FnIdx;
-        if (par.scoreCol != 0){
+        vector<vector<string>> idx2values;
+        if (!printColumnsIdx.empty()){
             for (const auto & rank : ranks) {
                 rank2TpIdx[rank] = vector<size_t>();
                 rank2FpIdx[rank] = vector<size_t>();
@@ -119,7 +132,7 @@ ncbiTaxonomy, par, cout)
             classList.clear();
             readIds.clear();
             scores.clear();
-            if (par.scoreCol != 0){
+            if (!printColumns.empty()){
                 for (const auto & rank : ranks) {
                     rank2TpIdx[rank].clear();
                     rank2FpIdx[rank].clear();
@@ -189,10 +202,13 @@ ncbiTaxonomy, par, cout)
                     numberOfClassifications++;
                 }
 
-                // Read score
-                if (par.scoreCol != 0) {
-                    float score = stof(fields[par.scoreCol]);
-                    scores.push_back(score);
+                // Read column for printing
+                if (!printColumnsIdx.empty()) {
+                    vector<string> values;
+                    for (const auto &idx: printColumnsIdx) {
+                        values.push_back(fields[idx]);
+                    }
+                    idx2values.push_back(values);
                 }
             }
             readClassification.close();
@@ -209,7 +225,7 @@ ncbiTaxonomy, par, cout)
                         p = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy,
                                                          results[i].countsAtRanks[rank], rank, par);
                     }
-                    if (par.scoreCol != 0) {
+                    if (!printColumns.empty()) {
                         if (p == 'O') rank2TpIdx[rank].push_back(j);
                         else if (p == 'X') rank2FpIdx[rank].push_back(j);
                         else if (p == 'N') rank2FnIdx[rank].push_back(j);
@@ -224,14 +240,17 @@ ncbiTaxonomy, par, cout)
                 results[i].countsAtRanks[rank].calculate();
             }
 
-            // Write the scores of TP, FP, and FN
-            if (par.scoreCol != 0) {
+            // Write the values of TP, FP, and FN
+            if (!printColumns.empty()) {
                 for (const string & rank : ranks) {
                     // TP
                     ofstream tpFile;
                     tpFile.open(readClassificationFileName + "." + rank + ".tp");
                     for (const auto & idx : rank2TpIdx[rank]) {
-                        tpFile << idx << "\t" << readIds[idx] << "\t" << scores[idx] << endl;
+                        for (const auto & value : idx2values[idx]) {
+                            tpFile << value << "\t";
+                        }
+                        tpFile << endl;
                     }
                     tpFile.close();
 
@@ -239,7 +258,10 @@ ncbiTaxonomy, par, cout)
                     ofstream fpFile;
                     fpFile.open(readClassificationFileName + "." + rank + ".fp");
                     for (const auto & idx : rank2FpIdx[rank]) {
-                        fpFile << idx << "\t" << readIds[idx] << "\t" << scores[idx] << endl;
+                        for (const auto & value : idx2values[idx]) {
+                            fpFile << value << "\t";
+                        }
+                        fpFile << endl;
                     }
                     fpFile.close();
 
@@ -247,7 +269,9 @@ ncbiTaxonomy, par, cout)
                     ofstream fnFile;
                     fnFile.open(readClassificationFileName + "." + rank + ".fn");
                     for (const auto & idx : rank2FnIdx[rank]) {
-                        fnFile << idx << "\t" << readIds[idx] << "\t" << scores[idx] << endl;
+                        for (const auto & value : idx2values[idx]) {
+                            fnFile << value << "\t";
+                        }
                     }
                     fnFile.close();
                 }
