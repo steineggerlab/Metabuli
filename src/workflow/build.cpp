@@ -2,6 +2,7 @@
 #include "FileMerger.h"
 #include "LocalParameters.h"
 #include <Command.h>
+#include "FileUtil.h"
 
 void setDefaults_build(LocalParameters & par){
     par.reducedAA = 0;
@@ -19,6 +20,11 @@ int build(int argc, const char **argv, const Command &command){
     string mappingFile = par.filenames[2];
     if (par.taxonomyPath.empty()) par.taxonomyPath = dbDirectory + "/taxonomy/";
     if (par.tinfoPath.empty()) par.tinfoPath = dbDirectory + "/prodigal/";
+    
+    // If the prodigal directory does not exist, create it
+    if (!FileUtil::directoryExists(par.tinfoPath.c_str())) {
+        FileUtil::makeDir(par.tinfoPath.c_str());
+    }
     cout << "Taxonomy path: " << par.taxonomyPath << endl;
     cout << "Tinfo path: " << par.tinfoPath << endl;
 
