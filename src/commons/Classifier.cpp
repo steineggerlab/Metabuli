@@ -913,7 +913,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     }
 
     // Choose the species with the highest coverage.
-    TaxID selectedSpecies;
     TaxonScore speciesScore;
     vector<TaxID> species;
     if (par.seqMode == 2) {
@@ -924,7 +923,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     } else {
         speciesScore = chooseSpecies(genusMatches, queryLength, species);
     }
-
 
     // Classify to LCA if more than one species are selected
     if (species.size() > 1) {
@@ -954,56 +952,60 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         }
         return;
     }
+    selectedTaxon = species[0];
 
-    selectedSpecies = species[0];
-    // Record matches of selected species
-    for (auto & genusMatch : genusMatches) {
-        if(speciesTaxIdList[genusMatch.targetId] == selectedSpecies){
-            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
-        }
-    }
-
-    // Check if it can be classified at the subspecies rank.
+    // Check if it can be classified at rank lower than species.
     int numOfstrains = 0;
     TaxID strainID = 0;
     int count = 1;
-    int minStrainSpecificCnt = 1;
-    if (par.seqMode == 1) {
-        minStrainSpecificCnt = 1;
-    } else if (par.seqMode == 2) {
-        minStrainSpecificCnt = 2;
-    } else if (par.seqMode == 3) {
-        minStrainSpecificCnt = 3;
-        if (queryLength > 3000) {
-            minStrainSpecificCnt = queryLength / 1000;
-        }
+    int minStrainSpecificCnt = par.seqMode;
+    if (par.seqMode == 3 && queryLength > 3000){
+        minStrainSpecificCnt = queryLength / 1000;
     }
-    if (NcbiTaxonomy::findRankIndex(taxonomy->taxonNode(selectedSpecies)->rank) == 4) {
-        unordered_map<TaxID, int> strainMatchCnt;
-        for (size_t i = 0; i < genusMatches.size(); i++) {
-            if (!genusMatches[i].redundacny
-                && taxonomy->IsAncestor2(selectedSpecies, taxIdList[genusMatches[i].targetId])) {
-                strainMatchCnt[taxIdList[genusMatches[i].targetId]]++;
-            }
-        }
-        for (auto strainIt = strainMatchCnt.begin(); strainIt != strainMatchCnt.end(); strainIt++) {
-            if (strainIt->second > minStrainSpecificCnt) {
-                strainID = strainIt->first;
-                numOfstrains++;
-                count = strainIt->second;
+    unordered_map<TaxID, int> strainMatchCnt;
+    for (auto & genusMatch : genusMatches){
+        if(speciesTaxIdList[genusMatch.targetId] == selectedTaxon){
+            // Record matches of selected species
+            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
+            // Count the number of strain-specific matches
+            if (!genusMatch.redundacny){
+                strainMatchCnt[taxIdList[genusMatch.targetId]]++;
             }
         }
     }
 
-    if (numOfstrains == 1 && count > minStrainSpecificCnt + 1) {selectedSpecies = strainID;}
+    // Count the number of strains with enough strain-specific matches
+    for (auto strainIt = strainMatchCnt.begin(); strainIt != strainMatchCnt.end(); strainIt++) {
+        if (strainIt->second > minStrainSpecificCnt) {
+            strainID = strainIt->first;
+            numOfstrains++;
+            count = strainIt->second;
+        }
+    }
+
+    // If there are multiple strains with enough strain-specific matches, classify to the LCA of the strains.
+    if (numOfstrains > 1) {
+        vector<TaxID> strainList;
+        strainList.reserve(strainMatchCnt.size());
+        for (auto strainIt = strainMatchCnt.begin(); strainIt != strainMatchCnt.end(); strainIt++) {
+            if (strainIt->second > minStrainSpecificCnt) {
+                strainList.push_back(strainIt->first);
+            }
+        }
+        selectedTaxon = taxonomy->LCA(strainList)->taxId;
+    }
+    // If there is only one strain with enough strain-specific matches, classify to the strain.
+    else if (numOfstrains == 1 && count > minStrainSpecificCnt + 1) {
+        selectedTaxon = strainID;
+    }
 
     // Store classification results
     queryList[currentQuery].isClassified = true;
-    queryList[currentQuery].classification = selectedSpecies;
+    queryList[currentQuery].classification = selectedTaxon;
     queryList[currentQuery].score = speciesScore.score;
     queryList[currentQuery].coverage = speciesScore.coverage;
     queryList[currentQuery].hammingDist = speciesScore.hammingDist;
-    queryList[currentQuery].newSpecies = false;
+
 //    if (par.verbosity == 4) {
 //        cout << "# " << currentQuery << endl;
 //        for (size_t i = 0; i < genusMatches.size(); i++) {
