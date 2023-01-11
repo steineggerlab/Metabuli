@@ -109,7 +109,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     size_t numOfSeq2;
     if (par.seqMode == 1 || par.seqMode == 3) {
         queryFile = mmapData<char>(queryPath_1.c_str());
-        IndexCreator::splitFASTA(sequences, queryFile);
+        IndexCreator::splitSequenceFile(sequences, queryFile);
         numOfSeq = sequences.size();
         queryList = new Query[numOfSeq];
         // Calculate the total read length
@@ -126,8 +126,8 @@ void Classifier::startClassify(const LocalParameters &par) {
 	Util::touchMemory(queryFile.data, queryFile.fileSize);
         Util::touchMemory(queryFile2.data, queryFile2.fileSize);
 
-        IndexCreator::splitFASTA(sequences, queryFile);
-        IndexCreator::splitFASTA(sequences2, queryFile2);
+        IndexCreator::splitSequenceFile(sequences, queryFile);
+        IndexCreator::splitSequenceFile(sequences2, queryFile2);
         numOfSeq = sequences.size();
         numOfSeq2 = sequences2.size();
         // Calculate the total read length
@@ -243,11 +243,11 @@ void Classifier::startClassify(const LocalParameters &par) {
 //    ofstream wr2;
 //    vector<int> wrongClassifications;
 //    sequences.clear();
-//    IndexCreator::splitFASTA(sequences, queryFile);
+//    IndexCreator::splitSequenceFile(sequences, queryFile);
 //    wr.open(par.filenames[0]+"_wrong_1");
 //    if(par.seqMode == 2) {
 //        sequences2.clear();
-//        IndexCreator::splitFASTA(sequences2, queryFile2);
+//        IndexCreator::splitSequenceFile(sequences2, queryFile2);
 //        wr2.open(par.filenames[0] + "_wrong_2");
 //    }
 //    performanceTest(taxonomy, queryList, numOfSeq, wrongClassifications);

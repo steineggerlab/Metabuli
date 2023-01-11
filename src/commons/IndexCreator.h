@@ -92,40 +92,40 @@ private:
     void trainProdigal();
     void loadTrainingInfo();
 
-    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<int> & taxIdList);
+//    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<int> & taxIdList);
     void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
 
     void writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
 
-    static size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
-                                        bool * checker,
-                                        size_t & processedTaxIdCnt,
-                                        const vector<FastaSplit> & splits,
-                                        const vector<TaxId2Fasta> & taxid2fasta,
-                                        const LocalParameters & par);
+//    static size_t fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
+//                                        bool * checker,
+//                                        size_t & processedTaxIdCnt,
+//                                        const vector<FastaSplit> & splits,
+//                                        const vector<TaxId2Fasta> & taxid2fasta,
+//                                        const LocalParameters & par);
 
     size_t fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                 bool *checker,
                                 size_t &processedSplitCnt,
                                 const LocalParameters &par);
 
-    static void extractKmerFromFasta(SeqIterator &seqIterator, MmapedData<char> &seqFile, priority_queue<uint64_t> &standardList,
-                     size_t lengthOfTrainingSeq, const vector<Sequence> &sequences, ProdigalWrapper &prodigal,
-                     vector<uint64_t> &intergenicKmerList, TargetKmerBuffer &kmerBuffer, size_t & posToWrite,
-                     uint32_t seqID, int taxIdAtRank, size_t startIdx);
+//    static void extractKmerFromFasta(SeqIterator &seqIterator, MmapedData<char> &seqFile, priority_queue<uint64_t> &standardList,
+//                     size_t lengthOfTrainingSeq, const vector<Sequence> &sequences, ProdigalWrapper &prodigal,
+//                     vector<uint64_t> &intergenicKmerList, TargetKmerBuffer &kmerBuffer, size_t & posToWrite,
+//                     uint32_t seqID, int taxIdAtRank, size_t startIdx);
 
 
     void makeBlocksForParallelProcessing();
 
-    void splitAFastaFile(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqSegments);
-    void splitFasta(int file_idx, TaxID speciesID);
-    void groupFastaFiles(const vector<TaxId2Fasta> & taxIdListAtRank, vector<FastaSplit> & fastaSplit);
-    void mappingFromTaxIDtoFasta(const string & fastaList_fname,
-                                 unordered_map<string, int> & assacc2taxid,
-                                 vector<TaxId2Fasta> & taxid2fasta,
-                                 NcbiTaxonomy & taxonomy);
+//    void splitAFastaFile(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqSegments);
+    void splitFastaForProdigalTraining(int file_idx, TaxID speciesID);
+//    void groupFastaFiles(const vector<TaxId2Fasta> & taxIdListAtRank, vector<FastaSplit> & fastaSplit);
+//    void mappingFromTaxIDtoFasta(const string & fastaList_fname,
+//                                 unordered_map<string, int> & assacc2taxid,
+//                                 vector<TaxId2Fasta> & taxid2fasta,
+//                                 NcbiTaxonomy & taxonomy);
 
     void unzipAndList(const string & folder, const string & fastaList_fname){
         system(("./../../util/unzip_and_list.sh " + folder + " " + fastaList_fname).c_str());
@@ -134,9 +134,9 @@ private:
     void load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
     static void load_accession2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
 
-    static size_t estimateKmerNum(const vector<TaxId2Fasta> & taxid2fasta, const FastaSplit & split);
-    void reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniqeKmerIdx, size_t & uniqKmerCnt, const LocalParameters & par,
-                          const vector<TaxId2Fasta> & taxid2fasta);
+//    static size_t estimateKmerNum(const vector<TaxId2Fasta> & taxid2fasta, const FastaSplit & split);
+//    void reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniqeKmerIdx, size_t & uniqKmerCnt, const LocalParameters & par,
+//                          const vector<TaxId2Fasta> & taxid2fasta);
     void reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniqeKmerIdx, size_t & uniqKmerCnt,
                           const LocalParameters & par);
     size_t AminoAcidPart(size_t kmer) {
@@ -155,8 +155,8 @@ private:
     }
 
 public:
-    static void splitFASTA(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
-    static void splitFASTQ(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
+    static void splitSequenceFile(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
+
     string getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const string & seqFileName,
                                   const unordered_map<string, TaxID> & acc2taxid,
                                   unordered_map<string, TaxID> & foundAcc2taxid);
