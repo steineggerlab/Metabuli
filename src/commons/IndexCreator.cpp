@@ -341,7 +341,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                     // Load FASTA file for training
                     struct MmapedData<char> fastaForTraining = mmapData<char>(
                             taxid2fasta[splits[i].training].fasta.c_str());
-                    getSeqSegmentsWithHead(sequences, fastaForTraining);
+                    splitFASTA(sequences, fastaForTraining);
                     sort(sequences.begin(), sequences.end(),
                          [](const Sequence &a, const Sequence &b) { return a.length > b.length; });
 
@@ -397,7 +397,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer & kmerBuffer,
                     // For other FASTA files...
                     for (size_t fastaCnt = 1; fastaCnt < splits[i].cnt; fastaCnt++) {
                         struct MmapedData<char> seqFile = mmapData<char>(taxid2fasta[splits[i].offset + fastaCnt].fasta.c_str());
-                        getSeqSegmentsWithHead(sequences, seqFile);
+                        splitFASTA(sequences, seqFile);
                         sort(sequences.begin(), sequences.end(),
                              [](const Sequence &a, const Sequence &b) { return a.length > b.length; });
                         extractKmerFromFasta(seqIterator, seqFile, standardList, lengthOfTrainingSeq, sequences,
@@ -834,26 +834,11 @@ inline bool IndexCreator::compareForDiffIdx(const TargetKmer & a, const TargetKm
     return a.ADkmer < b.ADkmer || (a.ADkmer == b.ADkmer && a.taxIdAtRank < b.taxIdAtRank);
 }
 
-void IndexCreator::getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile) {
-    size_t start = 0;
-    size_t numOfChar = seqFile.fileSize / sizeof(char);
-    for(size_t i = 0; i < numOfChar; i++){
-        if(seqFile.data[i] == '>'){
-            seqSegments.emplace_back(start, i-2, i - start - 1);// the first push_back is a garbage.
-            while(seqFile.data[i] != '\n'){
-                i++;
-            }
-            start = i + 1;
-        }
-    }
-    seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
-}
-
-void IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile) {
+void IndexCreator::splitFASTA(vector<Sequence> & seqSegments, MmapedData<char> seqFile) {
     size_t start = 0;
     size_t numOfChar = seqFile.fileSize / sizeof(char);
     for(size_t i = 1; i < numOfChar; i++){
-        if(seqFile.data[i] == '>'){
+        if(seqFile.data[i] == '>' || seqFile.data[i] == '@'){
             seqSegments.emplace_back(start, i-2, i - start - 1);
             start = i;
         }
@@ -878,12 +863,12 @@ string IndexCreator::getSeqSegmentsWithHead(vector<Sequence> & seqSegments, cons
     size_t seqCnt = taxIdList.size();
     if (seqFile.is_open()) {
         getline(seqFile, firstLine, '\n');
-        cout << firstLine << endl;
+//        cout << firstLine << endl;
         taxIdList.push_back(acc2taxid.at(firstLine.substr(1, firstLine.find('.') - 1)));
         foundAcc2taxid[firstLine.substr(1, firstLine.find(' ') - 1)] = taxIdList.back();
         while (getline(seqFile, eachLine, '\n')) {
             if (eachLine[0] == '>') {
-                cout << eachLine << endl;
+//                cout << eachLine << endl;
                 taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find('.') - 1)));
                 foundAcc2taxid[eachLine.substr(1, eachLine.find(' ') - 1)] = taxIdList.back();
                 pos = (size_t) seqFile.tellg();

@@ -136,7 +136,6 @@ protected:
 
     int getQueryKmerNumber(int queryLength);
 
-
     void linearSearchParallel(
             QueryKmer *queryKmerList,
             size_t &queryKmerCnt,

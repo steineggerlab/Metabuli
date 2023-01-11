@@ -118,7 +118,7 @@ private:
 
 
     void makeBlocksForParallelProcessing();
-    static void getSeqSegmentsWithoutHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
+
     void splitAFastaFile(const vector<int> & taxIdListAtRank, vector<FastaSplit> & fastaSplit, vector<Sequence> & seqSegments);
     void splitFasta(int file_idx, TaxID speciesID);
     void groupFastaFiles(const vector<TaxId2Fasta> & taxIdListAtRank, vector<FastaSplit> & fastaSplit);
@@ -155,7 +155,8 @@ private:
     }
 
 public:
-    static void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
+    static void splitFASTA(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
+    static void splitFASTQ(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
     string getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const string & seqFileName,
                                   const unordered_map<string, TaxID> & acc2taxid,
                                   unordered_map<string, TaxID> & foundAcc2taxid);
