@@ -116,6 +116,7 @@ void Classifier::startClassify(const LocalParameters &par) {
         numOfSeq = sequences.size();
         queryList = new Query[numOfSeq];
         // Calculate the total read length
+        // TODO : This is not correct for the FASTQ format
         for (size_t i = 0; i < numOfSeq; i++) {
             totalReadLength += sequences[i].length;
         }
@@ -133,7 +134,9 @@ void Classifier::startClassify(const LocalParameters &par) {
         IndexCreator::splitSequenceFile(sequences2, queryFile2);
         numOfSeq = sequences.size();
         numOfSeq2 = sequences2.size();
+
         // Calculate the total read length
+        // TODO : This is not correct for the FASTQ format
         for (size_t i = 0; i < numOfSeq; i++) {
             totalReadLength += sequences[i].length;
         }
@@ -148,6 +151,7 @@ void Classifier::startClassify(const LocalParameters &par) {
         }
     }
     cout << "Done" << endl;
+    cout << "Total number of sequences: " << numOfSeq << endl;
 
     // Allocate memory for buffers
     // 1. Calculate estimated maximum RAM usage
@@ -164,7 +168,7 @@ void Classifier::startClassify(const LocalParameters &par) {
         maxCount = ((size_t) par.ramUsage * 1'000'000'000 - memoryForReads - memoryForThreads) /
                 (96 * (par.ramUsage + 32) / par.ramUsage);
         memoryForQueryKmer = maxCount * sizeof(QueryKmer);
-        memoryForKmerMatch = maxCount * sizeof(Match) * 7;
+        memoryForKmerMatch = maxCount * sizeof(Match) * 5;
     } else {
         maxCount = estimatedNumOfKmer;
     }
@@ -308,10 +312,11 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                 int kmerCnt = getQueryKmerNumber((int) seq->seq.l);
 
                 // Ignore short read
-                if (kmerCnt < 1) {processedSeqCnt++; continue;}
-
-
-
+                if (kmerCnt < 1) {
+                    processedSeqCnt++;
+                    checker[i] = true;
+                    continue;
+                }
 
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt);
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
@@ -386,6 +391,7 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                 // Ignore short read
                 if (kmerCnt2 < 1 || kmerCnt < 1) {
                     processedSeqCnt++;
+                    checker[i] = true;
                     continue;
                 }
 
