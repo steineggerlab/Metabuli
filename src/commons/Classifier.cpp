@@ -110,6 +110,9 @@ void Classifier::startClassify(const LocalParameters &par) {
     if (par.seqMode == 1 || par.seqMode == 3) {
         queryFile = mmapData<char>(queryPath_1.c_str());
         IndexCreator::splitSequenceFile(sequences, queryFile);
+        madvise(queryFile.data, queryFile.fileSize, MADV_SEQUENTIAL);
+        Util::touchMemory(queryFile.data, queryFile.fileSize);
+
         numOfSeq = sequences.size();
         queryList = new Query[numOfSeq];
         // Calculate the total read length
@@ -302,17 +305,23 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
-                seqIterator.sixFrameTranslation(seq->seq.s);
                 int kmerCnt = getQueryKmerNumber((int) seq->seq.l);
-                posToWrite = kmerBuffer.reserveMemory(kmerCnt);
 
                 // Ignore short read
-                if (kmerCnt < 1) continue;
+                if (kmerCnt < 1) {processedSeqCnt++; continue;}
+
+
+
+
+                posToWrite = kmerBuffer.reserveMemory(kmerCnt);
                 if (posToWrite + kmerCnt < kmerBuffer.bufferSize) {
-                    seqIterator.fillQueryKmerBuffer(seq->seq.s, (int)seq->seq.l, kmerBuffer, posToWrite, i);
                     checker[i] = true;
+
+                    seqIterator.sixFrameTranslation(seq->seq.s);
+                    seqIterator.fillQueryKmerBuffer(seq->seq.s, (int)seq->seq.l, kmerBuffer, posToWrite, i);
+
                     queryList[i].queryLength = getMaxCoveredLength((int) seq->seq.l);
-                    queryList[i].queryId = i;
+                    queryList[i].queryId = (int) i;
                     queryList[i].name = string(seq->name.s);
                     queryList[i].kmerCnt = kmerCnt;
 
@@ -398,11 +407,10 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                     queryList[i].queryId = (int) i;
                     queryList[i].name = string(seq->name.s);
                     queryList[i].kmerCnt = kmerCnt + kmerCnt2;
-#pragma omp atomic
-                    processedSeqCnt++;
+
+                    __sync_fetch_and_add(&processedSeqCnt, 1);
                 } else {
-#pragma omp atomic
-                    kmerBuffer.startIndexOfReserve -= kmerCnt + kmerCnt2;
+                    __sync_fetch_and_add(&(kmerBuffer.startIndexOfReserve), -(kmerCnt + kmerCnt2));
                     hasOverflow = true;
                 }
                 kseq_destroy(seq);
