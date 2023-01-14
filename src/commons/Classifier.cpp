@@ -97,6 +97,18 @@ void Classifier::startClassify(const LocalParameters &par) {
 
     size_t totalNumOfQueryKmer = 0;
 
+    // Check if the query file is in FASTA format
+    bool isFasta = false;
+    ifstream check(queryPath_1.c_str());
+    if (check.is_open()) {
+        string line;
+        getline(check, line);
+        if (line[0] == '>') {
+            isFasta = true;
+        }
+    }
+    check.close();
+
     // Load query file
     cout << "Indexing query file ...";
     size_t totalReadLength = 0;
@@ -106,48 +118,57 @@ void Classifier::startClassify(const LocalParameters &par) {
     vector<Sequence> sequences2;
     Query *queryList;
     size_t numOfSeq = 0;
-    size_t numOfSeq2;
+
     if (par.seqMode == 1 || par.seqMode == 3) {
         queryFile = mmapData<char>(queryPath_1.c_str());
-        IndexCreator::splitSequenceFile(sequences, queryFile);
         madvise(queryFile.data, queryFile.fileSize, MADV_SEQUENTIAL);
         Util::touchMemory(queryFile.data, queryFile.fileSize);
 
+        // Get start and end positions of each read
+        if (isFasta) {
+            IndexCreator::splitSequenceFile(sequences, queryFile);
+        } else {
+            splitFASTQ(sequences, queryPath_1);
+        }
+
+        // Allocate memory for query list
         numOfSeq = sequences.size();
         queryList = new Query[numOfSeq];
+
         // Calculate the total read length
-        // TODO : This is not correct for the FASTQ format
         for (size_t i = 0; i < numOfSeq; i++) {
             totalReadLength += sequences[i].length;
         }
     } else if (par.seqMode == 2) {
         queryFile = mmapData<char>(queryPath_1.c_str());
         queryFile2 = mmapData<char>(queryPath_2.c_str());
-
-	madvise(queryFile.data, queryFile.fileSize, MADV_SEQUENTIAL);
+        madvise(queryFile.data, queryFile.fileSize, MADV_SEQUENTIAL);
         madvise(queryFile2.data, queryFile2.fileSize, MADV_SEQUENTIAL);
-        
-	Util::touchMemory(queryFile.data, queryFile.fileSize);
+        Util::touchMemory(queryFile.data, queryFile.fileSize);
         Util::touchMemory(queryFile2.data, queryFile2.fileSize);
 
-        IndexCreator::splitSequenceFile(sequences, queryFile);
-        IndexCreator::splitSequenceFile(sequences2, queryFile2);
+        // Get start and end positions of each read
+        if (isFasta) {
+            IndexCreator::splitSequenceFile(sequences, queryFile);
+            IndexCreator::splitSequenceFile(sequences2, queryFile2);
+        } else {
+            splitFASTQ(sequences, queryPath_1);
+            splitFASTQ(sequences2, queryPath_2);
+        }
+
+        if (sequences.size() != sequences2.size()) {
+            Debug(Debug::ERROR) << "The number of reads in the two files are not equal." << "\n";
+            EXIT(EXIT_FAILURE);
+        }
+
+        // Allocate memory for query list
         numOfSeq = sequences.size();
-        numOfSeq2 = sequences2.size();
+        queryList = new Query[numOfSeq];
 
         // Calculate the total read length
-        // TODO : This is not correct for the FASTQ format
         for (size_t i = 0; i < numOfSeq; i++) {
             totalReadLength += sequences[i].length;
-        }
-        for (size_t i = 0; i < numOfSeq2; i++) {
             totalReadLength += sequences2[i].length;
-        }
-        if (numOfSeq > numOfSeq2) {
-            queryList = new Query[numOfSeq];
-        } else {
-            numOfSeq = numOfSeq2;
-            queryList = new Query[numOfSeq];
         }
     }
     cout << "Done" << endl;
@@ -245,38 +266,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     readClassificationFile.close();
     writeReportFile(outDir + "/" + jobId + "_report.tsv", numOfSeq, taxCounts);
 
-    //Below is for developing
-//    ofstream wr;
-//    ofstream wr2;
-//    vector<int> wrongClassifications;
-//    sequences.clear();
-//    IndexCreator::splitSequenceFile(sequences, queryFile);
-//    wr.open(par.filenames[0]+"_wrong_1");
-//    if(par.seqMode == 2) {
-//        sequences2.clear();
-//        IndexCreator::splitSequenceFile(sequences2, queryFile2);
-//        wr2.open(par.filenames[0] + "_wrong_2");
-//    }
-//    performanceTest(taxonomy, queryList, numOfSeq, wrongClassifications);
-//    for (size_t i = 0; i < wrongClassifications.size(); i++) {
-//        kseq_buffer_t buffer(const_cast<char *>(&queryFile.data[sequences[wrongClassifications[i]].start]), sequences[wrongClassifications[i]].length);
-//        kseq_t *seq = kseq_init(&buffer);
-//        kseq_read(seq);
-//        wr<<">"<<seq->name.s<<endl;
-//        wr<<seq->seq.s<<endl;
-//        kseq_destroy(seq);
-//        if(par.seqMode == 2) {
-//            kseq_buffer_t buffer2(const_cast<char *>(&queryFile2.data[sequences[wrongClassifications[i]].start]),
-//                                  sequences2[wrongClassifications[i]].length);
-//            kseq_t *seq2 = kseq_init(&buffer2);
-//            kseq_read(seq2);
-//            wr2 << ">" << seq2->name.s << endl;
-//            wr2 << seq2->seq.s << endl;
-//            kseq_destroy(seq2);
-//        }
-//    }
-//    wr.close();
-//    wr2.close();
+    // Memory deallocation
     free(matchBuffer.buffer);
     delete[] queryList;
     delete[] processedSeqChecker;
@@ -313,7 +303,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
 
                 // Ignore short read
                 if (kmerCnt < 1) {
-                    processedSeqCnt++;
+                    __sync_fetch_and_add(&processedSeqCnt, 1);
                     checker[i] = true;
                     continue;
                 }
@@ -391,7 +381,7 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
 
                 // Ignore short read
                 if (kmerCnt2 < 1 || kmerCnt < 1) {
-                    processedSeqCnt++;
+                    __sync_fetch_and_add(&processedSeqCnt, 1);
                     checker[i] = true;
                     continue;
                 }
@@ -1750,3 +1740,36 @@ unsigned int Classifier::cladeCountVal(const std::unordered_map<TaxID, TaxonCoun
     }
 }
 
+void Classifier::splitFASTQ(vector<Sequence> & seqSegments, const string & queryPath) {
+    ifstream fastq;
+    fastq.open(queryPath);
+    if (!fastq.is_open()) {
+        cerr << "Error: Cannot open file " << queryPath << endl;
+        exit(1);
+    }
+
+    // FASTQ
+    // First line: ID
+    // Second line: Sequence
+    // Third line: +
+    // Fourth line: Quality
+    // Repeat
+    // Store file pointer for the start of the first line and the end of the second line
+    // Because we don't need to store the quality line
+    string line;
+    size_t lineCnt = 0;
+    size_t start;
+    size_t end;
+    size_t pos;
+    while (getline(fastq, line, '\n')) {
+        if (lineCnt % 4 == 0){
+            start = (size_t) fastq.tellg(); - line.length() - 1;
+        }
+        if (lineCnt % 4 == 1){
+            end = (size_t) fastq.tellg() - 1;
+            seqSegments.emplace_back(start, end, end - start + 1);
+
+        }
+        lineCnt++;
+    }
+}
