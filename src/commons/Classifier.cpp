@@ -300,7 +300,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
-                cout << seq->seq.s << endl; << endl;
+                cout << seq->seq.s << endl;
                 int kmerCnt = getQueryKmerNumber((int) seq->seq.l);
 
                 // Ignore short read
