@@ -323,7 +323,8 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                     checker[i] = true;
 
                     seqIterator.sixFrameTranslation(seq->seq.s);
-                    seqIterator.fillQueryKmerBuffer(seq->seq.s, (int)seq->seq.l, kmerBuffer, posToWrite, i);
+                    seqIterator.fillQueryKmerBuffer(seq->seq.s, (int)seq->seq.l, kmerBuffer, posToWrite,
+                                                    (int) i);
 
                     queryList[i].queryLength = getMaxCoveredLength((int) seq->seq.l);
                     queryList[i].queryId = (int) i;
@@ -852,7 +853,7 @@ void Classifier::analyseResultParallel(Match *matchList,
 void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                  size_t offset, size_t end, Match *matchList, Query *queryList,
                                  const LocalParameters &par) {
-    int queryLength = queryList[currentQuery].queryLength;
+//    int queryLength = queryList[currentQuery].queryLength;
     TaxID selectedTaxon;
 //    if (par.verbosity == 4) {
 //        cout << "# " << currentQuery << endl;
@@ -873,7 +874,8 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                          queryList[currentQuery].queryLength,
                                          queryList[currentQuery].queryLength2);
     } else {
-        genusScore = getBestGenusMatches(genusMatches, matchList, end, offset, queryLength);
+        genusScore = getBestGenusMatches(genusMatches, matchList, end, offset,
+                                         queryList[currentQuery].queryLength);
     }
 
 //    if (par.verbosity == 4) {
@@ -935,7 +937,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                      queryList[currentQuery].queryLength2,
                                      species);
     } else {
-        speciesScore = chooseSpecies(genusMatches, queryLength, species);
+        speciesScore = chooseSpecies(genusMatches, queryList[currentQuery].queryLength, species);
     }
 
     // Classify to LCA if more than one species are selected
@@ -972,9 +974,16 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     int numOfstrains = 0;
     TaxID strainID = 0;
     int count = 1;
-    int minStrainSpecificCnt = par.seqMode;
-    if (par.seqMode == 3 && queryLength > 3000){
-        minStrainSpecificCnt = queryLength / 1000;
+    int minStrainSpecificCnt = 1;
+    if (par.seqMode == 1) {
+        minStrainSpecificCnt = 1;
+    } else if (par.seqMode == 2) {
+        minStrainSpecificCnt = 2;
+    } else if (par.seqMode == 3) {
+        minStrainSpecificCnt = 3;
+        if (queryList[currentQuery].queryLength > 3000) {
+            minStrainSpecificCnt = queryList[currentQuery].queryLength / 1000;
+        }
     }
     unordered_map<TaxID, int> strainMatchCnt;
     for (auto & genusMatch : genusMatches){
@@ -1352,6 +1361,7 @@ TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
     int coveredLength = coveredPosCnt * 3;
     if (coveredLength > queryLength) coveredLength = queryLength;
     float score = ((float) coveredLength - hammingSum) / (float) queryLength;
+    float coverage = (float) (coveredLength) / (float) (queryLength);
 
 
 //    if (verbosity == 4) {
@@ -1361,6 +1371,7 @@ TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
 //             << endl;
 //    }
     matchesForEachGenus.push_back(move(matches));
+    return {genusTaxIdList[filteredMatches[0].targetId], score, coverage, (int) hammingSum};
 }
 
 TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
