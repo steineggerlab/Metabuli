@@ -1765,10 +1765,10 @@ void Classifier::splitFASTQ(vector<Sequence> & seqSegments, const string & query
     size_t pos;
     while (getline(fastq, line)) {
         if (lineCnt % 4 == 0){
-            start = (size_t) fastq.tellg(); - line.length() - 1;
+            start = (size_t) fastq.tellg() - line.length() - 1;
         }
         if (lineCnt % 4 == 1){
-            end = (size_t) fastq.tellg() - 2;
+            end = (size_t) fastq.tellg() - 1;
             seqSegments.emplace_back(start, end, end - start + 1);
         }
         lineCnt++;
