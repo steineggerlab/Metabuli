@@ -173,6 +173,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     }
     cout << "Done" << endl;
     cout << "Total number of sequences: " << numOfSeq << endl;
+    cout << "Total read length: " << totalReadLength <<  "nt" << endl;
 
     // Allocate memory for buffers
     // 1. Calculate estimated maximum RAM usage
@@ -200,7 +201,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 
 
     QueryKmerBuffer kmerBuffer(maxCount);
-    Buffer<Match> matchBuffer(size_t(maxCount) * size_t(7));
+    Buffer<Match> matchBuffer(size_t(maxCount) * size_t(5));
 
 
     // Checker for multi-threading
@@ -299,6 +300,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
+                cout << seq->seq.s << endl; << endl;
                 int kmerCnt = getQueryKmerNumber((int) seq->seq.l);
 
                 // Ignore short read
@@ -1731,6 +1733,14 @@ unsigned int Classifier::cladeCountVal(const std::unordered_map<TaxID, TaxonCoun
     }
 }
 
+// FASTQ
+// First line: ID
+// Second line: Sequence
+// Third line: +
+// Fourth line: Quality
+// Repeat
+// Store file pointer for the start of the first line and the end of the second line
+// Because we don't need to store the quality line
 void Classifier::splitFASTQ(vector<Sequence> & seqSegments, const string & queryPath) {
     ifstream fastq;
     fastq.open(queryPath);
@@ -1739,27 +1749,18 @@ void Classifier::splitFASTQ(vector<Sequence> & seqSegments, const string & query
         exit(1);
     }
 
-    // FASTQ
-    // First line: ID
-    // Second line: Sequence
-    // Third line: +
-    // Fourth line: Quality
-    // Repeat
-    // Store file pointer for the start of the first line and the end of the second line
-    // Because we don't need to store the quality line
     string line;
     size_t lineCnt = 0;
     size_t start;
     size_t end;
     size_t pos;
-    while (getline(fastq, line, '\n')) {
+    while (getline(fastq, line)) {
         if (lineCnt % 4 == 0){
             start = (size_t) fastq.tellg(); - line.length() - 1;
         }
         if (lineCnt % 4 == 1){
             end = (size_t) fastq.tellg() - 1;
             seqSegments.emplace_back(start, end, end - start + 1);
-
         }
         lineCnt++;
     }
