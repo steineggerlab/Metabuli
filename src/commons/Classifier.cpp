@@ -296,7 +296,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
         size_t posToWrite;
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < seqs.size(); i++) {
-            if (checker[i] == false && !hasOverflow) {
+            if (!checker[i] && !hasOverflow) {
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
@@ -1768,7 +1768,7 @@ void Classifier::splitFASTQ(vector<Sequence> & seqSegments, const string & query
             start = (size_t) fastq.tellg(); - line.length() - 1;
         }
         if (lineCnt % 4 == 1){
-            end = (size_t) fastq.tellg() - 1;
+            end = (size_t) fastq.tellg() - 2;
             seqSegments.emplace_back(start, end, end - start + 1);
         }
         lineCnt++;
