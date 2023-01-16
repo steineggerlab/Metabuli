@@ -100,7 +100,7 @@ int grade(int argc, const char **argv, const Command &command) {
 #endif
 
 #pragma omp parallel default(none), shared(results, ranks, numberOfFiles, mappingFileNames, readClassificationFileNames,\
-ncbiTaxonomy, par, cout, printColumnsIdx)
+ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
     {
         // Grade each file
         unordered_map<string, int> assacc2taxid;
@@ -146,10 +146,11 @@ ncbiTaxonomy, par, cout, printColumnsIdx)
                 // Load mapping file
                 ifstream mappingFileFile;
                 mappingFileFile.open(mappingFile);
+                string line;
                 if (mappingFileFile.is_open()) {
-                    getline(mappingFileFile, eachLine);
-                    while (getline(mappingFileFile, eachLine)) {
-                        vector<string> splitLine = Util::split(eachLine, "\t");
+                    getline(mappingFileFile, line);
+                    while (getline(mappingFileFile, line)) {
+                        vector<string> splitLine = Util::split(line, "\t");
                         assacc2taxid[splitLine[0]] = stoi(splitLine[2]);
                     }
                 } else {
