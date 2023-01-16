@@ -200,7 +200,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
                     size_t pos = id.find('_');
                     id = id.substr(0, pos);
                     rightAnswers.push_back(assacc2taxid[id]);
-                } else if (par.testType == "cami") {
+                } else if (par.testType == "cami" || par.testType == "cami-long") {
                     size_t pos = id.find('/');
                     id = id.substr(0, pos);
                     rightAnswers.push_back(assacc2taxid[id]);
