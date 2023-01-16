@@ -142,21 +142,36 @@ ncbiTaxonomy, par, cout, printColumnsIdx)
             mappingFile = mappingFileNames[i];
             readClassificationFileName = readClassificationFileNames[i];
 
-            // Load the mapping file (answer sheet) (accession to taxID)
-            string key, value;
-            ifstream map;
-            map.open(mappingFile);
-            size_t numberOfAnswers = 0;
-            if (map.is_open()) {
-                while (getline(map, key, '\t')) {
-                    getline(map, value, '\n');
-                    assacc2taxid[key] = stoi(value);
-                    numberOfAnswers++;
+            if (par.testType == "cami-long"){
+                // Load mapping file
+                ifstream mappingFileFile;
+                mappingFileFile.open(mappingFile);
+                if (mappingFileFile.is_open()) {
+                    getline(mappingFileFile, eachLine);
+                    while (getline(mappingFileFile, eachLine)) {
+                        vector<string> splitLine = Util::split(eachLine, "\t");
+                        assacc2taxid[splitLine[0]] = stoi(splitLine[2]);
+                    }
+                } else {
+                    cerr << "Cannot open file for answer" << endl;
                 }
             } else {
-                cout << "Cannot open file for mappig from assemlby accession to tax ID" << endl;
+                // Load the mapping file (answer sheet) (accession to taxID)
+                string key, value;
+                ifstream map;
+                map.open(mappingFile);
+                size_t numberOfAnswers = 0;
+                if (map.is_open()) {
+                    while (getline(map, key, '\t')) {
+                        getline(map, value, '\n');
+                        assacc2taxid[key] = stoi(value);
+                        numberOfAnswers++;
+                    }
+                } else {
+                    cout << "Cannot open file for answer" << endl;
+                }
+                map.close();
             }
-            map.close();
 
             // Load classification results
             string resultLine;
