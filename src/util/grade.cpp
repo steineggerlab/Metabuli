@@ -187,6 +187,10 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
             smatch assacc;
             size_t numberOfClassifications = 0;
             while (getline(readClassification, resultLine, '\n')) {
+                // Skip the line if it does not start with number
+                if (!isdigit(resultLine[0])) {
+                    continue;
+                }
                 // Parse classification result
                 fields = Util::split(resultLine, "\t");
 
