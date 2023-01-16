@@ -192,7 +192,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
                 fields = Util::split(resultLine, "\t");
 
                 // Skip the line if it is not a classification result
-                if (!isdigit(fields[par.readIdCol][0])) {
+                if (!isdigit(fields[par.taxidCol][0])) {
                     continue;
                 }
 
