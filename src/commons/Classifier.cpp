@@ -847,13 +847,13 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                  const LocalParameters &par) {
 //    int queryLength = queryList[currentQuery].queryLength;
     TaxID selectedTaxon;
-//    if (par.verbosity == 4) {
-//        cout << "# " << currentQuery << endl;
-//        for (size_t i = offset; i < end + 1; i++) {
-//            cout << genusTaxIdList[matchList[i].targetId] << " " << speciesTaxIdList[matchList[i].targetId] << " " <<
-//            taxIdList[matchList[i].targetId] << " " << matchList[i].position << " " << int(matchList[i].hamming) << endl;
-//        }
-//    }
+    if (PRINT) {
+        cout << "# " << currentQuery << " " << queryList[currentQuery].queryId << endl;
+        for (size_t i = offset; i < end + 1; i++) {
+            cout << genusTaxIdList[matchList[i].targetId] << " " << speciesTaxIdList[matchList[i].targetId] << " " <<
+            taxIdList[matchList[i].targetId] << " " << matchList[i].position << " " << int(matchList[i].hamming) << endl;
+        }
+    }
 
     // Get the best genus for current query
     vector<Match> genusMatches;
@@ -870,14 +870,14 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                          queryList[currentQuery].queryLength);
     }
 
-//    if (par.verbosity == 4) {
-//        cout << "# " << currentQuery << " filtered\n";
-//        for (size_t i = 0; i < genusMatches.size(); i++) {
-//            cout << genusTaxIdList[genusMatches[i].targetId] << " " << speciesTaxIdList[genusMatches[i].targetId] << " " <<
-//                 taxIdList[genusMatches[i].targetId] << " " << genusMatches[i].position << " " << int(genusMatches[i].hamming) << "\n";
-//        }
-//        cout << "Genus score: " << genusScore.score << "\n";
-//    }
+    if (PRINT) {
+        cout << "# " << currentQuery << " " << queryList[currentQuery].queryId << " filtered\n";
+        for (size_t i = 0; i < genusMatches.size(); i++) {
+            cout << genusTaxIdList[genusMatches[i].targetId] << " " << speciesTaxIdList[genusMatches[i].targetId] << " " <<
+                 taxIdList[genusMatches[i].targetId] << " " << genusMatches[i].position << " " << int(genusMatches[i].hamming) << "\n";
+        }
+        cout << "Genus score: " << genusScore.score << "\n";
+    }
 
     // If there is no proper genus for current query, it is un-classified.
     if (genusScore.score == 0 || genusScore.coverage < par.minCoverage || genusScore.score < par.minScore) {
@@ -1012,16 +1012,16 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     queryList[currentQuery].coverage = speciesScore.coverage;
     queryList[currentQuery].hammingDist = speciesScore.hammingDist;
     queryList[currentQuery].newSpecies = false;
-//    if (par.verbosity == 4) {
-//        cout << "# " << currentQuery << endl;
-//        for (size_t i = 0; i < genusMatches.size(); i++) {
-//            cout << i << " " << genusMatches[i].position << " " <<
-//            taxIdList[genusMatches[i].targetId] << " " << int(genusMatches[i].hamming) << endl;
-//        }
-//        cout << "Score: " << speciesScore.score << "  " << selectedSpecies << " "
-//             << taxonomy->taxonNode(selectedSpecies)->rank
-//             << endl;
-//    }
+    if (PRINT) {
+        cout << "# " << currentQuery << endl;
+        for (size_t i = 0; i < genusMatches.size(); i++) {
+            cout << i << " " << genusMatches[i].position << " " <<
+            taxIdList[genusMatches[i].targetId] << " " << int(genusMatches[i].hamming) << endl;
+        }
+        cout << "Score: " << speciesScore.score << "  " << selectedSpecies << " "
+             << taxonomy->taxonNode(selectedSpecies)->rank
+             << endl;
+    }
 }
 
 TaxonScore Classifier::getBestGenusMatches(vector<Match> & genusMatches,
