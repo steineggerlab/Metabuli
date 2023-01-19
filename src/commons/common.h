@@ -7,13 +7,13 @@
 // 10'000'000'000 -> build_dir 397G RAM
 // 1'000'000'000 -> build_dir 39.7G RAM
 #define SplitNum 4096
-#define PRINT false
+#define PRINT true
 #define likely(x) __builtin_expect((x),1)
 #define unlikely(x) __builtin_expect((x),0)
 
 struct Sequence{
     Sequence(size_t start, size_t end, size_t length, size_t totalSeqCnt = 0)
-    : start(start), end(end), length(length), totalSeqCnt(totalSeqCnt) {}
+            : start(start), end(end), length(length), totalSeqCnt(totalSeqCnt) {}
     Sequence() : start(0), end(0), length(0), totalSeqCnt(0) { }
     size_t start;
     size_t end;
