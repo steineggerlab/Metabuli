@@ -1178,7 +1178,7 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *m
             lastPos = -1;
             lastIn = false;
             while ((i < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
-                if (matchList[i].position + 3 >= matchList[i + 1].position) {
+                if (matchList[i].position + 29 >= matchList[i + 1].position) { // 3 -> 29
                     tempMatchContainer.push_back(matchList[i]);
                     speciesMatchCnt++;
                     if (matchList[i].position / 3 != lastPos) {
