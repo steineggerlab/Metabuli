@@ -1191,13 +1191,15 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *m
                     }
                     lastIn = true;
                 }
-                else if (matchList[i].position + 29 >= matchList[i + 1].position && temp >= 1){
+                else if (matchList[i].position + 29 >= matchList[i + 1].position && temp > 1){
                     temp = 0;
                     tempMatchContainer.push_back(matchList[i]);
                     speciesMatchCnt++;
-                    lastPos = matchList[i].position / 3;
-                    speciesDiffPosCnt++;
-                    consecutiveCnt++;
+                    if (matchList[i].position / 3 != lastPos) {
+                        lastPos = matchList[i].position / 3;
+                        speciesDiffPosCnt++;
+                        consecutiveCnt++;
+                    }
                 }
                 else if (lastIn) {
                     lastIn = false;
