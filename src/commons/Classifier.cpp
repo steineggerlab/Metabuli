@@ -817,6 +817,9 @@ void Classifier::analyseResultParallel(Match *matchList,
 
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
+    if(PRINT){
+        omp_set_num_threads(1);
+    }
 #endif
 
     // Process each block
