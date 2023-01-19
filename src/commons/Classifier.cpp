@@ -1178,6 +1178,7 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *m
             consecutiveCnt = 0;
             lastPos = -1;
             lastIn = false;
+            temp = 0;
             while ((i < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
                 if (matchList[i].position + 3 >= matchList[i + 1].position) { // 3 -> 29
                     tempMatchContainer.push_back(matchList[i]);
@@ -1190,14 +1191,14 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *m
                     }
                     lastIn = true;
                 }
-//                else if (matchList[i].position + 29 >= matchList[i + 1].position && temp > 2){
-//                    temp = 0;
-//                    tempMatchContainer.push_back(matchList[i]);
-//                    speciesMatchCnt++;
-//                    lastPos = matchList[i].position / 3;
-//                    speciesDiffPosCnt++;
-//                    consecutiveCnt++;
-//                }
+                else if (matchList[i].position + 29 >= matchList[i + 1].position && temp > 2){
+                    temp = 0;
+                    tempMatchContainer.push_back(matchList[i]);
+                    speciesMatchCnt++;
+                    lastPos = matchList[i].position / 3;
+                    speciesDiffPosCnt++;
+                    consecutiveCnt++;
+                }
                 else if (lastIn) {
                     lastIn = false;
                     tempMatchContainer.push_back(matchList[i]);
@@ -1214,6 +1215,7 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *m
                     consecutiveCnt = 0;
                     speciesMatchCnt = 0;
                     tempMatchContainer.clear();
+                    temp = 0;
                 }
                 i++;
             }
