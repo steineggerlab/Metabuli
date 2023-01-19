@@ -203,20 +203,19 @@ void Classifier::startClassify(const LocalParameters &par) {
     QueryKmerBuffer kmerBuffer(maxCount);
     Buffer<Match> matchBuffer(size_t(maxCount) * size_t(5));
 
-
     // Checker for multi-threading
     bool *processedSeqChecker = new bool[numOfSeq];
     fill_n(processedSeqChecker, numOfSeq, false);
     size_t processedSeqCnt = 0;
 
-    //
     size_t numOfTatalQueryKmerCnt = 0;
     size_t totalMatchCnt = 0;
-    // Extract k-mers from query sequences and compare them to target k-mer DB
+
+
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
 #endif
-
+    // Extract k-mers from query sequences and compare them to target k-mer DB
     while (processedSeqCnt < numOfSeq) {
         time_t beforeKmerExtraction = time(nullptr);
 
