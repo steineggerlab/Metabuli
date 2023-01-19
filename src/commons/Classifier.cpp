@@ -850,7 +850,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
 //    int queryLength = queryList[currentQuery].queryLength;
     TaxID selectedTaxon;
     if (PRINT) {
-        cout << "# " << currentQuery << " " << queryList[currentQuery].queryId << endl;
+        cout << "# " << currentQuery << " " << queryList[currentQuery].name << endl;
         for (size_t i = offset; i < end + 1; i++) {
             cout << genusTaxIdList[matchList[i].targetId] << " " << speciesTaxIdList[matchList[i].targetId] << " " <<
             taxIdList[matchList[i].targetId] << " " << matchList[i].position << " " << int(matchList[i].hamming) << endl;
@@ -873,7 +873,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     }
 
     if (PRINT) {
-        cout << "# " << currentQuery << " " << queryList[currentQuery].queryId << " filtered\n";
+        cout << "# " << currentQuery << " " << queryList[currentQuery].name << " filtered\n";
         for (size_t i = 0; i < genusMatches.size(); i++) {
             cout << genusTaxIdList[genusMatches[i].targetId] << " " << speciesTaxIdList[genusMatches[i].targetId] << " " <<
                  taxIdList[genusMatches[i].targetId] << " " << genusMatches[i].position << " " << int(genusMatches[i].hamming) << "\n";
