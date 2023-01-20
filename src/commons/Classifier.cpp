@@ -1307,7 +1307,7 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
                 distance = matchList[i + 1].position - matchList[i].position;
                 if ((distance < 6) || (26 < distance && distance < 30)) {
                     // Check density
-                    range += double(distance) / 3;
+                    range += ((double) matchList[i + 1].position / 3 - (double) matchList[i].position / 3) / 3;
                     if (double(currentConsecutiveCnt + 1) / range >= 0.2) {
                         tempMatchContainer.push_back(matchList[i]);
                         if (distance < 6) { // Consecutive
