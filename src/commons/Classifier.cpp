@@ -1310,7 +1310,7 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
                     distance = matchList[i + 1].position - matchList[i].position;
                     range += double(distance) / 3;
                     /// TODO: it's wrong
-                    if (double(currentConsecutiveCnt + 1) / range >= 0.2){
+                    if (double(currentConsecutiveCnt + 1) / range >= 0.2) {
                         tempMatchContainer.push_back(matchList[i]);
                         if (distance < 6) { // Consecutive
                             if (matchList[i + 1].position - matchList[i].position > 3) { // Next amino acid
@@ -1336,6 +1336,7 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
                                                tempMatchContainer.end());
                     }
                     tempMatchContainer.clear();
+                    range = 0;
                 }
                 i++;
             }
