@@ -1310,24 +1310,23 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
             size_t maxConsecutiveCnt = 0;
             size_t currentConsecutiveCnt = 1;
             size_t distance = 0;
+            int lastPos = -1;
             while ((i < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
-                if ((matchList[i + 1].position < matchList[i].position + 6) || // Right next to each other
-                    (matchList[i].position + 26 < matchList[i + 1].position && // Or 1 Gap
-                     matchList[i + 1].position < matchList[i].position + 30)){
+                distance = matchList[i + 1].position - matchList[i].position;
+                if ((distance < 6) || (26 < distance && distance < 30)) {
                     // Check density
-                    distance = matchList[i + 1].position - matchList[i].position;
                     range += double(distance) / 3;
-                    /// TODO: it's wrong
                     if (double(currentConsecutiveCnt + 1) / range >= 0.2) {
                         tempMatchContainer.push_back(matchList[i]);
                         if (distance < 6) { // Consecutive
-                            if (matchList[i + 1].position - matchList[i].position > 3) { // Next amino acid
+                            if (matchList[i].position / 3 != matchList[i+1].position / 3) { // Next amino acid
                                 currentConsecutiveCnt++;
                             }
                         } else { // Gap
                             if (currentConsecutiveCnt > maxConsecutiveCnt) {
                                 maxConsecutiveCnt = currentConsecutiveCnt;
                             }
+//                            lastPos = matchList[i].position / 3;
                             currentConsecutiveCnt = 1;
                         }
                         lastIn = true;
@@ -1350,10 +1349,6 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
             }
             if (lastIn) {
                 tempMatchContainer.push_back(matchList[i]);
-//                if (matchList[i].position - matchList[i - 1].position > 3) { // Next amino acid
-//                    speciesDiffPosCnt++;
-//                    currentConsecutiveCnt++;
-//                }
                 if (currentConsecutiveCnt > maxConsecutiveCnt) {
                     maxConsecutiveCnt = currentConsecutiveCnt;
                 }
