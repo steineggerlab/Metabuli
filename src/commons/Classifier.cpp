@@ -868,7 +868,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                          queryList[currentQuery].queryLength,
                                          queryList[currentQuery].queryLength2);
     } else {
-        genusScore = getBestGenusMatches(genusMatches, matchList, end, offset,
+        genusScore = getBestGenusMatches2(genusMatches, matchList, end, offset,
                                          queryList[currentQuery].queryLength);
     }
 
@@ -1290,10 +1290,6 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
     size_t i = offset;
     bool lastIn;
     size_t speciesMatchCnt;
-    size_t speciesDiffPosCnt;
-    size_t consecutiveCnt;
-    size_t temp = 0;
-    int lastPos;
     while (i < end + 1) {
         currentGenus = genusTaxIdList[matchList[i].targetId];
         // For current genus
@@ -1301,65 +1297,58 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
             currentSpecies = speciesTaxIdList[matchList[i].targetId];
             // For current species
             // Filter un-consecutive matches (probably random matches)
-            speciesMatchCnt = 0;
-            speciesDiffPosCnt = 0;
-            consecutiveCnt = 0;
-            lastPos = -1;
             lastIn = false;
-            temp = 0;
+            double range = 0;
+            size_t maxConsecutiveCnt = 0;
+            size_t currentConsecutiveCnt = 1;
+            size_t distance = 0;
             while ((i < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
-                if (matchList[i].position + 3 >= matchList[i + 1].position) { // 3 -> 29
-                    tempMatchContainer.push_back(matchList[i]);
-                    speciesMatchCnt++;
-                    if (matchList[i].position / 3 != lastPos) {
-                        lastPos = matchList[i].position / 3;
-                        speciesDiffPosCnt++;
-                        consecutiveCnt++;
-                        temp ++;
+                if ((matchList[i + 1].position < matchList[i].position + 6) || // Right next to each other
+                    (matchList[i].position + 26 < matchList[i + 1].position && // Or 1 Gap
+                     matchList[i + 1].position < matchList[i].position + 30)){
+                    // Check density
+                    distance = matchList[i + 1].position - matchList[i].position;
+                    range += double(distance) / 3;
+                    /// TODO: it's wrong
+                    if (double(currentConsecutiveCnt + 1) / range >= 0.2){
+                        tempMatchContainer.push_back(matchList[i]);
+                        if (distance < 6) { // Consecutive
+                            if (matchList[i + 1].position - matchList[i].position > 3) { // Next amino acid
+                                currentConsecutiveCnt++;
+                            }
+                        } else { // Gap
+                            if (currentConsecutiveCnt > maxConsecutiveCnt) {
+                                maxConsecutiveCnt = currentConsecutiveCnt;
+                            }
+                            currentConsecutiveCnt = 1;
+                        }
+                        lastIn = true;
                     }
-                    lastIn = true;
-                }
-                else if (matchList[i].position + 26 < matchList[i + 1].position &&
-                         matchList[i + 1].position < matchList[i].position + 30 && temp > 1) {
-                    temp = 0;
-                    tempMatchContainer.push_back(matchList[i]);
-                    speciesMatchCnt++;
-                    if (matchList[i].position / 3 != lastPos) {
-                        lastPos = matchList[i].position / 3;
-                        speciesDiffPosCnt++;
-                        consecutiveCnt++;
-                    }
-                    lastIn = true;
-                }
-                else if (lastIn) {
+                } else if (lastIn) {
                     lastIn = false;
                     tempMatchContainer.push_back(matchList[i]);
-                    speciesMatchCnt++;
-                    if (matchList[i].position / 3 != lastPos) {
-                        lastPos = matchList[i].position / 3;
-                        speciesDiffPosCnt++;
-                        consecutiveCnt++;
+                    if (currentConsecutiveCnt > maxConsecutiveCnt) {
+                        maxConsecutiveCnt = currentConsecutiveCnt;
                     }
-                    if (consecutiveCnt >= minConsCnt) {
+                    currentConsecutiveCnt = 1;
+                    if (maxConsecutiveCnt >= 3 && tempMatchContainer.size() >= minConsCnt) {
                         filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                                tempMatchContainer.end());
                     }
-                    consecutiveCnt = 0;
-                    speciesMatchCnt = 0;
                     tempMatchContainer.clear();
-                    temp = 0;
                 }
                 i++;
             }
             if (lastIn) {
                 tempMatchContainer.push_back(matchList[i]);
-                speciesMatchCnt++;
-                if (matchList[i].position / 3 != lastPos) {
-                    lastPos = matchList[i].position / 3;
-                    speciesDiffPosCnt++;
-                    consecutiveCnt++;
+//                if (matchList[i].position - matchList[i - 1].position > 3) { // Next amino acid
+//                    speciesDiffPosCnt++;
+//                    currentConsecutiveCnt++;
+//                }
+                if (currentConsecutiveCnt > maxConsecutiveCnt) {
+                    maxConsecutiveCnt = currentConsecutiveCnt;
                 }
-                if (consecutiveCnt >= minConsCnt) {
+                if (maxConsecutiveCnt >= 3 && tempMatchContainer.size() >= minConsCnt) {
                     filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                            tempMatchContainer.end());
                 }
