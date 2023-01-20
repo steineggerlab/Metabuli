@@ -1311,7 +1311,6 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
             size_t currentConsecutiveCnt = 1;
             size_t distance = 0;
             size_t diffPosCntOfCurrRange = 1;
-            // TODO: 000000000----------------------------00000 도 고려
             while ((i < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
                 distance = matchList[i + 1].position - matchList[i].position;
                 if ((distance < 6) || (26 < distance && distance < 30)) {
