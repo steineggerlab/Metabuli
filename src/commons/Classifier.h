@@ -117,7 +117,7 @@ protected:
             {3, 2, 3, 3, 4, 4, 1, 0}};
 
     // Index reads in query file
-    void splitFASTQ(vector<Sequence> & seqSegments, const string & queryPath);
+    static void splitFASTQ(vector<Sequence> & seqSegments, const string & queryPath);
 
     // Extract query k-mer
     void fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer, MmapedData<char> &seqFile, vector<Sequence> &seqs,
@@ -171,6 +171,9 @@ protected:
     TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
                                    size_t offset, int queryLength);
 
+    TaxonScore getBestGenusMatches2(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
+                                   size_t offset, int queryLength);
+
     TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end, size_t offset,
                                    int readLength1, int readLength2);
 
@@ -187,8 +190,6 @@ protected:
                                    vector<vector<Match>> &matchesForEachGenus,
                                    vector<float> &scoreOfEachGenus,
                                    int readLength1, int readLength2);
-
-    static bool sortMatchesByPos(const Match &a, const Match &b);
 
     TaxonScore chooseSpecies(const std::vector<Match> &matches,
                        int queryLength,
