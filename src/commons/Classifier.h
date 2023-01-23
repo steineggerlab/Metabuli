@@ -59,6 +59,7 @@ protected:
     uint8_t hammingMargin;
     float minSpScore;
     size_t minConsCnt;
+    int minCoveredPos;
 
     NcbiTaxonomy * taxonomy;
     vector<TaxID> taxIdList;
@@ -155,11 +156,11 @@ protected:
     void moveMatches(Match *dest, Match *src, int &matchNum);
 
     // Analyzing k-mer matches
-    void analyseResultParallel(Match *matchList,
-                               size_t numOfMatches,
-                               int seqNum,
-                               Query *queryList,
-                               const LocalParameters &par);
+    void fromMatchToClassification(Match *matchList,
+                                   size_t numOfMatches,
+                                   int seqNum,
+                                   Query *queryList,
+                                   const LocalParameters &par);
 
     void chooseBestTaxon(uint32_t currentQuery,
                          size_t offset,

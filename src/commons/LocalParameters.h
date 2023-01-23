@@ -42,6 +42,7 @@ public:
     PARAMETER(MIN_COVERAGE)
     PARAMETER(SPACED)
     PARAMETER(MIN_CONSECUTIVE)
+    PARAMETER(MIN_COVERED_POS)
     PARAMETER(HAMMING_MARGIN)
     PARAMETER(MIN_SP_SCORE)
     PARAMETER(TINFO_PATH)
@@ -78,6 +79,7 @@ public:
     float minSpScore;
     float minCoverage;
     int ramUsage;
+    int minCoveredPos;
 
     // Database creation
     std::string tinfoPath;

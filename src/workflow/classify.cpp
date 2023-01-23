@@ -17,6 +17,7 @@ void setClassifyDefaults(LocalParameters & par){
     par.hammingMargin = 0;
     par.verbosity = 3;
     par.ramUsage = 128;
+    par.minCoveredPos = 4;
 
 }
 
