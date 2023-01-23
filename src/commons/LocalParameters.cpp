@@ -134,7 +134,7 @@ LocalParameters::LocalParameters() :
                       (void *) &taxonomyPath,
                       ""),
         READID_COL(READID_COL_ID,
-                      "--accession-col",
+                      "--readid-col",
                       "Column number of accession in classification result",
                       "Column number of accession in classification result",
                       typeid(int),
@@ -181,7 +181,14 @@ LocalParameters::LocalParameters() :
                   "RAM usage in GB",
                   typeid(int),
                   (void *) &ramUsage,
-                  ""){
+                  ""),
+        MIN_COVERED_POS(MIN_COVERED_POS_ID,
+                        "--min-covered-pos",
+                        "Minimum number of covered positions of a range",
+                        "Minimum number of covered positions of a range",
+                        typeid(int),
+                        (void *) &minCoveredPos,
+                        ""){
     //add_to_library
 
     // build
@@ -205,6 +212,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MIN_SP_SCORE);
     classify.push_back(&PARAM_V);
     classify.push_back(&RAM_USAGE);
+    classify.push_back(&MIN_COVERED_POS);
 
 
     //updateTargetDB
