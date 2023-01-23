@@ -188,7 +188,14 @@ LocalParameters::LocalParameters() :
                         "Minimum number of covered positions of a range",
                         typeid(int),
                         (void *) &minCoveredPos,
-                        ""){
+                        ""),
+        PRINT_LOG(PRINT_LOG_ID,
+                  "--print-log",
+                  "Print logs to debug",
+                  "Print logs to debug",
+                  typeid(int),
+                  (void *) &printLog,
+                  ""){
     //add_to_library
 
     // build
@@ -213,6 +220,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&PARAM_V);
     classify.push_back(&RAM_USAGE);
     classify.push_back(&MIN_COVERED_POS);
+    classify.push_back(&PRINT_LOG);
 
 
     //updateTargetDB

@@ -47,6 +47,7 @@ public:
     PARAMETER(MIN_SP_SCORE)
     PARAMETER(TINFO_PATH)
     PARAMETER(RAM_USAGE)
+    PARAMETER(PRINT_LOG)
 
     // DB build parameters
     PARAMETER(LIBRARY_PATH)
@@ -80,6 +81,7 @@ public:
     float minCoverage;
     int ramUsage;
     int minCoveredPos;
+    int printLog;
 
     // Database creation
     std::string tinfoPath;
