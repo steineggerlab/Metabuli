@@ -31,6 +31,7 @@ Classifier::Classifier(LocalParameters & par) {
     bitsForCodon = 3;
     numOfSplit = 0;
     minConsCnt = par.minConsCnt;
+    minCoveredPos = par.minCoveredPos;
     minSpScore = par.minSpScore;
     verbosity = par.verbosity;
 
@@ -252,7 +253,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 
         // Classify queries based on the matches
         time_t beforeAnalyze = time(nullptr);
-        analyseResultParallel(matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList, par);
+        fromMatchToClassification(matchBuffer.buffer, matchBuffer.startIndexOfReserve, (int) numOfSeq, queryList, par);
         cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
         cout << "The number of processed sequences: " << processedSeqCnt << " (" << (double) processedSeqCnt / (double) numOfSeq << ")" << endl;
     }
@@ -793,11 +794,11 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
 }
 
 // It analyses the result of linear search.
-void Classifier::analyseResultParallel(Match *matchList,
-                                       size_t numOfMatches,
-                                       int seqNum,
-                                       Query *queryList,
-                                       const LocalParameters &par) {
+void Classifier::fromMatchToClassification(Match *matchList,
+                                           size_t numOfMatches,
+                                           int seqNum,
+                                           Query *queryList,
+                                           const LocalParameters &par) {
 
     // Devide matches into blocks for multi threading
     cout << "Devide matches into blocks for multi threading" << endl;
@@ -840,7 +841,7 @@ void Classifier::analyseResultParallel(Match *matchList,
         ++taxCounts[queryList[matchBlocks[i].id].classification];
     }
     delete[] matchBlocks;
-    cout << "End of analyseResultParallel" << endl;
+    cout << "End of fromMatchToClassification" << endl;
 }
 
 
@@ -1310,7 +1311,7 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
             size_t maxConsecutiveCnt = 0;
             size_t currentConsecutiveCnt = 1;
             size_t distance = 0;
-            size_t diffPosCntOfCurrRange = 1;
+            int diffPosCntOfCurrRange = 1;
             while ((i < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
                 distance = matchList[i + 1].position - matchList[i].position;
                 if ((distance < 6) || (26 < distance && distance < 30)) {
@@ -1338,10 +1339,7 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
                             if (currentConsecutiveCnt > maxConsecutiveCnt) {
                                 maxConsecutiveCnt = currentConsecutiveCnt;
                             }
-//                            if (matchList[i-1].position / 3 != matchList[i].position / 3){
-//                                diffPosCntOfCurrRange++;
-//                            }
-                            if (maxConsecutiveCnt >= 2 && diffPosCntOfCurrRange >= minConsCnt) {
+                            if (maxConsecutiveCnt >= minConsCnt && diffPosCntOfCurrRange >= minCoveredPos) {
                                 filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                                        tempMatchContainer.end());
                             }
@@ -1357,9 +1355,7 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
                     if (currentConsecutiveCnt > maxConsecutiveCnt) {
                         maxConsecutiveCnt = currentConsecutiveCnt;
                     }
-
-                    // TODO: tempMatchContainer.size() --> totalDiffPosCnt
-                    if (maxConsecutiveCnt >= 3 && diffPosCntOfCurrRange >= minConsCnt) {
+                    if (maxConsecutiveCnt >= minConsCnt && diffPosCntOfCurrRange >= minCoveredPos) {
                         filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                                tempMatchContainer.end());
                     }
@@ -1376,7 +1372,7 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
                 if (currentConsecutiveCnt > maxConsecutiveCnt) {
                     maxConsecutiveCnt = currentConsecutiveCnt;
                 }
-                if (maxConsecutiveCnt >= 3 && diffPosCntOfCurrRange >= minConsCnt) {
+                if (maxConsecutiveCnt >= minConsCnt && diffPosCntOfCurrRange >= minCoveredPos) {
                     filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                            tempMatchContainer.end());
                 }
