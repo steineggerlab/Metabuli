@@ -18,6 +18,7 @@ void setClassifyDefaults(LocalParameters & par){
     par.verbosity = 3;
     par.ramUsage = 128;
     par.minCoveredPos = 4;
+    par.printLog = 0;
 
 }
 

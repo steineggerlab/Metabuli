@@ -817,7 +817,7 @@ void Classifier::fromMatchToClassification(Match *matchList,
 
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
-    if(PRINT){
+    if(par.printLog){
         omp_set_num_threads(1);
     }
 #endif
@@ -850,7 +850,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                  const LocalParameters &par) {
 //    int queryLength = queryList[currentQuery].queryLength;
     TaxID selectedTaxon;
-    if (PRINT) {
+    if (par.printLog) {
         cout << "# " << currentQuery << " " << queryList[currentQuery].name << endl;
         for (size_t i = offset; i < end + 1; i++) {
             cout << genusTaxIdList[matchList[i].targetId] << " " << speciesTaxIdList[matchList[i].targetId] << " " <<
@@ -873,7 +873,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                          queryList[currentQuery].queryLength);
     }
 
-    if (PRINT) {
+    if (par.printLog) {
         cout << "# " << currentQuery << " " << queryList[currentQuery].name << " filtered\n";
         for (size_t i = 0; i < genusMatches.size(); i++) {
             cout << genusTaxIdList[genusMatches[i].targetId] << " " << speciesTaxIdList[genusMatches[i].targetId] << " " <<
@@ -1007,7 +1007,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     queryList[currentQuery].coverage = speciesScore.coverage;
     queryList[currentQuery].hammingDist = speciesScore.hammingDist;
     queryList[currentQuery].newSpecies = false;
-    if (PRINT) {
+    if (par.printLog) {
         cout << "# " << currentQuery << endl;
         for (size_t i = 0; i < genusMatches.size(); i++) {
             cout << i << " " << genusMatches[i].position << " " <<
