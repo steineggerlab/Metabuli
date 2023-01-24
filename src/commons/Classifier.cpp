@@ -1314,7 +1314,7 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
             int diffPosCntOfCurrRange = 1;
             while ((i < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
                 distance = matchList[i + 1].position - matchList[i].position;
-                if ((distance < 6) || (26 < distance && distance < 30)) {
+                if ((distance < 6) || (26 < distance && distance < 30 && currentConsecutiveCnt > 1)) {
                     // Check density
                     range += ((double) matchList[i + 1].position / 3 - (double) matchList[i].position / 3) / 3;
                     if (double(currentConsecutiveCnt + 1) / range >= 0.2) {
@@ -1349,7 +1349,7 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
                         maxConsecutiveCnt = 0;
                         range = 0;
                     }
-                } else if (lastIn) { // Not consecutive even with a gap --> end of current range
+                } else if (lastIn && currentConsecutiveCnt > 1) { // Not consecutive even with a gap --> end of current range
                     lastIn = false;
                     tempMatchContainer.push_back(matchList[i]);
                     if (currentConsecutiveCnt > maxConsecutiveCnt) {
@@ -1367,7 +1367,7 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
                 }
                 i++;
             }
-            if (lastIn) {
+            if (lastIn && currentConsecutiveCnt > 1) {
                 tempMatchContainer.push_back(matchList[i]);
                 if (currentConsecutiveCnt > maxConsecutiveCnt) {
                     maxConsecutiveCnt = currentConsecutiveCnt;
