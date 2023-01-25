@@ -1315,6 +1315,7 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
                             if (matchList[i].position / 3 != matchList[i+1].position / 3) { // Next amino acid
                                 currentConsecutiveCnt++;
                                 diffPosCntOfCurrRange++;
+                                lastIn = true;
                             }
                         } else { // Gap
                             diffPosCntOfCurrRange++;
@@ -1322,10 +1323,11 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
                                 maxConsecutiveCnt = currentConsecutiveCnt;
                             }
                             currentConsecutiveCnt = 1;
+                            lastIn = true;
                         }
-                        lastIn = true;
+
                     } else { // Not dense enough --> end of current range
-                        if (lastIn) {
+                        if (lastIn && currentConsecutiveCnt > 1) {
                             lastIn = false;
                             tempMatchContainer.push_back(matchList[i]);
                             if (currentConsecutiveCnt > maxConsecutiveCnt) {
