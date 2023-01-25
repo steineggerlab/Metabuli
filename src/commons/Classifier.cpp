@@ -1341,7 +1341,7 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
                                 }
                             }
                         }
-                        filteredMatches.clear();
+                        tempMatchContainer.clear();
                         diffPosCntOfCurrRange = 1;
                         currentConsecutiveCnt = 1;
                         maxConsecutiveCnt = 0;
