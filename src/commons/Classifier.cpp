@@ -782,6 +782,11 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
         hammingSums[i] = currentHammingSum;
     }
 
+    if (minHammingSum > 3) {
+        delete[] hammingSums;
+        return;
+    }
+    
     // Select target k-mers that passed hamming criteria
     for (size_t h = 0; h < size; h++) {
         if (hammingSums[h] <= minHammingSum + hammingMargin) {
