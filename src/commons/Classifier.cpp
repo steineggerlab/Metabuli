@@ -1382,10 +1382,10 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                                            tempMatchContainer.end());
                 }
             }
-            // Print filteredMatches
-            for (auto &m : filteredMatches) {
-                cout << speciesTaxIdList[m.targetId] << " " << m.position << " " << endl;
-            }
+//            // Print filteredMatches
+//            for (auto &m : filteredMatches) {
+//                cout << speciesTaxIdList[m.targetId] << " " << m.position << " " << endl;
+//            }
             tempMatchContainer.clear();
             i++;
         }
