@@ -1299,7 +1299,7 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
             // For current species
             // Filter un-consecutive matches (probably random matches)
             lastIn = false;
-            double range = 0;
+            int range = 0;
             size_t maxConsecutiveCnt = 0;
             size_t currentConsecutiveCnt = 1;
             size_t distance = 0;
@@ -1307,10 +1307,10 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
             while ((i < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
                 distance = matchList[i + 1].position - matchList[i].position;
                 if ((distance < 6) || (26 < distance && distance < 30 && currentConsecutiveCnt > 1)) {
-                    range += (double) matchList[i + 1].position / 3 - (double) matchList[i].position / 3;
+                    range += matchList[i + 1].position / 3 - matchList[i].position / 3;
                     if (range == 0) {
                         tempMatchContainer.push_back(matchList[i]);
-                    } else if (double(currentConsecutiveCnt + 1) / range >= 0.2) {
+                    } else if (double(currentConsecutiveCnt + 1) / (double) range >= 0.2) {
                         tempMatchContainer.push_back(matchList[i]);
                         if (distance < 6) { // Consecutive
                             if (matchList[i].position / 3 != matchList[i+1].position / 3) { // Next amino acid
@@ -1378,6 +1378,11 @@ TaxonScore Classifier::getBestGenusMatches2(vector<Match> &genusMatches, Match *
                                            tempMatchContainer.end());
                 }
             }
+            // Print filteredMatches
+            for (auto &m : filteredMatches) {
+                cout << speciesTaxIdList[m.targetId] << " " << m.position << " " << endl;
+            }
+
             tempMatchContainer.clear();
             i++;
         }
