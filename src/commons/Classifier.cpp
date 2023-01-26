@@ -1346,6 +1346,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                         currentConsecutiveCnt = 1;
                         diffPosCntOfCurrRange = 1;
                         maxConsecutiveCnt = 0;
+                        range = 0;
                     }
                 } else { // Not consecutive --> End range
                     if (lastIn){
@@ -1364,6 +1365,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                     currentConsecutiveCnt = 1;
                     diffPosCntOfCurrRange = 1;
                     maxConsecutiveCnt = 0;
+                    range = 0;
                 }
                 i++;
             }
