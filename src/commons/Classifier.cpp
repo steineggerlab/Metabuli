@@ -786,7 +786,7 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
         delete[] hammingSums;
         return;
     }
-    
+
     // Select target k-mers that passed hamming criteria
     for (size_t h = 0; h < size; h++) {
         if (hammingSums[h] <= minHammingSum + hammingMargin) {
@@ -1321,9 +1321,9 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                     diffPosCntOfCurrRange ++;
                     range += distance;
                     lastIn = true;
-                } else if (distance == 9 && currentConsecutiveCnt > 1) { // One gap apart AND previous block was consecutive enough
+                } else if (distance == 9) { // && currentConsecutiveCnt > 1) { // One gap apart AND previous block was consecutive enough
                     tempMatchContainer.push_back(matchList[i]);
-                    lastIn = false;
+                    lastIn = true;
                     // Check density
                     if (double(diffPosCntOfCurrRange + 1) / double(distance + range) >= 0.2){ // Dense enough --> Extend range
                         range += distance;
