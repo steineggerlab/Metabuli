@@ -1331,7 +1331,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                     diffPosCntOfCurrRange ++;
                     range += distance;
                     lastIn = true;
-                } else if (distance >= 8) { // && currentConsecutiveCnt > 1) { // One gap apart AND previous block was consecutive enough
+                } else if (distance >= 9) { // && currentConsecutiveCnt > 1) { // One gap apart AND previous block was consecutive enough
                     tempMatchContainer.push_back(matchList[i]);
                     lastIn = true;
                     // Check density
