@@ -1331,18 +1331,17 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                     diffPosCntOfCurrRange ++;
                     range += distance;
                     lastIn = true;
-                } else if (distance == 9) { // && currentConsecutiveCnt > 1) { // One gap apart AND previous block was consecutive enough
+                } else if (distance >= 9) { // && currentConsecutiveCnt > 1) { // One gap apart AND previous block was consecutive enough
                     tempMatchContainer.push_back(matchList[i]);
                     lastIn = true;
                     // Check density
-                    if (double(diffPosCntOfCurrRange + 1) / double(distance + range) >= 0.2){ // Dense enough --> Extend range
+                    if (double(diffPosCntOfCurrRange + 1) / double(distance + range) >= 0.1){ // Dense enough --> Extend range
                         range += distance;
                         diffPosCntOfCurrRange ++;
                         if (currentConsecutiveCnt > maxConsecutiveCnt) {
                             maxConsecutiveCnt = currentConsecutiveCnt;
                         }
                         currentConsecutiveCnt = 1;
-
                     } else { // Not dense enough --> End range
                         if (currentConsecutiveCnt > maxConsecutiveCnt) {
                             maxConsecutiveCnt = currentConsecutiveCnt;
