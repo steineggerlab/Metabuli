@@ -172,14 +172,14 @@ protected:
     TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
                                    size_t offset, int queryLength);
 
-    TaxonScore getBestGenusMatches2(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
-                                   size_t offset, int queryLength);
-
     TaxonScore getBestGenusMatches3(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
                                     size_t offset, int queryLength);
 
     TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end, size_t offset,
                                    int readLength1, int readLength2);
+
+    TaxonScore getBestGenusMatches3(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end, size_t offset,
+                                    int readLength1, int readLength2);
 
     TaxonScore scoreGenus(vector<Match> &filteredMatches,
                           vector<vector<Match>> &matchesForEachGenus,
