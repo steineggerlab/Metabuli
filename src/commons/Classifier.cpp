@@ -782,10 +782,10 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
         hammingSums[i] = currentHammingSum;
     }
 
-    if (minHammingSum > 3) {
-        delete[] hammingSums;
-        return;
-    }
+//    if (minHammingSum > 3) {
+//        delete[] hammingSums;
+//        return;
+//    }
 
     // Select target k-mers that passed hamming criteria
     for (size_t h = 0; h < size; h++) {
@@ -1295,10 +1295,10 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
     size_t i = offset;
     bool lastIn;
     size_t speciesMatchCnt;
-    while (i < end + 1) {
+    while (i + 1 < end + 1) {
         currentGenus = genusTaxIdList[matchList[i].targetId];
         // For current genus
-        while ((i < end + 1) && currentGenus == genusTaxIdList[matchList[i].targetId]) {
+        while ((i + 1 < end + 1) && currentGenus == genusTaxIdList[matchList[i].targetId]) {
             currentSpecies = speciesTaxIdList[matchList[i].targetId];
             // For current species
             // Filter un-consecutive matches (probably random matches)
@@ -1311,7 +1311,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
             int dnaDist = 0;
 
             // For the same species
-            while ((i < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
+            while ((i + 1 < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
                 distance = matchList[i+1].position / 3 - matchList[i].position / 3;
                 dnaDist = matchList[i+1].position - matchList[i].position;
                 if (distance == 0) { // At the same position
