@@ -1303,7 +1303,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
             // For current species
             // Filter un-consecutive matches (probably random matches)
             lastIn = false;
-            int range = 0;
+            int range = 1;
             size_t maxConsecutiveCnt = 0;
             size_t currentConsecutiveCnt = 1;
             int distance = 0;
@@ -1346,7 +1346,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                         currentConsecutiveCnt = 1;
                         diffPosCntOfCurrRange = 1;
                         maxConsecutiveCnt = 0;
-                        range = 0;
+                        range = 1;
                         lastIn = false;
                     }
                 } else { // Not consecutive --> End range
@@ -1366,7 +1366,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                     currentConsecutiveCnt = 1;
                     diffPosCntOfCurrRange = 1;
                     maxConsecutiveCnt = 0;
-                    range = 0;
+                    range = 1;
                 }
                 i++;
             }
@@ -1456,7 +1456,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
             // For current species
             // Filter un-consecutive matches (probably random matches)
             lastIn = false;
-            int range = 0;
+            int range = 1;
             size_t maxConsecutiveCnt = 0;
             size_t currentConsecutiveCnt = 1;
             int distance = 0;
@@ -1499,7 +1499,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                         currentConsecutiveCnt = 1;
                         diffPosCntOfCurrRange = 1;
                         maxConsecutiveCnt = 0;
-                        range = 0;
+                        range = 1;
                         lastIn = false;
                     }
                 } else { // Not consecutive --> End range
@@ -1519,7 +1519,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                     currentConsecutiveCnt = 1;
                     diffPosCntOfCurrRange = 1;
                     maxConsecutiveCnt = 0;
-                    range = 0;
+                    range = 1;
                 }
                 i++;
             }
