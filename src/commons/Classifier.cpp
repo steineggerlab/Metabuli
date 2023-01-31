@@ -873,7 +873,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         if (par.spaceMask != "11111111"){
             genusScore = getBestGenusMatches_spaced(genusMatches, matchList, end, offset,
                                                     queryList[currentQuery].queryLength,
-                                                    queryList[currentQuery].queryLength2)
+                                                    queryList[currentQuery].queryLength2);
         } else {
             genusScore = getBestGenusMatches3(genusMatches, matchList, end, offset,
                                               queryList[currentQuery].queryLength,
