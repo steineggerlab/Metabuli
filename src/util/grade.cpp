@@ -204,7 +204,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
                     regex_search(id, assacc, regex1);
                     readIds.push_back(assacc[0]);
                     rightAnswers.push_back(assacc2taxid[assacc[0]]);
-                } else if (par.testType == "hiv") {
+                } else if (par.testType == "hiv" || par.testType == "hiv-ex") {
                     size_t pos = id.find('_');
                     id = id.substr(0, pos);
                     rightAnswers.push_back(assacc2taxid[id]);
