@@ -181,6 +181,9 @@ protected:
     TaxonScore getBestGenusMatches3(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end, size_t offset,
                                     int readLength1, int readLength2);
 
+    TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end, size_t offset,
+                                    int readLength1, int readLength2);
+
     TaxonScore scoreGenus(vector<Match> &filteredMatches,
                           vector<vector<Match>> &matchesForEachGenus,
                           int queryLength);
