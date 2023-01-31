@@ -21,6 +21,8 @@ char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
 char compareTaxon_overclassification(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
                                      const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
 
+char compareTaxon_hivExclsuion(TaxID shot, TaxID target, CountAtRank & count);
+
 void setGradeDefault(LocalParameters & par){
     par.readIdCol = 1;
     par.taxidCol = 2;
@@ -243,6 +245,8 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
                     if (par.testType == "over") {
                         p = compareTaxon_overclassification(classList[j], rightAnswers[j], ncbiTaxonomy,
                                                             results[i].countsAtRanks[rank], rank, par);
+                    } else if(par.testType == "hiv-ex"){
+                        p = compareTaxon_hivExclsuion(classList[j], rightAnswers[j], results[i].countsAtRanks[rank]);
                     } else {
                         p = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy,
                                                          results[i].countsAtRanks[rank], rank, par);
@@ -390,6 +394,26 @@ char compareTaxon_overclassification(TaxID shot, TaxID target, NcbiTaxonomy & nc
         return 'N';
     }
 
+    count.total++;
+    if(shot == target){
+        count.TP++;
+        return 'O';
+    } else {
+        count.FP++;
+        return 'X';
+    }
+}
+
+// TP: HIV-1 at species rank
+// FP: Classifications to other taxa
+// FN: Not-classified
+char compareTaxon_hivExclusion(TaxID shot, TaxID target, CountAtRank & count){
+    // False negative; no classification or meaningless classification
+    if(shot == 1 || shot == 0) {
+        count.FN ++;
+        count.total ++;
+        return 'N';
+    }
     count.total++;
     if(shot == target){
         count.TP++;
