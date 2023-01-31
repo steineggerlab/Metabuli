@@ -870,7 +870,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     int res;
     TaxonScore genusScore(0, 0, 0, 0);
     if (par.seqMode == 2) {
-        genusScore = getBestGenusMatches(genusMatches, matchList, end, offset,
+        genusScore = getBestGenusMatches3(genusMatches, matchList, end, offset,
                                          queryList[currentQuery].queryLength,
                                          queryList[currentQuery].queryLength2);
     } else {
