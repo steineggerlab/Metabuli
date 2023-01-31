@@ -1474,6 +1474,7 @@ TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, M
                     tempMatchContainer.push_back(matchList[i]);
                 } else if (dnaDist < (8 + spaceNum_int) * 3) { // Overlapping
                     lastIn = true;
+                    tempMatchContainer.push_back(matchList[i]);
                     diffPosCntOfCurrRange ++;
                 } else { // Not consecutive --> End range
                     if (lastIn){
