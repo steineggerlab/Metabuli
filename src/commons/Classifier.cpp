@@ -1709,6 +1709,113 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
     //4. no genus
 }
 
+TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, Match *matchList, size_t end,
+                                                  size_t offset, int readLength) {
+    TaxID currentGenus;
+    TaxID currentSpecies;
+
+    vector<Match> tempMatchContainer;
+    vector<Match> filteredMatches;
+    vector<vector<Match>> matchesForEachGenus;
+    vector<bool> conservedWithinGenus;
+    vector<TaxonScore> genusScores;
+    TaxonScore bestScore;
+    size_t i = offset;
+    bool lastIn;
+    size_t speciesMatchCnt;
+    while (i + 1 < end + 1) {
+        currentGenus = genusTaxIdList[matchList[i].targetId];
+        // For current genus
+        while ((i + 1 < end + 1) && currentGenus == genusTaxIdList[matchList[i].targetId]) {
+            currentSpecies = speciesTaxIdList[matchList[i].targetId];
+            // For current species
+            // Filter un-consecutive matches (probably random matches)
+            lastIn = false;
+            int distance = 0;
+            int diffPosCntOfCurrRange = 1;
+            int dnaDist = 0;
+
+            // For the same species
+            while ((i + 1 < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
+                distance = matchList[i + 1].position / 3 - matchList[i].position / 3;
+                dnaDist = matchList[i + 1].position - matchList[i].position;
+                if (distance == 0) { // At the same position
+                    tempMatchContainer.push_back(matchList[i]);
+                } else if (dnaDist < (8 + spaceNum_int) * 3) { // Overlapping
+                    lastIn = true;
+                    tempMatchContainer.push_back(matchList[i]);
+                    diffPosCntOfCurrRange++;
+                } else { // Not consecutive --> End range
+                    if (lastIn) {
+                        tempMatchContainer.push_back(matchList[i]);
+                        if (diffPosCntOfCurrRange >= minCoveredPos) {
+                            filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
+                                                   tempMatchContainer.end());
+                        }
+                    }
+                    lastIn = false;
+                    // Initialize range info
+                    tempMatchContainer.clear();
+                    diffPosCntOfCurrRange = 1;
+                }
+                i++;
+            }
+
+            // Met next species
+            if (lastIn) {
+                tempMatchContainer.push_back(matchList[i]);
+                if (diffPosCntOfCurrRange >= minCoveredPos) {
+                    filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
+                                           tempMatchContainer.end());
+                }
+            }
+            tempMatchContainer.clear();
+            i++;
+        }
+
+        // Construct a match combination using filtered matches of current genus
+        // so that it can best cover the query, and score the combination
+        if (!filteredMatches.empty()) {
+            genusScores.push_back(scoreGenus(filteredMatches, matchesForEachGenus, readLength));
+        }
+        filteredMatches.clear();
+    }
+
+    // If there are no meaningful genus
+    if (genusScores.empty()) {
+        bestScore.score = 0;
+        return bestScore;
+    }
+
+    TaxonScore maxScore = *max_element(genusScores.begin(), genusScores.end(),
+                                       [](const TaxonScore &a, const TaxonScore &b) { return a.score < b.score; });
+
+    vector<size_t> maxIdx;
+    for (size_t g = 0; g < genusScores.size(); g++) {
+        if (genusScores[g].score > maxScore.score * 0.95f) {
+            maxIdx.push_back(g);
+        }
+    }
+    bestScore = maxScore;
+
+    for (unsigned long g: maxIdx) {
+        genusMatches.insert(genusMatches.end(),
+                            matchesForEachGenus[g].begin(),
+                            matchesForEachGenus[g].end());
+    }
+
+    // More than one genus
+    if (maxIdx.size() > 1) {
+        bestScore.taxId = 0;
+        return bestScore;
+    }
+    return bestScore;
+
+    //Three cases
+    //1. one genus
+    //2. more than one genus
+    //4. no genus
+}
 
 TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
                                   vector<vector<Match>> &matchesForEachGenus,
