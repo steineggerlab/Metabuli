@@ -19,6 +19,7 @@ void setClassifyDefaults(LocalParameters & par){
     par.ramUsage = 128;
     par.minCoveredPos = 4;
     par.printLog = 0;
+    par.maxGap = 0;
 
 }
 
