@@ -48,6 +48,7 @@ public:
     PARAMETER(TINFO_PATH)
     PARAMETER(RAM_USAGE)
     PARAMETER(PRINT_LOG)
+    PARAMETER(MAX_GAP)
 
     // DB build parameters
     PARAMETER(LIBRARY_PATH)
@@ -67,7 +68,6 @@ public:
     int virusTaxId;
     int bacteriaTaxId;
     int archaeaTaxId;
-    int eukaryotaTaxId;
 
     // Classify
     int seqMode;
@@ -82,6 +82,7 @@ public:
     int ramUsage;
     int minCoveredPos;
     int printLog;
+    int maxGap;
 
     // Database creation
     std::string tinfoPath;

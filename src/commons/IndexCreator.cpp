@@ -428,7 +428,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
     }
 
     for(size_t i = 0; i < splits.size(); i++){
-        delete [] idxOfEachSplit[i];
+        delete[] idxOfEachSplit[i];
     }
     delete[] cntOfEachSplit;
 }

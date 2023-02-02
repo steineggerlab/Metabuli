@@ -60,6 +60,7 @@ protected:
     float minSpScore;
     size_t minConsCnt;
     int minCoveredPos;
+    int maxGap;
 
     NcbiTaxonomy * taxonomy;
     vector<TaxID> taxIdList;

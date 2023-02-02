@@ -34,6 +34,7 @@ Classifier::Classifier(LocalParameters & par) {
     minCoveredPos = par.minCoveredPos;
     minSpScore = par.minSpScore;
     verbosity = par.verbosity;
+    maxGap = par.maxGap;
 
     // Mask for spaced k-mer
     size_t maskLen = par.spaceMask.length();
@@ -1480,7 +1481,7 @@ TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, M
                 dnaDist = matchList[i+1].position - matchList[i].position;
                 if (distance == 0) { // At the same position
                     tempMatchContainer.push_back(matchList[i]);
-                } else if (dnaDist < (8 + spaceNum_int) * 3) { // Overlapping
+                } else if (dnaDist < (8 + spaceNum_int + maxGap) * 3) { // Overlapping
                     lastIn = true;
                     tempMatchContainer.push_back(matchList[i]);
                     diffPosCntOfCurrRange ++;
@@ -1741,7 +1742,7 @@ TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, M
                 dnaDist = matchList[i + 1].position - matchList[i].position;
                 if (distance == 0) { // At the same position
                     tempMatchContainer.push_back(matchList[i]);
-                } else if (dnaDist < (8 + spaceNum_int) * 3) { // Overlapping
+                } else if (dnaDist < (8 + spaceNum_int + maxGap) * 3) { // Overlapping
                     lastIn = true;
                     tempMatchContainer.push_back(matchList[i]);
                     diffPosCntOfCurrRange++;
