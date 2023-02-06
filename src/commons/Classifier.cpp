@@ -1934,7 +1934,7 @@ TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
             }
             walker++;
         }
-        matches.push_back(*currentMatch);
+        matches.push_back(currentMatch);
     }
 
     // Calculate Hamming distance & covered length
