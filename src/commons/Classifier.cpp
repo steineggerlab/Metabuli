@@ -890,7 +890,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         for (size_t i = 0; i < genusMatches.size(); i++) {
             cout << genusTaxIdList[genusMatches[i].targetId] << " " << speciesTaxIdList[genusMatches[i].targetId] << " " <<
                  taxIdList[genusMatches[i].targetId] << " " << genusMatches[i].position << " " << int(genusMatches[i].hamming) <<
-                 genusMatches[i].redundacny << "\n";
+                 genusMatches[i].redundancy << "\n";
         }
         cout << "Genus score: " << genusScore.score << "\n";
     }
@@ -920,7 +920,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         queryList[currentQuery].coverage = genusScore.coverage;
         queryList[currentQuery].hammingDist = genusScore.hammingDist;
         for (auto & genusMatch : genusMatches) {
-            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
+            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundancy]->operator[](genusMatch.targetId)]++;
         }
         return;
     }
@@ -946,7 +946,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         queryList[currentQuery].coverage = genusScore.coverage;
         queryList[currentQuery].hammingDist = genusScore.hammingDist;
         for (auto & genusMatch : genusMatches) {
-            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
+            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundancy]->operator[](genusMatch.targetId)]++;
         }
         return;
     }
@@ -961,7 +961,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         queryList[currentQuery].hammingDist = genusScore.hammingDist;
         for (auto & genusMatch : genusMatches) {
             if(speciesTaxIdList[genusMatch.targetId] == species[0]){
-                queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
+                queryList[currentQuery].taxCnt[spORssp[genusMatch.redundancy]->operator[](genusMatch.targetId)]++;
             }
         }
         return;
@@ -972,7 +972,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     // Record matches of selected species
     for (auto & genusMatch : genusMatches) {
         if(speciesTaxIdList[genusMatch.targetId] == selectedSpecies){
-            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
+            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundancy]->operator[](genusMatch.targetId)]++;
         }
     }
 
@@ -994,7 +994,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     if (NcbiTaxonomy::findRankIndex(taxonomy->taxonNode(selectedSpecies)->rank) == 4) {
         unordered_map<TaxID, int> strainMatchCnt;
         for (size_t i = 0; i < genusMatches.size(); i++) {
-            if (!genusMatches[i].redundacny
+            if (!genusMatches[i].redundancy
                 && taxonomy->IsAncestor2(selectedSpecies, taxIdList[genusMatches[i].targetId])) {
                 strainMatchCnt[taxIdList[genusMatches[i].targetId]]++;
             }
@@ -1821,7 +1821,7 @@ TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
     vector<Match> matches;
     size_t walker = 0;
     size_t numOfFitMat = filteredMatches.size();
-    Match &currentMatch = filteredMatches[0];
+    Match currentMatch;
     while (walker < numOfFitMat) {
         TaxID currentSpecies = speciesTaxIdList[filteredMatches[walker].targetId];
         int currentPosition = filteredMatches[walker].position / 3;
@@ -1837,7 +1837,7 @@ TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
                 // Overlapping with same hamming distance but different subspecies taxonomy ID -> species level
             else if (taxIdList[currentMatch.targetId] != taxIdList[filteredMatches[walker].targetId] &&
                      currentMatch.hamming == filteredMatches[walker].hamming) {
-                currentMatch.redundacny = true;
+                currentMatch.redundancy = true;
             }
             walker++;
         }
@@ -1914,7 +1914,7 @@ TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
     vector<Match> matches;
     size_t walker = 0;
     size_t numOfFitMat = filteredMatches.size();
-    Match &currentMatch = filteredMatches[0];
+    Match currentMatch;
     while (walker < numOfFitMat) {
         TaxID currentSpecies = speciesTaxIdList[filteredMatches[walker].targetId];
         int currentPosition = filteredMatches[walker].position / 3;
@@ -1930,11 +1930,11 @@ TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
             // Overlapping with same hamming distance but different subspecies taxonomy ID -> species level
             else if (taxIdList[currentMatch.targetId] != taxIdList[filteredMatches[walker].targetId] &&
                      currentMatch.hamming == filteredMatches[walker].hamming) {
-                currentMatch.redundacny = true;
+                currentMatch.redundancy = true;
             }
             walker++;
         }
-        matches.push_back(currentMatch);
+        matches.push_back(*currentMatch);
     }
 
     // Calculate Hamming distance & covered length
