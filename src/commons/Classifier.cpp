@@ -921,17 +921,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         for (auto & genusMatch : genusMatches) {
             queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
         }
-
-//        if (par.verbosity == 4) {
-//            cout << "# " << currentQuery << " " << res << endl;
-//            for (size_t i = 0; i < genusMatches.size(); i++) {
-//                cout << i << " " << genusMatches[i].position << " " <<
-//                     taxIdList[genusMatches[i].targetId] << " " << int(genusMatches[i].hamming) << " "
-//                     << endl;
-//            }
-//            cout << "Genus score: " << genusScore.score << " " << selectedTaxon << " "
-//                 << taxonomy->taxonNode(selectedTaxon)->rank << endl;
-//        }
         return;
     }
 
@@ -976,7 +965,15 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         }
         return;
     }
+   
     selectedSpecies = species[0];
+    cout << "selectedSpecies: " << selectedSpecies << endl;
+    // Record matches of selected species
+    for (auto & genusMatch : genusMatches) {
+        if(speciesTaxIdList[genusMatch.targetId] == selectedSpecies){
+            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundacny]->operator[](genusMatch.targetId)]++;
+        }
+    }
 
     // Check if it can be classified at rank lower than species.
     int numOfstrains = 0;
@@ -1001,7 +998,9 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                 strainMatchCnt[taxIdList[genusMatches[i].targetId]]++;
             }
         }
+
         for (auto strainIt = strainMatchCnt.begin(); strainIt != strainMatchCnt.end(); strainIt++) {
+            cout << strainIt->first << " " << strainIt->second << endl;
             if (strainIt->second > minStrainSpecificCnt) {
                 strainID = strainIt->first;
                 numOfstrains++;
@@ -1010,7 +1009,11 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         }
     }
 
-    if (numOfstrains == 1 && count > minStrainSpecificCnt + 1) {selectedSpecies = strainID;}
+    if (numOfstrains == 1 && count > minStrainSpecificCnt + 1) {
+        cout << numOfstrains << endl;
+        cout << count << endl;
+        selectedSpecies = strainID;
+    }
 
     // Store classification results
     queryList[currentQuery].isClassified = true;
@@ -2141,7 +2144,7 @@ TaxonScore Classifier::scoreTaxon(const vector<Match> &matches,
                                   int queryLength,
                                   int queryLength2) {
 
-    // Get the smallest hamming distance at each position of query
+    // Get the largest hamming distance at each position of query
     int aminoAcidNum_total = queryLength / 3 + queryLength2 / 3;
     int aminoAcidNum_read1 = queryLength / 3;
     auto *hammingsAtEachPos = new signed char[aminoAcidNum_total + 3];
