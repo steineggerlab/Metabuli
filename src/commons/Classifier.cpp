@@ -969,7 +969,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     }
 
     selectedSpecies = species[0];
-    cout << "selectedSpecies: " << selectedSpecies << endl;
     // Record matches of selected species
     for (auto & genusMatch : genusMatches) {
         if(speciesTaxIdList[genusMatch.targetId] == selectedSpecies){
@@ -1002,7 +1001,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         }
 
         for (auto strainIt = strainMatchCnt.begin(); strainIt != strainMatchCnt.end(); strainIt++) {
-            cout << strainIt->first << " " << strainIt->second << endl;
             if (strainIt->second > minStrainSpecificCnt) {
                 strainID = strainIt->first;
                 numOfstrains++;
@@ -1012,8 +1010,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     }
 
     if (numOfstrains == 1 && count > minStrainSpecificCnt + 1) {
-        cout << numOfstrains << endl;
-        cout << count << endl;
         selectedSpecies = strainID;
     }
 
