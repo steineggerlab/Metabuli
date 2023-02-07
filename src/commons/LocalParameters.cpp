@@ -67,14 +67,14 @@ LocalParameters::LocalParameters() :
                typeid(std::string),
                (void *) &spaceMask,
                ""),
-        MIN_CONSECUTIVE(MIN_CONSECUTIVE_ID,
-                        "--min-consecutive",
-                        "Matches that are not consecutive for the specified number of times are ignored.",
-                        "Matched k-mers from the same genus are pulled and aligned to query.\n"
-                        "Matches that are not consecutive for the specified number of times are ignored.",
-                        typeid(int),
-                        (void *) &minConsCnt,
-                        ""),
+//        MIN_CONSECUTIVE(MIN_CONSECUTIVE_ID,
+//                        "--min-consecutive",
+//                        "Matches that are not consecutive for the specified number of times are ignored.",
+//                        "Matched k-mers from the same genus are pulled and aligned to query.\n"
+//                        "Matches that are not consecutive for the specified number of times are ignored.",
+//                        typeid(int),
+//                        (void *) &minConsCnt,
+//                        ""),
         MIN_COVERED_POS(MIN_COVERED_POS_ID,
                         "--min-covered-pos",
                         "Minimum number of covered positions of a range",
@@ -214,7 +214,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MIN_SCORE);
     classify.push_back(&MIN_COVERAGE);
     classify.push_back(&SPACED);
-    classify.push_back(&MIN_CONSECUTIVE);
+//    classify.push_back(&MIN_CONSECUTIVE);
     classify.push_back(&HAMMING_MARGIN);
     classify.push_back(&MIN_SP_SCORE);
     classify.push_back(&PARAM_V);

@@ -1307,7 +1307,6 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
     TaxonScore bestScore;
     size_t i = offset;
     bool lastIn;
-    size_t speciesMatchCnt;
     while (i + 1 < end + 1) {
         currentGenus = genusTaxIdList[matchList[i].targetId];
         // For current genus
@@ -1317,13 +1316,9 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
             // Filter un-consecutive matches (probably random matches)
             lastIn = false;
             int range = 1;
-            size_t maxConsecutiveCnt = 0;
-            size_t currentConsecutiveCnt = 1;
             int distance = 0;
             int diffPosCntOfCurrRange = 1;
             int dnaDist = 0;
-
-            // For the same species
             while ((i + 1 < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
                 distance = matchList[i+1].position / 3 - matchList[i].position / 3; //20
                 dnaDist = matchList[i+1].position - matchList[i].position;
@@ -1331,44 +1326,31 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                     tempMatchContainer.push_back(matchList[i]);
                 } else if (distance == 1 && dnaDist <= 3){ // Next position
                     tempMatchContainer.push_back(matchList[i]);
-                    currentConsecutiveCnt ++;
                     diffPosCntOfCurrRange ++;
                     range += distance;
                     lastIn = true;
-                } else if (distance >= 9) { // && currentConsecutiveCnt > 1) { // One gap apart AND previous block was consecutive enough
+                } else if (distance >= 9) { // One gap apart AND previous block was consecutive enough
                     tempMatchContainer.push_back(matchList[i]);
                     lastIn = true;
                     // Check density
                     if (double(diffPosCntOfCurrRange + 1) / double(distance + range) >= 0.2){ // Dense enough --> Extend range
                         range += distance;
                         diffPosCntOfCurrRange ++;
-                        if (currentConsecutiveCnt > maxConsecutiveCnt) {
-                            maxConsecutiveCnt = currentConsecutiveCnt;
-                        }
-                        currentConsecutiveCnt = 1;
                     } else { // Not dense enough --> End range
-                        if (currentConsecutiveCnt > maxConsecutiveCnt) {
-                            maxConsecutiveCnt = currentConsecutiveCnt;
-                        }
                         if (diffPosCntOfCurrRange >= minCoveredPos) {
                             filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                                    tempMatchContainer.end());
                         }
                         // Initialize range info
                         tempMatchContainer.clear();
-                        currentConsecutiveCnt = 1;
                         diffPosCntOfCurrRange = 1;
-                        maxConsecutiveCnt = 0;
                         range = 1;
                         lastIn = false;
                     }
                 } else { // Not consecutive --> End range
                     if (lastIn){
                         tempMatchContainer.push_back(matchList[i]);
-                        if (currentConsecutiveCnt > maxConsecutiveCnt) {
-                            maxConsecutiveCnt = currentConsecutiveCnt;
-                        }
-                        if (maxConsecutiveCnt && diffPosCntOfCurrRange >= minCoveredPos) {
+                        if (diffPosCntOfCurrRange >= minCoveredPos) {
                             filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                                    tempMatchContainer.end());
                         }
@@ -1376,9 +1358,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                     lastIn = false;
                     // Initialize range info
                     tempMatchContainer.clear();
-                    currentConsecutiveCnt = 1;
                     diffPosCntOfCurrRange = 1;
-                    maxConsecutiveCnt = 0;
                     range = 1;
                 }
                 i++;
@@ -1387,9 +1367,6 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
             // Met next species
             if (lastIn) {
                 tempMatchContainer.push_back(matchList[i]);
-                if (currentConsecutiveCnt > maxConsecutiveCnt) {
-                    maxConsecutiveCnt = currentConsecutiveCnt;
-                }
                 if (diffPosCntOfCurrRange >= minCoveredPos) {
                     filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                            tempMatchContainer.end());
@@ -1456,7 +1433,6 @@ TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, M
     TaxonScore bestScore;
     size_t i = offset;
     bool lastIn;
-    size_t speciesMatchCnt;
     while (i + 1 < end + 1) {
         currentGenus = genusTaxIdList[matchList[i].targetId];
         // For current genus
@@ -1564,7 +1540,6 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
     TaxonScore bestScore;
     size_t i = offset;
     bool lastIn;
-    size_t speciesMatchCnt;
     while (i < end + 1) {
         currentGenus = genusTaxIdList[matchList[i].targetId];
         // For current genus
@@ -1574,8 +1549,6 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
             // Filter un-consecutive matches (probably random matches)
             lastIn = false;
             int range = 1;
-            size_t maxConsecutiveCnt = 0;
-            size_t currentConsecutiveCnt = 1;
             int distance = 0;
             int diffPosCntOfCurrRange = 1;
             int dnaDist = 0;
@@ -1588,43 +1561,30 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                     tempMatchContainer.push_back(matchList[i]);
                 } else if (distance == 1 && dnaDist <= 3){ // Next position
                     tempMatchContainer.push_back(matchList[i]);
-                    currentConsecutiveCnt ++;
                     diffPosCntOfCurrRange ++;
                     range += distance;
                     lastIn = true;
-                } else if (distance >= 9) { // && currentConsecutiveCnt > 1) { // One gap apart AND previous block was consecutive enough
+                } else if (distance >= 9) { // One gap apart AND previous block was consecutive enough
                     tempMatchContainer.push_back(matchList[i]);
                     lastIn = true;
                     // Check density
                     if (double(diffPosCntOfCurrRange + 1) / double(distance + range) >= 0.1){ // Dense enough --> Extend range
                         range += distance;
                         diffPosCntOfCurrRange ++;
-                        if (currentConsecutiveCnt > maxConsecutiveCnt) {
-                            maxConsecutiveCnt = currentConsecutiveCnt;
-                        }
-                        currentConsecutiveCnt = 1;
                     } else { // Not dense enough --> End range
-                        if (currentConsecutiveCnt > maxConsecutiveCnt) {
-                            maxConsecutiveCnt = currentConsecutiveCnt;
-                        }
                         if (diffPosCntOfCurrRange >= minCoveredPos) {
                             filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                                    tempMatchContainer.end());
                         }
                         // Initialize range info
                         tempMatchContainer.clear();
-                        currentConsecutiveCnt = 1;
                         diffPosCntOfCurrRange = 1;
-                        maxConsecutiveCnt = 0;
                         range = 1;
                         lastIn = false;
                     }
                 } else { // Not consecutive --> End range
                     if (lastIn){
                         tempMatchContainer.push_back(matchList[i]);
-                        if (currentConsecutiveCnt > maxConsecutiveCnt) {
-                            maxConsecutiveCnt = currentConsecutiveCnt;
-                        }
                         if (diffPosCntOfCurrRange >= minCoveredPos) {
                             filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                                    tempMatchContainer.end());
@@ -1633,9 +1593,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                     lastIn = false;
                     // Initialize range info
                     tempMatchContainer.clear();
-                    currentConsecutiveCnt = 1;
                     diffPosCntOfCurrRange = 1;
-                    maxConsecutiveCnt = 0;
                     range = 1;
                 }
                 i++;
@@ -1644,9 +1602,6 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
             // Met next species
             if (lastIn) {
                 tempMatchContainer.push_back(matchList[i]);
-                if (currentConsecutiveCnt > maxConsecutiveCnt) {
-                    maxConsecutiveCnt = currentConsecutiveCnt;
-                }
                 if (diffPosCntOfCurrRange >= minCoveredPos) {
                     filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                            tempMatchContainer.end());
