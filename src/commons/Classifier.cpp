@@ -1320,7 +1320,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
 
             // For the same species
             while ((i + 1 < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
-                distance = matchList[i+1].position / 3 - matchList[i].position / 3;
+                distance = matchList[i+1].position / 3 - matchList[i].position / 3; //20
                 dnaDist = matchList[i+1].position - matchList[i].position;
                 if (distance == 0) { // At the same position
                     tempMatchContainer.push_back(matchList[i]);
@@ -1334,7 +1334,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                     tempMatchContainer.push_back(matchList[i]);
                     lastIn = true;
                     // Check density
-                    if (double(diffPosCntOfCurrRange + 1) / double(distance + range) >= 0.1){ // Dense enough --> Extend range
+                    if (double(diffPosCntOfCurrRange + 1) / double(distance + range) >= 0.2){ // Dense enough --> Extend range
                         range += distance;
                         diffPosCntOfCurrRange ++;
                         if (currentConsecutiveCnt > maxConsecutiveCnt) {
