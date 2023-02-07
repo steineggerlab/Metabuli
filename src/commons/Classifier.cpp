@@ -30,7 +30,7 @@ Classifier::Classifier(LocalParameters & par) {
     MARKER = ~ MARKER;
     bitsForCodon = 3;
     numOfSplit = 0;
-    minConsCnt = par.minConsCnt;
+//    minConsCnt = par.minConsCnt;
     minCoveredPos = par.minCoveredPos;
     minSpScore = par.minSpScore;
     verbosity = par.verbosity;
@@ -881,8 +881,13 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                               queryList[currentQuery].queryLength2);
         }
     } else {
-        genusScore = getBestGenusMatches3(genusMatches, matchList, end, offset,
-                                         queryList[currentQuery].queryLength);
+        if (par.spaceMask != "11111111"){
+            genusScore = getBestGenusMatches_spaced(genusMatches, matchList, end, offset,
+                                                    queryList[currentQuery].queryLength);
+        } else {
+            genusScore = getBestGenusMatches3(genusMatches, matchList, end, offset,
+                                              queryList[currentQuery].queryLength);
+        }
     }
 
     if (par.printLog) {
@@ -1031,262 +1036,262 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     }
 }
 
-TaxonScore Classifier::getBestGenusMatches(vector<Match> & genusMatches,
-                                           Match *matchList,
-                                           size_t end, size_t offset,
-                                           int readLength1,
-                                           int readLength2) {
-    TaxID currentGenus;
-    TaxID currentSpecies;
-    TaxonScore bestScore;
-    vector<Match> tempMatchContainer;
-    vector<Match> filteredMatches;
-    vector<vector<Match>> matchesForEachGenus;
-    vector<bool> conservedWithinGenus;
-    vector<TaxonScore> genusScores;
-    size_t i = offset;
-    bool lastIn;
-    size_t speciesMatchCnt;
-    size_t speciesDiffPosCnt;
-    size_t consecutiveCnt;
-    int lastPos;
+//TaxonScore Classifier::getBestGenusMatches(vector<Match> & genusMatches,
+//                                           Match *matchList,
+//                                           size_t end, size_t offset,
+//                                           int readLength1,
+//                                           int readLength2) {
+//    TaxID currentGenus;
+//    TaxID currentSpecies;
+//    TaxonScore bestScore;
+//    vector<Match> tempMatchContainer;
+//    vector<Match> filteredMatches;
+//    vector<vector<Match>> matchesForEachGenus;
+//    vector<bool> conservedWithinGenus;
+//    vector<TaxonScore> genusScores;
+//    size_t i = offset;
+//    bool lastIn;
+//    size_t speciesMatchCnt;
+//    size_t speciesDiffPosCnt;
+//    size_t consecutiveCnt;
+//    int lastPos;
+//
+//    while (i < end + 1) {
+//        currentGenus = genusTaxIdList[matchList[i].targetId];
+//        // For current genus
+//        while ((i < end + 1) && currentGenus == genusTaxIdList[matchList[i].targetId]) {
+//            currentSpecies = speciesTaxIdList[matchList[i].targetId];
+//            // For current species
+//            // Filter un-consecutive matches (probably random matches)
+//            speciesMatchCnt = 0;
+//            speciesDiffPosCnt = 0;
+//            consecutiveCnt = 0;
+//            lastPos = -1;
+//            lastIn = false;
+//            while ((i < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
+//                if (matchList[i].position + 3 >= matchList[i + 1].position) {
+//                    tempMatchContainer.push_back(matchList[i]);
+//                    speciesMatchCnt++;
+//                    if (matchList[i].position / 3 != lastPos) {
+//                        lastPos = matchList[i].position / 3;
+//                        speciesDiffPosCnt++;
+//                        consecutiveCnt++;
+//                    }
+//                    lastIn = true;
+//                } else if (lastIn) {
+//                    lastIn = false;
+//                    tempMatchContainer.push_back(matchList[i]);
+//                    speciesMatchCnt++;
+//                    if (matchList[i].position / 3 != lastPos) {
+//                        lastPos = matchList[i].position / 3;
+//                        speciesDiffPosCnt++;
+//                        consecutiveCnt++;
+//                    }
+//                    if (consecutiveCnt >= minConsCnt) {
+//                        filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
+//                                               tempMatchContainer.end());
+//                    }
+//                    consecutiveCnt = 0;
+//                    speciesMatchCnt = 0;
+//                    tempMatchContainer.clear();
+//                }
+//                i++;
+//            }
+//            if (lastIn) {
+//                tempMatchContainer.push_back(matchList[i]);
+//                speciesMatchCnt++;
+//                if (matchList[i].position / 3 != lastPos) {
+//                    lastPos = matchList[i].position / 3;
+//                    speciesDiffPosCnt++;
+//                    consecutiveCnt++;
+//                }
+//                if (consecutiveCnt >= minConsCnt) {
+//                    filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
+//                                           tempMatchContainer.end());
+//                }
+//                tempMatchContainer.clear();
+//            }
+//            i++;
+//        }
+//        // Construct a match combination using filtered matches of current genus
+//        // so that it can best cover the query, and score the combination
+//        if (!filteredMatches.empty()) {
+//            genusScores.push_back(scoreGenus(filteredMatches, matchesForEachGenus, readLength1, readLength2));
+//        }
+//        filteredMatches.clear();
+//    }
+//
+//    // If there are no meaningful genus
+//    if (genusScores.empty()) {
+//        bestScore.score = 0;
+//        return bestScore;
+//    }
+//
+//    TaxonScore maxScore = *max_element(genusScores.begin(), genusScores.end(),
+//                                       [](const TaxonScore & a, const TaxonScore & b) { return a.score < b.score; });
+//
+//    vector<size_t> maxIdx;
+//
+//    for (size_t g = 0; g < genusScores.size(); g++) {
+//        if (genusScores[g].score > maxScore.score * 0.95f) {
+//            maxIdx.push_back(g);
+//        }
+//    }
+//    bestScore = maxScore;
+//
+//    for (unsigned long g : maxIdx) {
+//        genusMatches.insert(genusMatches.end(),
+//                            matchesForEachGenus[g].begin(),
+//                            matchesForEachGenus[g].end());
+//    }
+//
+//    // More than one genus
+//    if (maxIdx.size() > 1) {
+//        bestScore.taxId = 0;
+//        return bestScore;
+//    }
+//    return bestScore;
+//
+//    //Three cases
+//    //1. one genus
+//    //2. more than one genus
+//    //4. no genus
+//}
 
-    while (i < end + 1) {
-        currentGenus = genusTaxIdList[matchList[i].targetId];
-        // For current genus
-        while ((i < end + 1) && currentGenus == genusTaxIdList[matchList[i].targetId]) {
-            currentSpecies = speciesTaxIdList[matchList[i].targetId];
-            // For current species
-            // Filter un-consecutive matches (probably random matches)
-            speciesMatchCnt = 0;
-            speciesDiffPosCnt = 0;
-            consecutiveCnt = 0;
-            lastPos = -1;
-            lastIn = false;
-            while ((i < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
-                if (matchList[i].position + 3 >= matchList[i + 1].position) {
-                    tempMatchContainer.push_back(matchList[i]);
-                    speciesMatchCnt++;
-                    if (matchList[i].position / 3 != lastPos) {
-                        lastPos = matchList[i].position / 3;
-                        speciesDiffPosCnt++;
-                        consecutiveCnt++;
-                    }
-                    lastIn = true;
-                } else if (lastIn) {
-                    lastIn = false;
-                    tempMatchContainer.push_back(matchList[i]);
-                    speciesMatchCnt++;
-                    if (matchList[i].position / 3 != lastPos) {
-                        lastPos = matchList[i].position / 3;
-                        speciesDiffPosCnt++;
-                        consecutiveCnt++;
-                    }
-                    if (consecutiveCnt >= minConsCnt) {
-                        filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
-                                               tempMatchContainer.end());
-                    }
-                    consecutiveCnt = 0;
-                    speciesMatchCnt = 0;
-                    tempMatchContainer.clear();
-                }
-                i++;
-            }
-            if (lastIn) {
-                tempMatchContainer.push_back(matchList[i]);
-                speciesMatchCnt++;
-                if (matchList[i].position / 3 != lastPos) {
-                    lastPos = matchList[i].position / 3;
-                    speciesDiffPosCnt++;
-                    consecutiveCnt++;
-                }
-                if (consecutiveCnt >= minConsCnt) {
-                    filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
-                                           tempMatchContainer.end());
-                }
-                tempMatchContainer.clear();
-            }
-            i++;
-        }
-        // Construct a match combination using filtered matches of current genus
-        // so that it can best cover the query, and score the combination
-        if (!filteredMatches.empty()) {
-            genusScores.push_back(scoreGenus(filteredMatches, matchesForEachGenus, readLength1, readLength2));
-        }
-        filteredMatches.clear();
-    }
-
-    // If there are no meaningful genus
-    if (genusScores.empty()) {
-        bestScore.score = 0;
-        return bestScore;
-    }
-
-    TaxonScore maxScore = *max_element(genusScores.begin(), genusScores.end(),
-                                       [](const TaxonScore & a, const TaxonScore & b) { return a.score < b.score; });
-
-    vector<size_t> maxIdx;
-
-    for (size_t g = 0; g < genusScores.size(); g++) {
-        if (genusScores[g].score > maxScore.score * 0.95f) {
-            maxIdx.push_back(g);
-        }
-    }
-    bestScore = maxScore;
-
-    for (unsigned long g : maxIdx) {
-        genusMatches.insert(genusMatches.end(),
-                            matchesForEachGenus[g].begin(),
-                            matchesForEachGenus[g].end());
-    }
-
-    // More than one genus
-    if (maxIdx.size() > 1) {
-        bestScore.taxId = 0;
-        return bestScore;
-    }
-    return bestScore;
-
-    //Three cases
-    //1. one genus
-    //2. more than one genus
-    //4. no genus
-}
-
-TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *matchList, size_t end,
-                                           size_t offset, int queryLength) {
-    TaxID currentGenus;
-    TaxID currentSpecies;
-
-    vector<Match> tempMatchContainer;
-    vector<Match> filteredMatches;
-    vector<vector<Match>> matchesForEachGenus;
-    vector<bool> conservedWithinGenus;
-    vector<TaxonScore> genusScores;
-    TaxonScore bestScore;
-    size_t i = offset;
-    bool lastIn;
-    size_t speciesMatchCnt;
-    size_t speciesDiffPosCnt;
-    size_t consecutiveCnt;
-    size_t temp = 0;
-    int lastPos;
-    while (i < end + 1) {
-        currentGenus = genusTaxIdList[matchList[i].targetId];
-        // For current genus
-        while ((i < end + 1) && currentGenus == genusTaxIdList[matchList[i].targetId]) {
-            currentSpecies = speciesTaxIdList[matchList[i].targetId];
-            // For current species
-            // Filter un-consecutive matches (probably random matches)
-            speciesMatchCnt = 0;
-            speciesDiffPosCnt = 0;
-            consecutiveCnt = 0;
-            lastPos = -1;
-            lastIn = false;
-            temp = 0;
-            while ((i < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
-                if (matchList[i].position + 3 >= matchList[i + 1].position) { // 3 -> 29
-                    tempMatchContainer.push_back(matchList[i]);
-                    speciesMatchCnt++;
-                    if (matchList[i].position / 3 != lastPos) {
-                        lastPos = matchList[i].position / 3;
-                        speciesDiffPosCnt++;
-                        consecutiveCnt++;
-                        temp ++;
-                    }
-                    lastIn = true;
-                }
-                else if (matchList[i].position + 26 < matchList[i + 1].position &&
-                         matchList[i + 1].position < matchList[i].position + 30 && temp > 1){
-                    temp = 0;
-                    tempMatchContainer.push_back(matchList[i]);
-                    speciesMatchCnt++;
-                    if (matchList[i].position / 3 != lastPos) {
-                        lastPos = matchList[i].position / 3;
-                        speciesDiffPosCnt++;
-                        consecutiveCnt++;
-                    }
-                    lastIn = true;
-                }
-                else if (lastIn) {
-                    lastIn = false;
-                    tempMatchContainer.push_back(matchList[i]);
-                    speciesMatchCnt++;
-                    if (matchList[i].position / 3 != lastPos) {
-                        lastPos = matchList[i].position / 3;
-                        speciesDiffPosCnt++;
-                        consecutiveCnt++;
-                    }
-                    if (consecutiveCnt >= minConsCnt) {
-                        filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
-                                               tempMatchContainer.end());
-                    }
-                    consecutiveCnt = 0;
-                    speciesMatchCnt = 0;
-                    tempMatchContainer.clear();
-                }
-                i++;
-            }
-            if (lastIn) {
-                tempMatchContainer.push_back(matchList[i]);
-                speciesMatchCnt++;
-                if (matchList[i].position / 3 != lastPos) {
-                    lastPos = matchList[i].position / 3;
-                    speciesDiffPosCnt++;
-                    consecutiveCnt++;
-                }
-                if (consecutiveCnt >= minConsCnt) {
-                    filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
-                                           tempMatchContainer.end());
-                }
-                tempMatchContainer.clear();
-            }
-            i++;
-        }
-
-        // Construct a match combination using filtered matches of current genus
-        // so that it can best cover the query, and score the combination
-        if (!filteredMatches.empty()) {
-            genusScores.push_back(scoreGenus(filteredMatches, matchesForEachGenus, queryLength));
-        }
-        filteredMatches.clear();
-    }
-
-    // If there are no meaningful genus
-    if (genusScores.empty()) {
-        bestScore.score = 0;
-        return bestScore;
-    }
-
-    TaxonScore maxScore = *max_element(genusScores.begin(), genusScores.end(),
-                                       [](const TaxonScore & a, const TaxonScore & b) { return a.score < b.score; });
-
-    vector<size_t> maxIdx;
-    for (size_t g = 0; g < genusScores.size(); g++) {
-        if (genusScores[g].score > maxScore.score * 0.95f) {
-            maxIdx.push_back(g);
-        }
-    }
-    bestScore = maxScore;
-
-    for (unsigned long g : maxIdx) {
-        genusMatches.insert(genusMatches.end(),
-                            matchesForEachGenus[g].begin(),
-                            matchesForEachGenus[g].end());
-    }
-
-    // More than one genus
-    if (maxIdx.size() > 1) {
-        bestScore.taxId = 0;
-        return bestScore;
-    }
-    return bestScore;
-
-    //Three cases
-    //1. one genus
-    //2. more than one genus
-    //4. no genus
-}
+//TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *matchList, size_t end,
+//                                           size_t offset, int queryLength) {
+//    TaxID currentGenus;
+//    TaxID currentSpecies;
+//
+//    vector<Match> tempMatchContainer;
+//    vector<Match> filteredMatches;
+//    vector<vector<Match>> matchesForEachGenus;
+//    vector<bool> conservedWithinGenus;
+//    vector<TaxonScore> genusScores;
+//    TaxonScore bestScore;
+//    size_t i = offset;
+//    bool lastIn;
+//    size_t speciesMatchCnt;
+//    size_t speciesDiffPosCnt;
+//    size_t consecutiveCnt;
+//    size_t temp = 0;
+//    int lastPos;
+//    while (i < end + 1) {
+//        currentGenus = genusTaxIdList[matchList[i].targetId];
+//        // For current genus
+//        while ((i < end + 1) && currentGenus == genusTaxIdList[matchList[i].targetId]) {
+//            currentSpecies = speciesTaxIdList[matchList[i].targetId];
+//            // For current species
+//            // Filter un-consecutive matches (probably random matches)
+//            speciesMatchCnt = 0;
+//            speciesDiffPosCnt = 0;
+//            consecutiveCnt = 0;
+//            lastPos = -1;
+//            lastIn = false;
+//            temp = 0;
+//            while ((i < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
+//                if (matchList[i].position + 3 >= matchList[i + 1].position) { // 3 -> 29
+//                    tempMatchContainer.push_back(matchList[i]);
+//                    speciesMatchCnt++;
+//                    if (matchList[i].position / 3 != lastPos) {
+//                        lastPos = matchList[i].position / 3;
+//                        speciesDiffPosCnt++;
+//                        consecutiveCnt++;
+//                        temp ++;
+//                    }
+//                    lastIn = true;
+//                }
+//                else if (matchList[i].position + 26 < matchList[i + 1].position &&
+//                         matchList[i + 1].position < matchList[i].position + 30 && temp > 1){
+//                    temp = 0;
+//                    tempMatchContainer.push_back(matchList[i]);
+//                    speciesMatchCnt++;
+//                    if (matchList[i].position / 3 != lastPos) {
+//                        lastPos = matchList[i].position / 3;
+//                        speciesDiffPosCnt++;
+//                        consecutiveCnt++;
+//                    }
+//                    lastIn = true;
+//                }
+//                else if (lastIn) {
+//                    lastIn = false;
+//                    tempMatchContainer.push_back(matchList[i]);
+//                    speciesMatchCnt++;
+//                    if (matchList[i].position / 3 != lastPos) {
+//                        lastPos = matchList[i].position / 3;
+//                        speciesDiffPosCnt++;
+//                        consecutiveCnt++;
+//                    }
+//                    if (consecutiveCnt >= minConsCnt) {
+//                        filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
+//                                               tempMatchContainer.end());
+//                    }
+//                    consecutiveCnt = 0;
+//                    speciesMatchCnt = 0;
+//                    tempMatchContainer.clear();
+//                }
+//                i++;
+//            }
+//            if (lastIn) {
+//                tempMatchContainer.push_back(matchList[i]);
+//                speciesMatchCnt++;
+//                if (matchList[i].position / 3 != lastPos) {
+//                    lastPos = matchList[i].position / 3;
+//                    speciesDiffPosCnt++;
+//                    consecutiveCnt++;
+//                }
+//                if (consecutiveCnt >= minConsCnt) {
+//                    filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
+//                                           tempMatchContainer.end());
+//                }
+//                tempMatchContainer.clear();
+//            }
+//            i++;
+//        }
+//
+//        // Construct a match combination using filtered matches of current genus
+//        // so that it can best cover the query, and score the combination
+//        if (!filteredMatches.empty()) {
+//            genusScores.push_back(scoreGenus(filteredMatches, matchesForEachGenus, queryLength));
+//        }
+//        filteredMatches.clear();
+//    }
+//
+//    // If there are no meaningful genus
+//    if (genusScores.empty()) {
+//        bestScore.score = 0;
+//        return bestScore;
+//    }
+//
+//    TaxonScore maxScore = *max_element(genusScores.begin(), genusScores.end(),
+//                                       [](const TaxonScore & a, const TaxonScore & b) { return a.score < b.score; });
+//
+//    vector<size_t> maxIdx;
+//    for (size_t g = 0; g < genusScores.size(); g++) {
+//        if (genusScores[g].score > maxScore.score * 0.95f) {
+//            maxIdx.push_back(g);
+//        }
+//    }
+//    bestScore = maxScore;
+//
+//    for (unsigned long g : maxIdx) {
+//        genusMatches.insert(genusMatches.end(),
+//                            matchesForEachGenus[g].begin(),
+//                            matchesForEachGenus[g].end());
+//    }
+//
+//    // More than one genus
+//    if (maxIdx.size() > 1) {
+//        bestScore.taxId = 0;
+//        return bestScore;
+//    }
+//    return bestScore;
+//
+//    //Three cases
+//    //1. one genus
+//    //2. more than one genus
+//    //4. no genus
+//}
 
 TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *matchList, size_t end,
                                             size_t offset, int readLength1, int readLength2) {
@@ -1301,7 +1306,6 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
     TaxonScore bestScore;
     size_t i = offset;
     bool lastIn;
-    size_t speciesMatchCnt;
     while (i + 1 < end + 1) {
         currentGenus = genusTaxIdList[matchList[i].targetId];
         // For current genus
@@ -1311,13 +1315,9 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
             // Filter un-consecutive matches (probably random matches)
             lastIn = false;
             int range = 1;
-            size_t maxConsecutiveCnt = 0;
-            size_t currentConsecutiveCnt = 1;
             int distance = 0;
             int diffPosCntOfCurrRange = 1;
             int dnaDist = 0;
-
-            // For the same species
             while ((i + 1 < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
                 distance = matchList[i+1].position / 3 - matchList[i].position / 3; //20
                 dnaDist = matchList[i+1].position - matchList[i].position;
@@ -1325,44 +1325,31 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                     tempMatchContainer.push_back(matchList[i]);
                 } else if (distance == 1 && dnaDist <= 3){ // Next position
                     tempMatchContainer.push_back(matchList[i]);
-                    currentConsecutiveCnt ++;
                     diffPosCntOfCurrRange ++;
                     range += distance;
                     lastIn = true;
-                } else if (distance >= 9) { // && currentConsecutiveCnt > 1) { // One gap apart AND previous block was consecutive enough
+                } else if (distance >= 9) { // One gap apart AND previous block was consecutive enough
                     tempMatchContainer.push_back(matchList[i]);
                     lastIn = true;
                     // Check density
                     if (double(diffPosCntOfCurrRange + 1) / double(distance + range) >= 0.2){ // Dense enough --> Extend range
                         range += distance;
                         diffPosCntOfCurrRange ++;
-                        if (currentConsecutiveCnt > maxConsecutiveCnt) {
-                            maxConsecutiveCnt = currentConsecutiveCnt;
-                        }
-                        currentConsecutiveCnt = 1;
                     } else { // Not dense enough --> End range
-                        if (currentConsecutiveCnt > maxConsecutiveCnt) {
-                            maxConsecutiveCnt = currentConsecutiveCnt;
-                        }
-                        if (maxConsecutiveCnt >= minConsCnt && diffPosCntOfCurrRange >= minCoveredPos) {
+                        if (diffPosCntOfCurrRange >= minCoveredPos) {
                             filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                                    tempMatchContainer.end());
                         }
                         // Initialize range info
                         tempMatchContainer.clear();
-                        currentConsecutiveCnt = 1;
                         diffPosCntOfCurrRange = 1;
-                        maxConsecutiveCnt = 0;
                         range = 1;
                         lastIn = false;
                     }
                 } else { // Not consecutive --> End range
                     if (lastIn){
                         tempMatchContainer.push_back(matchList[i]);
-                        if (currentConsecutiveCnt > maxConsecutiveCnt) {
-                            maxConsecutiveCnt = currentConsecutiveCnt;
-                        }
-                        if (maxConsecutiveCnt >= minConsCnt && diffPosCntOfCurrRange >= minCoveredPos) {
+                        if (diffPosCntOfCurrRange >= minCoveredPos) {
                             filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                                    tempMatchContainer.end());
                         }
@@ -1370,9 +1357,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                     lastIn = false;
                     // Initialize range info
                     tempMatchContainer.clear();
-                    currentConsecutiveCnt = 1;
                     diffPosCntOfCurrRange = 1;
-                    maxConsecutiveCnt = 0;
                     range = 1;
                 }
                 i++;
@@ -1381,18 +1366,11 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
             // Met next species
             if (lastIn) {
                 tempMatchContainer.push_back(matchList[i]);
-                if (currentConsecutiveCnt > maxConsecutiveCnt) {
-                    maxConsecutiveCnt = currentConsecutiveCnt;
-                }
-                if (maxConsecutiveCnt >= minConsCnt && diffPosCntOfCurrRange >= minCoveredPos) {
+                if (diffPosCntOfCurrRange >= minCoveredPos) {
                     filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                            tempMatchContainer.end());
                 }
             }
-//            // Print filteredMatches
-//            for (auto &m : filteredMatches) {
-//                cout << speciesTaxIdList[m.targetId] << " " << m.position << " " << endl;
-//            }
             tempMatchContainer.clear();
             i++;
         }
@@ -1454,7 +1432,6 @@ TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, M
     TaxonScore bestScore;
     size_t i = offset;
     bool lastIn;
-    size_t speciesMatchCnt;
     while (i + 1 < end + 1) {
         currentGenus = genusTaxIdList[matchList[i].targetId];
         // For current genus
@@ -1562,7 +1539,6 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
     TaxonScore bestScore;
     size_t i = offset;
     bool lastIn;
-    size_t speciesMatchCnt;
     while (i < end + 1) {
         currentGenus = genusTaxIdList[matchList[i].targetId];
         // For current genus
@@ -1572,8 +1548,6 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
             // Filter un-consecutive matches (probably random matches)
             lastIn = false;
             int range = 1;
-            size_t maxConsecutiveCnt = 0;
-            size_t currentConsecutiveCnt = 1;
             int distance = 0;
             int diffPosCntOfCurrRange = 1;
             int dnaDist = 0;
@@ -1586,44 +1560,31 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                     tempMatchContainer.push_back(matchList[i]);
                 } else if (distance == 1 && dnaDist <= 3){ // Next position
                     tempMatchContainer.push_back(matchList[i]);
-                    currentConsecutiveCnt ++;
                     diffPosCntOfCurrRange ++;
                     range += distance;
                     lastIn = true;
-                } else if (distance >= 9) { // && currentConsecutiveCnt > 1) { // One gap apart AND previous block was consecutive enough
+                } else if (distance >= 9) { // One gap apart AND previous block was consecutive enough
                     tempMatchContainer.push_back(matchList[i]);
                     lastIn = true;
                     // Check density
                     if (double(diffPosCntOfCurrRange + 1) / double(distance + range) >= 0.1){ // Dense enough --> Extend range
                         range += distance;
                         diffPosCntOfCurrRange ++;
-                        if (currentConsecutiveCnt > maxConsecutiveCnt) {
-                            maxConsecutiveCnt = currentConsecutiveCnt;
-                        }
-                        currentConsecutiveCnt = 1;
                     } else { // Not dense enough --> End range
-                        if (currentConsecutiveCnt > maxConsecutiveCnt) {
-                            maxConsecutiveCnt = currentConsecutiveCnt;
-                        }
-                        if (maxConsecutiveCnt >= minConsCnt && diffPosCntOfCurrRange >= minCoveredPos) {
+                        if (diffPosCntOfCurrRange >= minCoveredPos) {
                             filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                                    tempMatchContainer.end());
                         }
                         // Initialize range info
                         tempMatchContainer.clear();
-                        currentConsecutiveCnt = 1;
                         diffPosCntOfCurrRange = 1;
-                        maxConsecutiveCnt = 0;
                         range = 1;
                         lastIn = false;
                     }
                 } else { // Not consecutive --> End range
                     if (lastIn){
                         tempMatchContainer.push_back(matchList[i]);
-                        if (currentConsecutiveCnt > maxConsecutiveCnt) {
-                            maxConsecutiveCnt = currentConsecutiveCnt;
-                        }
-                        if (maxConsecutiveCnt >= minConsCnt && diffPosCntOfCurrRange >= minCoveredPos) {
+                        if (diffPosCntOfCurrRange >= minCoveredPos) {
                             filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                                    tempMatchContainer.end());
                         }
@@ -1631,9 +1592,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
                     lastIn = false;
                     // Initialize range info
                     tempMatchContainer.clear();
-                    currentConsecutiveCnt = 1;
                     diffPosCntOfCurrRange = 1;
-                    maxConsecutiveCnt = 0;
                     range = 1;
                 }
                 i++;
@@ -1642,10 +1601,7 @@ TaxonScore Classifier::getBestGenusMatches3(vector<Match> &genusMatches, Match *
             // Met next species
             if (lastIn) {
                 tempMatchContainer.push_back(matchList[i]);
-                if (currentConsecutiveCnt > maxConsecutiveCnt) {
-                    maxConsecutiveCnt = currentConsecutiveCnt;
-                }
-                if (maxConsecutiveCnt >= minConsCnt && diffPosCntOfCurrRange >= minCoveredPos) {
+                if (diffPosCntOfCurrRange >= minCoveredPos) {
                     filteredMatches.insert(filteredMatches.end(), tempMatchContainer.begin(),
                                            tempMatchContainer.end());
                 }
