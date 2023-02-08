@@ -65,6 +65,7 @@ int grade(int argc, const char **argv, const Command &command) {
     string nodes = taxonomy + "/nodes.dmp";
     string merged = taxonomy + "/merged.dmp";
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
+    cout << "Taxonomy loaded" << endl;
 
     // Load mapping file names
     ifstream mappingFileListFile;
@@ -78,6 +79,7 @@ int grade(int argc, const char **argv, const Command &command) {
     } else {
         cerr << "Cannot open file for mapping file list" << endl;
     }
+    cout << "Answer sheet loaded" << endl;
 
     // Load classification file names
     ifstream readClassificationFileListFile;
@@ -90,8 +92,7 @@ int grade(int argc, const char **argv, const Command &command) {
     } else {
         cerr << "Cannot open file for read classification file list" << endl;
     }
-
-
+    cout << "Classification results loaded" << endl;
 
     size_t numberOfFiles = mappingFileNames.size();
     vector<GradeResult> results;
