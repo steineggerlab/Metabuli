@@ -1845,7 +1845,7 @@ TaxonScore Classifier::scoreTaxon(const vector<Match> &matches,
     int aminoAcidNum_total = queryLength / 3 + queryLength2 / 3;
     int aminoAcidNum_read1 = queryLength / 3;
     auto *hammingsAtEachPos = new signed char[aminoAcidNum_total + 3];
-    memset(hammingsAtEachPos, -1, (aminoAcidNum_total + 3));
+    memset(hammingsAtEachPos, 10, (aminoAcidNum_total + 3));
 
     int currPos;
     size_t walker = begin;
@@ -1883,7 +1883,7 @@ TaxonScore Classifier::scoreTaxon(const vector<Match> &matches,
         if (h < aminoAcidNum_read1) {
             if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
                 coveredPosCnt_read1++;
-            } else if (hammingsAtEachPos[h] != -1) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
+            } else if (hammingsAtEachPos[h] != 10) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
                 hammingSum += 1.0f + (0.5f * (float) hammingsAtEachPos[h]);
                 hammingDist += hammingsAtEachPos[h];
                 coveredPosCnt_read1++;
@@ -1893,7 +1893,7 @@ TaxonScore Classifier::scoreTaxon(const vector<Match> &matches,
         else {
             if (hammingsAtEachPos[h] == 0) { // Add 0 for 0 hamming dist.
                 coveredPosCnt_read2++;
-            } else if (hammingsAtEachPos[h] != -1) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
+            } else if (hammingsAtEachPos[h] != 10) { // Add 1.5, 2, 2.5 for 1, 2, 3 hamming dist. respectively
                 hammingSum += 1.0f + (0.5f * (float) hammingsAtEachPos[h]);
                 hammingDist += hammingsAtEachPos[h];
                 coveredPosCnt_read2++;
