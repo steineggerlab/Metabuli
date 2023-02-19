@@ -179,11 +179,18 @@ void Classifier::startClassify(const LocalParameters &par) {
 
     // Allocate memory for buffers
     // 1. Calculate estimated maximum RAM usage
-    size_t estimatedNumOfKmer = 2 * totalReadLength - 84 * numOfSeq;
+    size_t estimatedNumOfKmer;
+    size_t matchPerKmer = 5;
+    if(par.seqMode == 2) {
+        estimatedNumOfKmer = 2 * totalReadLength - 84 * numOfSeq;
+    }
+    else {
+        estimatedNumOfKmer = 2 * totalReadLength - 42 * numOfSeq;
+    }
     size_t memoryForReads = 200 * numOfSeq; // 200 bytes per read
     size_t memoryForThreads = (size_t) 128'000'000 * (size_t) par.threads; // 128 MB per thread
     size_t memoryForQueryKmer = estimatedNumOfKmer * sizeof(QueryKmer);
-    size_t memoryForKmerMatch = estimatedNumOfKmer * sizeof(Match) * 5;
+    size_t memoryForKmerMatch = estimatedNumOfKmer * sizeof(Match) * matchPerKmer;
     size_t estimatedMaxRamUsage = memoryForReads + memoryForThreads + memoryForQueryKmer + memoryForKmerMatch;
 
     // 2. Check if the estimated memory usage is larger than the available memory
@@ -192,7 +199,7 @@ void Classifier::startClassify(const LocalParameters &par) {
         maxCount = ((size_t) par.ramUsage * 1'000'000'000 - memoryForReads - memoryForThreads) /
                 (96 * (par.ramUsage + 32) / par.ramUsage);
         memoryForQueryKmer = maxCount * sizeof(QueryKmer);
-        memoryForKmerMatch = maxCount * sizeof(Match) * 5;
+        memoryForKmerMatch = maxCount * sizeof(Match) * matchPerKmer;
     } else {
         maxCount = estimatedNumOfKmer;
     }
@@ -203,7 +210,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 
 
     QueryKmerBuffer kmerBuffer(maxCount);
-    Buffer<Match> matchBuffer(size_t(maxCount) * size_t(5));
+    Buffer<Match> matchBuffer(size_t(maxCount) * matchPerKmer);
 
     // Checker for multi-threading
     bool *processedSeqChecker = new bool[numOfSeq];
