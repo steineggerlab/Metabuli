@@ -599,7 +599,7 @@ void IndexCreator::splitSequenceFile(vector<Sequence> & seqSegments, MmapedData<
     size_t start = 0;
     size_t numOfChar = seqFile.fileSize / sizeof(char);
     for(size_t i = 1; i < numOfChar; i++){
-        if(seqFile.data[i] == '>' || seqFile.data[i] == '@'){
+        if(seqFile.data[i] == '>'){
             seqSegments.emplace_back(start, i-2, i - start - 1);
             start = i;
         }

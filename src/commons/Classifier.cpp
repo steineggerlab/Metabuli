@@ -118,6 +118,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     MmapedData<char> queryFile2{};
     vector<Sequence> sequences;
     vector<Sequence> sequences2;
+    vector<pair<size_t, size_t>> queryReadSplit;
     Query *queryList;
     size_t numOfSeq = 0;
 
@@ -128,7 +129,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 
         // Get start and end positions of each read
         if (isFasta) {
-            IndexCreator::splitSequenceFile(sequences, queryFile);
+            splitFASTA(sequences, queryPath_1);
         } else {
             splitFASTQ(sequences, queryPath_1);
         }
@@ -139,7 +140,10 @@ void Classifier::startClassify(const LocalParameters &par) {
 
         // Calculate the total read length
         for (size_t i = 0; i < numOfSeq; i++) {
-            totalReadLength += sequences[i].length;
+            if (kmerCnt > maxKmerCnt) {
+                queryReadSplit
+            }
+            totalReadLength += sequences[i].seqLength;
         }
     } else if (par.seqMode == 2) {
         queryFile = mmapData<char>(queryPath_1.c_str());
@@ -151,8 +155,10 @@ void Classifier::startClassify(const LocalParameters &par) {
 
         // Get start and end positions of each read
         if (isFasta) {
-            IndexCreator::splitSequenceFile(sequences, queryFile);
-            IndexCreator::splitSequenceFile(sequences2, queryFile2);
+//            IndexCreator::splitSequenceFile(sequences, queryFile);
+//            IndexCreator::splitSequenceFile(sequences2, queryFile2);
+            splitFASTA(sequences, queryPath_1);
+            splitFASTA(sequences, queryPath_2);
         } else {
             splitFASTQ(sequences, queryPath_1);
             splitFASTQ(sequences2, queryPath_2);
@@ -169,8 +175,8 @@ void Classifier::startClassify(const LocalParameters &par) {
 
         // Calculate the total read length
         for (size_t i = 0; i < numOfSeq; i++) {
-            totalReadLength += sequences[i].length;
-            totalReadLength += sequences2[i].length;
+            totalReadLength += sequences[i].seqLength;
+            totalReadLength += sequences2[i].seqLength;
         }
     }
     cout << "Done" << endl;
@@ -179,11 +185,18 @@ void Classifier::startClassify(const LocalParameters &par) {
 
     // Allocate memory for buffers
     // 1. Calculate estimated maximum RAM usage
-    size_t estimatedNumOfKmer = 2 * totalReadLength - 84 * numOfSeq;
+    size_t estimatedNumOfKmer;
+    size_t matchPerKmer = 5;
+    if(par.seqMode == 2) {
+        estimatedNumOfKmer = 2 * totalReadLength - 84 * numOfSeq;
+    }
+    else {
+        estimatedNumOfKmer = 2 * totalReadLength - 42 * numOfSeq;
+    }
     size_t memoryForReads = 200 * numOfSeq; // 200 bytes per read
     size_t memoryForThreads = (size_t) 128'000'000 * (size_t) par.threads; // 128 MB per thread
     size_t memoryForQueryKmer = estimatedNumOfKmer * sizeof(QueryKmer);
-    size_t memoryForKmerMatch = estimatedNumOfKmer * sizeof(Match) * 5;
+    size_t memoryForKmerMatch = estimatedNumOfKmer * sizeof(Match) * matchPerKmer;
     size_t estimatedMaxRamUsage = memoryForReads + memoryForThreads + memoryForQueryKmer + memoryForKmerMatch;
 
     // 2. Check if the estimated memory usage is larger than the available memory
@@ -192,7 +205,7 @@ void Classifier::startClassify(const LocalParameters &par) {
         maxCount = ((size_t) par.ramUsage * 1'000'000'000 - memoryForReads - memoryForThreads) /
                 (96 * (par.ramUsage + 32) / par.ramUsage);
         memoryForQueryKmer = maxCount * sizeof(QueryKmer);
-        memoryForKmerMatch = maxCount * sizeof(Match) * 5;
+        memoryForKmerMatch = maxCount * sizeof(Match) * matchPerKmer;
     } else {
         maxCount = estimatedNumOfKmer;
     }
@@ -203,7 +216,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 
 
     QueryKmerBuffer kmerBuffer(maxCount);
-    Buffer<Match> matchBuffer(size_t(maxCount) * size_t(5));
+    Buffer<Match> matchBuffer(size_t(maxCount) * matchPerKmer);
 
     // Checker for multi-threading
     bool *processedSeqChecker = new bool[numOfSeq];
@@ -943,6 +956,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         speciesScore = chooseSpecies(genusMatches, queryList[currentQuery].queryLength, species);
     }
 
+
     // Classify to LCA if more than one species are selected
     if (species.size() > 1) {
         queryList[currentQuery].isClassified = true;
@@ -971,7 +985,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         }
         return;
     }
-   
+
     selectedSpecies = species[0];
     // Record matches of selected species
     for (auto & genusMatch : genusMatches) {
@@ -980,7 +994,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         }
     }
 
-    // Check if it can be classified at rank lower than species.
+    // Check if it can be classified at the subspecies rank.
     int numOfstrains = 0;
     TaxID strainID = 0;
     int count = 1;
@@ -1997,15 +2011,41 @@ void Classifier::splitFASTQ(vector<Sequence> & seqSegments, const string & query
     size_t lineCnt = 0;
     size_t start;
     size_t end;
-    size_t pos;
     while (getline(fastq, line)) {
         if (lineCnt % 4 == 0){
             start = (size_t) fastq.tellg() - line.length() - 1;
         }
         if (lineCnt % 4 == 1){
             end = (size_t) fastq.tellg() - 1;
-            seqSegments.emplace_back(start, end, end - start + 1);
+            seqSegments.emplace_back(start, end, end - start + 1, line.length());
         }
         lineCnt++;
     }
+}
+
+void Classifier::splitFASTA(vector<Sequence> & seqSegments, const string & queryPath) {
+    ifstream fasta;
+    fasta.open(queryPath);
+    if (!fasta.is_open()) {
+        cerr << "Error: Cannot open file " << queryPath << endl;
+        exit(1);
+    }
+
+    string line;
+    size_t start = 0;
+    size_t end;
+    getline(fasta, line);
+    size_t seqLength = 0;
+    while (getline(fasta, line)) {
+        if (line[0] == '>') {
+            end = (size_t) fasta.tellg() - line.length() - 2;
+            seqSegments.emplace_back(start, end, end - start + 1, seqLength);
+            start = end + 1;
+            seqLength = 0;
+
+        } else {
+            seqLength += line.length();
+        }
+    }
+    seqSegments.emplace_back(start, end, end - start + 1, seqLength);
 }

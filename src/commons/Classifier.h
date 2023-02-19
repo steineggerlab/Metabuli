@@ -86,6 +86,7 @@ protected:
         DiffIdxSplit diffIdxSplit; // index in target k-mer list from where the search begins.
     };
 
+
     template<typename T>
     struct Buffer {
         T *buffer;
@@ -120,6 +121,7 @@ protected:
 
     // Index reads in query file
     static void splitFASTQ(vector<Sequence> & seqSegments, const string & queryPath);
+    static void splitFASTA(vector<Sequence> & seqSegments, const string & queryPath);
 
     // Extract query k-mer
     void fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer, MmapedData<char> &seqFile, vector<Sequence> &seqs,

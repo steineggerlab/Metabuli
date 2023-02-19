@@ -12,13 +12,13 @@
 #define unlikely(x) __builtin_expect((x),0)
 
 struct Sequence{
-    Sequence(size_t start, size_t end, size_t length, size_t totalSeqCnt = 0)
-            : start(start), end(end), length(length), totalSeqCnt(totalSeqCnt) {}
-    Sequence() : start(0), end(0), length(0), totalSeqCnt(0) { }
+    Sequence(size_t start, size_t end, size_t length, size_t seqLength = 0)
+            : start(start), end(end), length(length), seqLength(seqLength) {}
+    Sequence() : start(0), end(0), length(0), seqLength(0) { }
     size_t start;
     size_t end;
     size_t length;
-    size_t totalSeqCnt;
+    size_t seqLength;
 };
 
 struct Query{
