@@ -409,11 +409,18 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                 kseq_read(seq);
                 auto kmerCnt = getQueryKmerNumber<size_t>(seq->seq.l);
 
+                cout<< seq->name.s << endl;
+                cout << seq->seq.s << endl;
+
+
                 // Read 2
                 kseq_buffer_t buffer2(const_cast<char *>(&seqFile2.data[seqs2[i].start]), seqs2[i].length);
                 kseq_t *seq2 = kseq_init(&buffer2);
                 kseq_read(seq2);
                 auto kmerCnt2 = getQueryKmerNumber<size_t>(seq2->seq.l);
+
+                cout<< seq2->name.s << endl;
+                cout << seq2->seq.s << endl;
 
                 // Ignore short read
                 if (kmerCnt2 < 1 || kmerCnt < 1) {
