@@ -111,6 +111,9 @@ void Classifier::startClassify(const LocalParameters &par) {
     }
     check.close();
 
+    // Calculate maximum number of k-mers for each iteration.
+    size_t maxNumOfKmer = 0;
+
     // Load query file
     cout << "Indexing query file ...";
     size_t totalReadLength = 0;
@@ -118,9 +121,9 @@ void Classifier::startClassify(const LocalParameters &par) {
     MmapedData<char> queryFile2{};
     vector<Sequence> sequences;
     vector<Sequence> sequences2;
+    vector<pair<size_t, size_t>> queryReadSplit;
     Query *queryList;
     size_t numOfSeq = 0;
-
     if (par.seqMode == 1 || par.seqMode == 3) {
         queryFile = mmapData<char>(queryPath_1.c_str());
         madvise(queryFile.data, queryFile.fileSize, MADV_SEQUENTIAL);
@@ -128,7 +131,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 
         // Get start and end positions of each read
         if (isFasta) {
-            IndexCreator::splitSequenceFile(sequences, queryFile);
+            splitFASTA(sequences, queryPath_1);
         } else {
             splitFASTQ(sequences, queryPath_1);
         }
@@ -137,10 +140,20 @@ void Classifier::startClassify(const LocalParameters &par) {
         numOfSeq = sequences.size();
         queryList = new Query[numOfSeq];
 
-        // Calculate the total read length
+        // Make query read splits
+        size_t start = 0;
+        size_t kmerCnt = 0;
         for (size_t i = 0; i < numOfSeq; i++) {
-            totalReadLength += sequences[i].length;
+            kmerCnt += getQueryKmerNumber<size_t>(sequences[i].seqLength);
+            if (kmerCnt > maxNumOfKmer) {
+                queryReadSplit.emplace_back(start, i);
+                kmerCnt = 0;
+                start = i;
+            }
+            totalReadLength += sequences[i].seqLength;
         }
+        queryReadSplit.emplace_back(start, numOfSeq);
+
     } else if (par.seqMode == 2) {
         queryFile = mmapData<char>(queryPath_1.c_str());
         queryFile2 = mmapData<char>(queryPath_2.c_str());
@@ -151,8 +164,8 @@ void Classifier::startClassify(const LocalParameters &par) {
 
         // Get start and end positions of each read
         if (isFasta) {
-            IndexCreator::splitSequenceFile(sequences, queryFile);
-            IndexCreator::splitSequenceFile(sequences2, queryFile2);
+            splitFASTA(sequences, queryPath_1);
+            splitFASTA(sequences, queryPath_2);
         } else {
             splitFASTQ(sequences, queryPath_1);
             splitFASTQ(sequences2, queryPath_2);
@@ -167,12 +180,24 @@ void Classifier::startClassify(const LocalParameters &par) {
         numOfSeq = sequences.size();
         queryList = new Query[numOfSeq];
 
-        // Calculate the total read length
+
+        // Make query read splits
+        size_t start = 0;
+        size_t kmerCnt = 0;
         for (size_t i = 0; i < numOfSeq; i++) {
-            totalReadLength += sequences[i].length;
-            totalReadLength += sequences2[i].length;
+            kmerCnt += getQueryKmerNumber<size_t>(sequences[i].seqLength);
+            kmerCnt += getQueryKmerNumber<size_t>(sequences2[i].seqLength);
+            if (kmerCnt > maxNumOfKmer) {
+                queryReadSplit.emplace_back(start, i);
+                kmerCnt = 0;
+                start = i;
+            }
+            totalReadLength += sequences[i].seqLength;
+            totalReadLength += sequences2[i].seqLength;
         }
+        queryReadSplit.emplace_back(start, numOfSeq);
     }
+
     cout << "Done" << endl;
     cout << "Total number of sequences: " << numOfSeq << endl;
     cout << "Total read length: " << totalReadLength <<  "nt" << endl;
@@ -309,7 +334,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
 
-                int kmerCnt = getQueryKmerNumber((int) seq->seq.l);
+                auto kmerCnt = getQueryKmerNumber<size_t> (seq->seq.l);
 
                 // Ignore short read
                 if (kmerCnt < 1) {
@@ -329,11 +354,11 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                     queryList[i].queryLength = getMaxCoveredLength((int) seq->seq.l);
                     queryList[i].queryId = (int) i;
                     queryList[i].name = string(seq->name.s);
-                    queryList[i].kmerCnt = kmerCnt;
+                    queryList[i].kmerCnt = (int) kmerCnt;
 
                     __sync_fetch_and_add(&processedSeqCnt, 1);
                 } else {
-                    __sync_fetch_and_add(&(kmerBuffer.startIndexOfReserve), -kmerCnt);
+                    __sync_fetch_and_sub(&(kmerBuffer.startIndexOfReserve), kmerCnt);
                     hasOverflow = true;
                 }
                 kseq_destroy(seq);
@@ -353,7 +378,8 @@ int Classifier::getMaxCoveredLength(int queryLength) {
     }
 }
 
-int Classifier::getQueryKmerNumber(int queryLength) {
+template <typename T>
+T Classifier::getQueryKmerNumber(T queryLength) {
     return (getMaxCoveredLength(queryLength) / 3 - kmerLength - spaceNum_int + 1) * 6;
 }
 
@@ -381,13 +407,13 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                 kseq_buffer_t buffer(const_cast<char *>(&seqFile1.data[seqs[i].start]), seqs[i].length);
                 kseq_t *seq = kseq_init(&buffer);
                 kseq_read(seq);
-                int kmerCnt = getQueryKmerNumber((int) seq->seq.l);
+                auto kmerCnt = getQueryKmerNumber<size_t>(seq->seq.l);
 
                 // Read 2
                 kseq_buffer_t buffer2(const_cast<char *>(&seqFile2.data[seqs2[i].start]), seqs2[i].length);
                 kseq_t *seq2 = kseq_init(&buffer2);
                 kseq_read(seq2);
-                int kmerCnt2 = getQueryKmerNumber((int) seq2->seq.l);
+                auto kmerCnt2 = getQueryKmerNumber<size_t>(seq2->seq.l);
 
                 // Ignore short read
                 if (kmerCnt2 < 1 || kmerCnt < 1) {
@@ -413,11 +439,11 @@ void Classifier::fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
                     queryList[i].queryLength2 = getMaxCoveredLength((int) seq2->seq.l);
                     queryList[i].queryId = (int) i;
                     queryList[i].name = string(seq->name.s);
-                    queryList[i].kmerCnt = kmerCnt + kmerCnt2;
+                    queryList[i].kmerCnt = (int) (kmerCnt + kmerCnt2);
 
                     __sync_fetch_and_add(&processedSeqCnt, 1);
                 } else {
-                    __sync_fetch_and_add(&(kmerBuffer.startIndexOfReserve), -(kmerCnt + kmerCnt2));
+                    __sync_fetch_and_sub(&(kmerBuffer.startIndexOfReserve), kmerCnt + kmerCnt2);
                     hasOverflow = true;
                 }
                 kseq_destroy(seq);
@@ -2005,15 +2031,41 @@ void Classifier::splitFASTQ(vector<Sequence> & seqSegments, const string & query
     size_t lineCnt = 0;
     size_t start;
     size_t end;
-    size_t pos;
     while (getline(fastq, line)) {
         if (lineCnt % 4 == 0){
             start = (size_t) fastq.tellg() - line.length() - 1;
         }
         if (lineCnt % 4 == 1){
             end = (size_t) fastq.tellg() - 1;
-            seqSegments.emplace_back(start, end, end - start + 1);
+            seqSegments.emplace_back(start, end, end - start + 1, line.length());
         }
         lineCnt++;
     }
+}
+
+void Classifier::splitFASTA(vector<Sequence> & seqSegments, const string & queryPath) {
+    ifstream fasta;
+    fasta.open(queryPath);
+    if (!fasta.is_open()) {
+        cerr << "Error: Cannot open file " << queryPath << endl;
+        exit(1);
+    }
+
+    string line;
+    size_t start = 0;
+    size_t end;
+    getline(fasta, line);
+    size_t seqLength = 0;
+    while (getline(fasta, line)) {
+        if (line[0] == '>') {
+            end = (size_t) fasta.tellg() - line.length() - 2;
+            seqSegments.emplace_back(start, end, end - start + 1, seqLength);
+            start = end + 1;
+            seqLength = 0;
+
+        } else {
+            seqLength += line.length();
+        }
+    }
+    seqSegments.emplace_back(start, end, end - start + 1, seqLength);
 }
