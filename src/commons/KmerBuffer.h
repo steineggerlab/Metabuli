@@ -4,6 +4,7 @@
 #include <Kmer.h>
 #include "Util.h"
 
+
 class QueryKmerBuffer{
 private:
 
@@ -11,11 +12,14 @@ public:
     QueryKmer * buffer;
     size_t startIndexOfReserve;
     size_t bufferSize;
-    explicit QueryKmerBuffer(size_t sizeOfBuffer){
+
+    explicit QueryKmerBuffer(size_t sizeOfBuffer=100){
         buffer = (QueryKmer *) malloc(sizeof(QueryKmer) * sizeOfBuffer);
         bufferSize = sizeOfBuffer;
         startIndexOfReserve = 0;
     };
+
+
     ~QueryKmerBuffer(){
         free(buffer);
     }
@@ -23,6 +27,13 @@ public:
     size_t reserveMemory(size_t numOfKmer){
         size_t offsetToWrite = __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
         return offsetToWrite;
+    };
+
+    void reallocateMemory(size_t numOfKmer){
+        if (numOfKmer > bufferSize){
+            buffer = (QueryKmer *) realloc(buffer, sizeof(QueryKmer) * (numOfKmer));
+            bufferSize = numOfKmer;
+        }
     };
 
 };

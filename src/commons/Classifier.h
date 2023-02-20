@@ -93,7 +93,7 @@ protected:
         size_t startIndexOfReserve;
         size_t bufferSize;
 
-        explicit Buffer(size_t sizeOfBuffer) {
+        explicit Buffer(size_t sizeOfBuffer=100) {
             buffer = (T *) malloc(sizeof(T) * sizeOfBuffer);
             bufferSize = sizeOfBuffer;
             startIndexOfReserve = 0;
@@ -102,6 +102,13 @@ protected:
         size_t reserveMemory(size_t numOfKmer) {
             size_t offsetToWrite = __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
             return offsetToWrite;
+        };
+
+        void reallocateMemory(size_t sizeOfBuffer) {
+            if (sizeOfBuffer > bufferSize) {
+                buffer = (T *) realloc(buffer, sizeof(T) * sizeOfBuffer);
+                bufferSize = sizeOfBuffer;
+            }
         };
     };
 
@@ -124,20 +131,21 @@ protected:
     static void splitFASTA(vector<Sequence> & seqSegments, const string & queryPath);
 
     // Extract query k-mer
-    void fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer, MmapedData<char> &seqFile, vector<Sequence> &seqs,
-                                     bool *checker, size_t &processedSeqCnt, Query *queryList,
+    void fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
+                                     MmapedData<char> &seqFile,
+                                     const vector<Sequence> &seqs,
+                                     vector<Query> & queryList,
+                                     const pair<size_t, size_t> & currentSplit,
                                      const LocalParameters &par);
 
-    void fillQueryKmerBufferParallel_paired(QueryKmerBuffer &kmerBuffer,
-                                            MmapedData<char> &seqFile1,
-                                            MmapedData<char> &seqFile2,
-                                            vector<Sequence> &seqs,
-                                            vector<Sequence> &seqs2,
-                                            bool *checker,
-                                            size_t &processedSeqCnt,
-                                            Query *queryList,
-                                            size_t numOfSeq,
-                                            const LocalParameters &par);
+    void fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
+                                     MmapedData<char> &seqFile1,
+                                     MmapedData<char> &seqFile2,
+                                     const vector<Sequence> &seqs,
+                                     const vector<Sequence> &seqs2,
+                                     vector<Query> & queryList,
+                                     const pair<size_t, size_t> & currentSplit,
+                                     const LocalParameters &par);
 
     static int getMaxCoveredLength(int queryLength);
 
@@ -162,15 +170,14 @@ protected:
     // Analyzing k-mer matches
     void fromMatchToClassification(Match *matchList,
                                    size_t numOfMatches,
-                                   int seqNum,
-                                   Query *queryList,
+                                   vector<Query> & queryList,
                                    const LocalParameters &par);
 
     void chooseBestTaxon(uint32_t currentQuery,
                          size_t offset,
                          size_t end,
                          Match *matchList,
-                         Query *queryList,
+                         vector<Query> & queryList,
                          const LocalParameters &par);
 
 //    TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
@@ -225,14 +232,20 @@ protected:
                           int queryLength2);
 
     template <typename T>
-    static void loadBuffer(FILE * fp, T * buffer, size_t & bufferIdx, size_t size, int cnt = 0){
+    static void loadBuffer(FILE * fp, T * buffer, size_t & bufferIdx, size_t size, int cnt){
         fseek(fp, cnt * sizeof(T), SEEK_CUR);
         fread(buffer, sizeof(T), size, fp);
         bufferIdx = 0;
     }
 
+    template <typename T>
+    static void loadBuffer(FILE * fp, T * buffer, size_t & bufferIdx, size_t size){
+        fread(buffer, sizeof(T), size, fp);
+        bufferIdx = 0;
+    }
+
     // Write report
-    void writeReadClassification(Query *queryList, int queryNum, ofstream &readClassificationFile);
+    void writeReadClassification(const vector<Query> & queryList, int queryNum, ofstream &readClassificationFile);
 
     void writeReportFile(const string &reportFileName, int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt);
 
@@ -289,7 +302,10 @@ struct sortMatch {
                 else if (classifier->speciesTaxIdList[a.targetId] == classifier->speciesTaxIdList[b.targetId]) {
                     if (a.position < b.position) return true;
                     else if (a.position == b.position) {
-                        return a.hamming < b.hamming;
+                        if (a.hamming < b.hamming) return true;
+                        else if (a.hamming == b.hamming){
+                            return classifier->taxIdList[a.targetId] < classifier->taxIdList[b.targetId];
+                        }
                     }
                 }
             }

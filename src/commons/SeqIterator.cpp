@@ -4,10 +4,23 @@
 
 #include "SeqIterator.h"
 
+const string SeqIterator::atcg = "................................................................"
+                                 ".AGCG..GT..G.CN...ACTG.A.T......agcg..gt..g.cn...actg.a.t......."
+                                 "................................................................"
+                                 "................................................................";
+
+const string SeqIterator::iRCT = "................................................................"
+                                 ".TVGH..CD..M.KN...YSAABW.R.......tvgh..cd..m.kn...ysaabw.r......"
+                                 "................................................................"
+                                 "................................................................";
+
+
+
 SeqIterator::~SeqIterator() {
     delete[] mask;
     delete[] mask_int;
 }
+
 SeqIterator::SeqIterator(const LocalParameters &par) {
 
     // Mask for spaced k-mer
@@ -39,18 +52,6 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
         powers[i] = pow;
         pow *= numOfAlphabets;
     }
-
-    // Reverse compliment table
-    atcg =
-            "................................................................"
-            ".AGCG..GT..G.CN...ACTG.A.T......agcg..gt..g.cn...actg.a.t......."
-            "................................................................"
-            "................................................................";
-    iRCT =
-            "................................................................"
-            ".TVGH..CD..M.KN...YSAABW.R.......tvgh..cd..m.kn...ysaabw.r......"
-            "................................................................"
-            "................................................................";
 
     // Codon table
     if (par.reducedAA == 0) {
@@ -316,7 +317,6 @@ void SeqIterator::sixFrameTranslation(const char *seq) {
         }
     }
 }
-
 
 void SeqIterator::fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite, const int &seqID,
                                  uint32_t offset) {
