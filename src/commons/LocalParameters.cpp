@@ -103,7 +103,7 @@ LocalParameters::LocalParameters() :
                   "RAM usage in GB",
                   typeid(int),
                   (void *) &ramUsage,
-                  ""),
+                  "^[1-9]{1}[0-9]*$"),
         PRINT_LOG(PRINT_LOG_ID,
                   "--print-log",
                   "Print logs to debug",
