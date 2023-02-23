@@ -57,6 +57,8 @@ inline bool fileExist(const std::string& name) {
     }
 }
 
+void process_mem_usage(double& vm_usage, double& resident_set);
+
 
 
 #endif //ADCLASSIFIER2_COMMON_H

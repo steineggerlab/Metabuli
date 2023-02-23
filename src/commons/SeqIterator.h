@@ -43,8 +43,8 @@ typedef struct PredictedBlock {
 
 class SeqIterator {
 private:
-    string iRCT;
-    string atcg;
+    static const string iRCT;
+    static const string atcg;
     vector<int> aaFrames[6];
     uint64_t powers[10];
     int nuc2aa[8][8][8];
