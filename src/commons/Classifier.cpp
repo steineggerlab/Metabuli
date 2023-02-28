@@ -125,6 +125,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     vector<Sequence> sequences;
     vector<Sequence> sequences2;
     vector<pair<size_t, size_t>> queryReadSplit;
+    vector<size_t> splitKmerCnt;
     size_t numOfSeq = 0;
     size_t start = 0;
     size_t kmerCnt = 0;
@@ -201,6 +202,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 
     QueryKmerBuffer kmerBuffer;
     Buffer<Match> matchBuffer;
+    vector<Query> queryList;
 
     size_t numOfTatalQueryKmerCnt = 0;
     size_t totalMatchCnt = 0;
