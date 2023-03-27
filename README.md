@@ -97,6 +97,15 @@ It will generate **diffIdx**, **info**, **split**, and **taxID_list** and some o
   - DBDIR : The directory where you bulit the reference DB. 
   - OUTDIR : The directory where the report files will be generated.
   - Job ID: For the result files.  
+  
+   * Options
+    --threads : The number of CPU-cores used (all by default)
+    --max-ram : The maximum RAM usage.
+    --min-score : The minimum score to be classified (0.15 for precision mode)
+    --min-sp-score : The minimum score to be classified at or below species rank. (0.5 for precision mode)
+    --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
+    --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids. Give the same value used for DB creation.
+    --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
 ```
 It will generate two result files: 'Job ID_classifications.tsv' and 'Job ID_report.tsv'
 ### Classifications
