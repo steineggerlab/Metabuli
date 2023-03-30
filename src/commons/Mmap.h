@@ -25,11 +25,12 @@ MmapedData<T> mmapData(const char* filename, int mode = 1)
 {
     struct MmapedData<T> mmapedData;
     struct stat stat1;
+
     int file;
     if(mode == 2) {
         file = open(filename, O_RDONLY);
     } else {
-        file = open(filename, O_CREAT | O_RDWR);
+        file = open(filename, O_CREAT | O_RDWR, 0644);
     }
     int a;
     a = stat(filename, &stat1);

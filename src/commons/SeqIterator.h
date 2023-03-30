@@ -1,7 +1,3 @@
-//
-// Created by KJB on 01/09/2020.
-//
-
 #ifndef ADKMER4_KMEREXTRACTOR_H
 #define ADKMER4_KMEREXTRACTOR_H
 
@@ -47,8 +43,8 @@ typedef struct PredictedBlock {
 
 class SeqIterator {
 private:
-    string iRCT;
-    string atcg;
+    static const string iRCT;
+    static const string atcg;
     vector<int> aaFrames[6];
     uint64_t powers[10];
     int nuc2aa[8][8][8];
@@ -66,7 +62,7 @@ private:
     void addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const PredictedBlock &block, const int &kmerCnt);
 
 public:
-    void fillQueryKmerBuffer(const char *seq, QueryKmerBuffer &kmerBuffer, size_t &posToWrite, const int &seqID,
+    void fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite, const int &seqID,
                              uint32_t offset = 0);
 
     string reverseCompliment(string &read) const;
@@ -75,12 +71,12 @@ public:
 
     void sixFrameTranslation(const char *seq);
 
-    bool translateBlock(const char *seq, PredictedBlock &block);
+    bool translateBlock(const char *seq, PredictedBlock block);
 
     void generateIntergenicKmerList(struct _gene *genes, struct _node *nodes, int numberOfGenes,
                                     vector<uint64_t> &intergenicKmerList, const char *seq);
 
-    void getTranslationBlocks(struct _gene *genes, struct _node *nodes, vector<PredictedBlock> &blocks, size_t numOfGene,
+    void getExtendedORFs(struct _gene *genes, struct _node *nodes, vector<PredictedBlock> &blocks, size_t numOfGene,
             size_t length, size_t &numOfBlocks, vector<uint64_t> &intergenicKmerList, const char *seq);
 
     void getMinHashList(priority_queue<uint64_t> &sortedHashQue, const char *seq);
@@ -92,7 +88,7 @@ public:
 
     size_t getNumOfKmerForBlock(const PredictedBlock &block);
 
-    void fillBufferWithKmerFromBlock(const PredictedBlock &block, const char *seq, TargetKmerBuffer &kmerBuffer,
+    int fillBufferWithKmerFromBlock(const PredictedBlock &block, const char *seq, TargetKmerBuffer &kmerBuffer,
                                      size_t &posToWrite, const uint32_t &seqID, int taxIdAtRank);
 
     void printKmerInDNAsequence(uint64_t kmer);

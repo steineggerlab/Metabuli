@@ -4,10 +4,23 @@
 
 #include "SeqIterator.h"
 
+const string SeqIterator::atcg = "................................................................"
+                                 ".AGCG..GT..G.CN...ACTG.A.T......agcg..gt..g.cn...actg.a.t......."
+                                 "................................................................"
+                                 "................................................................";
+
+const string SeqIterator::iRCT = "................................................................"
+                                 ".TVGH..CD..M.KN...YSAABW.R.......tvgh..cd..m.kn...ysaabw.r......"
+                                 "................................................................"
+                                 "................................................................";
+
+
+
 SeqIterator::~SeqIterator() {
     delete[] mask;
     delete[] mask_int;
 }
+
 SeqIterator::SeqIterator(const LocalParameters &par) {
 
     // Mask for spaced k-mer
@@ -39,18 +52,6 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
         powers[i] = pow;
         pow *= numOfAlphabets;
     }
-
-    // Reverse compliment table
-    atcg =
-            "................................................................"
-            ".AGCG..GT..G.CN...ACTG.A.T......agcg..gt..g.cn...actg.a.t......."
-            "................................................................"
-            "................................................................";
-    iRCT =
-            "................................................................"
-            ".TVGH..CD..M.KN...YSAABW.R.......tvgh..cd..m.kn...ysaabw.r......"
-            "................................................................"
-            "................................................................";
 
     // Codon table
     if (par.reducedAA == 0) {
@@ -317,12 +318,10 @@ void SeqIterator::sixFrameTranslation(const char *seq) {
     }
 }
 
-
-void SeqIterator::fillQueryKmerBuffer(const char *seq, QueryKmerBuffer &kmerBuffer, size_t &posToWrite, const int &seqID,
+void SeqIterator::fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite, const int &seqID,
                                  uint32_t offset) {
     int forOrRev;
     uint64_t tempKmer = 0;
-    int seqLen = strlen(seq);
     int checkN;
 
     for (uint32_t frame = 0; frame < 6; frame++) {
@@ -392,8 +391,11 @@ SeqIterator::addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev,
     }
 }
 
-bool SeqIterator::translateBlock(const char *seq, PredictedBlock &block) {
+bool SeqIterator::translateBlock(const char *seq, PredictedBlock block) {
     aaFrames[0].clear();
+    if(aaFrames->capacity() < strlen(seq) / 3 + 1) {
+        aaFrames->reserve(strlen(seq) / 3 + 1);
+    }
     if (block.strand == 1) {
         for (int i = block.start; i + 2 <= block.end; i = i + 3) {
             aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[i]])][nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])]);
@@ -428,11 +430,11 @@ char *SeqIterator::reverseCompliment(char *read, int length) const {
 
 
 // It extracts kmers from amino acid sequence with DNA information and fill the kmerBuffer with them.
-void
+int
 SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock &block, const char *seq, TargetKmerBuffer &kmerBuffer,
                                          size_t &posToWrite, const uint32_t &seqID, int taxIdAtRank) {
     uint64_t tempKmer = 0;
-    int len = aaFrames[0].size();
+    int len = (int) aaFrames[0].size();
     int checkN;
     for (int kmerCnt = 0; kmerCnt < len - kmerLength - spaceNum_int + 1; kmerCnt++) {
         tempKmer = 0;
@@ -448,10 +450,15 @@ SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock &block, const char
             kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0, false};
         } else {
             addDNAInfo_TargetKmer(tempKmer, seq, block, kmerCnt);
+            if(posToWrite >= kmerBuffer.bufferSize - 2) {
+                cout << "HERE " << posToWrite << endl;
+                return -1;
+            }
             kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, false};
         }
         posToWrite++;
     }
+    return 0;
 }
 
 // It adds DNA information to kmers referring the original DNA sequence.
@@ -485,7 +492,7 @@ size_t SeqIterator::getNumOfKmerForBlock(const PredictedBlock &block) {
 
 // It makes the blocks for translation
 // Each block has a predicted gene part and an intergenic region. When another gene shows up, new block starts.
-void SeqIterator::getTranslationBlocks(struct _gene *genes, struct _node *nodes, vector<PredictedBlock> &blocks,
+void SeqIterator::getExtendedORFs(struct _gene *genes, struct _node *nodes, vector<PredictedBlock> &blocks,
                                        size_t numOfGene, size_t length,
                                        size_t &blockIdx, vector<uint64_t> &intergenicKmerList, const char *seq) {
 
@@ -545,8 +552,6 @@ void SeqIterator::getTranslationBlocks(struct _gene *genes, struct _node *nodes,
         blocks.emplace_back(0, rightEnd, -1);
         blockIdx++;
     }
-
-
 
     // From the second gene to the second last gene
     for (size_t geneIdx = 1; geneIdx < numOfGene - 1; geneIdx++) {
@@ -700,7 +705,7 @@ bool SeqIterator::compareMinHashList(priority_queue <uint64_t> list1, priority_q
             list2.pop();
         }
     }
-    if (identicalCount > list1Size * lengthRatio * 0.7) {
+    if (identicalCount > list1Size * lengthRatio * 0.5) {
         return true;
     } else {
         return false;
@@ -792,9 +797,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
         for (int i = 0; i < 8; i++) {
             cout << aminoacid[aa8mer[i]];
         }
-        cout << endl;
-
-
+        cout << "\t";
 
         for (int i = 0; i < 8; i++) {
             if (bitsForCodon == 4) {
@@ -1077,7 +1080,6 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
         for (int i = 0; i < 8; i++) {
             cout << dna24mer[7 - i];
         }
-        cout << endl;
     }
     else {
         uint64_t copy = kmer;
@@ -1102,7 +1104,7 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
         for (int i = 0; i < 8; i++) {
             cout << aminoacid[aa8mer[i]];
         }
-        cout<<endl;
+        cout<<"\t";
         for (int i = 0; i < 8; i++) {
             dnaInfo = copy & 7u;
             copy >>= 3;
@@ -1391,6 +1393,5 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
         for (int i = 0; i < 8; i++) {
             cout << dna24mer[7-i];
         }
-        cout << endl;
     }
 }

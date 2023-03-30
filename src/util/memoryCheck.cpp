@@ -1,6 +1,3 @@
-#include "common.h"
-#include <iostream>
-#include <fstream>
 #include <unistd.h>
 
 void process_mem_usage(double& vm_usage, double& resident_set)

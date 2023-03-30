@@ -13,9 +13,9 @@ ProdigalWrapper::~ProdigalWrapper() {
     free(finalGenes);
 }
 ProdigalWrapper::ProdigalWrapper() {
-    seq = (unsigned char *)malloc(MAX_SEQ/4*sizeof(unsigned char)); // 8 Mb
-    rseq = (unsigned char *)malloc(MAX_SEQ/4*sizeof(unsigned char)); // 8 Mb
-    useq = (unsigned char *)malloc(MAX_SEQ/8*sizeof(unsigned char)); // 4 Mb
+    seq = (unsigned char *)malloc((MAX_SEQ/4 + 1)*sizeof(unsigned char)); // 8 Mb
+    rseq = (unsigned char *)malloc((MAX_SEQ/4 + 1)*sizeof(unsigned char)); // 8 Mb
+    useq = (unsigned char *)malloc((MAX_SEQ/8 + 1)*sizeof(unsigned char)); // 4 Mb
     nodes = (struct _node *)malloc(STT_NOD*sizeof(struct _node)); // 13.6 Mb
     genes = (struct _gene *)malloc(MAX_GENES*sizeof(struct _gene)); // 30 Mb
     finalGenes = (struct _gene *)malloc(MAX_GENES*sizeof(struct _gene));
@@ -23,9 +23,9 @@ ProdigalWrapper::ProdigalWrapper() {
         fprintf(stderr, "\nError: Malloc failed on sequence/orfs\n\n"); exit(1);
     }
 
-    memset(seq, 0, MAX_SEQ/4*sizeof(unsigned char));
-    memset(rseq, 0, MAX_SEQ/4*sizeof(unsigned char));
-    memset(useq, 0, MAX_SEQ/8*sizeof(unsigned char));
+    memset(seq, 0, (MAX_SEQ/4 + 1)*sizeof(unsigned char));
+    memset(rseq, 0, (MAX_SEQ/4 + 1)*sizeof(unsigned char));
+    memset(useq, 0, (MAX_SEQ/8 + 1)*sizeof(unsigned char));
     memset(nodes, 0, STT_NOD*sizeof(struct _node));
     memset(genes, 0, MAX_GENES*sizeof(struct _gene));
     memset(&tinf, 0, sizeof(struct _training));
@@ -47,34 +47,33 @@ ProdigalWrapper::ProdigalWrapper() {
     for(size_t i = 0; i < NUM_META; i++){
         meta[i].tinf = new _training();
     }
-
 }
 
 void ProdigalWrapper::
 trainASpecies(char * genome){
 
-    memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
-    memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
-    memset(useq, 0, (slen/8+1)*sizeof(unsigned char));
-    memset(nodes, 0, nn*sizeof(struct _node));
+    memset(seq, 0, (slen / 4 + 1) * sizeof(unsigned char));
+    memset(rseq, 0, (slen / 4 + 1) * sizeof(unsigned char));
+    memset(useq, 0, (slen / 8 + 1) * sizeof(unsigned char));
+    memset(nodes, 0, nn * sizeof(struct _node));
     memset(&tinf, 0, sizeof(struct _training));
     nn = 0; slen = 0; ipath = 0; nmask = 0;
     tinf.st_wt = 4.35;
     tinf.trans_table = 11;
 
     slen = getNextSeq(genome, 1);
-    if(slen == 0) {
-        fprintf(stderr, "\n\nSequence read failed (file must be Fasta, ");
-        fprintf(stderr, "Genbank, or EMBL format).\n\n");
-        exit(9);
-    }
+//    if(slen == 0) {
+//        fprintf(stderr, "\n\nSequence read failed (file must be Fasta, ");
+//        fprintf(stderr, "Genbank, or EMBL format).\n\n");
+//        exit(9);
+//    }
 
-    if(slen < IDEAL_SINGLE_GENOME) {
-        fprintf(stderr, "\n\nWarning:  ideally Prodigal should be given at");
-        fprintf(stderr, " least %d bases for ", IDEAL_SINGLE_GENOME);
-        fprintf(stderr, "training.\nYou may get better results with the ");
-        fprintf(stderr, "-p meta option.\n\n");
-    }
+//    if(slen < IDEAL_SINGLE_GENOME) {
+//        fprintf(stderr, "\n\nWarning:  ideally Prodigal should be given at");
+//        fprintf(stderr, " least %d bases for ", IDEAL_SINGLE_GENOME);
+//        fprintf(stderr, "training.\nYou may get better results with the ");
+//        fprintf(stderr, "-p meta option.\n\n");
+//    }
     rcom_seq(seq, rseq, useq, slen);
 
     /***********************************************************************
@@ -83,10 +82,10 @@ trainASpecies(char * genome){
     ***********************************************************************/
     if(slen > max_slen && slen > STT_NOD*8) {
         nodes = (struct _node *)realloc(nodes, (int)(slen/8)*sizeof(struct _node));
-        if(nodes == NULL) {
-            fprintf(stderr, "Realloc failed on nodes\n\n");
-            exit(11);
-        }
+//        if(nodes == NULL) {
+//            fprintf(stderr, "Realloc failed on nodes\n\n");
+//            exit(11);
+//        }
         max_slen = slen;
     }
     nn = add_nodes(seq, rseq, slen, nodes, closed, mlist, nmask, &tinf);
@@ -98,10 +97,10 @@ trainASpecies(char * genome){
       initial set of genes.
     ***********************************************************************/
     gc_frame = calc_most_gc_frame(seq, slen);
-    if(gc_frame == NULL) {
-        fprintf(stderr, "Malloc failed on gc frame plot\n\n");
-        exit(11);
-    }
+//    if(gc_frame == NULL) {
+//        fprintf(stderr, "Malloc failed on gc frame plot\n\n");
+//        exit(11);
+//    }
     record_gc_bias(gc_frame, nodes, nn, &tinf);
     free(gc_frame);
 
@@ -134,37 +133,21 @@ trainASpecies(char * genome){
 }
 
 void ProdigalWrapper::trainMeta(char *genome) {
-
-    memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
-    memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
-    memset(useq, 0, (slen/8+1)*sizeof(unsigned char));
+    memset(seq, 0, (slen / 4 + 1) * sizeof(unsigned char));
+    memset(rseq, 0, (slen / 4 + 1) * sizeof(unsigned char));
+    memset(useq, 0, (slen / 8 + 1) * sizeof(unsigned char));
     memset(nodes, 0, nn*sizeof(struct _node));
     memset(&tinf, 0, sizeof(struct _training));
     tinf.st_wt = 4.35;
     tinf.trans_table = 11;
     nn = 0; slen = 0; ipath = 0; nmask = 0;
 
-    if(1) {
-        fprintf(stderr, "Request:  Metagenomic, Phase:  Training\n");
-        fprintf(stderr, "Initializing training files...");
-    }
-
     initialize_metagenomic_bins(meta);
-
-    if(1) {
-        fprintf(stderr, "done!\n");
-        fprintf(stderr, "-------------------------------------\n");
-    }
 
     slen = getNextSeq(genome, 1);
 
     rcom_seq(seq, rseq, useq, slen);
 
-    if(slen == 0) {
-        fprintf(stderr, "\nSequence read failed (file must be Fasta, ");
-        fprintf(stderr, "Genbank, or EMBL format).\n\n");
-        exit(14);
-    }
     if(slen > max_slen && slen > STT_NOD*8) {
         nodes = (struct _node *)realloc(nodes, (int)(slen/8)*sizeof(struct _node));
         if(nodes == NULL) {
@@ -178,7 +161,6 @@ void ProdigalWrapper::trainMeta(char *genome) {
     if(low > 0.65) low = 0.65;
     high = 0.86596*tinf.gc + .1131991;
     if(high < 0.35) high = 0.35;
-//    cout<<"223"<<endl;
     max_score = -100.0;
     for(int i = 0; i < NUM_META; i++) {
         if (i == 0 || meta[i].tinf->trans_table !=
@@ -202,10 +184,9 @@ void ProdigalWrapper::trainMeta(char *genome) {
     }
 }
 void ProdigalWrapper::getPredictedGenes(char * genome){
-
-    memset(seq, 0, (slen/4+1)*sizeof(unsigned char));
-    memset(rseq, 0, (slen/4+1)*sizeof(unsigned char));
-    memset(useq, 0, (slen/8+1)*sizeof(unsigned char));
+    memset(seq, 0, (slen / 4 + 1) * sizeof(unsigned char));
+    memset(rseq, 0, (slen / 4 + 1) * sizeof(unsigned char));
+    memset(useq, 0, (slen / 8 + 1) * sizeof(unsigned char));
     memset(nodes, 0, nn*sizeof(struct _node));
     nn = 0; slen = 0; nmask = 0; ipath=0;
 
@@ -225,6 +206,7 @@ void ProdigalWrapper::getPredictedGenes(char * genome){
             fprintf(stderr, "Realloc failed on nodes\n\n");
             exit(11);
         }
+        memset(nodes, 0, (int)(slen/8)*sizeof(struct _node));
         max_slen = slen;
     }
 
@@ -268,9 +250,7 @@ void ProdigalWrapper::getPredictedGenes(char * genome){
         tweak_final_starts(genes, ng, nodes, nn, meta[max_phase].tinf);
         record_gene_data(genes, ng, nodes, meta[max_phase].tinf, num_seq);
     }
-     if(1) {
-         fprintf(stderr, "done! gene count: %d (%d bp)\n", ng, slen);
-     }
+    fprintf(stderr, "done! gene count: %d (%d bp)\n", ng, slen);
 }
 
 int ProdigalWrapper::getNextSeq(char * line, int training) {
@@ -311,10 +291,10 @@ int ProdigalWrapper::getNextSeq(char * line, int training) {
         }
 
         bctr+=2; len++;
+
         if(len >= MAX_SEQ) {
-            fprintf(stderr, "\n\nWarning:  Sequence is long (max %d for training).\n",
-                    MAX_SEQ);
-            fprintf(stderr, "Training on the first %d bases.\n\n", MAX_SEQ);
+            fprintf(stderr, "\n\nWarning:  Sequence is long (max %d).\n", MAX_SEQ);
+            fprintf(stderr, "Use the first %d bases.\n\n", MAX_SEQ);
             break;
         }
     }
@@ -348,3 +328,12 @@ void ProdigalWrapper::removeCompletelyOverlappingGenes() {
     finalGenes[fng++] = genes[ng-1];
 }
 
+_training * ProdigalWrapper::getTrainingInfo() { return & tinf; }
+
+void ProdigalWrapper::setTrainingInfo(_training &tinf) {
+    this->tinf = tinf;
+}
+
+void ProdigalWrapper::updateTrainingInfo(_training &tinf2) {
+    this->tinf = tinf2;
+}

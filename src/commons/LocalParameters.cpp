@@ -1,14 +1,8 @@
 #include "LocalParameters.h"
+#include "Parameters.h"
 
 LocalParameters::LocalParameters() :
         Parameters(),
-        PARAM_GTDB_OR_NCBI(PARAM_GTDB_OR_NCBI_ID,
-                           "--tax-mode",
-                           "Creating target database Mode",
-                           "Creating target database based on taxonomy of GTDB or NCBI:\n1: GTDB\t2:NCBI ",
-                           typeid(int),
-                           (void *) &gtdbOrNcbi,
-                           "[1-2]"),
         VIRUS_TAX_ID(VIRUS_TAX_ID_ID,
                      "--virus-taxid",
                      "Taxonomy ID of virus taxon",
@@ -16,9 +10,23 @@ LocalParameters::LocalParameters() :
                      typeid(int),
                      (void *) &virusTaxId,
                      "[^[1-9]\\d*$]"),
+        BACTERIA_TAX_ID(BACTERIA_TAX_ID_ID,
+                        "--bacteria-taxid",
+                        "Taxonomy ID of bacteria taxon",
+                        "NCBI: 2 [Default]\nCUSTOM: Check names.dmp file ",
+                        typeid(int),
+                        (void *) &bacteriaTaxId,
+                        "[^[1-9]\\d*$]"),
+        ARCHAEA_TAX_ID(ARCHAEA_TAX_ID_ID,
+                       "--archaea-taxid",
+                       "Taxonomy ID of archaea taxon",
+                       "NCBI: 2157 [Default]\nCUSTOM: Check names.dmp file ",
+                       typeid(int),
+                       (void *) &archaeaTaxId,
+                       "[^[1-9]\\d*$]"),
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
-                 "Taxonomy ID of virus taxon",
+                 "Sequencing type",
                  "Single-end: 1 \nPaired-end: 2\nLong read: 3",
                  typeid(int),
                  (void *) &seqMode,
@@ -44,6 +52,13 @@ LocalParameters::LocalParameters() :
                   typeid(float),
                   (void *) &minScore,
                   "^0(\\.[0-9]+)?|1(\\.0+)?$"),
+        MIN_COVERAGE(MIN_COVERAGE_ID,
+                     "--min-cov",
+                     "The minimum coverage for classification",
+                     "You can set a value from 0.0 to 1.0",
+                     typeid(float),
+                     (void *) &minCoverage,
+                     "^0(\\.[0-9]+)?|1(\\.0+)?$"),
         SPACED(SPACED_ID,
                "--spacing-mask",
                "Binary patterned mask for spaced k-mer.\nThe same mask must be used for DB creation and classification",
@@ -52,40 +67,135 @@ LocalParameters::LocalParameters() :
                typeid(std::string),
                (void *) &spaceMask,
                ""),
-        MIN_CONSECUTIVE(MIN_CONSECUTIVE_ID,
-                        "--min-consecutive",
-                        ".",
-                        "Matched k-mers from the same genus are pulled and aligned to query.\n"
-                        "Matches that are not consecutive for the specified number of times are ignored.",
+        MIN_COVERED_POS(MIN_COVERED_POS_ID,
+                        "--min-covered-pos",
+                        "Minimum number of covered positions of a range",
+                        "Minimum number of covered positions of a range",
                         typeid(int),
-                        (void *) &minConsCnt,
+                        (void *) &minCoveredPos,
                         ""),
         HAMMING_MARGIN(HAMMING_MARGIN_ID,
                        "--hamming-margin",
-                       ".",
+                       "If a query k-mer has multiple matches, the matches with hamming distance lower than sum of \n"
+                       "the minimum distance and this margin are selected for later steps.",
                        "If a query k-mer has multiple matches, the matches with hamming distance lower than sum of \n"
                        "the minimum distance and this margin are selected for later steps.",
                        typeid(int),
                        (void *) &hammingMargin,
                        ""),
         MIN_SP_SCORE(MIN_SP_SCORE_ID,
-                       "--min-sp-score",
-                       ".",
-                       "Minimum score to be classified at the species level.",
-                       typeid(float),
-                       (void *) &minSpScore,
-                     "^0(\\.[0-9]+)?|1(\\.0+)?$"){
-    //build_dir
-    build_dir.push_back(&PARAM_THREADS);
-    build_dir.push_back(&PARAM_GTDB_OR_NCBI);
-    build_dir.push_back(&REDUCED_AA);
-    build_dir.push_back(&SPACED);
+                     "--min-sp-score",
+                     "Minimum score to be classified at species or lower rank.",
+                     "Minimum score to be classified at the species level.",
+                     typeid(float),
+                     (void *) &minSpScore,
+                     "^0(\\.[0-9]+)?|1(\\.0+)?$"),
+        TINFO_PATH(TINFO_PATH_ID,
+                   "--tinfo-path",
+                   "Path to prodigal training information files",
+                   "Path to prodigal training information files",
+                   typeid(std::string),
+                   (void *) &tinfoPath,
+                   ""),
+        RAM_USAGE(RAM_USAGE_ID,
+                  "--max-ram",
+                  "RAM usage in GB",
+                  "RAM usage in GB",
+                  typeid(int),
+                  (void *) &ramUsage,
+                  "^[1-9]{1}[0-9]*$"),
+        PRINT_LOG(PRINT_LOG_ID,
+                  "--print-log",
+                  "Print logs to debug",
+                  "Print logs to debug",
+                  typeid(int),
+                  (void *) &printLog,
+                  ""),
+        LIBRARY_PATH(LIBRARY_PATH_ID,
+                     "--library-path",
+                     "Path to library where the FASTA files are stored",
+                     "Path to library where the FASTA files are stored",
+                     typeid(std::string),
+                     (void *) &libraryPath,
+                     ""),
+        TAXONOMY_PATH(TAXONOMY_PATH_ID,
+                      "--taxonomy-path",
+                      "Directory where the taxonomy dump files are stored",
+                      "Directory where the taxonomy dump files are stored",
+                      typeid(std::string),
+                      (void *) &taxonomyPath,
+                      ""),
+        IS_ASSEMBLY(IS_ASSEMBLY_ID,
+                    "--assembly",
+                    "Input is an assembly",
+                    "Input is an assembly",
+                    typeid(bool),
+                    (void *) &assembly,
+                    ""),
+        TEST_RANK(TEST_RANK_ID,
+                  "--test-rank",
+                  ".",
+                  "csv of ranks to be tested",
+                  typeid(std::string),
+                  (void *) &testRank,
+                  ""),
+                  TEST_TYPE(TEST_TYPE_ID,
+                  "--test-type",
+                  ".",
+                  "Test Type",
+                  typeid(std::string),
+                  (void *) &testType,
+                  ""),
+        READID_COL(READID_COL_ID,
+                      "--readid-col",
+                      "Column number of accession in classification result",
+                      "Column number of accession in classification result",
+                      typeid(int),
+                      (void *) &readIdCol,
+                      ""),
+        TAXID_COL(TAXID_COL_ID,
+                  "--taxid-col",
+                  "Column number of taxonomy ID in classification result",
+                  "Column number of taxonomy ID in classification result",
+                  typeid(int),
+                  (void *) &taxidCol,
+                  ""),
+        SCORE_COL(SCORE_COL_ID,
+                  "--score-col",
+                  "Column number of score in classification result",
+                  "Column number of score in classification result",
+                  typeid(int),
+                  (void *) &scoreCol,
+                  ""),
+        COVERAGE_COL(COVERAGE_COL_ID,
+                     "--coverage-col",
+                     "Column number of coverage in classification result",
+                     "Column number of coverage in classification result",
+                     typeid(int),
+                     (void *) &coverageCol,
+                     ""),
+        PRINT_COLUMNS(PRINT_COLUMNS_ID,
+                      "--print-columns",
+                      "CSV of column numbers to be printed",
+                      "CSV of column numbers to be printed",
+                      typeid(std::string),
+                      (void *) &printColumns,
+                      ""),
+        MAX_GAP(MAX_GAP_ID,
+                "--max-gap",
+                "Maximum gap between two consecutive k-mers (used only with spaced k-mer)",
+                "Maximum gap between two consecutive k-mers (used only with spaced k-mer)",
+                typeid(int),
+                (void *) &maxGap,
+                ""){
+    //add_to_library
 
-    //build_fasta
-    build_fasta.push_back(&PARAM_THREADS);
-    build_fasta.push_back(&PARAM_GTDB_OR_NCBI);
-    build_fasta.push_back(&REDUCED_AA);
-    build_fasta.push_back(&SPACED);
+    // build
+    build.push_back(&PARAM_THREADS);
+    build.push_back(&REDUCED_AA);
+    build.push_back(&SPACED);
+    build.push_back(&TAXONOMY_PATH);
+    build.push_back(&TINFO_PATH);
 
     //classify
     classify.push_back(&PARAM_THREADS);
@@ -94,11 +204,41 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MEMORY_MODE);
     classify.push_back(&REDUCED_AA);
     classify.push_back(&MIN_SCORE);
+    classify.push_back(&MIN_COVERAGE);
     classify.push_back(&SPACED);
-    classify.push_back(&MIN_CONSECUTIVE);
+//    classify.push_back(&MIN_CONSECUTIVE);
     classify.push_back(&HAMMING_MARGIN);
     classify.push_back(&MIN_SP_SCORE);
+    classify.push_back(&PARAM_V);
+    classify.push_back(&RAM_USAGE);
+    classify.push_back(&MIN_COVERED_POS);
+    classify.push_back(&PRINT_LOG);
+    classify.push_back(&MAX_GAP);
+
 
     //updateTargetDB
+    exclusiontest_hiv.push_back(&TEST_RANK);
 
+    // grade
+    grade.push_back(&TEST_RANK);
+    grade.push_back(&TEST_TYPE);
+    grade.push_back(&PARAM_THREADS);
+    grade.push_back(&READID_COL);
+    grade.push_back(&TAXID_COL);
+    grade.push_back(&PARAM_V);
+    grade.push_back(&SCORE_COL);
+    grade.push_back(&COVERAGE_COL);
+    grade.push_back(&PRINT_COLUMNS);
+
+    // Apply thresholds
+    applyThreshold.push_back(&MIN_SP_SCORE);
+    applyThreshold.push_back(&MIN_SCORE);
+    applyThreshold.push_back(&MIN_COVERAGE);
+
+    // Binning to report
+    binning2report.push_back(&READID_COL);
+    binning2report.push_back(&TAXID_COL);
+
+    // add to library
+    addToLibrary.push_back(&IS_ASSEMBLY);
 }

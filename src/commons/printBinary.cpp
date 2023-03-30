@@ -1,6 +1,3 @@
-//
-// Created by KJB on 05/08/2020.
-//
 #include "printBinary.h"
 
 void print_binary64(int n, uint64_t x){

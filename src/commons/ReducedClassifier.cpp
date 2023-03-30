@@ -4,8 +4,8 @@
 
 #include "ReducedClassifier.h"
 
-ReducedClassifier::ReducedClassifier(LocalParameters & par, const vector<TaxID> & taxIdList)
-: Classifier(par, taxIdList){
+ReducedClassifier::ReducedClassifier(LocalParameters & par)
+: Classifier(par){
     setMarker(0Xffffffff);
     setNumOfBitsForCodon(4);
 }

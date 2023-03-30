@@ -1,12 +1,6 @@
 set(workflow_source_files
-        workflow/build_dir.cpp
         workflow/classify.cpp
-        workflow/updateTargetDB.cpp
-        workflow/build_fasta.cpp
-        workflow/benchmark.cpp
-        workflow/benchmark.h
-        workflow/inclusion_test.cpp
-        workflow/exclusion_test.cpp
-        workflow/inclusion_test_hiv.cpp
-        workflow/exclusion_test_hiv.cpp
+        workflow/updateDB.cpp
+        workflow/add_to_library.cpp
+        workflow/build.cpp
         PARENT_SCOPE)
