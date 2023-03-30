@@ -113,9 +113,9 @@ It will generate two result files: 'Job ID_classifications.tsv' and 'Job ID_repo
 2. Read ID
 3. Taxonomy identifier
 4. Effective read length
-5. Classification score
-6. Classification query coverage
-7. Hamming distance
+5. DNA level identitiy score
+6. Amino-acid level identity score
+7. Total Hamming distance
 8. Classification Rank
 9. List of "taxID : k-mer match count"
 
