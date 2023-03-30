@@ -98,7 +98,7 @@ LocalParameters::LocalParameters() :
                    (void *) &tinfoPath,
                    ""),
         RAM_USAGE(RAM_USAGE_ID,
-                  "--ram-usage",
+                  "--max-ram",
                   "RAM usage in GB",
                   "RAM usage in GB",
                   typeid(int),

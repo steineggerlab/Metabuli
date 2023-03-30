@@ -123,9 +123,59 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     }
     delete[] splitChecker;
 
-
 }
 
+void IndexCreator::updateIndex(const LocalParameters &par) {
+    // Read through FASTA files and make blocks of sequences to be processed by each thread
+    makeBlocksForParallelProcessing();
+    cout << "Made blocks for each thread" << endl;
+
+    // Train Prodigal for each species
+    time_t prodigalStart = time(nullptr);
+    trainProdigal();
+    time_t prodigalEnd = time(nullptr);
+    cout << "Prodigal training time: " << prodigalEnd - prodigalStart << " seconds" << endl;
+
+    // Write taxonomy id list
+    string taxidListFileName = dbDir + "/taxID_list";
+    FILE * taxidListFile = fopen(taxidListFileName.c_str(), "w");
+    for (auto & taxid : taxIdList) {
+        fprintf(taxidListFile, "%d\n", taxid);
+    }
+    fclose(taxidListFile);
+
+    // Process the splits until all are processed
+    size_t numOfSplits = fnaSplits.size();
+    bool * splitChecker = new bool[numOfSplits];
+    fill_n(splitChecker, numOfSplits, false);
+    size_t processedSplitCnt = 0;
+    TargetKmerBuffer kmerBuffer(kmerBufSize);
+    cout << "Kmer buffer size: " << kmerBuffer.bufferSize << endl;
+#ifdef OPENMP
+    omp_set_num_threads(par.threads);
+#endif
+    while(processedSplitCnt < numOfSplits){ // Check this condition
+        fillTargetKmerBuffer(kmerBuffer, splitChecker, processedSplitCnt, par);
+        time_t start = time(nullptr);
+        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
+                      IndexCreator::compareForDiffIdx);
+        time_t sort = time(nullptr);
+        cout << "Sort time: " << sort - start << endl;
+        auto * uniqKmerIdx = new size_t[kmerBuffer.startIndexOfReserve + 1];
+        size_t uniqKmerCnt = 0;
+        reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt, par);
+        time_t reduction = time(nullptr);
+        cout<<"Time spent for reducing redundancy: "<<(double) (reduction - sort) << endl;
+        if(processedSplitCnt == numOfSplits && numOfFlush == 0){
+            writeTargetFilesAndSplits(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par, uniqKmerIdx, uniqKmerCnt);
+        } else {
+            writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par,uniqKmerIdx, uniqKmerCnt);
+        }
+        delete[] uniqKmerIdx;
+    }
+    delete[] splitChecker;
+
+}
 void IndexCreator::makeBlocksForParallelProcessing(){
 
     unordered_map<string, TaxID> acc2taxid;
@@ -924,8 +974,9 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                               static_cast<size_t>(fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].training].length)};
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
-                    lengthOfTrainingSeq = strlen(seq->seq.s);
-                    prodigal.getPredictedGenes(seq->seq.s);
+                    cout << "T: " << seq->name.s << " " << seq->seq.l << endl;
+                    lengthOfTrainingSeq = seq->seq.l;
+                    prodigal.getPredictedGenes(seq->seq.s); /// SEGFAULT
                     seqIterator.generateIntergenicKmerList(prodigal.genes, prodigal.nodes,
                                                            prodigal.getNumberOfPredictedGenes(),
                                                            intergenicKmers,seq->seq.s);
@@ -963,6 +1014,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                 }
                             }
                         } else {
+                            //  reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, seq->seq.l); you already have the length, dont call strlen its O(n)
                             reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, strlen(seq->seq.s));
                             prodigal.getPredictedGenes(reverseCompliment);
                             prodigal.removeCompletelyOverlappingGenes();

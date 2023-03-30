@@ -208,6 +208,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
                 } else if (par.testType == "hiv" || par.testType == "hiv-ex") {
                     size_t pos = id.find('_');
                     id = id.substr(0, pos);
+//                    cout << assacc2taxid[id] << endl;
                     rightAnswers.push_back(assacc2taxid[id]);
                 } else if (par.testType == "cami" || par.testType == "cami-long") {
                     size_t pos = id.find('/');
