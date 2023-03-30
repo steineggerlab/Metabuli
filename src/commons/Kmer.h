@@ -1,7 +1,3 @@
-//
-// Created by KJB on 25/08/2020.
-//
-
 #ifndef ADKMER3_KMER_H
 #define ADKMER3_KMER_H
 #include <iostream>
@@ -10,7 +6,7 @@
 typedef struct QueryKmerInfo {
     QueryKmerInfo(int seqID = 0, uint32_t pos = 0, uint8_t frame = 0 ) : sequenceID(seqID), pos(pos), frame(frame) {}
     uint32_t sequenceID; // 4 byte
-    uint16_t pos; // 2 byte
+    uint16_t pos; // 2 byte, 0~65535
     uint8_t frame; // 0, 1, 2 are forward, and 3, 4, 5 are reverse 1 byte
 } QueryKmerInfo;
 
@@ -23,18 +19,21 @@ typedef struct QueryKmer {
 
 
 struct TargetKmerInfo{
-    TargetKmerInfo(int seqID = 0, bool redundancy = false) : sequenceID(seqID), redundancy(redundancy) {}
+    explicit TargetKmerInfo(uint32_t seqID = 0, bool redundancy = false) : sequenceID(seqID), redundancy(redundancy) {}
     uint32_t sequenceID : 31;
     uint32_t redundancy : 1;
-};
+    bool operator == (const TargetKmerInfo & info) const{
+        return (sequenceID == info.sequenceID && this->redundancy==info.redundancy);
+    }
+}; // 4 bytes
 
 struct TargetKmer{
-    TargetKmer(): info(0, false), ADkmer(0), taxIdAtRank(0) { };
+    TargetKmer(): info(0, false), taxIdAtRank(0), ADkmer(0)  { };
     TargetKmer(uint64_t ADkmer, TaxID taxIdAtRank, uint32_t seqID, bool redundacy)
-        : info(seqID, redundacy), ADkmer(ADkmer), taxIdAtRank(taxIdAtRank) {}
-    TargetKmerInfo info; // 8
-    uint64_t ADkmer; // 8
-    TaxID taxIdAtRank; // 4
+        : info(seqID, redundacy), taxIdAtRank(taxIdAtRank), ADkmer(ADkmer) {}
+    TargetKmerInfo info; // 4 byte
+    TaxID taxIdAtRank; // 4 byte
+    uint64_t ADkmer; // 8 byte
 };
 
 struct DiffIdxSplit{

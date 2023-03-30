@@ -9,11 +9,17 @@ void setClassifyDefaults(LocalParameters & par){
     par.seqMode = 2;
     par.memoryMode = 1;
     par.reducedAA = 0;
-    par.minScore = 0.0;
+    par.minScore = 0;
+    par.minCoverage = 0;
+    par.minSpScore = 0;
     par.spaceMask = "11111111";
-    par.minConsCnt = 4;
     par.hammingMargin = 0;
-    par.minSpScore = 0.7;
+    par.verbosity = 3;
+    par.ramUsage = 128;
+    par.minCoveredPos = 4;
+    par.printLog = 0;
+    par.maxGap = 0;
+
 }
 
 int classify(int argc, const char **argv, const Command& command)
@@ -27,39 +33,14 @@ int classify(int argc, const char **argv, const Command& command)
 #endif
 
     cout << "Number of threads: " << par.threads << endl;
-    const char * queryFileName = par.filenames[0].c_str();
-    const string databaseDirectory = par.filenames[1];
-
-    const string targetDiffIdxFileName = databaseDirectory+"/diffIdx";
-    const string targetInfoFileName = databaseDirectory+"/info";
-    string taxIdFileName = databaseDirectory+"/taxID_list";;
-    const string diffIdxSplitFileName = databaseDirectory+"/split";;
-
-    // Load the taxonomical ID list
-    cout << "Loading taxonomy ID list ... ";
-    FILE * taxIdFile;
-    if((taxIdFile = fopen(taxIdFileName.c_str(),"r")) == NULL){
-        cout<<"Cannot open the taxID list file."<<endl;
-        return 0;
-    }
-    vector<int> taxIdList; char taxID[100];
-    while(feof(taxIdFile) == 0)
-    {
-        fscanf(taxIdFile,"%s",taxID);
-        taxIdList.push_back(atol(taxID));
-    }
-    fclose(taxIdFile);
-    cout<<"Done"<<endl;
-
     Classifier * classifier;
     if(par.reducedAA == 1){
-        classifier = new ReducedClassifier(par, taxIdList);
+        classifier = new ReducedClassifier(par);
     } else {
-        classifier = new Classifier(par, taxIdList);
+        classifier = new Classifier(par);
     }
 
-    classifier->startClassify(targetDiffIdxFileName.c_str(), targetInfoFileName.c_str(),
-                             diffIdxSplitFileName.c_str(), par);
+    classifier->startClassify(par);
     delete classifier;
     return 0;
 }

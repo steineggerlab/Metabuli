@@ -176,11 +176,12 @@ FileMerger::~FileMerger() {
 // Merge differential index and k-mer information files, reducing redundancy
 void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) {
     size_t writtenKmerCnt = 0;
-    const string dbDirectory = par.filenames[1];
-    const string taxonomyDirectory = dbDirectory + "/taxonomy";
+    const string dbDirectory = par.filenames[0];
 
     // Taxonomy
-    NcbiTaxonomy taxonomy(taxonomyDirectory + "/names.dmp", taxonomyDirectory + "/nodes.dmp", taxonomyDirectory + "/merged.dmp");
+    NcbiTaxonomy taxonomy(par.taxonomyPath + "/names.dmp",
+                          par.taxonomyPath + "/nodes.dmp",
+                          par.taxonomyPath + "/merged.dmp");
 
     // Load taxonomy id list
     vector<TaxID> taxIdList;
@@ -279,9 +280,9 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
 
         // update looking k-mers
         lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
-        lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
+        lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]]; // TODO SEGV here
         infoFileIdx[idxOfMin] ++;
-        if( diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] ){
+        if( diffFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin] ){
             lookingKmers[idxOfMin] = UINT64_MAX;
             numOfincompletedFiles--;
             if(numOfincompletedFiles == 0) break;
@@ -298,7 +299,7 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
             lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
             infoFileIdx[idxOfMin] ++;
 
-            if(diffFileIdx[idxOfMin] > maxIdxOfEachFiles[idxOfMin] ){
+            if(diffFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin] ){
                 lookingKmers[idxOfMin] = UINT64_MAX;
                 numOfincompletedFiles--;
                 if(numOfincompletedFiles == 0){
@@ -317,6 +318,7 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
 
         if(AminoAcidPart(lastWrittenKmer) != AAofTempSplitOffset && splitCheck == 1){
             splitList[splitListIdx++] = {lastWrittenKmer, totalBufferIdx, totalInfoIdx};
+            cout<<splitListIdx<< "\t" <<lastWrittenKmer<<"\t"<<totalBufferIdx<<"\t"<<totalInfoIdx<<endl;
             splitCheck = 0;
         }
 
