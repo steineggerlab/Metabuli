@@ -241,4 +241,6 @@ LocalParameters::LocalParameters() :
 
     // add to library
     addToLibrary.push_back(&IS_ASSEMBLY);
+    addToLibrary.push_back(&TAXONOMY_PATH);
+    addToLibrary.push_back(&LIBRARY_PATH);
 }

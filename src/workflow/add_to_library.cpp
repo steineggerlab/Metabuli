@@ -10,25 +10,32 @@
 
 using namespace std;
 
+void setDefaults_addToLibrary(LocalParameters & par){
+    par.taxonomyPath = "DBDIR/taxonomy/" ;
+    par.libraryPath = "DBDIR/library/";
+}
+
 int addToLibrary(int argc, const char **argv, const Command &command){
     LocalParameters &par = LocalParameters::getLocalInstance();
+    setDefaults_addToLibrary(par);
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
 
     const string fileList = par.filenames[0];
     const string mappingFileName = par.filenames[1];
     const string dbDir = par.filenames[2];
-    const string taxonomy = dbDir + "/taxonomy";
+    if (par.taxonomyPath == "DBDIR/taxonomy/") par.taxonomyPath = dbDir + "/taxonomy/";
+    if (par.libraryPath == "DBDIR/library/") par.libraryPath = dbDir + "/library/";
 
-    string libraryPath = dbDir + "/library";
+//    string libraryPath = dbDir + "/library";
     // If the library directory does not exist, create it
-    if (FileUtil::directoryExists(libraryPath.c_str()) == false) {
-        FileUtil::makeDir(libraryPath.c_str());
+    if (FileUtil::directoryExists(par.libraryPath.c_str()) == false) {
+        FileUtil::makeDir(par.libraryPath.c_str());
     }
 
     // Load taxonomy
-    string names = taxonomy + "/names.dmp";
-    string nodes =  taxonomy + "/nodes.dmp";
-    string merged =  taxonomy + "/merged.dmp";
+    string names = par.taxonomyPath + "/names.dmp";
+    string nodes =  par.taxonomyPath + "/nodes.dmp";
+    string merged =  par.taxonomyPath + "/merged.dmp";
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
 
     // Load file names
