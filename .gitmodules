@@ -1,3 +1,0 @@
-[submodule "lib/mmseqs2"]
-	path = lib/mmseqs
-	url = https://github.com/JaebeomKim0731/MMseqs2
