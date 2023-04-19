@@ -3,6 +3,7 @@
 #include "LocalParameters.h"
 #include "DownloadDatabase.h"
 #include "CommandDeclarations.h"
+#include "Prefiltering.h"
 
 const char* binary_name = "metabuli";
 const char* tool_name = "metabuli";
@@ -12,6 +13,14 @@ const char* main_author = "Jaebeom Kim <jbeom0731@gmail.com> ";
 const char* show_extended_help = "1";
 const char* show_bash_info = NULL;
 bool hide_base_commands = true;
+extern const char* MMSEQS_CURRENT_INDEX_VERSION;
+const char* index_version_compatible = MMSEQS_CURRENT_INDEX_VERSION;
+bool hide_base_downloads = false;
+void (*validatorUpdate)(void) = 0;
+
+std::vector<DatabaseDownload> externalDownloads = {};
+std::vector<KmerThreshold> externalThreshold = {};
+
 
 LocalParameters& localPar = LocalParameters::getLocalInstance();
 std::vector<Command> commands = {

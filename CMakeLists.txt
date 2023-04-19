@@ -15,13 +15,8 @@ add_subdirectory(lib/prodigal)
 add_subdirectory(src)
 include_directories(lib)
 
-
-
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 #set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
 #set (CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp main.cpp -o main -lomp")
-
-
-
 #include_directories(lib/mmseq)

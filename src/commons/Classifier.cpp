@@ -77,6 +77,10 @@ Classifier::Classifier(LocalParameters & par) {
     fclose(taxIdFile);
     taxonomy->createTaxIdListAtRank(this->taxIdList, speciesTaxIdList, "species");
     taxonomy->createTaxIdListAtRank(speciesTaxIdList, genusTaxIdList, "genus");
+    // print taxid, species, genus
+    for (size_t i = 0; i < speciesTaxIdList.size(); i++) {
+        cout << taxIdList[i] << " " << speciesTaxIdList[i] << " " << genusTaxIdList[i] << endl;
+    }
     spORssp.push_back(&this->taxIdList);
     spORssp.push_back(&this->speciesTaxIdList);
 }
@@ -96,9 +100,7 @@ static inline bool compareForLinearSearch(const QueryKmer &a, const QueryKmer &b
 }
 
 void Classifier::startClassify(const LocalParameters &par) {
-
     size_t totalNumOfQueryKmer = 0;
-
     // Check if the query file is in FASTA format
     bool isFasta = false;
     ifstream check(queryPath_1.c_str());
@@ -1058,7 +1060,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
             minStrainSpecificCnt = queryList[currentQuery].queryLength / 1000;
         }
     }
-    if (NcbiTaxonomy::findRankIndex(taxonomy->taxonNode(selectedSpecies)->rank) == 4) {
+    if (string(taxonomy->getString(taxonomy->taxonNode(selectedSpecies)->rankIdx)) == "species") {
         unordered_map<TaxID, int> strainMatchCnt;
         for (size_t i = 0; i < genusMatches.size(); i++) {
             if (!genusMatches[i].redundancy
@@ -1987,7 +1989,7 @@ void Classifier::writeReadClassification(const vector<Query> & queryList, int qu
                                << queryList[i].score << "\t"
                                << queryList[i].coverage << "\t"
                                << queryList[i].hammingDist << "\t"
-                               << taxonomy->taxonNode(queryList[i].classification)->rank << "\t";
+                               << taxonomy->getString(taxonomy->taxonNode(queryList[i].classification)->rankIdx) << "\t";
         for (auto it = queryList[i].taxCnt.begin(); it != queryList[i].taxCnt.end(); ++it) {
             readClassificationFile << it->first << ":" << it->second << " ";
         }
@@ -2003,30 +2005,32 @@ void Classifier::writeReportFile(const string &reportFileName, int numOfQuery, u
     fclose(fp);
 }
 
-void Classifier::writeReport(FILE *fp, const unordered_map<TaxID, TaxonCounts> &cladeCounts, unsigned long totalReads,
-                             TaxID taxID, int depth) {
-    auto it = cladeCounts.find(taxID);
-    unsigned int cladeCount = (it == cladeCounts.end() ? 0 : it->second.cladeCount);
-    unsigned int taxCount = (it == cladeCounts.end() ? 0 : it->second.taxCount);
+void Classifier::writeReport(FILE *FP, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts,
+                             unsigned long totalReads, TaxID taxID, int depth) {
+    std::unordered_map<TaxID, TaxonCounts>::const_iterator it = cladeCounts.find(taxID);
+    unsigned int cladeCount = it == cladeCounts.end() ? 0 : it->second.cladeCount;
+    unsigned int taxCount = it == cladeCounts.end() ? 0 : it->second.taxCount;
     if (taxID == 0) {
         if (cladeCount > 0) {
-            fprintf(fp, "%.2f\t%i\t%i\t0\tno rank\tunclassified\n", 100 * cladeCount / double(totalReads), cladeCount,
-                    taxCount);
+            fprintf(FP, "%.4f\t%i\t%i\tno rank\t0\tunclassified\n",
+                    100 * cladeCount / double(totalReads),
+                    cladeCount, taxCount);
         }
-        writeReport(fp, cladeCounts, totalReads, 1);
+        writeReport(FP, cladeCounts, totalReads, 1);
     } else {
         if (cladeCount == 0) {
             return;
         }
         const TaxonNode *taxon = taxonomy->taxonNode(taxID);
-        fprintf(fp, "%.2f\t%i\t%i\t%i\t%s\t%s%s\n", 100 * cladeCount / double(totalReads), cladeCount, taxCount, taxID,
-                taxon->rank.c_str(), string(2 * depth, ' ').c_str(), taxon->name.c_str());
-        vector<TaxID> children = it->second.children;
-        sort(children.begin(), children.end(),
-             [&](int a, int b) { return cladeCountVal(cladeCounts, a) > cladeCountVal(cladeCounts, b); });
-        for (TaxID childTaxId: children) {
+        fprintf(FP, "%.4f\t%i\t%i\t%s\t%i\t%s%s\n",
+                100 * cladeCount / double(totalReads), cladeCount, taxCount,
+                taxonomy->getString(taxon->rankIdx), taxID, std::string(2 * depth, ' ').c_str(), taxonomy->getString(taxon->nameIdx));
+        std::vector<TaxID> children = it->second.children;
+        SORT_SERIAL(children.begin(), children.end(), [&](int a, int b) { return cladeCountVal(cladeCounts, a) > cladeCountVal(cladeCounts, b); });
+        for (size_t i = 0; i < children.size(); ++i) {
+            TaxID childTaxId = children[i];
             if (cladeCounts.count(childTaxId)) {
-                writeReport(fp,  cladeCounts, totalReads, childTaxId, depth + 1);
+                writeReport(FP, cladeCounts, totalReads, childTaxId, depth + 1);
             } else {
                 break;
             }

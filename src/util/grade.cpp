@@ -6,14 +6,38 @@
 #include <string>
 #include <iostream>
 #include <regex>
-#include "benchmark.h"
+//#include "benchmark.h"
 
 using namespace std;
+
+struct CountAtRank {
+    int total;
+    int FP;
+    int TP;
+    int FN;
+    float precision;
+    float sensitivity;
+    float f1;
+    void calculate() {
+        precision = (float)TP / (float)(TP + FP);
+        sensitivity = (float)TP / (float)(total);
+        f1 = 2 * precision * sensitivity / (precision + sensitivity);
+    }
+};
 
 struct GradeResult{
     unordered_map<string, CountAtRank> countsAtRanks;
     string path;
 };
+
+struct Score2{
+    Score2(int tf, std::string rank, float score) : tf(tf), rank(rank), score(score) { }
+    int tf; // 1 = t, 2 = f
+    std::string rank;
+    float score;
+};
+
+
 
 char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
                              const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
@@ -342,7 +366,8 @@ char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
     // Do not count if the rank of target is higher than current rank
     TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
-    if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)) {
+    int rankIdx = NcbiTaxonomy::findRankIndex(rank);
+    if (NcbiTaxonomy::findRankIndex(ncbiTaxonomy.getString(targetNode->rankIdx)) > rankIdx) {
         return '-';
     }
 
@@ -356,7 +381,7 @@ char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
     // False negative if the rank of shot is higher than current rank
     TaxID shotTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(shot, rank);
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shotTaxIdAtRank);
-    if (NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank)) {
+    if (NcbiTaxonomy::findRankIndex(ncbiTaxonomy.getString(shotNode->rankIdx)) > rankIdx) {
         count.FN ++;
         count.total ++;
         return 'N';
@@ -377,9 +402,11 @@ char compareTaxon_overclassification(TaxID shot, TaxID target, NcbiTaxonomy & nc
     // Do not count if the rank of target is higher than current rank
 //    TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);
-    if (NcbiTaxonomy::findRankIndex(targetNode->rank) > NcbiTaxonomy::findRankIndex(rank)) {
+    int rankIdx = NcbiTaxonomy::findRankIndex(rank);
+    if (NcbiTaxonomy::findRankIndex(ncbiTaxonomy.getString(targetNode->rankIdx)) > rankIdx) {
         return '-';
     }
+
 
     // False negative; no classification or meaningless classification
     if(shot == 1 || shot == 0) {
@@ -390,7 +417,7 @@ char compareTaxon_overclassification(TaxID shot, TaxID target, NcbiTaxonomy & nc
 
     // False negative if the rank of shot is higher than current rank
     const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
-    if (NcbiTaxonomy::findRankIndex(shotNode->rank) > NcbiTaxonomy::findRankIndex(rank)) {
+    if (NcbiTaxonomy::findRankIndex(ncbiTaxonomy.getString(shotNode->rankIdx)) > rankIdx) {
         count.FN ++;
         count.total ++;
         return 'N';
