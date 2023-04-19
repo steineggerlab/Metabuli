@@ -1,7 +1,7 @@
 #include "FileMerger.h"
 
 FileMerger::FileMerger(const LocalParameters & par) {
-    cre = new IndexCreator(par);
+    splitNum = par.splitNum;
     if (par.reducedAA == 1){
         MARKER = 0Xffffffff;
         MARKER = ~MARKER;
@@ -12,7 +12,7 @@ FileMerger::FileMerger(const LocalParameters & par) {
 }
 
 FileMerger::~FileMerger() {
-    delete cre;
+
 }
 
 //void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & taxIdListAtRank, vector<int> & taxIdList) {
@@ -240,15 +240,15 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
 
     // To make differential index splits
     uint64_t AAofTempSplitOffset = UINT64_MAX;
-    size_t sizeOfSplit = numOfKmerBeforeMerge / (SplitNum - 1);
-    size_t offsetList[SplitNum + 1];
+    size_t sizeOfSplit = numOfKmerBeforeMerge / (splitNum - 1);
+    size_t offsetList[splitNum + 1];
     int offsetListIdx = 1;
-    for(size_t os = 0; os < SplitNum; os++){
+    for(size_t os = 0; os < splitNum; os++){
         offsetList[os] = os * sizeOfSplit;
     }
-    offsetList[SplitNum] = UINT64_MAX;
-    DiffIdxSplit splitList[SplitNum];
-    memset(splitList, 0, sizeof(DiffIdxSplit) * SplitNum);
+    offsetList[splitNum] = UINT64_MAX;
+    DiffIdxSplit splitList[splitNum];
+    memset(splitList, 0, sizeof(DiffIdxSplit) * splitNum);
     int splitListIdx = 1;
 
     // get the first k-mer to write
@@ -331,10 +331,10 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
         if(endFlag == 1) break;
     }
 
-    cre->flushInfoBuf(infoBuffer, mergedInfoFile, infoBufferIdx);
-    cre->flushKmerBuf(diffBuffer, mergedDiffFile, diffBufferIdx);
-    fwrite(splitList, sizeof(DiffIdxSplit), SplitNum, diffIdxSplitFile);
-    for(int i = 0; i < SplitNum; i++){
+    IndexCreator::flushInfoBuf(infoBuffer, mergedInfoFile, infoBufferIdx);
+    IndexCreator::flushKmerBuf(diffBuffer, mergedDiffFile, diffBufferIdx);
+    fwrite(splitList, sizeof(DiffIdxSplit), splitNum, diffIdxSplitFile);
+    for(int i = 0; i < splitNum; i++){
         cout<<splitList[i].ADkmer<< " "<<splitList[i].diffIdxOffset<< " "<<splitList[i].infoIdxOffset<<endl;
     }
     free(diffBuffer);

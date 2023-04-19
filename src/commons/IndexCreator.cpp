@@ -48,7 +48,7 @@ IndexCreator::IndexCreator(const LocalParameters & par)
 }
 
 IndexCreator::IndexCreator(const LocalParameters &par, string dbDir, string fnaListFileName, string acc2taxidFile)
-        : dbDir(std::move(dbDir)), fnaListFileName(move(fnaListFileName)),
+        : dbDir(std::move(dbDir)), fnaListFileName(std::move(fnaListFileName)),
           taxonomyDir(par.taxonomyPath), acc2taxidFileName(std::move(acc2taxidFile))
 {
     // Load taxonomy
@@ -335,8 +335,8 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
 
     // Make splits
     FILE * diffIdxSplitFile = fopen(splitFileName.c_str(), "wb");
-    DiffIdxSplit splitList[SplitNum];
-    memset(splitList, 0, sizeof(DiffIdxSplit) * SplitNum);
+    DiffIdxSplit splitList[par.splitNum];
+    memset(splitList, 0, sizeof(DiffIdxSplit) * par.splitNum);
     size_t splitWidth = uniqKmerCnt / par.threads;
     for (size_t i = 1; i < (size_t) par.threads; i++) {
         for (size_t j = uniqKmerIdx[0] + splitWidth * i; j + 1 < uniqKmerCnt; j++) {
@@ -381,7 +381,7 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     cout<<"written k-mer count: "<<write<<endl;
 
     flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
-    fwrite(splitList, sizeof(DiffIdxSplit), SplitNum, diffIdxSplitFile);
+    fwrite(splitList, sizeof(DiffIdxSplit), par.splitNum, diffIdxSplitFile);
 
     free(diffIdxBuffer);
     fclose(diffIdxSplitFile);

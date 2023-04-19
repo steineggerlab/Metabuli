@@ -1,4 +1,4 @@
-#include "NcbiTaxonomy.h"
+    #include "NcbiTaxonomy.h"
 #include "LocalParameters.h"
 #include <Command.h>
 #include <string>
@@ -38,6 +38,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
     string merged =  par.taxonomyPath + "/merged.dmp";
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
 
+
     // Load file names
     ifstream fileListFile;
     fileListFile.open(fileList);
@@ -69,7 +70,6 @@ int addToLibrary(int argc, const char **argv, const Command &command){
         }
         cout << "done" << endl;
 
-        IndexCreator idxCreator;
         vector<Sequence> sequences;
         vector<string> unmapped;
         // Process each file
@@ -79,7 +79,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             string fileName = fileNames[i];
 
             // Getting start and end position of each sequence
-            idxCreator.getSeqSegmentsWithHead(sequences, fileName.c_str());
+            IndexCreator::getSeqSegmentsWithHead(sequences, fileName.c_str());
 
             // Mmap the file
             struct MmapedData<char> seqFile = mmapData<char>(fileName.c_str());
@@ -154,7 +154,6 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             cerr << "Cannot open the mapping from assembly accession to tax ID" << endl;
         }
 
-        IndexCreator idxCreator;
         vector<Sequence> sequences;
         vector<string> unmapped;
         regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
@@ -165,7 +164,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             string fileName = fileNames[i];
 
             // Getting start and end position of each sequence
-            idxCreator.getSeqSegmentsWithHead(sequences, fileName.c_str());
+            IndexCreator::getSeqSegmentsWithHead(sequences, fileName.c_str());
 
             // Mmap the file
             struct MmapedData<char> seqFile = mmapData<char>(fileName.c_str());
@@ -206,10 +205,10 @@ int addToLibrary(int argc, const char **argv, const Command &command){
                 acc2taxid[accession] = assembly2taxid[assemblyID];
 
                 // Write to file
-                FILE *file = fopen((dbDir + "/library/" + to_string(speciesTaxID) + ".fna").c_str(), "a");
-                fprintf(file, ">%s %s\n", seq->name.s, seq->comment.s);
-                fprintf(file, "%s\n", seq->seq.s);
-                fclose(file);
+//                FILE *file = fopen((dbDir + "/library/" + to_string(speciesTaxID) + ".fna").c_str(), "a");
+//                fprintf(file, ">%s %s\n", seq->name.s, seq->comment.s);
+//                fprintf(file, "%s\n", seq->seq.s);
+//                fclose(file);
 
                 kseq_destroy(seq);
             }
@@ -231,7 +230,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             string accession = it->first;
             size_t pos = accession.find('.');
             if (pos != string::npos) { accession = accession.substr(0, pos);}
-            fprintf(file, "%s\t%s\t%d\t0", accession.c_str(), it->first.c_str(), it->second);
+            fprintf(file, "\n%s\t%s\t%d\t0", accession.c_str(), it->first.c_str(), it->second);
         }
         fclose(file);
     }

@@ -52,6 +52,7 @@ public:
     PARAMETER(LIBRARY_PATH)
     PARAMETER(TAXONOMY_PATH)
     PARAMETER(IS_ASSEMBLY)
+    PARAMETER(SPLIT_NUM)
 
     // Test parameters
     PARAMETER(TEST_RANK)
@@ -86,6 +87,7 @@ public:
     std::string tinfoPath;
     std::string libraryPath;
     std::string taxonomyPath;
+    int splitNum;
 
     // Test parameters
     std::string testRank;

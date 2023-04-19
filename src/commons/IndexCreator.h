@@ -139,7 +139,7 @@ public:
     string getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const string & seqFileName,
                                   const unordered_map<string, TaxID> & acc2taxid,
                                   unordered_map<string, TaxID> & foundAcc2taxid);
-    void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const char * seqFileName);
+    static void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const char * seqFileName);
     IndexCreator(const LocalParameters & par);
     IndexCreator(const LocalParameters & par, string dbDir, string fnaListFileName, string acc2taxidFile);
     IndexCreator() {taxonomy = nullptr;}
@@ -156,8 +156,8 @@ public:
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
                     uint16_t *kmerBuf, size_t & localBufIdx, size_t & totalBufferIdx);
     void writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t & infoBufferIdx);
-    void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
-    void flushInfoBuf(TargetKmerInfo * buffer, FILE * infoFile, size_t & localBufIdx );
+    static void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
+    static void flushInfoBuf(TargetKmerInfo * buffer, FILE * infoFile, size_t & localBufIdx );
 
 };
 #endif //ADKMER4_INDEXCREATOR_H

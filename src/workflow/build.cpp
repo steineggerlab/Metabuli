@@ -8,6 +8,7 @@ void setDefaults_build(LocalParameters & par){
     par.reducedAA = 0;
     par.spaceMask = "11111111";
     par.taxonomyPath = "" ;
+    par.splitNum = 4096;
 }
 
 int build(int argc, const char **argv, const Command &command){
@@ -27,18 +28,18 @@ int build(int argc, const char **argv, const Command &command){
     }
     cout << "Taxonomy path: " << par.taxonomyPath << endl;
     cout << "Tinfo path: " << par.tinfoPath << endl;
-
-    IndexCreator idxCre(par, dbDirectory, fastaListPath, mappingFile);
-    idxCre.createIndex(par);
-
-    if(idxCre.getNumOfFlush() == 1) {
-        cerr << "Index creation completed." << endl;
-        return 0;
-    }
+//
+//    IndexCreator idxCre(par, dbDirectory, fastaListPath, mappingFile);
+//    idxCre.createIndex(par);
+//
+//    if(idxCre.getNumOfFlush() == 1) {
+//        cerr << "Index creation completed." << endl;
+//        return 0;
+//    }
 
     //Merge files
     cout << "Merge reference DB files ... " << endl;
-    int numOfSplits = idxCre.getNumOfFlush();
+    int numOfSplits = 4; //idxCre.getNumOfFlush();
     FileMerger merger(par);
     merger.mergeTargetFiles(par, numOfSplits);
     cerr << "Index creation completed." << endl;

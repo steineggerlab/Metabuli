@@ -18,8 +18,8 @@ using namespace std;
 
 class FileMerger {
 private:
-    IndexCreator * cre;
     uint64_t MARKER;
+    int splitNum;
 
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx, size_t & totalBufIdx);
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx , size_t & totalBufIdx);

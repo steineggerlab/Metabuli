@@ -7,7 +7,7 @@ ar_gz="${PWD}/ar.tar.gz"
 bac_gz="${PWD}/bac.tar.gz"
 
 
-wget -O "${ar_gz}" https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/ar122_metadata.tar.gz
+wget -O "${ar_gz}" https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/ar53_metadata.tar.gz
 wget -O "${bac_gz}" https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/bac120_metadata.tar.gz
 
 ar_meta="${PWD}/$(tar -tf "${ar_gz}")"
@@ -18,8 +18,8 @@ map="${PWD}/assacc_to_taxid.tsv"
 
 tar -xvf "${ar_gz}"
 tar -xvf "${bac_gz}"
-rm "${ar_gz}"
-rm "${bac_gz}"
+#rm "${ar_gz}"
+#rm "${bac_gz}"
 
 cat "${ar_meta}" "${bac_meta}" > "${ar_bac_meta}"
 rm "${ar_meta}"
@@ -27,7 +27,7 @@ rm "${bac_meta}"
 
 ./gtdb_to_taxdump.py \
   -t "${ar_bac_meta}" \
-  https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/ar122_taxonomy.tsv \
+  https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/ar53_taxonomy.tsv \
   https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/bac120_taxonomy.tsv \
   > taxID_info.tsv
 
@@ -41,7 +41,7 @@ awk -F '\t' '$1 ~ /^(R|G)/{print $1,$55,$111}' "${ar_bac_meta_wTaxIDs}" | while 
 done > "${map}"
 
 mv "${ar_bac_meta_wTaxIDs}" "${OUT}"
-echo "\t|\t\t|" > ../../gtdb_taxdmp/merged.dmp
+echo -e "\t|\t\t|" > "merged.dmp"
 mv "merged.dmp" "${OUT}"
 mv "names.dmp" "${OUT}"
 mv "nodes.dmp" "${OUT}"

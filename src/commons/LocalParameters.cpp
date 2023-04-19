@@ -187,7 +187,14 @@ LocalParameters::LocalParameters() :
                 "Maximum gap between two consecutive k-mers (used only with spaced k-mer)",
                 typeid(int),
                 (void *) &maxGap,
-                ""){
+                ""),
+        SPLIT_NUM(SPLIT_NUM_ID,
+                  "--split-num",
+                  "A database is divided to N splits (offsets). During classification, unnecessary splits are skipped",
+                  "A database is divided to N splits (offsets). During classification, unnecessary splits are skipped",
+                  typeid(int),
+                  (void *) &splitNum,
+                  ""){
     //add_to_library
 
     // build
@@ -196,6 +203,7 @@ LocalParameters::LocalParameters() :
     build.push_back(&SPACED);
     build.push_back(&TAXONOMY_PATH);
     build.push_back(&TINFO_PATH);
+    build.push_back(&SPLIT_NUM);
 
     //classify
     classify.push_back(&PARAM_THREADS);

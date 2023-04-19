@@ -6,6 +6,7 @@
 #define ADCLASSIFIER2_LOCALCOMMANDDECLARATIONS_H
 #include "Command.h"
 
+//extern int download_databases(int argc, const char **argv, const Command& command);
 extern int build(int argc, const char **argv, const Command& command);
 extern int updataDB(int argc, const char **argv, const Command& command);
 extern int classify(int argc, const char **argv, const Command& command);
