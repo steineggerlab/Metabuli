@@ -1,4 +1,4 @@
-    #include "NcbiTaxonomy.h"
+#include "NcbiTaxonomy.h"
 #include "LocalParameters.h"
 #include <Command.h>
 #include <string>

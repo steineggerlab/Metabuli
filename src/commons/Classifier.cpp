@@ -14,7 +14,6 @@ Classifier::Classifier(LocalParameters & par) {
         cout << "Database directory: " << dbDir << endl;
         cout << "Output directory: " << outDir << endl;
         cout << "Job ID: " << jobId << endl;
-
     } else {
         queryPath_1 = par.filenames[0];
         dbDir = par.filenames[1];
@@ -25,6 +24,7 @@ Classifier::Classifier(LocalParameters & par) {
         cout << "Output directory: " << outDir << endl;
         cout << "Job ID: " << jobId << endl;
     }
+    if (par.taxonomyPath == "DBDIR/taxonomy/") par.taxonomyPath = dbDir + "/taxonomy/";
 
     MARKER = 16777215;
     MARKER = ~ MARKER;
@@ -55,10 +55,9 @@ Classifier::Classifier(LocalParameters & par) {
     hammingMargin = (uint8_t) par.hammingMargin;
 
     // Taxonomy
-    const string taxonomyDirectory = dbDir + "/taxonomy";
-    const string names = taxonomyDirectory + "/names.dmp";
-    const string nodes = taxonomyDirectory + "/nodes.dmp";
-    const string merged = taxonomyDirectory + "/merged.dmp";
+    const string names = par.taxonomyPath + "/names.dmp";
+    const string nodes = par.taxonomyPath + "/nodes.dmp";
+    const string merged = par.taxonomyPath + "/merged.dmp";
     taxonomy = new NcbiTaxonomy(names, nodes, merged);
 
     // Taxonomy ID list
@@ -77,10 +76,7 @@ Classifier::Classifier(LocalParameters & par) {
     fclose(taxIdFile);
     taxonomy->createTaxIdListAtRank(this->taxIdList, speciesTaxIdList, "species");
     taxonomy->createTaxIdListAtRank(speciesTaxIdList, genusTaxIdList, "genus");
-    // print taxid, species, genus
-    for (size_t i = 0; i < speciesTaxIdList.size(); i++) {
-        cout << taxIdList[i] << " " << speciesTaxIdList[i] << " " << genusTaxIdList[i] << endl;
-    }
+
     spORssp.push_back(&this->taxIdList);
     spORssp.push_back(&this->speciesTaxIdList);
 }
@@ -100,6 +96,7 @@ static inline bool compareForLinearSearch(const QueryKmer &a, const QueryKmer &b
 }
 
 void Classifier::startClassify(const LocalParameters &par) {
+
     size_t totalNumOfQueryKmer = 0;
     // Check if the query file is in FASTA format
     bool isFasta = false;

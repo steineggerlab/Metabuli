@@ -16,7 +16,7 @@ void write_report(FILE *FP, const unordered_map<TaxID, TaxonCounts> &cladeCounts
     unsigned int taxCount = it == cladeCounts.end() ? 0 : it->second.taxCount;
     if (taxID == 0) {
         if (cladeCount > 0) {
-            fprintf(FP, "%.4f\t%i\t%i\tno rank\t0\tunclassified\n",
+            fprintf(FP, "%.2f\t%i\t%i\tno rank\t0\tunclassified\n",
                     100 * cladeCount / double(totalReads),
                     cladeCount, taxCount);
         }
@@ -26,7 +26,7 @@ void write_report(FILE *FP, const unordered_map<TaxID, TaxonCounts> &cladeCounts
             return;
         }
         const TaxonNode *taxon = taxonomy.taxonNode(taxID);
-        fprintf(FP, "%.4f\t%i\t%i\t%s\t%i\t%s%s\n",
+        fprintf(FP, "%.2f\t%i\t%i\t%s\t%i\t%s%s\n",
                 100 * cladeCount / double(totalReads), cladeCount, taxCount,
                 taxonomy.getString(taxon->rankIdx), taxID, std::string(2 * depth, ' ').c_str(), taxonomy.getString(taxon->nameIdx));
         std::vector<TaxID> children = it->second.children;

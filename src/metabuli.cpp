@@ -107,7 +107,16 @@ std::vector<Command> commands = {
                 {{"Binning Result", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                         {"OUT DIR", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory},
                         {"JOB ID", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-                        {"TAXONOMY DIR", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}}
+                        {"TAXONOMY DIR", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
+        {"filter-by-genus", filterByGenus, &localPar.filterByGenus, COMMAND_EXPERT,
+                    "It filters out reads classified as a specific genus",
+                    NULL,
+                    "Jaebeom Kim <jbeom0731@gmail.com>",
+                    "<i:Binning Result> <i:Genus list> <i: TAXONOMY DIR> ",
+                    CITATION_SPACEPHARER,
+                    {{"Binning Result", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                     {"Genus list", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                     {"TAXONOMY DIR", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}}
 
 };
 

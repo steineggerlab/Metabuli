@@ -15,4 +15,5 @@ extern int seqHeader2TaxId(int argc, const char **argv, const Command& command);
 extern int addToLibrary(int argc, const char **argv, const Command& command);
 extern int applyThreshold(int argc, const char **argv, const Command& command);
 extern int binning2report(int argc, const char **argv, const Command& command);
+extern int filterByGenus(int argc, const char **argv, const Command& command);
 #endif //ADCLASSIFIER2_LOCALCOMMANDDECLARATIONS_H

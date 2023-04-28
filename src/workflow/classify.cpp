@@ -19,6 +19,7 @@ void setClassifyDefaults(LocalParameters & par){
     par.minCoveredPos = 4;
     par.printLog = 0;
     par.maxGap = 0;
+    par.taxonomyPath = "DBDIR/taxonomy/" ;
 
 }
 
@@ -27,6 +28,7 @@ int classify(int argc, const char **argv, const Command& command)
     LocalParameters & par = LocalParameters::getLocalInstance();
     setClassifyDefaults(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
+
 
 #ifdef OPENMP
     omp_set_num_threads(par.threads);

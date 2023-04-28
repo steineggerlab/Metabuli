@@ -209,7 +209,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&PARAM_THREADS);
     classify.push_back(&SEQ_MODE);
     classify.push_back(&VIRUS_TAX_ID);
-    classify.push_back(&MEMORY_MODE);
+//    classify.push_back(&MEMORY_MODE);
     classify.push_back(&REDUCED_AA);
     classify.push_back(&MIN_SCORE);
     classify.push_back(&MIN_COVERAGE);
@@ -222,6 +222,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MIN_COVERED_POS);
     classify.push_back(&PRINT_LOG);
     classify.push_back(&MAX_GAP);
+    classify.push_back(&TAXONOMY_PATH);
 
 
     //updateTargetDB
