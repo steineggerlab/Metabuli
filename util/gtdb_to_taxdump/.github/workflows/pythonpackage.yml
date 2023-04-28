@@ -1,0 +1,40 @@
+name: gtdb_to_taxdump
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: build (${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8, 3.9]
+    steps:
+    - uses: actions/checkout@v2
+    - name: miniconda setup
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: 'latest'
+        auto-update-conda: true
+        mamba-version: "*"
+        python-version: ${{ matrix.python-version }}
+        channels: conda-forge,bioconda
+        environment-file: environment.yml
+        activate-environment: gtdb_to_taxdump
+    - name: package install
+      run: |
+        pip install .
+    - name: Check Installation
+      run: |
+        mamba list
+        pip list
+    - name: Script-level tests
+      run: |
+        pytest -s --hide-run-results --script-launch-mode=subprocess

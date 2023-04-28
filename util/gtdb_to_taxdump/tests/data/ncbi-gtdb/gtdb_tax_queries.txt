@@ -1,0 +1,12 @@
+f__Gearchaeaceae
+g__Aquabacter
+s__Nitrosopumilus sp000746785
+g__Escherichia
+g__Bacillus_A
+s__Xanthomonas oryzae
+c__Gammaproteobacteria
+o__Burkholderiales
+c__Bacteroidia
+f__BM003
+s__Homo sapiens
+Blank
