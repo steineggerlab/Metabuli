@@ -25,7 +25,9 @@ cat "${ar_meta}" "${bac_meta}" > "${ar_bac_meta}"
 rm "${ar_meta}"
 rm "${bac_meta}"
 
-./gtdb_to_taxdump.py \
+./gtdb_to_taxdump/setup.py install
+
+./gtdb_to_taxdump/bin/gtdb_to_taxdump.py \
   -t "${ar_bac_meta}" \
   https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/ar53_taxonomy.tsv \
   https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/bac120_taxonomy.tsv \
