@@ -26,6 +26,7 @@ public:
     std::vector<MMseqsParameter*> build;
     std::vector<MMseqsParameter*> applyThreshold;
     std::vector<MMseqsParameter*> binning2report;
+    std::vector<MMseqsParameter*> filterByGenus;
 
 
     // Superkingdom taxonomy id
@@ -52,6 +53,7 @@ public:
     PARAMETER(LIBRARY_PATH)
     PARAMETER(TAXONOMY_PATH)
     PARAMETER(IS_ASSEMBLY)
+    PARAMETER(SPLIT_NUM)
 
     // Test parameters
     PARAMETER(TEST_RANK)
@@ -86,6 +88,7 @@ public:
     std::string tinfoPath;
     std::string libraryPath;
     std::string taxonomyPath;
+    int splitNum;
 
     // Test parameters
     std::string testRank;

@@ -206,6 +206,7 @@ void ProdigalWrapper::getPredictedGenes(char * genome){
             fprintf(stderr, "Realloc failed on nodes\n\n");
             exit(11);
         }
+        memset(nodes, 0, (int)(slen/8)*sizeof(struct _node));
         max_slen = slen;
     }
 

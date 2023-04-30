@@ -13,7 +13,8 @@
 #include "KSeqBufferReader.h"
 #include "ProdigalWrapper.h"
 #include <functional>
-#include "xxh3.h"
+//#include "xxh3.h"
+#include "xxhash.h"
 #include <queue>
 #include "LocalParameters.h"
 

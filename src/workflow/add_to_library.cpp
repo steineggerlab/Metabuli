@@ -10,26 +10,34 @@
 
 using namespace std;
 
+void setDefaults_addToLibrary(LocalParameters & par){
+    par.taxonomyPath = "DBDIR/taxonomy/" ;
+    par.libraryPath = "DBDIR/library/";
+}
+
 int addToLibrary(int argc, const char **argv, const Command &command){
     LocalParameters &par = LocalParameters::getLocalInstance();
+    setDefaults_addToLibrary(par);
     par.parseParameters(argc, argv, command, false, Parameters::PARSE_ALLOW_EMPTY, 0);
 
     const string fileList = par.filenames[0];
     const string mappingFileName = par.filenames[1];
     const string dbDir = par.filenames[2];
-    const string taxonomy = dbDir + "/taxonomy";
+    if (par.taxonomyPath == "DBDIR/taxonomy/") par.taxonomyPath = dbDir + "/taxonomy/";
+    if (par.libraryPath == "DBDIR/library/") par.libraryPath = dbDir + "/library/";
 
-    string libraryPath = dbDir + "/library";
+//    string libraryPath = dbDir + "/library";
     // If the library directory does not exist, create it
-    if (FileUtil::directoryExists(libraryPath.c_str()) == false) {
-        FileUtil::makeDir(libraryPath.c_str());
+    if (FileUtil::directoryExists(par.libraryPath.c_str()) == false) {
+        FileUtil::makeDir(par.libraryPath.c_str());
     }
 
     // Load taxonomy
-    string names = taxonomy + "/names.dmp";
-    string nodes =  taxonomy + "/nodes.dmp";
-    string merged =  taxonomy + "/merged.dmp";
+    string names = par.taxonomyPath + "/names.dmp";
+    string nodes =  par.taxonomyPath + "/nodes.dmp";
+    string merged =  par.taxonomyPath + "/merged.dmp";
     NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
+
 
     // Load file names
     ifstream fileListFile;
@@ -62,7 +70,6 @@ int addToLibrary(int argc, const char **argv, const Command &command){
         }
         cout << "done" << endl;
 
-        IndexCreator idxCreator;
         vector<Sequence> sequences;
         vector<string> unmapped;
         // Process each file
@@ -72,7 +79,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             string fileName = fileNames[i];
 
             // Getting start and end position of each sequence
-            idxCreator.getSeqSegmentsWithHead(sequences, fileName.c_str());
+            IndexCreator::getSeqSegmentsWithHead(sequences, fileName.c_str());
 
             // Mmap the file
             struct MmapedData<char> seqFile = mmapData<char>(fileName.c_str());
@@ -147,7 +154,6 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             cerr << "Cannot open the mapping from assembly accession to tax ID" << endl;
         }
 
-        IndexCreator idxCreator;
         vector<Sequence> sequences;
         vector<string> unmapped;
         regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
@@ -158,7 +164,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             string fileName = fileNames[i];
 
             // Getting start and end position of each sequence
-            idxCreator.getSeqSegmentsWithHead(sequences, fileName.c_str());
+            IndexCreator::getSeqSegmentsWithHead(sequences, fileName.c_str());
 
             // Mmap the file
             struct MmapedData<char> seqFile = mmapData<char>(fileName.c_str());
@@ -199,10 +205,10 @@ int addToLibrary(int argc, const char **argv, const Command &command){
                 acc2taxid[accession] = assembly2taxid[assemblyID];
 
                 // Write to file
-                FILE *file = fopen((dbDir + "/library/" + to_string(speciesTaxID) + ".fna").c_str(), "a");
-                fprintf(file, ">%s %s\n", seq->name.s, seq->comment.s);
-                fprintf(file, "%s\n", seq->seq.s);
-                fclose(file);
+//                FILE *file = fopen((dbDir + "/library/" + to_string(speciesTaxID) + ".fna").c_str(), "a");
+//                fprintf(file, ">%s %s\n", seq->name.s, seq->comment.s);
+//                fprintf(file, "%s\n", seq->seq.s);
+//                fclose(file);
 
                 kseq_destroy(seq);
             }
@@ -224,7 +230,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             string accession = it->first;
             size_t pos = accession.find('.');
             if (pos != string::npos) { accession = accession.substr(0, pos);}
-            fprintf(file, "%s\t%s\t%d\t0", accession.c_str(), it->first.c_str(), it->second);
+            fprintf(file, "\n%s\t%s\t%d\t0", accession.c_str(), it->first.c_str(), it->second);
         }
         fclose(file);
     }

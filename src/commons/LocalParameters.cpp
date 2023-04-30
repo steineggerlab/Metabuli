@@ -253,3 +253,4 @@ LocalParameters::LocalParameters() :
     addToLibrary.push_back(&TAXONOMY_PATH);
     addToLibrary.push_back(&LIBRARY_PATH);
 }
+
