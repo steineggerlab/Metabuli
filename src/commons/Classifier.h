@@ -25,7 +25,7 @@
 #include "Match.h"
 
 
-#define BufferSize 16'777'216 //16 * 1024 * 1024 // 16 MB
+//#define BufferSize 16'777'216 //16 * 1024 * 1024 // 16 M
 using namespace std;
 
 struct TaxonScore {
@@ -42,6 +42,8 @@ class Classifier {
 protected:
     // Parameters
     int verbosity;
+    size_t localIndexBufferSize;
+    size_t localMatchBufferSize;
 
     string queryPath_1;
     string queryPath_2;
@@ -165,7 +167,7 @@ protected:
 
     virtual uint16_t getHammings(uint64_t kmer1, uint64_t kmer2);
 
-    void moveMatches(Match *dest, Match *src, int &matchNum);
+    void moveMatches(Match *dest, Match *src, size_t matchNum);
 
     // Analyzing k-mer matches
     void fromMatchToClassification(Match *matchList,
