@@ -1167,10 +1167,8 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *m
                 if (distance == 0) { // At the same position
                     tempMatchContainer.push_back(matchList[i]);
                 } else if (distance == 1 &&
-                            dnaDist <= 3){ // Next position
-                    if (dnaDist == 3){
-                        isConsecutive(matchList[i], matchList[i+1], par);
-                    }
+                            dnaDist <= 3 &&
+                           (isConsecutive(matchList[i], matchList[i+1], par) || dnaDist !=3)){ // Next position
                     tempMatchContainer.push_back(matchList[i]);
                     diffPosCntOfCurrRange ++;
                     range += distance;
