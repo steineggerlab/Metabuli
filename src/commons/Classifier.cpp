@@ -761,22 +761,22 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     while (diffIdxPos != numOfDiffIdx &&
                         AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer)) {
                         // Print the target k-mer
-                        if (taxIdList[kmerInfoBuffer[kmerInfoBufferIdx].sequenceID] == 9606 && par.printLog == 1) {
-                            cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t"
-                                 << (int) queryKmerList[j].info.frame << endl;
-                            cout << "Query  k-mer: ";
-                            print_binary64(64, currentQuery);
-                            cout << "\t";
-                            seqIterator.printKmerInDNAsequence(currentQuery);
-                            cout << endl;
-                            cout << "Target k-mer: ";
-                            print_binary64(64, currentTargetKmer);
-                            cout << "\t";
-                            seqIterator.printKmerInDNAsequence(currentTargetKmer);
-                            cout << "\t" << taxIdList[kmerInfoBuffer[kmerInfoBufferIdx].sequenceID] << endl;
-                            cout << (int) getHammingDistanceSum(currentQuery, currentTargetKmer) << endl;
-                            print_binary16(16, getHammings(currentQuery, currentTargetKmer)); cout << endl;
-                        }
+//                        if (taxIdList[kmerInfoBuffer[kmerInfoBufferIdx].sequenceID] == 9606 && par.printLog == 1) {
+//                            cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t"
+//                                 << (int) queryKmerList[j].info.frame << endl;
+//                            cout << "Query  k-mer: ";
+//                            print_binary64(64, currentQuery);
+//                            cout << "\t";
+//                            seqIterator.printKmerInDNAsequence(currentQuery);
+//                            cout << endl;
+//                            cout << "Target k-mer: ";
+//                            print_binary64(64, currentTargetKmer);
+//                            cout << "\t";
+//                            seqIterator.printKmerInDNAsequence(currentTargetKmer);
+//                            cout << "\t" << taxIdList[kmerInfoBuffer[kmerInfoBufferIdx].sequenceID] << endl;
+//                            cout << (int) getHammingDistanceSum(currentQuery, currentTargetKmer) << endl;
+//                            print_binary16(16, getHammings(currentQuery, currentTargetKmer)); cout << endl;
+//                        }
                         candidateTargetKmers.push_back(currentTargetKmer);
                         candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
 
@@ -2158,9 +2158,9 @@ bool Classifier::isConsecutive(const Match & match1, const Match & match2, const
     }
 
     // set most significant two bits to 0
-    hamming2 &= 0x3FFF;
+    hamming2 &= 0x3FFF; // 07654321
     // move bits to right by 2
-    hamming1 >>= 2;
+    hamming1 >>= 2; // 07654321
     if (par.printLog) {
         print_binary16(16, hamming1); cout << endl;
         print_binary16(16, hamming2); cout << endl;
