@@ -574,6 +574,11 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
         }
     }
 
+    cout << queryKmerCnt << endl;
+    for(size_t i = 0; i < querySplits.size(); i++) {
+        cout << "Query split " << i << " : " << querySplits[i].start << " ~ " << querySplits[i].end << endl;
+    }
+
     bool *splitCheckList = (bool *) malloc(sizeof(bool) * threadNum);
     fill_n(splitCheckList, threadNum, false);
     int completedSplitCnt = 0;
@@ -607,7 +612,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
             uint64_t currentTargetKmer;
 
             //Match buffer for each thread
-            int localBufferSize = 1'000'000; // 32 Mb
+            int localBufferSize = 2'000'000; // 32 Mb
             auto *matches = new Match[localBufferSize]; // 16 * 2'000'000 = 32 Mb
             int matchCnt = 0;
 
