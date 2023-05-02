@@ -914,7 +914,7 @@ void Classifier::fromMatchToClassification(Match *matchList,
 
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
-    if(par.9606-5.log){
+    if(par.printLog){
         omp_set_num_threads(1);
     }
 #endif
