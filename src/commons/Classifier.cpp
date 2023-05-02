@@ -257,14 +257,14 @@ void Classifier::startClassify(const LocalParameters &par) {
 
 
         // Search matches between query and target k-mers
-#ifdef OPENMP
-        omp_set_num_threads(32);
-#endif
+//#ifdef OPENMP
+//        omp_set_num_threads(32);
+//#endif
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, matchBuffer, par);
 
-#ifdef OPENMP
-        omp_set_num_threads(par.threads);
-#endif
+//#ifdef OPENMP
+//        omp_set_num_threads(par.threads);
+//#endif
         // Sort matches
         time_t beforeSortMatches = time(nullptr);
         totalMatchCnt += matchBuffer.startIndexOfReserve;
@@ -492,7 +492,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
 
 void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKmerCnt,
                                       Buffer<Match> &matchBuffer, const LocalParameters &par) {
-    int threadNum = 32;
+    int threadNum = par.threads;
     string targetDiffIdxFileName = dbDir + "/diffIdx";
     string targetInfoFileName = dbDir + "/info";
     string diffIdxSplitFileName = dbDir + "/split";;
@@ -542,6 +542,8 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
             }
         }
     } else { //More than two threads
+        // Devide query k-mers into blocks
+
         size_t splitWidth = queryKmerCnt / (threadNum - 1);
         querySplits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
         for (int i = 1; i < threadNum; i++) {
@@ -573,6 +575,8 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
         }
     }
 
+    cout << "Number of query splits: " << querySplits.size() << endl;
+    
     bool *splitCheckList = (bool *) malloc(sizeof(bool) * threadNum);
     fill_n(splitCheckList, threadNum, false);
     int completedSplitCnt = 0;
