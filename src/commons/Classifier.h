@@ -127,13 +127,13 @@ protected:
             {3, 2, 3, 3, 4, 4, 1, 0}};
 
     // Index reads in query file
-    static void splitFASTQ(vector<Sequence> & seqSegments, const string & queryPath);
-    static void splitFASTA(vector<Sequence> & seqSegments, const string & queryPath);
+    static void splitFASTQ(vector<SequenceBlock> & seqSegments, const string & queryPath);
+    static void splitFASTA(vector<SequenceBlock> & seqSegments, const string & queryPath);
 
     // Extract query k-mer
     void fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                                      MmapedData<char> &seqFile,
-                                     const vector<Sequence> &seqs,
+                                     const vector<SequenceBlock> &seqs,
                                      vector<Query> & queryList,
                                      const pair<size_t, size_t> & currentSplit,
                                      const LocalParameters &par);
@@ -141,8 +141,8 @@ protected:
     void fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                                      MmapedData<char> &seqFile1,
                                      MmapedData<char> &seqFile2,
-                                     const vector<Sequence> &seqs,
-                                     const vector<Sequence> &seqs2,
+                                     const vector<SequenceBlock> &seqs,
+                                     const vector<SequenceBlock> &seqs2,
                                      vector<Query> & queryList,
                                      const pair<size_t, size_t> & currentSplit,
                                      const LocalParameters &par);

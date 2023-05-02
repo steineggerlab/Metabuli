@@ -15,6 +15,8 @@ void setDefaults_addToLibrary(LocalParameters & par){
     par.libraryPath = "DBDIR/library/";
 }
 
+// Group sequences by species
+//
 int addToLibrary(int argc, const char **argv, const Command &command){
     LocalParameters &par = LocalParameters::getLocalInstance();
     setDefaults_addToLibrary(par);
@@ -70,7 +72,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
         }
         cout << "done" << endl;
 
-        vector<Sequence> sequences;
+        vector<SequenceBlock> sequences;
         vector<string> unmapped;
         // Process each file
         size_t numberOfFiles = fileNames.size();
@@ -154,7 +156,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             cerr << "Cannot open the mapping from assembly accession to tax ID" << endl;
         }
 
-        vector<Sequence> sequences;
+        vector<SequenceBlock> sequences;
         vector<string> unmapped;
         regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
         // Process each file

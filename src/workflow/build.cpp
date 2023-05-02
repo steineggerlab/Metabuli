@@ -9,6 +9,7 @@ void setDefaults_build(LocalParameters & par){
     par.spaceMask = "11111111";
     par.taxonomyPath = "" ;
     par.splitNum = 4096;
+    par.maskProb = 0.5;
 }
 
 int build(int argc, const char **argv, const Command &command){
@@ -19,8 +20,17 @@ int build(int argc, const char **argv, const Command &command){
     string dbDirectory = par.filenames[0];
     string fastaListPath = par.filenames[1];
     string mappingFile = par.filenames[2];
-    if (par.taxonomyPath.empty()) par.taxonomyPath = dbDirectory + "/taxonomy/";
-    if (par.tinfoPath.empty()) par.tinfoPath = dbDirectory + "/prodigal/";
+    if (par.taxonomyPath.empty()) {
+        par.taxonomyPath = dbDirectory + "/taxonomy/";
+    } else {
+        par.taxonomyPath = par.taxonomyPath + "/";
+    }
+    if (par.tinfoPath.empty()) {
+        par.tinfoPath = dbDirectory + "/prodigal/";
+    } else {
+        par.tinfoPath = par.tinfoPath + "/";
+    }
+    cout << par.maskProb << endl;
     
     // If the prodigal directory does not exist, create it
     if (!FileUtil::directoryExists(par.tinfoPath.c_str())) {
