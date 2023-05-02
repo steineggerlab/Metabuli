@@ -139,7 +139,7 @@ LocalParameters::LocalParameters() :
                   typeid(std::string),
                   (void *) &testRank,
                   ""),
-                  TEST_TYPE(TEST_TYPE_ID,
+        TEST_TYPE(TEST_TYPE_ID,
                   "--test-type",
                   ".",
                   "Test Type",
@@ -147,12 +147,12 @@ LocalParameters::LocalParameters() :
                   (void *) &testType,
                   ""),
         READID_COL(READID_COL_ID,
-                      "--readid-col",
-                      "Column number of accession in classification result",
-                      "Column number of accession in classification result",
-                      typeid(int),
-                      (void *) &readIdCol,
-                      ""),
+                   "--readid-col",
+                   "Column number of accession in classification result",
+                   "Column number of accession in classification result",
+                   typeid(int),
+                   (void *) &readIdCol,
+                   ""),
         TAXID_COL(TAXID_COL_ID,
                   "--taxid-col",
                   "Column number of taxonomy ID in classification result",
@@ -255,3 +255,4 @@ LocalParameters::LocalParameters() :
     addToLibrary.push_back(&TAXONOMY_PATH);
     addToLibrary.push_back(&LIBRARY_PATH);
 }
+
