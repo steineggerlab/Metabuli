@@ -1156,6 +1156,7 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *m
             int distance = 0;
             int diffPosCntOfCurrRange = 1;
             int dnaDist = 0;
+            cout << currentSpecies << endl;
             while ((i + 1 < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
                 distance = matchList[i+1].position / 3 - matchList[i].position / 3; //20
                 dnaDist = matchList[i+1].position - matchList[i].position;
