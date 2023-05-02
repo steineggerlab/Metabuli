@@ -922,14 +922,7 @@ void Classifier::fromMatchToClassification(const Match *matchList,
         matchBlocks[blockIdx].end = matchIdx - 1;
         blockIdx++;
     }
-
-#ifdef OPENMP
-    omp_set_num_threads(par.threads);
-    if(par.printLog){
-        omp_set_num_threads(1);
-    }
-#endif
-
+    
     // Process each block
 #pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqNum, queryList, blockIdx, par)
     {
