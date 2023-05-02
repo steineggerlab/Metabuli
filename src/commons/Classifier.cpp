@@ -761,22 +761,22 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     while (diffIdxPos != numOfDiffIdx &&
                         AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer)) {
                         // Print the target k-mer
-                        if (par.printLog == 1) {
-                            cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t"
-                                 << (int) queryKmerList[j].info.frame << endl;
-                            cout << "Query  k-mer: ";
-                            print_binary64(64, currentQuery);
-                            cout << "\t";
-                            seqIterator.printKmerInDNAsequence(currentQuery);
-                            cout << endl;
-                            cout << "Target k-mer: ";
-                            print_binary64(64, currentTargetKmer);
-                            cout << "\t";
-                            seqIterator.printKmerInDNAsequence(currentTargetKmer);
-                            cout << "\t" << taxIdList[kmerInfoBuffer[kmerInfoBufferIdx].sequenceID] << endl;
-                            cout << (int) getHammingDistanceSum(currentQuery, currentTargetKmer) << endl;
-                            print_binary16(16, getHammings(currentQuery, currentTargetKmer)); cout << endl;
-                        }
+//                        if (par.printLog == 1) {
+//                            cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t"
+//                                 << (int) queryKmerList[j].info.frame << endl;
+//                            cout << "Query  k-mer: ";
+//                            print_binary64(64, currentQuery);
+//                            cout << "\t";
+//                            seqIterator.printKmerInDNAsequence(currentQuery);
+//                            cout << endl;
+//                            cout << "Target k-mer: ";
+//                            print_binary64(64, currentTargetKmer);
+//                            cout << "\t";
+//                            seqIterator.printKmerInDNAsequence(currentTargetKmer);
+//                            cout << "\t" << taxIdList[kmerInfoBuffer[kmerInfoBufferIdx].sequenceID] << endl;
+//                            cout << (int) getHammingDistanceSum(currentQuery, currentTargetKmer) << endl;
+//                            print_binary16(16, getHammings(currentQuery, currentTargetKmer)); cout << endl;
+//                        }
                         candidateTargetKmers.push_back(currentTargetKmer);
                         candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
 
@@ -791,8 +791,8 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     }
 
                     // Compare the current query and the loaded target k-mers and select
-                    compareDna(currentQuery, candidateTargetKmers, selectedMatches, selectedHammingSum, selectedHammings,
-                               queryKmerList[j].info.frame);
+                    compareDna(currentQuery, candidateTargetKmers, selectedMatches, selectedHammingSum,
+                               selectedHammings, queryKmerList[j].info.frame);
 
                     // If local buffer is full, copy them to the shared buffer.
                     currMatchNum = selectedMatches.size();
@@ -802,7 +802,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                         if (posToWrite + matchCnt >= matchBuffer.bufferSize) { // full -> write matches to file first
                             hasOverflow = true;
                             querySplits[i].start = lastMovedQueryIdx + 1;
-                            __sync_fetch_and_sub(& matchBuffer.startIndexOfReserve, matchCnt);
+                            __sync_fetch_and_sub(&matchBuffer.startIndexOfReserve, matchCnt);
                             break;
                         } else { // not full -> copy matches to the shared buffer
                             moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
@@ -1161,7 +1161,6 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *m
             int distance = 0;
             int diffPosCntOfCurrRange = 1;
             int dnaDist = 0;
-            cout << currentSpecies << endl;
             while ((i + 1 < end + 1) && currentSpecies == speciesTaxIdList[matchList[i + 1].targetId]) {
                 distance = matchList[i+1].position / 3 - matchList[i].position / 3; //20
                 dnaDist = matchList[i+1].position - matchList[i].position;
