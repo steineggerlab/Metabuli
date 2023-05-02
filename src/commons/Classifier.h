@@ -25,7 +25,7 @@
 #include "Match.h"
 
 
-//#define BufferSize 16'777'216 //16 * 1024 * 1024 // 16 M
+#define BufferSize 16'777'216 //16 * 1024 * 1024 // 16 M
 using namespace std;
 
 struct TaxonScore {
@@ -167,7 +167,7 @@ protected:
 
     virtual uint16_t getHammings(uint64_t kmer1, uint64_t kmer2);
 
-    void moveMatches(Match *dest, Match *src, size_t matchNum);
+    void moveMatches(Match *dest, Match *src, int& matchNum);
 
     // Analyzing k-mer matches
     void fromMatchToClassification(Match *matchList,

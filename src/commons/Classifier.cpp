@@ -79,8 +79,8 @@ Classifier::Classifier(LocalParameters & par) {
     spORssp.push_back(&this->speciesTaxIdList);
 
     //
-    localIndexBufferSize =  16 * 1024 * 1024;
-    localMatchBufferSize = 2 * 1024 * 1024;
+//    localIndexBufferSize =  16 * 1024 * 1024;
+//    localMatchBufferSize = 2 * 1024 * 1024;
 }
 
 Classifier::~Classifier() {
@@ -116,11 +116,12 @@ void Classifier::startClassify(const LocalParameters &par) {
     size_t maxNumOfKmer = 0;
     size_t matchPerKmer = 4;
     size_t c = (1 + matchPerKmer) * 16;
-    size_t ram_per_thread = (sizeof(TargetKmerInfo) + sizeof(uint16_t)) * localIndexBufferSize
-            + sizeof(Match) * localMatchBufferSize;
-    size_t ram_threads = ((size_t) par.ramUsage * (size_t) 1073741824) - ((size_t) ram_per_thread * (size_t) par.threads);
+    size_t ram_threads = ((size_t) par.ramUsage * (size_t) 1073741824) - ((size_t) 134217728 * (size_t) par.threads);
+//    size_t ram_per_thread = (sizeof(TargetKmerInfo) + sizeof(uint16_t)) * localIndexBufferSize
+//            + sizeof(Match) * localMatchBufferSize;
+//    size_t ram_threads = ((size_t) par.ramUsage * (size_t) 1073741824) - ((size_t) ram_per_thread * (size_t) par.threads);
                            // N GB - 128 MB * M threads
-    cout << "RAM per thread: " << ram_per_thread << endl;
+//    cout << "RAM per thread: " << ram_per_thread << endl;
     cout << "The rest RAM: " << ram_threads << endl;
     // Load query file
     cout << "Indexing query file ...";
@@ -521,7 +522,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str());
 
     cout << "Comparing qeury and reference metamers..." << endl;
-    SeqIterator seqIterator(par);
+//    SeqIterator seqIterator1(par);
     // Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
     for (size_t checkN = queryKmerCnt - 1; checkN > 0; checkN--) {
         if (queryKmerList[checkN].ADkmer != UINT64_MAX) {
@@ -599,15 +600,15 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     while (completedSplitCnt < threadNum) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(completedSplitCnt, splitCheckList, hasOverflow, \
-querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOfDiffIdx, targetInfoFileName, seqIterator)
+querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOfDiffIdx, targetInfoFileName)
         {
             // FILE
             FILE * diffIdxFp = fopen(targetDiffIdxFileName.c_str(), "rb");
             FILE * kmerInfoFp = fopen(targetInfoFileName.c_str(), "rb");
 
             // Target K-mer buffer
-            uint16_t * diffIdxBuffer = (uint16_t *) malloc(sizeof(uint16_t) * (localIndexBufferSize + 1)); // size = 32 Mb
-            TargetKmerInfo * kmerInfoBuffer = (TargetKmerInfo *) malloc(sizeof(TargetKmerInfo) * (localIndexBufferSize+1)); // 64 Mb
+            uint16_t * diffIdxBuffer = (uint16_t *) malloc(sizeof(uint16_t) * (BufferSize + 1)); // size = 32 Mb
+            TargetKmerInfo * kmerInfoBuffer = (TargetKmerInfo *) malloc(sizeof(TargetKmerInfo) * (BufferSize+1)); // 64 Mb
             size_t kmerInfoBufferIdx = 0;
             size_t diffIdxBufferIdx = 0;
 
@@ -622,9 +623,9 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
             uint64_t currentTargetKmer;
 
             //Match buffer for each thread
-//            int localBufferSize = 2'000'000; // 32 Mb
-            auto *matches = new Match[localMatchBufferSize]; // 16 * 2 * 1024 * 1024 = 32 Mb
-            size_t matchCnt = 0;
+            int localBufferSize = 2'000'000; // 32 Mb
+            auto *matches = new Match[localBufferSize]; // 16 * 2'000'000 = 32 Mb
+            int matchCnt = 0;
 
 //            // For debug
 //            SeqIterator seqIterator(par);
@@ -635,7 +636,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
             vector<uint16_t> selectedHammings;
             size_t posToWrite;
 
-            size_t currMatchNum;
+            int currMatchNum;
             size_t idx;
 #pragma omp for schedule(dynamic, 1)
             for (size_t i = 0; i < querySplits.size(); i++) {
@@ -649,13 +650,13 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
 
                 fseek(kmerInfoFp, 4 * (long)(kmerInfoBufferIdx), SEEK_SET);
-                loadBuffer(kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx, localIndexBufferSize);
+                loadBuffer(kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx, BufferSize);
                 fseek(diffIdxFp, 2 * (long) (diffIdxBufferIdx), SEEK_SET);
-                loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, localIndexBufferSize);
+                loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize);
 
                 if (i == 0) {
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
-                                                          diffIdxBufferIdx, diffIdxPos, localIndexBufferSize, diffIdxFp);
+                                                          diffIdxBufferIdx, diffIdxPos, BufferSize, diffIdxFp);
                 }
                 currentQuery = UINT64_MAX;
                 currentQueryAA = UINT64_MAX;
@@ -667,7 +668,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     if (currentQuery == queryKmerList[j].ADkmer) {
                         currMatchNum = selectedMatches.size();
                         // If local buffer is full, copy them to the shared buffer.
-                        if (matchCnt + currMatchNum > localMatchBufferSize) {
+                        if (matchCnt + currMatchNum > localBufferSize) {
                             // Check if the shared buffer is full.
                             posToWrite = matchBuffer.reserveMemory(matchCnt);
                             if (posToWrite + matchCnt >= matchBuffer.bufferSize) {
@@ -680,7 +681,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                                 lastMovedQueryIdx = j;
                             }
                         }
-                        for (size_t k = 0; k < currMatchNum; k++) {
+                        for (int k = 0; k < currMatchNum; k++) {
                             idx = selectedMatches[k];
                             matches[matchCnt] = {queryKmerList[j].info.sequenceID,
                                                  candidateKmerInfos[idx].sequenceID,
@@ -706,7 +707,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                         currMatchNum = selectedMatches.size();
 
                         // If local buffer is full, copy them to the shared buffer.
-                        if (matchCnt + currMatchNum > localMatchBufferSize) {
+                        if (matchCnt + currMatchNum > localBufferSize) {
                             // Check if the shared buffer is full.
                             posToWrite = matchBuffer.reserveMemory(matchCnt);
                             if (posToWrite + matchCnt >= matchBuffer.bufferSize) {
@@ -743,12 +744,12 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     // Skip target k-mers that are not matched in amino acid level
                     while (diffIdxPos != numOfDiffIdx
                         && (AminoAcidPart(currentQuery) > AminoAcidPart(currentTargetKmer))) {
-                        if (unlikely(localIndexBufferSize < diffIdxBufferIdx + 7)){
-                            loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, localIndexBufferSize, ((int)(localIndexBufferSize - diffIdxBufferIdx)) * -1 );
+                        if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
+                            loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
                         }
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
                                                               diffIdxBufferIdx, diffIdxPos,
-                                                              localIndexBufferSize, diffIdxFp);
+                                                              BufferSize, diffIdxFp);
                         kmerInfoBufferIdx ++;
                     }
 
@@ -776,15 +777,15 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
 //                            cout << (int) getHammingDistanceSum(currentQuery, currentTargetKmer) << endl;
 //                        }
                         candidateTargetKmers.push_back(currentTargetKmer);
-                        candidateKmerInfos.push_back(getKmerInfo(localIndexBufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
+                        candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
 
-                        if (unlikely(localIndexBufferSize < diffIdxBufferIdx + 7)){
+                        if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
                             loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx,
-                                       localIndexBufferSize, ((int)(localIndexBufferSize - diffIdxBufferIdx)) * -1 );
+                                       BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
                         }
 
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
-                                                              diffIdxBufferIdx, diffIdxPos, localIndexBufferSize, diffIdxFp);
+                                                              diffIdxBufferIdx, diffIdxPos, BufferSize, diffIdxFp);
                         kmerInfoBufferIdx ++;
                     }
 
@@ -793,7 +794,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
 
                     // If local buffer is full, copy them to the shared buffer.
                     currMatchNum = selectedMatches.size();
-                    if (matchCnt + currMatchNum > localMatchBufferSize) {
+                    if (matchCnt + currMatchNum > localBufferSize) {
                         // Check if the shared buffer is full.
                         posToWrite = matchBuffer.reserveMemory(matchCnt);
                         if (posToWrite + matchCnt >= matchBuffer.bufferSize) { // full -> write matches to file first
@@ -852,7 +853,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
     queryKmerCnt = 0;
 }
 
-void Classifier::moveMatches(Match *dest, Match *src, size_t matchNum) {
+void Classifier::moveMatches(Match *dest, Match *src, int &matchNum) {
     memcpy(dest, src, sizeof(Match) * matchNum);
     matchNum = 0;
 }
