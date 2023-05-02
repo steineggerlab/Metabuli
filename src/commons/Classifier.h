@@ -172,7 +172,7 @@ protected:
     void moveMatches(Match *dest, Match *src, int& matchNum);
 
     // Analyzing k-mer matches
-    void fromMatchToClassification(Match *matchList,
+    void fromMatchToClassification(const Match *matchList,
                                    size_t numOfMatches,
                                    vector<Query> & queryList,
                                    const LocalParameters &par);
@@ -180,7 +180,7 @@ protected:
     void chooseBestTaxon(uint32_t currentQuery,
                          size_t offset,
                          size_t end,
-                         Match *matchList,
+                         const Match *matchList,
                          vector<Query> & queryList,
                          const LocalParameters &par);
 
@@ -189,15 +189,15 @@ protected:
 
 
 
-    TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
+    TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end,
                                    size_t offset, int queryLength);
 
-    TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end, size_t offset,
+    TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
                                    int readLength1, int readLength2, const LocalParameters &par);
 
-    TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end, size_t offset,
+    TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
                                           int readLength1, int readLength2);
-    TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end, size_t offset,
+    TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
                                           int readLength1);
 
     TaxonScore scoreGenus(vector<Match> &filteredMatches,

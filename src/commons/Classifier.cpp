@@ -298,9 +298,15 @@ void Classifier::startClassify(const LocalParameters &par) {
         // Classify queries based on the matches
         time_t beforeAnalyze = time(nullptr);
 
+#ifdef OPENMP
+        omp_set_num_threads(1);
+#endif
         cout << "Analyzing matches ..." << endl;
         fromMatchToClassification(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
 
+#ifdef OPENMP
+        omp_set_num_threads(par.threads);
+#endif
         cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
         processedSeqCnt += queryReadSplit[splitIdx].second - queryReadSplit[splitIdx].first;
         cout << "The number of processed sequences: " << processedSeqCnt << " (" << (double) processedSeqCnt / (double) numOfSeq << ")" << endl;
@@ -896,7 +902,7 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
 }
 
 // It analyses the result of linear search.
-void Classifier::fromMatchToClassification(Match *matchList,
+void Classifier::fromMatchToClassification(const Match *matchList,
                                            size_t numOfMatches,
                                            vector<Query> & queryList,
                                            const LocalParameters &par) {
@@ -949,7 +955,7 @@ void Classifier::fromMatchToClassification(Match *matchList,
 void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                  size_t offset,
                                  size_t end,
-                                 Match *matchList,
+                                 const Match *matchList,
                                  vector<Query> & queryList,
                                  const LocalParameters &par) {
     TaxID selectedTaxon;
@@ -1136,7 +1142,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     }
 }
 
-TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *matchList, size_t end,
+TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, const Match *matchList, size_t end,
                                            size_t offset, int readLength1, int readLength2, const LocalParameters & par) {
     TaxID currentGenus;
     TaxID currentSpecies;
@@ -1269,7 +1275,7 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *m
     //4. no genus
 }
 
-TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, Match *matchList, size_t end,
+TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, const Match *matchList, size_t end,
                                                   size_t offset, int readLength1, int readLength2) {
     TaxID currentGenus;
     TaxID currentSpecies;
@@ -1376,7 +1382,7 @@ TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, M
     //4. no genus
 }
 
-TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *matchList, size_t end,
+TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, const Match *matchList, size_t end,
                                            size_t offset, int queryLength) {
     TaxID currentGenus;
     TaxID currentSpecies;
@@ -1508,7 +1514,7 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *m
     //4. no genus
 }
 
-TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, Match *matchList, size_t end,
+TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, const Match *matchList, size_t end,
                                                   size_t offset, int readLength) {
     TaxID currentGenus;
     TaxID currentSpecies;
