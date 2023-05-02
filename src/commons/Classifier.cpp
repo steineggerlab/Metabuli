@@ -225,17 +225,10 @@ void Classifier::startClassify(const LocalParameters &par) {
         // Allocate memory for query list
         queryList.clear();
         queryList.resize(queryReadSplit[splitIdx].second - queryReadSplit[splitIdx].first + 1);
-        process_mem_usage(vm, rss);
-//        cout << "Query list memory usage: " << endl;
-//        cout << "VM: " << vm << "; RSS: " << rss << endl;
 
         // Allocate memory for query k-mer list and match list
         kmerBuffer.reallocateMemory(splitKmerCnt[splitIdx]);
         matchBuffer.reallocateMemory(splitKmerCnt[splitIdx] * matchPerKmer);
-
-        process_mem_usage(vm, rss);
-//        cout << "Kmer and match buffer allocated: " << endl;
-//        cout << "VM: " << vm << "; RSS: " << rss << endl;
 
         // Initialize query k-mer buffer and match buffer
         kmerBuffer.startIndexOfReserve = 0;
@@ -244,6 +237,9 @@ void Classifier::startClassify(const LocalParameters &par) {
         // Extract query k-mer
         time_t beforeKmerExtraction = time(nullptr);
         cout << "Extracting query metamers ... " << endl;
+#ifdef OPENMP
+        omp_set_num_threads(16);
+#endif
         if (par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
             fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, queryList, queryReadSplit[splitIdx], par);
         } else if (par.seqMode == 2) {
@@ -251,9 +247,9 @@ void Classifier::startClassify(const LocalParameters &par) {
         }
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
 
-        process_mem_usage(vm, rss);
-//        cout << "Kmers extracted: " << endl;
-//        cout << "VM: " << vm << "; RSS: " << rss << endl;
+#ifdef OPENMP
+        omp_set_num_threads(par.threads);
+#endif
 
         cout << "Time spent for metamer extraction: " << double(time(nullptr) - beforeKmerExtraction) << endl;
 
@@ -264,19 +260,8 @@ void Classifier::startClassify(const LocalParameters &par) {
         cout << "Time spent for sorting query metamer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
 
 
-#ifdef OPENMP
-            omp_set_num_threads(32);
-#endif
         // Search matches between query and target k-mers
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, matchBuffer, par);
-
-#ifdef OPENMP
-        omp_set_num_threads(par.threads);
-#endif
-
-//        process_mem_usage(vm, rss);
-//        cout << "Matches searched: " << endl;
-//        cout << "VM: " << vm << "; RSS: " << rss << endl;
 
         // Sort matches
         time_t beforeSortMatches = time(nullptr);
@@ -294,7 +279,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 
         // Classify queries based on the matches
         time_t beforeAnalyze = time(nullptr);
-        
+
         cout << "Analyzing matches ..." << endl;
         fromMatchToClassification(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
 
