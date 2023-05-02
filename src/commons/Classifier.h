@@ -282,7 +282,7 @@ public:
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiffIdxList, size_t &diffIdxPos);
 
     static uint64_t getNextTargetKmer(uint64_t lookingTarget, uint16_t *targetDiffIdxList, size_t & diffIdxPos,
-                                      size_t & totalPos, size_t bufferSize, FILE * diffIdxFp);
+                                      size_t & totalPos);// size_t bufferSize, FILE * diffIdxFp);
 
     static TargetKmerInfo getKmerInfo(size_t bufferSize, FILE * kmerInfoFp, TargetKmerInfo * infoBuffer,
                               size_t & infoBufferIdx);
@@ -371,8 +371,8 @@ Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiff
 }
 
 inline uint64_t
-Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, size_t & diffBufferIdx, size_t & totalPos,
-                              size_t bufferSize, FILE * diffIdxFp) {
+Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, size_t & diffBufferIdx, size_t & totalPos) {
+//                              size_t bufferSize, FILE * diffIdxFp) {
     uint16_t fragment;
     uint16_t check = 32768; // 2^15
     uint64_t diffIn64bit = 0;

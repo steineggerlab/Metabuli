@@ -543,7 +543,6 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
         }
     } else { //More than two threads
         // Devide query k-mers into blocks
-
         size_t splitWidth = queryKmerCnt / (threadNum - 1);
         querySplits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
         for (int i = 1; i < threadNum; i++) {
@@ -575,8 +574,6 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
         }
     }
 
-    cout << "Number of query splits: " << querySplits.size() << endl;
-    
     bool *splitCheckList = (bool *) malloc(sizeof(bool) * threadNum);
     fill_n(splitCheckList, threadNum, false);
     int completedSplitCnt = 0;
@@ -601,6 +598,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
             //query variables
             uint64_t currentQuery = UINT64_MAX;
             uint64_t currentQueryAA = UINT64_MAX;
+            QueryKmerInfo currentQueryInfo;
 
             //target variables
             size_t diffIdxPos = 0;
@@ -642,7 +640,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
 
                 if (i == 0) {
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
-                                                          diffIdxBufferIdx, diffIdxPos, BufferSize, diffIdxFp);
+                                                          diffIdxBufferIdx, diffIdxPos);
                 }
                 currentQuery = UINT64_MAX;
                 currentQueryAA = UINT64_MAX;
@@ -651,7 +649,8 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                 for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
                     querySplits[i].start++;
                     // Reuse the comparison data if queries are exactly identical
-                    if (currentQuery == queryKmerList[j].ADkmer) {
+                    if (currentQuery == queryKmerList[j].ADkmer
+                        && (currentQueryInfo.frame/3 == queryKmerList[j].info.frame/3)) {
                         currMatchNum = selectedMatches.size();
                         // If local buffer is full, copy them to the shared buffer.
                         if (matchCnt + currMatchNum > localBufferSize) {
@@ -678,8 +677,8 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                             matchCnt++;
                         }
 
-                        if (currMatchNum != 0) {
-                        }
+//                        if (currMatchNum != 0) {
+//                        }
                         continue;
                     }
                     selectedMatches.clear();
@@ -706,7 +705,6 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                                 lastMovedQueryIdx = j;
                             }
                         }
-
                         for (int k = 0; k < currMatchNum; k++) {
                             idx = selectedMatches[k];
                             matches[matchCnt] = {queryKmerList[j].info.sequenceID,
@@ -715,7 +713,6 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                                                  selectedHammings[k],
                                                  selectedHammingSum[k],
                                                  (bool) candidateKmerInfos[idx].redundancy};
-
                             matchCnt++;
                         }
                         continue;
@@ -726,26 +723,25 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     // Get next query, and start to find
                     currentQuery = queryKmerList[j].ADkmer;
                     currentQueryAA = AminoAcidPart(currentQuery);
+                    currentQueryInfo = queryKmerList[j].info;
 
                     // Skip target k-mers that are not matched in amino acid level
                     while (diffIdxPos != numOfDiffIdx
-                        && (AminoAcidPart(currentQuery) > AminoAcidPart(currentTargetKmer))) {
+                        && (currentQueryAA > AminoAcidPart(currentTargetKmer))) {
                         if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
                             loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
                         }
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
-                                                              diffIdxBufferIdx, diffIdxPos,
-                                                              BufferSize, diffIdxFp);
+                                                              diffIdxBufferIdx, diffIdxPos);
                         kmerInfoBufferIdx ++;
                     }
 
-                    if (AminoAcidPart(currentQuery) != AminoAcidPart(currentTargetKmer)) // Move to next query k-mer if there isn't any match.
+                    if (currentQueryAA != AminoAcidPart(currentTargetKmer)) // Move to next query k-mer if there isn't any match.
                         continue;
-                    else
 
                     // Load target k-mers that are matched in amino acid level
                     while (diffIdxPos != numOfDiffIdx &&
-                        AminoAcidPart(currentQuery) == AminoAcidPart(currentTargetKmer)) {
+                    currentQueryAA == AminoAcidPart(currentTargetKmer)) {
                         // Print the target k-mer
 //                        if (par.printLog == 1) {
 //                            cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t"
@@ -772,7 +768,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                         }
 
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
-                                                              diffIdxBufferIdx, diffIdxPos, BufferSize, diffIdxFp);
+                                                              diffIdxBufferIdx, diffIdxPos);
                         kmerInfoBufferIdx ++;
                     }
 
