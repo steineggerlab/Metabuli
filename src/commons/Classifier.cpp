@@ -969,7 +969,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         } else {
             genusScore = getBestGenusMatches(genusMatches, matchList, end, offset,
                                               queryList[currentQuery].queryLength,
-                                              queryList[currentQuery].queryLength2);
+                                              queryList[currentQuery].queryLength2, par);
         }
     } else {
         if (par.spaceMask != "11111111") {
@@ -1131,7 +1131,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
 }
 
 TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *matchList, size_t end,
-                                           size_t offset, int readLength1, int readLength2) {
+                                           size_t offset, int readLength1, int readLength2, const LocalParameters & par) {
     TaxID currentGenus;
     TaxID currentSpecies;
 
@@ -1162,7 +1162,7 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *m
                     tempMatchContainer.push_back(matchList[i]);
                 } else if (distance == 1 &&
                             dnaDist <= 3 &&
-                           (isConsecutive(matchList[i], matchList[i+1]) || dnaDist !=3)){ // Next position
+                           (isConsecutive(matchList[i], matchList[i+1], par) || dnaDist !=3)){ // Next position
                     tempMatchContainer.push_back(matchList[i]);
                     diffPosCntOfCurrRange ++;
                     range += distance;
@@ -2140,14 +2140,30 @@ void Classifier::splitFASTA(vector<SequenceBlock> & seqSegments, const string & 
 bool Classifier::isConsecutive(const Match & match1, const Match & match2) {
     uint16_t hamming1 = match1.rightEndHamming;
     uint16_t hamming2 = match2.rightEndHamming;
-    print_binary16(16, hamming1); cout << endl;
-    print_binary16(16, hamming2); cout << endl;
     // set most significant two bits to 0
     hamming1 &= 0x3FFF;
-    print_binary16(16, hamming1); cout << endl;
     // move bits to right by 2
     hamming2 >>= 2;
-    print_binary16(16, hamming2); cout << endl;
+
+    return hamming1 == hamming2;
+}
+
+bool Classifier::isConsecutive(const Match & match1, const Match & match2, const LocalParameters & par) {
+    uint16_t hamming1 = match1.rightEndHamming;
+    uint16_t hamming2 = match2.rightEndHamming;
+    if (par.printLog) {
+        print_binary16(16, hamming1); cout << endl;
+        print_binary16(16, hamming2); cout << endl;
+    }
+
+    // set most significant two bits to 0
+    hamming1 &= 0x3FFF;
+    // move bits to right by 2
+    hamming2 >>= 2;
+    if (par.printLog) {
+        print_binary16(16, hamming1); cout << endl;
+        print_binary16(16, hamming2); cout << endl;
+    }
 
     return hamming1 == hamming2;
 }

@@ -183,6 +183,7 @@ protected:
                          const LocalParameters &par);
 
     bool isConsecutive(const Match & match1, const Match & match2);
+    bool isConsecutive(const Match & match1, const Match & match2, const LocalParameters &par);
 
 
 
@@ -190,7 +191,7 @@ protected:
                                    size_t offset, int queryLength);
 
     TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end, size_t offset,
-                                   int readLength1, int readLength2);
+                                   int readLength1, int readLength2, const LocalParameters &par);
 
     TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end, size_t offset,
                                           int readLength1, int readLength2);
