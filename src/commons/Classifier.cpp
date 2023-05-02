@@ -2135,3 +2135,19 @@ void Classifier::splitFASTA(vector<SequenceBlock> & seqSegments, const string & 
     }
     seqSegments.emplace_back(start, end, end - start + 1, seqLength);
 }
+
+
+bool Classifier::isConsecutive(const Match & match1, const Match & match2) {
+    uint16_t hamming1 = match1.rightEndHamming;
+    uint16_t hamming2 = match2.rightEndHamming;
+    print_binary16(16, hamming1); cout << endl;
+    print_binary16(16, hamming2); cout << endl;
+    // set most significant two bits to 0
+    hamming1 &= 0x3FFF;
+    print_binary16(16, hamming1); cout << endl;
+    // move bits to right by 2
+    hamming2 >>= 2;
+    print_binary16(16, hamming2); cout << endl;
+
+    return hamming1 == hamming2;
+}

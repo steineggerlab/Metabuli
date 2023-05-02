@@ -182,6 +182,8 @@ protected:
                          vector<Query> & queryList,
                          const LocalParameters &par);
 
+    bool isConsecutive(const Match & match1, const Match & match2);
+
 
 
     TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, Match *matchList, size_t end,
@@ -382,5 +384,6 @@ TargetKmerInfo Classifier::getKmerInfo(size_t bufferSize, FILE * kmerInfoFp, Tar
     }
     return infoBuffer[infoBufferIdx];
 }
+
 
 #endif //ADKMER4_SEARCHER_H
