@@ -265,10 +265,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 
 
 #ifdef OPENMP
-        omp_set_num_threads(par.threads);
-        if(par.printLog){
-            omp_set_num_threads(1);
-        }
+            omp_set_num_threads(32);
 #endif
         // Search matches between query and target k-mers
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, matchBuffer, par);
@@ -297,16 +294,11 @@ void Classifier::startClassify(const LocalParameters &par) {
 
         // Classify queries based on the matches
         time_t beforeAnalyze = time(nullptr);
-
-#ifdef OPENMP
-        omp_set_num_threads(1);
-#endif
+        
         cout << "Analyzing matches ..." << endl;
         fromMatchToClassification(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
 
-#ifdef OPENMP
-        omp_set_num_threads(par.threads);
-#endif
+
         cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
         processedSeqCnt += queryReadSplit[splitIdx].second - queryReadSplit[splitIdx].first;
         cout << "The number of processed sequences: " << processedSeqCnt << " (" << (double) processedSeqCnt / (double) numOfSeq << ")" << endl;
@@ -922,7 +914,7 @@ void Classifier::fromMatchToClassification(const Match *matchList,
         matchBlocks[blockIdx].end = matchIdx - 1;
         blockIdx++;
     }
-    
+
     // Process each block
 #pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqNum, queryList, blockIdx, par)
     {
