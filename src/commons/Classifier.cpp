@@ -703,7 +703,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     // Reuse the candidate target k-mers to compare in DNA level if queries are the same at amino acid level but not at DNA level
                     if (currentQueryAA == AminoAcidPart(queryKmerList[j].ADkmer)) {
                         compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, selectedMatches,
-                                   selectedHammingSum, selectedHammings);
+                                   selectedHammingSum, selectedHammings,queryKmerList[j].info.frame);
                         currMatchNum = selectedMatches.size();
 
                         // If local buffer is full, copy them to the shared buffer.
@@ -791,7 +791,8 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     }
 
                     // Compare the current query and the loaded target k-mers and select
-                    compareDna(currentQuery, candidateTargetKmers, selectedMatches, selectedHammingSum, selectedHammings);
+                    compareDna(currentQuery, candidateTargetKmers, selectedMatches, selectedHammingSum, selectedHammings,
+                               queryKmerList[j].info.frame);
 
                     // If local buffer is full, copy them to the shared buffer.
                     currMatchNum = selectedMatches.size();
@@ -863,7 +864,7 @@ void Classifier::moveMatches(Match *dest, Match *src, int &matchNum) {
 // If a query has matches, the matches with the smallest hamming distance will be selected
 void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompare,
                             vector<size_t> &selectedMatches, vector<uint8_t> &selectedHammingSum,
-                            vector<uint16_t> &selectedHammings) {
+                            vector<uint16_t> &selectedHammings, uint8_t frame) {
 
     size_t size = targetKmersToCompare.size();
     uint8_t *hammingSums = new uint8_t[size + 1];
@@ -884,7 +885,11 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
         if (hammingSums[h] <= minHammingSum + hammingMargin) {
             selectedMatches.push_back(h);
             selectedHammingSum.push_back(hammingSums[h]);
-            selectedHammings.push_back(getHammings(query, targetKmersToCompare[h]));
+            if (frame < 3) {
+                selectedHammings.push_back(getHammings(query, targetKmersToCompare[h]));
+            } else {
+                selectedHammings.push_back(getHammings_reverse(query, targetKmersToCompare[h]));
+            }
         }
     }
     delete[] hammingSums;
