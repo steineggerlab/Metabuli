@@ -344,7 +344,7 @@ inline uint16_t Classifier::getHammings(uint64_t kmer1, uint64_t kmer2) {  //ham
 inline uint16_t Classifier::getHammings_reverse(uint64_t kmer1, uint64_t kmer2) {  //hammings 87654321
     uint16_t hammings = 0;
     for (int i = 0; i < 8; i++) {
-        hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U * (8-i);
+        hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U * (7-i);
         kmer1 >>= bitsForCodon;
         kmer2 >>= bitsForCodon;
     }

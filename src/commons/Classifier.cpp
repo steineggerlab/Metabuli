@@ -1171,6 +1171,7 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, Match *m
                     if (dnaDist == 3){
                         isConsecutive(matchList[i], matchList[i+1], par);
                     }
+                    tempMatchContainer.push_back(matchList[i]);
                     diffPosCntOfCurrRange ++;
                     range += distance;
                     lastIn = true;
