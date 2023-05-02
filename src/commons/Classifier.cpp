@@ -237,9 +237,7 @@ void Classifier::startClassify(const LocalParameters &par) {
         // Extract query k-mer
         time_t beforeKmerExtraction = time(nullptr);
         cout << "Extracting query metamers ... " << endl;
-#ifdef OPENMP
-        omp_set_num_threads(16);
-#endif
+
         if (par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
             fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, queryList, queryReadSplit[splitIdx], par);
         } else if (par.seqMode == 2) {
@@ -247,9 +245,7 @@ void Classifier::startClassify(const LocalParameters &par) {
         }
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
 
-#ifdef OPENMP
-        omp_set_num_threads(par.threads);
-#endif
+
 
         cout << "Time spent for metamer extraction: " << double(time(nullptr) - beforeKmerExtraction) << endl;
 
@@ -261,8 +257,14 @@ void Classifier::startClassify(const LocalParameters &par) {
 
 
         // Search matches between query and target k-mers
+#ifdef OPENMP
+        omp_set_num_threads(32);
+#endif
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, matchBuffer, par);
 
+#ifdef OPENMP
+        omp_set_num_threads(par.threads);
+#endif
         // Sort matches
         time_t beforeSortMatches = time(nullptr);
         totalMatchCnt += matchBuffer.startIndexOfReserve;
@@ -313,9 +315,6 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                                              vector<Query> & queryList,
                                              const pair<size_t, size_t> & currentSplit,
                                              const LocalParameters &par) {
-#ifdef OPENMP
-    omp_set_num_threads(par.threads);
-#endif
 
 #pragma omp parallel default(none), shared(par, kmerBuffer, seqFile, seqs, cout, queryList, currentSplit)
     {
@@ -493,7 +492,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
 
 void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKmerCnt,
                                       Buffer<Match> &matchBuffer, const LocalParameters &par) {
-    int threadNum = par.threads;
+    int threadNum = 32;
     string targetDiffIdxFileName = dbDir + "/diffIdx";
     string targetInfoFileName = dbDir + "/info";
     string diffIdxSplitFileName = dbDir + "/split";;
