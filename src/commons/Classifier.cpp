@@ -79,7 +79,7 @@ Classifier::Classifier(LocalParameters & par) {
     spORssp.push_back(&this->speciesTaxIdList);
 
     //
-    localIndexBufferSize =  8 * 1024 * 1024;
+    localIndexBufferSize =  16 * 1024 * 1024;
     localMatchBufferSize = 2 * 1024 * 1024;
 }
 
@@ -120,7 +120,8 @@ void Classifier::startClassify(const LocalParameters &par) {
             + sizeof(Match) * localMatchBufferSize;
     size_t ram_threads = ((size_t) par.ramUsage * (size_t) 1073741824) - ((size_t) ram_per_thread * (size_t) par.threads);
                            // N GB - 128 MB * M threads
-
+    cout << "RAM per thread: " << ram_per_thread << endl;
+    cout << "The rest RAM: " << ram_threads << endl;
     // Load query file
     cout << "Indexing query file ...";
     size_t totalReadLength = 0;
@@ -605,7 +606,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
 
             //Match buffer for each thread
 //            int localBufferSize = 2'000'000; // 32 Mb
-            auto *matches = new Match[localMatchBufferSize]; // 16 * 2'000'000 = 32 Mb
+            auto *matches = new Match[localMatchBufferSize]; // 16 * 2 * 1024 * 1024 = 32 Mb
             size_t matchCnt = 0;
 
 //            // For debug
@@ -662,7 +663,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                                 lastMovedQueryIdx = j;
                             }
                         }
-                        for (int k = 0; k < currMatchNum; k++) {
+                        for (size_t k = 0; k < currMatchNum; k++) {
                             idx = selectedMatches[k];
                             matches[matchCnt] = {queryKmerList[j].info.sequenceID,
                                                  candidateKmerInfos[idx].sequenceID,
