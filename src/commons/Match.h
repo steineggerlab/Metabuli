@@ -5,15 +5,16 @@
 
 struct Match { // 16 byte
     Match(){}
-    Match(uint32_t queryId, int targetId, int position, uint16_t eachHamming, uint8_t hamming, bool redundancy)
+    Match(uint32_t queryId, int targetId, int position, uint16_t eachHamming, uint8_t hamming, bool redundancy, int splitIdx = 0)
             : queryId(queryId), targetId(targetId), position(position), rightEndHamming(eachHamming),
-              hamming(hamming), redundancy(redundancy) { }
+              hamming(hamming), redundancy(redundancy), splitIdx(splitIdx) { }
     uint32_t queryId; // 4
     int targetId; // 4
     int position; // 4
     uint16_t rightEndHamming; // 2
     uint8_t hamming; // 1
     bool redundancy; // 1
+    int splitIdx; // 4
 };
 
 #endif //ADCLASSIFIER2_MATCH_H
