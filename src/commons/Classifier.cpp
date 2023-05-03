@@ -1185,7 +1185,7 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
     size_t end = curFrameMatches.size();
     vector<pair<const Match *, size_t>> curPosMatches; // <match, index>
     vector<pair<const Match *, size_t>> nextPosMatches;
-    unordered_map<size_t, vector<size_t>> linkedMatches; // <index, linked indexes>
+    map<size_t, vector<size_t>> linkedMatches; // <index, linked indexes>
 
     while ( i < end && curFrameMatches[i]->qInfo.position == curFrameMatches[0]->qInfo.position) {
         curPosMatches.emplace_back(curFrameMatches[i], i);
@@ -1220,7 +1220,7 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
 //    }
 
     // Iterate linkedMatches to get filteredMatches
-    int MIN_DEPTH = 4;
+    int MIN_DEPTH = 3;
     unordered_set<size_t> used;
     vector<size_t> filteredMatchIdx;
     for (const auto& entry : linkedMatches) {
@@ -1243,7 +1243,7 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
 }
 
 
-size_t Classifier::DFS(size_t curMatchIdx, const unordered_map<size_t, vector<size_t>>& linkedMatches,
+size_t Classifier::DFS(size_t curMatchIdx, const map<size_t, vector<size_t>>& linkedMatches,
                      vector<size_t>& filteredMatches, size_t depth, const size_t MIN_DEPTH, unordered_set<size_t>& used) {
     depth++;
     size_t maxDepth = 0;
