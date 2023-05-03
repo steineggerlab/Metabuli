@@ -184,7 +184,9 @@ protected:
                          vector<Query> & queryList,
                          const LocalParameters &par);
 
-    bool isConsecutive(const Match & match1, const Match & match2);
+    void remainConsecutiveMatches(vector<const Match *> & curFrameMatches, vector<Match> & filteredMatches);
+
+    bool isConsecutive(const Match * match1, const Match * match2);
     bool isConsecutive(const Match & match1, const Match & match2, const LocalParameters &par);
 
 
@@ -297,19 +299,22 @@ public:
 struct sortMatch {
     sortMatch(const Classifier * classifier) : classifier(classifier) {}
     bool operator() (const Match & a, const Match & b) const {
-        if (a.queryId < b.queryId) return true;
-        else if (a.queryId == b.queryId) {
+        if (a.qInfo.queryId < b.qInfo.queryId) return true;
+        else if (a.qInfo.queryId == b.qInfo.queryId) {
             if (classifier->genusTaxIdList[a.targetId] < classifier->genusTaxIdList[b.targetId]) return true;
             else if (classifier->genusTaxIdList[a.targetId] == classifier->genusTaxIdList[b.targetId]) {
                 if (classifier->speciesTaxIdList[a.targetId] < classifier->speciesTaxIdList[b.targetId]) return true;
                 else if (classifier->speciesTaxIdList[a.targetId] == classifier->speciesTaxIdList[b.targetId]) {
-                    if (a.position < b.position) return true;
-                    else if (a.position == b.position) {
-                        if (a.hamming < b.hamming) return true;
-                        else if (a.hamming == b.hamming){
-                            if (a.rightEndHamming < b.rightEndHamming) return true;
-                            else if (a.rightEndHamming == b.rightEndHamming) {
-                                return classifier->taxIdList[a.targetId] < classifier->taxIdList[b.targetId];
+                    if (a.qInfo.frame < b.qInfo.frame) return true;
+                    else if (a.qInfo.frame == b.qInfo.frame) {
+                        if (a.qInfo.position < b.qInfo.position) return true;
+                        else if (a.qInfo.position == b.qInfo.position) {
+                            if (a.hamming < b.hamming) return true;
+                            else if (a.hamming == b.hamming) {
+                                if (a.rightEndHamming < b.rightEndHamming) return true;
+                                else if (a.rightEndHamming == b.rightEndHamming) {
+                                    return classifier->taxIdList[a.targetId] < classifier->taxIdList[b.targetId];
+                                }
                             }
                         }
                     }

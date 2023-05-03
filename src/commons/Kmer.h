@@ -6,16 +6,16 @@
 typedef struct QueryKmerInfo {
     QueryKmerInfo(int seqID = 0, uint32_t pos = 0, uint8_t frame = 0 ) : sequenceID(seqID), pos(pos), frame(frame) {}
     uint32_t sequenceID; // 4 byte
-    uint16_t pos; // 2 byte, 0~65535
+    uint32_t pos; // 4 byte, 0~65535
     uint8_t frame; // 0, 1, 2 are forward, and 3, 4, 5 are reverse 1 byte
-} QueryKmerInfo;
+} QueryKmerInfo; // 9 byte -> 12 byte
 
 typedef struct QueryKmer {
     QueryKmer(uint64_t ADkmer, int seqID, uint32_t pos, uint32_t isReverse) : ADkmer(ADkmer), info(seqID, pos, isReverse) {}
     QueryKmer():ADkmer(0), info(0,0,0){}
     uint64_t ADkmer; // 8 byte
-    QueryKmerInfo info; // 7 byte
-} QueryKmer; // 15 -> 16 byte
+    QueryKmerInfo info; // 12 byte
+} QueryKmer; // 20 byte -> 24 byte
 
 
 struct TargetKmerInfo{
