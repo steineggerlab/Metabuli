@@ -440,49 +440,6 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                 kseq_destroy(seq2);
             }
         }
-//        for (size_t i = currentSplit.first; i < currentSplit.second; i++) {
-//            size_t queryIdx = i - currentSplit.first;
-//
-//            // Read 1
-//            fseek(query1, (long) seqs[i].start, SEEK_SET);
-//            loadBuffer(query1, readBuffer1, readBufferIdx1, seqs[i].length);
-//            kseq_buffer_t buffer(readBuffer1, seqs[i].length);
-//            kseq_t *seq = kseq_init(&buffer);
-//            kseq_read(seq);
-//            auto kmerCnt = getQueryKmerNumber<size_t>(seq->seq.l);
-//
-//            // Read 2
-//            fseek(query2, (long) seqs2[i].start, SEEK_SET);
-//            loadBuffer(query2, readBuffer2, readBufferIdx2, seqs2[i].length);
-//            kseq_buffer_t buffer2(readBuffer2, seqs2[i].length);
-//            kseq_t *seq2 = kseq_init(&buffer2);
-//            kseq_read(seq2);
-//            auto kmerCnt2 = getQueryKmerNumber<size_t>(seq2->seq.l);
-//
-//
-//
-//            posToWrite = kmerBuffer.reserveMemory(kmerCnt + kmerCnt2);
-//
-//            // Read 1
-//            seqIterator.sixFrameTranslation(seq->seq.s);
-//            seqIterator.fillQueryKmerBuffer(seq->seq.s, (int) seq->seq.l, kmerBuffer, posToWrite,
-//                                            (int) queryIdx);
-//            queryList[queryIdx].queryLength = getMaxCoveredLength((int) seq->seq.l);
-//
-//            // Read 2
-//            seqIterator2.sixFrameTranslation(seq2->seq.s);
-//            seqIterator2.fillQueryKmerBuffer(seq2->seq.s, (int) seq2->seq.l, kmerBuffer, posToWrite,
-//                                             (int) queryIdx);
-//
-//            // Query Info
-//            queryList[queryIdx].queryLength2 = getMaxCoveredLength((int) seq2->seq.l);
-//            queryList[queryIdx].queryId = (int) queryIdx;
-//            queryList[queryIdx].name = string(seq->name.s);
-//            queryList[queryIdx].kmerCnt = (int) (kmerCnt + kmerCnt2);
-//
-//            kseq_destroy(seq);
-//            kseq_destroy(seq2);
-//        }
         free(readBuffer1);
         free(readBuffer2);
         fclose(query1);
@@ -527,6 +484,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     // Each split has start and end points of query list + proper offset point of target k-mer list
     vector<QueryKmerSplit> querySplits;
     uint64_t queryAA;
+    vector<int> targetSplitIdxs;
     if (threadNum == 1) { //Single thread
         querySplits.emplace_back(0, queryKmerCnt - 1, queryKmerCnt, diffIdxSplits.data[0]);
     } else if (threadNum == 2) { //Two threads
@@ -558,6 +516,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
                         querySplits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
                                                  diffIdxSplits.data[j]);
                     }
+                    targetSplitIdxs.emplace_back(j);
                     needLastTargetBlock = false;
                     break;
                 }
@@ -566,9 +525,11 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
                 if (i != threadNum - 1) { // If it is not the last split
                     querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth,
                                              diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
+                    targetSplitIdxs.emplace_back(numOfDiffIdxSplits_use - 2);
                 } else {
                     querySplits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
                                              diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
+                    targetSplitIdxs.emplace_back(numOfDiffIdxSplits_use - 2);
                 }
             }
         }
@@ -679,7 +640,8 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                                                  queryKmerList[j].info.pos,
                                                  selectedHammings[k],
                                                  selectedHammingSum[k],
-                                                 (bool) candidateKmerInfos[idx].redundancy, (int)i};
+                                                 (bool) candidateKmerInfos[idx].redundancy, (int)i,
+                                                 targetSplitIdxs[i]};
                             matchCnt++;
                         }
                         continue;
@@ -716,7 +678,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                                                  selectedHammings[k],
                                                  selectedHammingSum[k],
                                                  (bool) candidateKmerInfos[idx].redundancy,
-                                                 (int)i};
+                                                 (int)i, targetSplitIdxs[i]};
                             matchCnt++;
                         }
                         continue;
@@ -803,7 +765,8 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                                              queryKmerList[j].info.pos,
                                              selectedHammings[k],
                                              selectedHammingSum[k],
-                                             (bool) candidateKmerInfos[idx].redundancy, (int)i};
+                                             (bool) candidateKmerInfos[idx].redundancy, (int)i,
+                                             targetSplitIdxs[i]};
                         matchCnt++;
                     }
                 } // End of one split
