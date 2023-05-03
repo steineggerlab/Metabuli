@@ -550,7 +550,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
             bool needLastTargetBlock = true;
             for (size_t j = 0; j < numOfDiffIdxSplits_use; j++) {
                 if (queryAA <= AminoAcidPart(diffIdxSplits.data[j].ADkmer)) {
-                    j = j - (j != 0);
+                    j = j - (j != 0) - 1;
                     if (i != threadNum - 1) {
                         querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth,
                                                  diffIdxSplits.data[j]);
@@ -565,10 +565,10 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
             if (needLastTargetBlock) {
                 if (i != threadNum - 1) {
                     querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth,
-                                             diffIdxSplits.data[numOfDiffIdxSplits_use - 1]);
+                                             diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
                 } else {
                     querySplits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
-                                             diffIdxSplits.data[numOfDiffIdxSplits_use - 1]);
+                                             diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
                 }
             }
         }
