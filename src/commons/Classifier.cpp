@@ -480,6 +480,10 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
             numOfDiffIdxSplits_use--;
         }
     }
+    for (size_t i = 0; i < numOfDiffIdxSplits_use; i++) {
+        cout << "DiffIdxSplit " << i << ": " << diffIdxSplits.data[i].ADkmer << " " << diffIdxSplits.data[i].diffIdxOffset
+             << " " << diffIdxSplits.data[i].infoIdxOffset << endl;
+    }
 
     // Divide query k-mer list into blocks for multi threading.
     // Each split has start and end points of query list + proper offset point of target k-mer list
