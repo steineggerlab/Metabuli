@@ -1236,6 +1236,7 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
     for (auto & idx : filteredMatchIdx) {
         cout << idx << " ";
     }
+    cout << endl;
     for (auto & idx : filteredMatchIdx) {
         filteredMatches.push_back(*curFrameMatches[idx]);
     }
