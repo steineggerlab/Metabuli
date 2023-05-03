@@ -1210,14 +1210,14 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
         nextPosMatches.clear();
     }
     // Print linkedMatches
-    cout << "linkedMatches: " << endl;
-    for (const auto& entry : linkedMatches) {
-        cout << entry.first << ": ";
-        for (auto & idx : entry.second) {
-            cout << idx << " ";
-        }
-        cout << endl;
-    }
+//    cout << "linkedMatches: " << endl;
+//    for (const auto& entry : linkedMatches) {
+//        cout << entry.first << ": ";
+//        for (auto & idx : entry.second) {
+//            cout << idx << " ";
+//        }
+//        cout << endl;
+//    }
 
     // Iterate linkedMatches to get filteredMatches
     int MIN_DEPTH = 4;
@@ -1231,12 +1231,12 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
         }
     }
 
-    // Print filteredMatchIdx
-    cout << "filteredMatchIdx: ";
-    for (auto & idx : filteredMatchIdx) {
-        cout << idx << " ";
-    }
-    cout << endl;
+//    // Print filteredMatchIdx
+//    cout << "filteredMatchIdx: ";
+//    for (auto & idx : filteredMatchIdx) {
+//        cout << idx << " ";
+//    }
+//    cout << endl;
     for (auto & idx : filteredMatchIdx) {
         filteredMatches.push_back(*curFrameMatches[idx]);
     }
