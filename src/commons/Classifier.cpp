@@ -563,12 +563,12 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
                 }
             }
             if (needLastTargetBlock) {
-                if (i != threadNum - 1) {
+                if (i != threadNum - 1) { // If it is not the last split
                     querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth,
-                                             diffIdxSplits.data[numOfDiffIdxSplits_use - 1]);
+                                             diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
                 } else {
                     querySplits.emplace_back(splitWidth * i, queryKmerCnt - 1, queryKmerCnt - splitWidth * i,
-                                             diffIdxSplits.data[numOfDiffIdxSplits_use - 1]);
+                                             diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
                 }
             }
         }
@@ -635,7 +635,8 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
 
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 diffIdxBufferIdx = querySplits[i].diffIdxSplit.diffIdxOffset;
-                kmerInfoBufferIdx = querySplits[i].diffIdxSplit.infoIdxOffset - ( querySplits[i].diffIdxSplit.ADkmer != 0);//- (i != 0);
+                kmerInfoBufferIdx = querySplits[i].diffIdxSplit.infoIdxOffset
+                                    - (querySplits[i].diffIdxSplit.ADkmer != 0);//- (i != 0);
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
 
                 fseek(kmerInfoFp, 4 * (long)(kmerInfoBufferIdx), SEEK_SET);
@@ -681,9 +682,6 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                                                  (bool) candidateKmerInfos[idx].redundancy};
                             matchCnt++;
                         }
-
-//                        if (currMatchNum != 0) {
-//                        }
                         continue;
                     }
                     selectedMatches.clear();
