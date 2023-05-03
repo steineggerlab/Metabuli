@@ -1175,29 +1175,35 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, const Ma
     //4. no genus
 }
 
+
+
 void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatches, vector<Match> & filteredMatches) {
     size_t i = 0;
     size_t end = curFrameMatches.size();
-    vector<const Match *> curPosMatches;
-    vector<const Match *> nextPosMatches;
+    vector<pair<const Match *, size_t>> curPosMatches; // <match, index>
+    vector<pair<const Match *, size_t>> nextPosMatches;
+    unordered_map<size_t, vector<size_t>> linkedMatches;
+//    vector<pair<size_t, vector<size_t>>> linkedMatches;
     while ( i < end && curFrameMatches[i]->qInfo.position == curFrameMatches[0]->qInfo.position) {
-        curPosMatches.push_back(curFrameMatches[i]);
+        curPosMatches.emplace_back(curFrameMatches[i], i);
         i++;
     }
     while (i < end) {
         uint32_t nextPos = curFrameMatches[i]->qInfo.position;
         while (i < end  && nextPos == curFrameMatches[i]->qInfo.position) {
-            nextPosMatches.push_back(curFrameMatches[i]);
+            nextPosMatches.emplace_back(curFrameMatches[i], i);
             ++ i;
         }
         // Compare curPosMatches and nextPosMatches
         for (auto & curPosMatch : curPosMatches) {
             for (auto & nextPosMatch : nextPosMatches) {
-                if (isConsecutive(curPosMatch, nextPosMatch)) {
-                    filteredMatches.push_back(*curPosMatch);
-                    if (i == end) {
-                        filteredMatches.push_back(*nextPosMatch);
-                    }
+                if (isConsecutive(curPosMatch.first, nextPosMatch.first)) {
+//                    filteredMatches.push_back(*curPosMatch.first);
+                    linkedMatches[curPosMatch.second].push_back(nextPosMatch.second);
+//                    linkedMatches.emplace_back(curPosMatch.second, nextPosMatch.second);
+//                    if (i == end) {
+//                        filteredMatches.push_back(*nextPosMatch.first);
+//                    }
                 }
             }
         }
@@ -1205,7 +1211,42 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
         curPosMatches = nextPosMatches;
         nextPosMatches.clear();
     }
+    // Iterate linkedMatches to get filteredMatches
+    int MIN_DEPTH = 4;
+    unordered_set<size_t> used;
+    vector<size_t> filteredMatchIdx;
+    for (const auto& entry : linkedMatches) {
+        if (!used.count(entry.first)) {
+            used.insert(entry.first);
+            vector<const Match*> curMatches;
+            DFS(entry.first, linkedMatches, filteredMatchIdx, 0, MIN_DEPTH, used);
+        }
+    }
+}
 
+
+size_t Classifier::DFS(size_t curMatchIdx, const unordered_map<size_t, vector<size_t>>& linkedMatches,
+                     vector<size_t>& filteredMatches, size_t depth, const size_t MIN_DEPTH, unordered_set<size_t>& used) {
+    depth++;
+    size_t maxDepth = 0;
+    size_t returnDepth = 0;
+    if (linkedMatches.find(curMatchIdx) == linkedMatches.end() || linkedMatches.at(curMatchIdx).empty()) {
+        // reached a leaf node
+        if (depth > MIN_DEPTH) {
+            filteredMatches.push_back(curMatchIdx);
+        }
+        return depth;
+    } else { // not a leaf node
+        for (auto &nextMatchIdx: linkedMatches.at(curMatchIdx)) {
+            used.insert(nextMatchIdx);
+            returnDepth = DFS(nextMatchIdx, linkedMatches, filteredMatches, depth, MIN_DEPTH, used);
+            maxDepth = max(maxDepth, returnDepth);
+        }
+        if (maxDepth > MIN_DEPTH) {
+            filteredMatches.push_back(curMatchIdx);
+        }
+    }
+    return maxDepth;
 }
 
 TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, const Match *matchList, size_t end,
