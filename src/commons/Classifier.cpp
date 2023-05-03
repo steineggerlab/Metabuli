@@ -274,7 +274,8 @@ void Classifier::startClassify(const LocalParameters &par) {
         cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
 
         for (size_t i = 0; i < matchBuffer.startIndexOfReserve; i++) {
-            cout << matchBuffer.buffer[i].queryId << " " <<  matchBuffer.buffer[i].splitIdx << " " <<matchBuffer.buffer[i].targetId << " " <<
+            cout << matchBuffer.buffer[i].queryId << " " <<  matchBuffer.buffer[i].splitIdx << " " <<
+            matchBuffer.buffer[i].targetSplitIdx << " " << matchBuffer.buffer[i].targetId << " " <<
             genusTaxIdList[matchBuffer.buffer[i].targetId] << " " << speciesTaxIdList[matchBuffer.buffer[i].targetId] << " "
             << matchBuffer.buffer[i].position << " " << (int) matchBuffer.buffer[i].hamming << " " << taxIdList[matchBuffer.buffer[i].targetId] << endl;
         }
