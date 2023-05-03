@@ -340,8 +340,8 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     FILE * diffIdxSplitFile = fopen(splitFileName.c_str(), "wb");
     DiffIdxSplit splitList[par.splitNum];
     memset(splitList, 0, sizeof(DiffIdxSplit) * par.splitNum);
-    size_t splitWidth = uniqKmerCnt / par.threads;
-    for (size_t i = 1; i < (size_t) par.threads; i++) {
+    size_t splitWidth = uniqKmerCnt / par.splitNum;
+    for (size_t i = 1; i < (size_t) par.splitNum; i++) {
         for (size_t j = uniqKmerIdx[0] + splitWidth * i; j + 1 < uniqKmerCnt; j++) {
             if (AminoAcidPart(kmerBuffer[j].ADkmer) != AminoAcidPart(kmerBuffer[j + 1].ADkmer)) {
                 splitList[i].ADkmer = kmerBuffer[j].ADkmer;
