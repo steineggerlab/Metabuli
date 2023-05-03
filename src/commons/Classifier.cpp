@@ -1182,8 +1182,8 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
     size_t end = curFrameMatches.size();
     vector<pair<const Match *, size_t>> curPosMatches; // <match, index>
     vector<pair<const Match *, size_t>> nextPosMatches;
-    unordered_map<size_t, vector<size_t>> linkedMatches;
-//    vector<pair<size_t, vector<size_t>>> linkedMatches;
+    unordered_map<size_t, vector<size_t>> linkedMatches; // <index, linked indexes>
+
     while ( i < end && curFrameMatches[i]->qInfo.position == curFrameMatches[0]->qInfo.position) {
         curPosMatches.emplace_back(curFrameMatches[i], i);
         i++;
@@ -1198,12 +1198,7 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
         for (auto & curPosMatch : curPosMatches) {
             for (auto & nextPosMatch : nextPosMatches) {
                 if (isConsecutive(curPosMatch.first, nextPosMatch.first)) {
-//                    filteredMatches.push_back(*curPosMatch.first);
                     linkedMatches[curPosMatch.second].push_back(nextPosMatch.second);
-//                    linkedMatches.emplace_back(curPosMatch.second, nextPosMatch.second);
-//                    if (i == end) {
-//                        filteredMatches.push_back(*nextPosMatch.first);
-//                    }
                 }
             }
         }
@@ -1211,6 +1206,16 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
         curPosMatches = nextPosMatches;
         nextPosMatches.clear();
     }
+    // Print linkedMatches
+    cout << "linkedMatches: " << endl;
+    for (const auto& entry : linkedMatches) {
+        cout << entry.first << ": ";
+        for (auto & idx : entry.second) {
+            cout << idx << " ";
+        }
+        cout << endl;
+    }
+
     // Iterate linkedMatches to get filteredMatches
     int MIN_DEPTH = 4;
     unordered_set<size_t> used;
@@ -1221,6 +1226,15 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
             vector<const Match*> curMatches;
             DFS(entry.first, linkedMatches, filteredMatchIdx, 0, MIN_DEPTH, used);
         }
+    }
+
+    // Print filteredMatchIdx
+    cout << "filteredMatchIdx: ";
+    for (auto & idx : filteredMatchIdx) {
+        cout << idx << " ";
+    }
+    for (auto & idx : filteredMatchIdx) {
+        filteredMatches.push_back(*curFrameMatches[idx]);
     }
 }
 
