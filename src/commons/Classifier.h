@@ -23,8 +23,7 @@
 #include <set>
 #include <cmath>
 #include "Match.h"
-
-
+#include <unordered_set>
 #define BufferSize 16'777'216 //16 * 1024 * 1024 // 16 M
 using namespace std;
 
@@ -186,6 +185,10 @@ protected:
 
     void remainConsecutiveMatches(vector<const Match *> & curFrameMatches, vector<Match> & filteredMatches);
 
+    size_t DFS(size_t curMatchIdx, const unordered_map<size_t, vector<size_t>>& linkedMatches,
+             vector<size_t>& fiteredMatchIdx, size_t depth, const size_t MIN_DEPTH, unordered_set<size_t>& used);
+
+//    DFS(entry.first, linkedMatches, filteredMatches, 0, MIN_DEPTH, used);
     bool isConsecutive(const Match * match1, const Match * match2);
     bool isConsecutive(const Match & match1, const Match & match2, const LocalParameters &par);
 
