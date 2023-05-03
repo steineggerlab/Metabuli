@@ -307,7 +307,10 @@ struct sortMatch {
                     else if (a.position == b.position) {
                         if (a.hamming < b.hamming) return true;
                         else if (a.hamming == b.hamming){
-                            return classifier->taxIdList[a.targetId] < classifier->taxIdList[b.targetId];
+                            if (a.rightEndHamming < b.rightEndHamming) return true;
+                            else if (a.rightEndHamming == b.rightEndHamming) {
+                                return classifier->taxIdList[a.targetId] < classifier->taxIdList[b.targetId];
+                            }
                         }
                     }
                 }
