@@ -679,7 +679,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                                                  queryKmerList[j].info.pos,
                                                  selectedHammings[k],
                                                  selectedHammingSum[k],
-                                                 (bool) candidateKmerInfos[idx].redundancy};
+                                                 (bool) candidateKmerInfos[idx].redundancy, i};
                             matchCnt++;
                         }
                         continue;
@@ -715,7 +715,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                                                  queryKmerList[j].info.pos,
                                                  selectedHammings[k],
                                                  selectedHammingSum[k],
-                                                 (bool) candidateKmerInfos[idx].redundancy};
+                                                 (bool) candidateKmerInfos[idx].redundancy, i};
                             matchCnt++;
                         }
                         continue;
@@ -802,7 +802,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                                              queryKmerList[j].info.pos,
                                              selectedHammings[k],
                                              selectedHammingSum[k],
-                                             (bool) candidateKmerInfos[idx].redundancy};
+                                             (bool) candidateKmerInfos[idx].redundancy, i};
                         matchCnt++;
                     }
                 } // End of one split
