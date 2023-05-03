@@ -284,6 +284,9 @@ void Classifier::startClassify(const LocalParameters &par) {
         time_t beforeAnalyze = time(nullptr);
 
         cout << "Analyzing matches ..." << endl;
+#ifdef OPENMP
+        omp_set_num_threads(1);
+#endif
         fromMatchToClassification(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
 
 
