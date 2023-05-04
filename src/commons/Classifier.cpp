@@ -1116,6 +1116,9 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, const Ma
         while ((i < end + 1) && currentGenus == genusTaxIdList[matchList[i].targetId]) {
             currentSpecies = speciesTaxIdList[matchList[i].targetId];
 
+            if (par.printLog) {
+                cout << currentGenus << " " << currentSpecies << endl;
+            }
             // For current species
             while ((i < end + 1) && currentSpecies == speciesTaxIdList[matchList[i].targetId]) {
                 curFrame = matchList[i].qInfo.frame;
@@ -1128,7 +1131,7 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, const Ma
                     i ++;
                 }
                 if (curFrameMatches.size() > 1) {
-                    remainConsecutiveMatches(curFrameMatches, filteredMatches);
+                    remainConsecutiveMatches(curFrameMatches, filteredMatches, par);
                 }
             }
         }
@@ -1182,7 +1185,8 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, const Ma
 
 
 
-void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatches, vector<Match> & filteredMatches) {
+void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatches, vector<Match> & filteredMatches,
+                                          const LocalParameters & par) {
     size_t i = 0;
     size_t end = curFrameMatches.size();
     vector<pair<const Match *, size_t>> curPosMatches; // <match, index>
@@ -1212,13 +1216,15 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
         nextPosMatches.clear();
     }
     // Print linkedMatches
-    cout << "linkedMatches: " << endl;
-    for (const auto& entry : linkedMatches) {
-        cout << entry.first << ": ";
-        for (auto & idx : entry.second) {
-            cout << idx << " ";
+    if (par.printLog) {
+        cout << "linkedMatches: " << endl;
+        for (const auto &entry: linkedMatches) {
+            cout << entry.first << ": ";
+            for (auto &idx: entry.second) {
+                cout << idx << " ";
+            }
+            cout << endl;
         }
-        cout << endl;
     }
 
     // Iterate linkedMatches to get filteredMatches
@@ -1234,13 +1240,15 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
     }
 
     // Print filteredMatchIdx
-    cout << "filteredMatchIdx: ";
-    for (auto & idx : filteredMatchIdx) {
-        cout << idx << " ";
-    }
-    cout << endl;
-    for (auto & idx : filteredMatchIdx) {
-        filteredMatches.push_back(*curFrameMatches[idx]);
+    if (par.printLog) {
+        cout << "filteredMatchIdx: ";
+        for (auto &idx: filteredMatchIdx) {
+            cout << idx << " ";
+        }
+        cout << endl;
+        for (auto &idx: filteredMatchIdx) {
+            filteredMatches.push_back(*curFrameMatches[idx]);
+        }
     }
 }
 
