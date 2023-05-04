@@ -629,38 +629,38 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     querySplits[i].start++;
 
                     // Reuse the comparison data if queries are exactly identical
-//                    if (currentQuery == queryKmerList[j].ADkmer
-//                        && (currentQueryInfo.frame/3 == queryKmerList[j].info.frame/3)) {
-//                        currMatchNum = selectedMatches.size();
-//                        // If local buffer is full, copy them to the shared buffer.
-//                        if (matchCnt + currMatchNum > localBufferSize) {
-//                            // Check if the shared buffer is full.
-//                            posToWrite = matchBuffer.reserveMemory(matchCnt);
-//                            if (posToWrite + matchCnt >= matchBuffer.bufferSize) {
-//                                hasOverflow = true;
-//                                querySplits[i].start = lastMovedQueryIdx + 1;
-//                                __sync_fetch_and_sub(& matchBuffer.startIndexOfReserve, matchCnt);
-//                                break;
-//                            } else { // not full -> copy matches to the shared buffer
-//                                moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
-//                                lastMovedQueryIdx = j;
-//                            }
-//                        }
-//                        for (int k = 0; k < currMatchNum; k++) {
-//                            idx = selectedMatches[k];
-//                            matches[matchCnt] = {queryKmerList[j].info.sequenceID,
-//                                                 queryKmerList[j].info.pos,
-//                                                 queryKmerList[j].info.frame,
-//                                                 candidateKmerInfos[idx].sequenceID,
-//                                                 selectedHammings[k],
-//                                                 selectedHammingSum[k],
-//                                                 (bool) candidateKmerInfos[idx].redundancy,
-//                                                 (int)i,
-//                                                 targetSplitIdxs[i]};
-//                            matchCnt++;
-//                        }
-//                        continue;
-//                    }
+                    if (currentQuery == queryKmerList[j].ADkmer
+                        && (currentQueryInfo.frame/3 == queryKmerList[j].info.frame/3)) {
+                        currMatchNum = selectedMatches.size();
+                        // If local buffer is full, copy them to the shared buffer.
+                        if (matchCnt + currMatchNum > localBufferSize) {
+                            // Check if the shared buffer is full.
+                            posToWrite = matchBuffer.reserveMemory(matchCnt);
+                            if (posToWrite + matchCnt >= matchBuffer.bufferSize) {
+                                hasOverflow = true;
+                                querySplits[i].start = lastMovedQueryIdx + 1;
+                                __sync_fetch_and_sub(& matchBuffer.startIndexOfReserve, matchCnt);
+                                break;
+                            } else { // not full -> copy matches to the shared buffer
+                                moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
+                                lastMovedQueryIdx = j;
+                            }
+                        }
+                        for (int k = 0; k < currMatchNum; k++) {
+                            idx = selectedMatches[k];
+                            matches[matchCnt] = {queryKmerList[j].info.sequenceID,
+                                                 queryKmerList[j].info.pos,
+                                                 queryKmerList[j].info.frame,
+                                                 candidateKmerInfos[idx].sequenceID,
+                                                 selectedHammings[k],
+                                                 selectedHammingSum[k],
+                                                 (bool) candidateKmerInfos[idx].redundancy,
+                                                 (int)i,
+                                                 targetSplitIdxs[i]};
+                            matchCnt++;
+                        }
+                        continue;
+                    }
                     selectedMatches.clear();
                     selectedHammingSum.clear();
                     selectedHammings.clear();
@@ -698,6 +698,9 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                                                  targetSplitIdxs[i]};
                             matchCnt++;
                         }
+                        currentQuery = queryKmerList[j].ADkmer;
+                        currentQueryAA = AminoAcidPart(currentQuery);
+                        currentQueryInfo = queryKmerList[j].info;
                         continue;
                     }
                     candidateTargetKmers.clear();
