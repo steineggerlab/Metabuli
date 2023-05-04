@@ -916,8 +916,10 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     if (par.printLog) {
         cout << "# " << currentQuery << " " << queryList[currentQuery].name << endl;
         for (size_t i = offset; i < end + 1; i++) {
-            cout << genusTaxIdList[matchList[i].targetId] << " " << speciesTaxIdList[matchList[i].targetId] << " " <<
-            taxIdList[matchList[i].targetId] << " " << matchList[i].qInfo.position << " " << int(matchList[i].hamming) << endl;
+            cout << genusTaxIdList[matchList[i].targetId] << " " << speciesTaxIdList[matchList[i].targetId] <<
+            " "  << taxIdList[matchList[i].targetId]      << " " << matchList[i].qInfo.frame << " ";
+            print_binary16(16, matchList[i].rightEndHamming);
+            cout << " " << matchList[i].qInfo.position << " " << int(matchList[i].hamming) << endl;
         }
     }
 
@@ -951,9 +953,10 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     if (par.printLog) {
         cout << "# " << currentQuery << " " << queryList[currentQuery].name << " filtered\n";
         for (size_t i = 0; i < genusMatches.size(); i++) {
-            cout << genusTaxIdList[genusMatches[i].targetId] << " " << speciesTaxIdList[genusMatches[i].targetId] << " " <<
-                 taxIdList[genusMatches[i].targetId] << " " << genusMatches[i].qInfo.position << " " << int(genusMatches[i].hamming) <<
-                 genusMatches[i].redundancy << "\n";
+            cout << genusTaxIdList[genusMatches[i].targetId] << " " << speciesTaxIdList[genusMatches[i].targetId] <<
+                 " "  << taxIdList[genusMatches[i].targetId]      << " " << genusMatches[i].qInfo.frame << " ";
+            print_binary16(16, genusMatches[i].rightEndHamming);
+            cout << " " << genusMatches[i].qInfo.position << " " << int(genusMatches[i].hamming) << endl;
         }
         cout << "Genus score: " << genusScore.score << "\n";
     }
@@ -1256,7 +1259,7 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
 
 
 size_t Classifier::DFS(size_t curMatchIdx, const map<size_t, vector<size_t>>& linkedMatches,
-                     vector<size_t>& filteredMatches, size_t depth, const size_t MIN_DEPTH, unordered_set<size_t>& used) {
+                     vector<size_t>& filteredMatches, size_t depth, size_t MIN_DEPTH, unordered_set<size_t>& used) {
     depth++;
     size_t maxDepth = 0;
     size_t returnDepth = 0;
@@ -1817,13 +1820,6 @@ TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
             ((float) (coveredLength_read1 + coveredLength_read2) - hammingSum) / (float) (readLength1 + readLength2);
     float coverage = (float) (coveredLength_read1 + coveredLength_read2) / (float) (readLength1 + readLength2);
 
-//    if (verbosity == 4) {
-//        cout << genusTaxIdList[filteredMatches[0].targetId] << " " << coveredLength_read1 + coveredLength_read2 << " " << hammingSum
-//             << " " << score <<
-//             " " << matches.size()
-
-//             << endl;
-//    }
 //    matchesForEachGenus.push_back(move(filteredMatches));
     return {genusTaxIdList[filteredMatches[0].targetId], score, coverage, (int) hammingSum};
 }
