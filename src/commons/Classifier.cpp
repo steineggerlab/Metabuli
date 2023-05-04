@@ -1721,47 +1721,47 @@ TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
                                   vector<vector<Match>> &matchesForEachGenus,
                                   int readLength1,
                                   int readLength2) {
-//    // Do not allow overlaps between the same species
-//    vector<Match> matches;
-//    size_t walker = 0;
-//    size_t numOfFitMat = filteredMatches.size();
-//    Match currentMatch;
-//    while (walker < numOfFitMat) {
-//        TaxID currentSpecies = speciesTaxIdList[filteredMatches[walker].targetId];
-//        int currentPosition = filteredMatches[walker].qInfo.position / 3;
-//        currentMatch = filteredMatches[walker];
-//        // Look through overlaps within a species
-//        while (walker < numOfFitMat && speciesTaxIdList[filteredMatches[walker].targetId] == currentSpecies
-//               && filteredMatches[walker].qInfo.position / 3 == currentPosition
-//               ) {
-//            // Take the match with lower hamming distance
-//            if (filteredMatches[walker].hamming < currentMatch.hamming) {
-//                currentMatch = filteredMatches[walker];
-//            }
-//            // Overlapping with same hamming distance but different subspecies taxonomy ID -> species level
-//            else if (taxIdList[currentMatch.targetId] != taxIdList[filteredMatches[walker].targetId] &&
-//                     currentMatch.hamming == filteredMatches[walker].hamming) {
-//                currentMatch.redundancy = true;
-//            }
-//            walker++;
-//        }
-//        matches.push_back(currentMatch);
-//    }
+    // Do not allow overlaps between the same species
+    vector<Match> matches;
+    size_t walker = 0;
+    size_t numOfFitMat = filteredMatches.size();
+    Match currentMatch;
+    while (walker < numOfFitMat) {
+        TaxID currentSpecies = speciesTaxIdList[filteredMatches[walker].targetId];
+        int currentPosition = filteredMatches[walker].qInfo.position / 3;
+        currentMatch = filteredMatches[walker];
+        // Look through overlaps within a species
+        while (walker < numOfFitMat && speciesTaxIdList[filteredMatches[walker].targetId] == currentSpecies
+               && filteredMatches[walker].qInfo.position / 3 == currentPosition
+               ) {
+            // Take the match with lower hamming distance
+            if (filteredMatches[walker].hamming < currentMatch.hamming) {
+                currentMatch = filteredMatches[walker];
+            }
+            // Overlapping with same hamming distance but different subspecies taxonomy ID -> species level
+            else if (taxIdList[currentMatch.targetId] != taxIdList[filteredMatches[walker].targetId] &&
+                     currentMatch.hamming == filteredMatches[walker].hamming) {
+                currentMatch.redundancy = true;
+            }
+            walker++;
+        }
+        matches.push_back(currentMatch);
+    }
 
     // Calculate Hamming distance & covered length
     uint16_t currHammings;
     int aminoAcidNum_total = ((int) readLength1 / 3) + ((int) readLength2 / 3);
     int aminoAcidNum_read1 = ((int) readLength1 / 3);
     int currPos;
-    size_t matchNum = filteredMatches.size();
+    size_t matchNum = matches.size();
     size_t f = 0;
 
     // Get the largest hamming distance at each position of query
     auto *hammingsAtEachPos = new signed char[aminoAcidNum_total + 3];
     memset(hammingsAtEachPos, -1, (aminoAcidNum_total + 3));
     while (f < matchNum) {
-        currPos = (int) filteredMatches[f].qInfo.position / 3;
-        currHammings = filteredMatches[f].rightEndHamming;
+        currPos = (int) matches[f].qInfo.position / 3;
+        currHammings = matches[f].rightEndHamming;
         if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos + unmaskedPos[0]])
             hammingsAtEachPos[currPos + unmaskedPos[0]] = GET_2_BITS(currHammings);
         if (GET_2_BITS(currHammings >> 2) > hammingsAtEachPos[currPos + unmaskedPos[1]])
@@ -1823,7 +1823,7 @@ TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
 
 //             << endl;
 //    }
-    matchesForEachGenus.push_back(std::move(filteredMatches));
+    matchesForEachGenus.push_back(move(matches));
     return {genusTaxIdList[filteredMatches[0].targetId], score, coverage, (int) hammingSum};
 }
 
