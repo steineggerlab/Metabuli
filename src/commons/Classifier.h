@@ -183,7 +183,8 @@ protected:
                          vector<Query> & queryList,
                          const LocalParameters &par);
 
-    void remainConsecutiveMatches(vector<const Match *> & curFrameMatches, vector<Match> & filteredMatches);
+    void remainConsecutiveMatches(vector<const Match *> & curFrameMatches, vector<Match> & filteredMatches,
+                                  const LocalParameters & par);
 
     size_t DFS(size_t curMatchIdx, const map<size_t, vector<size_t>>& linkedMatches,
              vector<size_t>& fiteredMatchIdx, size_t depth, const size_t MIN_DEPTH, unordered_set<size_t>& used);
