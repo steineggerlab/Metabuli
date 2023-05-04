@@ -1237,7 +1237,7 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
     }
 
     // Iterate linkedMatches to get filteredMatches
-    int MIN_DEPTH = 3;
+    int MIN_DEPTH = par.minConsCnt - 1;
     unordered_set<size_t> used;
     vector<size_t> filteredMatchIdx;
     for (const auto& entry : linkedMatches) {

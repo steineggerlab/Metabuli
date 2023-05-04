@@ -318,7 +318,7 @@ void SeqIterator::sixFrameTranslation(const char *seq) {
     }
 }
 
-void SeqIterator::fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite, const int &seqID,
+void SeqIterator::fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite, uint32_t seqID,
                                  uint32_t offset) {
     int forOrRev;
     uint64_t tempKmer = 0;
@@ -363,9 +363,9 @@ void SeqIterator::fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuff
 }
 
 void
-SeqIterator::addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev, const int &kmerCnt, const int &frame,
+SeqIterator::addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev, uint32_t kmerCnt, uint32_t frame,
                                   int seqLen) {
-    int start = (frame % 3) + (kmerCnt * 3);
+    uint32_t start = (frame % 3) + (kmerCnt * 3);
     kmer <<= bitsFor8Codons;
     size_t end = seqLen - 1;
 

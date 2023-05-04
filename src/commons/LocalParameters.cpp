@@ -132,6 +132,27 @@ LocalParameters::LocalParameters() :
                     typeid(bool),
                     (void *) &assembly,
                     ""),
+        MAX_GAP(MAX_GAP_ID,
+                "--max-gap",
+                "Maximum gap between two consecutive k-mers (used only with spaced k-mer)",
+                "Maximum gap between two consecutive k-mers (used only with spaced k-mer)",
+                typeid(int),
+                (void *) &maxGap,
+                ""),
+        MIN_CONS_CNT(MIN_CONS_CNT_ID,
+                     "--min-cons-cnt",
+                     "Minimum number of consecutive metamer matches to be used for classification",
+                     "Minimum number of consecutive metamer matches to be used for classification",
+                     typeid(int),
+                     (void *) &minConsCnt,
+                     ""),
+        SPLIT_NUM(SPLIT_NUM_ID,
+                  "--split-num",
+                  "A database is divided to N splits (offsets). During classification, unnecessary splits are skipped",
+                  "A database is divided to N splits (offsets). During classification, unnecessary splits are skipped",
+                  typeid(int),
+                  (void *) &splitNum,
+                  ""),
         TEST_RANK(TEST_RANK_ID,
                   "--test-rank",
                   ".",
@@ -180,21 +201,7 @@ LocalParameters::LocalParameters() :
                       "CSV of column numbers to be printed",
                       typeid(std::string),
                       (void *) &printColumns,
-                      ""),
-        MAX_GAP(MAX_GAP_ID,
-                "--max-gap",
-                "Maximum gap between two consecutive k-mers (used only with spaced k-mer)",
-                "Maximum gap between two consecutive k-mers (used only with spaced k-mer)",
-                typeid(int),
-                (void *) &maxGap,
-                ""),
-        SPLIT_NUM(SPLIT_NUM_ID,
-                  "--split-num",
-                  "A database is divided to N splits (offsets). During classification, unnecessary splits are skipped",
-                  "A database is divided to N splits (offsets). During classification, unnecessary splits are skipped",
-                  typeid(int),
-                  (void *) &splitNum,
-                  ""){
+                      "") {
     //add_to_library
 
     // build
@@ -225,6 +232,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&PRINT_LOG);
     classify.push_back(&MAX_GAP);
     classify.push_back(&TAXONOMY_PATH);
+    classify.push_back(&MIN_CONS_CNT);
 
 
     //updateTargetDB

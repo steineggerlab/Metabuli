@@ -20,7 +20,7 @@ void setClassifyDefaults(LocalParameters & par){
     par.printLog = 0;
     par.maxGap = 0;
     par.taxonomyPath = "DBDIR/taxonomy/" ;
-
+    par.minConsCnt = 4;
 }
 
 int classify(int argc, const char **argv, const Command& command)
