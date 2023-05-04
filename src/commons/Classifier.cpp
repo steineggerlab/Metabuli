@@ -429,14 +429,14 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
 
                 // Process Read 1
                 seqIterator.sixFrameTranslation(seq1->seq.s);
-                seqIterator.fillQueryKmerBuffer(seq1->seq.s, (int) seq1->seq.l, kmerBuffer, posToWrite,
-                                                (int) queryIdx);
-                queryList[queryIdx].queryLength = getMaxCoveredLength((int) seq1->seq.l);
+                seqIterator.fillQueryKmerBuffer(seq1->seq.s, (uint32_t) seq1->seq.l, kmerBuffer, posToWrite,
+                                                (uint32_t) queryIdx);
+                queryList[queryIdx].queryLength = getMaxCoveredLength((uint32_t) seq1->seq.l);
 
                 // Process Read 2
                 seqIterator2.sixFrameTranslation(seq2->seq.s);
-                seqIterator2.fillQueryKmerBuffer(seq2->seq.s, (int) seq2->seq.l, kmerBuffer, posToWrite,
-                                                 (int) queryIdx, queryList[queryIdx].queryLength);
+                seqIterator2.fillQueryKmerBuffer(seq2->seq.s, (uint32_t) seq2->seq.l, kmerBuffer, posToWrite,
+                                                 (uint32_t) queryIdx, queryList[queryIdx].queryLength);
 
                 // Query Info
                 queryList[queryIdx].queryLength2 = getMaxCoveredLength((int) seq2->seq.l);
@@ -627,39 +627,40 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                 size_t lastMovedQueryIdx = 0;
                 for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
                     querySplits[i].start++;
+
                     // Reuse the comparison data if queries are exactly identical
-                    if (currentQuery == queryKmerList[j].ADkmer
-                        && (currentQueryInfo.frame/3 == queryKmerList[j].info.frame/3)) {
-                        currMatchNum = selectedMatches.size();
-                        // If local buffer is full, copy them to the shared buffer.
-                        if (matchCnt + currMatchNum > localBufferSize) {
-                            // Check if the shared buffer is full.
-                            posToWrite = matchBuffer.reserveMemory(matchCnt);
-                            if (posToWrite + matchCnt >= matchBuffer.bufferSize) {
-                                hasOverflow = true;
-                                querySplits[i].start = lastMovedQueryIdx + 1;
-                                __sync_fetch_and_sub(& matchBuffer.startIndexOfReserve, matchCnt);
-                                break;
-                            } else { // not full -> copy matches to the shared buffer
-                                moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
-                                lastMovedQueryIdx = j;
-                            }
-                        }
-                        for (int k = 0; k < currMatchNum; k++) {
-                            idx = selectedMatches[k];
-                            matches[matchCnt] = {queryKmerList[j].info.sequenceID,
-                                                 queryKmerList[j].info.pos,
-                                                 queryKmerList[j].info.frame,
-                                                 candidateKmerInfos[idx].sequenceID,
-                                                 selectedHammings[k],
-                                                 selectedHammingSum[k],
-                                                 (bool) candidateKmerInfos[idx].redundancy,
-                                                 (int)i,
-                                                 targetSplitIdxs[i]};
-                            matchCnt++;
-                        }
-                        continue;
-                    }
+//                    if (currentQuery == queryKmerList[j].ADkmer
+//                        && (currentQueryInfo.frame/3 == queryKmerList[j].info.frame/3)) {
+//                        currMatchNum = selectedMatches.size();
+//                        // If local buffer is full, copy them to the shared buffer.
+//                        if (matchCnt + currMatchNum > localBufferSize) {
+//                            // Check if the shared buffer is full.
+//                            posToWrite = matchBuffer.reserveMemory(matchCnt);
+//                            if (posToWrite + matchCnt >= matchBuffer.bufferSize) {
+//                                hasOverflow = true;
+//                                querySplits[i].start = lastMovedQueryIdx + 1;
+//                                __sync_fetch_and_sub(& matchBuffer.startIndexOfReserve, matchCnt);
+//                                break;
+//                            } else { // not full -> copy matches to the shared buffer
+//                                moveMatches(matchBuffer.buffer + posToWrite, matches, matchCnt);
+//                                lastMovedQueryIdx = j;
+//                            }
+//                        }
+//                        for (int k = 0; k < currMatchNum; k++) {
+//                            idx = selectedMatches[k];
+//                            matches[matchCnt] = {queryKmerList[j].info.sequenceID,
+//                                                 queryKmerList[j].info.pos,
+//                                                 queryKmerList[j].info.frame,
+//                                                 candidateKmerInfos[idx].sequenceID,
+//                                                 selectedHammings[k],
+//                                                 selectedHammingSum[k],
+//                                                 (bool) candidateKmerInfos[idx].redundancy,
+//                                                 (int)i,
+//                                                 targetSplitIdxs[i]};
+//                            matchCnt++;
+//                        }
+//                        continue;
+//                    }
                     selectedMatches.clear();
                     selectedHammingSum.clear();
                     selectedHammings.clear();
@@ -834,7 +835,7 @@ void Classifier::compareDna(uint64_t query, vector<uint64_t> &targetKmersToCompa
                             vector<uint16_t> &selectedHammings, uint8_t frame) {
 
     size_t size = targetKmersToCompare.size();
-    uint8_t *hammingSums = new uint8_t[size + 1];
+    auto *hammingSums = new uint8_t[size + 1];
     uint8_t currentHammingSum;
     uint8_t minHammingSum = UINT8_MAX;
 
