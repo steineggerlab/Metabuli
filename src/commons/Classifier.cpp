@@ -898,8 +898,8 @@ void Classifier::fromMatchToClassification(const Match *matchList,
         }
     }
 
-    for (size_t i = 0; i < blockIdx; i++) {
-        ++taxCounts[queryList[matchBlocks[i].id].classification];
+    for (size_t i = 0; i < seqNum; i++) {
+        ++taxCounts[queryList[i].classification];
     }
     delete[] matchBlocks;
 //    cout << "End of fromMatchToClassification" << endl;
