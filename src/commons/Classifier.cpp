@@ -1116,10 +1116,10 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, const Ma
         currentGenus = genusTaxIdList[matchList[i].targetId];
         // For current genus
         while ((i < end + 1) && currentGenus == genusTaxIdList[matchList[i].targetId]) {
+            currentSpecies = speciesTaxIdList[matchList[i].targetId];
             if (par.printLog) {
                 cout << currentGenus << " " << currentSpecies << endl;
             }
-            currentSpecies = speciesTaxIdList[matchList[i].targetId];
             // For current species
             while ((i < end + 1) && currentSpecies == speciesTaxIdList[matchList[i].targetId]) {
                 curFrame = matchList[i].qInfo.frame;
@@ -1247,9 +1247,9 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
             cout << idx << " ";
         }
         cout << endl;
-        for (auto &idx: filteredMatchIdx) {
-            filteredMatches.push_back(*curFrameMatches[idx]);
-        }
+    }
+    for (auto &idx: filteredMatchIdx) {
+        filteredMatches.push_back(*curFrameMatches[idx]);
     }
 }
 
