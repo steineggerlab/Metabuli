@@ -1140,6 +1140,7 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, const Ma
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
         if (!filteredMatches.empty()) {
+            matchesForEachGenus.push_back(filteredMatches);
             genusScores.push_back(scoreGenus(filteredMatches, matchesForEachGenus, readLength1, readLength2));
         }
         filteredMatches.clear();
@@ -1823,7 +1824,7 @@ TaxonScore Classifier::scoreGenus(vector<Match> &filteredMatches,
 
 //             << endl;
 //    }
-    matchesForEachGenus.push_back(move(filteredMatches));
+//    matchesForEachGenus.push_back(move(filteredMatches));
     return {genusTaxIdList[filteredMatches[0].targetId], score, coverage, (int) hammingSum};
 }
 
