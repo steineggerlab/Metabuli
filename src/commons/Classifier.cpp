@@ -284,11 +284,13 @@ void Classifier::startClassify(const LocalParameters &par) {
         time_t beforeAnalyze = time(nullptr);
 
         cout << "Analyzing matches ..." << endl;
-//#ifdef OPENMP
-//        omp_set_num_threads(1);
-//#endif
+#ifdef OPENMP
+        omp_set_num_threads(1);
+#endif
         fromMatchToClassification(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
-
+#ifdef OPENMP
+        omp_set_num_threads(par.threads);
+#endif
 
         cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
         processedSeqCnt += queryReadSplit[splitIdx].second - queryReadSplit[splitIdx].first;
@@ -483,10 +485,10 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
             numOfDiffIdxSplits_use--;
         }
     }
-    for (size_t i = 0; i < numOfDiffIdxSplits_use; i++) {
-        cout << "DiffIdxSplit " << i << ": " << diffIdxSplits.data[i].ADkmer << " " << diffIdxSplits.data[i].diffIdxOffset
-             << " " << diffIdxSplits.data[i].infoIdxOffset << endl;
-    }
+//    for (size_t i = 0; i < numOfDiffIdxSplits_use; i++) {
+//        cout << "DiffIdxSplit " << i << ": " << diffIdxSplits.data[i].ADkmer << " " << diffIdxSplits.data[i].diffIdxOffset
+//             << " " << diffIdxSplits.data[i].infoIdxOffset << endl;
+//    }
 
     // Divide query k-mer list into blocks for multi threading.
     // Each split has start and end points of query list + proper offset point of target k-mer list
@@ -543,10 +545,10 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
         }
     }
 
-    cout << queryKmerCnt << endl;
-    for(size_t i = 0; i < querySplits.size(); i++) {
-        cout << "Query split " << i << " : " << querySplits[i].start << " ~ " << querySplits[i].end << endl;
-    }
+//    cout << queryKmerCnt << endl;
+//    for(size_t i = 0; i < querySplits.size(); i++) {
+//        cout << "Query split " << i << " : " << querySplits[i].start << " ~ " << querySplits[i].end << endl;
+//    }
 
     bool *splitCheckList = (bool *) malloc(sizeof(bool) * threadNum);
     fill_n(splitCheckList, threadNum, false);
@@ -1210,14 +1212,14 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
         nextPosMatches.clear();
     }
     // Print linkedMatches
-//    cout << "linkedMatches: " << endl;
-//    for (const auto& entry : linkedMatches) {
-//        cout << entry.first << ": ";
-//        for (auto & idx : entry.second) {
-//            cout << idx << " ";
-//        }
-//        cout << endl;
-//    }
+    cout << "linkedMatches: " << endl;
+    for (const auto& entry : linkedMatches) {
+        cout << entry.first << ": ";
+        for (auto & idx : entry.second) {
+            cout << idx << " ";
+        }
+        cout << endl;
+    }
 
     // Iterate linkedMatches to get filteredMatches
     int MIN_DEPTH = 3;
@@ -1231,12 +1233,12 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
         }
     }
 
-//    // Print filteredMatchIdx
-//    cout << "filteredMatchIdx: ";
-//    for (auto & idx : filteredMatchIdx) {
-//        cout << idx << " ";
-//    }
-//    cout << endl;
+    // Print filteredMatchIdx
+    cout << "filteredMatchIdx: ";
+    for (auto & idx : filteredMatchIdx) {
+        cout << idx << " ";
+    }
+    cout << endl;
     for (auto & idx : filteredMatchIdx) {
         filteredMatches.push_back(*curFrameMatches[idx]);
     }
