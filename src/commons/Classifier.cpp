@@ -262,9 +262,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 //#endif
         linearSearchParallel(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, matchBuffer, par);
 
-//#ifdef OPENMP
-//        omp_set_num_threads(par.threads);
-//#endif
+
         // Sort matches
         time_t beforeSortMatches = time(nullptr);
         totalMatchCnt += matchBuffer.startIndexOfReserve;
@@ -281,19 +279,19 @@ void Classifier::startClassify(const LocalParameters &par) {
 //        }
 
         // Classify queries based on the matches
+#ifdef OPENMP
+        omp_set_num_threads(1);
+#endif
         time_t beforeAnalyze = time(nullptr);
 
+
         cout << "Analyzing matches ..." << endl;
-#ifdef OPENMP
-        if(par.printLog){
-            omp_set_num_threads(1);
-        }
-#endif
+
         fromMatchToClassification(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
+
 #ifdef OPENMP
         omp_set_num_threads(par.threads);
 #endif
-
         cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
         processedSeqCnt += queryReadSplit[splitIdx].second - queryReadSplit[splitIdx].first;
         cout << "The number of processed sequences: " << processedSeqCnt << " (" << (double) processedSeqCnt / (double) numOfSeq << ")" << endl;
@@ -930,6 +928,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     // Get the best genus for current query
     vector<Match> genusMatches;
     genusMatches.reserve(end - offset + 1);
+    cout << queryList[currentQuery].name << endl;
 
     int res;
     TaxonScore genusScore(0, 0, 0, 0);
