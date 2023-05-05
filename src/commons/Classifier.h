@@ -140,8 +140,6 @@ protected:
                                      const LocalParameters &par);
 
     void fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
-                                     MmapedData<char> &seqFile1,
-                                     MmapedData<char> &seqFile2,
                                      const vector<SequenceBlock> &seqs,
                                      const vector<SequenceBlock> &seqs2,
                                      vector<Query> & queryList,
@@ -196,7 +194,7 @@ protected:
 
 
     TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end,
-                                   size_t offset, int queryLength);
+                                   size_t offset, int queryLength, const LocalParameters &par);
 
     TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
                                    int readLength1, int readLength2, const LocalParameters &par);
@@ -207,11 +205,9 @@ protected:
                                           int readLength1);
 
     TaxonScore scoreGenus(vector<Match> &filteredMatches,
-                          vector<vector<Match>> &matchesForEachGenus,
                           int queryLength);
 
     TaxonScore scoreGenus(vector<Match> &filteredMatches,
-                          vector<vector<Match>> &matchesForEachGenus,
                           int readLength1,
                           int readLength2);
 
