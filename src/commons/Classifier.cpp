@@ -363,7 +363,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
         queryReadSplit.emplace_back(i, std::min(i + numOfSeqPerSplit - 1, currentSplit.second- 1));
     }
 
-#pragma omp parallel default(none), shared(par, kmerBuffer, seqFile1, seqFile2, seqs, seqs2, cout, queryList, currentSplit, queryReadSplit, numOfSeqPerSplit)
+#pragma omp parallel default(none), shared(par, kmerBuffer, seqs, seqs2, cout, queryList, currentSplit, queryReadSplit, numOfSeqPerSplit)
     {
         FILE * query1 = fopen(par.filenames[0].c_str(), "r");
         FILE * query2 = fopen(par.filenames[1].c_str(), "r");
