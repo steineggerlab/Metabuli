@@ -187,7 +187,8 @@ protected:
                                   const LocalParameters & par);
 
     size_t DFS(size_t curMatchIdx, const map<size_t, vector<size_t>>& linkedMatches,
-             vector<size_t>& fiteredMatchIdx, size_t depth, size_t MIN_DEPTH, unordered_set<size_t>& used);
+             vector<size_t>& fiteredMatchIdx, size_t depth, size_t MIN_DEPTH, unordered_set<size_t>& used,
+             unordered_map<size_t, size_t> & idx2depth);
 
     static bool isConsecutive(const Match * match1, const Match * match2);
     bool isConsecutive(const Match & match1, const Match & match2, const LocalParameters &par);

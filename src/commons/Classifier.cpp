@@ -1239,11 +1239,12 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
     int MIN_DEPTH = par.minConsCnt - 1;
     unordered_set<size_t> used;
     vector<size_t> filteredMatchIdx;
+    unordered_map<size_t, size_t> idx2depth;
     for (const auto& entry : linkedMatches) {
         if (!used.count(entry.first)) {
             used.insert(entry.first);
             vector<const Match*> curMatches;
-            DFS(entry.first, linkedMatches, filteredMatchIdx, 0, MIN_DEPTH, used);
+            DFS(entry.first, linkedMatches, filteredMatchIdx, 0, MIN_DEPTH, used, idx2depth);
         }
     }
 
@@ -1262,12 +1263,14 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
 
 
 size_t Classifier::DFS(size_t curMatchIdx, const map<size_t, vector<size_t>>& linkedMatches,
-                     vector<size_t>& filteredMatches, size_t depth, size_t MIN_DEPTH, unordered_set<size_t>& used) {
+                       vector<size_t>& filteredMatches, size_t depth, size_t MIN_DEPTH, unordered_set<size_t>& used,
+                       unordered_map<size_t, size_t> & idx2depth) {
     depth++;
     size_t maxDepth = 0;
     size_t returnDepth = 0;
     if (linkedMatches.find(curMatchIdx) == linkedMatches.end() || linkedMatches.at(curMatchIdx).empty()) {
         // reached a leaf node
+        idx2depth[curMatchIdx] = depth;
         if (depth > MIN_DEPTH) {
             filteredMatches.push_back(curMatchIdx);
         }
@@ -1275,11 +1278,17 @@ size_t Classifier::DFS(size_t curMatchIdx, const map<size_t, vector<size_t>>& li
     } else { // not a leaf node
         for (auto &nextMatchIdx: linkedMatches.at(curMatchIdx)) {
             used.insert(nextMatchIdx);
-            returnDepth = DFS(nextMatchIdx, linkedMatches, filteredMatches, depth, MIN_DEPTH, used);
+            if (idx2depth.find(nextMatchIdx) != idx2depth.end()) {
+                returnDepth = idx2depth[nextMatchIdx];
+                maxDepth = max(maxDepth, returnDepth);
+                continue;
+            }
+            returnDepth = DFS(nextMatchIdx, linkedMatches, filteredMatches, depth, MIN_DEPTH, used, idx2depth);
             maxDepth = max(maxDepth, returnDepth);
         }
         if (maxDepth > MIN_DEPTH) {
             filteredMatches.push_back(curMatchIdx);
+            idx2depth[curMatchIdx] = maxDepth;
         }
     }
     return maxDepth;
