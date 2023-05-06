@@ -1046,11 +1046,11 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         }
 
         for (auto strainIt = strainMatchCnt.begin(); strainIt != strainMatchCnt.end(); strainIt++) {
-            if (strainIt->second > minStrainSpecificCnt) {
+//            if (strainIt->second > minStrainSpecificCnt) {
                 strainID = strainIt->first;
                 numOfstrains++;
                 count = strainIt->second;
-            }
+//            }
         }
     }
 
