@@ -935,7 +935,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
             cout << genusTaxIdList[genusMatches[i].targetId] << " " << speciesTaxIdList[genusMatches[i].targetId] <<
                  " "  << taxIdList[genusMatches[i].targetId]      << " " << genusMatches[i].qInfo.frame << " ";
             print_binary16(16, genusMatches[i].rightEndHamming);
-            cout << " " << genusMatches[i].qInfo.position << " " << int(genusMatches[i].hamming) <<  " "  << int(matchList[i].redundancy) << endl;
+            cout << " " << genusMatches[i].qInfo.position << " " << int(genusMatches[i].hamming) <<  " "  << int(genusMatches[i].redundancy) << endl;
         }
         cout << "Genus score: " << genusScore.score << "\n";
     }
