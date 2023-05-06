@@ -1054,7 +1054,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         }
     }
 
-    if (numOfstrains == 1 && count > minStrainSpecificCnt + 1) {
+    if (numOfstrains == 1) {
         selectedSpecies = strainID;
     }
 
