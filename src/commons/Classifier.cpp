@@ -898,7 +898,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
             cout << genusTaxIdList[matchList[i].targetId] << " " << speciesTaxIdList[matchList[i].targetId] <<
             " "  << taxIdList[matchList[i].targetId]      << " " << matchList[i].qInfo.frame << " ";
             print_binary16(16, matchList[i].rightEndHamming);
-            cout << " " << matchList[i].qInfo.position << " " << int(matchList[i].hamming) << endl;
+            cout << " " << matchList[i].qInfo.position << " " << int(matchList[i].hamming) <<  " "  << int(matchList[i].redundancy) << endl;
         }
     }
 
@@ -935,7 +935,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
             cout << genusTaxIdList[genusMatches[i].targetId] << " " << speciesTaxIdList[genusMatches[i].targetId] <<
                  " "  << taxIdList[genusMatches[i].targetId]      << " " << genusMatches[i].qInfo.frame << " ";
             print_binary16(16, genusMatches[i].rightEndHamming);
-            cout << " " << genusMatches[i].qInfo.position << " " << int(genusMatches[i].hamming) << endl;
+            cout << " " << genusMatches[i].qInfo.position << " " << int(genusMatches[i].hamming) <<  " "  << int(matchList[i].redundancy) << endl;
         }
         cout << "Genus score: " << genusScore.score << "\n";
     }
