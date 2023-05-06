@@ -269,6 +269,14 @@ void Classifier::startClassify(const LocalParameters &par) {
 //        }
 
         // Classify queries based on the matches
+#ifdef OPENMP
+        if (par.printLog == 1) {
+            omp_set_num_threads(1);
+        } else {
+            omp_set_num_threads(par.threads);
+        }
+#endif
+
         time_t beforeAnalyze = time(nullptr);
         cout << "Analyzing matches ..." << endl;
         fromMatchToClassification(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
@@ -578,7 +586,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 diffIdxBufferIdx = querySplits[i].diffIdxSplit.diffIdxOffset;
                 kmerInfoBufferIdx = querySplits[i].diffIdxSplit.infoIdxOffset
-                                    - (querySplits[i].diffIdxSplit.ADkmer != 0);//- (i != 0);
+                                    - (querySplits[i].diffIdxSplit.ADkmer != 0);
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
 
                 fseek(kmerInfoFp, 4 * (long)(kmerInfoBufferIdx), SEEK_SET);
@@ -2015,14 +2023,13 @@ void Classifier::splitFASTA(vector<SequenceBlock> & seqSegments, const string & 
 
 
 bool Classifier::isConsecutive(const Match * match1, const Match * match2) {
-    uint16_t hamming1 = match1->rightEndHamming;
-    uint16_t hamming2 = match2->rightEndHamming;
-    // set most significant two bits to 0
-    hamming2 &= 0x3FFF;
-    // move bits to right by 2
-    hamming1 >>= 2;
-
-    return hamming1 == hamming2;
+//    uint16_t hamming1 = match1->rightEndHamming;
+//    uint16_t hamming2 = match2->rightEndHamming;
+//    // move bits to right by 2
+//    hamming1 >>= 2;
+//    // set most significant two bits to 0
+//    hamming2 &= 0x3FFF;
+    return (match1->rightEndHamming >> 2) == (match2->rightEndHamming & 0x3FFF);
 }
 
 bool Classifier::isConsecutive(const Match & match1, const Match & match2, const LocalParameters & par) {
