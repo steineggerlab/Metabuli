@@ -1123,7 +1123,7 @@ TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<size_t, s
                 continue;
             }
             if (minHamming == matches[i].hamming) {
-                minHammingTaxId = taxonomy->LCA(minHammingTaxId, matches[i].targetId);
+                minHammingTaxId = taxonomy->LCA(minHammingTaxId, taxIdList[matches[i].targetId]);
                 minHammingMatch->redundancy = true;
                 matches[i].redundancy = true;
             }
