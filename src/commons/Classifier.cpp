@@ -1161,7 +1161,7 @@ TaxID Classifier::BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID 
     if (cladeCnt.at(root).children.empty()) { // root is a leaf
         return root;
     }
-    unsigned int maxCnt = 4;
+    unsigned int maxCnt = 3;
     unsigned int currentCnt;
     vector<TaxID> bestChildren;
     for (auto it = cladeCnt.at(root).children.begin(); it != cladeCnt.at(root).children.end(); it++) {
