@@ -438,6 +438,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
         size_t lookingIndex;
         int endFlag;
         int hasSeenOtherStrains;
+        vector<TaxID> taxIds;
 #pragma omp for schedule(dynamic, 1)
         for(size_t split = 0; split < splits.size(); split ++){
             lookingKmer = & kmerBuffer.buffer[splits[split].offset];
@@ -445,10 +446,13 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
             endFlag = 0;
             for(size_t i = 1 + splits[split].offset; i < splits[split].end + 1 ; i++) {
                 hasSeenOtherStrains = 0;
+                taxIds.clear();
+                taxIds.push_back(taxIdList[lookingKmer->info.sequenceID]);
                 while(lookingKmer->taxIdAtRank == kmerBuffer.buffer[i].taxIdAtRank){
                     if (lookingKmer->ADkmer != kmerBuffer.buffer[i].ADkmer) {
                         break;
                     }
+                    taxIds.push_back(taxIdList[lookingKmer->info.sequenceID]);
                     hasSeenOtherStrains += (taxIdList[lookingKmer->info.sequenceID] != taxIdList[kmerBuffer.buffer[i].info.sequenceID]);
                     i++;
                     if(i == splits[split].end + 1){
@@ -458,6 +462,12 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
                 }
 
                 lookingKmer->info.redundancy = (hasSeenOtherStrains > 0);
+                if(taxIds.size() > 1){
+                    lookingKmer->info.sequenceID = taxonomy->LCA(taxIds)->taxId;
+                } else {
+                    lookingKmer->info.sequenceID = taxIds[0];
+                }
+
                 idxOfEachSplit[split][cntOfEachSplit[split]] = lookingIndex;
                 cntOfEachSplit[split] ++;
                 if(endFlag == 1) break;

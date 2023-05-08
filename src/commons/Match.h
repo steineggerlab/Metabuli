@@ -29,15 +29,4 @@ struct Match { // 16 byte
     bool redundancy; // 1
 };
 
-
-
-//struct TargetKmerInfo{
-//    explicit TargetKmerInfo(uint32_t seqID = 0, bool redundancy = false) : sequenceID(seqID), redundancy(redundancy) {}
-//    uint32_t sequenceID : 31;
-//    uint32_t redundancy : 1;
-//    bool operator == (const TargetKmerInfo & info) const{
-//        return (sequenceID == info.sequenceID && this->redundancy==info.redundancy);
-//    }
-//}; // 4 bytes
-
 #endif //ADCLASSIFIER2_MATCH_H

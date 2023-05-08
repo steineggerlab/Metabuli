@@ -64,10 +64,12 @@ protected:
     int maxGap;
 
     NcbiTaxonomy * taxonomy;
-    vector<TaxID> taxIdList;
-    vector<TaxID> speciesTaxIdList;
-    vector<TaxID> genusTaxIdList;
-    vector<vector<TaxID> *> spORssp;
+//    vector<TaxID> taxIdList;
+    unordered_map<TaxID, TaxID> taxId2speciesId;
+    unordered_map<TaxID, TaxID> taxId2genusId;
+//    vector<TaxID> speciesTaxIdList;
+//    vector<TaxID> genusTaxIdList;
+//    vector<vector<TaxID> *> spORssp;
 
     struct MatchBlock {
         MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) {}
