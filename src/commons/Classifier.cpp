@@ -1124,7 +1124,7 @@ TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<size_t, s
             if (minHamming == matches[i].hamming) {
                 minHammingMatch->redundancy = true;
                 matches[i].redundancy = true;
-                matches[i + 1].redundancy = true;
+//                matches[i + 1].redundancy = true;
             }
             i++;
         }
