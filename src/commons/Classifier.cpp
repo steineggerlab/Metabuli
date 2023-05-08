@@ -1091,7 +1091,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
 
 void Classifier::checkRedundantMatches(vector<Match> &matches, pair<size_t, size_t> &matchRange) {
     size_t i = matchRange.first;
-    while (i < matchRange.second) {
+    while (i + 1 < matchRange.second) {
         size_t currQuotient = matches[i].qInfo.position / 3;
         uint8_t minHamming = matches[i].hamming;
         while ( (i + 1 < matchRange.second) && (currQuotient == matches[i].qInfo.position / 3) ) {
