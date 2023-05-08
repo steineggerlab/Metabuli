@@ -452,7 +452,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
                     if (lookingKmer->ADkmer != kmerBuffer.buffer[i].ADkmer) {
                         break;
                     }
-                    taxIds.push_back(taxIdList[lookingKmer->info.sequenceID]);
+                    taxIds.push_back(taxIdList[kmerBuffer.buffer[i].info.sequenceID]);
                     hasSeenOtherStrains += (taxIdList[lookingKmer->info.sequenceID] != taxIdList[kmerBuffer.buffer[i].info.sequenceID]);
                     i++;
                     if(i == splits[split].end + 1){
