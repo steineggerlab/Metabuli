@@ -1114,6 +1114,7 @@ TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<size_t, s
         size_t currQuotient = matches[i].qInfo.position / 3;
         uint8_t minHamming = matches[i].hamming;
         Match * minHammingMatch = & matches[i];
+        TaxID minHammingTaxId = spORssp[minHammingMatch->redundancy]->operator[](minHammingMatch->targetId);
         bool first = true;
         while ( (i < matchRange.second) && (currQuotient == matches[i].qInfo.position / 3) ) {
             if (first) {
@@ -1122,12 +1123,13 @@ TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<size_t, s
                 continue;
             }
             if (minHamming == matches[i].hamming) {
+                minHammingTaxId = taxonomy->LCA(minHammingTaxId, matches[i].targetId);
                 minHammingMatch->redundancy = true;
                 matches[i].redundancy = true;
             }
             i++;
         }
-        taxCnt[spORssp[minHammingMatch->redundancy]->operator[](minHammingMatch->targetId)] ++;
+        taxCnt[minHammingTaxId] ++;
     }
 
     unordered_map<TaxID, TaxonCounts> cladeCnt;
