@@ -1025,53 +1025,56 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
 
     checkRedundantMatches(genusMatches, speciesMatchRange[selectedSpecies]);
 
+
+
+    TaxID result = lowerRankClassification(genusMatches, speciesMatchRange[selectedSpecies]);
+
     // Record matches of selected species
-    for (auto & genusMatch : genusMatches) {
-        if(speciesTaxIdList[genusMatch.targetId] == selectedSpecies){
-            queryList[currentQuery].taxCnt[spORssp[genusMatch.redundancy]->operator[](genusMatch.targetId)]++;
-        }
+    for (size_t i = speciesMatchRange[selectedSpecies].first; i < speciesMatchRange[selectedSpecies].second; i++) {
+        queryList[currentQuery].taxCnt[spORssp[genusMatches[i].redundancy]->operator[](genusMatches[i].targetId)]++;
     }
 
-    // Check if it can be classified at the subspecies rank.
-    int numOfstrains = 0;
-    TaxID strainID = 0;
-    int count = 1;
-    int minStrainSpecificCnt = 1;
-    if (par.seqMode == 1) {
-        minStrainSpecificCnt = 1;
-    } else if (par.seqMode == 2) {
-        minStrainSpecificCnt = 2;
-    } else if (par.seqMode == 3) {
-        minStrainSpecificCnt = 3;
-        if (queryList[currentQuery].queryLength > 3000) {
-            minStrainSpecificCnt = queryList[currentQuery].queryLength / 1000;
-        }
-    }
-    if (string(taxonomy->getString(taxonomy->taxonNode(selectedSpecies)->rankIdx)) == "species") {
-        unordered_map<TaxID, int> strainMatchCnt;
-        for (size_t i = 0; i < genusMatches.size(); i++) {
-            if (!genusMatches[i].redundancy
-                && taxonomy->IsAncestor2(selectedSpecies, taxIdList[genusMatches[i].targetId])) {
-                strainMatchCnt[taxIdList[genusMatches[i].targetId]]++;
-            }
-        }
 
-        for (auto strainIt = strainMatchCnt.begin(); strainIt != strainMatchCnt.end(); strainIt++) {
-//            if (strainIt->second > minStrainSpecificCnt) {
-                strainID = strainIt->first;
-                numOfstrains++;
-                count = strainIt->second;
+//    // Check if it can be classified at the subspecies rank.
+//    int numOfstrains = 0;
+//    TaxID strainID = 0;
+//    int count = 1;
+//    int minStrainSpecificCnt = 1;
+//    if (par.seqMode == 1) {
+//        minStrainSpecificCnt = 1;
+//    } else if (par.seqMode == 2) {
+//        minStrainSpecificCnt = 2;
+//    } else if (par.seqMode == 3) {
+//        minStrainSpecificCnt = 3;
+//        if (queryList[currentQuery].queryLength > 3000) {
+//            minStrainSpecificCnt = queryList[currentQuery].queryLength / 1000;
+//        }
+//    }
+//    if (string(taxonomy->getString(taxonomy->taxonNode(selectedSpecies)->rankIdx)) == "species") {
+//        unordered_map<TaxID, int> strainMatchCnt;
+//        for (size_t i = 0; i < genusMatches.size(); i++) {
+//            if (!genusMatches[i].redundancy
+//                && taxonomy->IsAncestor2(selectedSpecies, taxIdList[genusMatches[i].targetId])) {
+//                strainMatchCnt[taxIdList[genusMatches[i].targetId]]++;
 //            }
-        }
-    }
-
-    if (numOfstrains == 1) {
-        selectedSpecies = strainID;
-    }
+//        }
+//
+//        for (auto strainIt = strainMatchCnt.begin(); strainIt != strainMatchCnt.end(); strainIt++) {
+////            if (strainIt->second > minStrainSpecificCnt) {
+//                strainID = strainIt->first;
+//                numOfstrains++;
+//                count = strainIt->second;
+////            }
+//        }
+//    }
+//
+//    if (numOfstrains == 1) {
+//        selectedSpecies = strainID;
+//    }
 
     // Store classification results
     queryList[currentQuery].isClassified = true;
-    queryList[currentQuery].classification = selectedSpecies;
+    queryList[currentQuery].classification = result;
     queryList[currentQuery].score = speciesScore.score;
     queryList[currentQuery].coverage = speciesScore.coverage;
     queryList[currentQuery].hammingDist = speciesScore.hammingDist;
@@ -1101,6 +1104,51 @@ void Classifier::checkRedundantMatches(vector<Match> &matches, pair<size_t, size
             }
             i++;
         }
+    }
+}
+
+TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<size_t, size_t> &matchRange) {
+    size_t i = matchRange.first;
+    unordered_map<TaxID, unsigned int> taxCnt;
+    while (i + 1 < matchRange.second) {
+        size_t currQuotient = matches[i].qInfo.position / 3;
+        uint8_t minHamming = matches[i].hamming;
+        Match * minHammingMatch = & matches[i];
+        while ( (i + 1 < matchRange.second) && (currQuotient == matches[i].qInfo.position / 3) ) {
+            if (minHamming == matches[i + 1].hamming) {
+                minHammingMatch->targetId = taxonomy->LCA(minHammingMatch->targetId, matches[i + 1].targetId);
+                matches[i].redundancy = true;
+                matches[i + 1].redundancy = true;
+            }
+            i++;
+        }
+        taxCnt[minHammingMatch->targetId]++;
+    }
+
+    return BFS(taxonomy->getCladeCounts(taxCnt), speciesTaxIdList[matches[matchRange.first].targetId]);
+}
+
+TaxID Classifier::BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID root) {
+    if (cladeCnt.at(root).children.empty()) { // root is a leaf
+        return root;
+    }
+    unsigned int maxCnt = 0;
+    unsigned int currentCnt;
+    vector<TaxID> bestChildren;
+    for (auto it = cladeCnt.at(root).children.begin(); it != cladeCnt.at(root).children.end(); it++) {
+        currentCnt = cladeCnt.at(*it).cladeCount;
+        if (currentCnt > maxCnt) {
+            bestChildren.clear();
+            bestChildren.push_back(*it);
+            maxCnt = currentCnt;
+        } else if (currentCnt == maxCnt) {
+            bestChildren.push_back(*it);
+        }
+    }
+    if (bestChildren.size() == 1) {
+        return BFS(cladeCnt, bestChildren[0]);
+    } else {
+        return root;
     }
 }
 

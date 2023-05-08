@@ -238,7 +238,11 @@ protected:
                           int queryLength,
                           int queryLength2);
 
-    void checkRedundantMatches(vector<Match> &matches, pair<size_t, size_t> &matchRange);
+    static void checkRedundantMatches(vector<Match> &matches, pair<size_t, size_t> &matchRange);
+
+    TaxID lowerRankClassification(vector<Match> &matches, pair<size_t, size_t> &matchRange);
+
+    TaxID BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID root);
 
     template <typename T>
     static void loadBuffer(FILE * fp, T * buffer, size_t & bufferIdx, size_t size, int cnt){
