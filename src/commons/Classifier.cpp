@@ -1023,11 +1023,11 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
             return a.qInfo.position / 3 < b.qInfo.position / 3;
     });
 
-    checkRedundantMatches(genusMatches, speciesMatchRange[selectedSpecies]);
+//    checkRedundantMatches(genusMatches, speciesMatchRange[selectedSpecies]);
 
 
 
-    TaxID result = lowerRankClassification(genusMatches, speciesMatchRange[selectedSpecies]);
+    TaxID result = lowerRankClassification(genusMatches, speciesMatchRange[selectedSpecies], selectedSpecies);
 
     // Record matches of selected species
     for (size_t i = speciesMatchRange[selectedSpecies].first; i < speciesMatchRange[selectedSpecies].second; i++) {
@@ -1107,7 +1107,7 @@ void Classifier::checkRedundantMatches(vector<Match> &matches, pair<size_t, size
     }
 }
 
-TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<size_t, size_t> &matchRange) {
+TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<size_t, size_t> &matchRange, TaxID spTaxId) {
     size_t i = matchRange.first;
     unordered_map<TaxID, unsigned int> taxCnt;
     while (i + 1 < matchRange.second) {
@@ -1125,7 +1125,28 @@ TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<size_t, s
         taxCnt[minHammingMatch->targetId]++;
     }
 
-    return BFS(taxonomy->getCladeCounts(taxCnt), speciesTaxIdList[matches[matchRange.first].targetId]);
+    unordered_map<TaxID, TaxonCounts> cladeCnt;
+    getSpeciesCladeCounts(taxCnt, cladeCnt, spTaxId);
+
+    // Print clade counts
+
+
+    return BFS(cladeCnt, speciesTaxIdList[matches[matchRange.first].targetId]);
+}
+
+void Classifier::getSpeciesCladeCounts(const unordered_map<TaxID, unsigned int> &taxCnt,
+                                       unordered_map<TaxID, TaxonCounts> & cladeCount,
+                                       TaxID speciesTaxID) {
+    for (auto it = taxCnt.begin(); it != taxCnt.end(); ++it) {
+        cladeCount[it->first].taxCount = it->second;
+        cladeCount[it->first].cladeCount += it->second;
+        TaxonNode const * taxon = taxonomy->taxonNode(it->first);
+        while (taxon->taxId != speciesTaxID) {
+            taxon = taxonomy->taxonNode(taxon->parentTaxId);
+            cladeCount[taxon->taxId].cladeCount += it->second;
+            cladeCount[taxon->taxId].children.push_back(it->first);
+        }
+    }
 }
 
 TaxID Classifier::BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID root) {

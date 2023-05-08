@@ -240,7 +240,11 @@ protected:
 
     static void checkRedundantMatches(vector<Match> &matches, pair<size_t, size_t> &matchRange);
 
-    TaxID lowerRankClassification(vector<Match> &matches, pair<size_t, size_t> &matchRange);
+    TaxID lowerRankClassification(vector<Match> &matches, pair<size_t, size_t> &matchRange, TaxID speciesID);
+
+    void getSpeciesCladeCounts(const unordered_map<TaxID, unsigned int> & taxCnt,
+                               unordered_map<TaxID, TaxonCounts> & cladeCnt,
+                               TaxID spciesID);
 
     TaxID BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID root);
 
