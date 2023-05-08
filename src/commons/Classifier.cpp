@@ -1110,14 +1110,18 @@ void Classifier::checkRedundantMatches(vector<Match> &matches, pair<size_t, size
 TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<size_t, size_t> &matchRange, TaxID spTaxId) {
     size_t i = matchRange.first;
     unordered_map<TaxID, unsigned int> taxCnt;
-    while (i + 1 < matchRange.second) {
+    while (i < matchRange.second) {
         size_t currQuotient = matches[i].qInfo.position / 3;
         uint8_t minHamming = matches[i].hamming;
         Match * minHammingMatch = & matches[i];
-        while ( (i + 1 < matchRange.second) && (currQuotient == matches[i].qInfo.position / 3) ) {
-            if (minHamming == matches[i + 1].hamming) {
-//                minHammingMatch->targetId = taxonomy->LCA(taxIdList[minHammingMatch->targetId],
-//                                                          taxIdList[matches[i + 1].targetId]);
+        bool first = true;
+        while ( (i < matchRange.second) && (currQuotient == matches[i].qInfo.position / 3) ) {
+            if (first) {
+                first = false;
+                i++;
+                continue;
+            }
+            if (minHamming == matches[i].hamming) {
                 minHammingMatch->redundancy = true;
                 matches[i].redundancy = true;
                 matches[i + 1].redundancy = true;
@@ -1129,9 +1133,6 @@ TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<size_t, s
 
     unordered_map<TaxID, TaxonCounts> cladeCnt;
     getSpeciesCladeCounts(taxCnt, cladeCnt, spTaxId);
-
-    // Print clade counts
-
 
     return BFS(cladeCnt, speciesTaxIdList[matches[matchRange.first].targetId]);
 }
