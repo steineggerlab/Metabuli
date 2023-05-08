@@ -18,19 +18,15 @@ struct Match { // 16 byte
           int targetId,
           uint16_t eachHamming,
           uint8_t hamming,
-          bool redundancy,
-          int splitIdx = 0,
-          int targetSplitIdx = 0)
-            : qInfo(position, queryId, frame), targetId(targetId), rightEndHamming(eachHamming), hamming(hamming), redundancy(redundancy),
-            splitIdx(splitIdx), targetSplitIdx(targetSplitIdx) { }
+          bool redundancy):
+          qInfo(position, queryId, frame), targetId(targetId),
+          rightEndHamming(eachHamming), hamming(hamming), redundancy(redundancy) { }
 
     Match_qInfo qInfo; // 8
     int targetId; // 4
     uint16_t rightEndHamming; // 2
     uint8_t hamming; // 1
     bool redundancy; // 1
-    int splitIdx; // 4
-    int targetSplitIdx; // 4
 };
 
 
