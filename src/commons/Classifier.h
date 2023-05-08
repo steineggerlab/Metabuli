@@ -315,10 +315,10 @@ struct sortMatch {
     bool operator() (const Match & a, const Match & b) const {
         if (a.qInfo.queryId < b.qInfo.queryId) return true;
         else if (a.qInfo.queryId == b.qInfo.queryId) {
-            if (classifier->genusTaxIdList[a.targetId] < classifier->genusTaxIdList[b.targetId]) return true;
-            else if (classifier->genusTaxIdList[a.targetId] == classifier->genusTaxIdList[b.targetId]) {
-                if (classifier->speciesTaxIdList[a.targetId] < classifier->speciesTaxIdList[b.targetId]) return true;
-                else if (classifier->speciesTaxIdList[a.targetId] == classifier->speciesTaxIdList[b.targetId]) {
+            if (classifier->taxId2genusId.at(a.targetId) < classifier->taxId2genusId.at(b.targetId)) return true;
+            else if (classifier->taxId2genusId.at(a.targetId) == classifier->taxId2genusId.at(b.targetId)) {
+                if (classifier->taxId2speciesId.at(a.targetId) < classifier->taxId2speciesId.at(b.targetId)) return true;
+                else if (classifier->taxId2speciesId.at(a.targetId) == classifier->taxId2speciesId.at(b.targetId)) {
                     if (a.qInfo.frame < b.qInfo.frame) return true;
                     else if (a.qInfo.frame == b.qInfo.frame) {
                         if (a.qInfo.position < b.qInfo.position) return true;
@@ -327,7 +327,7 @@ struct sortMatch {
                             else if (a.hamming == b.hamming) {
                                 if (a.rightEndHamming < b.rightEndHamming) return true;
                                 else if (a.rightEndHamming == b.rightEndHamming) {
-                                    return classifier->taxIdList[a.targetId] < classifier->taxIdList[b.targetId];
+                                    return a.targetId < b.targetId;
                                 }
                             }
                         }
