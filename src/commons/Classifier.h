@@ -181,7 +181,7 @@ protected:
                          vector<Query> & queryList,
                          const LocalParameters &par);
 
-    void remainConsecutiveMatches(vector<const Match *> & curFrameMatches, vector<Match> & filteredMatches,
+    void remainConsecutiveMatches(vector<const Match *> & curFrameMatches, vector<const Match *> & filteredMatches,
                                   const LocalParameters & par);
 
     size_t DFS(size_t curMatchIdx, const map<size_t, vector<size_t>>& linkedMatches,
@@ -204,10 +204,10 @@ protected:
     TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
                                           int readLength1);
 
-    TaxonScore scoreGenus(vector<Match> &filteredMatches,
+    TaxonScore scoreGenus(vector<const Match *> &filteredMatches,
                           int queryLength);
 
-    TaxonScore scoreGenus(vector<Match> &filteredMatches,
+    TaxonScore scoreGenus(vector<const Match *> &filteredMatches,
                           int readLength1,
                           int readLength2);
 
@@ -218,23 +218,27 @@ protected:
 
     TaxonScore chooseSpecies(const std::vector<Match> &matches,
                        int queryLength,
-                       vector<TaxID> &species);
+                       vector<TaxID> &species,
+                       unordered_map<TaxID, pair<size_t, size_t>> & speciesMatchRange);
 
     TaxonScore chooseSpecies(const std::vector<Match> &matches,
                        int read1Length,
                        int read2Length,
-                       vector<TaxID> &species);
+                       vector<TaxID> &species,
+                       unordered_map<TaxID, pair<size_t, size_t>> & speciesMatchRange);
 
-    TaxonScore scoreTaxon(const vector<Match> &matches,
+    TaxonScore scoreSpecies(const vector<Match> &matches,
                           size_t begin,
                           size_t end,
                           int queryLength);
 
-    TaxonScore scoreTaxon(const vector<Match> &matches,
+    TaxonScore scoreSpecies(const vector<Match> &matches,
                           size_t begin,
                           size_t end,
                           int queryLength,
                           int queryLength2);
+
+    void checkRedundantMatches(vector<Match> &matches, pair<size_t, size_t> &matchRange);
 
     template <typename T>
     static void loadBuffer(FILE * fp, T * buffer, size_t & bufferIdx, size_t size, int cnt){
