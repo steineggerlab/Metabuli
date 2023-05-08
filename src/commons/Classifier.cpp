@@ -1124,7 +1124,6 @@ TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<size_t, s
             if (minHamming == matches[i].hamming) {
                 minHammingMatch->redundancy = true;
                 matches[i].redundancy = true;
-//                matches[i + 1].redundancy = true;
             }
             i++;
         }
@@ -1145,9 +1144,13 @@ void Classifier::getSpeciesCladeCounts(const unordered_map<TaxID, unsigned int> 
         cladeCount[it->first].cladeCount += it->second;
         TaxonNode const * taxon = taxonomy->taxonNode(it->first);
         while (taxon->taxId != speciesTaxID) {
+            if (find(cladeCount[taxon->parentTaxId].children.begin(),
+                     cladeCount[taxon->parentTaxId].children.end(),
+                     taxon->taxId) == cladeCount[taxon->parentTaxId].children.end()) {
+                cladeCount[taxon->parentTaxId].children.push_back(taxon->taxId);
+            }
+            cladeCount[taxon->parentTaxId].cladeCount += it->second;
             taxon = taxonomy->taxonNode(taxon->parentTaxId);
-            cladeCount[taxon->taxId].cladeCount += it->second;
-            cladeCount[taxon->taxId].children.push_back(it->first);
         }
     }
 }
