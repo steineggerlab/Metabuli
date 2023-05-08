@@ -1116,13 +1116,15 @@ TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<size_t, s
         Match * minHammingMatch = & matches[i];
         while ( (i + 1 < matchRange.second) && (currQuotient == matches[i].qInfo.position / 3) ) {
             if (minHamming == matches[i + 1].hamming) {
-                minHammingMatch->targetId = taxonomy->LCA(minHammingMatch->targetId, matches[i + 1].targetId);
+//                minHammingMatch->targetId = taxonomy->LCA(taxIdList[minHammingMatch->targetId],
+//                                                          taxIdList[matches[i + 1].targetId]);
+                minHammingMatch->redundancy = true;
                 matches[i].redundancy = true;
                 matches[i + 1].redundancy = true;
             }
             i++;
         }
-        taxCnt[minHammingMatch->targetId]++;
+        taxCnt[spORssp[minHammingMatch->redundancy]->operator[](minHammingMatch->targetId)] ++;
     }
 
     unordered_map<TaxID, TaxonCounts> cladeCnt;
