@@ -311,14 +311,14 @@ public:
 };
 
 struct sortMatch {
-    sortMatch(const Classifier * classifier) : classifier(classifier) {}
+    sortMatch(Classifier * classifier) : classifier(classifier) {}
     bool operator() (const Match & a, const Match & b) const {
         if (a.qInfo.queryId < b.qInfo.queryId) return true;
         else if (a.qInfo.queryId == b.qInfo.queryId) {
-            if (classifier->taxId2genusId.at(a.targetId) < classifier->taxId2genusId.at(b.targetId)) return true;
-            else if (classifier->taxId2genusId.at(a.targetId) == classifier->taxId2genusId.at(b.targetId)) {
-                if (classifier->taxId2speciesId.at(a.targetId) < classifier->taxId2speciesId.at(b.targetId)) return true;
-                else if (classifier->taxId2speciesId.at(a.targetId) == classifier->taxId2speciesId.at(b.targetId)) {
+            if (classifier->taxId2genusId[a.targetId] < classifier->taxId2genusId[b.targetId]) return true;
+            else if (classifier->taxId2genusId[a.targetId] == classifier->taxId2genusId[b.targetId]) {
+                if (classifier->taxId2speciesId[a.targetId] < classifier->taxId2speciesId[b.targetId]) return true;
+                else if (classifier->taxId2speciesId[a.targetId] == classifier->taxId2speciesId[b.targetId]) {
                     if (a.qInfo.frame < b.qInfo.frame) return true;
                     else if (a.qInfo.frame == b.qInfo.frame) {
                         if (a.qInfo.position < b.qInfo.position) return true;
@@ -337,7 +337,7 @@ struct sortMatch {
         }
         return false;
     }
-    const Classifier *  classifier;
+    Classifier *  classifier;
 };
 
 inline uint8_t Classifier::getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2) {//12345678
