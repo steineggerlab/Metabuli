@@ -15,27 +15,6 @@ IndexCreator::IndexCreator(const LocalParameters & par)
                                 taxonomyDir + "/nodes.dmp",
                                 taxonomyDir + "/merged.dmp");
 
-
-    // ==== To re-use prodigal training data if possible ==== //
-    if (par.tinfoPath != ""){
-        tinfo_path = par.tinfoPath;
-        tinfo_list = tinfo_path + "/tinfo.list";
-    } else {
-        tinfo_path = par.filenames[1] + "/tinfo/";
-        tinfo_list = tinfo_path + "tinfo.list";
-    }
-    // Load trained species list
-    if (FILE * tinfoList = fopen(tinfo_list.c_str(), "r")){
-        char buffer[512];
-        TaxID taxid;
-        while(feof(tinfoList) == 0)
-        {
-            fscanf(tinfoList,"%s",buffer);
-            trainedSpecies.push_back(atol(buffer));
-        }
-        trainedSpecies.pop_back();
-        fclose(tinfoList);
-    }
     // ======================================================= //
 
     if (par.reducedAA == 1){
@@ -47,9 +26,7 @@ IndexCreator::IndexCreator(const LocalParameters & par)
     }
 
     // For masking low complexity regions
-    cout << "here" << par.scoringMatrixFile.values.nucleotide().c_str() << endl;
     subMat = new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0);
-
 }
 
 IndexCreator::IndexCreator(const LocalParameters &par, string dbDir, string fnaListFileName, string acc2taxidFile)
@@ -71,9 +48,7 @@ IndexCreator::IndexCreator(const LocalParameters &par, string dbDir, string fnaL
     tinfo_path = par.tinfoPath;
 
     // For masking low complexity regions
-    cout << "here" << par.scoringMatrixFile.values.nucleotide().c_str() << endl;
     subMat = new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0);
-
 }
 
 IndexCreator::~IndexCreator() {
@@ -638,98 +613,6 @@ void IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, c
     }
     seqFile.close();
 }
-
-//void IndexCreator::groupFastaFiles(const vector<TaxId2Fasta> & taxIdListAtRank, vector<FastaSplit> & fastaSplit){
-//    size_t i = 0;
-//    size_t training = 0;
-//    uint32_t offset = 0;
-//    uint32_t splitSize = 0;
-//    while(i < taxIdListAtRank.size()){
-//        TaxID currentSpecies = taxIdListAtRank[i].species;
-//        training = i;
-//        offset = i;
-//        splitSize = 0;
-//        while(currentSpecies == taxIdListAtRank[i].species && i < taxIdListAtRank.size() && splitSize < 30){
-//            splitSize ++;
-//            i++;
-//        }
-//        fastaSplit.emplace_back(training, offset, splitSize, currentSpecies);
-//    }
-//    for(auto x : fastaSplit){
-//        cout<<x.training<<" "<<x.offset<<" "<<x.cnt<<endl;
-//    }
-//}
-//void IndexCreator::splitAFastaFile(const vector<int> & speciesTaxIDs,
-//                                   vector<FastaSplit> & fastaSplit, // Each split is processed by a thread
-//                                   vector<Sequence> & seqSegments // Start and end position of each sequence
-//                                   ){
-//    size_t training = 0;
-//    size_t idx = 0;
-//    uint32_t offset = 0;
-//    uint32_t cnt = 0;
-//    int currSpecies;
-//    unordered_map<TaxID, size_t> species2training;
-//    unordered_map<TaxID, int> maxLenOfSpecies;
-//
-//    while(idx < speciesTaxIDs.size()){
-//        offset = idx;
-//        cnt = 0;
-//        currSpecies = speciesTaxIDs[idx];
-//        if(currSpecies == 0) {
-//            idx++;
-//            continue;
-//        }
-//        if(maxLenOfSpecies.find(currSpecies) == maxLenOfSpecies.end()){ // First time to see this species
-//            maxLenOfSpecies[currSpecies] = 0;
-//        }
-//        while(idx < speciesTaxIDs.size() && currSpecies == speciesTaxIDs[idx] ){
-//            if(seqSegments[idx].length > maxLenOfSpecies[currSpecies]){ // Find the longest sequence of this species to be the training sequence
-//                maxLenOfSpecies[currSpecies] = seqSegments[idx].length;
-//                species2training[currSpecies] = idx;
-//            }
-//            cnt ++;
-//            if(cnt > 30){
-//                fastaSplit.emplace_back(0, offset, cnt - 1, currSpecies);
-//                offset += cnt - 1;
-//                cnt = 1;
-//            }
-//            idx ++;
-//        }
-//        fastaSplit.emplace_back(0, offset, cnt, currSpecies);
-//    }
-//
-//    // Update the training sequence
-//    for(auto & x : fastaSplit){
-//        x.training = species2training[x.taxid];
-//    }
-//}
-
-//void IndexCreator::mappingFromTaxIDtoFasta(const string & fastaList_fname,
-//                             unordered_map<string, int> & assacc2taxid,
-//                             vector<TaxId2Fasta> & taxid2fasta,
-//                             NcbiTaxonomy & taxonomy){
-//    ifstream fastaList;
-//    fastaList.open(fastaList_fname);
-//    string fileName;
-//    smatch assacc;
-//    int taxId;
-//    regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
-//    if(fastaList.is_open()){
-//        cout<<"Writing taxID to fileName mapping file"<<endl;
-//        while(getline(fastaList,fileName,'\n')) {
-//            regex_search(fileName, assacc, regex1);
-//            if (assacc2taxid.count(assacc[0].str())) {
-//                taxId = assacc2taxid[assacc[0].str()];
-//                taxid2fasta.emplace_back(taxonomy.getTaxIdAtRank(taxId,"species"), taxId, fileName);
-//            } else{
-//                cout<<assacc[0].str()<<" is excluded in creating target DB because it is not mapped to taxonomical ID"<<endl;
-//            }
-//        }
-//    }
-//
-//    // Sort by species tax id
-//    sort(taxid2fasta.begin(), taxid2fasta.end(), [](TaxId2Fasta & a, TaxId2Fasta & b){return a.species < b.species;});
-//}
 
 void IndexCreator::load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid){
     string key, value;

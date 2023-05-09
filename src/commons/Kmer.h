@@ -19,9 +19,9 @@ typedef struct QueryKmer {
 
 
 struct TargetKmerInfo{
-    explicit TargetKmerInfo(uint32_t seqID = 0, bool redundancy = false) : sequenceID(seqID), redundancy(redundancy) {}
-    uint32_t sequenceID : 31;
-    uint32_t redundancy : 1;
+    explicit TargetKmerInfo(int seqID = 0, bool redundancy = false) : sequenceID(seqID), redundancy(redundancy) {}
+    int sequenceID : 31;
+    int redundancy : 1;
     bool operator == (const TargetKmerInfo & info) const{
         return (sequenceID == info.sequenceID && this->redundancy==info.redundancy);
     }
@@ -29,7 +29,7 @@ struct TargetKmerInfo{
 
 struct TargetKmer{
     TargetKmer(): info(0, false), taxIdAtRank(0), ADkmer(0)  { };
-    TargetKmer(uint64_t ADkmer, TaxID taxIdAtRank, uint32_t seqID, bool redundacy)
+    TargetKmer(uint64_t ADkmer, TaxID taxIdAtRank, int seqID, bool redundacy)
         : info(seqID, redundacy), taxIdAtRank(taxIdAtRank), ADkmer(ADkmer) {}
     TargetKmerInfo info; // 4 byte
     TaxID taxIdAtRank; // 4 byte
