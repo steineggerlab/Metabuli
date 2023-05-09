@@ -496,102 +496,6 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
     delete[] cntOfEachSplit;
 }
 
-//void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniqeKmerIdx, size_t & uniqueKmerCnt, const LocalParameters & par,
-//                                    const vector<TaxId2Fasta> & taxid2fasta){
-//
-//    // Find the first index of garbage k-mer (UINT64_MAX)
-//    for(size_t checkN = kmerBuffer.startIndexOfReserve - 1; checkN >= 0; checkN--){
-//        if(kmerBuffer.buffer[checkN].ADkmer != UINT64_MAX){
-//            kmerBuffer.startIndexOfReserve = checkN + 1;
-//            break;
-//        }
-//    }
-//
-//    // Find the first index of meaningful k-mer
-//    size_t startIdx = 0;
-//    for(size_t i = 0; i < kmerBuffer.startIndexOfReserve ; i++){
-//        if(kmerBuffer.buffer[i].taxIdAtRank != 0){
-//            startIdx = i;
-//            break;
-//        }
-//    }
-//
-//    // Make splits
-//    vector<Split> splits;
-//    size_t splitWidth = (kmerBuffer.startIndexOfReserve - startIdx) / par.threads;
-//    for (size_t i = 0; i < par.threads - 1; i++) {
-//        for (size_t j = startIdx + splitWidth; j + 1 < kmerBuffer.startIndexOfReserve; j++) {
-//            if (kmerBuffer.buffer[j].taxIdAtRank != kmerBuffer.buffer[j + 1].taxIdAtRank) {
-//                splits.emplace_back(startIdx, j);
-//                startIdx = j + 1;
-//                break;
-//            }
-//        }
-//    }
-//    splits.emplace_back(startIdx, kmerBuffer.startIndexOfReserve - 1);
-//
-//    //
-//    size_t ** idxOfEachSplit = new size_t * [splits.size()];
-//    size_t * cntOfEachSplit = new size_t[splits.size()];
-//    for(size_t i = 0; i < splits.size(); i++){
-//        idxOfEachSplit[i] = new size_t[splits[i].end - splits[i].offset + 2];
-//        cntOfEachSplit[i] = 0;
-//    }
-//#pragma omp parallel default(none), shared(kmerBuffer, taxid2fasta, idxOfEachSplit, cntOfEachSplit, splits)
-//    {
-//        TargetKmer * lookingKmer;
-//        size_t lookingIndex;
-//        int endFlag;
-//        int hasSeenOtherStrains;
-//#pragma omp for schedule(dynamic, 1)
-//        for(size_t split = 0; split < splits.size(); split ++){
-//            lookingKmer = & kmerBuffer.buffer[splits[split].offset];
-//            lookingIndex = splits[split].offset;
-//            endFlag = 0;
-//            for(size_t i = 1 + splits[split].offset; i < splits[split].end + 1 ; i++) {
-//                hasSeenOtherStrains = 0;
-//                while(lookingKmer->taxIdAtRank == kmerBuffer.buffer[i].taxIdAtRank){
-//                    if (lookingKmer->ADkmer != kmerBuffer.buffer[i].ADkmer) {
-//                        break;
-//                    }
-//                    hasSeenOtherStrains += (taxid2fasta[lookingKmer->info.sequenceID].taxid
-//                            != taxid2fasta[kmerBuffer.buffer[i].info.sequenceID].taxid);
-//                    i++;
-//                    if(i == splits[split].end + 1){
-//                        endFlag = 1;
-//                        break;
-//                    }
-//                }
-//
-//                lookingKmer->info.redundancy = (hasSeenOtherStrains > 0);
-//                idxOfEachSplit[split][cntOfEachSplit[split]] = lookingIndex;
-//                cntOfEachSplit[split] ++;
-//                if(endFlag == 1) break;
-//                lookingKmer = & kmerBuffer.buffer[i];
-//                lookingIndex = i;
-//            }
-//
-//            //For the end part
-//            if(!((kmerBuffer.buffer[splits[split].end - 1].ADkmer == kmerBuffer.buffer[splits[split].end].ADkmer) &&
-//                 (kmerBuffer.buffer[splits[split].end - 1].taxIdAtRank == kmerBuffer.buffer[splits[split].end].taxIdAtRank))){
-//                idxOfEachSplit[split][cntOfEachSplit[split]] = splits[split].end;
-//                cntOfEachSplit[split] ++;
-//            }
-//        }
-//    }
-//
-//    // Merge
-//    for(size_t i = 0; i < splits.size(); i++){
-//        memcpy(uniqeKmerIdx + uniqueKmerCnt, idxOfEachSplit[i], cntOfEachSplit[i] * sizeof(size_t));
-//        uniqueKmerCnt += cntOfEachSplit[i];
-//    }
-//
-//    for(size_t i = 0; i < splits.size(); i++){
-//        delete[] idxOfEachSplit[i];
-//    }
-//    delete[] cntOfEachSplit;
-//}
-
 void IndexCreator::getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx ){
     uint64_t kmerdiff = entryToWrite - lastKmer;
     uint16_t buffer[5];
@@ -947,8 +851,13 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                                              prodigal.fng, strlen(seq->seq.s),
                                                         orfNum, intergenicKmers, seq->seq.s);
                             // Get masked sequence
-                            char * maskedSeq = new char[seq->seq.l + 1];
-                            maskLowComplexityRegions(seq->seq.s, maskedSeq, probMatrix, par);
+                            char *maskedSeq = nullptr;
+                            if (par.maskMode) {
+                                maskedSeq = new char[seq->seq.l + 1];
+                                maskLowComplexityRegions(seq->seq.s, maskedSeq, probMatrix, par);
+                            } else {
+                                maskedSeq = seq->seq.s;
+                            }
 
                             // Get k-mers from extended ORFs
                             for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
@@ -972,8 +881,13 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                                         orfNum, intergenicKmers, reverseCompliment);
 
                             // Get masked sequence
-                            char * maskedSeq = new char[seq->seq.l + 1];
-                            maskLowComplexityRegions(reverseCompliment, maskedSeq, probMatrix, par);
+                            char *maskedSeq = nullptr;
+                            if (par.maskMode) {
+                                maskedSeq = new char[seq->seq.l + 1];
+                                maskLowComplexityRegions(reverseCompliment, maskedSeq, probMatrix, par);
+                            } else {
+                                maskedSeq = reverseCompliment;
+                            }
 
                             for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
                                 seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt]);

@@ -10,6 +10,7 @@ void setDefaults_build(LocalParameters & par){
     par.taxonomyPath = "" ;
     par.splitNum = 4096;
     par.maskProb = 0.5;
+    par.maskMode = 0;
 }
 
 int build(int argc, const char **argv, const Command &command){

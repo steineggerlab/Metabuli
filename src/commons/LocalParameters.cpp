@@ -212,6 +212,7 @@ LocalParameters::LocalParameters() :
     build.push_back(&TINFO_PATH);
     build.push_back(&SPLIT_NUM);
     build.push_back(&PARAM_MASK_PROBABILTY);
+    build.push_back(&PARAM_MASK_RESIDUES);
 
 
     //classify
