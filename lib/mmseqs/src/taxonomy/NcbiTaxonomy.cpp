@@ -290,7 +290,7 @@ TaxID NcbiTaxonomy::LCA(TaxID taxonA, TaxID taxonB) const {
 TaxonNode const * NcbiTaxonomy::LCA(const std::vector<TaxID>& taxa) const {
     std::vector<int>::const_iterator it = taxa.begin();
     while (it != taxa.end() && !nodeExists(*it)) {
-        Debug(Debug::WARNING) << "No node for taxID " << *it << ", ignoring it.\n";
+        Debug(Debug::WARNING) << "No node for tax ID " << *it << ", ignoring it.\n";
         ++it;
     }
     if (it == taxa.end()) { return NULL; }
