@@ -869,7 +869,9 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                     cout << "ERROR: Buffer overflow " << seq->name.s << seq->seq.l << endl;
                                 }
                             }
-                            delete[] maskedSeq;
+                            if (par.maskMode) {
+                                delete[] maskedSeq;
+                            }
                         } else { // Reverse complement
                             reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, seq->seq.l);
 
@@ -899,7 +901,9 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                 }
                             }
                             free(reverseCompliment);
-                            delete[] maskedSeq;
+                            if (par.maskMode) {
+                                delete[] maskedSeq;
+                            }
                         }
                         cout << "Processed " << seq->name.s << endl;
                         kseq_destroy(seq);
