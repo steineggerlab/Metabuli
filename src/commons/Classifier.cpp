@@ -71,9 +71,16 @@ Classifier::Classifier(LocalParameters & par) {
     {
         fscanf(taxIdFile,"%s",taxID);
         TaxID taxId = atol(taxID);
-        taxId2speciesId[taxId] = taxonomy->getTaxIdAtRank(taxId, "species");
-        taxId2genusId[taxId] = taxonomy->getTaxIdAtRank(taxId, "genus");
-//        this->taxIdList.push_back(atol(taxID));
+        TaxonNode const * taxon = taxonomy->taxonNode(taxId);
+        TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
+        TaxID genusTaxID = taxonomy->getTaxIdAtRank(taxId, "genus");
+        while (taxon->taxId != speciesTaxID) {
+            taxId2speciesId[taxon->taxId] = speciesTaxID;
+            taxId2genusId[taxon->taxId] = genusTaxID;
+            taxon = taxonomy->taxonNode(taxon->parentTaxId);
+        }
+        taxId2speciesId[speciesTaxID] = speciesTaxID;
+        taxId2genusId[speciesTaxID] = genusTaxID;
     }
     fclose(taxIdFile);
 //    taxonomy->createTaxIdListAtRank(this->taxIdList, speciesTaxIdList, "species");
@@ -1024,10 +1031,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         else
             return a.qInfo.position / 3 < b.qInfo.position / 3;
     });
-
-//    checkRedundantMatches(genusMatches, speciesMatchRange[selectedSpecies]);
-
-
 
     TaxID result = lowerRankClassification(genusMatches, speciesMatchRange[selectedSpecies], selectedSpecies);
 

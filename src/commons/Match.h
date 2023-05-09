@@ -23,7 +23,7 @@ struct Match { // 16 byte
           rightEndHamming(eachHamming), hamming(hamming), redundancy(redundancy) { }
 
     Match_qInfo qInfo; // 8
-    int targetId; // 4
+    TaxID targetId; // 4
     uint16_t rightEndHamming; // 2
     uint8_t hamming; // 1
     bool redundancy; // 1
