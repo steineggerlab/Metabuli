@@ -71,22 +71,21 @@ Classifier::Classifier(LocalParameters & par) {
     {
         fscanf(taxIdFile,"%s",taxID);
         TaxID taxId = atol(taxID);
-        TaxonNode const * taxon = taxonomy->taxonNode(taxId);
-        TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
-        TaxID genusTaxID = taxonomy->getTaxIdAtRank(taxId, "genus");
-        while (taxon->taxId != speciesTaxID) {
-            taxId2speciesId[taxon->taxId] = speciesTaxID;
-            taxId2genusId[taxon->taxId] = genusTaxID;
-            taxon = taxonomy->taxonNode(taxon->parentTaxId);
-        }
-        taxId2speciesId[speciesTaxID] = speciesTaxID;
-        taxId2genusId[speciesTaxID] = genusTaxID;
+//        TaxonNode const * taxon = taxonomy->taxonNode(taxId);
+//        TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
+//        TaxID genusTaxID = taxonomy->getTaxIdAtRank(taxId, "genus");
+//        while (taxon->taxId != speciesTaxID) {
+//            taxId2speciesId[taxon->taxId] = speciesTaxID;
+//            taxId2genusId[taxon->taxId] = genusTaxID;
+//            taxon = taxonomy->taxonNode(taxon->parentTaxId);
+//        }
+//        taxId2speciesId[speciesTaxID] = speciesTaxID;
+//        taxId2genusId[speciesTaxID] = genusTaxID;
+
+        taxId2speciesId[taxId] = taxonomy->getTaxIdAtRank(taxId, "species");
+        taxId2genusId[taxId] = taxonomy->getTaxIdAtRank(taxId, "genus");
     }
     fclose(taxIdFile);
-//    taxonomy->createTaxIdListAtRank(this->taxIdList, speciesTaxIdList, "species");
-//    taxonomy->createTaxIdListAtRank(speciesTaxIdList, genusTaxIdList, "genus");
-//    spORssp.push_back(&this->taxIdList);
-//    spORssp.push_back(&this->speciesTaxIdList);
 
 //    localIndexBufferSize =  16 * 1024 * 1024;
 //    localMatchBufferSize = 2 * 1024 * 1024;
