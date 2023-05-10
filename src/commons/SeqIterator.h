@@ -68,7 +68,7 @@ public:
 
     string reverseCompliment(string &read) const;
 
-    char *reverseCompliment(char *read, int length) const;
+    char *reverseCompliment(char *read, size_t length) const;
 
     void sixFrameTranslation(const char *seq);
 

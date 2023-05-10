@@ -419,9 +419,9 @@ string SeqIterator::reverseCompliment(string &read) const {
     return out;
 }
 
-char *SeqIterator::reverseCompliment(char *read, int length) const {
+char *SeqIterator::reverseCompliment(char *read, size_t length) const {
     char *revCom = (char *) malloc(sizeof(char) * (length + 1));
-    for (int i = 0; i < length; i++) {
+    for (size_t i = 0; i < length; i++) {
         revCom[length - i - 1] = iRCT[read[i]];
     }
     revCom[length] = '\0';

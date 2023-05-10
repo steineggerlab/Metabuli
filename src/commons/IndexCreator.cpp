@@ -595,7 +595,7 @@ string IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
         cerr << "Unable to open file: " << seqFileName << endl;
     }
     seqFile.close();
-    seqSegments = move(seqSegmentsTmp);
+    seqSegments = std::move(seqSegmentsTmp);
     return firstLine;
 }
 
@@ -730,7 +730,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
 
-                        cout << "Processing " << seq->name.s << "\t" << strlen(seq->seq.s) << endl;
+                        cout << "Processing " << seq->name.s << "\t" << seq->seq.l << endl;
                         currentList = priority_queue<uint64_t>();
                         seqIterator.getMinHashList(currentList, seq->seq.s);
                         orfNum = 0;
@@ -756,9 +756,13 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                             // Get k-mers from extended ORFs
                             for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
                                 seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt]);
-                                tempCheck = seqIterator.fillBufferWithKmerFromBlock(extendedORFs[orfCnt], maskedSeq, kmerBuffer, posToWrite,
-                                                                        processedSeqCnt[fnaSplits[i].file_idx] + fnaSplits[i].offset + s_cnt,
-                                                                        fnaSplits[i].speciesID);
+                                tempCheck = seqIterator.fillBufferWithKmerFromBlock(
+                                        extendedORFs[orfCnt],
+                                        maskedSeq,
+                                        kmerBuffer,
+                                        posToWrite,
+                                        int(processedSeqCnt[fnaSplits[i].file_idx] + fnaSplits[i].offset + s_cnt),
+                                        fnaSplits[i].speciesID);
                                 if (tempCheck == -1) {
                                     cout << "ERROR: Buffer overflow " << seq->name.s << seq->seq.l << endl;
                                 }
@@ -787,9 +791,13 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
 
                             for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
                                 seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt]);
-                                tempCheck = seqIterator.fillBufferWithKmerFromBlock(extendedORFs[orfCnt], maskedSeq, kmerBuffer,
-                                                                        posToWrite, processedSeqCnt[fnaSplits[i].file_idx] + fnaSplits[i].offset + s_cnt,
-                                                                        fnaSplits[i].speciesID);
+                                tempCheck = seqIterator.fillBufferWithKmerFromBlock(
+                                        extendedORFs[orfCnt],
+                                        maskedSeq,
+                                        kmerBuffer,
+                                        posToWrite,
+                                        int(processedSeqCnt[fnaSplits[i].file_idx] + fnaSplits[i].offset + s_cnt),
+                                        fnaSplits[i].speciesID);
                                 if (tempCheck == -1) {
                                     cout << "ERROR: Buffer overflow " << seq->name.s << seq->seq.l << endl;
                                 }
@@ -799,7 +807,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                 delete[] maskedSeq;
                             }
                         }
-                        cout << "Processed " << seq->name.s << endl;
+                        cout << "Processed " << seq->name.s << " " << seq->seq.l << endl;
+                        for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
+                            extendedORFs[orfCnt].printPredictedBlock();
+                        }
                         kseq_destroy(seq);
                     }
                     __sync_fetch_and_add(&processedSplitCnt, 1);
