@@ -807,10 +807,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                 delete[] maskedSeq;
                             }
                         }
-                        cout << "Processed " << seq->name.s << " " << seq->seq.l << "\t" << posToWrite << endl;
-                        for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
-                            extendedORFs[orfCnt].printPredictedBlock();
-                        }
                         kseq_destroy(seq);
                     }
                     __sync_fetch_and_add(&processedSplitCnt, 1);
