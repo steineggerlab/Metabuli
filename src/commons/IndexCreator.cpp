@@ -680,7 +680,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                 for (size_t p = 0; p < fnaSplits[i].cnt; p++) {
                     totalLength += fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].offset + p].length;
                 }
-                size_t estimatedKmerCnt = totalLength / 3;
+                size_t estimatedKmerCnt = (totalLength + totalLength / 1000) / 3;
 
                 // Process current split if buffer has enough space.
                 posToWrite = kmerBuffer.reserveMemory(estimatedKmerCnt);
