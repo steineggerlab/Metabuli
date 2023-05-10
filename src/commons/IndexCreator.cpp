@@ -463,6 +463,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
             //For the end part
             if(!((kmerBuffer.buffer[splits[split].end - 1].ADkmer == kmerBuffer.buffer[splits[split].end].ADkmer) &&
                  (kmerBuffer.buffer[splits[split].end - 1].taxIdAtRank == kmerBuffer.buffer[splits[split].end].taxIdAtRank))){
+                kmerBuffer.buffer[splits[split].end].info.sequenceID = taxIdList[kmerBuffer.buffer[splits[split].end].info.sequenceID];
                 idxOfEachSplit[split][cntOfEachSplit[split]] = splits[split].end;
                 cntOfEachSplit[split] ++;
             }
