@@ -88,14 +88,21 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     omp_set_num_threads(par.threads);
 #endif
     while(processedSplitCnt < numOfSplits){ // Check this condition
+        // Initialize the k-mer buffer
+        memset(kmerBuffer.buffer, 0, kmerBuffer.bufferSize * sizeof(TargetKmer));
+
+        // Extract Target k-mers
         fillTargetKmerBuffer(kmerBuffer, splitChecker, processedSplitCnt, par);
         time_t start = time(nullptr);
+
+        // Sort the k-mers
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
                       IndexCreator::compareForDiffIdx);
         time_t sort = time(nullptr);
         cout << "Sort time: " << sort - start << endl;
         auto * uniqKmerIdx = new size_t[kmerBuffer.startIndexOfReserve + 1];
         size_t uniqKmerCnt = 0;
+
         reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt, par);
         time_t reduction = time(nullptr);
         cout<<"Time spent for reducing redundancy: "<<(double) (reduction - sort) << endl;
@@ -139,7 +146,7 @@ void IndexCreator::updateIndex(const LocalParameters &par) {
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
 #endif
-    while(processedSplitCnt < numOfSplits){ // Check this condition
+    while(processedSplitCnt < numOfSplits){
         fillTargetKmerBuffer(kmerBuffer, splitChecker, processedSplitCnt, par);
         time_t start = time(nullptr);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
@@ -379,6 +386,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
     }
 
     // Find the first index of meaningful k-mer
+    //
     size_t startIdx = 0;
     for(size_t i = 0; i < kmerBuffer.startIndexOfReserve ; i++){
         if(kmerBuffer.buffer[i].taxIdAtRank != 0){
