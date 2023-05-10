@@ -387,6 +387,8 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
         }
     }
 
+    cout << "startIdx: " << startIdx << endl;
+
     // Make splits
     vector<Split> splits;
     size_t splitWidth = (kmerBuffer.startIndexOfReserve - startIdx) / par.threads;
