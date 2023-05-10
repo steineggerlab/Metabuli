@@ -693,7 +693,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
                     lengthOfTrainingSeq = seq->seq.l;
-                    cout << "T: " << seq->name.s << " " << lengthOfTrainingSeq << endl;
+                    cout << "T: " << seq->name.s << " " << lengthOfTrainingSeq << " " << estimatedKmerCnt << endl;
 
                     // Train prodigal.
                     prodigal.is_meta = 0;
@@ -730,7 +730,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                         seq = kseq_init(&buffer);
                         kseq_read(seq);
 
-                        cout << "Processing " << seq->name.s << "\t" << seq->seq.l << endl;
+                        cout << "Processing " << seq->name.s << "\t" << seq->seq.l << "\t" << posToWrite << endl;
                         currentList = priority_queue<uint64_t>();
                         seqIterator.getMinHashList(currentList, seq->seq.s);
                         orfNum = 0;
@@ -807,7 +807,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                 delete[] maskedSeq;
                             }
                         }
-                        cout << "Processed " << seq->name.s << " " << seq->seq.l << endl;
+                        cout << "Processed " << seq->name.s << " " << seq->seq.l << "\t" << posToWrite << endl;
                         for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
                             extendedORFs[orfCnt].printPredictedBlock();
                         }
