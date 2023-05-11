@@ -16,14 +16,18 @@ struct Match { // 16 byte
           uint32_t position,
           uint8_t frame,
           int targetId,
+          TaxID genusId,
+          TaxID speciesId,
           uint16_t eachHamming,
           uint8_t hamming,
           bool redundancy):
-          qInfo(position, queryId, frame), targetId(targetId),
+          qInfo(position, queryId, frame), targetId(targetId), genusId(genusId), speciesId(speciesId),
           rightEndHamming(eachHamming), hamming(hamming), redundancy(redundancy) { }
 
     Match_qInfo qInfo; // 8
     TaxID targetId; // 4
+    TaxID genusId;
+    TaxID speciesId;
     uint16_t rightEndHamming; // 2
     uint8_t hamming; // 1
     bool redundancy; // 1

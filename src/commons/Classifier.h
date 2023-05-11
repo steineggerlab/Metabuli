@@ -311,25 +311,26 @@ public:
 };
 
 struct sortMatch {
-    sortMatch(Classifier * classifier) : classifier(classifier) {}
+    sortMatch(const Classifier * classifier) : classifier(classifier) {}
     bool operator() (const Match & a, const Match & b) const {
         if (a.qInfo.queryId < b.qInfo.queryId) return true;
         else if (a.qInfo.queryId == b.qInfo.queryId) {
-            if (classifier->taxId2genusId[a.targetId] < classifier->taxId2genusId[b.targetId]) return true;
-            else if (classifier->taxId2genusId[a.targetId] == classifier->taxId2genusId[b.targetId]) {
-                if (classifier->taxId2speciesId[a.targetId] < classifier->taxId2speciesId[b.targetId]) return true;
-                else if (classifier->taxId2speciesId[a.targetId] == classifier->taxId2speciesId[b.targetId]) {
+            if (a.genusId < b.genusId) return true;
+            else if (a.genusId == b.genusId) {
+                if (a.speciesId < b.speciesId) return true;
+                else if (a.speciesId == b.speciesId) {
                     if (a.qInfo.frame < b.qInfo.frame) return true;
                     else if (a.qInfo.frame == b.qInfo.frame) {
                         if (a.qInfo.position < b.qInfo.position) return true;
                         else if (a.qInfo.position == b.qInfo.position) {
-                            if (a.hamming < b.hamming) return true;
-                            else if (a.hamming == b.hamming) {
-                                if (a.rightEndHamming < b.rightEndHamming) return true;
-                                else if (a.rightEndHamming == b.rightEndHamming) {
-                                    return a.targetId < b.targetId;
-                                }
-                            }
+                            return a.hamming < b.hamming;
+//                            if (a.hamming < b.hamming) return true;
+//                            else if (a.hamming == b.hamming) {
+//                                if (a.rightEndHamming < b.rightEndHamming) return true;
+//                                else if (a.rightEndHamming == b.rightEndHamming) {
+//                                    return a.targetId < b.targetId;
+//                                }
+//                            }
                         }
                     }
                 }
@@ -337,7 +338,7 @@ struct sortMatch {
         }
         return false;
     }
-    Classifier *  classifier;
+    const Classifier *  classifier;
 };
 
 inline uint8_t Classifier::getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2) {//12345678

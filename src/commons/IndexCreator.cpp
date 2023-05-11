@@ -64,10 +64,10 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     cout << "Made blocks for each thread" << endl;
 
     // Train Prodigal for each species
-    time_t prodigalStart = time(nullptr);
+//    time_t prodigalStart = time(nullptr);
 //    trainProdigal();
-    time_t prodigalEnd = time(nullptr);
-    cout << "Prodigal training time: " << prodigalEnd - prodigalStart << " seconds" << endl;
+//    time_t prodigalEnd = time(nullptr);
+//    cout << "Prodigal training time: " << prodigalEnd - prodigalStart << " seconds" << endl;
 
     // Write taxonomy id list
     string taxidListFileName = dbDir + "/taxID_list";

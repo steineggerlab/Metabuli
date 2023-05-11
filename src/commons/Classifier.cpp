@@ -634,6 +634,8 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                                                  queryKmerList[j].info.pos,
                                                  queryKmerList[j].info.frame,
                                                  candidateKmerInfos[idx].sequenceID,
+                                                 taxId2genusId[candidateKmerInfos[idx].sequenceID],
+                                                 taxId2speciesId[candidateKmerInfos[idx].sequenceID],
                                                  selectedHammings[k],
                                                  selectedHammingSum[k],
                                                  (bool) candidateKmerInfos[idx].redundancy};
@@ -671,6 +673,8 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                                                  queryKmerList[j].info.pos,
                                                  queryKmerList[j].info.frame,
                                                  candidateKmerInfos[idx].sequenceID,
+                                                 taxId2genusId[candidateKmerInfos[idx].sequenceID],
+                                                 taxId2speciesId[candidateKmerInfos[idx].sequenceID],
                                                  selectedHammings[k],
                                                  selectedHammingSum[k],
                                                  (bool) candidateKmerInfos[idx].redundancy};
@@ -762,6 +766,8 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                                              queryKmerList[j].info.pos,
                                              queryKmerList[j].info.frame,
                                              candidateKmerInfos[idx].sequenceID,
+                                             taxId2genusId[candidateKmerInfos[idx].sequenceID],
+                                             taxId2speciesId[candidateKmerInfos[idx].sequenceID],
                                              selectedHammings[k],
                                              selectedHammingSum[k],
                                              (bool) candidateKmerInfos[idx].redundancy};
@@ -891,15 +897,15 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
                                  vector<Query> & queryList,
                                  const LocalParameters &par) {
     TaxID selectedTaxon;
-    if (par.printLog) {
-        cout << "# " << currentQuery << " " << queryList[currentQuery].name << endl;
-        for (size_t i = offset; i < end + 1; i++) {
-            cout << taxId2genusId[matchList[i].targetId] << " " << taxId2speciesId[matchList[i].targetId] <<
-            " "  << matchList[i].targetId << " " << matchList[i].qInfo.frame << " ";
-            print_binary16(16, matchList[i].rightEndHamming);
-            cout << " " << matchList[i].qInfo.position << " " << int(matchList[i].hamming) <<  " "  << int(matchList[i].redundancy) << endl;
-        }
-    }
+//    if (par.printLog) {
+//        cout << "# " << currentQuery << " " << queryList[currentQuery].name << endl;
+//        for (size_t i = offset; i < end + 1; i++) {
+//            cout << taxId2genusId[matchList[i].targetId] << " " << taxId2speciesId[matchList[i].targetId] <<
+//            " "  << matchList[i].targetId << " " << matchList[i].qInfo.frame << " ";
+//            print_binary16(16, matchList[i].rightEndHamming);
+//            cout << " " << matchList[i].qInfo.position << " " << int(matchList[i].hamming) <<  " "  << int(matchList[i].redundancy) << endl;
+//        }
+//    }
 
     // Get the best genus for current query
     vector<Match> genusMatches;
@@ -928,16 +934,16 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     }
 
 
-    if (par.printLog) {
-        cout << "# " << currentQuery << " " << queryList[currentQuery].name << " filtered\n";
-        for (size_t i = 0; i < genusMatches.size(); i++) {
-            cout << taxId2genusId[genusMatches[i].targetId] << " " << taxId2speciesId[genusMatches[i].targetId] <<
-                 " "  << genusMatches[i].targetId << " " << genusMatches[i].qInfo.frame << " ";
-            print_binary16(16, genusMatches[i].rightEndHamming);
-            cout << " " << genusMatches[i].qInfo.position << " " << int(genusMatches[i].hamming) <<  " "  << int(genusMatches[i].redundancy) << endl;
-        }
-        cout << "Genus score: " << genusScore.score << "\n";
-    }
+//    if (par.printLog) {
+//        cout << "# " << currentQuery << " " << queryList[currentQuery].name << " filtered\n";
+//        for (size_t i = 0; i < genusMatches.size(); i++) {
+//            cout << taxId2genusId[genusMatches[i].targetId] << " " << taxId2speciesId[genusMatches[i].targetId] <<
+//                 " "  << genusMatches[i].targetId << " " << genusMatches[i].qInfo.frame << " ";
+//            print_binary16(16, genusMatches[i].rightEndHamming);
+//            cout << " " << genusMatches[i].qInfo.position << " " << int(genusMatches[i].hamming) <<  " "  << int(genusMatches[i].redundancy) << endl;
+//        }
+//        cout << "Genus score: " << genusScore.score << "\n";
+//    }
 
     // If there is no proper genus for current query, it is un-classified.
     if (genusScore.score == 0 || genusScore.coverage < par.minCoverage || genusScore.score < par.minScore) {
@@ -1036,43 +1042,6 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     }
 
 
-//    // Check if it can be classified at the subspecies rank.
-//    int numOfstrains = 0;
-//    TaxID strainID = 0;
-//    int count = 1;
-//    int minStrainSpecificCnt = 1;
-//    if (par.seqMode == 1) {
-//        minStrainSpecificCnt = 1;
-//    } else if (par.seqMode == 2) {
-//        minStrainSpecificCnt = 2;
-//    } else if (par.seqMode == 3) {
-//        minStrainSpecificCnt = 3;
-//        if (queryList[currentQuery].queryLength > 3000) {
-//            minStrainSpecificCnt = queryList[currentQuery].queryLength / 1000;
-//        }
-//    }
-//    if (string(taxonomy->getString(taxonomy->taxonNode(selectedSpecies)->rankIdx)) == "species") {
-//        unordered_map<TaxID, int> strainMatchCnt;
-//        for (size_t i = 0; i < genusMatches.size(); i++) {
-//            if (!genusMatches[i].redundancy
-//                && taxonomy->IsAncestor2(selectedSpecies, taxIdList[genusMatches[i].targetId])) {
-//                strainMatchCnt[taxIdList[genusMatches[i].targetId]]++;
-//            }
-//        }
-//
-//        for (auto strainIt = strainMatchCnt.begin(); strainIt != strainMatchCnt.end(); strainIt++) {
-////            if (strainIt->second > minStrainSpecificCnt) {
-//                strainID = strainIt->first;
-//                numOfstrains++;
-//                count = strainIt->second;
-////            }
-//        }
-//    }
-//
-//    if (numOfstrains == 1) {
-//        selectedSpecies = strainID;
-//    }
-
     // Store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = result;
@@ -1080,17 +1049,17 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     queryList[currentQuery].coverage = speciesScore.coverage;
     queryList[currentQuery].hammingDist = speciesScore.hammingDist;
     queryList[currentQuery].newSpecies = false;
-    if (par.printLog) {
-        cout << "# " << currentQuery << endl;
-        for (size_t i = 0; i < genusMatches.size(); i++) {
-            cout << i << " " << genusMatches[i].qInfo.position << " " <<
-            genusMatches[i].targetId << " " << int(genusMatches[i].hamming) << endl;
-        }
-        cout << "Score: " << speciesScore.score << "  " << selectedSpecies << " "
-             << taxonomy->getString(taxonomy->taxonNode(selectedSpecies)->rankIdx)
-
-             << endl;
-    }
+//    if (par.printLog) {
+//        cout << "# " << currentQuery << endl;
+//        for (size_t i = 0; i < genusMatches.size(); i++) {
+//            cout << i << " " << genusMatches[i].qInfo.position << " " <<
+//            genusMatches[i].targetId << " " << int(genusMatches[i].hamming) << endl;
+//        }
+//        cout << "Score: " << speciesScore.score << "  " << selectedSpecies << " "
+//             << taxonomy->getString(taxonomy->taxonNode(selectedSpecies)->rankIdx)
+//
+//             << endl;
+//    }
 }
 
 void Classifier::checkRedundantMatches(vector<Match> &matches, pair<size_t, size_t> &matchRange) {
@@ -1301,16 +1270,16 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
         nextPosMatches.clear();
     }
     // Print linkedMatches
-    if (par.printLog) {
-        cout << "linkedMatches: " << endl;
-        for (const auto &entry: linkedMatches) {
-            cout << entry.first << ": ";
-            for (auto &idx: entry.second) {
-                cout << idx << " ";
-            }
-            cout << endl;
-        }
-    }
+//    if (par.printLog) {
+//        cout << "linkedMatches: " << endl;
+//        for (const auto &entry: linkedMatches) {
+//            cout << entry.first << ": ";
+//            for (auto &idx: entry.second) {
+//                cout << idx << " ";
+//            }
+//            cout << endl;
+//        }
+//    }
 
     // Iterate linkedMatches to get filteredMatches
     int MIN_DEPTH = par.minConsCnt - 1;
@@ -1326,13 +1295,13 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
     }
 
     // Print filteredMatchIdx
-    if (par.printLog) {
-        cout << "filteredMatchIdx: ";
-        for (auto &idx: filteredMatchIdx) {
-            cout << idx << " ";
-        }
-        cout << endl;
-    }
+//    if (par.printLog) {
+//        cout << "filteredMatchIdx: ";
+//        for (auto &idx: filteredMatchIdx) {
+//            cout << idx << " ";
+//        }
+//        cout << endl;
+//    }
     for (auto &idx: filteredMatchIdx) {
         filteredMatches.push_back(curFrameMatches[idx]);
     }
