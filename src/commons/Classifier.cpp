@@ -1025,14 +1025,14 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
 
     // Sort matches by the position of the query sequence
     selectedSpecies = species[0];
-    sort(genusMatches.begin() + speciesMatchRange[selectedSpecies].first,
-         genusMatches.begin() + speciesMatchRange[selectedSpecies].second,
-         [](const Match & a, const Match & b) {
-        if (a.qInfo.position / 3 == b.qInfo.position / 3)
-            return a.hamming < b.hamming;
-        else
-            return a.qInfo.position / 3 < b.qInfo.position / 3;
-    });
+//    sort(genusMatches.begin() + speciesMatchRange[selectedSpecies].first,
+//         genusMatches.begin() + speciesMatchRange[selectedSpecies].second,
+//         [](const Match & a, const Match & b) {
+//        if (a.qInfo.position / 3 == b.qInfo.position / 3)
+//            return a.hamming < b.hamming;
+//        else
+//            return a.qInfo.position / 3 < b.qInfo.position / 3;
+//    });
 
     TaxID result = lowerRankClassification(genusMatches, speciesMatchRange[selectedSpecies], selectedSpecies);
 
@@ -1078,29 +1078,53 @@ void Classifier::checkRedundantMatches(vector<Match> &matches, pair<size_t, size
 }
 
 TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<size_t, size_t> &matchRange, TaxID spTaxId) {
-    size_t i = matchRange.first;
+    size_t i = matchRange.second - 1;
     unordered_map<TaxID, unsigned int> taxCnt;
-    while (i < matchRange.second) {
+
+    while ( i >= matchRange.first ) {
         size_t currQuotient = matches[i].qInfo.position / 3;
         uint8_t minHamming = matches[i].hamming;
         Match * minHammingMatch = & matches[i];
         TaxID minHammingTaxId = minHammingMatch->targetId;
         bool first = true;
-        while ( (i < matchRange.second) && (currQuotient == matches[i].qInfo.position / 3) ) {
-            if (first) {
-                first = false;
-                i++;
-                continue;
-            }
-            if (minHamming == matches[i].hamming) {
+        i --;
+        while ( (i >= matchRange.first) && (currQuotient == matches[i].qInfo.position / 3) ) {
+            if (matches[i].hamming < minHamming) {
+                minHamming = matches[i].hamming;
+                minHammingMatch = & matches[i];
+                minHammingTaxId = minHammingMatch->targetId;
+            } else if (matches[i].hamming == minHamming) {
                 minHammingTaxId = taxonomy->LCA(minHammingTaxId, matches[i].targetId);
-                minHammingMatch->redundancy = true;
-                matches[i].redundancy = true;
             }
-            i++;
+            i--;
         }
-        taxCnt[minHammingTaxId] ++;
+        taxCnt[minHammingTaxId]++;
     }
+
+
+//    size_t i = matchRange.first;
+//    unordered_map<TaxID, unsigned int> taxCnt;
+//    while (i < matchRange.second) {
+//        size_t currQuotient = matches[i].qInfo.position / 3;
+//        uint8_t minHamming = matches[i].hamming;
+//        Match * minHammingMatch = & matches[i];
+//        TaxID minHammingTaxId = minHammingMatch->targetId;
+//        bool first = true;
+//        while ( (i < matchRange.second) && (currQuotient == matches[i].qInfo.position / 3) ) {
+//            if (first) {
+//                first = false;
+//                i++;
+//                continue;
+//            }
+//            if (minHamming == matches[i].hamming) {
+//                minHammingTaxId = taxonomy->LCA(minHammingTaxId, matches[i].targetId);
+//                minHammingMatch->redundancy = true;
+//                matches[i].redundancy = true;
+//            }
+//            i++;
+//        }
+//        taxCnt[minHammingTaxId] ++;
+//    }
 
     unordered_map<TaxID, TaxonCounts> cladeCnt;
     getSpeciesCladeCounts(taxCnt, cladeCnt, spTaxId);
