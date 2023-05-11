@@ -1034,6 +1034,11 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
 //            return a.qInfo.position / 3 < b.qInfo.position / 3;
 //    });
 
+    sort(genusMatches.begin() + speciesMatchRange[selectedSpecies].first,
+         genusMatches.begin() + speciesMatchRange[selectedSpecies].second,
+         [](const Match & a, const Match & b) { return a.qInfo.position > b.qInfo.position; });
+
+
     TaxID result = lowerRankClassification(genusMatches, speciesMatchRange[selectedSpecies], selectedSpecies);
 
     // Record matches of selected species
