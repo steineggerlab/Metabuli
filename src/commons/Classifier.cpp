@@ -961,7 +961,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         vector<TaxID> genusList;
         genusList.reserve(genusMatches.size());
         for (auto & genusMatch : genusMatches) {
-            genusList.push_back(taxId2genusId[genusMatch.targetId]);
+            genusList.push_back(genusMatch.genusId);
         }
         selectedTaxon = taxonomy->LCA(genusList)->taxId;
         queryList[currentQuery].isClassified = true;
@@ -1016,7 +1016,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
         queryList[currentQuery].coverage = genusScore.coverage;
         queryList[currentQuery].hammingDist = genusScore.hammingDist;
         for (auto & genusMatch : genusMatches) {
-            if(taxId2speciesId[genusMatch.targetId] == species[0]){
+            if(genusMatch.speciesId == species[0]){
                 queryList[currentQuery].taxCnt[genusMatch.targetId]++;
             }
         }
@@ -1195,20 +1195,22 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, const Ma
     uint8_t curFrame;
     vector<const Match *> curFrameMatches;
     while (i  < end + 1) {
-        currentGenus = taxId2genusId[matchList[i].targetId];
+//        currentGenus = taxId2genusId[matchList[i].targetId];
+        currentGenus = matchList[i].genusId;
         // For current genus
-        while ((i < end + 1) && currentGenus == taxId2genusId[matchList[i].targetId]) {
-            currentSpecies = taxId2speciesId[matchList[i].targetId];
-            if (par.printLog) {
-                cout << currentGenus << " " << currentSpecies << endl;
-            }
+        while ((i < end + 1) && currentGenus == matchList[i].genusId) {
+//            currentSpecies = taxId2speciesId[matchList[i].targetId];
+            currentSpecies = matchList[i].speciesId;
+//            if (par.printLog) {
+//                cout << currentGenus << " " << currentSpecies << endl;
+//            }
             // For current species
-            while ((i < end + 1) && currentSpecies == taxId2speciesId[matchList[i].targetId]) {
+            while ((i < end + 1) && currentSpecies == matchList[i].speciesId) {
                 curFrame = matchList[i].qInfo.frame;
                 curFrameMatches.clear();
 
                 // For current frame
-                while ((i < end + 1) && currentSpecies == taxId2speciesId[matchList[i].targetId]
+                while ((i < end + 1) && currentSpecies == matchList[i].speciesId
                     && curFrame == matchList[i].qInfo.frame) {
                     curFrameMatches.push_back(&matchList[i]);
                     i ++;
@@ -1385,10 +1387,11 @@ TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, c
     size_t i = offset;
     bool lastIn;
     while (i + 1 < end + 1) {
-        currentGenus = taxId2genusId[matchList[i].targetId];
+        currentGenus = matchList[i].genusId;
         // For current genus
-        while ((i + 1 < end + 1) && currentGenus == taxId2genusId[matchList[i].targetId]) {
-            currentSpecies = taxId2speciesId[matchList[i].targetId];
+        while ((i + 1 < end + 1) && currentGenus == matchList[i].genusId) {
+//            currentSpecies = taxId2speciesId[matchList[i].targetId];
+            currentSpecies = matchList[i].speciesId;
             // For current species
             // Filter un-consecutive matches (probably random matches)
             lastIn = false;
@@ -1397,7 +1400,7 @@ TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, c
             int dnaDist = 0;
 
             // For the same species
-            while ((i + 1 < end + 1) && currentSpecies == taxId2speciesId[matchList[i + 1].targetId]) {
+            while ((i + 1 < end + 1) && currentSpecies == matchList[i + 1].speciesId) {
                 distance = matchList[i+1].qInfo.position / 3 - matchList[i].qInfo.position / 3;
                 dnaDist = matchList[i+1].qInfo.position - matchList[i].qInfo.position;
                 if (distance == 0) { // At the same position
@@ -1491,18 +1494,18 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, const Ma
     uint8_t curFrame;
     vector<const Match *> curFrameMatches;
     while (i  < end + 1) {
-        currentGenus = taxId2genusId[matchList[i].targetId];
+        currentGenus = matchList[i].genusId;
         // For current genus
-        while ((i < end + 1) && currentGenus == taxId2genusId[matchList[i].targetId]) {
-            currentSpecies = taxId2speciesId[matchList[i].targetId];
+        while ((i < end + 1) && currentGenus == matchList[i].genusId) {
+            currentSpecies = matchList[i].speciesId;
 
             // For current species
-            while ((i < end + 1) && currentSpecies == taxId2speciesId[matchList[i].targetId]) {
+            while ((i < end + 1) && currentSpecies == matchList[i].speciesId) {
                 curFrame = matchList[i].qInfo.frame;
                 curFrameMatches.clear();
 
                 // For current frame
-                while ((i < end + 1) && currentSpecies == taxId2speciesId[matchList[i].targetId]
+                while ((i < end + 1) && currentSpecies == matchList[i].speciesId
                        && curFrame == matchList[i].qInfo.frame) {
                     curFrameMatches.push_back(&matchList[i]);
                     i ++;
@@ -1573,10 +1576,10 @@ TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, c
     bool lastIn;
     size_t speciesMatchCnt;
     while (i + 1 < end + 1) {
-        currentGenus = taxId2genusId[matchList[i].targetId];
+        currentGenus = matchList[i].genusId;
         // For current genus
-        while ((i + 1 < end + 1) && currentGenus == taxId2genusId[matchList[i].targetId]) {
-            currentSpecies = taxId2speciesId[matchList[i].targetId];
+        while ((i + 1 < end + 1) && currentGenus == matchList[i].genusId) {
+            currentSpecies = matchList[i].speciesId;
             // For current species
             // Filter un-consecutive matches (probably random matches)
             lastIn = false;
@@ -1585,7 +1588,7 @@ TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, c
             int dnaDist = 0;
 
             // For the same species
-            while ((i + 1 < end + 1) && currentSpecies == taxId2speciesId[matchList[i + 1].targetId]) {
+            while ((i + 1 < end + 1) && currentSpecies == matchList[i + 1].speciesId) {
                 distance = matchList[i + 1].qInfo.position / 3 - matchList[i].qInfo.position / 3;
                 dnaDist = matchList[i + 1].qInfo.position - matchList[i].qInfo.position;
                 if (distance == 0) { // At the same position
@@ -1719,7 +1722,7 @@ TaxonScore Classifier::scoreGenus(vector<const Match *> &filteredMatches,
     float score = ((float) coveredLength - hammingSum) / (float) queryLength;
     float coverage = (float) (coveredLength) / (float) (queryLength);
 
-    return {taxId2genusId[filteredMatches[0]->targetId], score, coverage, (int) hammingSum};
+    return {filteredMatches[0]->genusId, score, coverage, (int) hammingSum};
 }
 
 TaxonScore Classifier::scoreGenus(vector<const Match *> &filteredMatches,
@@ -1795,7 +1798,7 @@ TaxonScore Classifier::scoreGenus(vector<const Match *> &filteredMatches,
     float coverage = (float) (coveredLength_read1 + coveredLength_read2) / (float) (readLength1 + readLength2);
 
 //    matchesForEachGenus.push_back(move(filteredMatches));
-    return {taxId2genusId[filteredMatches[0]->targetId], score, coverage, (int) hammingSum};
+    return {filteredMatches[0]->genusId, score, coverage, (int) hammingSum};
 }
 
 TaxonScore Classifier::chooseSpecies(const vector<Match> &matches,
@@ -1809,9 +1812,9 @@ TaxonScore Classifier::chooseSpecies(const vector<Match> &matches,
     size_t numOfMatch = matches.size();
     size_t speciesBegin, speciesEnd;
     while (i < numOfMatch) {
-        currentSpeices = taxId2speciesId[matches[i].targetId];
+        currentSpeices = matches[i].speciesId;
         speciesBegin = i;
-        while ((i < numOfMatch) && currentSpeices == taxId2speciesId[matches[i].targetId]) {
+        while ((i < numOfMatch) && currentSpeices == matches[i].speciesId) {
             i++;
         }
         speciesEnd = i;
@@ -1848,9 +1851,9 @@ TaxonScore Classifier::chooseSpecies(const vector<Match> &matches,
     size_t numOfMatch = matches.size();
     size_t speciesBegin, speciesEnd;
     while (i < numOfMatch) {
-        currentSpeices = taxId2speciesId[matches[i].targetId];
+        currentSpeices = matches[i].speciesId;
         speciesBegin = i;
-        while ((i < numOfMatch) && currentSpeices == taxId2speciesId[matches[i].targetId]) {
+        while ((i < numOfMatch) && currentSpeices == matches[i].speciesId) {
             i++;
         }
         speciesEnd = i;
