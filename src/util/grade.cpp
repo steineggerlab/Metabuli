@@ -42,6 +42,9 @@ struct Score2{
 char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
                              const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
 
+char compareTaxonAtRank_CAMI_euk(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
+                                 const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
+
 char compareTaxon_overclassification(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
                                      const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
 
@@ -273,6 +276,9 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
                                                             results[i].countsAtRanks[rank], rank, par);
                     } else if(par.testType == "hiv-ex"){
                         p = compareTaxon_hivExclusion(classList[j], 11676, results[i].countsAtRanks[rank]);
+                    } else if (par.testType == "cami-euk"){
+                        p = compareTaxonAtRank_CAMI_euk(classList[j], rightAnswers[j], ncbiTaxonomy,
+                                                        results[i].countsAtRanks[rank], rank, par);
                     } else {
                         p = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy,
                                                          results[i].countsAtRanks[rank], rank, par);
@@ -368,6 +374,47 @@ char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
     int rankIdx = NcbiTaxonomy::findRankIndex(rank);
     if (NcbiTaxonomy::findRankIndex(ncbiTaxonomy.getString(targetNode->rankIdx)) > rankIdx) {
+        return '-';
+    }
+
+    // False negative; no classification or meaningless classification
+    if(shot == 1 || shot == 0) {
+        count.FN ++;
+        count.total ++;
+        return 'N';
+    }
+
+    // False negative if the rank of shot is higher than current rank
+    TaxID shotTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(shot, rank);
+    const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shotTaxIdAtRank);
+    if (NcbiTaxonomy::findRankIndex(ncbiTaxonomy.getString(shotNode->rankIdx)) > rankIdx) {
+        count.FN ++;
+        count.total ++;
+        return 'N';
+    }
+
+    count.total++;
+    if(shotTaxIdAtRank == targetTaxIdAtRank){
+        count.TP++;
+        return 'O';
+    } else {
+        count.FP++;
+        return 'X';
+    }
+}
+
+char compareTaxonAtRank_CAMI_euk(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
+                             const string & rank, const LocalParameters & par, size_t idx, const string& readId) {
+    // Do not count if the rank of target is higher than current rank
+    TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
+    const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
+    int rankIdx = NcbiTaxonomy::findRankIndex(rank);
+    if (NcbiTaxonomy::findRankIndex(ncbiTaxonomy.getString(targetNode->rankIdx)) > rankIdx) {
+        return '-';
+    }
+
+    // Do not count if target is not eukaryote
+    if (ncbiTaxonomy.getTaxIdAtRank(target, "superkingdom") != 2759) {
         return '-';
     }
 
