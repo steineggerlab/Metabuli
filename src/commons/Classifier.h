@@ -221,13 +221,13 @@ protected:
     TaxonScore chooseSpecies(const std::vector<Match> &matches,
                        int queryLength,
                        vector<TaxID> &species,
-                       unordered_map<TaxID, pair<size_t, size_t>> & speciesMatchRange);
+                       unordered_map<TaxID, pair<int, int>> & speciesMatchRange);
 
     TaxonScore chooseSpecies(const std::vector<Match> &matches,
                        int read1Length,
                        int read2Length,
                        vector<TaxID> &species,
-                       unordered_map<TaxID, pair<size_t, size_t>> & speciesMatchRange);
+                       unordered_map<TaxID, pair<int, int>> & speciesMatchRange);
 
     TaxonScore scoreSpecies(const vector<Match> &matches,
                           size_t begin,
@@ -242,7 +242,7 @@ protected:
 
     static void checkRedundantMatches(vector<Match> &matches, pair<size_t, size_t> &matchRange);
 
-    TaxID lowerRankClassification(vector<Match> &matches, pair<size_t, size_t> &matchRange, TaxID speciesID);
+    TaxID lowerRankClassification(vector<Match> &matches, pair<int, int> &matchRange, TaxID speciesID);
 
     void getSpeciesCladeCounts(const unordered_map<TaxID, unsigned int> & taxCnt,
                                unordered_map<TaxID, TaxonCounts> & cladeCnt,

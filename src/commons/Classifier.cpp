@@ -979,7 +979,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
     TaxID selectedSpecies;
     TaxonScore speciesScore;
     vector<TaxID> species;
-    unordered_map<TaxID, pair<size_t, size_t>> speciesMatchRange;
+    unordered_map<TaxID, pair<int, int>> speciesMatchRange;
     if (par.seqMode == 2) {
         speciesScore = chooseSpecies(genusMatches,
                                      queryList[currentQuery].queryLength,
@@ -1082,8 +1082,8 @@ void Classifier::checkRedundantMatches(vector<Match> &matches, pair<size_t, size
     }
 }
 
-TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<size_t, size_t> &matchRange, TaxID spTaxId) {
-    size_t i = matchRange.second - 1;
+TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<int, int> &matchRange, TaxID spTaxId) {
+    int i = matchRange.second - 1;
     unordered_map<TaxID, unsigned int> taxCnt;
 
     while ( i >= matchRange.first ) {
@@ -1100,6 +1100,8 @@ TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<size_t, s
                 minHammingTaxId = minHammingMatch->targetId;
             } else if (matches[i].hamming == minHamming) {
                 minHammingTaxId = taxonomy->LCA(minHammingTaxId, matches[i].targetId);
+                minHammingMatch->redundancy = true;
+                matches[i].redundancy = true;
             }
             i--;
         }
@@ -1799,7 +1801,7 @@ TaxonScore Classifier::scoreGenus(vector<const Match *> &filteredMatches,
 TaxonScore Classifier::chooseSpecies(const vector<Match> &matches,
                                      int queryLength,
                                      vector<TaxID> &species,
-                                     unordered_map<TaxID, pair<size_t, size_t>> & speciesMatchRange) {
+                                     unordered_map<TaxID, pair<int, int>> & speciesMatchRange) {
     // Score each species
     std::unordered_map<TaxID, TaxonScore> speciesScores;
     size_t i = 0;
@@ -1814,7 +1816,7 @@ TaxonScore Classifier::chooseSpecies(const vector<Match> &matches,
         }
         speciesEnd = i;
         speciesScores[currentSpeices] = scoreSpecies(matches, speciesBegin, speciesEnd, queryLength);
-        speciesMatchRange[currentSpeices] = {speciesBegin, speciesEnd};
+        speciesMatchRange[currentSpeices] = {(int) speciesBegin, (int) speciesEnd};
         speciesScores[currentSpeices].taxId = currentSpeices;
     }
 
@@ -1836,7 +1838,7 @@ TaxonScore Classifier::chooseSpecies(const vector<Match> &matches,
                                      int read1Length,
                                      int read2Length,
                                      vector<TaxID> &species,
-                                     unordered_map<TaxID, pair<size_t, size_t>> & speciesMatchRange) {
+                                     unordered_map<TaxID, pair<int, int>> & speciesMatchRange) {
     // Score each species
     std::unordered_map<TaxID, TaxonScore> speciesScores;
 
@@ -1853,7 +1855,7 @@ TaxonScore Classifier::chooseSpecies(const vector<Match> &matches,
         }
         speciesEnd = i;
         speciesScores[currentSpeices] = scoreSpecies(matches, speciesBegin, speciesEnd, read1Length, read2Length);
-        speciesMatchRange[currentSpeices] = {speciesBegin, speciesEnd};
+        speciesMatchRange[currentSpeices] = {(int) speciesBegin, (int) speciesEnd};
         speciesScores[currentSpeices].taxId = currentSpeices;
     }
 
