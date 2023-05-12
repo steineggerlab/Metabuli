@@ -197,7 +197,6 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
         TaxID taxId = atol(taxID);
         TaxonNode const * taxon = taxonomy.taxonNode(taxId);
         TaxID speciesTaxID = taxonomy.getTaxIdAtRank(taxId, "species");
-        TaxID genusTaxID = taxonomy.getTaxIdAtRank(taxId, "genus");
         while (taxon->taxId != speciesTaxID) {
             taxId2speciesId[taxon->taxId] = speciesTaxID;
             taxon = taxonomy.taxonNode(taxon->parentTaxId);
@@ -541,11 +540,13 @@ size_t FileMerger::smallest(const uint64_t lookingKmers[],
 {
     size_t idxOfMin = 0;
     uint64_t min = lookingKmers[0];
+    cout << "1: " << lookingInfos[0].sequenceID << endl;
     int minTaxIdAtRank = taxId2speciesId.at((int) lookingInfos[0].sequenceID);
     for(size_t i = 1; i < fileCnt; i++)
     {
-        if(lookingKmers[i] < min ||(lookingKmers[i] == min
-        && taxId2speciesId.at((int) lookingInfos[i].sequenceID) < minTaxIdAtRank)){
+        cout << "2: " << lookingInfos[i].sequenceID << endl;
+        if(lookingKmers[i] < min ||
+          (lookingKmers[i] == min && taxId2speciesId.at((int) lookingInfos[i].sequenceID) < minTaxIdAtRank)){
             min = lookingKmers[i];
             minTaxIdAtRank = taxId2speciesId.at((int) lookingInfos[i].sequenceID);
             idxOfMin = i;
