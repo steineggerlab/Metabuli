@@ -1119,7 +1119,7 @@ TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<int, int>
             }
             i--;
         }
-        taxCnt[minHammingTaxId]++;
+        taxCnt[taxonomy->taxonNode(minHammingTaxId)->taxId]++;
     }
 
 
@@ -1355,13 +1355,13 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
 }
 
 
-size_t Classifier::DFS(size_t curMatchIdx, const map<size_t, vector<size_t>>& linkedMatches,
+size_t Classifier::DFS(size_t curMatchIdx, const map<size_t, vector<size_t>> & linkedMatches,
                        vector<size_t>& filteredMatches, size_t depth, size_t MIN_DEPTH, unordered_set<size_t>& used,
                        unordered_map<size_t, size_t> & idx2depth) {
     depth++;
     size_t maxDepth = 0;
     size_t returnDepth = 0;
-    if (linkedMatches.find(curMatchIdx) == linkedMatches.end() || linkedMatches.at(curMatchIdx).empty()) {
+    if (linkedMatches.find(curMatchIdx) == linkedMatches.end()) { //|| linkedMatches.at(curMatchIdx).empty()) {
         // reached a leaf node
         idx2depth[curMatchIdx] = depth;
         if (depth > MIN_DEPTH) {
