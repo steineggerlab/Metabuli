@@ -550,11 +550,9 @@ size_t FileMerger::smallest(const uint64_t lookingKmers[],
 {
     size_t idxOfMin = 0;
     uint64_t min = lookingKmers[0];
-    cout << "1: " << lookingInfos[0].sequenceID << endl;
     int minTaxIdAtRank = taxId2speciesId.at((int) lookingInfos[0].sequenceID);
     for(size_t i = 1; i < fileCnt; i++)
     {
-        cout << "2: " << lookingInfos[i].sequenceID << endl;
         if(lookingKmers[i] < min ||
           (lookingKmers[i] == min && taxId2speciesId.at((int) lookingInfos[i].sequenceID) < minTaxIdAtRank)){
             min = lookingKmers[i];

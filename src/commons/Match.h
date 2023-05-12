@@ -10,7 +10,7 @@ struct Match_qInfo {
     uint64_t frame : 3; // 0-5
 };
 
-struct Match { // 16 byte
+struct Match { // 24 byte
     Match(){}
     Match(uint32_t queryId,
           uint32_t position,
