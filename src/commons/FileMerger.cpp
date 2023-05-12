@@ -196,12 +196,22 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
         fscanf(taxIdFile,"%s",taxID);
         TaxID taxId = atol(taxID);
         TaxonNode const * taxon = taxonomy.taxonNode(taxId);
-        TaxID speciesTaxID = taxonomy.getTaxIdAtRank(taxId, "species");
-        while (taxon->taxId != speciesTaxID) {
-            taxId2speciesId[taxon->taxId] = speciesTaxID;
-            taxon = taxonomy.taxonNode(taxon->parentTaxId);
+        if (taxId == taxon->taxId){
+            TaxID speciesTaxID = taxonomy.getTaxIdAtRank(taxId, "species");
+            while (taxon->taxId != speciesTaxID) {
+                taxId2speciesId[taxon->taxId] = speciesTaxID;
+                taxon = taxonomy.taxonNode(taxon->parentTaxId);
+            }
+            taxId2speciesId[speciesTaxID] = speciesTaxID;
+        } else { // merged
+            TaxID speciesTaxID = taxonomy.getTaxIdAtRank(taxId, "species");
+            while (taxon->taxId != speciesTaxID) {
+                taxId2speciesId[taxon->taxId] = speciesTaxID;
+                taxon = taxonomy.taxonNode(taxon->parentTaxId);
+            }
+            taxId2speciesId[speciesTaxID] = speciesTaxID;
+            taxId2speciesId[taxId] = speciesTaxID;
         }
-        taxId2speciesId[speciesTaxID] = speciesTaxID;
     }
     fclose(taxIdFile);
 
