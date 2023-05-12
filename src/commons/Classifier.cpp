@@ -1119,33 +1119,8 @@ TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<int, int>
             }
             i--;
         }
-        taxCnt[taxonomy->taxonNode(minHammingTaxId)->taxId]++;
+        taxCnt[minHammingTaxId]++;
     }
-
-
-//    size_t i = matchRange.first;
-//    unordered_map<TaxID, unsigned int> taxCnt;
-//    while (i < matchRange.second) {
-//        size_t currQuotient = matches[i].qInfo.position / 3;
-//        uint8_t minHamming = matches[i].hamming;
-//        Match * minHammingMatch = & matches[i];
-//        TaxID minHammingTaxId = minHammingMatch->targetId;
-//        bool first = true;
-//        while ( (i < matchRange.second) && (currQuotient == matches[i].qInfo.position / 3) ) {
-//            if (first) {
-//                first = false;
-//                i++;
-//                continue;
-//            }
-//            if (minHamming == matches[i].hamming) {
-//                minHammingTaxId = taxonomy->LCA(minHammingTaxId, matches[i].targetId);
-//                minHammingMatch->redundancy = true;
-//                matches[i].redundancy = true;
-//            }
-//            i++;
-//        }
-//        taxCnt[minHammingTaxId] ++;
-//    }
 
     unordered_map<TaxID, TaxonCounts> cladeCnt;
     getSpeciesCladeCounts(taxCnt, cladeCnt, spTaxId);
@@ -1157,9 +1132,11 @@ void Classifier::getSpeciesCladeCounts(const unordered_map<TaxID, unsigned int> 
                                        unordered_map<TaxID, TaxonCounts> & cladeCount,
                                        TaxID speciesTaxID) {
     for (auto it = taxCnt.begin(); it != taxCnt.end(); ++it) {
-        cladeCount[it->first].taxCount = it->second;
-        cladeCount[it->first].cladeCount += it->second;
+//        cladeCount[it->first].taxCount = it->second;
+//        cladeCount[it->first].cladeCount += it->second;
         TaxonNode const * taxon = taxonomy->taxonNode(it->first);
+        cladeCount[taxon->taxId].taxCount = it->second;
+        cladeCount[taxon->taxId].cladeCount += it->second;
         while (taxon->taxId != speciesTaxID) {
             if (find(cladeCount[taxon->parentTaxId].children.begin(),
                      cladeCount[taxon->parentTaxId].children.end(),

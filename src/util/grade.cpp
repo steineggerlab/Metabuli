@@ -237,7 +237,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
                     id = id.substr(0, pos);
 //                    cout << assacc2taxid[id] << endl;
                     rightAnswers.push_back(assacc2taxid[id]);
-                } else if (par.testType == "cami" || par.testType == "cami-long") {
+                } else if (par.testType == "cami" || par.testType == "cami-long" || par.testType == "cami-euk") {
                     size_t pos = id.find('/');
                     id = id.substr(0, pos);
                     rightAnswers.push_back(assacc2taxid[id]);
