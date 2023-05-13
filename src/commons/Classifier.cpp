@@ -749,10 +749,9 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                             print_binary64(64, currentTargetKmer);
                             cout << "\t";
                             seqIterator.printKmerInDNAsequence(currentTargetKmer);
-                            cout << "\t" << kmerInfoBufferIdx << endl;
-                            cout << kmerInfoBuffer[kmerInfoBufferIdx].sequenceID << endl;
-                            cout << taxId2speciesId[kmerInfoBuffer[kmerInfoBufferIdx].sequenceID] << endl;
-                            cout << (int) getHammingDistanceSum(currentQuery, currentTargetKmer) << endl;
+                            cout << "\t" << kmerInfoBuffer[kmerInfoBufferIdx].sequenceID
+                                 << "\t" << taxId2speciesId[kmerInfoBuffer[kmerInfoBufferIdx].sequenceID] << endl;
+                            cout << (int) getHammingDistanceSum(currentQuery, currentTargetKmer) << "\t";
                             print_binary16(16, getHammings(currentQuery, currentTargetKmer)); cout << endl;
                         }
 
@@ -1284,7 +1283,8 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
     vector<pair<const Match *, size_t>> nextPosMatches;
     map<size_t, vector<size_t>> linkedMatches; // <index, linked indexes>
 
-    while ( i < end && curFrameMatches[i]->qInfo.position == curFrameMatches[0]->qInfo.position) {
+    size_t currPos = curFrameMatches[0]->qInfo.position;
+    while ( i < end && curFrameMatches[i]->qInfo.position == currPos) {
         curPosMatches.emplace_back(curFrameMatches[i], i);
         i++;
     }
@@ -1294,17 +1294,22 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
             nextPosMatches.emplace_back(curFrameMatches[i], i);
             ++ i;
         }
-        // Compare curPosMatches and nextPosMatches
-        for (auto & curPosMatch : curPosMatches) {
-            for (auto & nextPosMatch : nextPosMatches) {
-                if (isConsecutive(curPosMatch.first, nextPosMatch.first)) {
-                    linkedMatches[curPosMatch.second].push_back(nextPosMatch.second);
+        // Check if current position and next position are consecutive
+        if (currPos + 3 == nextPos) {
+            // Compare curPosMatches and nextPosMatches
+            for (auto &curPosMatch: curPosMatches) {
+                for (auto &nextPosMatch: nextPosMatches) {
+                    if (isConsecutive(curPosMatch.first, nextPosMatch.first)) {
+                        linkedMatches[curPosMatch.second].push_back(nextPosMatch.second);
+                    }
                 }
             }
+
         }
         // Update curPosMatches and nextPosMatches
         curPosMatches = nextPosMatches;
         nextPosMatches.clear();
+        currPos = nextPos;
     }
     // Print linkedMatches
     if (par.printLog) {
