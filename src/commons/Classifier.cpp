@@ -734,6 +734,8 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                     // Load target k-mers that are matched in amino acid level
                     while (diffIdxPos != numOfDiffIdx &&
                     currentQueryAA == AminoAcidPart(currentTargetKmer)) {
+                        candidateTargetKmers.push_back(currentTargetKmer);
+                        candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
                         // Print the target k-mer
                         if (par.printLog == 1) {
                             cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t"
@@ -753,8 +755,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                             cout << (int) getHammingDistanceSum(currentQuery, currentTargetKmer) << endl;
                             print_binary16(16, getHammings(currentQuery, currentTargetKmer)); cout << endl;
                         }
-                        candidateTargetKmers.push_back(currentTargetKmer);
-                        candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
+
 
                         if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
                             loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx,
