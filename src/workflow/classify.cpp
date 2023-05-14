@@ -21,6 +21,8 @@ void setClassifyDefaults(LocalParameters & par){
     par.maxGap = 0;
     par.taxonomyPath = "DBDIR/taxonomy/" ;
     par.minConsCnt = 4;
+    par.minConsCntEuk = 9;
+    par.eukaryotaTaxId = 2759;
 }
 
 int classify(int argc, const char **argv, const Command& command)

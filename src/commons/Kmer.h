@@ -11,7 +11,7 @@ typedef struct QueryKmerInfo {
 } QueryKmerInfo; // 9 byte -> 12 byte
 
 typedef struct QueryKmer {
-    QueryKmer(uint64_t ADkmer, uint32_t seqID, uint32_t pos, uint32_t frame) : ADkmer(ADkmer), info(seqID, pos, (uint8_t) frame) {}
+    QueryKmer(uint64_t ADkmer, uint32_t seqID, uint32_t pos, uint8_t frame) : ADkmer(ADkmer), info(seqID, pos, frame) {}
     QueryKmer():ADkmer(0), info(0,0,0){}
     uint64_t ADkmer; // 8 byte
     QueryKmerInfo info; // 12 byte

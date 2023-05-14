@@ -13,7 +13,7 @@
 #include "KmerBuffer.h"
 #include "IndexCreator.h"
 #include <cstdio>
-#include <time.h>
+#include <ctime>
 #include <vector>
 #include <algorithm>
 #include <regex>
@@ -41,8 +41,8 @@ class Classifier {
 protected:
     // Parameters
     int verbosity;
-    size_t localIndexBufferSize;
-    size_t localMatchBufferSize;
+//    size_t localIndexBufferSize;
+//    size_t localMatchBufferSize;
 
     string queryPath_1;
     string queryPath_2;
@@ -59,17 +59,13 @@ protected:
 
     uint8_t hammingMargin;
     float minSpScore;
-    size_t minConsCnt;
     int minCoveredPos;
     int maxGap;
 
     NcbiTaxonomy * taxonomy;
-//    vector<TaxID> taxIdList;
     unordered_map<TaxID, TaxID> taxId2speciesId;
     unordered_map<TaxID, TaxID> taxId2genusId;
-//    vector<TaxID> speciesTaxIdList;
-//    vector<TaxID> genusTaxIdList;
-//    vector<vector<TaxID> *> spORssp;
+
 
     struct MatchBlock {
         MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) {}
@@ -80,7 +76,7 @@ protected:
     };
 
     struct QueryKmerSplit {
-        QueryKmerSplit(size_t start, size_t end, size_t length, DiffIdxSplit diffIdxSplit)
+        QueryKmerSplit(size_t start, size_t end, size_t length, const DiffIdxSplit& diffIdxSplit)
                 : start(start), end(end), length(length), diffIdxSplit(diffIdxSplit) {}
 
         size_t start; // start idx in query k-mer list
@@ -183,7 +179,9 @@ protected:
                          vector<Query> & queryList,
                          const LocalParameters &par);
 
-    void remainConsecutiveMatches(vector<const Match *> & curFrameMatches, vector<const Match *> & filteredMatches,
+    void remainConsecutiveMatches(vector<const Match *> & curFrameMatches,
+                                  vector<const Match *> & filteredMatches,
+                                  TaxID genusId,
                                   const LocalParameters & par);
 
     size_t DFS(size_t curMatchIdx, const map<size_t, vector<size_t>>& linkedMatches,
@@ -240,8 +238,6 @@ protected:
                           int queryLength,
                           int queryLength2);
 
-    static void checkRedundantMatches(vector<Match> &matches, pair<size_t, size_t> &matchRange);
-
     TaxID lowerRankClassification(vector<Match> &matches, pair<int, int> &matchRange, TaxID speciesID);
 
     void getSpeciesCladeCounts(const unordered_map<TaxID, unsigned int> & taxCnt,
@@ -273,11 +269,11 @@ protected:
 
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts> &map, TaxID key);
 
-    size_t AminoAcidPart(size_t kmer) {
+    size_t AminoAcidPart(size_t kmer) const {
         return (kmer) & MARKER;
     }
 
-    size_t getCodonBits(size_t num) {
+    static size_t getCodonBits(size_t num) {
         return num & 0X7U;
     }
 
@@ -295,15 +291,17 @@ public:
 
     void startClassify(const LocalParameters &par);
 
-    static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiffIdxList, size_t &diffIdxPos);
+//    static uint64_t getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiffIdxList, size_t &diffIdxPos);
 
-    static uint64_t getNextTargetKmer(uint64_t lookingTarget, uint16_t *targetDiffIdxList, size_t & diffIdxPos,
+    static uint64_t getNextTargetKmer(uint64_t lookingTarget,
+                                      const uint16_t * diffIdxBuffer,
+                                      size_t & diffBufferIdx,
                                       size_t & totalPos);// size_t bufferSize, FILE * diffIdxFp);
 
     static TargetKmerInfo getKmerInfo(size_t bufferSize, FILE * kmerInfoFp, TargetKmerInfo * infoBuffer,
                               size_t & infoBufferIdx);
 
-    Classifier(LocalParameters & par);
+    explicit Classifier(LocalParameters & par);
 
     virtual ~Classifier();
 
@@ -311,7 +309,7 @@ public:
 };
 
 struct sortMatch {
-    sortMatch(const Classifier * classifier) : classifier(classifier) {}
+    explicit sortMatch(const Classifier * classifier) : classifier(classifier) {}
     bool operator() (const Match & a, const Match & b) const {
         if (a.qInfo.queryId < b.qInfo.queryId) return true;
         else if (a.qInfo.queryId == b.qInfo.queryId) {
@@ -374,27 +372,27 @@ inline uint16_t Classifier::getHammings_reverse(uint64_t kmer1, uint64_t kmer2) 
     return hammings;
 }
 
-inline uint64_t
-Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiffIdxList, size_t &diffIdxPos) {
-    uint16_t fragment;
-    uint16_t check = (0x1u << 15u);
-    uint64_t diffIn64bit = 0;
-    fragment = targetDiffIdxList[diffIdxPos];
-    diffIdxPos++;
-    while (!(fragment & check)) { // 27 %
-        diffIn64bit |= fragment;
-        diffIn64bit <<= 15u;
-        fragment = targetDiffIdxList[diffIdxPos];
-        diffIdxPos++;
-    }
-    fragment &= ~check; // not; 8.47 %
-    diffIn64bit |= fragment; // or : 23.6%
+//inline uint64_t
+//Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiffIdxList, size_t &diffIdxPos) {
+//    uint16_t fragment;
+//    uint16_t check = (0x1u << 15u);
+//    uint64_t diffIn64bit = 0;
+//    fragment = targetDiffIdxList[diffIdxPos];
+//    diffIdxPos++;
+//    while (!(fragment & check)) { // 27 %
+//        diffIn64bit |= fragment;
+//        diffIn64bit <<= 15u;
+//        fragment = targetDiffIdxList[diffIdxPos];
+//        diffIdxPos++;
+//    }
+//    fragment &= ~check; // not; 8.47 %
+//    diffIn64bit |= fragment; // or : 23.6%
+//
+//    return diffIn64bit + lookingTarget;
+//}
 
-    return diffIn64bit + lookingTarget;
-}
-
 inline uint64_t
-Classifier::getNextTargetKmer(uint64_t lookingTarget, uint16_t * diffIdxBuffer, size_t & diffBufferIdx, size_t & totalPos) {
+Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t * diffIdxBuffer, size_t & diffBufferIdx, size_t & totalPos) {
 //                              size_t bufferSize, FILE * diffIdxFp) {
     uint16_t fragment;
     uint16_t check = 32768; // 2^15
@@ -416,7 +414,7 @@ inline
 TargetKmerInfo Classifier::getKmerInfo(size_t bufferSize, FILE * kmerInfoFp, TargetKmerInfo * infoBuffer,
                                        size_t & infoBufferIdx){
     if (unlikely(infoBufferIdx >= bufferSize)) {
-        loadBuffer(kmerInfoFp, infoBuffer, infoBufferIdx, bufferSize, infoBufferIdx - bufferSize);
+        loadBuffer(kmerInfoFp, infoBuffer, infoBufferIdx, bufferSize, (int) (infoBufferIdx - bufferSize));
     }
     return infoBuffer[infoBufferIdx];
 }

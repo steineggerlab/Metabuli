@@ -33,6 +33,7 @@ public:
     PARAMETER(VIRUS_TAX_ID)
     PARAMETER(BACTERIA_TAX_ID)
     PARAMETER(ARCHAEA_TAX_ID)
+    PARAMETER(EUKARYOTA_TAX_ID)
 
     // Classify
     PARAMETER(SEQ_MODE)
@@ -49,6 +50,7 @@ public:
     PARAMETER(PRINT_LOG)
     PARAMETER(MAX_GAP)
     PARAMETER(MIN_CONS_CNT)
+    PARAMETER(MIN_CONS_CNT_EUK)
 
     // DB build parameters
     PARAMETER(LIBRARY_PATH)
@@ -69,6 +71,8 @@ public:
     int virusTaxId;
     int bacteriaTaxId;
     int archaeaTaxId;
+    int eukaryotaTaxId;
+
 
     // Classify
     int seqMode;
@@ -84,6 +88,7 @@ public:
     int minCoveredPos;
     int printLog;
     int maxGap;
+    int minConsCntEuk;
 
     // Database creation
     std::string tinfoPath;
