@@ -31,14 +31,13 @@ int build(int argc, const char **argv, const Command &command){
     } else {
         par.tinfoPath = par.tinfoPath + "/";
     }
-    cout << par.maskProb << endl;
-    
+
     // If the prodigal directory does not exist, create it
-    if (!FileUtil::directoryExists(par.tinfoPath.c_str())) {
-        FileUtil::makeDir(par.tinfoPath.c_str());
-    }
+//    if (!FileUtil::directoryExists(par.tinfoPath.c_str())) {
+//        FileUtil::makeDir(par.tinfoPath.c_str());
+//    }
     cout << "Taxonomy path: " << par.taxonomyPath << endl;
-    cout << "Tinfo path: " << par.tinfoPath << endl;
+//    cout << "Tinfo path: " << par.tinfoPath << endl;
 
     IndexCreator idxCre(par, dbDirectory, fastaListPath, mappingFile);
     idxCre.createIndex(par);

@@ -223,7 +223,7 @@ LocalParameters::LocalParameters() :
     build.push_back(&REDUCED_AA);
     build.push_back(&SPACED);
     build.push_back(&TAXONOMY_PATH);
-    build.push_back(&TINFO_PATH);
+//    build.push_back(&TINFO_PATH);
     build.push_back(&SPLIT_NUM);
     build.push_back(&PARAM_MASK_PROBABILTY);
     build.push_back(&PARAM_MASK_RESIDUES);
@@ -248,6 +248,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MAX_GAP);
     classify.push_back(&TAXONOMY_PATH);
     classify.push_back(&MIN_CONS_CNT);
+    classify.push_back(&MIN_CONS_CNT_EUK);
 
 
     //updateTargetDB
