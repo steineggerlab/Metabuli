@@ -1,0 +1,34 @@
+language: python
+
+
+matrix:
+  include:
+    - name: "ubuntu xenial"
+      os: linux  
+      dist: xenial
+    - name: "ubuntu bionic"
+      os: linux
+      dist: bionic
+
+python:
+  - "3.6"
+
+before_install:
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh							 
+  - ./miniconda.sh -b
+  - export PATH=$HOME/miniconda3/bin:$PATH
+  - conda update --yes conda
+  - conda config --add channels defaults
+  - conda config --add channels conda-forge
+  - conda config --add channels bioconda
+  
+install:
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION taxonkit
+  - conda list
+
+script:
+  - python gtdb_to_taxdump.py tests/data/gtdb_r89.0/ar122_taxonomy_r89.tsv tests/data/gtdb_r89.0/bac120_taxonomy_r89_n10k.tsv | head -n 100
+  - python gtdb_to_taxdump.py https://data.ace.uq.edu.au/public/gtdb/data/releases/release89/89.0/ar122_taxonomy_r89.tsv | head -n 100
+  - taxonkit list --data-dir . --ids 1,10,24 | head -n 100
+  - taxonkit lineage --data-dir . tests/data/taxonkit/taxIDs.txt | head -n 100

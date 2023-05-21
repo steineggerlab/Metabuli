@@ -250,7 +250,7 @@ void ProdigalWrapper::getPredictedGenes(char * genome){
         tweak_final_starts(genes, ng, nodes, nn, meta[max_phase].tinf);
         record_gene_data(genes, ng, nodes, meta[max_phase].tinf, num_seq);
     }
-    fprintf(stderr, "done! gene count: %d (%d bp)\n", ng, slen);
+//    fprintf(stderr, "done! gene count: %d (%d bp)\n", ng, slen);
 }
 
 int ProdigalWrapper::getNextSeq(char * line, int training) {

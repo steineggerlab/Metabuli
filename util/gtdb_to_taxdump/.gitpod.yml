@@ -1,0 +1,16 @@
+github:
+  prebuilds:
+    master: true
+    pullRequests: true
+    addCheck: true
+    addComment: true
+    addBadge: false
+image: condaforge/mambaforge
+tasks:
+  - name: mamba env create and package install
+    init: |
+      mamba init
+      . ${HOME}/.bashrc
+      mamba env create -f environment.yml python=3.9
+      mamba activate gtdb_to_taxdump
+      pip install .

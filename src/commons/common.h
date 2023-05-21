@@ -6,15 +6,15 @@
 #define kmerBufSize 1'000'000'000  // 1'000'000'000 //286'000'000 //   10'000'000'000 | 286'000'000 (16 byte x 1 giga = 16 GB)
 // 10'000'000'000 -> build_dir 397G RAM
 // 1'000'000'000 -> build_dir 39.7G RAM
-#define SplitNum 4096
-#define PRINT false
+//#define SplitNum 4096
+//#define PRINT false
 #define likely(x) __builtin_expect((x),1)
 #define unlikely(x) __builtin_expect((x),0)
 
-struct Sequence{
-    Sequence(size_t start, size_t end, size_t length, size_t seqLength = 0)
+struct SequenceBlock{
+    SequenceBlock(size_t start, size_t end, size_t length, size_t seqLength = 0)
             : start(start), end(end), length(length), seqLength(seqLength) {}
-    Sequence() : start(0), end(0), length(0), seqLength(0) { }
+    SequenceBlock() : start(0), end(0), length(0), seqLength(0) { }
     size_t start;
     size_t end;
     size_t length;

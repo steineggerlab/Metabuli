@@ -318,13 +318,13 @@ void SeqIterator::sixFrameTranslation(const char *seq) {
     }
 }
 
-void SeqIterator::fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite, const int &seqID,
+void SeqIterator::fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite, uint32_t seqID,
                                  uint32_t offset) {
     int forOrRev;
     uint64_t tempKmer = 0;
     int checkN;
 
-    for (uint32_t frame = 0; frame < 6; frame++) {
+    for (uint8_t frame = 0; frame < 6; frame++) {
         uint32_t len = aaFrames[frame].size();
         forOrRev = frame / 3;
         for (uint32_t kmerCnt = 0; kmerCnt < len - kmerLength - spaceNum + 1; kmerCnt++) {
@@ -363,9 +363,9 @@ void SeqIterator::fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuff
 }
 
 void
-SeqIterator::addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev, const int &kmerCnt, const int &frame,
+SeqIterator::addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev, uint32_t kmerCnt, uint32_t frame,
                                   int seqLen) {
-    int start = (frame % 3) + (kmerCnt * 3);
+    uint32_t start = (frame % 3) + (kmerCnt * 3);
     kmer <<= bitsFor8Codons;
     size_t end = seqLen - 1;
 
@@ -419,9 +419,9 @@ string SeqIterator::reverseCompliment(string &read) const {
     return out;
 }
 
-char *SeqIterator::reverseCompliment(char *read, int length) const {
+char *SeqIterator::reverseCompliment(char *read, size_t length) const {
     char *revCom = (char *) malloc(sizeof(char) * (length + 1));
-    for (int i = 0; i < length; i++) {
+    for (size_t i = 0; i < length; i++) {
         revCom[length - i - 1] = iRCT[read[i]];
     }
     revCom[length] = '\0';
@@ -432,7 +432,7 @@ char *SeqIterator::reverseCompliment(char *read, int length) const {
 // It extracts kmers from amino acid sequence with DNA information and fill the kmerBuffer with them.
 int
 SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock &block, const char *seq, TargetKmerBuffer &kmerBuffer,
-                                         size_t &posToWrite, const uint32_t &seqID, int taxIdAtRank) {
+                                         size_t &posToWrite, int seqID, int taxIdAtRank) {
     uint64_t tempKmer = 0;
     int len = (int) aaFrames[0].size();
     int checkN;

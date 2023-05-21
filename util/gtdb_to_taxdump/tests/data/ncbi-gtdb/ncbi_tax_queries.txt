@@ -1,0 +1,14 @@
+s__Methanobrevibacter smithii
+s__methanosarcina Barkeri
+s__Bacteroides thetaiotaomicron
+s__Escherichia coli
+g__Escherichia
+s__Bacillus anthracis
+s__Xanthomonas Oryzae
+s__Aquicella lusitana
+g__Bacillus
+c__GammaProteobacteria
+c__Betaproteobacteria
+p__Bacteroidetes
+s__Homo sapiens
+s__Saccharomyces cerevisiae

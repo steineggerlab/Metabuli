@@ -17,6 +17,16 @@
 #include "Classifier.h"
 #include "LocalParameters.h"
 
+// For masking
+#include "NucleotideMatrix.h"
+#include "SubstitutionMatrix.h"
+#include "tantan.h"
+//#include "DBReader.h"
+//#include "DBWriter.h"
+//#include "Debug.h"
+//#include "Util.h"
+//#include "FileUtil.h"
+
 #ifdef OPENMP
 #include <omp.h>
 #endif
@@ -41,6 +51,7 @@ private:
     vector<TaxID> trainedSpecies;
     unordered_map<TaxID, _training> trainingInfo;
     int threadNum;
+    BaseMatrix *subMat;
 
     NcbiTaxonomy * taxonomy;
     string dbDir;
@@ -52,7 +63,7 @@ private:
         string path;
         TaxID speciesID;
         size_t trainingSeqIdx;
-        vector<Sequence> sequences;
+        vector<SequenceBlock> sequences;
     };
 
     vector<FASTA> fastaList;
@@ -90,7 +101,6 @@ private:
     size_t numOfFlush=0;
 
     void trainProdigal();
-    void loadTrainingInfo();
 
 //    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<int> & taxIdList);
     void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
@@ -99,6 +109,8 @@ private:
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
 
+    void maskLowComplexityRegions(char * seq, char * maskedSeq, ProbabilityMatrix & probMat,
+                                  const LocalParameters & par);
     size_t fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                 bool *checker,
                                 size_t &processedSplitCnt,
@@ -134,12 +146,12 @@ private:
     }
 
 public:
-    static void splitSequenceFile(vector<Sequence> & seqSegments, MmapedData<char> seqFile);
+    static void splitSequenceFile(vector<SequenceBlock> & seqSegments, MmapedData<char> seqFile);
 
-    string getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const string & seqFileName,
+    string getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const string & seqFileName,
                                   const unordered_map<string, TaxID> & acc2taxid,
                                   unordered_map<string, TaxID> & foundAcc2taxid);
-    void getSeqSegmentsWithHead(vector<Sequence> & seqSegments, const char * seqFileName);
+    static void getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const char * seqFileName);
     IndexCreator(const LocalParameters & par);
     IndexCreator(const LocalParameters & par, string dbDir, string fnaListFileName, string acc2taxidFile);
     IndexCreator() {taxonomy = nullptr;}
@@ -156,8 +168,8 @@ public:
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
                     uint16_t *kmerBuf, size_t & localBufIdx, size_t & totalBufferIdx);
     void writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t & infoBufferIdx);
-    void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
-    void flushInfoBuf(TargetKmerInfo * buffer, FILE * infoFile, size_t & localBufIdx );
+    static void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
+    static void flushInfoBuf(TargetKmerInfo * buffer, FILE * infoFile, size_t & localBufIdx );
 
 };
 #endif //ADKMER4_INDEXCREATOR_H

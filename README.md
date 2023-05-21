@@ -16,6 +16,15 @@ make -j 16
 ```
 The built binary can be found in ./build/src
 
+## Pre-built databases
+You can download pre-built databases.
+1. **RefSeq release 217 virus + archaea + bacteria**: Viral and prokaryotic genomes of RefSeq release 217 and human genome (GRCh38.p14)
+- link:
+2. **RefSeq Complete and Chromosome**: Complete Genome or Chromosome level assemblies of virus and prokaryotes in RefSeq (2023-04-04) and human genome (GRCh38.p14)
+- link:
+3. **GTDB 207**: Complete Genome or Chromosome level assemblies in GTDB207 (CheckM Completeness > 90, CheckM Contamination < 5) with GTDB taxonomy.
+- link:
+
 ## Database building
 To build your Metabuli database, you need three things.
 1. **FASTA files** : Each sequence of your FASTA files must be separated by '>accession.version' like '>CP001849.1'

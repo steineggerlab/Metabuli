@@ -13,7 +13,8 @@
 #include "KSeqBufferReader.h"
 #include "ProdigalWrapper.h"
 #include <functional>
-#include "xxh3.h"
+//#include "xxh3.h"
+#include "xxhash.h"
 #include <queue>
 #include "LocalParameters.h"
 
@@ -56,18 +57,18 @@ private:
     int bitsForCodon;
     int bitsFor8Codons;
 
-    void addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev, const int &kmerCnt, const int &frame,
+    void addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev, uint32_t kmerCnt, uint32_t frame,
                               int readLength);
 
     void addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const PredictedBlock &block, const int &kmerCnt);
 
 public:
-    void fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite, const int &seqID,
-                             uint32_t offset = 0);
+    void fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite,
+                             uint32_t seqID, uint32_t offset = 0);
 
     string reverseCompliment(string &read) const;
 
-    char *reverseCompliment(char *read, int length) const;
+    char *reverseCompliment(char *read, size_t length) const;
 
     void sixFrameTranslation(const char *seq);
 
@@ -89,7 +90,7 @@ public:
     size_t getNumOfKmerForBlock(const PredictedBlock &block);
 
     int fillBufferWithKmerFromBlock(const PredictedBlock &block, const char *seq, TargetKmerBuffer &kmerBuffer,
-                                     size_t &posToWrite, const uint32_t &seqID, int taxIdAtRank);
+                                     size_t &posToWrite, int seqID, int taxIdAtRank);
 
     void printKmerInDNAsequence(uint64_t kmer);
 

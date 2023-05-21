@@ -26,12 +26,14 @@ public:
     std::vector<MMseqsParameter*> build;
     std::vector<MMseqsParameter*> applyThreshold;
     std::vector<MMseqsParameter*> binning2report;
+    std::vector<MMseqsParameter*> filterByGenus;
 
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
     PARAMETER(BACTERIA_TAX_ID)
     PARAMETER(ARCHAEA_TAX_ID)
+    PARAMETER(EUKARYOTA_TAX_ID)
 
     // Classify
     PARAMETER(SEQ_MODE)
@@ -47,11 +49,14 @@ public:
     PARAMETER(RAM_USAGE)
     PARAMETER(PRINT_LOG)
     PARAMETER(MAX_GAP)
+    PARAMETER(MIN_CONS_CNT)
+    PARAMETER(MIN_CONS_CNT_EUK)
 
     // DB build parameters
     PARAMETER(LIBRARY_PATH)
     PARAMETER(TAXONOMY_PATH)
     PARAMETER(IS_ASSEMBLY)
+    PARAMETER(SPLIT_NUM)
 
     // Test parameters
     PARAMETER(TEST_RANK)
@@ -66,6 +71,8 @@ public:
     int virusTaxId;
     int bacteriaTaxId;
     int archaeaTaxId;
+    int eukaryotaTaxId;
+
 
     // Classify
     int seqMode;
@@ -81,11 +88,13 @@ public:
     int minCoveredPos;
     int printLog;
     int maxGap;
+    int minConsCntEuk;
 
     // Database creation
     std::string tinfoPath;
     std::string libraryPath;
     std::string taxonomyPath;
+    int splitNum;
 
     // Test parameters
     std::string testRank;

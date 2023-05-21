@@ -1,7 +1,7 @@
 #include "FileMerger.h"
 
 FileMerger::FileMerger(const LocalParameters & par) {
-    cre = new IndexCreator(par);
+    splitNum = par.splitNum;
     if (par.reducedAA == 1){
         MARKER = 0Xffffffff;
         MARKER = ~MARKER;
@@ -12,7 +12,7 @@ FileMerger::FileMerger(const LocalParameters & par) {
 }
 
 FileMerger::~FileMerger() {
-    delete cre;
+
 }
 
 //void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & taxIdListAtRank, vector<int> & taxIdList) {
@@ -183,24 +183,37 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
                           par.taxonomyPath + "/nodes.dmp",
                           par.taxonomyPath + "/merged.dmp");
 
-    // Load taxonomy id list
-    vector<TaxID> taxIdList;
+    // Load taxonomy ids
     FILE * taxIdFile;
     if((taxIdFile = fopen((string(dbDirectory) + "/taxID_list").c_str(),"r")) == NULL){
         cout<<"Cannot open the taxID list file."<<endl;
         return;
     }
     char taxID[100];
-    while(feof(taxIdFile) == 0) {
+    unordered_map<TaxID, TaxID> taxId2speciesId;
+    while(feof(taxIdFile) == 0)
+    {
         fscanf(taxIdFile,"%s",taxID);
-        taxIdList.push_back(atol(taxID));
+        TaxID taxId = atol(taxID);
+        TaxonNode const * taxon = taxonomy.taxonNode(taxId);
+        if (taxId == taxon->taxId){
+            TaxID speciesTaxID = taxonomy.getTaxIdAtRank(taxId, "species");
+            while (taxon->taxId != speciesTaxID) {
+                taxId2speciesId[taxon->taxId] = speciesTaxID;
+                taxon = taxonomy.taxonNode(taxon->parentTaxId);
+            }
+            taxId2speciesId[speciesTaxID] = speciesTaxID;
+        } else { // merged
+            TaxID speciesTaxID = taxonomy.getTaxIdAtRank(taxId, "species");
+            while (taxon->taxId != speciesTaxID) {
+                taxId2speciesId[taxon->taxId] = speciesTaxID;
+                taxon = taxonomy.taxonNode(taxon->parentTaxId);
+            }
+            taxId2speciesId[speciesTaxID] = speciesTaxID;
+            taxId2speciesId[taxId] = speciesTaxID;
+        }
     }
     fclose(taxIdFile);
-    taxIdList.pop_back();
-
-    // Make taxonomy id list at species rank
-    vector<int> taxIdListAtSpecies;
-    taxonomy.createTaxIdListAtRank(taxIdList, taxIdListAtSpecies, "species");
 
     // File names for the final DB
     string mergedDiffFileName = dbDirectory + "/diffIdx";
@@ -240,15 +253,15 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
 
     // To make differential index splits
     uint64_t AAofTempSplitOffset = UINT64_MAX;
-    size_t sizeOfSplit = numOfKmerBeforeMerge / (SplitNum - 1);
-    size_t offsetList[SplitNum + 1];
+    size_t sizeOfSplit = numOfKmerBeforeMerge / (splitNum - 1);
+    size_t offsetList[splitNum + 1];
     int offsetListIdx = 1;
-    for(size_t os = 0; os < SplitNum; os++){
+    for(size_t os = 0; os < splitNum; os++){
         offsetList[os] = os * sizeOfSplit;
     }
-    offsetList[SplitNum] = UINT64_MAX;
-    DiffIdxSplit splitList[SplitNum];
-    memset(splitList, 0, sizeof(DiffIdxSplit) * SplitNum);
+    offsetList[splitNum] = UINT64_MAX;
+    DiffIdxSplit splitList[splitNum];
+    memset(splitList, 0, sizeof(DiffIdxSplit) * splitNum);
     int splitListIdx = 1;
 
     // get the first k-mer to write
@@ -259,7 +272,7 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     }
 
 
-    size_t idxOfMin = smallest(lookingKmers, lookingInfos, taxIdListAtSpecies, numOfSplits);
+    size_t idxOfMin = smallest(lookingKmers, lookingInfos, taxId2speciesId, numOfSplits);
     uint64_t lastWrittenKmer = 0;
     uint64_t entryKmer = lookingKmers[idxOfMin];
     TargetKmerInfo entryInfo = lookingInfos[idxOfMin];
@@ -273,6 +286,7 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     int endFlag = 0;
 
     size_t numOfincompletedFiles = numOfSplits;
+    vector<TaxID> taxIds;
     while(true){
         // update entry k-mer
         entryKmer = lookingKmers[idxOfMin];
@@ -280,20 +294,23 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
 
         // update looking k-mers
         lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
-        lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]]; // TODO SEGV here
+        lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
         infoFileIdx[idxOfMin] ++;
         if( diffFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin] ){
             lookingKmers[idxOfMin] = UINT64_MAX;
             numOfincompletedFiles--;
             if(numOfincompletedFiles == 0) break;
         }
-        idxOfMin = smallest(lookingKmers, lookingInfos, taxIdListAtSpecies, numOfSplits);
+        idxOfMin = smallest(lookingKmers, lookingInfos, taxId2speciesId, numOfSplits);
 
         int hasSeenOtherStrains = 0;
-        while(taxIdListAtSpecies[entryInfo.sequenceID] == taxIdListAtSpecies[lookingInfos[idxOfMin].sequenceID]){
+        taxIds.clear();
+        taxIds.push_back(entryInfo.sequenceID); // Wrong
+        while(taxId2speciesId[entryInfo.sequenceID] == taxId2speciesId[lookingInfos[idxOfMin].sequenceID]){
             if(entryKmer != lookingKmers[idxOfMin]) break;
 
-            hasSeenOtherStrains += (taxIdList[entryInfo.sequenceID] != taxIdList[lookingInfos[idxOfMin].sequenceID]);
+            hasSeenOtherStrains += (entryInfo.sequenceID != lookingInfos[idxOfMin].sequenceID);
+            taxIds.push_back(lookingInfos[idxOfMin].sequenceID);
 
             lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
             lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
@@ -307,7 +324,13 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
                     break;
                 }
             }
-            idxOfMin = smallest(lookingKmers, lookingInfos, taxIdListAtSpecies, numOfSplits);
+            idxOfMin = smallest(lookingKmers, lookingInfos, taxId2speciesId, numOfSplits);
+        }
+
+        if (taxIds.size() > 1) {
+            entryInfo.sequenceID = taxonomy.LCA(taxIds)->taxId;
+        } else {
+            entryInfo.sequenceID = taxIds[0];
         }
 
         entryInfo.redundancy = (hasSeenOtherStrains > 0 || entryInfo.redundancy);
@@ -331,10 +354,10 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
         if(endFlag == 1) break;
     }
 
-    cre->flushInfoBuf(infoBuffer, mergedInfoFile, infoBufferIdx);
-    cre->flushKmerBuf(diffBuffer, mergedDiffFile, diffBufferIdx);
-    fwrite(splitList, sizeof(DiffIdxSplit), SplitNum, diffIdxSplitFile);
-    for(int i = 0; i < SplitNum; i++){
+    IndexCreator::flushInfoBuf(infoBuffer, mergedInfoFile, infoBufferIdx);
+    IndexCreator::flushKmerBuf(diffBuffer, mergedDiffFile, diffBufferIdx);
+    fwrite(splitList, sizeof(DiffIdxSplit), splitNum, diffIdxSplitFile);
+    for(int i = 0; i < splitNum; i++){
         cout<<splitList[i].ADkmer<< " "<<splitList[i].diffIdxOffset<< " "<<splitList[i].infoIdxOffset<<endl;
     }
     free(diffBuffer);
@@ -520,16 +543,20 @@ uint64_t FileMerger::getNextKmer(uint64_t lookingTarget, const struct MmapedData
     return diffIn64bit + lookingTarget;
 }
 
-size_t FileMerger::smallest(const uint64_t lookingKmers[], const TargetKmerInfo lookingInfos[], vector<int> & taxListAtRank, const size_t & fileCnt)
+size_t FileMerger::smallest(const uint64_t lookingKmers[],
+                            const TargetKmerInfo lookingInfos[],
+                            const unordered_map<TaxID, TaxID> & taxId2speciesId,
+                            const size_t & fileCnt)
 {
     size_t idxOfMin = 0;
     uint64_t min = lookingKmers[0];
-    int minTaxIdAtRank = taxListAtRank[lookingInfos[0].sequenceID];
+    int minTaxIdAtRank = taxId2speciesId.at((int) lookingInfos[0].sequenceID);
     for(size_t i = 1; i < fileCnt; i++)
     {
-        if(lookingKmers[i] < min ||(lookingKmers[i] == min && taxListAtRank[lookingInfos[i].sequenceID] < minTaxIdAtRank)){
+        if(lookingKmers[i] < min ||
+          (lookingKmers[i] == min && taxId2speciesId.at((int) lookingInfos[i].sequenceID) < minTaxIdAtRank)){
             min = lookingKmers[i];
-            minTaxIdAtRank = taxListAtRank[lookingInfos[i].sequenceID];
+            minTaxIdAtRank = taxId2speciesId.at((int) lookingInfos[i].sequenceID);
             idxOfMin = i;
         }
     }

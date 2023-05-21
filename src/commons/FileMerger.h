@@ -18,8 +18,8 @@ using namespace std;
 
 class FileMerger {
 private:
-    IndexCreator * cre;
     uint64_t MARKER;
+    int splitNum;
 
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx, size_t & totalBufIdx);
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx , size_t & totalBufIdx);
@@ -38,7 +38,10 @@ public:
 
 
     //    void updateTargetDatabase(vector<char *> diffIdxFileNames, vector<char *> infoFileNames, vector<int> & taxListAtRank, vector<int> & taxIdList, const int & seqIdOffset);
-    static size_t smallest(const uint64_t *lookingKmer, const TargetKmerInfo lookingInfos[], vector<int> & taxListAtRank, const size_t &fileCnt);
+    static size_t smallest(const uint64_t *lookingKmer,
+                           const TargetKmerInfo lookingInfos[],
+                           const unordered_map<TaxID, TaxID> & taxId2speciesId,
+                           const size_t &fileCnt);
     static uint64_t getNextKmer(uint64_t currentValue, const struct MmapedData<uint16_t> & diffList, size_t &idx);
 };
 #endif //ADKMER4_MERGETARGETFILES_H

@@ -67,7 +67,7 @@ int applyThreshold(int argc, const char **argv, const Command &command) {
                 taxonCounts[0]++;
             }
             // Not enough to be classified as species
-            else if (stof(columns[par.scoreCol]) < par.minSpScore && ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(stoi(columns[2]), "species"))->rank == "species") {
+            else if (stof(columns[par.scoreCol]) < par.minSpScore && ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(stoi(columns[2]), "species"))->rankIdx == 4) {
                 TaxID parentTaxId = ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(stoi(columns[2]), "species"))->parentTaxId;
                 newResults.emplace_back(lineCnt, parentTaxId, stof(columns[4]), stof(columns[5]), stoi(columns[6]),
                                         stoi(columns[3]),0, 0, true, false, columns[1]);
@@ -91,7 +91,7 @@ int applyThreshold(int argc, const char **argv, const Command &command) {
         for (auto &result : newResults) {
             new_result_file << result.isClassified << "\t" << result.name << "\t" << result.classification << "\t"
             << result.queryLength << "\t" << result.score << "\t" << result.coverage << "\t" << result.hammingDist <<
-            "\t" << ncbiTaxonomy.taxonNode(result.classification)->rank << endl;
+            "\t" << ncbiTaxonomy.taxonNode(result.classification)->rankIdx << endl;
         }
     } else {
         cerr << "Cannot open file for new result" << endl;

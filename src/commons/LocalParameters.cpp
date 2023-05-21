@@ -24,6 +24,13 @@ LocalParameters::LocalParameters() :
                        typeid(int),
                        (void *) &archaeaTaxId,
                        "[^[1-9]\\d*$]"),
+        EUKARYOTA_TAX_ID(EUKARYOTA_TAX_ID_ID,
+                         "--eukaryota-taxid",
+                         "Taxonomy ID of eukaryota taxon",
+                         "NCBI: 2759 [Default]\nCUSTOM: Check names.dmp file ",
+                         typeid(int),
+                         (void *) &eukaryotaTaxId,
+                         "[^[1-9]\\d*$]"),
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
                  "Sequencing type",
@@ -132,6 +139,34 @@ LocalParameters::LocalParameters() :
                     typeid(bool),
                     (void *) &assembly,
                     ""),
+        MAX_GAP(MAX_GAP_ID,
+                "--max-gap",
+                "Maximum gap between two consecutive k-mers (used only with spaced k-mer)",
+                "Maximum gap between two consecutive k-mers (used only with spaced k-mer)",
+                typeid(int),
+                (void *) &maxGap,
+                ""),
+        MIN_CONS_CNT(MIN_CONS_CNT_ID,
+                     "--min-cons-cnt",
+                     "Minimum number of consecutive metamer matches to be used for prokaryote/virus classification",
+                     "Minimum number of consecutive metamer matches to be used for prokaryote/virus classification",
+                     typeid(int),
+                     (void *) &minConsCnt,
+                     ""),
+        MIN_CONS_CNT_EUK(MIN_CONS_CNT_EUK_ID,
+                         "--min-cons-cnt-euk",
+                         "Minimum number of consecutive metamer matches to be used for eukaryote classification",
+                         "Minimum number of consecutive metamer matches to be used for eukaryote classification",
+                         typeid(int),
+                         (void *) &minConsCntEuk,
+                         ""),
+        SPLIT_NUM(SPLIT_NUM_ID,
+                  "--split-num",
+                  "A database is divided to N splits (offsets). During classification, unnecessary splits are skipped",
+                  "A database is divided to N splits (offsets). During classification, unnecessary splits are skipped",
+                  typeid(int),
+                  (void *) &splitNum,
+                  ""),
         TEST_RANK(TEST_RANK_ID,
                   "--test-rank",
                   ".",
@@ -139,7 +174,7 @@ LocalParameters::LocalParameters() :
                   typeid(std::string),
                   (void *) &testRank,
                   ""),
-                  TEST_TYPE(TEST_TYPE_ID,
+        TEST_TYPE(TEST_TYPE_ID,
                   "--test-type",
                   ".",
                   "Test Type",
@@ -147,12 +182,12 @@ LocalParameters::LocalParameters() :
                   (void *) &testType,
                   ""),
         READID_COL(READID_COL_ID,
-                      "--readid-col",
-                      "Column number of accession in classification result",
-                      "Column number of accession in classification result",
-                      typeid(int),
-                      (void *) &readIdCol,
-                      ""),
+                   "--readid-col",
+                   "Column number of accession in classification result",
+                   "Column number of accession in classification result",
+                   typeid(int),
+                   (void *) &readIdCol,
+                   ""),
         TAXID_COL(TAXID_COL_ID,
                   "--taxid-col",
                   "Column number of taxonomy ID in classification result",
@@ -180,14 +215,7 @@ LocalParameters::LocalParameters() :
                       "CSV of column numbers to be printed",
                       typeid(std::string),
                       (void *) &printColumns,
-                      ""),
-        MAX_GAP(MAX_GAP_ID,
-                "--max-gap",
-                "Maximum gap between two consecutive k-mers (used only with spaced k-mer)",
-                "Maximum gap between two consecutive k-mers (used only with spaced k-mer)",
-                typeid(int),
-                (void *) &maxGap,
-                ""){
+                      "") {
     //add_to_library
 
     // build
@@ -195,13 +223,17 @@ LocalParameters::LocalParameters() :
     build.push_back(&REDUCED_AA);
     build.push_back(&SPACED);
     build.push_back(&TAXONOMY_PATH);
-    build.push_back(&TINFO_PATH);
+//    build.push_back(&TINFO_PATH);
+    build.push_back(&SPLIT_NUM);
+    build.push_back(&PARAM_MASK_PROBABILTY);
+    build.push_back(&PARAM_MASK_RESIDUES);
+
 
     //classify
     classify.push_back(&PARAM_THREADS);
     classify.push_back(&SEQ_MODE);
     classify.push_back(&VIRUS_TAX_ID);
-    classify.push_back(&MEMORY_MODE);
+//    classify.push_back(&MEMORY_MODE);
     classify.push_back(&REDUCED_AA);
     classify.push_back(&MIN_SCORE);
     classify.push_back(&MIN_COVERAGE);
@@ -214,6 +246,9 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MIN_COVERED_POS);
     classify.push_back(&PRINT_LOG);
     classify.push_back(&MAX_GAP);
+    classify.push_back(&TAXONOMY_PATH);
+    classify.push_back(&MIN_CONS_CNT);
+    classify.push_back(&MIN_CONS_CNT_EUK);
 
 
     //updateTargetDB
@@ -241,4 +276,7 @@ LocalParameters::LocalParameters() :
 
     // add to library
     addToLibrary.push_back(&IS_ASSEMBLY);
+    addToLibrary.push_back(&TAXONOMY_PATH);
+    addToLibrary.push_back(&LIBRARY_PATH);
 }
+
