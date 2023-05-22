@@ -1674,7 +1674,7 @@ TaxonScore Classifier::scoreGenus(vector<const Match *> &filteredMatches,
     auto *hammingsAtEachPos = new signed char[aminoAcidNum + 1];
     memset(hammingsAtEachPos, -1, (aminoAcidNum + 1));
     while (f < matchNum) {
-        currPos = filteredMatches[f]->qInfo.position / 3;
+        currPos = filteredMatches[f]->qInfo.pos / 3;
         currHammings = filteredMatches[f]->rightEndHamming;
         if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos + unmaskedPos[0]])
             hammingsAtEachPos[currPos + unmaskedPos[0]] = GET_2_BITS(currHammings);
