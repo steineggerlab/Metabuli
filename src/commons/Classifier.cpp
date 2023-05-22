@@ -655,9 +655,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                         }
                         for (int k = 0; k < currMatchNum; k++) {
                             idx = selectedMatches[k];
-                            matches[matchCnt] = {queryKmerList[j].info.sequenceID,
-                                                 queryKmerList[j].info.pos,
-                                                 queryKmerList[j].info.frame,
+                            matches[matchCnt] = {queryKmerList[j].info,
                                                  candidateKmerInfos[idx].sequenceID,
                                                  taxId2genusId[candidateKmerInfos[idx].sequenceID],
                                                  taxId2speciesId[candidateKmerInfos[idx].sequenceID],
@@ -694,9 +692,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
                         }
                         for (int k = 0; k < currMatchNum; k++) {
                             idx = selectedMatches[k];
-                            matches[matchCnt] = {queryKmerList[j].info.sequenceID,
-                                                 queryKmerList[j].info.pos,
-                                                 queryKmerList[j].info.frame,
+                            matches[matchCnt] = {queryKmerList[j].info,
                                                  candidateKmerInfos[idx].sequenceID,
                                                  taxId2genusId[candidateKmerInfos[idx].sequenceID],
                                                  taxId2speciesId[candidateKmerInfos[idx].sequenceID],
@@ -788,9 +784,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
 
                     for (int k = 0; k < currMatchNum; k++) {
                         idx = selectedMatches[k];
-                        matches[matchCnt] = {queryKmerList[j].info.sequenceID,
-                                             queryKmerList[j].info.pos,
-                                             queryKmerList[j].info.frame,
+                        matches[matchCnt] = {queryKmerList[j].info,
                                              candidateKmerInfos[idx].sequenceID,
                                              taxId2genusId[candidateKmerInfos[idx].sequenceID],
                                              taxId2speciesId[candidateKmerInfos[idx].sequenceID],
@@ -887,10 +881,10 @@ void Classifier::fromMatchToClassification(const Match *matchList,
     size_t blockIdx = 0;
     uint32_t currentQuery;
     while (matchIdx < numOfMatches) {
-        currentQuery = matchList[matchIdx].qInfo.queryId;
+        currentQuery = matchList[matchIdx].qInfo.sequenceID;
         matchBlocks[blockIdx].id = currentQuery;
         matchBlocks[blockIdx].start = matchIdx;
-        while ((currentQuery == matchList[matchIdx].qInfo.queryId) && (matchIdx < numOfMatches)) ++matchIdx;
+        while ((currentQuery == matchList[matchIdx].qInfo.sequenceID) && (matchIdx < numOfMatches)) ++matchIdx;
         matchBlocks[blockIdx].end = matchIdx - 1;
         blockIdx++;
     }
@@ -1061,7 +1055,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
 
     sort(genusMatches.begin() + speciesMatchRange[selectedSpecies].first,
          genusMatches.begin() + speciesMatchRange[selectedSpecies].second,
-         [](const Match & a, const Match & b) { return a.qInfo.position > b.qInfo.position; });
+         [](const Match & a, const Match & b) { return a.qInfo.pos > b.qInfo.pos; });
 
 
     TaxID result = lowerRankClassification(genusMatches, speciesMatchRange[selectedSpecies], selectedSpecies);
@@ -1097,13 +1091,13 @@ TaxID Classifier::lowerRankClassification(vector<Match> &matches, pair<int, int>
     unordered_map<TaxID, unsigned int> taxCnt;
 
     while ( i >= matchRange.first ) {
-        size_t currQuotient = matches[i].qInfo.position / 3;
+        size_t currQuotient = matches[i].qInfo.pos / 3;
         uint8_t minHamming = matches[i].hamming;
         Match * minHammingMatch = & matches[i];
         TaxID minHammingTaxId = minHammingMatch->targetId;
         bool first = true;
         i --;
-        while ( (i >= matchRange.first) && (currQuotient == matches[i].qInfo.position / 3) ) {
+        while ( (i >= matchRange.first) && (currQuotient == matches[i].qInfo.pos / 3) ) {
             if (matches[i].hamming < minHamming) {
                 minHamming = matches[i].hamming;
                 minHammingMatch = & matches[i];
@@ -1268,14 +1262,14 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
     vector<pair<const Match *, size_t>> nextPosMatches;
     map<size_t, vector<size_t>> linkedMatches; // <index, linked indexes>
 
-    size_t currPos = curFrameMatches[0]->qInfo.position;
-    while ( i < end && curFrameMatches[i]->qInfo.position == currPos) {
+    size_t currPos = curFrameMatches[0]->qInfo.pos;
+    while ( i < end && curFrameMatches[i]->qInfo.pos == currPos) {
         curPosMatches.emplace_back(curFrameMatches[i], i);
         i++;
     }
     while (i < end) {
-        uint32_t nextPos = curFrameMatches[i]->qInfo.position;
-        while (i < end  && nextPos == curFrameMatches[i]->qInfo.position) {
+        uint32_t nextPos = curFrameMatches[i]->qInfo.pos;
+        while (i < end  && nextPos == curFrameMatches[i]->qInfo.pos) {
             nextPosMatches.emplace_back(curFrameMatches[i], i);
             ++ i;
         }
@@ -1398,8 +1392,8 @@ TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, c
 
             // For the same species
             while ((i + 1 < end + 1) && currentSpecies == matchList[i + 1].speciesId) {
-                distance = matchList[i+1].qInfo.position / 3 - matchList[i].qInfo.position / 3;
-                dnaDist = matchList[i+1].qInfo.position - matchList[i].qInfo.position;
+                distance = matchList[i+1].qInfo.pos / 3 - matchList[i].qInfo.pos / 3;
+                dnaDist = matchList[i+1].qInfo.pos - matchList[i].qInfo.pos;
                 if (distance == 0) { // At the same position
                     tempMatchContainer.push_back(matchList + i);
                 } else if (dnaDist < (8 + spaceNum_int + maxGap) * 3) { // Overlapping
@@ -1586,8 +1580,8 @@ TaxonScore Classifier::getBestGenusMatches_spaced(vector<Match> &genusMatches, c
 
             // For the same species
             while ((i + 1 < end + 1) && currentSpecies == matchList[i + 1].speciesId) {
-                distance = matchList[i + 1].qInfo.position / 3 - matchList[i].qInfo.position / 3;
-                dnaDist = matchList[i + 1].qInfo.position - matchList[i].qInfo.position;
+                distance = matchList[i + 1].qInfo.pos / 3 - matchList[i].qInfo.pos / 3;
+                dnaDist = matchList[i + 1].qInfo.pos - matchList[i].qInfo.pos;
                 if (distance == 0) { // At the same position
                     tempMatchContainer.push_back(matchList + i);
                 } else if (dnaDist < (8 + spaceNum_int + maxGap) * 3) { // Overlapping
@@ -1738,7 +1732,7 @@ TaxonScore Classifier::scoreGenus(vector<const Match *> &filteredMatches,
     auto *hammingsAtEachPos = new signed char[aminoAcidNum_total + 3];
     memset(hammingsAtEachPos, -1, (aminoAcidNum_total + 3));
     while (f < matchNum) {
-        currPos = (int) filteredMatches[f]->qInfo.position / 3;
+        currPos = (int) filteredMatches[f]->qInfo.pos / 3;
         currHammings = filteredMatches[f]->rightEndHamming;
         if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos + unmaskedPos[0]])
             hammingsAtEachPos[currPos + unmaskedPos[0]] = GET_2_BITS(currHammings);
@@ -1886,7 +1880,7 @@ TaxonScore Classifier::scoreSpecies(const vector<Match> &matches,
     size_t walker = begin;
     uint16_t currHammings;
     while (walker < end) {
-        currPos = matches[walker].qInfo.position / 3;
+        currPos = matches[walker].qInfo.pos / 3;
         currHammings = matches[walker].rightEndHamming;
         if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos + unmaskedPos[0]])
             hammingsAtEachPos[currPos + unmaskedPos[0]] = GET_2_BITS(currHammings);
@@ -1948,7 +1942,7 @@ TaxonScore Classifier::scoreSpecies(const vector<Match> &matches,
     uint16_t currHammings;
 
     while (walker < end) {
-        currPos = matches[walker].qInfo.position / 3;
+        currPos = matches[walker].qInfo.pos / 3;
         currHammings = matches[walker].rightEndHamming;
         if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos + unmaskedPos[0]])
             hammingsAtEachPos[currPos + unmaskedPos[0]] = GET_2_BITS(currHammings);
