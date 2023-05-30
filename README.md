@@ -5,9 +5,25 @@ It is developed to achieve specificity of DNA based method and sensitivity of am
 ## Requirements (WIP)
 
 ## Installation
+### Precompiled binaries
+```
+# Linux ARM64 build
+wget https://mmseqs.com/metabuli/metabuli-linux-arm64.tar.gz; tar xvzf metabuli-linux-arm64.tar.gz; export PATH=$(pwd)/metabuli/bin/:$PATH
+
+# Linux AVX2 build (check using: cat /proc/cpuinfo | grep avx2)
+wget https://mmseqs.com/metabuli/metabuli-linux-avx2.tar.gz; tar xvzf metabuli-linux-avx2.tar.gz; export PATH=$(pwd)/metabuli/bin/:$PATH
+
+# Linux SSE2 build 
+wget https://mmseqs.com/metabuli/metabuli-linux-sse2.tar.gz; tar xvzf metabuli-linux-sse2.tar.gz; export PATH=$(pwd)/metabuli/bin/:$PATH
+
+# MacOS
+wget https://mmseqs.com/metabuli/metabuli-osx-universal.tar.gz; tar xvzf metabuli-osx-universal.tar.gz; export PATH=$(pwd)/metabuli/bin/:$PATH
+```
+
+### Compile from source code
 Installation from Github source code.
 ```
-git clone --recursive GITHUB_LINK
+git clone GITHUB_LINK
 cd Metabuli
 mkdir build
 cd build
@@ -15,6 +31,7 @@ cmake ..
 make -j 16
 ```
 The built binary can be found in ./build/src
+ 
 
 ## Pre-built databases
 You can download pre-built databases.
