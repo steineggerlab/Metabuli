@@ -288,7 +288,7 @@ void Classifier::startClassify(const LocalParameters &par) {
         totalMatchCnt += matchBuffer.startIndexOfReserve;
         cout << "Sorting matches ..." << endl;
         SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve,
-                      sortMatch(this));
+                      sortMatch());
         cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << endl;
 
 //        for (size_t i = 0; i < matchBuffer.startIndexOfReserve; i++) {

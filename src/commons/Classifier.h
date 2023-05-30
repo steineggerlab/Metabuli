@@ -286,7 +286,6 @@ protected:
         bitsForCodon = num;
     }
 
-    friend struct sortMatch;
 public:
 
     void startClassify(const LocalParameters &par);
@@ -309,33 +308,24 @@ public:
 };
 
 struct sortMatch {
-    explicit sortMatch(const Classifier * classifier) : classifier(classifier) {}
-    bool operator() (const Match & a, const Match & b) const {
-        if (a.qInfo.sequenceID < b.qInfo.sequenceID) return true;
-            if (a.genusId < b.genusId) return true;
-            else if (a.genusId == b.genusId) {
-                if (a.speciesId < b.speciesId) return true;
-                else if (a.speciesId == b.speciesId) {
-                    if (a.qInfo.frame < b.qInfo.frame) return true;
-                    else if (a.qInfo.frame == b.qInfo.frame) {
-                        if (a.qInfo.pos < b.qInfo.pos) return true;
-                        else if (a.qInfo.pos == b.qInfo.pos) {
-                            return a.hamming < b.hamming;
-//                            if (a.hamming < b.hamming) return true;
-//                            else if (a.hamming == b.hamming) {
-//                                if (a.rightEndHamming < b.rightEndHamming) return true;
-//                                else if (a.rightEndHamming == b.rightEndHamming) {
-//                                    return a.targetId < b.targetId;
-//                                }
-//                            }
-                        }
-                    }
-                }
-            }
-        }
-        return false;
+    bool operator() (const Match& a, const Match& b) const {
+        if (a.qInfo.sequenceID != b.qInfo.sequenceID)
+            return a.qInfo.sequenceID < b.qInfo.sequenceID;
+
+        if (a.genusId != b.genusId)
+            return a.genusId < b.genusId;
+
+        if (a.speciesId != b.speciesId)
+            return a.speciesId < b.speciesId;
+
+        if (a.qInfo.frame != b.qInfo.frame)
+            return a.qInfo.frame < b.qInfo.frame;
+
+        if (a.qInfo.pos != b.qInfo.pos)
+            return a.qInfo.pos < b.qInfo.pos;
+
+        return a.hamming < b.hamming;
     }
-    const Classifier *  classifier;
 };
 
 inline uint8_t Classifier::getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2) {//12345678
