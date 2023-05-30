@@ -15,4 +15,4 @@ add_library(prodigal
         training.cpp
         training.h)
 
-mmseqs_setup_derived_target(prodigal)
+set_target_properties(prodigal PROPERTIES COMPILE_FLAGS "${MMSEQS_CXX_FLAGS} -w" LINK_FLAGS "${MMSEQS_CXX_FLAGS} -w")
