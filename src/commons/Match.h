@@ -3,6 +3,7 @@
 
 #include "Kmer.h"
 #include <iostream>
+
 //struct Match_qInfo {
 //    explicit Match_qInfo(uint32_t position = 0, uint32_t queryId = 0, uint8_t frame = 0)
 //            : position(position), queryId(queryId),  frame(frame) {}

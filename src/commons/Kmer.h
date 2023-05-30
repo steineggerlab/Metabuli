@@ -10,6 +10,7 @@ struct QueryKmerInfo {
     uint64_t frame : 3; // 0, 1, 2 are forward, and 3, 4, 5 are reverse 1 byte
 }; // 8 byte
 
+
 typedef struct QueryKmer {
     QueryKmer(uint64_t ADkmer, uint32_t seqID, uint32_t pos, uint8_t frame) : ADkmer(ADkmer), info(seqID, pos, frame) {}
     QueryKmer():ADkmer(0), info(0,0,0){}

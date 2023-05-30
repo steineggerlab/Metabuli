@@ -312,7 +312,6 @@ struct sortMatch {
     explicit sortMatch(const Classifier * classifier) : classifier(classifier) {}
     bool operator() (const Match & a, const Match & b) const {
         if (a.qInfo.sequenceID < b.qInfo.sequenceID) return true;
-        else if (a.qInfo.sequenceID == b.qInfo.sequenceID) {
             if (a.genusId < b.genusId) return true;
             else if (a.genusId == b.genusId) {
                 if (a.speciesId < b.speciesId) return true;
