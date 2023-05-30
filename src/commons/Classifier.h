@@ -311,16 +311,15 @@ public:
 struct sortMatch {
     explicit sortMatch(const Classifier * classifier) : classifier(classifier) {}
     bool operator() (const Match & a, const Match & b) const {
-        if (a.qInfo.queryId < b.qInfo.queryId) return true;
-        else if (a.qInfo.queryId == b.qInfo.queryId) {
+        if (a.qInfo.sequenceID < b.qInfo.sequenceID) return true;
             if (a.genusId < b.genusId) return true;
             else if (a.genusId == b.genusId) {
                 if (a.speciesId < b.speciesId) return true;
                 else if (a.speciesId == b.speciesId) {
                     if (a.qInfo.frame < b.qInfo.frame) return true;
                     else if (a.qInfo.frame == b.qInfo.frame) {
-                        if (a.qInfo.position < b.qInfo.position) return true;
-                        else if (a.qInfo.position == b.qInfo.position) {
+                        if (a.qInfo.pos < b.qInfo.pos) return true;
+                        else if (a.qInfo.pos == b.qInfo.pos) {
                             return a.hamming < b.hamming;
 //                            if (a.hamming < b.hamming) return true;
 //                            else if (a.hamming == b.hamming) {

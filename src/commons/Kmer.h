@@ -3,19 +3,20 @@
 #include <iostream>
 #include "NcbiTaxonomy.h"
 
-typedef struct QueryKmerInfo {
-    explicit QueryKmerInfo(uint32_t seqID = 0, uint32_t pos = 0, uint8_t frame = 0 ) : sequenceID(seqID), pos(pos), frame(frame) {}
-    uint32_t sequenceID; // 4 byte
-    uint32_t pos; // 4 byte, 0~65535
-    uint8_t frame; // 0, 1, 2 are forward, and 3, 4, 5 are reverse 1 byte
-} QueryKmerInfo; // 9 byte -> 12 byte
+struct QueryKmerInfo {
+    explicit QueryKmerInfo(uint32_t seqID = 0, uint32_t pos = 0, uint8_t frame = 0 ) : pos(pos), sequenceID(seqID), frame(frame) {}
+    uint64_t pos : 32;
+    uint64_t sequenceID : 29;
+    uint64_t frame : 3; // 0, 1, 2 are forward, and 3, 4, 5 are reverse 1 byte
+}; // 8 byte
+
 
 typedef struct QueryKmer {
     QueryKmer(uint64_t ADkmer, uint32_t seqID, uint32_t pos, uint8_t frame) : ADkmer(ADkmer), info(seqID, pos, frame) {}
     QueryKmer():ADkmer(0), info(0,0,0){}
     uint64_t ADkmer; // 8 byte
-    QueryKmerInfo info; // 12 byte
-} QueryKmer; // 20 byte -> 24 byte
+    QueryKmerInfo info; // 8 byte
+} QueryKmer; // 16 byte
 
 
 struct TargetKmerInfo{
