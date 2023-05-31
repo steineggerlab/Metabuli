@@ -7,8 +7,7 @@
 
 const char* binary_name = "metabuli";
 const char* tool_name = "metabuli";
-// TODO Write one full sentence
-const char* tool_introduction = "Taxonomical classifier using 8-mers which have information of both of amino acid and DNA sequences";
+const char* tool_introduction = "Metabuli is a taxonomical classifier that jointly analyzes amino acid and DNA sequences.";
 const char* main_author = "Jaebeom Kim <jbeom0731@gmail.com> ";
 const char* show_extended_help = "1";
 const char* show_bash_info = NULL;
@@ -18,8 +17,7 @@ const char* index_version_compatible = MMSEQS_CURRENT_INDEX_VERSION;
 bool hide_base_downloads = false;
 void (*validatorUpdate)(void) = 0;
 
-std::vector<DatabaseDownload> externalDownloads = {};
-std::vector<KmerThreshold> externalThreshold = {};
+
 
 
 LocalParameters& localPar = LocalParameters::getLocalInstance();
@@ -119,6 +117,30 @@ std::vector<Command> commands = {
                      {"TAXONOMY DIR", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}}
 
 };
+std::vector<KmerThreshold> externalThreshold = {};
+
+#include "metabulidatabase.sh.h"
+
+std::vector<DatabaseDownload> externalDownloads = {
+        {
+                "RefSeq",
+                "Database built with NCBI RefSeq assemblies (Complete/Chromosome level only, Prokaryote & Virus) and Human genome (GRCh38.p14)",
+                "Jumper et al. Highly accurate protein structure prediction with AlphaFold. Nature, (2021)",
+                "https://alphafold.ebi.ac.uk/",
+                true, LocalParameters::DBTYPE_METABULI, metabulidatabase_sh, metabulidatabase_sh_len,
+                {}
+        },
+        {
+                "GTDB207",
+                "Database built with genomes and taxonomy of GTDB207 (Complete/Chromosome level only, CheckM Completeness > 90, CheckM Contamination < 5) and Human genome (GRCh38.p14)",
+                "Jumper et al. Highly accurate protein structure prediction with AlphaFold. Nature, (2021)",
+                "https://alphafold.ebi.ac.uk/",
+                true, LocalParameters::DBTYPE_METABULI, metabulidatabase_sh, metabulidatabase_sh_len,
+                {}
+        }
+};
+
+
 
 //#include "structdatabases.sh.h"
 //
