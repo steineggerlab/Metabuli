@@ -5,6 +5,8 @@
 #include "CommandDeclarations.h"
 #include "Prefiltering.h"
 
+#include "metabulidatabases.sh.h"
+
 const char* binary_name = "metabuli";
 const char* tool_name = "metabuli";
 const char* tool_introduction = "Metabuli is a taxonomical classifier that jointly analyzes amino acid and DNA sequences.";
@@ -119,15 +121,13 @@ std::vector<Command> commands = {
 };
 std::vector<KmerThreshold> externalThreshold = {};
 
-#include "metabulidatabase.sh.h"
-
 std::vector<DatabaseDownload> externalDownloads = {
         {
                 "RefSeq",
                 "Database built with NCBI RefSeq assemblies (Complete/Chromosome level only, Prokaryote & Virus) and Human genome (GRCh38.p14)",
                 "Jumper et al. Highly accurate protein structure prediction with AlphaFold. Nature, (2021)",
                 "https://alphafold.ebi.ac.uk/",
-                true, LocalParameters::DBTYPE_METABULI, metabulidatabase_sh, metabulidatabase_sh_len,
+                true, LocalParameters::DBTYPE_METABULI, metabulidatabases_sh, metabulidatabases_sh_len,
                 {}
         },
         {
@@ -135,7 +135,7 @@ std::vector<DatabaseDownload> externalDownloads = {
                 "Database built with genomes and taxonomy of GTDB207 (Complete/Chromosome level only, CheckM Completeness > 90, CheckM Contamination < 5) and Human genome (GRCh38.p14)",
                 "Jumper et al. Highly accurate protein structure prediction with AlphaFold. Nature, (2021)",
                 "https://alphafold.ebi.ac.uk/",
-                true, LocalParameters::DBTYPE_METABULI, metabulidatabase_sh, metabulidatabase_sh_len,
+                true, LocalParameters::DBTYPE_METABULI, metabulidatabases_sh, metabulidatabases_sh_len,
                 {}
         }
 };
