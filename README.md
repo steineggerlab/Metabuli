@@ -52,10 +52,16 @@ metabuli databases GTDB207 gtdb tmp
 ```
 metabuli classify <i:FASTA> <i:DBDIR> <o:OUTDIR> <Job ID> [options]
 - FASTA : A FASTA file of reads you want to classify.
-- DBDIR : The directory where you bulit the reference DB. 
-- OUTDIR : The directory where the report files will be generated.
-- Job ID: For the result files.  
+- DBDIR : The directory of reference DB. 
+- OUTDIR : The directory where the result files will be generated.
+- Job ID: It will be the prefix of result files.  
   
+# Paired-end
+metabuli classify read_1.fna read_2.fna dbdir outdir jobid
+
+# Single-end
+metabuli classify --seq-mode 1 read.fna dbdir outdir jobid
+
   * Options
    --threads : The number of CPU-cores used (all by default)
    --max-ram : The maximum RAM usage.
