@@ -16,5 +16,6 @@ include(MMseqsSetupDerivedTarget)
 add_subdirectory(lib/mmseqs)
 add_subdirectory(lib/prodigal)
 add_subdirectory(src)
+add_subdirectory(data)
 include_directories(lib)
 
