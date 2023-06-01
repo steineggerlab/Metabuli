@@ -1,8 +1,7 @@
 # Metabuli
-Metabuli is a taxonomical classifier using amino acid and DNA at the same time.
-It is developed to achieve specificity of DNA based method and sensitivity of amino acid based method at the same time.
+Metabuli taxonomically classifies metagenomic reads using both DNA and amino acid (AA) information.
+It achieved specificity of DNA-based method and sensitivity of AA-method at the same time.
 
-## Requirements (WIP)
 
 ## Installation
 ### Precompiled binaries
@@ -31,27 +30,90 @@ cmake ..
 make -j 16
 ```
 The built binary can be found in ./build/src
- 
 
 ## Pre-built databases
-You can download pre-built databases.
-1. **RefSeq release 217 virus + archaea + bacteria**: Viral and prokaryotic genomes of RefSeq release 217 and human genome (GRCh38.p14)
-- link:
-2. **RefSeq Complete and Chromosome**: Complete Genome or Chromosome level assemblies of virus and prokaryotes in RefSeq (2023-04-04) and human genome (GRCh38.p14)
-- link:
-3. **GTDB 207**: Complete Genome or Chromosome level assemblies in GTDB207 (CheckM Completeness > 90, CheckM Contamination < 5) with GTDB taxonomy.
-- link:
+You can download pre-built databases using `databases` command.
+```
+# RefSeq Complete/Chromosome
+# - Complete Genome or Chromosome level assemblies of virus and prokaryotes in RefSeq (2023-04-04) and human genome (GRCh38.p14)
+metabuli databases RefSeq refseq tmp
 
-## Database building
-To build your Metabuli database, you need three things.
+# RefSeq Releases 217
+# - Viral and prokaryotic genomes of RefSeq release 217 and human genome (GRCh38.p14)
+metabuli databases RefSeq217 refseq217 tmp
+
+# GTDB 207
+# - Complete Genome or Chromosome level assemblies in GTDB207 (CheckM Completeness > 90, CheckM Contamination < 5) with GTDB taxonomy.
+metabuli databases GTDB207 gtdb tmp 
+```
+
+
+## Classification
+```
+metabuli classify <i:FASTA> <i:DBDIR> <o:OUTDIR> <Job ID> [options]
+- FASTA : A FASTA file of reads you want to classify.
+- DBDIR : The directory where you bulit the reference DB. 
+- OUTDIR : The directory where the report files will be generated.
+- Job ID: For the result files.  
+  
+  * Options
+   --threads : The number of CPU-cores used (all by default)
+   --max-ram : The maximum RAM usage.
+   --min-score : The minimum score to be classified (0.15 for precision mode)
+   --min-sp-score : The minimum score to be classified at or below species rank. (0.5 for precision mode)
+   --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
+   --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids. Give the same value used for DB creation.
+   --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
+```
+It will generate two result files: 'Job ID_classifications.tsv' and 'Job ID_report.tsv'
+#### Job ID_classifications.tsv
+1. Classified or not
+2. Read ID
+3. Taxonomy identifier
+4. Effective read length
+5. DNA level identitiy score
+6. Amino-acid level identity score
+7. Total Hamming distance
+8. Classification Rank
+9. List of "taxID : k-mer match count"
+
+```
+#Example
+1       read_1     2688    294     0.627551        0.806122        35      subspecies      2688:65
+1       read_2     2688    294     0.816327        1       36      subspecies      2688:78
+0       read_3     0       294     0       0       0       no rank
+```
+
+#### Job ID_report.tsv
+Proportion of reads that are assigned to each taxon.
+```
+#Example
+33.73   77571   77571   0       no rank unclassified
+66.27   152429  132     1       no rank root
+64.05   147319  2021    8034    superkingdom      d__Bacteria
+22.22   51102   3       22784   phylum      p__Firmicutes
+22.07   50752   361     22785   class         c__Bacilli
+17.12   39382   57      123658  order           o__Bacillales
+15.81   36359   3       126766  family            f__Bacillaceae
+15.79   36312   26613   126767  genus               g__Bacillus
+2.47    5677    4115    170517  species               s__Bacillus amyloliquefaciens
+0.38    883     883     170531  subspecies                      RS_GCF_001705195.1
+0.16    360     360     170523  subspecies                      RS_GCF_003868675.1
+0.11    248     248     170525  subspecies                      RS_GCF_002209305.1
+0.02    42      42      170529  subspecies                      RS_GCF_002173635.1
+0.01    24      24      170539  subspecies                      RS_GCF_000204275.1
+```
+
+## Custom database
+To build your custom database, you need three things.
 1. **FASTA files** : Each sequence of your FASTA files must be separated by '>accession.version' like '>CP001849.1'
 2. **accession2taxid** : Mapping from acession to taxonomy identifier. Sequences whose accessions are not listed in this file will be skipped.
 3. **NCBI-style taxonomy dump** : 'names.dmp' , 'nodes.dmp', and 'merged.dmp' are required. Sequences whose taxid are not included here will be skipped.
 
 Here, steps for creating a database based on a taxonomy of NCBI or GTDB are described.
 
-### 1. Prepare taxonomy and accession2taxid
-  #### NCBI taxonomy
+#### 1. Prepare taxonomy and accession2taxid
+  ##### NCBI taxonomy
   
   * accession2taxid can be downloaded from
   https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/
@@ -59,12 +121,12 @@ Here, steps for creating a database based on a taxonomy of NCBI or GTDB are desc
   * Taxonomy dump files can be downloaded from 
   https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/
   
-  #### GTDB taxonomy
+  ##### GTDB taxonomy
   
-  Please follow two steps below to generate NCBI style taxonomy dump and accession2taxid file.
-  * Requirements: The FASTA file name must include the assembly accession.  
-    If you downloaded assemblies using "ncbi-genome-download", you probably don't have to care about it.  
-    The regular experssion is (GC[AF]_[0-9].[0-9])
+  Follow two steps below to generate GTDB taxonomy and accession2taxid file.
+  * Requirements: You need assembly FASTA files whose file name (or path) include the assembly accession.  
+    If you downloaded assemblies using [ncbi-genome-download](https://github.com/kblin/ncbi-genome-download), you probably don't have to care about it.  
+    The regular experssion of assembly accession is (GC[AF]_[0-9].[0-9])
     
   ```
   # 1. 
@@ -87,7 +149,7 @@ Here, steps for creating a database based on a taxonomy of NCBI or GTDB are desc
   It will add your FASTA files to 'DBDIR/library' according to their species taxonomy ID and generate 'my.accession2taxid' 
 
   
-### 2. Add to libarary (optional)
+#### 2. Add to libarary (optional)
 ```
 ./metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR>
   - FASTA list: A list of absolute paths of each FASTA files.
@@ -96,78 +158,23 @@ Here, steps for creating a database based on a taxonomy of NCBI or GTDB are desc
 ```
 This command groups your FASTA files of the same species and add stores them in separate files to DBDIR/library.  
 You can skip this step in the case of
-1. You have already used this command to generate 'my.accession2taxid'.
+1. You have already used this command during the preparation for GTDB taxonomy.
 2. Your FASTA list includes only one FASTA file per species.
 
 
-### 3. Build
+#### 3. Build
 
 ```
-./metabuli build <DBDIR> <FASTA list> <accession2taxid> [options]
-  - DBDIR: The same DBDIR from the previous step.
-  - FASTA list: A list of absolute paths to your FASTA files (in DBDIR/library)
-  - accession2taxid : accession2taxid file
+metabuli build <DBDIR> <FASTA list> <accession2taxid> [options]
+- DBDIR: The same DBDIR from the previous step. 
+- FASTA list: A list of absolute paths to your FASTA files (in DBDIR/library)
+- accession2taxid : accession2taxid file
   
   * Options
-    --threads : The number of CPU-cores used (all by default)
-    --tinfo-path : Path to prodigal training information files. (DBDIR/prodigal by default)
-    --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
-    --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids.
-    --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
+   --threads : The number of CPU-cores used (all by default)
+   --tinfo-path : Path to prodigal training information files. (DBDIR/prodigal by default)
+   --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
+   --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids.
+   --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
 ```
 It will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
-## Classification
-```
-./metabuli classify <i:FASTA> <i:DBDIR> <o:OUTDIR> <Job ID> [options]
-  - FASTA : A FASTA file of reads you want to classify.
-  - DBDIR : The directory where you bulit the reference DB. 
-  - OUTDIR : The directory where the report files will be generated.
-  - Job ID: For the result files.  
-  
-   * Options
-    --threads : The number of CPU-cores used (all by default)
-    --max-ram : The maximum RAM usage.
-    --min-score : The minimum score to be classified (0.15 for precision mode)
-    --min-sp-score : The minimum score to be classified at or below species rank. (0.5 for precision mode)
-    --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
-    --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids. Give the same value used for DB creation.
-    --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
-```
-It will generate two result files: 'Job ID_classifications.tsv' and 'Job ID_report.tsv'
-### Classifications
-1. Classified or not
-2. Read ID
-3. Taxonomy identifier
-4. Effective read length
-5. DNA level identitiy score
-6. Amino-acid level identity score
-7. Total Hamming distance
-8. Classification Rank
-9. List of "taxID : k-mer match count"
-
-```
-#Example
-1       read_1     2688    294     0.627551        0.806122        35      subspecies      2688:65
-1       read_2     2688    294     0.816327        1       36      subspecies      2688:78
-0       read_3     0       294     0       0       0       no rank
-```
-
-### Report
-Proportion of reads that are assigned to each taxon.
-```
-#Example
-33.73   77571   77571   0       no rank unclassified
-66.27   152429  132     1       no rank root
-64.05   147319  2021    8034    superkingdom      d__Bacteria
-22.22   51102   3       22784   phylum      p__Firmicutes
-22.07   50752   361     22785   class         c__Bacilli
-17.12   39382   57      123658  order           o__Bacillales
-15.81   36359   3       126766  family            f__Bacillaceae
-15.79   36312   26613   126767  genus               g__Bacillus
-2.47    5677    4115    170517  species               s__Bacillus amyloliquefaciens
-0.38    883     883     170531  subspecies                      RS_GCF_001705195.1
-0.16    360     360     170523  subspecies                      RS_GCF_003868675.1
-0.11    248     248     170525  subspecies                      RS_GCF_002209305.1
-0.02    42      42      170529  subspecies                      RS_GCF_002173635.1
-0.01    24      24      170539  subspecies                      RS_GCF_000204275.1
-```
