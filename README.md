@@ -14,7 +14,8 @@ wget https://mmseqs.com/metabuli/metabuli-linux-sse2.tar.gz; tar xvzf metabuli-l
 # MacOS (Universal, works on Apple Silicon and Intel Macs)
 wget https://mmseqs.com/metabuli/metabuli-osx-universal.tar.gz; tar xvzf metabuli-osx-universal.tar.gz; export PATH=$(pwd)/metabuli/bin/:$PATH
 ```
-Metabuli also works on Linux ARM64 systems. Please check [https://mmseqs.com/metabuli/](https://mmseqs.com/metabuli/) for static builds for other architectures.
+Metabuli also works on Linux ARM64 systems. Please check [https://mmseqs.com/metabuli](https://mmseqs.com/metabuli) for static builds for other architectures.
+
 ### Compile from source code
 Installation from source code:
 ```
@@ -27,7 +28,8 @@ make -j 16
 The built binary can be found in `./build/src`.
 
 ## Pre-built databases
-You can download pre-built databases using `databases` command.
+You can download pre-built databases using `databases` workflow.
+
 ```
 # RefSeq Complete/Chromosome
 # - Complete Genome or Chromosome level assemblies of virus and prokaryotes in RefSeq (2023-04-04) and human genome (GRCh38.p14)
@@ -66,7 +68,8 @@ metabuli classify --seq-mode 1 read.fna dbdir outdir jobid
    --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids. Give the same value used for DB creation.
    --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
 ```
-It will generate two result files: 'Job ID_classifications.tsv' and 'Job ID_report.tsv'
+
+This will generate two result files: `Job ID_classifications.tsv` and `Job ID_report.tsv`
 #### Job ID_classifications.tsv
 1. Classified or not
 2. Read ID
@@ -106,15 +109,15 @@ Proportion of reads that are assigned to each taxon.
 ```
 
 ## Custom database
-To build your custom database, you need three things.
+To build a custom database, you need three things:
 1. **FASTA files** : Each sequence of your FASTA files must be separated by '>accession.version' like '>CP001849.1'
 2. **accession2taxid** : Mapping from acession to taxonomy identifier. Sequences whose accessions are not listed in this file will be skipped.
 3. **NCBI-style taxonomy dump** : 'names.dmp' , 'nodes.dmp', and 'merged.dmp' are required. Sequences whose taxid are not included here will be skipped.
 
-Here, steps for creating a database based on a taxonomy of NCBI or GTDB are described.
+Next, the steps for creating a database based on NCBI or GTDB taxonomy are described.
 
 #### 1. Prepare taxonomy and accession2taxid
-  ##### NCBI taxonomy
+##### NCBI taxonomy
   
   * accession2taxid can be downloaded from
   https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/
@@ -122,7 +125,7 @@ Here, steps for creating a database based on a taxonomy of NCBI or GTDB are desc
   * Taxonomy dump files can be downloaded from 
   https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/
   
-  ##### GTDB taxonomy
+##### GTDB taxonomy
   
   Follow two steps below to generate GTDB taxonomy and accession2taxid file.
   * Requirements: You need assembly FASTA files whose file name (or path) include the assembly accession.  
@@ -137,22 +140,22 @@ Here, steps for creating a database based on a taxonomy of NCBI or GTDB are desc
       Make sure that 'DBDIR/taxonomy' is exist and empty. 
       The same path should be used in step 1.
   ```
-  It will generate taxonomy dump files and 'assacc_to_taxid.tsv' with other files.
+  This will generate taxonomy dump files and `assacc_to_taxid.tsv` with other files.
     
   ```
   # 2. 
-  ./metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR> --assembly true
+  metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR> --assembly true
     - FASTA list : A list of absolute paths of each assembly files.
       Each absolute path must include assembly accession. 
     - accession2taxid : 'assacc_to_taxid.tsv' from the previous step
     - DBDIR : The same DBDIR from the previous step.
   ```
-  It will add your FASTA files to 'DBDIR/library' according to their species taxonomy ID and generate 'my.accession2taxid' 
+  This will add your FASTA files to `DBDIR/library` according to their species taxonomy ID and generate 'my.accession2taxid' 
 
   
 #### 2. Add to libarary (optional)
 ```
-./metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR>
+metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR>
   - FASTA list: A list of absolute paths of each FASTA files.
   - accession2taxid: A path to NCBI-style accession2taxid
   - DBDIR: The same DBDIR from the previous step.
@@ -178,4 +181,4 @@ metabuli build <DBDIR> <FASTA list> <accession2taxid> [options]
    --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids.
    --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
 ```
-It will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
+This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
