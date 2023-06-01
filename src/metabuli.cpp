@@ -16,7 +16,7 @@ const char* show_bash_info = NULL;
 bool hide_base_commands = true;
 extern const char* MMSEQS_CURRENT_INDEX_VERSION;
 const char* index_version_compatible = MMSEQS_CURRENT_INDEX_VERSION;
-bool hide_base_downloads = false;
+bool hide_base_downloads = true;
 void (*validatorUpdate)(void) = 0;
 
 
@@ -29,7 +29,7 @@ std::vector<Command> commands = {
                 NULL,
                 "Milot Mirdita <milot@mirdita.de>",
                 "<name> <o:sequenceDB> <tmpDir>",
-                CITATION_MMSEQS2, {{"selection", 0, DbType::ZERO_OR_ALL, &DbValidator::empty },
+                CITATION_SPACEPHARER, {{"selection", 0, DbType::ZERO_OR_ALL, &DbValidator::empty },
                                           {"sequenceDB", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::sequenceDb },
                                           {"tmpDir",     DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory }}},
        {"build", build, &localPar.build, COMMAND_MAIN,
@@ -125,72 +125,35 @@ std::vector<DatabaseDownload> externalDownloads = {
         {
                 "RefSeq",
                 "Database built with NCBI RefSeq assemblies (Complete/Chromosome level only, Prokaryote & Virus) and Human genome (GRCh38.p14)",
-                "Jumper et al. Highly accurate protein structure prediction with AlphaFold. Nature, (2021)",
-                "https://alphafold.ebi.ac.uk/",
-                true, LocalParameters::DBTYPE_METABULI, metabulidatabases_sh, metabulidatabases_sh_len,
+                "O'Leary et al. Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation. Nucleic Acids Res. (2016)",
+                "https://www.ncbi.nlm.nih.gov/refseq/",
+                true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,
+                {}
+        },
+        {
+                "RefSeq217",
+                "Database built with genomes of NCBI release 217 (Prokaryote & Virus) and Human genome (GRCh38.p14)",
+                "O'Leary et al. Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation. Nucleic Acids Res. (2016)",
+                "https://www.ncbi.nlm.nih.gov/refseq/",
+                true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,
                 {}
         },
         {
                 "GTDB207",
                 "Database built with genomes and taxonomy of GTDB207 (Complete/Chromosome level only, CheckM Completeness > 90, CheckM Contamination < 5) and Human genome (GRCh38.p14)",
-                "Jumper et al. Highly accurate protein structure prediction with AlphaFold. Nature, (2021)",
-                "https://alphafold.ebi.ac.uk/",
-                true, LocalParameters::DBTYPE_METABULI, metabulidatabases_sh, metabulidatabases_sh_len,
+                "Donovan et al. GTDB: an ongoing census of bacterial and archaeal diversity through a phylogenetically consistent, rank normalized and complete genome-based taxonomy. Nucleic Acids Res. (2022)",
+                "https://gtdb.ecogenomic.org/",
+                true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,
+                {}
+        },
+        {
+                "RefSeq_virus",
+                "Database built with NCBI RefSeq virus assemblies (Complete/Chromosome level only)",
+                "O'Leary et al. Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation. Nucleic Acids Res. (2016)",
+                "https://www.ncbi.nlm.nih.gov/refseq/",
+                true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,
                 {}
         }
 };
 
 
-
-//#include "structdatabases.sh.h"
-//
-//std::vector<DatabaseDownload> externalDownloads = {
-//        {
-//                "Alphafold/UniProt",
-//                "AlphaFold UniProt Protein Structure Database (including C-alpha, ~700GB download, ~950GB extracted).",
-//                "Jumper et al. Highly accurate protein structure prediction with AlphaFold. Nature, (2021)",
-//                "https://alphafold.ebi.ac.uk/",
-//                true, Parameters::DBTYPE_AMINO_ACIDS, structdatabases_sh, structdatabases_sh_len,
-//                {}
-//        },
-//        {
-//                "Alphafold/UniProt50",
-//                "AlphaFold UniProt Protein Structure Database clustered with MMseqs2 at 50% sequence identity and 90% bidrectional coverage.",
-//                "Jumper et al. Highly accurate protein structure prediction with AlphaFold. Nature, (2021)",
-//                "https://alphafold.ebi.ac.uk/",
-//                true, Parameters::DBTYPE_AMINO_ACIDS, structdatabases_sh, structdatabases_sh_len,
-//                {}
-//        },
-//        {
-//                "Alphafold/Proteome",
-//                "AlphaFold Proteomes Protein Structure Database.",
-//                "Jumper et al. Highly accurate protein structure prediction with AlphaFold. Nature, (2021)",
-//                "https://alphafold.ebi.ac.uk/",
-//                true, Parameters::DBTYPE_AMINO_ACIDS, structdatabases_sh, structdatabases_sh_len,
-//                {}
-//        },
-//        {
-//                "Alphafold/Swiss-Prot",
-//                "AlphaFold Swissprot Protein Structure Database.",
-//                "Jumper et al. Highly accurate protein structure prediction with AlphaFold. Nature, (2021)",
-//                "https://alphafold.ebi.ac.uk/",
-//                true, Parameters::DBTYPE_AMINO_ACIDS, structdatabases_sh, structdatabases_sh_len,
-//                {}
-//        },
-//        {
-//                "ESMAtlas30",
-//                "ESM Metagenomic Atlas clustered at 30% sequence identity.",
-//                "Lin et al. Evolutionary-scale prediction of atomic level protein structure with a language model. bioRxiv, (2022)",
-//                "https://esmatlas.com",
-//                false, Parameters::DBTYPE_AMINO_ACIDS, structdatabases_sh, structdatabases_sh_len,
-//                {}
-//        },
-//        {
-//                "PDB",
-//                "The Protein Data Bank is the single worldwide archive of structural data of biological macromolecules.",
-//                "Berman et al. The Protein Data Bank. Nucleic Acids Res, 28(1), 235-242 (2000)",
-//                "https://www.rcsb.org",
-//                true, Parameters::DBTYPE_AMINO_ACIDS, structdatabases_sh, structdatabases_sh_len,
-//                {}
-//        }
-//};

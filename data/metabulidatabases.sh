@@ -91,20 +91,34 @@ case "${SELECTION}" in
     "GTDB207")
         if notExists "${TMP_PATH}/gtdb207+human.tar"; then
             downloadFile "https://metabuli.steineggerlab.workers.dev/gtdb207+human.tar" "${TMP_PATH}/gtdb207+human.tar"
-#            downloadFile "https://foldseek.steineggerlab.workers.dev/afdb.version" "${TMP_PATH}/version"
         fi
-        tar xvfz "${TMP_PATH}/gtdb207+human.tar" -C "${TMP_PATH}"
+        tar xvf "${TMP_PATH}/gtdb207+human.tar" -C "${TMP_PATH}"
         push_back "${TMP_PATH}/gtdb207"
         INPUT_TYPE="METABULI_DB"
     ;;
     "RefSeq")
         if notExists "${TMP_PATH}/refseq_complete_chromosome+human.tar"; then
             downloadFile "https://metabuli.steineggerlab.workers.dev/refseq_complete_chromosome+human.tar" "${TMP_PATH}/refseq_complete_chromosome+human.tar"
-#            downloadFile "https://foldseek.steineggerlab.workers.dev/afdb50.version" "${TMP_PATH}/version"
         fi
-        tar xvfz "${TMP_PATH}/refseq_complete_chromosome+human.tar" -C "${TMP_PATH}"
+        tar xvf "${TMP_PATH}/refseq_complete_chromosome+human.tar" -C "${TMP_PATH}"
         push_back "${TMP_PATH}/RefSeq"
         INPUT_TYPE="METABULI_DB"
+    ;;
+   "RefSeq217")
+          if notExists "${TMP_PATH}/refseq_release217+human.tar"; then
+              downloadFile "https://metabuli.steineggerlab.workers.dev/refseq_release217+human.tar" "${TMP_PATH}/refseq_release217+human.tar"
+          fi
+          tar xvf "${TMP_PATH}/refseq_release217+human.tar" -C "${TMP_PATH}"
+          push_back "${TMP_PATH}/RefSeq217"
+          INPUT_TYPE="METABULI_DB"
+    ;;
+    "RefSeq_virus")
+              if notExists "${TMP_PATH}/refseq_virus.tar"; then
+                  downloadFile "https://metabuli.steineggerlab.workers.dev/refseq_virues.tar" "${TMP_PATH}/refseq_virus.tar"
+              fi
+              tar xvf "${TMP_PATH}/refseq_virus.tar" -C "${TMP_PATH}"
+              push_back "${TMP_PATH}/RefSeq_virus"
+              INPUT_TYPE="METABULI_DB"
     ;;
 esac
 
