@@ -2,31 +2,29 @@
 Metabuli taxonomically classifies metagenomic reads using both DNA and amino acid (AA) information.
 It achieved specificity of DNA-based method and sensitivity of AA-method at the same time.
 
-
 ## Installation
 ### Precompiled binaries
 ```
-# Linux AVX2 build (fast, recommended for most Linux system) (check using: cat /proc/cpuinfo | grep avx2)
+# Linux AVX2 build (fast, recommended for most Linux system, check using: cat /proc/cpuinfo | grep avx2)
 wget https://mmseqs.com/metabuli/metabuli-linux-avx2.tar.gz; tar xvzf metabuli-linux-avx2.tar.gz; export PATH=$(pwd)/metabuli/bin/:$PATH
 
-# Linux SSE2 build (slow, for old systems)
+# Linux SSE2 build (slower, for old systems)
 wget https://mmseqs.com/metabuli/metabuli-linux-sse2.tar.gz; tar xvzf metabuli-linux-sse2.tar.gz; export PATH=$(pwd)/metabuli/bin/:$PATH
 
-# MacOS
+# MacOS (Universal, works on Apple Silicon and Intel Macs)
 wget https://mmseqs.com/metabuli/metabuli-osx-universal.tar.gz; tar xvzf metabuli-osx-universal.tar.gz; export PATH=$(pwd)/metabuli/bin/:$PATH
 ```
-Metabuli also works on ARM64 systems. Please check [https://mmseqs.com/metabuli/](https://mmseqs.com/metabuli/)
+Metabuli also works on Linux ARM64 systems. Please check [https://mmseqs.com/metabuli/](https://mmseqs.com/metabuli/) for static builds for other architectures.
 ### Compile from source code
-Installation from Github source code.
+Installation from source code:
 ```
-git clone GITHUB_LINK
+git clone https://github.com/steineggerlab/Metabuli.git
 cd Metabuli
-mkdir build
-cd build
-cmake ..
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j 16
 ```
-The built binary can be found in ./build/src
+The built binary can be found in `./build/src`.
 
 ## Pre-built databases
 You can download pre-built databases using `databases` command.
