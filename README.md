@@ -6,19 +6,16 @@ It achieved specificity of DNA-based method and sensitivity of AA-method at the 
 ## Installation
 ### Precompiled binaries
 ```
-# Linux ARM64 build
-wget https://mmseqs.com/metabuli/metabuli-linux-arm64.tar.gz; tar xvzf metabuli-linux-arm64.tar.gz; export PATH=$(pwd)/metabuli/bin/:$PATH
-
-# Linux AVX2 build (check using: cat /proc/cpuinfo | grep avx2)
+# Linux AVX2 build (fast, recommended for most Linux system) (check using: cat /proc/cpuinfo | grep avx2)
 wget https://mmseqs.com/metabuli/metabuli-linux-avx2.tar.gz; tar xvzf metabuli-linux-avx2.tar.gz; export PATH=$(pwd)/metabuli/bin/:$PATH
 
-# Linux SSE2 build 
+# Linux SSE2 build (slow, for old systems)
 wget https://mmseqs.com/metabuli/metabuli-linux-sse2.tar.gz; tar xvzf metabuli-linux-sse2.tar.gz; export PATH=$(pwd)/metabuli/bin/:$PATH
 
 # MacOS
 wget https://mmseqs.com/metabuli/metabuli-osx-universal.tar.gz; tar xvzf metabuli-osx-universal.tar.gz; export PATH=$(pwd)/metabuli/bin/:$PATH
 ```
-
+Metabuli also works on ARM64 systems. Please check [https://mmseqs.com/metabuli/](https://mmseqs.com/metabuli/)
 ### Compile from source code
 Installation from Github source code.
 ```

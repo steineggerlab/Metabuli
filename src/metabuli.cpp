@@ -125,7 +125,15 @@ std::vector<DatabaseDownload> externalDownloads = {
         {
                 "RefSeq",
                 "Database built with NCBI RefSeq assemblies (Complete/Chromosome level only, Prokaryote & Virus) and Human genome (GRCh38.p14)",
-                "Jumper et al. Highly accurate protein structure prediction with AlphaFold. Nature, (2021)",
+                "O'Leary et al. Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation. Nucleic Acids Res. (2016)",
+                "https://www.ncbi.nlm.nih.gov/refseq/",
+                true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,
+                {}
+        },
+        {
+                "RefSeq217",
+                "Database built with genomes of NCBI release 217 (Prokaryote & Virus) and Human genome (GRCh38.p14)",
+                "O'Leary et al. Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation. Nucleic Acids Res. (2016)",
                 "https://www.ncbi.nlm.nih.gov/refseq/",
                 true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,
                 {}
@@ -133,12 +141,19 @@ std::vector<DatabaseDownload> externalDownloads = {
         {
                 "GTDB207",
                 "Database built with genomes and taxonomy of GTDB207 (Complete/Chromosome level only, CheckM Completeness > 90, CheckM Contamination < 5) and Human genome (GRCh38.p14)",
-                "Jumper et al. Highly accurate protein structure prediction with AlphaFold. Nature, (2021)",
+                "Donovan et al. GTDB: an ongoing census of bacterial and archaeal diversity through a phylogenetically consistent, rank normalized and complete genome-based taxonomy. Nucleic Acids Res. (2022)",
                 "https://gtdb.ecogenomic.org/",
+                true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,
+                {}
+        },
+        {
+                "RefSeq_virus",
+                "Database built with NCBI RefSeq virus assemblies (Complete/Chromosome level only)",
+                "O'Leary et al. Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation. Nucleic Acids Res. (2016)",
+                "https://www.ncbi.nlm.nih.gov/refseq/",
                 true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,
                 {}
         }
 };
-
 
 
