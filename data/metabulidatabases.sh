@@ -128,9 +128,7 @@ IN="${*}"
 
 "${MMSEQS}" mvdb "${IN}" "${OUTDB}" || fail "mv died"
 
-
 if [ -n "${REMOVE_TMP}" ]; then
     rm -f "${TMP_PATH}/download.sh"
 fi
-
 
