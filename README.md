@@ -1,6 +1,9 @@
 # Metabuli
-Metabuli taxonomically classifies metagenomic reads using both DNA and amino acid (AA) information.
-It achieved specificity of DNA-based method and sensitivity of AA-method at the same time.
+Metabuli is metagenomic classifier that jointly analyze both DNA and amino acid (AA) sequences.
+DNA-based classifiers can make specific classifications, exploiting point mutations to distinguish close taxa.
+AA-based classifiers have higher sensitivity in detecting homology between query and reference sequences, leverageing higher conservation of AA sequences.
+Metabuli combines the information of both sequence types using a novel k-mer structure, _metamer_, to enable both specific and sensitive characterization of metagenomic samples.
+In addition, it can classify reads against a database of any size as long as it fits in the hard disk. 
 
 ## Installation
 ### Precompiled binaries
@@ -29,8 +32,7 @@ make -j 16
 The built binary can be found in `./build/src`.
 
 ## Pre-built databases
-You can download pre-built databases using `databases` workflow.
-
+You can download [pre-built databases](https://metabuli.steineggerlab.workers.dev/) using `databases` workflow.
 ```
 # RefSeq Complete/Chromosome
 # - Complete Genome or Chromosome level assemblies of virus and prokaryotes in RefSeq (2023-04-04) and human genome (GRCh38.p14)
@@ -62,7 +64,7 @@ metabuli classify --seq-mode 1 read.fna dbdir outdir jobid
 
   * Important parameters:
    --threads : The number of CPU-cores used (all by default)
-   --max-ram : The maximum RAM usage.
+   --max-ram : The maximum RAM usage. (128 GiB by default)
    --min-score : The minimum score to be classified (0.15 for precision mode)
    --min-sp-score : The minimum score to be classified at or below species rank. (0.5 for precision mode)
    --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
@@ -108,6 +110,10 @@ Proportion of reads that are assigned to each taxon.
 0.02    42      42      170529  subspecies                      RS_GCF_002173635.1
 0.01    24      24      170539  subspecies                      RS_GCF_000204275.1
 ```
+
+#### Resource requirements
+Metabuli can classify reads against a database of any size as long as the database is fits in the hard disk, regardless of the machine's RAM size.
+We tested it with a MacBook Air (2020, M1, 8 GiB), where we classified about 1.5 M paired-end 150 bp reads (~5 GiB in size) against a database built with ~23K prokaryotic genomes (~69 GiB in size)
 
 ## Custom database
 To build a custom database, you need three things:
