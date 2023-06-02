@@ -5,7 +5,8 @@ It achieved specificity of DNA-based method and sensitivity of AA-method at the 
 ## Installation
 ### Precompiled binaries
 ```
-# Linux AVX2 build (fast, recommended for most Linux system, check using: cat /proc/cpuinfo | grep avx2)
+# Linux AVX2 build (fast, recommended for most Linux system
+# check using: cat /proc/cpuinfo | grep avx2)
 wget https://mmseqs.com/metabuli/metabuli-linux-avx2.tar.gz; tar xvzf metabuli-linux-avx2.tar.gz; export PATH=$(pwd)/metabuli/bin/:$PATH
 
 # Linux SSE2 build (slower, for old systems)
@@ -17,7 +18,7 @@ wget https://mmseqs.com/metabuli/metabuli-osx-universal.tar.gz; tar xvzf metabul
 Metabuli also works on Linux ARM64 systems. Please check [https://mmseqs.com/metabuli](https://mmseqs.com/metabuli) for static builds for other architectures.
 
 ### Compile from source code
-Installation from source code:
+To compile Metabuli from source code use the following commands:
 ```
 git clone https://github.com/steineggerlab/Metabuli.git
 cd Metabuli
@@ -59,7 +60,7 @@ metabuli classify read_1.fna read_2.fna dbdir outdir jobid
 # Single-end
 metabuli classify --seq-mode 1 read.fna dbdir outdir jobid
 
-  * Options
+  * Important parameters:
    --threads : The number of CPU-cores used (all by default)
    --max-ram : The maximum RAM usage.
    --min-score : The minimum score to be classified (0.15 for precision mode)
