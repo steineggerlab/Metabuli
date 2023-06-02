@@ -8,6 +8,9 @@ In addition, it can classify reads against a database of any size as long as it 
 ## Installation
 ### Precompiled binaries
 ```
+# install via conda
+conda install -c conda-forge -c bioconda metabuli
+
 # Linux AVX2 build (fast, recommended for most Linux system
 # check using: cat /proc/cpuinfo | grep avx2)
 wget https://mmseqs.com/metabuli/metabuli-linux-avx2.tar.gz; tar xvzf metabuli-linux-avx2.tar.gz; export PATH=$(pwd)/metabuli/bin/:$PATH
