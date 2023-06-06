@@ -158,7 +158,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     size_t currentKmerCnt = 0;
     size_t seqCnt = 0;
     if (par.seqMode == 1 || par.seqMode == 3) {
-        queryFile = mmapData<char>(queryPath_1.c_str());
+        queryFile = mmapData<char>(queryPath_1.c_str(), 2); // mmap readonly
         madvise(queryFile.data, queryFile.fileSize, MADV_SEQUENTIAL);
 
         // Get start and end positions of each read
@@ -482,7 +482,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
     stat(targetDiffIdxFileName.c_str(), &diffIdxFileSt);
     size_t numOfDiffIdx = diffIdxFileSt.st_size / sizeof(uint16_t);
 
-    struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str());
+    struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str(), 3);
 
     cout << "Comparing qeury and reference metamers..." << endl;
 
