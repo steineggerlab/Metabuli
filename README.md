@@ -37,24 +37,25 @@ The built binary can be found in `./build/src`.
 ## Pre-built databases
 You can download [pre-built databases](https://metabuli.steineggerlab.workers.dev/) using `databases` workflow.
 ```
-# RefSeq Complete/Chromosome
+# RefSeq Complete/Chromosome (115.6 GiB)
 # - Complete Genome or Chromosome level assemblies of virus and prokaryotes in RefSeq (2023-04-04) and human genome (GRCh38.p14)
 metabuli databases RefSeq refseq tmp
 
-# RefSeq Releases 217
+# RefSeq Releases 217 (480.5 GiB)
 # - Viral and prokaryotic genomes of RefSeq release 217 and human genome (GRCh38.p14)
 metabuli databases RefSeq217 refseq217 tmp
 
-# GTDB 207
+# GTDB 207 (81.2 GiB)
 # - Complete Genome or Chromosome level assemblies in GTDB207 (CheckM Completeness > 90, CheckM Contamination < 5) with GTDB taxonomy.
 metabuli databases GTDB207 gtdb tmp 
 ```
 
 
 ## Classification
+There is a reported error during classification using one thread. Until the problem is solved, please try multi-threading as set by default.
 ```
 metabuli classify <i:FASTA> <i:DBDIR> <o:OUTDIR> <Job ID> [options]
-- FASTA : A FASTA file of reads you want to classify.
+- INPUT : FASTA or FASTQ file (not compressed) of reads you want to classify. 
 - DBDIR : The directory of reference DB. 
 - OUTDIR : The directory where the result files will be generated.
 - Job ID: It will be the prefix of result files.  
@@ -73,6 +74,9 @@ metabuli classify --seq-mode 1 read.fna dbdir outdir jobid
    --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
    --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids. Give the same value used for DB creation.
    --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
+   
+  * --min-score and --min-sp-score for precision mode are optimized only for short reads.
+  * We don't recommend use them for long reads.
 ```
 
 This will generate two result files: `Job ID_classifications.tsv` and `Job ID_report.tsv`
