@@ -85,7 +85,7 @@ This will generate two result files: `Job ID_classifications.tsv` and `Job ID_re
 2. Read ID
 3. Taxonomy identifier
 4. Effective read length
-5. DNA level identitiy score
+5. DNA level identity score
 6. Amino-acid level identity score
 7. Total Hamming distance
 8. Classification Rank
@@ -142,9 +142,9 @@ Next, the steps for creating a database based on NCBI or GTDB taxonomy are descr
 ##### GTDB taxonomy
   
   Follow two steps below to generate GTDB taxonomy and accession2taxid file.
-  * Requirements: You need assembly FASTA files whose file name (or path) include the assembly accession.  
+  * Requirements: You need assembly FASTA files whose file name (or path) includes the assembly accession.  
     If you downloaded assemblies using [ncbi-genome-download](https://github.com/kblin/ncbi-genome-download), you probably don't have to care about it.  
-    The regular experssion of assembly accession is (GC[AF]_[0-9].[0-9])
+    The regular expression of assembly accessions is (GC[AF]_[0-9].[0-9])
     
   ```
   # 1. 
