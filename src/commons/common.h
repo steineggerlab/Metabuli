@@ -34,7 +34,7 @@ struct Query{
     bool newSpecies; // 36 byte
 
     std::string name;
-    std::unordered_map<TaxID,int> taxCnt; // 8 byte per element
+    std::map<TaxID,int> taxCnt; // 8 byte per element
 
     bool operator==(int id) const { return queryId == id;}
 
