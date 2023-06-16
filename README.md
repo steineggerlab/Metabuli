@@ -52,7 +52,6 @@ metabuli databases GTDB207 gtdb tmp
 
 
 ## Classification
-There is a reported error during classification using one thread. Until the problem is solved, please try multi-threading as set by default.
 ```
 metabuli classify <i:FASTA> <i:DBDIR> <o:OUTDIR> <Job ID> [options]
 - INPUT : FASTA or FASTQ file (not compressed) of reads you want to classify. 
