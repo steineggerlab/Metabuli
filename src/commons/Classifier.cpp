@@ -352,7 +352,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
             kseq_buffer_t buffer(const_cast<char *>(&seqFile.data[seqs[i].start]), seqs[i].length);
             kseq_t *seq = kseq_init(&buffer);
             kseq_read(seq);
-            auto kmerCnt = getQueryKmerNumber<size_t> (seq->seq.l);
+            int kmerCnt = getQueryKmerNumber<int> ((int) seq->seq.l);
             // Ignore short read
             if (kmerCnt < 1) {
                 continue;
@@ -427,14 +427,14 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                                       seqs[i].length);
                 kseq_t *seq1 = kseq_init(&buffer1);
                 kseq_read(seq1);
-                auto kmerCnt = getQueryKmerNumber<size_t>(seq1->seq.l);
+                int kmerCnt = getQueryKmerNumber<int>((int) seq1->seq.l);
 
                 // Load Read 2
                 kseq_buffer_t buffer2(readBuffer2 + seqs2[i].start - seqs2[queryReadSplit[j].first].start,
                                       seqs2[i].length);
                 kseq_t *seq2 = kseq_init(&buffer2);
                 kseq_read(seq2);
-                auto kmerCnt2 = getQueryKmerNumber<size_t>(seq2->seq.l);
+                int kmerCnt2 = getQueryKmerNumber<int>((int) seq2->seq.l);
 
                 // Ignore short read
                 if (kmerCnt2 < 1 || kmerCnt < 1) {
