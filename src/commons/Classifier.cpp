@@ -202,6 +202,7 @@ void Classifier::startClassify(const LocalParameters &par) {
         }
 
         numOfSeq = sequences.size();
+
         // Make query read splits
         for (size_t i = 0; i < numOfSeq; i++) {
             totalReadLength += sequences[i].seqLength;
@@ -247,7 +248,14 @@ void Classifier::startClassify(const LocalParameters &par) {
 
         // Allocate memory for query k-mer list and match list
         kmerBuffer.reallocateMemory(splitKmerCnt[splitIdx]);
-        matchBuffer.reallocateMemory(splitKmerCnt[splitIdx] * matchPerKmer);
+        if (splitKmerCnt.size() == 1) {
+            size_t remain = ram_threads - splitKmerCnt[splitIdx] * sizeof(QueryKmer) - numOfSeq * 200;
+            matchPerKmer = remain / (sizeof(Match) * splitKmerCnt[splitIdx]);
+            matchBuffer.reallocateMemory(splitKmerCnt[splitIdx] * matchPerKmer);
+        } else {
+            matchBuffer.reallocateMemory(splitKmerCnt[splitIdx] * matchPerKmer);
+        }
+
 
         // Initialize query k-mer buffer and match buffer
         kmerBuffer.startIndexOfReserve = 0;
