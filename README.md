@@ -47,7 +47,11 @@ metabuli databases RefSeq217 refseq217 tmp
 
 # GTDB 207 (81.2 GiB)
 # - Complete Genome or Chromosome level assemblies in GTDB207 (CheckM Completeness > 90, CheckM Contamination < 5) with GTDB taxonomy.
-metabuli databases GTDB207 gtdb tmp 
+metabuli databases GTDB207 gtdb tmp
+
+# RefSeq Virus (1.5 GiB)
+# - Viral RefSeq genomes and five SARS-CoV-2 variants (alpha, beta, delta, gamma, and omicron)
+metabuli databases RefSeq_virus refseq_virus tmp
 ```
 
 
@@ -195,3 +199,19 @@ metabuli build <DBDIR> <FASTA list> <accession2taxid> [options]
    --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
 ```
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
+
+## Example
+```
+Classifying RNA-seq reads from a COVID-19 patient to identify the culprit variant.
+
+1. Download RefSeq Virus DB (1.5 GiB)
+metabuli databases RefSeq_virus refseq_virus tmp
+
+2. Download an RNA-seq result (SRR14484345) from this link
+  - https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&page_size=10&acc=SRR14484345&display=data-access
+
+3. Classify the reads using metabuli
+metabuli classify SRR14484345_1.fq SRR14484345_2.fq refseq_virus RESULT_DIR JOB_ID --max-ram RAM_SIZE
+
+4. Check RESULT_DIR/JOB_ID_report.tsv
+```
