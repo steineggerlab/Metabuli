@@ -203,6 +203,7 @@ This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some
 ## Example
 ```
 Classifying RNA-seq reads from a COVID-19 patient to identify the culprit variant.
+The whole process must take less than 10 mins using a personal machine.
 
 1. Download RefSeq Virus DB (1.5 GiB)
 metabuli databases RefSeq_virus refseq_virus tmp
@@ -214,4 +215,13 @@ metabuli databases RefSeq_virus refseq_virus tmp
 metabuli classify SRR14484345_1.fq SRR14484345_2.fq refseq_virus RESULT_DIR JOB_ID --max-ram RAM_SIZE
 
 4. Check RESULT_DIR/JOB_ID_report.tsv
+  - Find a section like the example below
+...
+92.1346 509945  492302  no rank 2697049                           Severe acute respiratory syndrome coronavirus 2
+3.1174  17254   17254   subspecies      3000001                             SARS-CoV-2 beta
+0.0558  309     309     subspecies      3000000                             SARS-CoV-2 alpha
+0.0065  36      36      subspecies      3000004                             SARS-CoV-2 omicron
+0.0045  25      25      subspecies      3000003                             SARS-CoV-2 gamma
+0.0034  19      19      subspecies      3000002                             SARS-CoV-2 delta
+...
 ```
