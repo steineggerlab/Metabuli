@@ -17,6 +17,9 @@
 #include "xxhash.h"
 #include <queue>
 #include "LocalParameters.h"
+#include "NucleotideMatrix.h"
+#include "SubstitutionMatrix.h"
+#include "tantan.h"
 
 #ifdef OPENMP
 #include <omp.h>
@@ -57,6 +60,7 @@ private:
     int bitsForCodon;
     int bitsFor8Codons;
 
+
     void addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev, uint32_t kmerCnt, uint32_t frame,
                               int readLength);
 
@@ -91,6 +95,9 @@ public:
 
     int fillBufferWithKmerFromBlock(const PredictedBlock &block, const char *seq, TargetKmerBuffer &kmerBuffer,
                                      size_t &posToWrite, int seqID, int taxIdAtRank);
+
+    static void maskLowComplexityRegions(char * seq, char * maskedSeq, ProbabilityMatrix & probMat,
+                                         float maskProb, const BaseMatrix * subMat);
 
     void printKmerInDNAsequence(uint64_t kmer);
 

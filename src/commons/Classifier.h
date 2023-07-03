@@ -41,14 +41,16 @@ class Classifier {
 protected:
     // Parameters
     int verbosity;
-//    size_t localIndexBufferSize;
-//    size_t localMatchBufferSize;
-
+    const int maskMode;
+    const float maskProb;
     string queryPath_1;
     string queryPath_2;
     string dbDir;
     string outDir;
     string jobId;
+
+//    size_t localIndexBufferSize;
+//    size_t localMatchBufferSize;
 
     // For spaced k-mer
     uint32_t * mask;
@@ -56,6 +58,9 @@ protected:
     int spaceNum_int;
     int unmaskedPos[9];
 
+    // For masking reads
+    ProbabilityMatrix probMatrix;
+    BaseMatrix *subMat;
 
     uint8_t hammingMargin;
     float minSpScore;

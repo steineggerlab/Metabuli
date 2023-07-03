@@ -249,6 +249,8 @@ LocalParameters::LocalParameters() :
     classify.push_back(&TAXONOMY_PATH);
     classify.push_back(&MIN_CONS_CNT);
     classify.push_back(&MIN_CONS_CNT_EUK);
+    classify.push_back(&PARAM_MASK_RESIDUES);
+    classify.push_back(&PARAM_MASK_PROBABILTY);
 
 
     //updateTargetDB

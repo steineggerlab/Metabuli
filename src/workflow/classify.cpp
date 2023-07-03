@@ -23,6 +23,8 @@ void setClassifyDefaults(LocalParameters & par){
     par.minConsCnt = 4;
     par.minConsCntEuk = 9;
     par.eukaryotaTaxId = 2759;
+    par.maskMode = 0;
+    par.maskProb = 0.9;
 }
 
 int classify(int argc, const char **argv, const Command& command)
