@@ -74,7 +74,7 @@ public:
 
     char *reverseCompliment(char *read, size_t length) const;
 
-    void sixFrameTranslation(const char *seq);
+    void sixFrameTranslation(const char *seq, int seqLen);
 
     bool translateBlock(const char *seq, PredictedBlock block);
 
