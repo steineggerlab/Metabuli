@@ -209,13 +209,21 @@ LocalParameters::LocalParameters() :
                      typeid(int),
                      (void *) &coverageCol,
                      ""),
+        MATCH_PER_KMER(MATCH_PER_KMER_ID,
+                       "--match-per-kmer",
+                       "Number of matches per query k-mer",
+                       "Number of matches per query k-mer. Larger values assign more memory for storing k-mer matches.",
+                       typeid(int),
+                       (void *) &matchPerKmer,
+                       ""),
         PRINT_COLUMNS(PRINT_COLUMNS_ID,
                       "--print-columns",
                       "CSV of column numbers to be printed",
                       "CSV of column numbers to be printed",
                       typeid(std::string),
                       (void *) &printColumns,
-                      "") {
+                      "")
+  {
     //add_to_library
 
     // build
@@ -251,6 +259,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MIN_CONS_CNT_EUK);
     classify.push_back(&PARAM_MASK_RESIDUES);
     classify.push_back(&PARAM_MASK_PROBABILTY);
+    classify.push_back(&MATCH_PER_KMER);
 
 
     //updateTargetDB

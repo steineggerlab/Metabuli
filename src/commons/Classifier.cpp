@@ -136,8 +136,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     check.close();
 
     // Calculate maximum number of k-mers for each iteration.
-    size_t maxNumOfKmer = 0;
-    size_t matchPerKmer = 4;
+    size_t matchPerKmer = par.matchPerKmer;
     size_t c = sizeof(QueryKmer) + matchPerKmer * sizeof(Match);
     size_t ram_threads = ((size_t) par.ramUsage * (size_t) 1024 * 1024 * 1024)
                             - ((size_t) 134217728 * (size_t) par.threads);
