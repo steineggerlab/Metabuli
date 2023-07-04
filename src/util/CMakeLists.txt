@@ -5,4 +5,5 @@ set(util_source_files
         util/report.h
         util/report.cpp
         util/grade.cpp
+        util/database-report.cpp
         PARENT_SCOPE)

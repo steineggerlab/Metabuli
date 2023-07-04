@@ -748,7 +748,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                             char *maskedSeq = nullptr;
                             if (par.maskMode) {
                                 maskedSeq = new char[seq->seq.l + 1];
-                                maskLowComplexityRegions(seq->seq.s, maskedSeq, probMatrix, par);
+                                SeqIterator::maskLowComplexityRegions(seq->seq.s, maskedSeq, probMatrix, par.maskProb, subMat);
                             } else {
                                 maskedSeq = seq->seq.s;
                             }
@@ -784,7 +784,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                             char *maskedSeq = nullptr;
                             if (par.maskMode) {
                                 maskedSeq = new char[seq->seq.l + 1];
-                                maskLowComplexityRegions(reverseCompliment, maskedSeq, probMatrix, par);
+                                SeqIterator::maskLowComplexityRegions(reverseCompliment, maskedSeq, probMatrix, par.maskProb, subMat);
                             } else {
                                 maskedSeq = reverseCompliment;
                             }
@@ -887,29 +887,6 @@ void IndexCreator::trainProdigal() {
 //        fprintf(fp, "%d\n", trainedSpecie);
 //    }
 //    fclose(fp);
-}
-
-void IndexCreator::maskLowComplexityRegions(char *seq, char *maskedSeq, ProbabilityMatrix & probMat,
-                                            const LocalParameters & par) {
-    unsigned int seqLen = 0;
-    while (seq[seqLen] != '\0') {
-        maskedSeq[seqLen] = (char) subMat->aa2num[static_cast<int>(seq[seqLen])];
-        seqLen++;
-    }
-    tantan::maskSequences(maskedSeq,
-                          maskedSeq + seqLen,
-                          50 /*options.maxCycleLength*/,
-                          probMat.probMatrixPointers,
-                          0.005 /*options.repeatProb*/,
-                          0.05 /*options.repeatEndProb*/,
-                          0.9 /*options.repeatOffsetProbDecay*/,
-                          0, 0,
-                          par.maskProb /*options.minMaskProb*/,
-                          probMat.hardMaskTable);
-    for (unsigned int pos = 0; pos < seqLen; pos++) {
-        char nt = seq[pos];
-        maskedSeq[pos] = (maskedSeq[pos] == probMat.hardMaskTable[0]) ? 'N' : nt;
-    }
 }
 
 

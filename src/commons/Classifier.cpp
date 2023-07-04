@@ -2,7 +2,9 @@
 #include "LocalParameters.h"
 #include <ctime>
 
-Classifier::Classifier(LocalParameters & par) {
+Classifier::Classifier(LocalParameters & par) : maskMode(par.maskMode), maskProb(par.maskProb),
+    probMatrix(*(new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0))) {
+
     if (par.seqMode == 2){
         queryPath_1 = par.filenames[0];
         queryPath_2 = par.filenames[1];
@@ -98,6 +100,8 @@ Classifier::Classifier(LocalParameters & par) {
     }
     fclose(taxIdFile);
 
+    subMat = new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0);
+
 //    localIndexBufferSize =  16 * 1024 * 1024;
 //    localMatchBufferSize = 2 * 1024 * 1024;
 }
@@ -137,12 +141,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     size_t c = sizeof(QueryKmer) + matchPerKmer * sizeof(Match);
     size_t ram_threads = ((size_t) par.ramUsage * (size_t) 1024 * 1024 * 1024)
                             - ((size_t) 134217728 * (size_t) par.threads);
-//    size_t ram_per_thread = (sizeof(TargetKmerInfo) + sizeof(uint16_t)) * localIndexBufferSize
-//            + sizeof(Match) * localMatchBufferSize;
-//    size_t ram_threads = ((size_t) par.ramUsage * (size_t) 1073741824) - ((size_t) ram_per_thread * (size_t) par.threads);
-                           // N GB - 128 MB * M threads
-//    cout << "RAM per thread: " << ram_per_thread << endl;
-    cout << "The rest RAM: " << ram_threads << endl;
+
     // Load query file
     cout << "Indexing query file ...";
     size_t totalReadLength = 0;
@@ -264,10 +263,20 @@ void Classifier::startClassify(const LocalParameters &par) {
         // Extract query k-mer
         time_t beforeKmerExtraction = time(nullptr);
         cout << "Extracting query metamers ... " << endl;
-        if (par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
-            fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, queryList, queryReadSplit[splitIdx], par);
-        } else if (par.seqMode == 2) {
-            fillQueryKmerBufferParallel(kmerBuffer, sequences, sequences2, queryList, queryReadSplit[splitIdx], par);
+        if (! par.maskMode) { // No masking
+            if (par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
+                fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, queryList, queryReadSplit[splitIdx], par);
+            } else if (par.seqMode == 2) {
+                fillQueryKmerBufferParallel(kmerBuffer, sequences, sequences2, queryList, queryReadSplit[splitIdx],
+                                            par);
+            }
+        } else { // Masking low-complexity regions
+            if (par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
+                fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, queryList, queryReadSplit[splitIdx], par);
+            } else if (par.seqMode == 2) {
+                fillQueryKmerBufferParallel(kmerBuffer, sequences, sequences2, queryList, queryReadSplit[splitIdx],
+                                            par);
+            }
         }
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
         cout << "Time spent for metamer extraction: " << double(time(nullptr) - beforeKmerExtraction) << endl;
@@ -365,20 +374,35 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
             if (kmerCnt < 1) {
                 continue;
             }
+
+            // Get masked sequence
+            char *maskedSeq = nullptr;
+            if (maskMode) {
+                maskedSeq = new char[seq->seq.l + 1];
+                SeqIterator::maskLowComplexityRegions(seq->seq.s, maskedSeq, probMatrix, maskProb, subMat);
+            } else {
+                maskedSeq = seq->seq.s;
+            }
+
             posToWrite = kmerBuffer.reserveMemory(kmerCnt);
 
-            seqIterator.sixFrameTranslation(seq->seq.s);
-            seqIterator.fillQueryKmerBuffer(seq->seq.s, (int)seq->seq.l, kmerBuffer, posToWrite,
+            seqIterator.sixFrameTranslation(maskedSeq);
+            seqIterator.fillQueryKmerBuffer(maskedSeq, (int)seq->seq.l, kmerBuffer, posToWrite,
                                             (int) queryIdx);
+            if (par.maskMode) {
+                delete[] maskedSeq;
+            }
 
             queryList[queryIdx].queryLength = getMaxCoveredLength((int) seq->seq.l);
             queryList[queryIdx].queryId = (int) queryIdx;
             queryList[queryIdx].name = string(seq->name.s);
             queryList[queryIdx].kmerCnt = (int) kmerCnt;
+
             kseq_destroy(seq);
         }
     }
 }
+
 
 
 int Classifier::getMaxCoveredLength(int queryLength) {
@@ -449,18 +473,36 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                     continue;
                 }
 
+                // Get masked sequence
+                char *maskedSeq1 = nullptr;
+                char *maskedSeq2 = nullptr;
+                if (maskMode) {
+                    maskedSeq1 = new char[seq1->seq.l + 1];
+                    maskedSeq2 = new char[seq2->seq.l + 1];
+                    SeqIterator::maskLowComplexityRegions(seq1->seq.s, maskedSeq1, probMatrix, maskProb, subMat);
+                    SeqIterator::maskLowComplexityRegions(seq2->seq.s, maskedSeq2, probMatrix, maskProb, subMat);
+                } else {
+                    maskedSeq1 = seq1->seq.s;
+                    maskedSeq2 = seq2->seq.s;
+                }
+
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt + kmerCnt2);
 
                 // Process Read 1
-                seqIterator.sixFrameTranslation(seq1->seq.s);
-                seqIterator.fillQueryKmerBuffer(seq1->seq.s, (uint32_t) seq1->seq.l, kmerBuffer, posToWrite,
+                seqIterator.sixFrameTranslation(maskedSeq1);
+                seqIterator.fillQueryKmerBuffer(maskedSeq1, (int) seq1->seq.l, kmerBuffer, posToWrite,
                                                 (uint32_t) queryIdx);
-                queryList[queryIdx].queryLength = getMaxCoveredLength((uint32_t) seq1->seq.l);
+                queryList[queryIdx].queryLength = getMaxCoveredLength((int) seq1->seq.l);
 
                 // Process Read 2
-                seqIterator2.sixFrameTranslation(seq2->seq.s);
-                seqIterator2.fillQueryKmerBuffer(seq2->seq.s, (uint32_t) seq2->seq.l, kmerBuffer, posToWrite,
+                seqIterator2.sixFrameTranslation(maskedSeq2);
+                seqIterator2.fillQueryKmerBuffer(maskedSeq2, (int) seq2->seq.l, kmerBuffer, posToWrite,
                                                  (uint32_t) queryIdx, queryList[queryIdx].queryLength);
+
+                if (par.maskMode) {
+                    delete[] maskedSeq1;
+                    delete[] maskedSeq2;
+                }
 
                 // Query Info
                 queryList[queryIdx].queryLength2 = getMaxCoveredLength((int) seq2->seq.l);

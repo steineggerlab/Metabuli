@@ -106,8 +106,8 @@ LocalParameters::LocalParameters() :
                    ""),
         RAM_USAGE(RAM_USAGE_ID,
                   "--max-ram",
-                  "RAM usage in GB",
-                  "RAM usage in GB",
+                  "RAM usage in GiB",
+                  "RAM usage in GiB",
                   typeid(int),
                   (void *) &ramUsage,
                   "^[1-9]{1}[0-9]*$"),
@@ -249,6 +249,8 @@ LocalParameters::LocalParameters() :
     classify.push_back(&TAXONOMY_PATH);
     classify.push_back(&MIN_CONS_CNT);
     classify.push_back(&MIN_CONS_CNT_EUK);
+    classify.push_back(&PARAM_MASK_RESIDUES);
+    classify.push_back(&PARAM_MASK_PROBABILTY);
 
 
     //updateTargetDB
@@ -278,5 +280,8 @@ LocalParameters::LocalParameters() :
     addToLibrary.push_back(&IS_ASSEMBLY);
     addToLibrary.push_back(&TAXONOMY_PATH);
     addToLibrary.push_back(&LIBRARY_PATH);
+
+    // db report
+    databaseReport.push_back(&TAXONOMY_PATH);
 }
 
