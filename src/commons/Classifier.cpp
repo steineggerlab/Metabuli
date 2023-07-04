@@ -536,7 +536,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
 
     struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str(), 3);
 
-    cout << "Comparing qeury and reference metamers..." << endl;
+    cout << "Comparing query and reference metamers..." << endl;
 
     // Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
     for (size_t checkN = queryKmerCnt - 1; checkN > 0; checkN--) {
