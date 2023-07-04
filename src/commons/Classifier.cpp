@@ -108,6 +108,7 @@ Classifier::Classifier(LocalParameters & par) : maskMode(par.maskMode), maskProb
 
 Classifier::~Classifier() {
     delete[] mask;
+    delete subMat;
     delete taxonomy;
 }
 
