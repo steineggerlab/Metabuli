@@ -25,6 +25,7 @@ void setClassifyDefaults(LocalParameters & par){
     par.eukaryotaTaxId = 2759;
     par.maskMode = 0;
     par.maskProb = 0.9;
+    par.matchPerKmer = 4;
 }
 
 int classify(int argc, const char **argv, const Command& command)
