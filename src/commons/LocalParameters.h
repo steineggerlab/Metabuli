@@ -29,6 +29,7 @@ public:
     std::vector<MMseqsParameter*> applyThreshold;
     std::vector<MMseqsParameter*> binning2report;
     std::vector<MMseqsParameter*> filterByGenus;
+    std::vector<MMseqsParameter*> databaseReport;
 
 
     // Superkingdom taxonomy id

@@ -141,12 +141,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     size_t c = sizeof(QueryKmer) + matchPerKmer * sizeof(Match);
     size_t ram_threads = ((size_t) par.ramUsage * (size_t) 1024 * 1024 * 1024)
                             - ((size_t) 134217728 * (size_t) par.threads);
-//    size_t ram_per_thread = (sizeof(TargetKmerInfo) + sizeof(uint16_t)) * localIndexBufferSize
-//            + sizeof(Match) * localMatchBufferSize;
-//    size_t ram_threads = ((size_t) par.ramUsage * (size_t) 1073741824) - ((size_t) ram_per_thread * (size_t) par.threads);
-                           // N GB - 128 MB * M threads
-//    cout << "RAM per thread: " << ram_per_thread << endl;
-    cout << "The rest RAM: " << ram_threads << endl;
+
     // Load query file
     cout << "Indexing query file ...";
     size_t totalReadLength = 0;
