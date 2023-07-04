@@ -258,10 +258,9 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
 }
 
 // It translates a DNA sequence to amino acid sequences with six frames
-void SeqIterator::sixFrameTranslation(const char *seq) {
+void SeqIterator::sixFrameTranslation(const char *seq, int len) {
     for (int i = 0; i < 6; i++) { aaFrames[i].clear(); }
 
-    int len = strlen(seq);
     size_t end = len - 1;
     // Translate DNA to AA.
     if (len % 3 == 2) {
