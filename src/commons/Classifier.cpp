@@ -2,8 +2,8 @@
 #include "LocalParameters.h"
 #include <ctime>
 
-Classifier::Classifier(LocalParameters & par) : maskMode(par.maskMode), maskProb(par.maskProb),
-    probMatrix(*(new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0))) {
+Classifier::Classifier(LocalParameters & par) : maskMode(par.maskMode), maskProb(par.maskProb) {
+//    probMatrix(*(new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0))) {
 
     if (par.seqMode == 2){
         queryPath_1 = par.filenames[0];
@@ -101,7 +101,7 @@ Classifier::Classifier(LocalParameters & par) : maskMode(par.maskMode), maskProb
     fclose(taxIdFile);
 
     subMat = new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0);
-
+    probMatrix = new ProbabilityMatrix(*(subMat));
 //    localIndexBufferSize =  16 * 1024 * 1024;
 //    localMatchBufferSize = 2 * 1024 * 1024;
 }
@@ -109,6 +109,7 @@ Classifier::Classifier(LocalParameters & par) : maskMode(par.maskMode), maskProb
 Classifier::~Classifier() {
     delete[] mask;
     delete subMat;
+    delete probMatrix;
     delete taxonomy;
 }
 
@@ -380,7 +381,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
             char *maskedSeq = nullptr;
             if (maskMode) {
                 maskedSeq = new char[seq->seq.l + 1];
-                SeqIterator::maskLowComplexityRegions(seq->seq.s, maskedSeq, probMatrix, maskProb, subMat);
+                SeqIterator::maskLowComplexityRegions(seq->seq.s, maskedSeq, *probMatrix, maskProb, subMat);
             } else {
                 maskedSeq = seq->seq.s;
             }
@@ -482,8 +483,8 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                 if (maskMode) {
                     maskedSeq1 = new char[seq1->seq.l + 1];
                     maskedSeq2 = new char[seq2->seq.l + 1];
-                    SeqIterator::maskLowComplexityRegions(seq1->seq.s, maskedSeq1, probMatrix, maskProb, subMat);
-                    SeqIterator::maskLowComplexityRegions(seq2->seq.s, maskedSeq2, probMatrix, maskProb, subMat);
+                    SeqIterator::maskLowComplexityRegions(seq1->seq.s, maskedSeq1, *probMatrix, maskProb, subMat);
+                    SeqIterator::maskLowComplexityRegions(seq2->seq.s, maskedSeq2, *probMatrix, maskProb, subMat);
                 } else {
                     maskedSeq1 = seq1->seq.s;
                     maskedSeq2 = seq2->seq.s;

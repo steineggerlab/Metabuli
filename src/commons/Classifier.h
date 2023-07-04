@@ -59,8 +59,8 @@ protected:
     int unmaskedPos[9];
 
     // For masking reads
-    ProbabilityMatrix probMatrix;
-    BaseMatrix *subMat;
+    ProbabilityMatrix * probMatrix;
+    BaseMatrix * subMat;
 
     uint8_t hammingMargin;
     float minSpScore;
