@@ -371,6 +371,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
             int kmerCnt = getQueryKmerNumber<int> ((int) seq->seq.l);
             // Ignore short read
             if (kmerCnt < 1) {
+                kseq_destroy(seq);
                 continue;
             }
 
@@ -385,8 +386,8 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
 
             posToWrite = kmerBuffer.reserveMemory(kmerCnt);
 
-            seqIterator.sixFrameTranslation(maskedSeq);
-            seqIterator.fillQueryKmerBuffer(maskedSeq, (int)seq->seq.l, kmerBuffer, posToWrite,
+            seqIterator.sixFrameTranslation(maskedSeq, (int) seq->seq.l);
+            seqIterator.fillQueryKmerBuffer(maskedSeq, (int) seq->seq.l, kmerBuffer, posToWrite,
                                             (int) queryIdx);
             if (par.maskMode) {
                 delete[] maskedSeq;
@@ -469,6 +470,8 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
 
                 // Ignore short read
                 if (kmerCnt2 < 1 || kmerCnt < 1) {
+                    kseq_destroy(seq1);
+                    kseq_destroy(seq2);
                     continue;
                 }
 
@@ -488,17 +491,17 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                 posToWrite = kmerBuffer.reserveMemory(kmerCnt + kmerCnt2);
 
                 // Process Read 1
-                seqIterator.sixFrameTranslation(maskedSeq1);
+                seqIterator.sixFrameTranslation(maskedSeq1, (int) seq1->seq.l);
                 seqIterator.fillQueryKmerBuffer(maskedSeq1, (int) seq1->seq.l, kmerBuffer, posToWrite,
                                                 (uint32_t) queryIdx);
                 queryList[queryIdx].queryLength = getMaxCoveredLength((int) seq1->seq.l);
 
                 // Process Read 2
-                seqIterator2.sixFrameTranslation(maskedSeq2);
+                seqIterator2.sixFrameTranslation(maskedSeq2, (int) seq2->seq.l);
                 seqIterator2.fillQueryKmerBuffer(maskedSeq2, (int) seq2->seq.l, kmerBuffer, posToWrite,
                                                  (uint32_t) queryIdx, queryList[queryIdx].queryLength);
 
-                if (par.maskMode) {
+                if (maskMode) {
                     delete[] maskedSeq1;
                     delete[] maskedSeq2;
                 }
