@@ -47,7 +47,11 @@ metabuli databases RefSeq217 refseq217 tmp
 
 # GTDB 207 (81.2 GiB)
 # - Complete Genome or Chromosome level assemblies in GTDB207 (CheckM Completeness > 90, CheckM Contamination < 5) with GTDB taxonomy.
-metabuli databases GTDB207 gtdb tmp 
+metabuli databases GTDB207 gtdb tmp
+
+# RefSeq Virus (1.5 GiB)
+# - Viral RefSeq genomes and five SARS-CoV-2 variants (alpha, beta, delta, gamma, and omicron)
+metabuli databases RefSeq_virus refseq_virus tmp
 ```
 
 
@@ -195,3 +199,29 @@ metabuli build <DBDIR> <FASTA list> <accession2taxid> [options]
    --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
 ```
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
+
+## Example
+```
+Classifying RNA-seq reads from a COVID-19 patient to identify the culprit variant.
+The whole process must take less than 10 mins using a personal machine.
+
+1. Download RefSeq Virus DB (1.5 GiB)
+metabuli databases RefSeq_virus refseq_virus tmp
+
+2. Download an RNA-seq result (SRR14484345) from this link
+  - https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&page_size=10&acc=SRR14484345&display=data-access
+
+3. Classify the reads using metabuli
+metabuli classify SRR14484345_1.fq SRR14484345_2.fq refseq_virus RESULT_DIR JOB_ID --max-ram RAM_SIZE
+
+4. Check RESULT_DIR/JOB_ID_report.tsv
+  - Find a section like the example below
+...
+92.1346 509945  492302  no rank 2697049                           Severe acute respiratory syndrome coronavirus 2
+3.1174  17254   17254   subspecies      3000001                             SARS-CoV-2 beta
+0.0558  309     309     subspecies      3000000                             SARS-CoV-2 alpha
+0.0065  36      36      subspecies      3000004                             SARS-CoV-2 omicron
+0.0045  25      25      subspecies      3000003                             SARS-CoV-2 gamma
+0.0034  19      19      subspecies      3000002                             SARS-CoV-2 delta
+...
+```

@@ -109,8 +109,8 @@ private:
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
 
-    void maskLowComplexityRegions(char * seq, char * maskedSeq, ProbabilityMatrix & probMat,
-                                  const LocalParameters & par);
+//    void maskLowComplexityRegions(char * seq, char * maskedSeq, ProbabilityMatrix & probMat,
+//                                  const LocalParameters & par);
     size_t fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                 bool *checker,
                                 size_t &processedSplitCnt,

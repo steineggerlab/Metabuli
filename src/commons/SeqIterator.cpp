@@ -778,6 +778,31 @@ void SeqIterator::generateIntergenicKmerList(_gene *genes, _node *nodes, int num
     free(kmer);
 }
 
+void SeqIterator::maskLowComplexityRegions(char *seq, char *maskedSeq, ProbabilityMatrix & probMat,
+                                           float maskProb, const BaseMatrix * subMat) {
+    unsigned int seqLen = 0;
+    while (seq[seqLen] != '\0') {
+        maskedSeq[seqLen] = (char) subMat->aa2num[static_cast<int>(seq[seqLen])];
+        seqLen++;
+    }
+    tantan::maskSequences(maskedSeq,
+                          maskedSeq + seqLen,
+                          50 /*options.maxCycleLength*/,
+                          probMat.probMatrixPointers,
+                          0.005 /*options.repeatProb*/,
+                          0.05 /*options.repeatEndProb*/,
+                          0.9 /*options.repeatOffsetProbDecay*/,
+                          0, 0,
+                          maskProb /*options.minMaskProb*/,
+                          probMat.hardMaskTable);
+    for (unsigned int pos = 0; pos < seqLen; pos++) {
+        char nt = seq[pos];
+        maskedSeq[pos] = (maskedSeq[pos] == probMat.hardMaskTable[0]) ? 'N' : nt;
+    }
+}
+
+
+
 void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
     if (bitsForCodon == 4) {
         uint64_t copy = kmer;
