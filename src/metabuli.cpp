@@ -41,7 +41,7 @@ std::vector<Command> commands = {
                 {{"Directory where the DB will be generated", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty},
                  {"A list of FASTA files", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                  {"Mapping file (accession to tax ID)", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
-        {"database-report", databaseReport, &localPar.databases, COMMAND_DATABASE_CREATION,
+        {"database-report", databaseReport, &localPar.databaseReport, COMMAND_DATABASE_CREATION,
                 "It generates a report of taxa in a database.",
                 NULL,
                 "Jaebeom Kim <jbeom0731@gmail.com>",
