@@ -1286,6 +1286,12 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, const Ma
 //            maxIdx.push_back(g);
 //        }
     }
+    if (maxIdx.size() > 1) {
+        for (size_t g : maxIdx) {
+            cout << genusScores[g].taxId << " " << genusScores[g].score << " " << genusScores[g].coverage << " " << genusScores[g].hammingDist << endl;
+        }
+        cout << endl;
+    }
     bestScore = maxScore;
 
     for (unsigned long g : maxIdx) {
