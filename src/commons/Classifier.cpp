@@ -1,5 +1,6 @@
 #include "Classifier.h"
 #include "LocalParameters.h"
+#include "krona_prelude.html.h"
 #include "taxonomyreport.cpp"
 #include <ctime>
 
@@ -2085,7 +2086,10 @@ void Classifier::writeReportFile(const string &outdir, int numOfQuery, unordered
 
     // Write Krona chart
     FILE *kronaFile = fopen((outDir + "/" + jobId + "_krona.html").c_str(), "w");
+    fwrite(krona_prelude_html, krona_prelude_html_len, sizeof(char), kronaFile);
+    fprintf(kronaFile, "<node name=\"all\"><magnitude><val>%zu</val></magnitude>", numOfQuery);
     kronaReport(kronaFile, *taxonomy, cladeCounts, numOfQuery);
+    fprintf(kronaFile, "</node></krona></div></body></html>");
 
 }
 
