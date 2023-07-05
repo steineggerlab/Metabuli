@@ -83,11 +83,11 @@ metabuli classify --seq-mode 1 read.fna dbdir outdir jobid
    --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
    
   * --min-score and --min-sp-score for precision mode are optimized only for short reads.
-  * We don't recommend use them for long reads.
+  * We don't recommend using them for long reads.
 ```
 
-This will generate two result files: `Job ID_classifications.tsv` and `Job ID_report.tsv`
-#### Job ID_classifications.tsv
+This will generate two result files: `JobID_classifications.tsv`, `JobID_report.tsv`, and `JobID_krona.html`.
+#### JobID_classifications.tsv
 1. Classified or not
 2. Read ID
 3. Taxonomy identifier
@@ -105,8 +105,8 @@ This will generate two result files: `Job ID_classifications.tsv` and `Job ID_re
 0       read_3     0       294     0       0       0       no rank
 ```
 
-#### Job ID_report.tsv
-Proportion of reads that are assigned to each taxon.
+#### JobID_report.tsv
+The proportion of reads that are assigned to each taxon.
 ```
 #Example
 33.73   77571   77571   0       no rank unclassified
@@ -124,6 +124,10 @@ Proportion of reads that are assigned to each taxon.
 0.02    42      42      170529  subspecies                      RS_GCF_002173635.1
 0.01    24      24      170539  subspecies                      RS_GCF_000204275.1
 ```
+
+#### JobID_krona.html
+It is for an interactive taxonomy report (Krona). You can use any modern web browser to open `JobID_krona.html`.
+
 
 #### Resource requirements
 Metabuli can classify reads against a database of any size as long as the database is fits in the hard disk, regardless of the machine's RAM size.
