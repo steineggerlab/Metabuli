@@ -1,6 +1,6 @@
 #include "Classifier.h"
 #include "LocalParameters.h"
-#include "krona_prelude.html.h"
+//#include "krona_prelude.html.h"
 #include "taxonomyreport.cpp"
 #include <ctime>
 
@@ -1279,9 +1279,12 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, const Ma
 
     vector<size_t> maxIdx;
     for (size_t g = 0; g < genusScores.size(); g++) {
-        if (genusScores[g].score > maxScore.score * 0.95f) {
+        if (genusScores[g].score == maxScore.score) {
             maxIdx.push_back(g);
         }
+//        if (genusScores[g].score > maxScore.score * 0.95f) {
+//            maxIdx.push_back(g);
+//        }
     }
     bestScore = maxScore;
 
