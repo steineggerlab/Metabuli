@@ -1,5 +1,6 @@
 #include "Classifier.h"
 #include "LocalParameters.h"
+#include "taxonomyreport.cpp"
 #include <ctime>
 
 Classifier::Classifier(LocalParameters & par) : maskMode(par.maskMode), maskProb(par.maskProb) {
@@ -341,8 +342,9 @@ void Classifier::startClassify(const LocalParameters &par) {
     cout << "The number of matches: " << totalMatchCnt << endl;
     readClassificationFile.close();
 
+
     // Write report files
-    writeReportFile(outDir + "/" + jobId + "_report.tsv", numOfSeq, taxCounts);
+    writeReportFile(outDir, numOfSeq, taxCounts);
 
     // Memory deallocation
     free(matchBuffer.buffer);
@@ -538,7 +540,7 @@ void Classifier::linearSearchParallel(QueryKmer *queryKmerList, size_t &queryKme
 
     struct MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str(), 3);
 
-    cout << "Comparing qeury and reference metamers..." << endl;
+    cout << "Comparing query and reference metamers..." << endl;
 
     // Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
     for (size_t checkN = queryKmerCnt - 1; checkN > 0; checkN--) {
@@ -2074,12 +2076,17 @@ void Classifier::writeReadClassification(const vector<Query> & queryList, int qu
     }
 }
 
-void Classifier::writeReportFile(const string &reportFileName, int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt) {
+void Classifier::writeReportFile(const string &outdir, int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt) {
     unordered_map<TaxID, TaxonCounts> cladeCounts = taxonomy->getCladeCounts(taxCnt);
     FILE *fp;
-    fp = fopen(reportFileName.c_str(), "w");
+    fp = fopen((outdir + + "/" + jobId + "_report.tsv").c_str(), "w");
     writeReport(fp, cladeCounts, numOfQuery);
     fclose(fp);
+
+    // Write Krona chart
+    FILE *kronaFile = fopen((outDir + "/" + jobId + "_krona.html").c_str(), "w");
+    kronaReport(kronaFile, *taxonomy, cladeCounts, numOfQuery);
+
 }
 
 void Classifier::writeReport(FILE *FP, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts,
