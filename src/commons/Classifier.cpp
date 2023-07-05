@@ -1,6 +1,6 @@
 #include "Classifier.h"
 #include "LocalParameters.h"
-#include "krona_prelude.html.h"
+//#include "krona_prelude.html.h"
 #include "taxonomyreport.cpp"
 #include <ctime>
 
