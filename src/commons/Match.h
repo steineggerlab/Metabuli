@@ -33,7 +33,7 @@ struct Match { // 24 byte
     bool redundancy; // 1
 
     void printMatch() const {
-        cout << qInfo.sequenceID << " " << qInfo.pos << " " << targetId << " " << genusId << " " << speciesId << " " << rightEndHamming << endl;
+        cout << qInfo.sequenceID << " " << qInfo.pos << " " << qInfo.frame << " " << targetId << " " << genusId << " " << speciesId << " " << rightEndHamming << endl;
     }
 };
 
