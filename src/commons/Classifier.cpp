@@ -1609,6 +1609,7 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, const Ma
 //        }
     }
     if (maxIdx.size() > 1) {
+        cout << "Multiple genera" << endl;
         for (size_t g : maxIdx) {
             cout << genusScores[g].taxId << " " << genusScores[g].score << " " << genusScores[g].coverage << " " << genusScores[g].hammingDist << endl;
         }
