@@ -1577,17 +1577,20 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, const Ma
         // so that it can best cover the query, and score the combination
 
         if (!filteredMatches.empty()) {
-            cout << "Current genus: " << currentGenus << endl;
+//            cout << "Current genus: " << currentGenus << endl;
             matchesForEachGenus.push_back(filteredMatches);
-            for (size_t n = 0; n < matchesForEachGenus.size(); n++) {
-                for (size_t m = 0; m < matchesForEachGenus[n].size(); m ++) {
-                    matchesForEachGenus[n][m]->printMatch();
-                }
-                cout << endl;
-            }
+
             genusScores.push_back(scoreGenus(filteredMatches, queryLength));
         }
         filteredMatches.clear();
+    }
+
+    cout << matchList[offset].qInfo.sequenceID << endl;
+    for (size_t n = 0; n < matchesForEachGenus.size(); n++) {
+        for (size_t m = 0; m < matchesForEachGenus[n].size(); m ++) {
+            matchesForEachGenus[n][m]->printMatch();
+        }
+        cout << endl;
     }
 
     // If there are no meaningful genus
