@@ -1575,13 +1575,15 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, const Ma
 
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
-        cout << "Current genus: " << currentGenus << endl;
+
         if (!filteredMatches.empty()) {
+            cout << "Current genus: " << currentGenus << endl;
             matchesForEachGenus.push_back(filteredMatches);
             for (size_t n = 0; n < matchesForEachGenus.size(); n++) {
                 for (size_t m = 0; m < matchesForEachGenus[n].size(); m ++) {
                     matchesForEachGenus[n][m]->printMatch();
                 }
+                cout << endl;
             }
             genusScores.push_back(scoreGenus(filteredMatches, queryLength));
         }
