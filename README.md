@@ -7,7 +7,7 @@ In addition, it can classify reads against a database of any size as long as it 
 
 [Kim J and Steinegger M. Metabuli: sensitive and specific metagenomic classification via joint analysis of amino-acid and DNA. bioRxiv (2023)](https://www.biorxiv.org/content/10.1101/2023.05.31.543018v2).
 
-<p align="left"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/Marv_recycle.png" height="350" /></p>
+<p align="center"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/Marv_recycle.png" height="350" /></p>
 
 ## Installation
 ### Precompiled binaries
