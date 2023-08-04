@@ -86,47 +86,49 @@ SELECTION="$1"
 OUTDB="$2"
 TMP_PATH="$3"
 
+mkdir -p "${OUTDB}"
+
 #INPUT_TYPE=""
 case "${SELECTION}" in
     "GTDB207")
         if notExists "${TMP_PATH}/gtdb207+human.tar.gz"; then
             downloadFile "https://metabuli.steineggerlab.workers.dev/gtdb207+human.tar.gz" "${TMP_PATH}/gtdb207+human.tar.gz"
         fi
-        tar zxvf "${TMP_PATH}/gtdb207+human.tar.gz" -C "${TMP_PATH}"
-        push_back "${TMP_PATH}/gtdb207+human"
+        tar zxvf "${TMP_PATH}/gtdb207+human.tar.gz" -C "${OUTDB}"
+       # push_back "${TMP_PATH}/gtdb207+human"
        # INPUT_TYPE="METABULI_DB"
     ;;
     "RefSeq")
         if notExists "${TMP_PATH}/refseq_complete_chromosome+human.tar.gz"; then
             downloadFile "https://metabuli.steineggerlab.workers.dev/refseq_complete_chromosome+human.tar.gz" "${TMP_PATH}/refseq_complete_chromosome+human.tar.gz"
         fi
-        tar zxvf "${TMP_PATH}/refseq_complete_chromosome+human.tar.gz" -C "${TMP_PATH}"
-        push_back "${TMP_PATH}/refseq_complete_chromosome+human"
+        tar zxvf "${TMP_PATH}/refseq_complete_chromosome+human.tar.gz" -C "${OUTDB}"
+        # push_back "${TMP_PATH}/refseq_complete_chromosome+human"
         # INPUT_TYPE="METABULI_DB"
     ;;
    "RefSeq217")
           if notExists "${TMP_PATH}/refseq_release217+human.tar.gz"; then
               downloadFile "https://metabuli.steineggerlab.workers.dev/refseq_release217+human.tar.gz" "${TMP_PATH}/refseq_release217+human.tar.gz"
           fi
-          tar zxvf "${TMP_PATH}/refseq_release217+human.tar.gz" -C "${TMP_PATH}"
-          push_back "${TMP_PATH}/refseq_release217+human"
+          tar zxvf "${TMP_PATH}/refseq_release217+human.tar.gz" -C "${OUTDB}"
+         # push_back "${TMP_PATH}/refseq_release217+human"
          # INPUT_TYPE="METABULI_DB"
     ;;
     "RefSeq_virus")
-	    if notExists "${TMP_PATH}/refseq_virus.tar.gz"; then
-		    downloadFile "https://metabuli.steineggerlab.workers.dev/refseq_virus.tar.gz" "${TMP_PATH}/refseq_virus.tar.gz"
-            fi
-            tar zxvf "${TMP_PATH}/refseq_virus.tar.gz" -C "${TMP_PATH}"
-            push_back "${TMP_PATH}/refseq_virus"
+	        if notExists "${TMP_PATH}/refseq_virus.tar.gz"; then
+		          downloadFile "https://metabuli.steineggerlab.workers.dev/refseq_virus.tar.gz" "${TMP_PATH}/refseq_virus.tar.gz"
+          fi
+          tar zxvf "${TMP_PATH}/refseq_virus.tar.gz" -C "${OUTDB}"
+          # push_back "${TMP_PATH}/refseq_virus"
           # INPUT_TYPE="METABULI_DB"
     ;;
 esac
 
-eval "set -- $ARR"
-IN="${*}"
+#eval "set -- $ARR"
+#IN="${*}"
 # shellcheck disable=SC2086
 
-"${MMSEQS}" mvdb "${IN}" "${OUTDB}" || fail "mv died"
+#"${MMSEQS}" mvdb "${IN}" "${OUTDB}" || fail "mv died"
 
 if [ -n "${REMOVE_TMP}" ]; then
     rm -f "${TMP_PATH}/download.sh"
