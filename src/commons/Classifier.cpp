@@ -980,7 +980,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
 //            cout << taxId2genusId[matchList[i].targetId] << " " << taxId2speciesId[matchList[i].targetId] <<
 //            " "  << matchList[i].targetId << " " << matchList[i].qInfo.frame << " ";
 //            print_binary16(16, matchList[i].rightEndHamming);
-//            cout << " " << matchList[i].qInfo.position << " " << int(matchList[i].hamming) <<  " "  << int(matchList[i].redundancy) << endl;
+//            cout << " " << matchList[i].qInfo.pos << " " << int(matchList[i].hamming) <<  " "  << int(matchList[i].redundancy) << endl;
 //        }
 //    }
 
@@ -1016,7 +1016,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
 //            cout << taxId2genusId[genusMatches[i].targetId] << " " << taxId2speciesId[genusMatches[i].targetId] <<
 //                 " "  << genusMatches[i].targetId << " " << genusMatches[i].qInfo.frame << " ";
 //            print_binary16(16, genusMatches[i].rightEndHamming);
-//            cout << " " << genusMatches[i].qInfo.position << " " << int(genusMatches[i].hamming) <<  " "  << int(genusMatches[i].redundancy) << endl;
+//            cout << " " << genusMatches[i].qInfo.pos << " " << int(genusMatches[i].hamming) <<  " "  << int(genusMatches[i].redundancy) << endl;
 //        }
 //        cout << "Genus score: " << genusScore.score << "\n";
 //    }
@@ -1133,7 +1133,7 @@ void Classifier::chooseBestTaxon(uint32_t currentQuery,
 //    if (par.printLog) {
 //        cout << "# " << currentQuery << endl;
 //        for (size_t i = 0; i < genusMatches.size(); i++) {
-//            cout << i << " " << genusMatches[i].qInfo.position << " " <<
+//            cout << i << " " << genusMatches[i].qInfo.pos << " " <<
 //            genusMatches[i].targetId << " " << int(genusMatches[i].hamming) << endl;
 //        }
 //        cout << "Score: " << speciesScore.score << "  " << selectedSpecies << " "
@@ -1375,7 +1375,7 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
         }
     }
 
-    // Print filteredMatchIdx
+//    // Print filteredMatchIdx
 //    if (par.printLog) {
 //        cout << "filteredMatchIdx: ";
 //        for (auto &idx: filteredMatchIdx) {
@@ -1383,6 +1383,7 @@ void Classifier::remainConsecutiveMatches(vector<const Match *> & curFrameMatche
 //        }
 //        cout << endl;
 //    }
+
     for (auto &idx: filteredMatchIdx) {
         filteredMatches.push_back(curFrameMatches[idx]);
     }
@@ -1566,6 +1567,7 @@ TaxonScore Classifier::getBestGenusMatches(vector<Match> &genusMatches, const Ma
 
         // Construct a match combination using filtered matches of current genus
         // so that it can best cover the query, and score the combination
+
         if (!filteredMatches.empty()) {
             matchesForEachGenus.push_back(filteredMatches);
             genusScores.push_back(scoreGenus(filteredMatches, queryLength));
@@ -2207,19 +2209,19 @@ bool Classifier::isConsecutive(const Match * match1, const Match * match2) {
 bool Classifier::isConsecutive(const Match & match1, const Match & match2, const LocalParameters & par) {
     uint16_t hamming1 = match1.rightEndHamming;
     uint16_t hamming2 = match2.rightEndHamming;
-    if (par.printLog) {
-        print_binary16(16, hamming1); cout << endl;
-        print_binary16(16, hamming2); cout << endl;
-    }
+//    if (par.printLog) {
+//        print_binary16(16, hamming1); cout << endl;
+//        print_binary16(16, hamming2); cout << endl;
+//    }
 
     // set most significant two bits to 0
     hamming2 &= 0x3FFF; // 07654321
     // move bits to right by 2
     hamming1 >>= 2; // 07654321
-    if (par.printLog) {
-        print_binary16(16, hamming1); cout << endl;
-        print_binary16(16, hamming2); cout << endl;
-    }
+//    if (par.printLog) {
+//        print_binary16(16, hamming1); cout << endl;
+//        print_binary16(16, hamming2); cout << endl;
+//    }
 
     return hamming1 == hamming2;
 }

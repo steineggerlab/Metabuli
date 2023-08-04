@@ -31,6 +31,11 @@ struct Match { // 24 byte
     uint16_t rightEndHamming; // 2
     uint8_t hamming; // 1
     bool redundancy; // 1
+
+    void printMatch() const {
+        cout << qInfo.sequenceID << " " << qInfo.pos << " " << qInfo.frame << " "
+        << targetId << " " << genusId << " " << speciesId << " " << rightEndHamming << " " << (int)hamming << endl;
+    }
 };
 
 #endif //ADCLASSIFIER2_MATCH_H
