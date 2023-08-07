@@ -53,11 +53,13 @@ private:
     int threadNum;
     BaseMatrix *subMat;
 
+    // parameters
     NcbiTaxonomy * taxonomy;
     string dbDir;
     string fnaListFileName;
     string taxonomyDir;
     string acc2taxidFileName;
+    size_t bufferSize;
 
     struct FASTA {
         string path;
@@ -164,7 +166,7 @@ public:
     void updateIndex(const LocalParameters & par);
 
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
-                    uint16_t *kmerBuf, size_t & localBufIdx );
+                    uint16_t *kmerBuf, size_t & localBufIdx);
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
                     uint16_t *kmerBuf, size_t & localBufIdx, size_t & totalBufferIdx);
     void writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t & infoBufferIdx);
