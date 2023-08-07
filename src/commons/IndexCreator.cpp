@@ -323,10 +323,14 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     DiffIdxSplit splitList[par.splitNum];
     memset(splitList, 0, sizeof(DiffIdxSplit) * par.splitNum);
     size_t splitWidth = uniqKmerCnt / par.splitNum;
+    size_t splitCnt = 1;
     for (size_t i = 1; i < (size_t) par.splitNum; i++) {
         for (size_t j = uniqKmerIdx[0] + splitWidth * i; j + 1 < uniqKmerCnt; j++) {
             if (AminoAcidPart(kmerBuffer[j].ADkmer) != AminoAcidPart(kmerBuffer[j + 1].ADkmer)) {
-                splitList[i].ADkmer = kmerBuffer[j].ADkmer;
+                if (kmerBuffer[j].ADkmer != splitList[splitCnt - 1].ADkmer){
+                    splitList[splitCnt].ADkmer = kmerBuffer[j].ADkmer;
+                    splitCnt ++;
+                }
                 break;
             }
         }
@@ -363,7 +367,7 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     }
 
     cout<<"total k-mer count  : "<< kmerNum << endl;
-    cout<<"written k-mer count: "<<write<<endl;
+    cout<<"written k-mer count: "<< write << endl;
 
     flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
     fwrite(splitList, sizeof(DiffIdxSplit), par.splitNum, diffIdxSplitFile);
@@ -386,7 +390,6 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
     }
 
     // Find the first index of meaningful k-mer
-    //
     size_t startIdx = 0;
     for(size_t i = 0; i < kmerBuffer.startIndexOfReserve ; i++){
         if(kmerBuffer.buffer[i].taxIdAtRank != 0){
