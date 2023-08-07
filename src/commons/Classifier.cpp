@@ -246,7 +246,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     for (size_t splitIdx = 0; splitIdx < queryReadSplit.size(); splitIdx++) {
         // Allocate memory for query list
         queryList.clear();
-        queryList.resize(queryReadSplit[splitIdx].second - queryReadSplit[splitIdx].first + 1);
+        queryList.resize(queryReadSplit[splitIdx].second - queryReadSplit[splitIdx].first);
 
         // Allocate memory for query k-mer list and match list
         kmerBuffer.reallocateMemory(splitKmerCnt[splitIdx]);
@@ -343,6 +343,16 @@ void Classifier::startClassify(const LocalParameters &par) {
     cout << "The number of matches: " << totalMatchCnt << endl;
     readClassificationFile.close();
 
+
+    // Count the number of taxid=0 in queryList
+    cout << queryList.size() << endl;
+    size_t numOfUnassigned = 0;
+    for (size_t i = 0; i < queryList.size(); i++) {
+        if (queryList[i].classification == 0) {
+            numOfUnassigned++;
+        }
+    }
+    cout << "The number of unassigned reads: " << numOfUnassigned << endl;
 
     // Write report files
     writeReportFile(outDir, numOfSeq, taxCounts);
