@@ -26,18 +26,18 @@ int build(int argc, const char **argv, const Command &command){
     } else {
         par.taxonomyPath = par.taxonomyPath + "/";
     }
-    if (par.tinfoPath.empty()) {
-        par.tinfoPath = dbDirectory + "/prodigal/";
-    } else {
-        par.tinfoPath = par.tinfoPath + "/";
+//    if (par.tinfoPath.empty()) {
+//        par.tinfoPath = dbDirectory + "/prodigal/";
+//    } else {
+//        par.tinfoPath = par.tinfoPath + "/";
+//    }
+
+    // If dbDirectory does not exist, create it
+    if (!FileUtil::directoryExists(dbDirectory.c_str())) {
+        FileUtil::makeDir(dbDirectory.c_str());
     }
 
-    // If the prodigal directory does not exist, create it
-//    if (!FileUtil::directoryExists(par.tinfoPath.c_str())) {
-//        FileUtil::makeDir(par.tinfoPath.c_str());
-//    }
     cout << "Taxonomy path: " << par.taxonomyPath << endl;
-//    cout << "Tinfo path: " << par.tinfoPath << endl;
 
     IndexCreator idxCre(par, dbDirectory, fastaListPath, mappingFile);
     idxCre.createIndex(par);
