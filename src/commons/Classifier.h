@@ -131,8 +131,7 @@ protected:
             {3, 2, 3, 3, 4, 4, 1, 0}};
 
     // Index reads in query file
-    static void splitFASTQ(vector<SequenceBlock> & seqSegments, const string & queryPath);
-    static void splitFASTA(vector<SequenceBlock> & seqSegments, const string & queryPath);
+    static void splitQueryFile(vector<SequenceBlock> & seqSegments, const string & queryPath);
 
     // Extract query k-mer
     void fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,

@@ -126,54 +126,32 @@ static inline bool compareForLinearSearch(const QueryKmer &a, const QueryKmer &b
 
 void Classifier::startClassify(const LocalParameters &par) {
 
-    size_t totalNumOfQueryKmer = 0;
-    // Check if the query file is in FASTA format
-    bool isFasta = false;
-    ifstream check(queryPath_1.c_str());
-    if (check.is_open()) {
-        string line;
-        getline(check, line);
-        if (line[0] == '>') {
-            isFasta = true;
-        }
-    }
-    check.close();
-
     // Calculate maximum number of k-mers for each iteration.
     size_t matchPerKmer = par.matchPerKmer;
     size_t c = sizeof(QueryKmer) + matchPerKmer * sizeof(Match);
     size_t ram_threads = ((size_t) par.ramUsage * (size_t) 1024 * 1024 * 1024)
-                            - ((size_t) 134217728 * (size_t) par.threads);
+                         - ((size_t) 134217728 * (size_t) par.threads);
+
 
     // Load query file
     cout << "Indexing query file ...";
-    size_t totalReadLength = 0;
-    MmapedData<char> queryFile{};
-    MmapedData<char> queryFile2{};
-    vector<SequenceBlock> sequences;
-    vector<SequenceBlock> sequences2;
-    vector<pair<size_t, size_t>> queryReadSplit;
-    vector<size_t> splitKmerCnt;
+    vector<SequenceBlock> sequences_read1;
+    vector<SequenceBlock> sequences_read2;
     size_t numOfSeq = 0;
     size_t start = 0;
     size_t kmerCnt = 0;
     size_t currentKmerCnt = 0;
     size_t seqCnt = 0;
+    vector<size_t> splitKmerCnt;
+    vector<pair<size_t, size_t>> queryReadSplit;
+    size_t totalReadLength = 0;
     if (par.seqMode == 1 || par.seqMode == 3) {
-        queryFile = mmapData<char>(queryPath_1.c_str(), 2); // mmap readonly
-        madvise(queryFile.data, queryFile.fileSize, MADV_SEQUENTIAL);
-
-        // Get start and end positions of each read
-        if (isFasta) {
-            splitFASTA(sequences, queryPath_1);
-        } else {
-            splitFASTQ(sequences, queryPath_1);
-        }
+        splitQueryFile(sequences_read1, queryPath_1);
 
         // Make query read splits
-        numOfSeq = sequences.size();
+        numOfSeq = sequences_read1.size();
         for (size_t i = 0; i < numOfSeq; i++) {
-            currentKmerCnt = getQueryKmerNumber<size_t>(sequences[i].seqLength);
+            currentKmerCnt = getQueryKmerNumber<size_t>(sequences_read1[i].seqLength);
             kmerCnt += currentKmerCnt;
             seqCnt++;
             if (c * kmerCnt + ((size_t) 200 * seqCnt) > ram_threads) {
@@ -183,34 +161,33 @@ void Classifier::startClassify(const LocalParameters &par) {
                 start = i;
                 seqCnt = 1;
             }
-            totalReadLength += sequences[i].seqLength;
+            totalReadLength += sequences_read1[i].seqLength;
         }
         queryReadSplit.emplace_back(start, numOfSeq);
         splitKmerCnt.push_back(kmerCnt);
-    } else if (par.seqMode == 2) {
+    } else {
+        splitQueryFile(sequences_read1, queryPath_1);
+        splitQueryFile(sequences_read2, queryPath_2);
 
-        // Get start and end positions of each read
-        if (isFasta) {
-            splitFASTA(sequences, queryPath_1);
-            splitFASTA(sequences2, queryPath_2);
-        } else {
-            splitFASTQ(sequences, queryPath_1);
-            splitFASTQ(sequences2, queryPath_2);
+        // Print first 100 elements of sequences_read1
+        for (size_t i = 0; i < 100; i++) {
+            cout << sequences_read1[i].start << "\t" << sequences_read1[i].end << "\t" << sequences_read1[i].length << "\t" << sequences_read1[i].seqLength << endl;
         }
 
-        if (sequences.size() != sequences2.size()) {
+        // Check if the number of reads in the two files are equal
+        if (sequences_read1.size() != sequences_read2.size()) {
             Debug(Debug::ERROR) << "The number of reads in the two files are not equal." << "\n";
             EXIT(EXIT_FAILURE);
         }
 
-        numOfSeq = sequences.size();
+        numOfSeq = sequences_read1.size();
 
         // Make query read splits
         for (size_t i = 0; i < numOfSeq; i++) {
-            totalReadLength += sequences[i].seqLength;
-            totalReadLength += sequences2[i].seqLength;
-            currentKmerCnt = getQueryKmerNumber<size_t>(sequences[i].seqLength) +
-                    getQueryKmerNumber<size_t>(sequences2[i].seqLength);
+            totalReadLength += sequences_read1[i].seqLength;
+            totalReadLength += sequences_read2[i].seqLength;
+            currentKmerCnt = getQueryKmerNumber<size_t>(sequences_read1[i].seqLength) +
+                             getQueryKmerNumber<size_t>(sequences_read2[i].seqLength);
             kmerCnt += currentKmerCnt;
             seqCnt ++;
             if (c * kmerCnt + ((size_t) 200 * seqCnt) > ram_threads) {
@@ -224,6 +201,7 @@ void Classifier::startClassify(const LocalParameters &par) {
         queryReadSplit.emplace_back(start, numOfSeq);
         splitKmerCnt.push_back(kmerCnt);
     }
+
     cout << "Done" << endl;
     cout << "Total number of sequences: " << numOfSeq << endl;
     cout << "Total read length: " << totalReadLength <<  "nt" << endl;
@@ -266,21 +244,22 @@ void Classifier::startClassify(const LocalParameters &par) {
         // Extract query k-mer
         time_t beforeKmerExtraction = time(nullptr);
         cout << "Extracting query metamers ... " << endl;
-        if (! par.maskMode) { // No masking
-            if (par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
-                fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, queryList, queryReadSplit[splitIdx], par);
-            } else if (par.seqMode == 2) {
-                fillQueryKmerBufferParallel(kmerBuffer, sequences, sequences2, queryList, queryReadSplit[splitIdx],
+        if (par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
+//                fillQueryKmerBufferParallel(kmerBuffer,
+//                                            queryFile,
+//                                            sequences_read1,
+//                                            queryList,
+//                                            queryReadSplit[splitIdx],
+//                                            par);
+        } else if (par.seqMode == 2) {
+                fillQueryKmerBufferParallel(kmerBuffer,
+                                            sequences_read1,
+                                            sequences_read2,
+                                            queryList,
+                                            queryReadSplit[splitIdx],
                                             par);
-            }
-        } else { // Masking low-complexity regions
-            if (par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
-                fillQueryKmerBufferParallel(kmerBuffer, queryFile, sequences, queryList, queryReadSplit[splitIdx], par);
-            } else if (par.seqMode == 2) {
-                fillQueryKmerBufferParallel(kmerBuffer, sequences, sequences2, queryList, queryReadSplit[splitIdx],
-                                            par);
-            }
         }
+
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
         cout << "Time spent for metamer extraction: " << double(time(nullptr) - beforeKmerExtraction) << endl;
 
@@ -349,10 +328,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     // Memory deallocation
     free(matchBuffer.buffer);
 
-    munmap(queryFile.data, queryFile.fileSize + 1);
-    if (par.seqMode == 2) {
-        munmap(queryFile2.data, queryFile2.fileSize + 1);
-    }
+//    munmap(queryFile.data, queryFile.fileSize + 1);
 }
 
 void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
@@ -2136,62 +2112,16 @@ unsigned int Classifier::cladeCountVal(const std::unordered_map<TaxID, TaxonCoun
     }
 }
 
-// FASTQ
-// First line: ID
-// Second line: Sequence
-// Third line: +
-// Fourth line: Quality
-// Repeat
-// Store file pointer for the start of the first line and the end of the second line
-// Because we don't need to store the quality line
-void Classifier::splitFASTQ(vector<SequenceBlock> & seqSegments, const string & queryPath) {
-    ifstream fastq;
-    fastq.open(queryPath);
-    if (!fastq.is_open()) {
-        cerr << "Error: Cannot open file " << queryPath << endl;
-        exit(1);
+void Classifier::splitQueryFile(vector<SequenceBlock> & sequences, const std::string &queryPath) {
+    KSeqWrapper* kseq = nullptr;
+    kseq = KSeqFactory(queryPath.c_str());
+    while (kseq->ReadEntry()) {
+        const KSeqWrapper::KSeqEntry & e = kseq->entry;
+        sequences.emplace_back(e.headerOffset - 1,
+                               e.sequenceOffset + e.sequence.l,
+                               e.sequenceOffset + e.sequence.l - e.headerOffset + 2,
+                               e.sequence.l);
     }
-
-    string line;
-    size_t lineCnt = 0;
-    size_t start = 0;
-    size_t end;
-    while (getline(fastq, line)) {
-        if (lineCnt % 4 == 0){
-            start = (size_t) fastq.tellg() - line.length() - 1;
-        }
-        if (lineCnt % 4 == 1){
-            end = (size_t) fastq.tellg() - 1;
-            seqSegments.emplace_back(start, end, end - start + 1, line.length());
-        }
-        lineCnt++;
-    }
-}
-
-void Classifier::splitFASTA(vector<SequenceBlock> & seqSegments, const string & queryPath) {
-    ifstream fasta;
-    fasta.open(queryPath);
-    if (!fasta.is_open()) {
-        cerr << "Error: Cannot open file " << queryPath << endl;
-        exit(1);
-    }
-
-    string line;
-    size_t start = 0;
-    size_t end;
-    getline(fasta, line);
-    size_t seqLength = 0;
-    while (getline(fasta, line)) {
-        if (line[0] == '>') {
-            seqSegments.emplace_back(start, end, end - start + 1, seqLength);
-            start = end + 1;
-            seqLength = 0;
-        } else {
-            end = (size_t) fasta.tellg() - 1;
-            seqLength += line.length();
-        }
-    }
-    seqSegments.emplace_back(start, end, end - start + 1, seqLength);
 }
 
 
