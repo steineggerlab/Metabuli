@@ -4,7 +4,7 @@ trigger:
   - master
 
 variables:
-    regression: 0
+    regression: 1
 
 jobs:
   - job: build_ubuntu_2004
