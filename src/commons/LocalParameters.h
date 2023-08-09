@@ -61,6 +61,7 @@ public:
     PARAMETER(TAXONOMY_PATH)
     PARAMETER(IS_ASSEMBLY)
     PARAMETER(SPLIT_NUM)
+    PARAMETER(BUFFER_SIZE)
 
     // Test parameters
     PARAMETER(TEST_RANK)
@@ -100,6 +101,7 @@ public:
     std::string libraryPath;
     std::string taxonomyPath;
     int splitNum;
+    size_t bufferSize;
 
     // Test parameters
     std::string testRank;
