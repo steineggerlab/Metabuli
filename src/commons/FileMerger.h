@@ -1,7 +1,3 @@
-//
-// Created by KJB on 03/09/2020.
-//
-
 #ifndef ADKMER4_MERGETARGETFILES_H
 #define ADKMER4_MERGETARGETFILES_H
 #include <vector>
@@ -20,6 +16,7 @@ class FileMerger {
 private:
     uint64_t MARKER;
     int splitNum;
+    size_t bufferSize;
 
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx, size_t & totalBufIdx);
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx , size_t & totalBufIdx);

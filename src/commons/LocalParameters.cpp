@@ -167,6 +167,13 @@ LocalParameters::LocalParameters() :
                   typeid(int),
                   (void *) &splitNum,
                   ""),
+        BUFFER_SIZE(BUFFER_SIZE_ID,
+                    "--buffer-size",
+                    "Buffer size (the number of k-mers)",
+                    "Buffer size (the number of k-mers)",
+                    typeid(size_t),
+                    (void *) &bufferSize,
+                    ""),
         TEST_RANK(TEST_RANK_ID,
                   "--test-rank",
                   ".",
@@ -231,11 +238,10 @@ LocalParameters::LocalParameters() :
     build.push_back(&REDUCED_AA);
     build.push_back(&SPACED);
     build.push_back(&TAXONOMY_PATH);
-//    build.push_back(&TINFO_PATH);
     build.push_back(&SPLIT_NUM);
     build.push_back(&PARAM_MASK_PROBABILTY);
     build.push_back(&PARAM_MASK_RESIDUES);
-
+    build.push_back(&BUFFER_SIZE);
 
     //classify
     classify.push_back(&PARAM_THREADS);
