@@ -69,7 +69,7 @@ jobs:
         displayName: Build
       - script: |
           cd ${BUILD_SOURCESDIRECTORY}
-          ./regression/run_regression.sh ./build/src/metabuli examples 
+          ./util/Metabuli-regression/run_regression.sh ./build/src/metabuli examples 
         displayName: Run Regression Suite
         condition: eq(variables['regression'], 1)
       - task: PublishPipelineArtifact@0
@@ -139,7 +139,7 @@ jobs:
         displayName: Build Metabuli
       - script: |
           cd ${BUILD_SOURCESDIRECTORY}
-          ./regression/run_regression.sh ./build/metabuli examples 
+          ./util/Metabuli-regression/run_regression.sh ./build/metabuli examples 
         displayName: Run Regression Suite
         condition: eq(variables['regression'], 1)
       - task: PublishPipelineArtifact@0
