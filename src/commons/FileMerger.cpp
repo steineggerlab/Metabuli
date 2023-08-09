@@ -2,6 +2,7 @@
 
 FileMerger::FileMerger(const LocalParameters & par) {
     splitNum = par.splitNum;
+    bufferSize = par.bufferSize;
     if (par.reducedAA == 1){
         MARKER = 0Xffffffff;
         MARKER = ~MARKER;
@@ -226,10 +227,10 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     FILE * diffIdxSplitFile = fopen(diffIdxSplitFileName.c_str(), "wb");
 
     // Buffers to fill
-    uint16_t * diffBuffer = (uint16_t *)malloc(sizeof(uint16_t) * kmerBufSize);
+    uint16_t * diffBuffer = (uint16_t *)malloc(sizeof(uint16_t) * bufferSize);
     size_t diffBufferIdx = 0;
     size_t totalBufferIdx = 0;
-    TargetKmerInfo * infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * kmerBufSize);
+    TargetKmerInfo * infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * bufferSize);
     size_t infoBufferIdx = 0;
     size_t totalInfoIdx = 0;
 
@@ -578,7 +579,7 @@ void FileMerger::getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToW
     writeDiffIdx(kmerBuf, handleKmerTable, (buffer + idx + 1), (4 - idx), localBufIdx, totalBufIdx);
 }
 void FileMerger::writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx, size_t & totalBufIdx) {
-    if (localBufIdx + size >= kmerBufSize) {
+    if (localBufIdx + size >= bufferSize) {
         flushKmerBuf(buffer, handleKmerTable, localBufIdx);
     }
     memcpy(buffer + localBufIdx, toWrite, sizeof(uint16_t) * size);
@@ -593,7 +594,7 @@ void FileMerger::flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & 
 
 void FileMerger::writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t & infoBufferIdx, size_t & totalInfoIdx)
 {
-    if (infoBufferIdx >= kmerBufSize) {
+    if (infoBufferIdx >= bufferSize) {
         flushInfoBuf(infoBuffer, infoFile, infoBufferIdx);
     }
     memcpy(infoBuffer + infoBufferIdx, entryToWrite, sizeof(TargetKmerInfo));
