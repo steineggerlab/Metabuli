@@ -53,9 +53,8 @@ IndexCreator::IndexCreator(const LocalParameters &par, string dbDir, string fnaL
 }
 
 IndexCreator::~IndexCreator() {
-    if (taxonomy != nullptr){
-        delete taxonomy;
-    }
+    delete taxonomy;
+    delete subMat;
 }
 
 void IndexCreator::createIndex(const LocalParameters &par) {
@@ -115,7 +114,6 @@ void IndexCreator::createIndex(const LocalParameters &par) {
         delete[] uniqKmerIdx;
     }
     delete[] splitChecker;
-
 }
 
 void IndexCreator::updateIndex(const LocalParameters &par) {
@@ -483,6 +481,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
     for(size_t i = 0; i < splits.size(); i++){
         delete[] idxOfEachSplit[i];
     }
+    delete[] idxOfEachSplit;
     delete[] cntOfEachSplit;
 }
 
