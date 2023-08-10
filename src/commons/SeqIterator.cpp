@@ -777,7 +777,7 @@ void SeqIterator::generateIntergenicKmerList(_gene *genes, _node *nodes, int num
     free(kmer);
 }
 
-void SeqIterator::maskLowComplexityRegions(char *seq, char *maskedSeq, ProbabilityMatrix & probMat,
+void SeqIterator::maskLowComplexityRegions(const char *seq, char *maskedSeq, ProbabilityMatrix & probMat,
                                            float maskProb, const BaseMatrix * subMat) {
     unsigned int seqLen = 0;
     while (seq[seqLen] != '\0') {

@@ -166,13 +166,19 @@ void Classifier::startClassify(const LocalParameters &par) {
         queryReadSplit.emplace_back(start, numOfSeq);
         splitKmerCnt.push_back(kmerCnt);
     } else {
-        splitQueryFile(sequences_read1, queryPath_1);
-        splitQueryFile(sequences_read2, queryPath_2);
+        if (Util::endsWith(".gz", queryPath_1)){
+            splitGzippedFASTA(sequences_read1, queryPath_1);
+            splitGzippedFASTA(sequences_read2, queryPath_2);
+        } else {
+            splitQueryFile(sequences_read1, queryPath_1);
+            splitQueryFile(sequences_read2, queryPath_2);
+        }
+
 
         // Print first 100 elements of sequences_read1
-        for (size_t i = 0; i < 100; i++) {
-            cout << sequences_read1[i].start << "\t" << sequences_read1[i].end << "\t" << sequences_read1[i].length << "\t" << sequences_read1[i].seqLength << endl;
-        }
+//        for (size_t i = 0; i < 100; i++) {
+//            cout << sequences_read1[i].start << "\t" << sequences_read1[i].end << "\t" << sequences_read1[i].length << "\t" << sequences_read1[i].seqLength << endl;
+//        }
 
         // Check if the number of reads in the two files are equal
         if (sequences_read1.size() != sequences_read2.size()) {
@@ -252,12 +258,13 @@ void Classifier::startClassify(const LocalParameters &par) {
 //                                            queryReadSplit[splitIdx],
 //                                            par);
         } else if (par.seqMode == 2) {
-                fillQueryKmerBufferParallel(kmerBuffer,
-                                            sequences_read1,
-                                            sequences_read2,
-                                            queryList,
-                                            queryReadSplit[splitIdx],
-                                            par);
+//                fillQueryKmerBufferParallel(kmerBuffer,
+//                                            sequences_read1,
+//                                            sequences_read2,
+//                                            queryList,
+//                                            queryReadSplit[splitIdx],
+//                                            par);
+            fillQueryKmerBufferParallel2(kmerBuffer, queryList, queryReadSplit[splitIdx], par);
         }
 
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
@@ -400,6 +407,99 @@ T Classifier::getQueryKmerNumber(T queryLength) {
     return (getMaxCoveredLength(queryLength) / 3 - kmerLength - spaceNum_int + 1) * 6;
 }
 
+void Classifier::fillQueryKmerBufferParallel2(QueryKmerBuffer &kmerBuffer,
+                                              vector<Query> & queryList,
+                                              const pair<size_t, size_t> & currentSplit,
+                                              const LocalParameters &par) {
+    KSeqWrapper* kseq1 = nullptr;
+    KSeqWrapper* kseq2 = nullptr;
+    kseq1 = KSeqFactory(par.filenames[0].c_str());
+    kseq2 = KSeqFactory(par.filenames[1].c_str());
+
+    size_t queryNum = currentSplit.second - currentSplit.first;
+    size_t processedQueryNum = 0;
+
+    // Array to store reads of thread number
+    vector<string> reads1(par.threads);
+    vector<string> reads2(par.threads);
+
+    while (processedQueryNum < queryNum) {
+        size_t currentQueryNum = min(queryNum - processedQueryNum, (size_t) par.threads);
+        size_t count = 0;
+        while (count < currentQueryNum) {
+            // Read query
+            kseq1->ReadEntry();
+            kseq2->ReadEntry();
+            const KSeqWrapper::KSeqEntry & e1 = kseq1->entry;
+            const KSeqWrapper::KSeqEntry & e2 = kseq2->entry;
+
+            // Get k-mer count
+            int kmerCnt = getQueryKmerNumber<int>((int) e1.sequence.l);
+            int kmerCnt2 = getQueryKmerNumber<int>((int) e2.sequence.l);
+
+            // Query Info
+            queryList[processedQueryNum].queryLength = getMaxCoveredLength((int) e1.sequence.l);
+            queryList[processedQueryNum].queryLength2 = getMaxCoveredLength((int) e2.sequence.l);
+            queryList[processedQueryNum].name = string(e1.name.s);
+            queryList[processedQueryNum].kmerCnt = (int) (kmerCnt + kmerCnt2);
+
+            // Store reads
+            reads1[count] = string(kseq1->entry.sequence.s);
+            reads2[count] = string(kseq2->entry.sequence.s);
+
+            processedQueryNum ++;
+            count ++;
+        }
+#pragma omp parallel default(none), shared(par, kmerBuffer, cout, processedQueryNum, queryList, currentQueryNum, currentSplit, count, reads1, reads2)
+        {
+            SeqIterator seqIterator(par);
+            SeqIterator seqIterator2(par);
+            size_t posToWrite;
+#pragma omp for schedule(dynamic, 1)
+            for (size_t i = 0; i < currentQueryNum; i ++) {
+                size_t queryIdx = processedQueryNum - currentQueryNum + i;
+                // Get k-mer count
+                auto kmerCnt = getQueryKmerNumber<size_t>(reads1[i].length());
+                auto kmerCnt2 = getQueryKmerNumber<size_t>(reads2[i].length());
+
+                // Ignore short read
+                if (kmerCnt2 < 1 || kmerCnt < 1) { continue; }
+
+                // Get masked sequence
+                char *maskedSeq1 = nullptr;
+                char *maskedSeq2 = nullptr;
+                if (maskMode) {
+                    maskedSeq1 = new char[reads1[i].length() + 1];
+                    maskedSeq2 = new char[reads2[i].length() + 1];
+                    SeqIterator::maskLowComplexityRegions(reads1[i].c_str(),maskedSeq1, *probMatrix, maskProb, subMat);
+                    SeqIterator::maskLowComplexityRegions(reads2[i].c_str(),maskedSeq2, *probMatrix, maskProb, subMat);
+                } else {
+                    maskedSeq1 = const_cast<char *>(reads1[i].c_str());
+                    maskedSeq2 = const_cast<char *>(reads2[i].c_str());
+                }
+
+                posToWrite = kmerBuffer.reserveMemory(kmerCnt + kmerCnt2);
+
+                // Process Read 1
+                seqIterator.sixFrameTranslation(maskedSeq1, (int) reads1[i].length());
+                seqIterator.fillQueryKmerBuffer(maskedSeq1, (int) reads1[i].length(), kmerBuffer, posToWrite,
+                                                (uint32_t) queryIdx);
+                queryList[queryIdx].queryLength = getMaxCoveredLength((int) reads1[i].length());
+
+                // Process Read 2
+                seqIterator2.sixFrameTranslation(maskedSeq2, (int) reads2[i].length());
+                seqIterator2.fillQueryKmerBuffer(maskedSeq2, (int) reads2[i].length(), kmerBuffer, posToWrite,
+                                                 (uint32_t) queryIdx, queryList[queryIdx].queryLength);
+
+                if (maskMode) {
+                    delete[] maskedSeq1;
+                    delete[] maskedSeq2;
+                }
+            }
+        }
+    }
+}
+
 void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                                              const vector<SequenceBlock> &seqs,
                                              const vector<SequenceBlock> &seqs2,
@@ -407,8 +507,7 @@ void Classifier::fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
                                              const pair<size_t, size_t> & currentSplit,
                                              const LocalParameters &par) {
     vector<pair<size_t, size_t>> queryReadSplit;
-//    size_t numOfSeq = currentSplit.second - currentSplit.first;
-    size_t numOfSeqPerSplit = size_t(1000);
+    auto numOfSeqPerSplit = size_t(1000);
     for (size_t i = currentSplit.first; i < currentSplit.second; i += numOfSeqPerSplit) {
         queryReadSplit.emplace_back(i, std::min(i + numOfSeqPerSplit - 1, currentSplit.second- 1));
     }
@@ -2124,14 +2223,97 @@ void Classifier::splitQueryFile(vector<SequenceBlock> & sequences, const std::st
     }
 }
 
+void Classifier::splitFASTQ(vector<SequenceBlock> & seqSegments, const string & queryPath) {
+    ifstream fastq;
+    fastq.open(queryPath);
+    if (!fastq.is_open()) {
+        cerr << "Error: Cannot open file " << queryPath << endl;
+        exit(1);
+    }
+
+    string line;
+    size_t lineCnt = 0;
+    size_t start = 0;
+    size_t end;
+    while (getline(fastq, line)) {
+        if (lineCnt % 4 == 0){
+            start = (size_t) fastq.tellg() - line.length() - 1;
+        }
+        if (lineCnt % 4 == 1){
+            end = (size_t) fastq.tellg() - 1;
+            seqSegments.emplace_back(start, end, end - start + 1, line.length());
+        }
+        lineCnt++;
+    }
+}
+
+void Classifier::splitGzippedFASTA(vector<SequenceBlock> & seqSegments, const string & queryPath) {
+//    igzstream file(queryPath.c_str());
+//    std::string line;
+//    std::string currentSequence;
+//    size_t start = 0;
+//    size_t end;
+//    getline(file, line);
+//    size_t seqLength = 0;
+//    while (getline(file, line)) {
+//        if (line[0] == '>') {
+//            seqSegments.emplace_back(start, end, end - start + 1, seqLength);
+//            start = end + 1;
+//            seqLength = 0;
+//        } else {
+//            end = (size_t) file.tellg() - 1;
+//            seqLength += line.length();
+//        }
+//    }
+//    seqSegments.emplace_back(start, end, end - start + 1, seqLength);
+
+
+    gzFile fasta = gzopen(queryPath.c_str(), "rb");
+    if (!fasta) {
+        std::cerr << "Error: Cannot open file " << queryPath << std::endl;
+        exit(1);
+    }
+
+    char buffer[4096];
+    size_t start = 0;
+    size_t end;
+    size_t seqLength = 0;
+    while (gzgets(fasta,buffer, 4096)) {
+        if (buffer[0] == '>') {
+            seqSegments.emplace_back(start, end, end - start + 1, seqLength);
+            start = end + 1;
+            seqLength = 0;
+        } else {
+            end = (size_t)gztell(fasta) - 1;
+            seqLength += strlen(buffer) - 1; //.length() - 1; // Exclude newline character
+        }
+        cout << buffer << endl;
+        cout << "1" << endl;
+    }
+    seqSegments.emplace_back(start, end, end - start + 1, seqLength);
+
+    gzclose(fasta);
+
+//    string line;
+//    size_t start = 0;
+//    size_t end;
+//    getline(fasta, line);
+//    size_t seqLength = 0;
+//    while (getline(fasta, line)) {
+//        if (line[0] == '>') {
+//            seqSegments.emplace_back(start, end, end - start + 1, seqLength);
+//            start = end + 1;
+//            seqLength = 0;
+//        } else {
+//            end = (size_t) fasta.tellg() - 1;
+//            seqLength += line.length();
+//        }
+//    }
+//    seqSegments.emplace_back(start, end, end - start + 1, seqLength);
+}
+
 
 bool Classifier::isConsecutive(const Match * match1, const Match * match2) {
-//    uint16_t hamming1 = match1->rightEndHamming;
-//    uint16_t hamming2 = match2->rightEndHamming;
-//    // move bits to right by 2
-//    hamming1 >>= 2;
-//    // set most significant two bits to 0
-//    hamming2 &= 0x3FFF;
     return (match1->rightEndHamming >> 2) == (match2->rightEndHamming & 0x3FFF);
 }
 
