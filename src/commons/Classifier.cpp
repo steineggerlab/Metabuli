@@ -166,13 +166,8 @@ void Classifier::startClassify(const LocalParameters &par) {
         queryReadSplit.emplace_back(start, numOfSeq);
         splitKmerCnt.push_back(kmerCnt);
     } else {
-        if (Util::endsWith(".gz", queryPath_1)){
-            splitGzippedFASTA(sequences_read1, queryPath_1);
-            splitGzippedFASTA(sequences_read2, queryPath_2);
-        } else {
-            splitQueryFile(sequences_read1, queryPath_1);
-            splitQueryFile(sequences_read2, queryPath_2);
-        }
+        splitQueryFile(sequences_read1, queryPath_1);
+        splitQueryFile(sequences_read2, queryPath_2);
 
 
         // Print first 100 elements of sequences_read1
