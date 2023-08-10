@@ -3,6 +3,7 @@
 #include "Parameters.h"
 #include "LocalParameters.h"
 #include "NcbiTaxonomy.h"
+#include "FileUtil.h"
 
 void setClassifyDefaults(LocalParameters & par){
     par.virusTaxId = 10239;// Taxonomy ID of virus taxon in NCBI
@@ -34,6 +35,15 @@ int classify(int argc, const char **argv, const Command& command)
     setClassifyDefaults(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
 
+    if (par.seqMode == 2) {
+        if (!FileUtil::directoryExists(par.filenames[3].c_str())) {
+            FileUtil::makeDir(par.filenames[3].c_str());
+        }
+    } else {
+        if (!FileUtil::directoryExists(par.filenames[2].c_str())) {
+            FileUtil::makeDir(par.filenames[2].c_str());
+        }
+    }
 
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
