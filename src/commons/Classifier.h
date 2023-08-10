@@ -24,6 +24,7 @@
 #include <cmath>
 #include "Match.h"
 #include <unordered_set>
+
 #define BufferSize 16'777'216 //16 * 1024 * 1024 // 16 M
 using namespace std;
 
@@ -131,23 +132,21 @@ protected:
             {3, 2, 3, 3, 4, 4, 1, 0}};
 
     // Index reads in query file
-    static void splitFASTQ(vector<SequenceBlock> & seqSegments, const string & queryPath);
-    static void splitFASTA(vector<SequenceBlock> & seqSegments, const string & queryPath);
+    static void splitQueryFile(vector<SequenceBlock> & seqSegments, const string & queryPath);
 
     // Extract query k-mer
-    void fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
-                                     MmapedData<char> &seqFile,
-                                     const vector<SequenceBlock> &seqs,
+    void fillQueryKmerBufferParallel(KSeqWrapper* kseq1,
+                                     QueryKmerBuffer &kmerBuffer,
                                      vector<Query> & queryList,
                                      const pair<size_t, size_t> & currentSplit,
                                      const LocalParameters &par);
 
-    void fillQueryKmerBufferParallel(QueryKmerBuffer &kmerBuffer,
-                                     const vector<SequenceBlock> &seqs,
-                                     const vector<SequenceBlock> &seqs2,
-                                     vector<Query> & queryList,
-                                     const pair<size_t, size_t> & currentSplit,
-                                     const LocalParameters &par);
+    void fillQueryKmerBufferParallel_paired(KSeqWrapper* kseq1,
+                                            KSeqWrapper* kseq2,
+                                            QueryKmerBuffer &kmerBuffer,
+                                            vector<Query> &queryList,
+                                            const pair<size_t, size_t> &currentSplit,
+                                            const LocalParameters &par);
 
     static int getMaxCoveredLength(int queryLength);
 

@@ -96,7 +96,7 @@ public:
     int fillBufferWithKmerFromBlock(const PredictedBlock &block, const char *seq, TargetKmerBuffer &kmerBuffer,
                                      size_t &posToWrite, int seqID, int taxIdAtRank);
 
-    static void maskLowComplexityRegions(char * seq, char * maskedSeq, ProbabilityMatrix & probMat,
+    static void maskLowComplexityRegions(const char * seq, char * maskedSeq, ProbabilityMatrix & probMat,
                                          float maskProb, const BaseMatrix * subMat);
 
     void printKmerInDNAsequence(uint64_t kmer);
