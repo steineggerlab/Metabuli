@@ -24,7 +24,7 @@
 #include <cmath>
 #include "Match.h"
 #include <unordered_set>
-#include "gzstream.h"
+
 #define BufferSize 16'777'216 //16 * 1024 * 1024 // 16 M
 using namespace std;
 
@@ -133,8 +133,6 @@ protected:
 
     // Index reads in query file
     static void splitQueryFile(vector<SequenceBlock> & seqSegments, const string & queryPath);
-    static void splitGzippedFASTA(vector<SequenceBlock> & seqSegments, const string & queryPath);
-    static void splitFASTQ(vector<SequenceBlock> & seqSegments, const string & queryPath);
 
     // Extract query k-mer
     void fillQueryKmerBufferParallel(KSeqWrapper* kseq1,
