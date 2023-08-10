@@ -323,8 +323,6 @@ void Classifier::startClassify(const LocalParameters &par) {
 
     // Memory deallocation
     free(matchBuffer.buffer);
-
-//    munmap(queryFile.data, queryFile.fileSize + 1);
 }
 
 void Classifier::fillQueryKmerBufferParallel(KSeqWrapper* kseq1,
