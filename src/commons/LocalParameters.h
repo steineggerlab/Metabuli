@@ -40,7 +40,6 @@ public:
 
     // Classify
     PARAMETER(SEQ_MODE)
-    PARAMETER(MEMORY_MODE)
     PARAMETER(REDUCED_AA)
     PARAMETER(MIN_SCORE)
     PARAMETER(MIN_COVERAGE)
@@ -81,7 +80,6 @@ public:
 
     // Classify
     int seqMode;
-    int memoryMode;
     int reducedAA;
     float minScore;
     std::string spaceMask;

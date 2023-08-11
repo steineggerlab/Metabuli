@@ -6,7 +6,6 @@
 #include "FileUtil.h"
 
 void setClassifyDefaults(LocalParameters & par){
-    par.virusTaxId = 10239;// Taxonomy ID of virus taxon in NCBI
     par.seqMode = 2;
     par.memoryMode = 1;
     par.reducedAA = 0;
