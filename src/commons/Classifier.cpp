@@ -314,6 +314,7 @@ void Classifier::startClassify(const LocalParameters &par) {
                                 (int) (queryReadSplit[splitIdx].second - queryReadSplit[splitIdx].first),
                                 readClassificationFile);
     }
+
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
     cout << "The number of matches: " << totalMatchCnt << endl;
     readClassificationFile.close();
@@ -323,6 +324,9 @@ void Classifier::startClassify(const LocalParameters &par) {
 
     // Memory deallocation
     free(matchBuffer.buffer);
+    delete kseq1;
+    delete kseq2;
+
 }
 
 void Classifier::fillQueryKmerBufferParallel(KSeqWrapper* kseq1,
@@ -2124,6 +2128,7 @@ void Classifier::splitQueryFile(vector<SequenceBlock> & sequences, const std::st
                                e.sequenceOffset + e.sequence.l - e.headerOffset + 2,
                                e.sequence.l);
     }
+    delete kseq;
 }
 
 bool Classifier::isConsecutive(const Match * match1, const Match * match2) {
