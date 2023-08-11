@@ -358,7 +358,7 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
         getDiffIdx(lastKmer, kmerBuffer[uniqKmerIdx[i]].ADkmer, diffIdxFile,
                    diffIdxBuffer, localBufIdx, totalDiffIdx);
         lastKmer = kmerBuffer[uniqKmerIdx[i]].ADkmer;
-        if(lastKmer == splitList[splitIdx].ADkmer){
+        if((splitIdx < splitCnt) && (lastKmer == splitList[splitIdx].ADkmer)){
             splitList[splitIdx].diffIdxOffset = totalDiffIdx;
             splitList[splitIdx].infoIdxOffset = write;
             splitIdx ++;
