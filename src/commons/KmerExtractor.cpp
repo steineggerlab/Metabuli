@@ -65,7 +65,7 @@ void KmerExtractor::fillQueryKmerBufferParallel(KSeqWrapper *kseq1,
             int kmerCnt = LocalUtil::getQueryKmerNumber<int>((int) e1.sequence.l, spaceNum);
 
             // Query Info
-            queryList[processedQueryNum].queryLength = getMaxCoveredLength((int) e1.sequence.l);
+            queryList[processedQueryNum].queryLength = LocalUtil::getMaxCoveredLength((int) e1.sequence.l);
             queryList[processedQueryNum].name = string(e1.name.s);
             queryList[processedQueryNum].kmerCnt = (int) (kmerCnt);
 
