@@ -29,7 +29,7 @@ private:
                                             const QuerySplit & currentSplit,
                                             const LocalParameters &par);
 
-    static int getMaxCoveredLength(int queryLength) ;
+
 
 public:
     explicit KmerExtractor(const LocalParameters & par);

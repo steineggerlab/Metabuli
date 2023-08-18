@@ -17,6 +17,7 @@ public:
 
     static void splitQueryFile(std::vector<SequenceBlock> & seqSegments, const std::string & queryPath);
 
+    static int getMaxCoveredLength(int queryLength) ;
 };
 
 

@@ -142,8 +142,8 @@ void KmerExtractor::fillQueryKmerBufferParallel_paired(KSeqWrapper *kseq1,
             int kmerCnt2 = LocalUtil::getQueryKmerNumber<int>((int) e2.sequence.l, spaceNum);
 
             // Query Info
-            queryList[processedQueryNum].queryLength = getMaxCoveredLength((int) e1.sequence.l);
-            queryList[processedQueryNum].queryLength2 = getMaxCoveredLength((int) e2.sequence.l);
+            queryList[processedQueryNum].queryLength = LocalUtil::getMaxCoveredLength((int) e1.sequence.l);
+            queryList[processedQueryNum].queryLength2 = LocalUtil::getMaxCoveredLength((int) e2.sequence.l);
             queryList[processedQueryNum].name = string(e1.name.s);
             queryList[processedQueryNum].kmerCnt = (int) (kmerCnt + kmerCnt2);
 
@@ -205,12 +205,3 @@ void KmerExtractor::fillQueryKmerBufferParallel_paired(KSeqWrapper *kseq1,
     }
 }
 
-int KmerExtractor::getMaxCoveredLength(int queryLength) {
-    if (queryLength % 3 == 2) {
-        return queryLength - 2; // 2
-    } else if (queryLength % 3 == 1) {
-        return queryLength - 4; // 4
-    } else {
-        return queryLength - 3; // 3
-    }
-}
