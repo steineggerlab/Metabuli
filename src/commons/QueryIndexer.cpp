@@ -29,56 +29,77 @@ void QueryIndexer::setAvailableRam() {
 
 void QueryIndexer::indexQueryFile() {
     // Read 1
-    KSeqWrapper* kseq;
-    kseq = KSeqFactory(queryPath_1.c_str());
-    size_t kmerCnt = 0;
-    size_t seqCnt = 0;
-    size_t start = 0;
-    while (kseq->ReadEntry()) {
-        readNum_1++;
-        const KSeqWrapper::KSeqEntry &e = kseq->entry;
-        totalReadLength += e.sequence.l;
-        size_t currentKmerCnt = LocalUtil::getQueryKmerNumber<size_t>(e.sequence.l, spaceNum);
-        kmerCnt += currentKmerCnt;
-        seqCnt++;
-        if (bytesPerKmer * kmerCnt + ((size_t) 200 * seqCnt) > availableRam) {
-            querySplits.emplace_back(start, readNum_1, kmerCnt - currentKmerCnt);
-            kmerCnt = currentKmerCnt;
-            start = readNum_1;
-            seqCnt = 1;
-        }
-    }
-    querySplits.emplace_back(start, readNum_1, kmerCnt);
-    delete kseq;
-
-    // Read 2
-    if (seqMode == 2) {
-        kseq = KSeqFactory(queryPath_2.c_str());
-        kmerCnt = 0;
-        seqCnt = 0;
-        start = 0;
+    if (seqMode == 1 || seqMode == 3) {
+        KSeqWrapper* kseq;
+        kseq = KSeqFactory(queryPath_1.c_str());
+        size_t kmerCnt = 0;
+        size_t seqCnt = 0;
+        size_t start = 0;
         while (kseq->ReadEntry()) {
-            readNum_2++;
+            readNum_1++;
             const KSeqWrapper::KSeqEntry &e = kseq->entry;
             totalReadLength += e.sequence.l;
             size_t currentKmerCnt = LocalUtil::getQueryKmerNumber<size_t>(e.sequence.l, spaceNum);
             kmerCnt += currentKmerCnt;
             seqCnt++;
             if (bytesPerKmer * kmerCnt + ((size_t) 200 * seqCnt) > availableRam) {
-                querySplits.emplace_back(start, readNum_2, kmerCnt - currentKmerCnt);
+                querySplits.emplace_back(start, readNum_1, kmerCnt - currentKmerCnt);
                 kmerCnt = currentKmerCnt;
-                start = readNum_2;
+                start = readNum_1;
                 seqCnt = 1;
             }
         }
-        querySplits.emplace_back(start, readNum_2, kmerCnt);
+        querySplits.emplace_back(start, readNum_1, kmerCnt);
         delete kseq;
+    } else {
+        KSeqWrapper* kseq_1 = KSeqFactory(queryPath_1.c_str());
+        KSeqWrapper* kseq_2 = KSeqFactory(queryPath_2.c_str());
+        size_t kmerCnt = 0;
+                size_t seqCnt_1 = 0;
+        size_t seqCnt_2 = 0;
+        size_t start = 0;
+        size_t currentKmerCnt;
+        bool end = false;
+        while(true) {
+            if (kseq_1->ReadEntry()) {
+                readNum_1++;
+                seqCnt_1++;
+                totalReadLength += kseq_1->entry.sequence.l;
+                currentKmerCnt = LocalUtil::getQueryKmerNumber<size_t>(kseq_1->entry.sequence.l, spaceNum);
+                kmerCnt += currentKmerCnt;
+            } else {
+                end = true;
+            }
 
-        // Check if the number of reads in the two files are equal
-        if (readNum_1 != readNum_2) {
-            Debug(Debug::ERROR) << "The number of reads in the two files are not equal." << "\n";
-            EXIT(EXIT_FAILURE);
+            if (kseq_2->ReadEntry()) {
+                readNum_2++;
+                seqCnt_2++;
+                totalReadLength += kseq_2->entry.sequence.l;
+                currentKmerCnt += LocalUtil::getQueryKmerNumber<size_t>(kseq_2->entry.sequence.l, spaceNum);
+                kmerCnt += currentKmerCnt;
+            } else {
+                end = true;
+            }
+
+            if (seqCnt_1 != seqCnt_2) {
+                Debug(Debug::ERROR) << "The number of reads in the two files are not equal." << "\n";
+                EXIT(EXIT_FAILURE);
+            }
+
+            if (bytesPerKmer * kmerCnt + ((size_t) 200 * seqCnt_1) > availableRam) {
+                querySplits.emplace_back(start, seqCnt_1, kmerCnt - currentKmerCnt);
+                kmerCnt = currentKmerCnt;
+                start = seqCnt_1;
+                seqCnt_1 = 1;
+            }
+
+            if (end) {
+                querySplits.emplace_back(start, seqCnt_1, kmerCnt);
+                break;
+            }
         }
+        delete kseq_1;
+        delete kseq_2;
     }
 }
 

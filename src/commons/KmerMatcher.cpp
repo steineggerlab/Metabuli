@@ -22,7 +22,6 @@ KmerMatcher::KmerMatcher(const LocalParameters & par,
         return;
     }
     char taxID[100];
-
     while(feof(taxIdFile) == 0) {
         fscanf(taxIdFile,"%s",taxID);
         TaxID taxId = atol(taxID);
@@ -88,8 +87,7 @@ int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer, Buffer<Match> * m
     // Each split has start and end points of query list + proper offset point of target k-mer list
     std::vector<QueryKmerSplit> querySplits;
     uint64_t queryAA;
-    std::vector<int> targetSplitIdxs;
-
+ 
     if (threads == 1) { //Single thread
         querySplits.emplace_back(0, queryKmerNum - 1, queryKmerNum, diffIdxSplits.data[0]);
     } else if (threads == 2) { //Two threads
@@ -121,7 +119,6 @@ int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer, Buffer<Match> * m
                         querySplits.emplace_back(splitWidth * i, queryKmerNum - 1, queryKmerNum - splitWidth * i,
                                                  diffIdxSplits.data[j]);
                     }
-                    targetSplitIdxs.emplace_back(j);
                     needLastTargetBlock = false;
                     break;
                 }
@@ -130,11 +127,9 @@ int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer, Buffer<Match> * m
                 if (i != threads - 1) { // If it is not the last split
                     querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth,
                                              diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
-                    targetSplitIdxs.emplace_back(numOfDiffIdxSplits_use - 2);
                 } else {
                     querySplits.emplace_back(splitWidth * i, queryKmerNum - 1, queryKmerNum - splitWidth * i,
                                              diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
-                    targetSplitIdxs.emplace_back(numOfDiffIdxSplits_use - 2);
                 }
             }
         }
@@ -149,7 +144,7 @@ int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer, Buffer<Match> * m
     while (completedSplitCnt < threads) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(completedSplitCnt, splitCheckList, hasOverflow, \
-querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffIdx, targetInfoFileName, targetSplitIdxs)
+querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffIdx, targetInfoFileName)
         {
             // FILE
             FILE * diffIdxFp = fopen(targetDiffIdxFileName.c_str(), "rb");
@@ -157,7 +152,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
 
             // Target K-mer buffer
             uint16_t * diffIdxBuffer = (uint16_t *) malloc(sizeof(uint16_t) * (BufferSize + 1)); // size = 32 Mb
-            TargetKmerInfo * kmerInfoBuffer = (TargetKmerInfo *) malloc(sizeof(TargetKmerInfo) * (BufferSize+1)); // 64 Mb
+            TargetKmerInfo * kmerInfoBuffer = (TargetKmerInfo *) malloc(sizeof(TargetKmerInfo) * (BufferSize + 1)); // 64 Mb
             size_t kmerInfoBufferIdx = 0;
             size_t diffIdxBufferIdx = 0;
 
@@ -176,9 +171,6 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
             int localBufferSize = 2'000'000; // 32 Mb
             auto *matches = new Match[localBufferSize]; // 16 * 2'000'000 = 32 Mb
             int matchCnt = 0;
-
-            // For debug
-//            SeqIterator seqIterator(par);
 
             //vectors for selected target k-mers
             std::vector<uint8_t> selectedHammingSum;
@@ -236,6 +228,11 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                         }
                         for (int k = 0; k < currMatchNum; k++) {
                             idx = selectedMatches[k];
+                            // Check if candidateKmerInfos[idx].sequenceID is valid
+                            if (taxId2genusId.find(candidateKmerInfos[idx].sequenceID) == taxId2genusId.end() ||
+                                taxId2speciesId.find(candidateKmerInfos[idx].sequenceID) == taxId2speciesId.end()) {
+                                cout << "Error: " << candidateKmerInfos[idx].sequenceID << " is not found in the taxonomy database." << endl;
+                            }
                             matches[matchCnt] = {queryKmerList[j].info,
                                                  candidateKmerInfos[idx].sequenceID,
                                                  taxId2genusId[candidateKmerInfos[idx].sequenceID],
@@ -273,6 +270,11 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                         }
                         for (int k = 0; k < currMatchNum; k++) {
                             idx = selectedMatches[k];
+                            // Check if candidateKmerInfos[idx].sequenceID is valid
+                            if (taxId2genusId.find(candidateKmerInfos[idx].sequenceID) == taxId2genusId.end() ||
+                                taxId2speciesId.find(candidateKmerInfos[idx].sequenceID) == taxId2speciesId.end()) {
+                                cout << "Error: " << candidateKmerInfos[idx].sequenceID << " is not found in the taxonomy database." << endl;
+                            }
                             matches[matchCnt] = {queryKmerList[j].info,
                                                  candidateKmerInfos[idx].sequenceID,
                                                  taxId2genusId[candidateKmerInfos[idx].sequenceID],
@@ -365,6 +367,11 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
 
                     for (int k = 0; k < currMatchNum; k++) {
                         idx = selectedMatches[k];
+                        // Check if candidateKmerInfos[idx].sequenceID is valid
+                        if (taxId2genusId.find(candidateKmerInfos[idx].sequenceID) == taxId2genusId.end() ||
+                            taxId2speciesId.find(candidateKmerInfos[idx].sequenceID) == taxId2speciesId.end()) {
+                            cout << "Error: " << candidateKmerInfos[idx].sequenceID << " is not found in the taxonomy database." << endl;
+                        }
                         matches[matchCnt] = {queryKmerList[j].info,
                                              candidateKmerInfos[idx].sequenceID,
                                              taxId2genusId[candidateKmerInfos[idx].sequenceID],
@@ -404,7 +411,6 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
         }
     } // end of while(completeSplitCnt < threadNum)
     std::cout << "Time spent for the comparison: " << double(time(nullptr) - beforeSearch) << std::endl;
-    munmap(diffIdxSplits.data, diffIdxSplits.fileSize + 1);
     free(splitCheckList);
     queryKmerNum = 0;
 
@@ -416,8 +422,9 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
     time_t beforeSortMatches = time(nullptr);
     totalMatchCnt += matchBuffer->startIndexOfReserve;
     std::cout << "Sorting matches ..." << std::endl;
-    SORT_PARALLEL(matchBuffer->buffer, matchBuffer->buffer + matchBuffer->startIndexOfReserve,
-                  sortMatch());
+    SORT_PARALLEL(matchBuffer->buffer,
+                  matchBuffer->buffer + matchBuffer->startIndexOfReserve,
+                  compareMatches);
     std::cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << std::endl;
 
     return 1;
@@ -463,4 +470,23 @@ void KmerMatcher::compareDna(uint64_t query,
         }
     }
     delete[] hammingSums;
+}
+
+bool KmerMatcher::compareMatches(const Match& a, const Match& b) {
+    if (a.qInfo.sequenceID != b.qInfo.sequenceID)
+        return a.qInfo.sequenceID < b.qInfo.sequenceID;
+
+    if (a.genusId != b.genusId)
+        return a.genusId < b.genusId;
+
+    if (a.speciesId != b.speciesId)
+        return a.speciesId < b.speciesId;
+
+    if (a.qInfo.frame != b.qInfo.frame)
+        return a.qInfo.frame < b.qInfo.frame;
+
+    if (a.qInfo.pos != b.qInfo.pos)
+        return a.qInfo.pos < b.qInfo.pos;
+
+    return a.hamming < b.hamming;
 }

@@ -4,6 +4,8 @@ KmerExtractor::KmerExtractor(const LocalParameters &par) {
     spaceNum = par.spaceMask.length() - 8;
     maskMode = par.maskMode;
     maskProb = par.maskProb;
+    subMat = new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0);
+    probMatrix = new ProbabilityMatrix(*(subMat));
 }
 
 KmerExtractor::~KmerExtractor() {

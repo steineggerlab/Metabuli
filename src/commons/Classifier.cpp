@@ -43,6 +43,11 @@ void Classifier::startClassify(const LocalParameters &par) {
     cout << "Total number of sequences: " << numOfSeq << endl;
     cout << "Total read length: " << totalReadLength <<  "nt" << endl;
 
+    // Print queryReadSplit
+   for (size_t i = 0; i < queryReadSplit.size(); i++) {
+       cout << queryReadSplit[i].start << " " << queryReadSplit[i].end << " " << queryReadSplit[i].kmerCnt << endl;
+   }
+
     QueryKmerBuffer kmerBuffer;
     Buffer<Match> matchBuffer;
     vector<Query> queryList;

@@ -48,7 +48,6 @@ protected:
     struct QueryKmerSplit {
         QueryKmerSplit(size_t start, size_t end, size_t length, const DiffIdxSplit& diffIdxSplit)
                 : start(start), end(end), length(length), diffIdxSplit(diffIdxSplit) {}
-
         size_t start; // start idx in query k-mer list
         size_t end; // end idx in query k-mer list
         size_t length;
@@ -98,6 +97,8 @@ protected:
 
     virtual uint16_t getHammings_reverse(uint64_t kmer1, uint64_t kmer2);
 
+    static bool compareMatches(const Match& a, const Match& b);
+
 public:
     KmerMatcher(const LocalParameters & par,
                 NcbiTaxonomy * taxonomy);
@@ -133,7 +134,7 @@ inline
 TargetKmerInfo KmerMatcher::getKmerInfo(size_t bufferSize,
                                         FILE * kmerInfoFp,
                                         TargetKmerInfo * infoBuffer,
-                                       size_t & infoBufferIdx){
+                                        size_t & infoBufferIdx){
     if (unlikely(infoBufferIdx >= bufferSize)) {
         loadBuffer(kmerInfoFp, infoBuffer, infoBufferIdx, bufferSize, (int) (infoBufferIdx - bufferSize));
     }
@@ -173,25 +174,25 @@ inline uint16_t KmerMatcher::getHammings_reverse(uint64_t kmer1, uint64_t kmer2)
     return hammings;
 }
 
-struct sortMatch {
-    bool operator() (const Match& a, const Match& b) const {
-        if (a.qInfo.sequenceID != b.qInfo.sequenceID)
-            return a.qInfo.sequenceID < b.qInfo.sequenceID;
+// struct sortMatch {
+//     bool operator() (const Match& a, const Match& b) const {
+//         if (a.qInfo.sequenceID != b.qInfo.sequenceID)
+//             return a.qInfo.sequenceID < b.qInfo.sequenceID;
 
-        if (a.genusId != b.genusId)
-            return a.genusId < b.genusId;
+//         if (a.genusId != b.genusId)
+//             return a.genusId < b.genusId;
 
-        if (a.speciesId != b.speciesId)
-            return a.speciesId < b.speciesId;
+//         if (a.speciesId != b.speciesId)
+//             return a.speciesId < b.speciesId;
 
-        if (a.qInfo.frame != b.qInfo.frame)
-            return a.qInfo.frame < b.qInfo.frame;
+//         if (a.qInfo.frame != b.qInfo.frame)
+//             return a.qInfo.frame < b.qInfo.frame;
 
-        if (a.qInfo.pos != b.qInfo.pos)
-            return a.qInfo.pos < b.qInfo.pos;
+//         if (a.qInfo.pos != b.qInfo.pos)
+//             return a.qInfo.pos < b.qInfo.pos;
 
-        return a.hamming < b.hamming;
-    }
-};
+//         return a.hamming < b.hamming;
+//     }
+// };
 
 #endif //METABULI_KMERMATCHER_H

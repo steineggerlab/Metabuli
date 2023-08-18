@@ -7,7 +7,7 @@ Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxon
     for(size_t i = 0, j = 0; i < par.spaceMask.length(); i++){
         mask[i] = par.spaceMask[i] - 48;
         spaceNum += (mask[i] == 0);
-        if(par.spaceMask[i]==1){
+        if(mask[i] == 1){
             unmaskedPos[j] = (int) i;
             j++;
         }

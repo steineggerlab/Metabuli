@@ -1,7 +1,7 @@
 #ifndef ADCLASSIFIER2_LOCALPARAMETERS_H
 #define ADCLASSIFIER2_LOCALPARAMETERS_H
 
-#include <Parameters.h>
+#include "Parameters.h"
 
 const int CITATION_SPACEPHARER = CITATION_END;
 
