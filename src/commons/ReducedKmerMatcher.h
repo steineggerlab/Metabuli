@@ -1,13 +1,11 @@
-//
-// Created by 김재범 on 2022/06/28.
-//
+#ifndef METABULI_REDUCEDKMERMATCHER_H
+#define METABULI_REDUCEDKMERMATCHER_H
 
-#ifndef METABULI_REDUCEDCLASSIFIER_H
-#define METABULI_REDUCEDCLASSIFIER_H
+#include "KmerMatcher.h"
+#include <unordered_map>
+#include "NcbiTaxonomy.h"
 
-#include "Classifier.h"
-
-class ReducedClassifier : public Classifier {
+class ReducedKmerMatcher : public KmerMatcher {
 protected:
     uint8_t hammingLookup[11][11] = {
             {0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3},
@@ -21,7 +19,6 @@ protected:
             {2, 2, 2, 1, 2, 4, 4, 1, 0, 4, 4},
             {3, 2, 3, 3, 4, 4, 4, 4, 4, 0, 4},
             {3, 3, 2, 3, 4, 4, 4, 4, 4, 4, 0}};
-
 
 public:
     uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2) override {
@@ -58,8 +55,14 @@ public:
         return hammings;
     }
 
-    ReducedClassifier(LocalParameters & par);
+    explicit ReducedKmerMatcher(LocalParameters & par,
+                                NcbiTaxonomy * taxonomy)
+                                : KmerMatcher(par,taxonomy) {
+        MARKER = 0Xffffffff;
+    }
+
+    ~ReducedKmerMatcher() override = default;
 };
 
 
-#endif //METABULI_REDUCEDCLASSIFIER_H
+#endif //METABULI_REDUCEDKMERMATCHER_H

@@ -18,8 +18,21 @@ set(commons_source_files
         commons/LocalParameters.h
 		commons/ProdigalWrapper.h
 		commons/ProdigalWrapper.cpp
-		commons/ReducedClassifier.cpp
-		commons/ReducedClassifier.h
 		commons/Match.h
 		commons/common.cpp
+		commons/QueryFilter.h
+		commons/QueryFilter.cpp
+		commons/LocalUtil.h
+		commons/LocalUtil.cpp
+		commons/QueryIndexer.h
+		commons/QueryIndexer.cpp
+		commons/KmerMatcher.h
+		commons/KmerMatcher.cpp
+		commons/ReducedKmerMatcher.h
+		commons/KmerExtractor.h
+		commons/KmerExtractor.cpp
+		commons/Taxonomer.h
+		commons/Taxonomer.cpp
+		commons/Reporter.h
+		commons/Reporter.cpp
         PARENT_SCOPE)

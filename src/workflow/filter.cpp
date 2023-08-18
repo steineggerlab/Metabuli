@@ -2,11 +2,12 @@
 #include "Parameters.h"
 #include "LocalParameters.h"
 #include "FileUtil.h"
+#include "QueryFilter.h"
 
-void setClassifyDefaults(LocalParameters & par){
+void setFilterDefaults(LocalParameters & par){
     par.seqMode = 2;
     par.reducedAA = 0;
-    par.minScore = 0;
+    par.minScore = 0.7;
     par.minCoverage = 0;
     par.minSpScore = 0;
     par.spaceMask = "11111111";
@@ -25,10 +26,10 @@ void setClassifyDefaults(LocalParameters & par){
     par.matchPerKmer = 4;
 }
 
-int classify(int argc, const char **argv, const Command& command)
+int filter(int argc, const char **argv, const Command& command)
 {
     LocalParameters & par = LocalParameters::getLocalInstance();
-    setClassifyDefaults(par);
+    setFilterDefaults(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
 
     if (par.seqMode == 2) {
@@ -46,8 +47,11 @@ int classify(int argc, const char **argv, const Command& command)
 #endif
 
     cout << "Number of threads: " << par.threads << endl;
-    Classifier * classifier = new Classifier(par);
-    classifier->startClassify(par);
+
+    QueryFilter * queryFilter = new QueryFilter(par);
+
+    queryFilter->startClassify(par);
+
     delete classifier;
     return 0;
 }

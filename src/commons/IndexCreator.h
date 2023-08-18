@@ -21,18 +21,14 @@
 #include "NucleotideMatrix.h"
 #include "SubstitutionMatrix.h"
 #include "tantan.h"
-//#include "DBReader.h"
-//#include "DBWriter.h"
-//#include "Debug.h"
-//#include "Util.h"
-//#include "FileUtil.h"
+
 
 #ifdef OPENMP
 #include <omp.h>
 #endif
 
 
-#define kmerLength 8
+
 
 struct TaxId2Fasta{
     TaxID species;
