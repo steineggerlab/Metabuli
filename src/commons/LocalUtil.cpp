@@ -18,10 +18,6 @@ std::string LocalUtil::getQueryBaseName(const std::string & queryPath) {
     return baseName;
 }
 
-template <typename T>
-T LocalUtil::getQueryKmerNumber(T queryLength, int spaceNum) {
-    return (getMaxCoveredLength(queryLength) / 3 - kmerLength - spaceNum + 1) * 6;
-}
 
 
 void LocalUtil::splitQueryFile(std::vector<SequenceBlock> & sequences, const std::string &queryPath) {

@@ -20,4 +20,10 @@ public:
 };
 
 
+template <typename T>
+T LocalUtil::getQueryKmerNumber(T queryLength, int spaceNum) {
+    return (getMaxCoveredLength(queryLength) / 3 - kmerLength - spaceNum + 1) * 6;
+}
+
+
 #endif //METABULI_LOCALUTIL_H
