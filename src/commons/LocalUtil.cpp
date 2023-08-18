@@ -1,7 +1,7 @@
 #include "LocalUtil.h"
 
 
-std::string LocalUtil::getQueryBaseName(const std::string queryPath) {
+std::string LocalUtil::getQueryBaseName(const std::string & queryPath) {
     std::vector<std::string> splits = Util::split(queryPath, ".");
     std::string baseName;
     int extentionNum = 1;

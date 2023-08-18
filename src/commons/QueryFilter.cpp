@@ -1,11 +1,6 @@
 #include "QueryFilter.h"
 
 QueryFilter::QueryFilter(LocalParameters & par) {
-    if (par.reducedAA == 1) {
-        classifier = new ReducedClassifier(par);
-    } else {
-        classifier = new Classifier(par);
-    }
     queryIndexer = new QueryIndexer(par);
 
     setInputAndOutputFiles(par);
@@ -13,7 +8,6 @@ QueryFilter::QueryFilter(LocalParameters & par) {
 
 QueryFilter::~QueryFilter() {
     delete queryIndexer;
-    delete classifier;
 }
 
 void QueryFilter::setInputAndOutputFiles(const LocalParameters & par) {

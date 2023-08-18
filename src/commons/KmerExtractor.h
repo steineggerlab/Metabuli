@@ -2,7 +2,7 @@
 #define METABULI_KMEREXTRACTER_H
 #include "SeqIterator.h"
 #include "QueryIndexer.h"
-#include "KseqWrapper.h"
+#include "KSeqWrapper.h"
 
 class KmerExtractor {
 private:

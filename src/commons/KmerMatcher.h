@@ -9,6 +9,7 @@
 #include "Mmap.h"
 #include "BitManipulateMacros.h"
 #include "NcbiTaxonomy.h"
+#include "unordered_map"
 
 #define BufferSize 16'777'216 //16 * 1024 * 1024 // 16 M
 
@@ -19,7 +20,7 @@
 // Output
 // 1. Matched K-mers
 
-
+using namespace std;
 
 class KmerMatcher {
 protected:

@@ -10,12 +10,12 @@ class LocalUtil : public Util {
 public:
     LocalUtil() = default;
 
-    static std::string getQueryBaseName(const std::string queryPath);
+    static std::string getQueryBaseName(const std::string & queryPath);
 
     template<typename T>
     static T getQueryKmerNumber(T queryLength, int spaceNum);
 
-    static void splitQueryFile(vector<SequenceBlock> & seqSegments, const string & queryPath);
+    static void splitQueryFile(std::vector<SequenceBlock> & seqSegments, const string & queryPath);
 
 };
 
