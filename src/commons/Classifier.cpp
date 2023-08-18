@@ -1,6 +1,4 @@
 #include "Classifier.h"
-#include "LocalParameters.h"
-#include "taxonomyreport.cpp"
 
 Classifier::Classifier(LocalParameters & par) {
     // Load parameters

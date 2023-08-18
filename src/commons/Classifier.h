@@ -49,9 +49,6 @@ protected:
     Reporter * reporter;
     NcbiTaxonomy * taxonomy;
 
-
-
-
 public:
     void startClassify(const LocalParameters &par);
 
@@ -59,32 +56,7 @@ public:
 
     virtual ~Classifier();
 
-
 };
-
-
-
-
-//inline uint64_t
-//Classifier::getNextTargetKmer(uint64_t lookingTarget, const uint16_t *targetDiffIdxList, size_t &diffIdxPos) {
-//    uint16_t fragment;
-//    uint16_t check = (0x1u << 15u);
-//    uint64_t diffIn64bit = 0;
-//    fragment = targetDiffIdxList[diffIdxPos];
-//    diffIdxPos++;
-//    while (!(fragment & check)) { // 27 %
-//        diffIn64bit |= fragment;
-//        diffIn64bit <<= 15u;
-//        fragment = targetDiffIdxList[diffIdxPos];
-//        diffIdxPos++;
-//    }
-//    fragment &= ~check; // not; 8.47 %
-//    diffIn64bit |= fragment; // or : 23.6%
-//
-//    return diffIn64bit + lookingTarget;
-//}
-
-
 
 
 #endif //ADKMER4_SEARCHER_H
