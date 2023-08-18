@@ -149,7 +149,7 @@ int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer, Buffer<Match> * m
     while (completedSplitCnt < threads) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(completedSplitCnt, splitCheckList, hasOverflow, \
-querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOfDiffIdx, targetInfoFileName, targetSplitIdxs)
+querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffIdx, targetInfoFileName, targetSplitIdxs)
         {
             // FILE
             FILE * diffIdxFp = fopen(targetDiffIdxFileName.c_str(), "rb");
@@ -409,7 +409,7 @@ querySplits, queryKmerList, matchBuffer, cout, par, targetDiffIdxFileName, numOf
     queryKmerNum = 0;
 
 #ifdef OPENMP
-    omp_set_num_threads(par.threads);
+    omp_set_num_threads(threads);
 #endif
 
     // Sort matches
