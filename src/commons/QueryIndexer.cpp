@@ -17,6 +17,7 @@ QueryIndexer::QueryIndexer(const LocalParameters & par) {
     readNum_1 = 0;
     readNum_2 = 0;
     spaceNum = par.spaceMask.length() - kmerLength;
+    totalReadLength = 0;
 
     setAvailableRam();
 }
