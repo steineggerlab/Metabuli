@@ -48,10 +48,6 @@ int filter(int argc, const char **argv, const Command& command)
 
     cout << "Number of threads: " << par.threads << endl;
 
-    QueryFilter * queryFilter = new QueryFilter(par);
 
-    queryFilter->startClassify(par);
-
-    delete classifier;
     return 0;
 }
