@@ -55,7 +55,7 @@ void QueryIndexer::indexQueryFile() {
         KSeqWrapper* kseq_1 = KSeqFactory(queryPath_1.c_str());
         KSeqWrapper* kseq_2 = KSeqFactory(queryPath_2.c_str());
         size_t kmerCnt = 0;
-                size_t seqCnt_1 = 0;
+        size_t seqCnt_1 = 0;
         size_t seqCnt_2 = 0;
         size_t start = 0;
         size_t currentKmerCnt;
@@ -81,20 +81,20 @@ void QueryIndexer::indexQueryFile() {
                 end = true;
             }
 
-            if (seqCnt_1 != seqCnt_2) {
+            if (readNum_1 != readNum_2) {
                 Debug(Debug::ERROR) << "The number of reads in the two files are not equal." << "\n";
                 EXIT(EXIT_FAILURE);
             }
 
             if (bytesPerKmer * kmerCnt + ((size_t) 200 * seqCnt_1) > availableRam) {
-                querySplits.emplace_back(start, seqCnt_1, kmerCnt - currentKmerCnt);
+                querySplits.emplace_back(start, readNum_1, kmerCnt - currentKmerCnt);
                 kmerCnt = currentKmerCnt;
-                start = seqCnt_1;
+                start = readNum_1;
                 seqCnt_1 = 1;
             }
 
             if (end) {
-                querySplits.emplace_back(start, seqCnt_1, kmerCnt);
+                querySplits.emplace_back(start, readNum_1, kmerCnt);
                 break;
             }
         }

@@ -1,7 +1,4 @@
-#include "Classifier.h"
-#include "Parameters.h"
 #include "LocalParameters.h"
-#include "FileUtil.h"
 #include "QueryFilter.h"
 
 void setFilterDefaults(LocalParameters & par){
@@ -24,6 +21,7 @@ void setFilterDefaults(LocalParameters & par){
     par.maskMode = 0;
     par.maskProb = 0.9;
     par.matchPerKmer = 4;
+    par.printMode = 1;
 }
 
 int filter(int argc, const char **argv, const Command& command)
@@ -32,22 +30,15 @@ int filter(int argc, const char **argv, const Command& command)
     setFilterDefaults(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
 
-    if (par.seqMode == 2) {
-        if (!FileUtil::directoryExists(par.filenames[3].c_str())) {
-            FileUtil::makeDir(par.filenames[3].c_str());
-        }
-    } else {
-        if (!FileUtil::directoryExists(par.filenames[2].c_str())) {
-            FileUtil::makeDir(par.filenames[2].c_str());
-        }
-    }
-
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
 #endif
 
-    cout << "Number of threads: " << par.threads << endl;
-
-
+    QueryFilter * queryFilter = new QueryFilter(par);
+    
+    queryFilter->filterReads(par);
+    
+    delete queryFilter;
+    
     return 0;
 }

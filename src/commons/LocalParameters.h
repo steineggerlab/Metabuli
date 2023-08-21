@@ -21,6 +21,7 @@ public:
     }
 
     std::vector<MMseqsParameter*> classify;
+    std::vector<MMseqsParameter*> filter;
     std::vector<MMseqsParameter*> exclusiontest_hiv;
     std::vector<MMseqsParameter*> seqHeader2TaxId;
     std::vector<MMseqsParameter*> grade;
@@ -71,6 +72,9 @@ public:
     PARAMETER(COVERAGE_COL)
     PARAMETER(PRINT_COLUMNS)
 
+    // Filter
+    PARAMETER(PRINT_MODE)
+
     // Superkingdom taxonomy id
     int virusTaxId;
     int bacteriaTaxId;
@@ -112,6 +116,9 @@ public:
 
     // Add to library
     bool assembly;
+
+    // Filter
+    int printMode;
 
 private:
     LocalParameters();

@@ -23,16 +23,16 @@ private:
 public:
     Reporter(const LocalParameters &par, NcbiTaxonomy *taxonomy);
     // Write report
+    void writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt);
+    void writeReport(FILE *FP, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts,
+                     unsigned long totalReads, TaxID taxID = 0, int depth = 0);
 
     // Read by read classification results
     void openReadClassificationFile();
-    void writeReadClassification(const vector<Query> & queryList);
+    void writeReadClassification(const vector<Query> & queryList, bool classifiedOnly = false);
     void closeReadClassificationFile();
 
-    void writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt);
-
-    void writeReport(FILE *FP, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts,
-                     unsigned long totalReads, TaxID taxID = 0, int depth = 0);
+   
 
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts> &map, TaxID key);
 

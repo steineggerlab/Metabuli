@@ -223,6 +223,13 @@ LocalParameters::LocalParameters() :
                       typeid(std::string),
                       (void *) &printColumns,
                       "^.*$")
+        PRINT_MODE(PRINT_MODE_ID,
+                        "--print-mode",
+                       "[1] Only filtered reads [2] Both filtered and removed reads",
+                       "[1] Only filtered reads [2] Both filtered and removed reads",
+                       typeid(int),
+                       (void *) &printMode,
+                       "[1-2]")
   {
     //add_to_library
 
@@ -258,6 +265,28 @@ LocalParameters::LocalParameters() :
     classify.push_back(&PARAM_MASK_PROBABILTY);
     classify.push_back(&MATCH_PER_KMER);
 
+    // filter 
+    filter.push_back(&PARAM_THREADS);
+    filter.push_back(&SEQ_MODE);
+    filter.push_back(&VIRUS_TAX_ID);
+    filter.push_back(&REDUCED_AA);
+    filter.push_back(&MIN_SCORE);
+    filter.push_back(&MIN_COVERAGE);
+    filter.push_back(&SPACED);
+    filter.push_back(&HAMMING_MARGIN);
+    filter.push_back(&MIN_SP_SCORE);
+    filter.push_back(&PARAM_V);
+    filter.push_back(&RAM_USAGE);
+    filter.push_back(&MIN_COVERED_POS);
+    filter.push_back(&PRINT_LOG);
+    filter.push_back(&MAX_GAP);
+    filter.push_back(&TAXONOMY_PATH);
+    filter.push_back(&MIN_CONS_CNT);
+    filter.push_back(&MIN_CONS_CNT_EUK);
+    filter.push_back(&PARAM_MASK_RESIDUES);
+    filter.push_back(&PARAM_MASK_PROBABILTY);
+    filter.push_back(&MATCH_PER_KMER);
+    filter.push_back(&PRINT_MODE);
 
     //updateTargetDB
     exclusiontest_hiv.push_back(&TEST_RANK);

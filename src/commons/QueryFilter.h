@@ -4,14 +4,38 @@
 #include "LocalUtil.h"
 #include "QueryIndexer.h"
 #include "ReducedKmerMatcher.h"
+#include "KmerExtractor.h"
+#include "Taxonomer.h"
+#include "Reporter.h"
+
 class QueryFilter {
 private:
-    QueryIndexer * queryIndexer;
-    KmerMatcher * kmerMatcher;
+    // Parameters
+    std::string dbDir;
+    size_t matchPerKmer;
+    int printMode;
 
-    std::string in1, in2, out1, out2, reportFileName; // input and output file names
+    // Agents
+    QueryIndexer * queryIndexer;
+    KmerExtractor * kmerExtractor;
+    KmerMatcher * kmerMatcher;
+    Taxonomer * taxonomer;
+    Reporter * reporter;
+
+    // Kseq
+    KSeqWrapper* filter_kseq1;
+    KSeqWrapper* filter_kseq2;
+
+    std::string in1, in2, f1, f2, rm1, rm2; // input and output file names
+    bool * isFiltered;
+    size_t readCounter;
+    FILE * f1_fp, * f2_fp, * rm1_fp, * rm2_fp;
 
     void setInputAndOutputFiles(const LocalParameters & par);
+
+    void recordFilteredReads(const vector<Query> & queryList);
+    
+    void printFilteredReads();
 
 public:
     void filterReads(LocalParameters & par);

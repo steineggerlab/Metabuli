@@ -15,8 +15,11 @@ void Reporter::openReadClassificationFile() {
     readClassificationFile.open(outDir + "/" + jobId + "_classifications.tsv");
 }
 
-void Reporter::writeReadClassification(const vector<Query> & queryList) {
+void Reporter::writeReadClassification(const vector<Query> & queryList, bool classifiedOnly) {
     for (size_t i = 0; i < queryList.size(); i++) {
+        if (classifiedOnly && !queryList[i].isClassified) {
+            continue;
+        }
         readClassificationFile << queryList[i].isClassified << "\t" << queryList[i].name << "\t"
                                << queryList[i].classification << "\t"
                                << queryList[i].queryLength + queryList[i].queryLength2 << "\t"

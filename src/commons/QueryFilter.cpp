@@ -1,13 +1,58 @@
 #include "QueryFilter.h"
 
 QueryFilter::QueryFilter(LocalParameters & par) {
+    // Load parameters
+    dbDir = par.filenames[1 + (par.seqMode == 2)];
+    matchPerKmer = par.matchPerKmer;
+    printMode = par.printMode;
+
+    // Taxonomy
+    if (par.taxonomyPath == "DBDIR/taxonomy/") par.taxonomyPath = dbDir + "/taxonomy/";
+    taxonomy = new NcbiTaxonomy(par.taxonomyPath + "/names.dmp",
+                                par.taxonomyPath + "/nodes.dmp",
+                                par.taxonomyPath + "/merged.dmp");
+
+    // Agents
     queryIndexer = new QueryIndexer(par);
+    kmerExtractor = new KmerExtractor(par);
+    if (par.reducedAA) { kmerMatcher = new ReducedKmerMatcher(par, taxonomy);} 
+    else { kmerMatcher = new KmerMatcher(par, taxonomy);}
+    taxonomer = new Taxonomer(par, taxonomy);
+    reporter = new Reporter(par, taxonomy);
 
     setInputAndOutputFiles(par);
+    filter_kseq1 = KSeqFactory(in1.c_str());
+    if (par.seqMode == 2) { filter_kseq2 = KSeqFactory(in2.c_str()); }
+
+    isFiltered = new bool[queryIndexer->getReadNum_1()];
+    memset(isFiltered, 0, sizeof(bool) * queryIndexer->getReadNum_1());
+    readCounter = 0;
+
+    // Open output files
+    f1_fp = fopen(f1.c_str(), "w");
+    if (par.seqMode == 2) { f2_fp = fopen(f2.c_str(), "w"); }
+    if (printMode == 2) {
+        rm1_fp = fopen(rm1.c_str(), "w");
+        if (par.seqMode == 2) { rm2_fp = fopen(rm2.c_str(), "w"); }
+    }
 }
 
 QueryFilter::~QueryFilter() {
+    delete taxonomy;
     delete queryIndexer;
+    delete kmerExtractor;
+    delete kmerMatcher;
+    delete taxonomer;
+    delete reporter;
+    delete filter_kseq1;
+    delete filter_kseq2;
+    delete[] isFiltered;
+    fclose(f1_fp);
+    if (par.seqMode == 2) { fclose(f2_fp); }
+    if (printMode == 2) {
+        fclose(rm1_fp);
+        if (par.seqMode == 2) { fclose(rm2_fp); }
+    }
 }
 
 void QueryFilter::setInputAndOutputFiles(const LocalParameters & par) {
@@ -16,13 +61,37 @@ void QueryFilter::setInputAndOutputFiles(const LocalParameters & par) {
     string baseName = LocalUtil::getQueryBaseName(in1);
 
     // Set the output file names
-    out1 = baseName + "_filtered.fna.gz";
-    reportFileName = baseName + "_filter_report.tsv";
+    f1 = baseName + "_filtered.fna.gz";
+    rm1 = baseName + "_removed.fna.gz";
 
     // For paired-end reads
     if (par.seqMode == 2) {
         in2 = par.filenames[1];
-        out2 = LocalUtil::getQueryBaseName(in2) + "_filtered.fna.gz";
+        f2 = LocalUtil::getQueryBaseName(in2) + "_filtered.fna.gz";
+        rm2 = LocalUtil::getQueryBaseName(in2) + "_removed.fna.gz";
+    }
+}
+
+void QueryFilter::recordFilteredReads(const vectore<Query> & queryList) {
+    for (query:queryList){
+        isFiltered[readCounter++] = query.isClassified;
+    }
+}
+
+void QueryFilter::printFilteredReads() {
+    for (size_t i = 0; i < readCounter; i ++) {
+        // Read query reads
+        filter_kseq1->ReadEntry();
+        if (par.seqMode == 2) { filter_kseq2->ReadEntry(); }
+
+        // Print reads
+        if (isFiltered[i]) { // Print filtered reads
+            fprintf(f1_fp, ">%s\n%s\n", filter_kseq1->entry.name.s, filter_kseq1->entry.sequence.s);
+            if (par.seqMode == 2) { fprintf(f2_fp, ">%s\n%s\n", filter_kseq2->entry.name.s, filter_kseq2->entry.sequence.s); }
+        } else if (printMode == 2) { // Print removed reads
+            fprintf(rm1_fp, ">%s\n%s\n", filter_kseq1->entry.name.s, filter_kseq1->entry.sequence.s);
+            if (par.seqMode == 2) { fprintf(rm2_fp, ">%s\n%s\n", filter_kseq2->entry.name.s, filter_kseq2->entry.sequence.s); }
+        }
     }
 }
 
@@ -41,6 +110,66 @@ void QueryFilter::filterReads(LocalParameters & par) {
     Buffer<Match> matchBuffer;
     vector<Query> queryList;
 
+    size_t numOfTatalQueryKmerCnt = 0;
+    size_t totalMatchCnt = 0;
+    size_t processedSeqCnt = 0;
+    reporter->openReadClassificationFile();
 
+#ifdef OPENMP
+    omp_set_num_threads(par.threads);
+#endif
+
+    KSeqWrapper* kseq1 = KSeqFactory(in1.c_str());
+    KSeqWrapper* kseq2 = nullptr;
+    if (par.seqMode == 2) { kseq2 = KSeqFactory(in2.c_str()); }
+
+    for (size_t splitIdx = 0; splitIdx < queryReadSplit.size(); splitIdx++) {
+        // Allocate memory for query list
+        queryList.clear();
+        queryList.resize(queryReadSplit[splitIdx].end - queryReadSplit[splitIdx].start);
+
+        // Allocate memory for query k-mer list and match list
+        kmerBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt);
+        if (queryReadSplit.size() == 1) {
+            size_t remain = queryIndexer->getAvailableRam() - queryReadSplit[splitIdx].kmerCnt * sizeof(QueryKmer) - numOfSeq * 200;
+            matchBuffer.reallocateMemory(remain / sizeof(Match));
+        } else {
+            matchBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt * matchPerKmer);
+        }
+
+        // Initialize query k-mer buffer and match buffer
+        kmerBuffer.startIndexOfReserve = 0;
+        matchBuffer.startIndexOfReserve = 0;
+
+        // Extract query k-mer
+        kmerExtractor->extractQueryKmers(kmerBuffer,
+                                         queryList,
+                                         queryReadSplit[splitIdx],
+                                         par,
+                                         kseq1,
+                                         kseq2);
+        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
+
+        // Search matches between query and target k-mers
+        kmerMatcher->matchKmers(&kmerBuffer, &matchBuffer);
+
+        // Classify queries based on the matches
+        taxonomer->assignTaxonomy(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
+        processedSeqCnt += queryReadSplit[splitIdx].end - queryReadSplit[splitIdx].start;
+        cout << "The number of processed sequences: " << processedSeqCnt << " (" << (double) processedSeqCnt / (double) numOfSeq << ")" << endl;
+        
+        // Write classification results
+        reporter->writeReadClassification(queryList, true);
+
+        recordFilteredReads(queryList);
+    }
+    printFilteredReads();
+    reporter->writeReportFile(numOfSeq, taxonomer->getTaxCounts());
+    reporter->closeReadClassificationFile();
+    
+    // Memory deallocation
+    free(matchBuffer.buffer);
+    delete kseq1;
+    delete kseq2;
 }
 

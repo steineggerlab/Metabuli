@@ -160,7 +160,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
             uint64_t currentQuery = UINT64_MAX;
             uint64_t currentQueryAA = UINT64_MAX;
             QueryKmerInfo currentQueryInfo;
-
+            
             //target variables
             size_t diffIdxPos = 0;
             std::vector<uint64_t> candidateTargetKmers; //vector for candidate target k-mer, some of which are selected after based on hamming distance
