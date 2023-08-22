@@ -16,7 +16,6 @@ void setDefaults_addToLibrary(LocalParameters & par){
 }
 
 // Group sequences by species
-//
 int addToLibrary(int argc, const char **argv, const Command &command){
     LocalParameters &par = LocalParameters::getLocalInstance();
     setDefaults_addToLibrary(par);
