@@ -222,14 +222,21 @@ LocalParameters::LocalParameters() :
                       "CSV of column numbers to be printed",
                       typeid(std::string),
                       (void *) &printColumns,
-                      "^.*$")
+                      "^.*$"),
         PRINT_MODE(PRINT_MODE_ID,
                         "--print-mode",
                        "[1] Only filtered reads [2] Both filtered and removed reads",
                        "[1] Only filtered reads [2] Both filtered and removed reads",
                        typeid(int),
                        (void *) &printMode,
-                       "[1-2]")
+                       "[1-2]"),
+        CONTAM_LIST(CONTAM_LIST_ID, 
+                   "--contam-list",
+                   "List of contaminants to be filtered",
+                   "List of taxids to be filtered",
+                     typeid(std::string),
+                        (void *) &contamList,
+                        "^.*$") 
   {
     //add_to_library
 
@@ -287,6 +294,7 @@ LocalParameters::LocalParameters() :
     filter.push_back(&PARAM_MASK_PROBABILTY);
     filter.push_back(&MATCH_PER_KMER);
     filter.push_back(&PRINT_MODE);
+    filter.push_back(&CONTAM_LIST);
 
     //updateTargetDB
     exclusiontest_hiv.push_back(&TEST_RANK);

@@ -5,7 +5,9 @@ QueryFilter::QueryFilter(LocalParameters & par) {
     dbDir = par.filenames[1 + (par.seqMode == 2)];
     matchPerKmer = par.matchPerKmer;
     printMode = par.printMode;
-
+    seqMode = par.seqMode;
+    contams = Util::split(par.contamList, ",");
+    
     // Taxonomy
     if (par.taxonomyPath == "DBDIR/taxonomy/") par.taxonomyPath = dbDir + "/taxonomy/";
     taxonomy = new NcbiTaxonomy(par.taxonomyPath + "/names.dmp",
@@ -48,10 +50,10 @@ QueryFilter::~QueryFilter() {
     delete filter_kseq2;
     delete[] isFiltered;
     fclose(f1_fp);
-    if (par.seqMode == 2) { fclose(f2_fp); }
+    if (seqMode == 2) { fclose(f2_fp); }
     if (printMode == 2) {
         fclose(rm1_fp);
-        if (par.seqMode == 2) { fclose(rm2_fp); }
+        if (seqMode == 2) { fclose(rm2_fp); }
     }
 }
 
@@ -65,15 +67,15 @@ void QueryFilter::setInputAndOutputFiles(const LocalParameters & par) {
     rm1 = baseName + "_removed.fna.gz";
 
     // For paired-end reads
-    if (par.seqMode == 2) {
+    if (seqMode == 2) {
         in2 = par.filenames[1];
         f2 = LocalUtil::getQueryBaseName(in2) + "_filtered.fna.gz";
         rm2 = LocalUtil::getQueryBaseName(in2) + "_removed.fna.gz";
     }
 }
 
-void QueryFilter::recordFilteredReads(const vectore<Query> & queryList) {
-    for (query:queryList){
+void QueryFilter::recordFilteredReads(const vector<Query> & queryList) {
+    for (auto query : queryList) {
         isFiltered[readCounter++] = query.isClassified;
     }
 }
@@ -82,15 +84,15 @@ void QueryFilter::printFilteredReads() {
     for (size_t i = 0; i < readCounter; i ++) {
         // Read query reads
         filter_kseq1->ReadEntry();
-        if (par.seqMode == 2) { filter_kseq2->ReadEntry(); }
+        if (seqMode == 2) { filter_kseq2->ReadEntry(); }
 
         // Print reads
         if (isFiltered[i]) { // Print filtered reads
             fprintf(f1_fp, ">%s\n%s\n", filter_kseq1->entry.name.s, filter_kseq1->entry.sequence.s);
-            if (par.seqMode == 2) { fprintf(f2_fp, ">%s\n%s\n", filter_kseq2->entry.name.s, filter_kseq2->entry.sequence.s); }
+            if (seqMode == 2) { fprintf(f2_fp, ">%s\n%s\n", filter_kseq2->entry.name.s, filter_kseq2->entry.sequence.s); }
         } else if (printMode == 2) { // Print removed reads
             fprintf(rm1_fp, ">%s\n%s\n", filter_kseq1->entry.name.s, filter_kseq1->entry.sequence.s);
-            if (par.seqMode == 2) { fprintf(rm2_fp, ">%s\n%s\n", filter_kseq2->entry.name.s, filter_kseq2->entry.sequence.s); }
+            if (seqMode == 2) { fprintf(rm2_fp, ">%s\n%s\n", filter_kseq2->entry.name.s, filter_kseq2->entry.sequence.s); }
         }
     }
 }
@@ -151,7 +153,10 @@ void QueryFilter::filterReads(LocalParameters & par) {
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
 
         // Search matches between query and target k-mers
-        kmerMatcher->matchKmers(&kmerBuffer, &matchBuffer);
+        for (auto db : contams) {
+            kmerMatcher->matchKmers(&kmerBuffer, &matchBuffer, db);
+        }
+        kmerMatcher->sortMatches(&matchBuffer);
 
         // Classify queries based on the matches
         taxonomer->assignTaxonomy(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
@@ -166,7 +171,7 @@ void QueryFilter::filterReads(LocalParameters & par) {
     printFilteredReads();
     reporter->writeReportFile(numOfSeq, taxonomer->getTaxCounts());
     reporter->closeReadClassificationFile();
-    
+
     // Memory deallocation
     free(matchBuffer.buffer);
     delete kseq1;

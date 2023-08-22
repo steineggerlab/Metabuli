@@ -106,6 +106,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 
         // Search matches between query and target k-mers
         kmerMatcher->matchKmers(&kmerBuffer, &matchBuffer);
+        kmerMatcher->sortMatches(&matchBuffer);
 
 
 //#ifdef OPENMP

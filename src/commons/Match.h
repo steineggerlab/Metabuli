@@ -4,14 +4,6 @@
 #include "Kmer.h"
 #include <iostream>
 
-//struct Match_qInfo {
-//    explicit Match_qInfo(uint32_t position = 0, uint32_t queryId = 0, uint8_t frame = 0)
-//            : position(position), queryId(queryId),  frame(frame) {}
-//    uint64_t position : 32;
-//    uint64_t queryId : 29;
-//    uint64_t frame : 3; // 0-5
-//};
-
 struct Match { // 24 byte
     Match(){}
     Match(QueryKmerInfo qInfo,
@@ -25,7 +17,7 @@ struct Match { // 24 byte
           rightEndHamming(eachHamming), hamming(hamming), redundancy(redundancy) { }
 
     QueryKmerInfo qInfo; // 8
-    TaxID targetId; // 4
+    TaxID targetId; // 4 taxonomy id infact
     TaxID genusId; // 4
     TaxID speciesId; // 4
     uint16_t rightEndHamming; // 2

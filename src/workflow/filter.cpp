@@ -22,6 +22,7 @@ void setFilterDefaults(LocalParameters & par){
     par.maskProb = 0.9;
     par.matchPerKmer = 4;
     par.printMode = 1;
+    par.contamList = ""; // TODO: set default
 }
 
 int filter(int argc, const char **argv, const Command& command)

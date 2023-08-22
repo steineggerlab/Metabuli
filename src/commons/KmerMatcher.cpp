@@ -2,17 +2,13 @@
 
 KmerMatcher::KmerMatcher(const LocalParameters & par,
                          NcbiTaxonomy * taxonomy) {
+    // Parameters
     threads = par.threads;
-    std::string dbDir = par.filenames[1 + (par.seqMode == 2)];
-    targetDiffIdxFileName = dbDir + "/diffIdx";
-    targetInfoFileName = dbDir + "/info";
-    diffIdxSplitFileName = dbDir + "/split";
-
-    diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str(), 3);
-
+    dbDir = par.filenames[1 + (par.seqMode == 2)];
+    hammingMargin = par.hammingMargin;
+    
     MARKER = 16777215;
     MARKER = ~ MARKER;
-    hammingMargin = par.hammingMargin;
     totalMatchCnt = 0;
 
     // Load the taxonomy ID list
@@ -53,16 +49,33 @@ KmerMatcher::KmerMatcher(const LocalParameters & par,
     fclose(taxIdFile);
 }
 
+
 KmerMatcher::~KmerMatcher() {
-    munmap(diffIdxSplits.data, diffIdxSplits.fileSize + 1);
 }
 
-int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer, Buffer<Match> * matchBuffer) {
-    size_t queryKmerNum = queryKmerBuffer->startIndexOfReserve;
-    QueryKmer *queryKmerList = queryKmerBuffer->buffer;
 
+int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
+                            Buffer<Match> * matchBuffer,
+                            const string & db){
+    // Set database files
+    string targetDiffIdxFileName;
+    string targetInfoFileName;
+    string diffIdxSplitFileName;
+    if (db.empty()) {
+        targetDiffIdxFileName = dbDir + "/diffIdx";
+        targetInfoFileName = dbDir + "/info";
+        diffIdxSplitFileName = dbDir + "/split";
+    } else {
+        targetDiffIdxFileName = dbDir + "/" + db + "/diffIdx";
+        targetInfoFileName = dbDir + "/" + db + "/info";
+        diffIdxSplitFileName = dbDir + "/" + db + "/split";
+    } 
+    MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str(), 3);
     size_t numOfDiffIdx = FileUtil::getFileSize(targetDiffIdxFileName) / sizeof(uint16_t);
 
+    size_t queryKmerNum = queryKmerBuffer->startIndexOfReserve;
+    QueryKmer *queryKmerList = queryKmerBuffer->buffer;
+    
     std::cout << "Comparing query and reference metamers..." << std::endl;
 
     // Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
@@ -418,16 +431,17 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
     omp_set_num_threads(threads);
 #endif
 
-    // Sort matches
-    time_t beforeSortMatches = time(nullptr);
     totalMatchCnt += matchBuffer->startIndexOfReserve;
+    return 1;
+}
+
+void KmerMatcher::sortMatches(Buffer<Match> * matchBuffer) {
+    time_t beforeSortMatches = time(nullptr);
     std::cout << "Sorting matches ..." << std::endl;
     SORT_PARALLEL(matchBuffer->buffer,
                   matchBuffer->buffer + matchBuffer->startIndexOfReserve,
                   compareMatches);
     std::cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << std::endl;
-
-    return 1;
 }
 
 void KmerMatcher::moveMatches(Match *dest, Match *src, int &matchNum) {
@@ -471,6 +485,7 @@ void KmerMatcher::compareDna(uint64_t query,
     }
     delete[] hammingSums;
 }
+
 
 bool KmerMatcher::compareMatches(const Match& a, const Match& b) {
     if (a.qInfo.sequenceID != b.qInfo.sequenceID)

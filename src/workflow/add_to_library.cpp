@@ -6,6 +6,7 @@
 #include <iostream>
 #include "IndexCreator.h"
 #include "FileUtil.h"
+#include <regex>
 
 using namespace std;
 

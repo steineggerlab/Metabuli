@@ -14,6 +14,8 @@ private:
     std::string dbDir;
     size_t matchPerKmer;
     int printMode;
+    int seqMode;
+    std::vector<std::string> contams;
 
     // Agents
     QueryIndexer * queryIndexer;
@@ -21,6 +23,7 @@ private:
     KmerMatcher * kmerMatcher;
     Taxonomer * taxonomer;
     Reporter * reporter;
+    NcbiTaxonomy * taxonomy;
 
     // Kseq
     KSeqWrapper* filter_kseq1;

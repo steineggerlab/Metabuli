@@ -14,10 +14,7 @@
 #include "common.h"
 #include "NcbiTaxonomy.h"
 #include "FastSort.h"
-#include "Classifier.h"
 #include "LocalParameters.h"
-
-// For masking
 #include "NucleotideMatrix.h"
 #include "SubstitutionMatrix.h"
 #include "tantan.h"
@@ -26,8 +23,6 @@
 #ifdef OPENMP
 #include <omp.h>
 #endif
-
-
 
 
 struct TaxId2Fasta{

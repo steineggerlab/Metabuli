@@ -74,6 +74,7 @@ public:
 
     // Filter
     PARAMETER(PRINT_MODE)
+    PARAMETER(CONTAM_LIST)
 
     // Superkingdom taxonomy id
     int virusTaxId;
@@ -119,6 +120,7 @@ public:
 
     // Filter
     int printMode;
+    std::string contamList;
 
 private:
     LocalParameters();
