@@ -6,10 +6,11 @@ Classifier::Classifier(LocalParameters & par) {
     matchPerKmer = par.matchPerKmer;
 
     // Taxonomy
-    if (par.taxonomyPath == "DBDIR/taxonomy/") par.taxonomyPath = dbDir + "/taxonomy/";
-    taxonomy = new NcbiTaxonomy(par.taxonomyPath + "/names.dmp",
-                                par.taxonomyPath + "/nodes.dmp",
-                                par.taxonomyPath + "/merged.dmp");
+    taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
+    // if (par.taxonomyPath == "DBDIR/taxonomy/") par.taxonomyPath = dbDir + "/taxonomy/";
+    // taxonomy = new NcbiTaxonomy(par.taxonomyPath + "/names.dmp",
+    //                             par.taxonomyPath + "/nodes.dmp",
+    //                             par.taxonomyPath + "/merged.dmp");
 
     // Agents
     queryIndexer = new QueryIndexer(par);
@@ -48,7 +49,6 @@ void Classifier::startClassify(const LocalParameters &par) {
     vector<Query> queryList;
 
     size_t numOfTatalQueryKmerCnt = 0;
-    size_t totalMatchCnt = 0;
     size_t processedSeqCnt = 0;
 
     reporter->openReadClassificationFile();
@@ -134,7 +134,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     }
 
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
-    cout << "The number of matches: " << totalMatchCnt << endl;
+    cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
     reporter->closeReadClassificationFile();
 
     // Write report files

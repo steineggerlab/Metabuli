@@ -37,20 +37,24 @@ using namespace std;
 class IndexCreator{
 private:
     uint64_t MARKER;
-    string tinfo_path;
-    string tinfo_list;
-    vector<TaxID> trainedSpecies;
-    unordered_map<TaxID, _training> trainingInfo;
-    int threadNum;
     BaseMatrix *subMat;
 
-    // parameters
+    // Parameters
+    int threadNum;
+    size_t bufferSize;
+    
+    // Inputs
     NcbiTaxonomy * taxonomy;
     string dbDir;
     string fnaListFileName;
     string taxonomyDir;
     string acc2taxidFileName;
-    size_t bufferSize;
+
+
+    // Outputs
+    string taxidListFileName;
+    string taxonomyBinaryFileName;
+    string versionFileName;
 
     struct FASTA {
         string path;
@@ -93,13 +97,14 @@ private:
 
     size_t numOfFlush=0;
 
-    void trainProdigal();
-
-//    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<int> & taxIdList);
     void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
 
     void writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
+
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
+
+    void writeTaxonomyDB();
+
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
 
 //    void maskLowComplexityRegions(char * seq, char * maskedSeq, ProbabilityMatrix & probMat,
@@ -146,7 +151,6 @@ public:
                                   unordered_map<string, TaxID> & foundAcc2taxid);
     static void getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const char * seqFileName);
     IndexCreator(const LocalParameters & par);
-    IndexCreator(const LocalParameters & par, string dbDir, string fnaListFileName, string acc2taxidFile);
     IndexCreator() {taxonomy = nullptr;}
     ~IndexCreator();
     int getNumOfFlush();

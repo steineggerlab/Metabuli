@@ -100,6 +100,9 @@ public:
                  const string &db = string());
   
   void sortMatches(Buffer<Match> *matchBuffer);
+
+  // Getters
+  size_t getTotalMatchCnt() const { return totalMatchCnt; }
 };
 
 inline uint64_t KmerMatcher::getNextTargetKmer(uint64_t lookingTarget,

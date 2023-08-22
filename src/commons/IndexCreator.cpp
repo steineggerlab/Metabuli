@@ -2,22 +2,33 @@
 
 #include <utility>
 
-IndexCreator::IndexCreator(const LocalParameters & par)
-{
-    dbDir = par.filenames[0];
-    fnaListFileName = par.filenames[1];
-    taxonomyDir = par.filenames[0] + "/taxonomy";
+IndexCreator::IndexCreator(const LocalParameters & par) {
+    // Parameters
     threadNum = par.threads;
     bufferSize = par.bufferSize;
+    
+    // Input files
+    dbDir = par.filenames[0];
+    if (par.taxonomyPath.empty()) {
+        taxonomyDir = dbDir + "/taxonomy/";
+    } else {
+        taxonomyDir = par.taxonomyPath + "/";
+    }
+    cout << "Taxonomy path: " << par.taxonomyPath << endl;
+    fnaListFileName = par.filenames[1];
+    acc2taxidFileName = par.filenames[2];
 
+    
+    // Output files
+    taxidListFileName = dbDir + "/taxID_list";
+    taxonomyBinaryFileName = dbDir + "/taxonomyDB";
+    versionFileName = dbDir + "/db.version";
 
     // Load taxonomy
     taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp",
                                 taxonomyDir + "/nodes.dmp",
                                 taxonomyDir + "/merged.dmp");
 
-    // ======================================================= //
-
     if (par.reducedAA == 1){
         MARKER = 0Xffffffff;
         MARKER = ~ MARKER;
@@ -30,27 +41,6 @@ IndexCreator::IndexCreator(const LocalParameters & par)
     subMat = new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0);
 }
 
-IndexCreator::IndexCreator(const LocalParameters &par, string dbDir, string fnaListFileName, string acc2taxidFile)
-        : dbDir(std::move(dbDir)), fnaListFileName(std::move(fnaListFileName)),
-          taxonomyDir(par.taxonomyPath), acc2taxidFileName(std::move(acc2taxidFile))
-{
-    // Load taxonomy
-    taxonomy = new NcbiTaxonomy(this->taxonomyDir + "/names.dmp",
-                                this->taxonomyDir + "/nodes.dmp",
-                                this->taxonomyDir + "/merged.dmp");
-
-    if (par.reducedAA == 1){
-        MARKER = 0Xffffffff;
-        MARKER = ~ MARKER;
-    } else {
-        MARKER = 16777215;
-        MARKER = ~ MARKER;
-    }
-    tinfo_path = par.tinfoPath;
-
-    // For masking low complexity regions
-    subMat = new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0);
-}
 
 IndexCreator::~IndexCreator() {
     delete taxonomy;
@@ -64,7 +54,6 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     cout << "Made blocks for each thread" << endl;
 
     // Write taxonomy id list
-    string taxidListFileName = dbDir + "/taxID_list";
     FILE * taxidListFile = fopen(taxidListFileName.c_str(), "w");
     for (auto & taxid : taxIdList) {
         fprintf(taxidListFile, "%d\n", taxid);
@@ -108,6 +97,7 @@ void IndexCreator::createIndex(const LocalParameters &par) {
         delete[] uniqKmerIdx;
     }
     delete[] splitChecker;
+    writeTaxonomyDB();
 }
 
 void IndexCreator::updateIndex(const LocalParameters &par) {
@@ -117,7 +107,7 @@ void IndexCreator::updateIndex(const LocalParameters &par) {
 
     // Train Prodigal for each species
     time_t prodigalStart = time(nullptr);
-    trainProdigal();
+    // trainProdigal();
     time_t prodigalEnd = time(nullptr);
     cout << "Prodigal training time: " << prodigalEnd - prodigalStart << " seconds" << endl;
 
@@ -826,64 +816,14 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
     return 0;
 }
 
-
-void IndexCreator::trainProdigal() {
-    // Train prodigal for each FASTA.
-#pragma omp parallel default(none), shared(cerr, fastaList, tinfo_path)
-    {
-        ProdigalWrapper prodigal;
-        kseq_buffer_t buffer;
-        kseq_t *seq;
-        size_t lengthOfTrainingSeq;
-#pragma omp for schedule(dynamic, 1)
-        for (size_t i = 0; i < fastaList.size(); i++) {
-            FASTA &currentFasta = fastaList[i];
-            TaxID currentSpecies = currentFasta.speciesID;
-            string fileName =  tinfo_path + to_string(currentSpecies) + ".tinfo";
-
-            // Skip if the training file for current species already exists.
-            if (fileExist(fileName)) {
-                cerr << "Training file for " << currentSpecies << " already exists. Skip." << endl;
-                continue;
-            }
-
-            // Load sequence for training.
-            struct MmapedData<char> fastaFile = mmapData<char>(currentFasta.path.c_str());
-            buffer = {const_cast<char *>(&fastaFile.data[currentFasta.sequences[currentFasta.trainingSeqIdx].start]),
-                      static_cast<size_t>(currentFasta.sequences[currentFasta.trainingSeqIdx].length)};
-            seq = kseq_init(&buffer);
-            kseq_read(seq);
-
-            // Train prodigal.
-            prodigal.is_meta = 0;
-            lengthOfTrainingSeq = seq->seq.l;
-            if (lengthOfTrainingSeq < 100'000) {
-                prodigal.is_meta = 1;
-                prodigal.trainMeta(seq->seq.s);
-            } else {
-                prodigal.trainASpecies(seq->seq.s);
-            }
-
-            // Write training result into a file for later use.
-            _training *tinfo = prodigal.getTrainingInfo();
-            write_training_file(const_cast<char *>(fileName.c_str()), tinfo);
-
-            kseq_destroy(seq);
-            munmap(fastaFile.data, fastaFile.fileSize + 1);
-        }
+void IndexCreator::writeTaxonomyDB() {
+    std::pair<char *, size_t> serialized = NcbiTaxonomy::serialize(*taxonomy);
+    FILE *handle = fopen(taxonomyBinaryFileName.c_str(), "w");
+    if (handle == NULL) {
+        Debug(Debug::ERROR) << "Could not open " << taxonomyBinaryFileName << " for writing\n";
+        EXIT(EXIT_FAILURE);
     }
-//    // TODO: Write species ID of newly trained species into a file.
-//    // Write trained species into a file.
-//    for (int i = 0; i < threadNum; i++) {
-//        for (auto &species : newSpeciesList[i]) {
-//            trainedSpecies.push_back(species);
-//        }
-//    }
-//    FILE *fp = fopen((tinfo_path + "/species-list.txt").c_str(), "w");
-//    for (int trainedSpecie: trainedSpecies) {
-//        fprintf(fp, "%d\n", trainedSpecie);
-//    }
-//    fclose(fp);
+    fwrite(serialized.first, serialized.second, sizeof(char), handle);
+    fclose(handle);
+    free(serialized.first);
 }
-
-

@@ -16,7 +16,7 @@ void setClassifyDefaults(LocalParameters & par){
     par.minCoveredPos = 4;
     par.printLog = 0;
     par.maxGap = 0;
-    par.taxonomyPath = "DBDIR/taxonomy/" ;
+    par.taxonomyPath = "" ;
     par.minConsCnt = 4;
     par.minConsCntEuk = 9;
     par.eukaryotaTaxId = 2759;

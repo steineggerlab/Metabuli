@@ -9,10 +9,11 @@ QueryFilter::QueryFilter(LocalParameters & par) {
     contams = Util::split(par.contamList, ",");
     
     // Taxonomy
-    if (par.taxonomyPath == "DBDIR/taxonomy/") par.taxonomyPath = dbDir + "/taxonomy/";
-    taxonomy = new NcbiTaxonomy(par.taxonomyPath + "/names.dmp",
-                                par.taxonomyPath + "/nodes.dmp",
-                                par.taxonomyPath + "/merged.dmp");
+    taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
+    // if (par.taxonomyPath == "DBDIR/taxonomy/") par.taxonomyPath = dbDir + "/taxonomy/";
+    // taxonomy = new NcbiTaxonomy(par.taxonomyPath + "/names.dmp",
+    //                             par.taxonomyPath + "/nodes.dmp",
+    //                             par.taxonomyPath + "/merged.dmp");
 
     // Agents
     queryIndexer = new QueryIndexer(par);
