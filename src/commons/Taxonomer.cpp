@@ -250,7 +250,6 @@ TaxID Taxonomer::lowerRankClassification(vector<Match> &matches, pair<int, int> 
         uint8_t minHamming = matches[i].hamming;
         Match * minHammingMatch = & matches[i];
         TaxID minHammingTaxId = minHammingMatch->targetId;
-        bool first = true;
         i --;
         while ( (i >= matchRange.first) && (currQuotient == matches[i].qInfo.pos / 3) ) {
             if (matches[i].hamming < minHamming) {

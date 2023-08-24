@@ -18,6 +18,10 @@ public:
     static void splitQueryFile(std::vector<SequenceBlock> & seqSegments, const std::string & queryPath);
 
     static int getMaxCoveredLength(int queryLength) ;
+
+    static int getFirstWhiteSpacePos(const std::string & str);
+
+    // static std::string getAccessionFromHeader(const std::string & header);
 };
 
 

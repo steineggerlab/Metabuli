@@ -18,6 +18,7 @@
 #include "NucleotideMatrix.h"
 #include "SubstitutionMatrix.h"
 #include "tantan.h"
+#include "LocalUtil.h"
 
 
 #ifdef OPENMP
@@ -65,6 +66,7 @@ private:
         vector<SequenceBlock> sequences;
     };
 
+    TaxID newTaxID;
     vector<FASTA> fastaList;
     vector<TaxID> taxIdList;
     vector<size_t> processedSeqCnt; // Index of this vector is the same as the index of fnaList
@@ -128,7 +130,10 @@ private:
     }
 
     void load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
-    static void load_accession2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
+
+    static TaxID load_accession2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
+
+    void editTaxonomyDumpFiles(const vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid);
 
     void reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniqeKmerIdx, size_t & uniqKmerCnt,
                           const LocalParameters & par);
@@ -150,9 +155,11 @@ private:
 public:
     static void splitSequenceFile(vector<SequenceBlock> & seqSegments, MmapedData<char> seqFile);
 
-    string getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const string & seqFileName,
+    string getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
+                                  const string & seqFileName,
                                   const unordered_map<string, TaxID> & acc2taxid,
-                                  unordered_map<string, TaxID> & foundAcc2taxid);
+                                  vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid);
+
     static void getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const char * seqFileName);
     IndexCreator(const LocalParameters & par);
     IndexCreator() {taxonomy = nullptr;}

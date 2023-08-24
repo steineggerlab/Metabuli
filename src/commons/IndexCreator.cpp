@@ -1,4 +1,7 @@
 #include "IndexCreator.h"
+#include "FileUtil.h"
+#include "LocalUtil.h"
+#include <bits/types/FILE.h>
 #include <cstdio>
 #include <utility>
 
@@ -27,9 +30,9 @@ IndexCreator::IndexCreator(const LocalParameters & par) {
     paramterFileName = dbDir + "/db.parameters";
 
     // Load taxonomy
-    taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp",
-                                taxonomyDir + "/nodes.dmp",
-                                taxonomyDir + "/merged.dmp");
+    // taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp",
+    //                             taxonomyDir + "/nodes.dmp",
+    //                             taxonomyDir + "/merged.dmp");
 
     if (par.reducedAA == 1){
         MARKER = 0Xffffffff;
@@ -54,11 +57,6 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     // Read through FASTA files and make blocks of sequences to be processed by each thread
     makeBlocksForParallelProcessing();
     cout << "Made blocks for each thread" << endl;
-
-    // Print fnaSplits
-    for (auto & fnaSplit : fnaSplits) {
-        cout << fnaSplit.offset << " " << fnaSplit.cnt << " " << fnaSplit.speciesID << " " << fnaSplit.file_idx << " " << fnaSplit.training << endl;
-    }
 
     // Write taxonomy id list
     FILE * taxidListFile = fopen(taxidListFileName.c_str(), "w");
@@ -162,7 +160,10 @@ void IndexCreator::updateIndex(const LocalParameters &par) {
 void IndexCreator::makeBlocksForParallelProcessing(){
 
     unordered_map<string, TaxID> acc2taxid;
-    load_accession2taxid(acc2taxidFileName, acc2taxid);
+    TaxID maxTaxID = load_accession2taxid(acc2taxidFileName, acc2taxid);
+    newTaxID = maxTaxID + 1;
+
+    vector<pair<string,pair<TaxID, TaxID>>> newAcc2taxid; // accession.version -> (parent, newTaxID)
 
     // Make blocks of sequences that can be processed in parallel
     int fileNum = getNumberOfLines(fnaListFileName);
@@ -176,18 +177,42 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     }
     string eachFile;
     string seqHeader;
+    string accession_version;
+    string accession;
+    vector<TaxID> tempTaxIDList;
 
-    unordered_map<string, TaxID> foundAcc2taxid;
     for (int i = 0; i < fileNum; ++i) {
         // Get start and end position of each sequence in the file
         getline(fnaListFile, eachFile);
         fastaList[i].path = eachFile;
         processedSeqCnt.push_back(taxIdList.size());
-        seqHeader = getSeqSegmentsWithHead(fastaList[i].sequences, eachFile, acc2taxid, foundAcc2taxid);
-        seqHeader = seqHeader.substr(1, seqHeader.find('.') - 1);
-        TaxID speciesTaxid = taxonomy->getTaxIdAtRank(acc2taxid[seqHeader], "species");
 
-        // Split current file into blocks for parallel processing
+
+        seqHeader = getSeqSegmentsWithHead(fastaList[i].sequences, eachFile, acc2taxid, newAcc2taxid);
+        // accession_version = seqHeader.substr(1, seqHeader.find('.') - 1);
+        accession = seqHeader.substr(1, seqHeader.find('.') - 1);
+        accession_version = seqHeader.substr(1, LocalUtil::getFirstWhiteSpacePos(seqHeader) - 1);
+        // newAcc2taxid.emplace_back(accession_version, make_pair(acc2taxid[accession], newTaxID));
+        tempTaxIDList.push_back(acc2taxid[accession]);   
+        
+        // TaxID speciesTaxid = taxonomy->getTaxIdAtRank(acc2taxid[accession], "species");
+
+        // // Split current file into blocks for parallel processing
+        // splitFastaForProdigalTraining(i, speciesTaxid);
+        // fastaList[i].speciesID = speciesTaxid;
+    }
+
+    // Edit taxonomy dump files
+    editTaxonomyDumpFiles(newAcc2taxid);
+
+    // Load taxonomy
+    taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp.new",
+                                taxonomyDir + "/nodes.dmp.new",
+                                taxonomyDir + "/merged.dmp");
+
+
+    for (int i = 0; i < fileNum; ++i) {
+        TaxID speciesTaxid = taxonomy->getTaxIdAtRank(tempTaxIDList[i], "species");
         splitFastaForProdigalTraining(i, speciesTaxid);
         fastaList[i].speciesID = speciesTaxid;
     }
@@ -196,8 +221,8 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     // Write accession to taxid map to file
     string acc2taxidFileName2 = dbDir + "/acc2taxid.map";
     FILE * acc2taxidFile = fopen(acc2taxidFileName2.c_str(), "w");
-    for (auto it = foundAcc2taxid.begin(); it != foundAcc2taxid.end(); ++it) {
-        fprintf(acc2taxidFile, "%s\t%d\n", it->first.c_str(), it->second);
+    for (auto it : newAcc2taxid) {
+        fprintf(acc2taxidFile, "%s\t%d\t%d\n", it.first.c_str(), it.second.first, it.second.second);
     }
     fclose(acc2taxidFile);
 
@@ -256,7 +281,8 @@ void IndexCreator::splitFastaForProdigalTraining(int file_idx, TaxID speciesID) 
     fastaList[file_idx].trainingSeqIdx = seqForTraining;
 }
 
-void IndexCreator::load_accession2taxid(const string & mappingFileName, unordered_map<string, int> & acc2taxid) {
+TaxID IndexCreator::load_accession2taxid(const string & mappingFileName, unordered_map<string, int> & acc2taxid) {
+    TaxID maxTaxID = 0;
     cerr << "Load mapping from accession ID to taxonomy ID ... " << flush;
     string eachLine;
     string eachItem;
@@ -266,11 +292,15 @@ void IndexCreator::load_accession2taxid(const string & mappingFileName, unordere
         fscanf(mappingFile, "%*s\t%*s\t%*s\t%*s");
         while (fscanf(mappingFile, "%s\t%*s\t%d\t%*d", buffer, &taxID) == 2 ){
             acc2taxid[string(buffer)] = taxID;
+            if (taxID > maxTaxID) {
+                maxTaxID = taxID;
+            }
         }
     } else {
         cerr << "Cannot open file for mapping from accession to tax ID" << endl;
     }
     cerr << "Done" << endl;
+    return maxTaxID;
 }
 
 // This function sort the TargetKmerBuffer, do redundancy reducing task, write the differential index of them
@@ -444,7 +474,8 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
                         break;
                     }
                     taxIds.push_back(taxIdList[kmerBuffer.buffer[i].info.sequenceID]);
-                    hasSeenOtherStrains += (taxIdList[lookingKmer->info.sequenceID] != taxIdList[kmerBuffer.buffer[i].info.sequenceID]);
+                    hasSeenOtherStrains += (taxonomy->taxonNode(taxIdList[lookingKmer->info.sequenceID])->parentTaxId 
+                                                != taxonomy->taxonNode(taxIdList[kmerBuffer.buffer[i].info.sequenceID]) -> parentTaxId);
                     i++;
                     if(i == splits[split].end + 1){
                         endFlag = 1;
@@ -569,7 +600,7 @@ void IndexCreator::splitSequenceFile(vector<SequenceBlock> & seqSegments, Mmaped
 
 string IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const string & seqFileName,
                                             const unordered_map<string, TaxID> & acc2taxid,
-                                            unordered_map<string, TaxID> & foundAcc2taxid) {
+                                            vector<pair<string,pair<TaxID, TaxID>>> & newAcc2taxid) {
     struct stat stat1{};
     stat(seqFileName.c_str(), &stat1);
     size_t numOfChar = stat1.st_size;
@@ -580,24 +611,33 @@ string IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
     size_t start = 0;
     size_t pos;
     vector<SequenceBlock> seqSegmentsTmp;
-    vector<string> headers;
-    size_t seqCnt = taxIdList.size();
+    string accession;
+    string accession_version;
+
     if (seqFile.is_open()) {
         getline(seqFile, firstLine, '\n');
+        accession = firstLine.substr(1, firstLine.find('.') - 1);
+        accession_version = firstLine.substr(1, LocalUtil::getFirstWhiteSpacePos(firstLine) - 1);
+        newAcc2taxid.emplace_back(accession_version, make_pair(acc2taxid.at(accession), newTaxID));
+        taxIdList.push_back(newTaxID++);
 //        cout << firstLine << endl;
-        taxIdList.push_back(acc2taxid.at(firstLine.substr(1, firstLine.find('.') - 1)));
-        foundAcc2taxid[firstLine.substr(1, firstLine.find(' ') - 1)] = taxIdList.back();
+        // taxIdList.push_back(acc2taxid.at(firstLine.substr(1, firstLine.find('.') - 1)));
+        // foundAcc2taxid[firstLine.substr(1, firstLine.find(' ') - 1)] = taxIdList.back();
         while (getline(seqFile, eachLine, '\n')) {
             if (eachLine[0] == '>') {
+                accession = eachLine.substr(1, eachLine.find('.') - 1);
+                accession_version = eachLine.substr(1, LocalUtil::getFirstWhiteSpacePos(eachLine) - 1);
+                newAcc2taxid.emplace_back(accession_version, make_pair(acc2taxid.at(accession), newTaxID));
+                taxIdList.push_back(newTaxID++);
 //                cout << eachLine << endl;
-                taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find('.') - 1)));
-                foundAcc2taxid[eachLine.substr(1, eachLine.find(' ') - 1)] = taxIdList.back();
+                // taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find('.') - 1)));
+                // foundAcc2taxid[eachLine.substr(1, eachLine.find(' ') - 1)] = taxIdList.back();
                 pos = (size_t) seqFile.tellg();
                 seqSegmentsTmp.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
                 start = pos - eachLine.length() - 1;
             }
         }
-        seqSegmentsTmp.emplace_back(start, numOfChar - 2, numOfChar - start - 1, seqCnt);
+        seqSegmentsTmp.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
     } else {
         cerr << "Unable to open file: " << seqFileName << endl;
     }
@@ -608,7 +648,7 @@ string IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
 
 void IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const char * seqFileName) {
     struct stat stat1{};
-    int a = stat(seqFileName, &stat1);
+    stat(seqFileName, &stat1);
     size_t numOfChar = stat1.st_size;
 
     ifstream seqFile;
@@ -857,4 +897,40 @@ void IndexCreator::writeDbParameters() {
     fprintf(handle, "Reduced_alphabet\t%d\n", reducedAA);
     fprintf(handle, "Spaced_kmer_mask\t%s\n", spaceMask.c_str());
     fclose(handle);
+}
+
+void IndexCreator::editTaxonomyDumpFiles(const vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid) {
+    // Edit names.dmp
+    string nameFileName = taxonomyDir + "/names.dmp";
+    string newNameFileName = taxonomyDir + "/names.dmp.new";
+    FileUtil::copyFile(nameFileName.c_str(), newNameFileName.c_str());
+    FILE *nameFile = fopen(newNameFileName.c_str(), "a");
+    if (nameFile == NULL) {
+        Debug(Debug::ERROR) << "Could not open " << newNameFileName << " for writing\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    for (size_t i = 0; i < newAcc2taxid.size() - 1; i++) {
+        fprintf(nameFile, "%d\t|\t%s\t|\t\t|\tscientific name\t|\n", newAcc2taxid[i].second.second, newAcc2taxid[i].first.c_str());
+    }
+    fprintf(nameFile, "%d\t|\t%s\t|\t\t|\tscientific name\t|", newAcc2taxid.back().second.second, newAcc2taxid.back().first.c_str());
+    fclose(nameFile);
+
+    // Edit nodes.dmp
+    string nodeFileName = taxonomyDir + "/nodes.dmp";
+    string newNodeFileName = taxonomyDir + "/nodes.dmp.new";
+    FileUtil::copyFile(nodeFileName.c_str(), newNodeFileName.c_str());
+    FILE *nodeFile = fopen(newNodeFileName.c_str(), "a");
+    if (nodeFile == NULL) {
+        Debug(Debug::ERROR) << "Could not open " << newNodeFileName << " for writing\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    for (size_t i = 0; i < newAcc2taxid.size() - 1; i++) {
+        fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\n", newAcc2taxid[i].second.second, newAcc2taxid[i].second.first);
+    }
+    fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|", newAcc2taxid.back().second.second, newAcc2taxid.back().second.first);
+    fclose(nodeFile);
+
+    // Edit node.dmp
 }

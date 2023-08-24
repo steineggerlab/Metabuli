@@ -160,15 +160,6 @@ int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
     MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str(), 3);
     size_t numOfDiffIdx = FileUtil::getFileSize(targetDiffIdxFileName) / sizeof(uint16_t);
 
-    MmapedData<TargetKmerInfo> tempInfos = mmapData<TargetKmerInfo>(targetInfoFileName.c_str(), 3);
-    size_t numOfInfos = tempInfos.fileSize / sizeof(TargetKmerInfo);
-
-    // Print kmer infos
-    for (size_t i = 0; i < numOfInfos; i++) {
-        cout << (int) tempInfos.data[i].sequenceID << " " << (int) tempInfos.data[i].redundancy << endl;
-    }
-
-
     size_t queryKmerNum = queryKmerBuffer->startIndexOfReserve;
     QueryKmer *queryKmerList = queryKmerBuffer->buffer;
     
