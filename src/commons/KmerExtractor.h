@@ -29,8 +29,6 @@ private:
                                             const QuerySplit & currentSplit,
                                             const LocalParameters &par);
 
-
-
 public:
     explicit KmerExtractor(const LocalParameters & par);
     ~KmerExtractor();

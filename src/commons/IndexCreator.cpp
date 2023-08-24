@@ -1,11 +1,13 @@
 #include "IndexCreator.h"
-
+#include <cstdio>
 #include <utility>
 
 IndexCreator::IndexCreator(const LocalParameters & par) {
     // Parameters
     threadNum = par.threads;
     bufferSize = par.bufferSize;
+    reducedAA = par.reducedAA;
+    spaceMask = par.spaceMask;
     
     // Input files
     dbDir = par.filenames[0];
@@ -18,11 +20,11 @@ IndexCreator::IndexCreator(const LocalParameters & par) {
     fnaListFileName = par.filenames[1];
     acc2taxidFileName = par.filenames[2];
 
-    
     // Output files
     taxidListFileName = dbDir + "/taxID_list";
     taxonomyBinaryFileName = dbDir + "/taxonomyDB";
     versionFileName = dbDir + "/db.version";
+    paramterFileName = dbDir + "/db.parameters";
 
     // Load taxonomy
     taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp",
@@ -52,6 +54,11 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     // Read through FASTA files and make blocks of sequences to be processed by each thread
     makeBlocksForParallelProcessing();
     cout << "Made blocks for each thread" << endl;
+
+    // Print fnaSplits
+    for (auto & fnaSplit : fnaSplits) {
+        cout << fnaSplit.offset << " " << fnaSplit.cnt << " " << fnaSplit.speciesID << " " << fnaSplit.file_idx << " " << fnaSplit.training << endl;
+    }
 
     // Write taxonomy id list
     FILE * taxidListFile = fopen(taxidListFileName.c_str(), "w");
@@ -98,6 +105,7 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     }
     delete[] splitChecker;
     writeTaxonomyDB();
+    writeDbParameters();
 }
 
 void IndexCreator::updateIndex(const LocalParameters &par) {
@@ -207,22 +215,34 @@ void IndexCreator::splitFastaForProdigalTraining(int file_idx, TaxID speciesID) 
     bool stored = false;
     while(seqIdx < fastaList[file_idx].sequences.size()){
         stored = false;
+        
+        // Skip
         if(speciesID == 0) { seqIdx++; continue;}
 
+        // Length
         currLength = fastaList[file_idx].sequences[seqIdx].length;
         if (currLength > maxLength){
             maxLength = currLength;
             seqForTraining = seqIdx;
         }
         lengthSum += currLength;
+        
         cnt ++;
+        // Check the size of current split
         if(lengthSum > 100'000'000 || cnt > 300 || (cnt > 100 && lengthSum > 50'000'000)){
-            tempSplits.emplace_back(0, offset, cnt - 1, speciesID, file_idx);
-            offset += cnt - 1;
+            tempSplits.emplace_back(0, offset, cnt, speciesID, file_idx);
+            offset += cnt;
             lengthSum = 0;
-            cnt = 1;
+            cnt = 0;
             stored = true;
         }
+        // if(lengthSum > 100'000'000 || cnt > 300 || (cnt > 100 && lengthSum > 50'000'000)){
+        //     tempSplits.emplace_back(0, offset, cnt - 1, speciesID, file_idx);
+        //     offset += cnt - 1;
+        //     lengthSum = 0;
+        //     cnt = 1;
+        //     stored = true;
+        // }
         seqIdx ++;
     }
     if(!stored){
@@ -801,7 +821,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     cout << omp_get_thread_num() << " Processed " << i << "th splits (" << processedSplitCnt << ")" << endl;
 #endif
                     munmap(fastaFile.data, fastaFile.fileSize + 1);
-                }else {
+                } else {
                     // Withdraw the reservation if the buffer is full.
                     cout << "Buffer is full. Withdraw the reservation." << endl;
                     checker[i] = false;
@@ -826,4 +846,15 @@ void IndexCreator::writeTaxonomyDB() {
     fwrite(serialized.first, serialized.second, sizeof(char), handle);
     fclose(handle);
     free(serialized.first);
+}
+
+void IndexCreator::writeDbParameters() {
+    FILE *handle = fopen(paramterFileName.c_str(), "w");
+    if (handle == NULL) {
+        Debug(Debug::ERROR) << "Could not open " << paramterFileName << " for writing\n";
+        EXIT(EXIT_FAILURE);
+    }
+    fprintf(handle, "Reduced_alphabet\t%d\n", reducedAA);
+    fprintf(handle, "Spaced_kmer_mask\t%s\n", spaceMask.c_str());
+    fclose(handle);
 }

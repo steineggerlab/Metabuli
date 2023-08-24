@@ -1,18 +1,26 @@
 #include "Reporter.h"
 #include "taxonomyreport.cpp"
 
-Reporter::Reporter(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxonomy(taxonomy){
-    if (par.seqMode == 2) {
-        outDir = par.filenames[3];
-        jobId = par.filenames[4];
-    } else {
-        outDir = par.filenames[2];
-        jobId = par.filenames[3];
+Reporter::Reporter(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxonomy(taxonomy) {
+    if (par.contamList == "") { // classify module
+        if (par.seqMode == 2) {
+            outDir = par.filenames[3];
+            jobId = par.filenames[4];
+        } else {
+            outDir = par.filenames[2];
+            jobId = par.filenames[3];
+        }
+        // Output file names
+        reportFileName = outDir + + "/" + jobId + "_report.tsv";
+        readClassificationFileName = outDir + "/" + jobId + "_classifications.tsv";
     }
+
+    
+    
 }
 
 void Reporter::openReadClassificationFile() {
-    readClassificationFile.open(outDir + "/" + jobId + "_classifications.tsv");
+    readClassificationFile.open(readClassificationFileName);
 }
 
 void Reporter::writeReadClassification(const vector<Query> & queryList, bool classifiedOnly) {
@@ -38,20 +46,22 @@ void Reporter::closeReadClassificationFile() {
     readClassificationFile.close();
 }
 
-void Reporter::writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt) {
+void Reporter::writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt, bool krona) {
     unordered_map<TaxID, TaxonCounts> cladeCounts = taxonomy->getCladeCounts(taxCnt);
     FILE *fp;
-    fp = fopen((outDir + + "/" + jobId + "_report.tsv").c_str(), "w");
+    fp = fopen((reportFileName).c_str(), "w");
     writeReport(fp, cladeCounts, numOfQuery);
     fclose(fp);
 
     // Write Krona chart
-    FILE *kronaFile = fopen((outDir + "/" + jobId + "_krona.html").c_str(), "w");
-    fwrite(krona_prelude_html, krona_prelude_html_len, sizeof(char), kronaFile);
-    fprintf(kronaFile, "<node name=\"all\"><magnitude><val>%zu</val></magnitude>", numOfQuery);
-    kronaReport(kronaFile, *taxonomy, cladeCounts, numOfQuery);
-    fprintf(kronaFile, "</node></krona></div></body></html>");
-
+    if (krona) {
+        FILE *kronaFile = fopen((outDir + "/" + jobId + "_krona.html").c_str(), "w");
+        fwrite(krona_prelude_html, krona_prelude_html_len, sizeof(char), kronaFile);
+        fprintf(kronaFile, "<node name=\"all\"><magnitude><val>%zu</val></magnitude>", numOfQuery);
+        kronaReport(kronaFile, *taxonomy, cladeCounts, numOfQuery);
+        fprintf(kronaFile, "</node></krona></div></body></html>");
+        fclose(kronaFile);
+    }
 }
 
 void Reporter::writeReport(FILE *FP, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts,

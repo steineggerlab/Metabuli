@@ -2,14 +2,15 @@
 #include "Parameters.h"
 #include "LocalParameters.h"
 #include "FileUtil.h"
+#include "common.h"
 
 void setClassifyDefaults(LocalParameters & par){
-    par.seqMode = 2;
     par.reducedAA = 0;
+    par.spaceMask = "11111111";
+    par.seqMode = 2;    
     par.minScore = 0;
     par.minCoverage = 0;
     par.minSpScore = 0;
-    par.spaceMask = "11111111";
     par.hammingMargin = 0;
     par.verbosity = 3;
     par.ramUsage = 128;

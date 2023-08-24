@@ -17,13 +17,14 @@ private:
     NcbiTaxonomy * taxonomy;
 
     // Output
+    string reportFileName;
+    string readClassificationFileName;
     ofstream readClassificationFile;
-
 
 public:
     Reporter(const LocalParameters &par, NcbiTaxonomy *taxonomy);
     // Write report
-    void writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt);
+    void writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt, bool krona = true);
     void writeReport(FILE *FP, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts,
                      unsigned long totalReads, TaxID taxID = 0, int depth = 0);
 
@@ -32,10 +33,16 @@ public:
     void writeReadClassification(const vector<Query> & queryList, bool classifiedOnly = false);
     void closeReadClassificationFile();
 
-   
-
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts> &map, TaxID key);
 
+    // Setter
+    void setReportFileName(const string &reportFileName) {
+        Reporter::reportFileName = reportFileName;
+    }
+
+    void setReadClassificationFileName(const string &readClassificationFileName) {
+        Reporter::readClassificationFileName = readClassificationFileName;
+    }
 };
 
 

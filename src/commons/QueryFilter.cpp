@@ -1,4 +1,5 @@
 #include "QueryFilter.h"
+#include "common.h"
 
 QueryFilter::QueryFilter(LocalParameters & par) {
     // Load parameters
@@ -7,14 +8,11 @@ QueryFilter::QueryFilter(LocalParameters & par) {
     printMode = par.printMode;
     seqMode = par.seqMode;
     contams = Util::split(par.contamList, ",");
+    loadDbParameters(par);
     
     // Taxonomy
     taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
-    // if (par.taxonomyPath == "DBDIR/taxonomy/") par.taxonomyPath = dbDir + "/taxonomy/";
-    // taxonomy = new NcbiTaxonomy(par.taxonomyPath + "/names.dmp",
-    //                             par.taxonomyPath + "/nodes.dmp",
-    //                             par.taxonomyPath + "/merged.dmp");
-
+ 
     // Agents
     queryIndexer = new QueryIndexer(par);
     kmerExtractor = new KmerExtractor(par);
@@ -22,13 +20,19 @@ QueryFilter::QueryFilter(LocalParameters & par) {
     else { kmerMatcher = new KmerMatcher(par, taxonomy);}
     taxonomer = new Taxonomer(par, taxonomy);
     reporter = new Reporter(par, taxonomy);
-
     setInputAndOutputFiles(par);
+    reporter->setReadClassificationFileName(readClassificationFileName);
+    reporter->setReportFileName(reportFileName);
+    cout << "Filtered reads: " << f1 << endl;
+    if (par.seqMode == 2) { cout << "Filtered reads: " << f2 << endl; }
+    if (printMode == 2) {
+        cout << "Removed reads: " << rm1 << endl;
+        if (par.seqMode == 2) { cout << "Removed reads: " << rm2 << endl; }
+    }
+
     filter_kseq1 = KSeqFactory(in1.c_str());
     if (par.seqMode == 2) { filter_kseq2 = KSeqFactory(in2.c_str()); }
 
-    isFiltered = new bool[queryIndexer->getReadNum_1()];
-    memset(isFiltered, 0, sizeof(bool) * queryIndexer->getReadNum_1());
     readCounter = 0;
 
     // Open output files
@@ -38,6 +42,8 @@ QueryFilter::QueryFilter(LocalParameters & par) {
         rm1_fp = fopen(rm1.c_str(), "w");
         if (par.seqMode == 2) { rm2_fp = fopen(rm2.c_str(), "w"); }
     }
+
+
 }
 
 QueryFilter::~QueryFilter() {
@@ -59,19 +65,22 @@ QueryFilter::~QueryFilter() {
 }
 
 void QueryFilter::setInputAndOutputFiles(const LocalParameters & par) {
+    cout << "Setting output file names" << endl;
     // Get the base name of in1
     in1 = par.filenames[0];
     string baseName = LocalUtil::getQueryBaseName(in1);
 
     // Set the output file names
-    f1 = baseName + "_filtered.fna.gz";
-    rm1 = baseName + "_removed.fna.gz";
+    f1 = baseName + "_filtered.fna";
+    rm1 = baseName + "_removed.fna";
+    reportFileName = baseName + "_report.tsv";
+    readClassificationFileName = baseName + "_classifications.tsv";
 
     // For paired-end reads
     if (seqMode == 2) {
         in2 = par.filenames[1];
-        f2 = LocalUtil::getQueryBaseName(in2) + "_filtered.fna.gz";
-        rm2 = LocalUtil::getQueryBaseName(in2) + "_removed.fna.gz";
+        f2 = LocalUtil::getQueryBaseName(in2) + "_filtered.fna";
+        rm2 = LocalUtil::getQueryBaseName(in2) + "_removed.fna";
     }
 }
 
@@ -88,7 +97,7 @@ void QueryFilter::printFilteredReads() {
         if (seqMode == 2) { filter_kseq2->ReadEntry(); }
 
         // Print reads
-        if (isFiltered[i]) { // Print filtered reads
+        if (!isFiltered[i]) { // Print filtered reads
             fprintf(f1_fp, ">%s\n%s\n", filter_kseq1->entry.name.s, filter_kseq1->entry.sequence.s);
             if (seqMode == 2) { fprintf(f2_fp, ">%s\n%s\n", filter_kseq2->entry.name.s, filter_kseq2->entry.sequence.s); }
         } else if (printMode == 2) { // Print removed reads
@@ -105,16 +114,21 @@ void QueryFilter::filterReads(LocalParameters & par) {
     size_t numOfSeq = queryIndexer->getReadNum_1();
     size_t totalReadLength = queryIndexer->getTotalReadLength();
     const vector<QuerySplit> & queryReadSplit = queryIndexer->getQuerySplits();
+    // print queryReadSplit
+    // for (size_t i = 0; i < queryReadSplit.size(); i++) {
+    //     cout << queryReadSplit[i].start << " " << queryReadSplit[i].end << " " << queryReadSplit[i].kmerCnt << endl;
+    // }
     cout << "Done" << endl;
     cout << "Total number of sequences: " << numOfSeq << endl;
     cout << "Total read length: " << totalReadLength <<  "nt" << endl;
 
+    isFiltered = new bool[queryIndexer->getReadNum_1()];
+    memset(isFiltered, 0, sizeof(bool) * queryIndexer->getReadNum_1());
     QueryKmerBuffer kmerBuffer;
     Buffer<Match> matchBuffer;
     vector<Query> queryList;
 
     size_t numOfTatalQueryKmerCnt = 0;
-    size_t totalMatchCnt = 0;
     size_t processedSeqCnt = 0;
     reporter->openReadClassificationFile();
 
@@ -169,8 +183,11 @@ void QueryFilter::filterReads(LocalParameters & par) {
 
         recordFilteredReads(queryList);
     }
+
+    cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
+    cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
     printFilteredReads();
-    reporter->writeReportFile(numOfSeq, taxonomer->getTaxCounts());
+    reporter->writeReportFile(numOfSeq, taxonomer->getTaxCounts(), false);
     reporter->closeReadClassificationFile();
 
     // Memory deallocation

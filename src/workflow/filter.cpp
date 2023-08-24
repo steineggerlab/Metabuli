@@ -1,13 +1,13 @@
 #include "LocalParameters.h"
 #include "QueryFilter.h"
 
-void setFilterDefaults(LocalParameters & par){
-    par.seqMode = 2;
+void setFilterDefaults(LocalParameters & par) {
     par.reducedAA = 0;
-    par.minScore = 0.7;
+    par.spaceMask = "11111111";
+    par.seqMode = 2;
+    par.minScore = 0.5;
     par.minCoverage = 0;
     par.minSpScore = 0;
-    par.spaceMask = "11111111";
     par.hammingMargin = 0;
     par.verbosity = 3;
     par.ramUsage = 128;
@@ -25,8 +25,7 @@ void setFilterDefaults(LocalParameters & par){
     par.contamList = ""; // TODO: set default
 }
 
-int filter(int argc, const char **argv, const Command& command)
-{
+int filter(int argc, const char **argv, const Command& command) {
     LocalParameters & par = LocalParameters::getLocalInstance();
     setFilterDefaults(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
@@ -34,6 +33,11 @@ int filter(int argc, const char **argv, const Command& command)
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
 #endif
+
+    if (par.contamList == "") {
+        cerr << "Error: Contamination list is not specified." << endl;
+        return 1;
+    }
 
     QueryFilter * queryFilter = new QueryFilter(par);
     

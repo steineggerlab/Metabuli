@@ -67,7 +67,7 @@ std::vector<Command> commands = {
                  {"DB dir", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory},
                  {"out dir", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory},
                  {"job ID", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
-        {"filter", classify, &localPar.filter, COMMAND_MAIN,
+        {"filter", filter, &localPar.filter, COMMAND_MAIN,
                 "Filtering reads based on the classification result",
                 nullptr,
                 "Jaebeom Kim <jbeom0731@gmail.com>",

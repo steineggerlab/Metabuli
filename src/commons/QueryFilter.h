@@ -29,7 +29,11 @@ private:
     KSeqWrapper* filter_kseq1;
     KSeqWrapper* filter_kseq2;
 
-    std::string in1, in2, f1, f2, rm1, rm2; // input and output file names
+    std::string in1, in2;
+    std::string f1, f2, rm1, rm2; // input and output file names
+    std::string readClassificationFileName;
+    std::string reportFileName;
+    
     bool * isFiltered;
     size_t readCounter;
     FILE * f1_fp, * f2_fp, * rm1_fp, * rm2_fp;

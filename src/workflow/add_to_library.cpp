@@ -6,6 +6,7 @@
 #include <iostream>
 #include "IndexCreator.h"
 #include "FileUtil.h"
+#include "common.h"
 #include <regex>
 
 using namespace std;
@@ -33,10 +34,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
     }
 
     // Load taxonomy
-    string names = par.taxonomyPath + "/names.dmp";
-    string nodes =  par.taxonomyPath + "/nodes.dmp";
-    string merged =  par.taxonomyPath + "/merged.dmp";
-    NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
+    NcbiTaxonomy * taxonomy = loadTaxonomy(dbDir);
 
     // Load file names
     ifstream fileListFile;
@@ -91,7 +89,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
                 }
 
                 // Get species taxID
-                int speciesTaxID = ncbiTaxonomy.getTaxIdAtRank(acc2taxid[accession], "species");
+                int speciesTaxID = taxonomy->getTaxIdAtRank(acc2taxid[accession], "species");
 
                 // Skip if species taxID is not found
                 if (speciesTaxID == 0) {
@@ -157,7 +155,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             }
 
             // Get species taxID
-            int speciesTaxID = ncbiTaxonomy.getTaxIdAtRank(assembly2taxid[assemblyID], "species");
+            int speciesTaxID = taxonomy->getTaxIdAtRank(assembly2taxid[assemblyID], "species");
             if (speciesTaxID == 0) {
                 cout << "During processing " << fileNames[i] << ", accession " << assemblyID <<
                      " is not matched to any species. It is skipped." << endl;
@@ -196,5 +194,6 @@ int addToLibrary(int argc, const char **argv, const Command &command){
         }
         fclose(file);
     }
+    delete taxonomy;
     return EXIT_SUCCESS;
 }

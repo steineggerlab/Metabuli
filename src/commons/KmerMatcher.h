@@ -91,6 +91,8 @@ protected:
 
   static bool compareMatches(const Match &a, const Match &b);
 
+  void loadTaxIdList(const LocalParameters & par);
+
 public:
   KmerMatcher(const LocalParameters &par, NcbiTaxonomy *taxonomy);
 

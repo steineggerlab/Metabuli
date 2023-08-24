@@ -1,6 +1,7 @@
 #ifndef ADCLASSIFIER2_COMMON_H
 #define ADCLASSIFIER2_COMMON_H
 #include <utility>
+#include "LocalParameters.h"
 #include "NcbiTaxonomy.h"
 #include <iostream>
 
@@ -82,5 +83,7 @@ inline bool fileExist(const std::string& name) {
 void process_mem_usage(double& vm_usage, double& resident_set);
 
 NcbiTaxonomy * loadTaxonomy(const std::string & dbDir, const std::string & taxonomyDir = "");
+
+int loadDbParameters(LocalParameters & par);
 
 #endif //ADCLASSIFIER2_COMMON_H

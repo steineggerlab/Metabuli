@@ -6,6 +6,7 @@
 #include <unistd.h>
 // #include "MathUtil.h"
 #include "Debug.h"
+#include "Reporter.h"
 #include "Util.h"
 #include "sys/mman.h"
 
@@ -71,4 +72,26 @@ NcbiTaxonomy *loadTaxonomy(const std::string &dbDir,
   return new NcbiTaxonomy(dbDir + "/taxonomy/names.dmp",
                           dbDir + "/taxonomy/nodes.dmp",
                           dbDir + "/taxonomy/merged.dmp");
+}
+
+int loadDbParameters(LocalParameters &par) {
+  std::string dbDir = par.filenames[1 + (par.seqMode == 2)];
+  if (fileExist(dbDir + "/db.parameters")) {
+    // open db.parameters
+    std::ifstream dbParametersFile;
+    dbParametersFile.open(dbDir + "/db.parameters");
+    std::string eachLine;
+    if (dbParametersFile.is_open()) {
+      while (getline(dbParametersFile, eachLine)) {
+        std::vector<std::string> tokens = Util::split(eachLine, "\t");
+        if (tokens[0] == "Reduced_alphabet") {
+          par.reducedAA = stoi(tokens[1]);
+        } else if (tokens[0] == "Spaced_kmer_mask") {
+          par.spaceMask = tokens[1];
+        }
+      }
+      return 1;
+    }
+  }
+  return 0;
 }

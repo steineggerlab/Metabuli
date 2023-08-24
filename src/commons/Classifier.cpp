@@ -1,16 +1,15 @@
 #include "Classifier.h"
+#include "FileUtil.h"
+#include "common.h"
 
 Classifier::Classifier(LocalParameters & par) {
     // Load parameters
     dbDir = par.filenames[1 + (par.seqMode == 2)];
     matchPerKmer = par.matchPerKmer;
-
+    loadDbParameters(par);
+    
     // Taxonomy
     taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
-    // if (par.taxonomyPath == "DBDIR/taxonomy/") par.taxonomyPath = dbDir + "/taxonomy/";
-    // taxonomy = new NcbiTaxonomy(par.taxonomyPath + "/names.dmp",
-    //                             par.taxonomyPath + "/nodes.dmp",
-    //                             par.taxonomyPath + "/merged.dmp");
 
     // Agents
     queryIndexer = new QueryIndexer(par);

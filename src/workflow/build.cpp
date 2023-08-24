@@ -10,7 +10,7 @@ void setDefaults_build(LocalParameters & par){
     par.taxonomyPath = "" ;
     par.splitNum = 4096;
     par.maskProb = 0.9;
-    par.maskMode = 0;
+    par.maskMode = 1;
     par.bufferSize = 1'000'000'000;
 }
 

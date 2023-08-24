@@ -21,23 +21,16 @@
 #ifndef BITMAP_H_
 #define BITMAP_H_
 
- unsigned char static test(unsigned char *bm, int ndx) {
-     return ( bm[ndx>>3] & (1 << (ndx&0x07))?1:0 );
- }
+/* Test a bit, 0 = not set, 1 = set */
+unsigned char test(unsigned char *bm, int ndx);
 
 /* Clear a bit (set it to 0) */
- void static clear(unsigned char *bm, int ndx) {
-     bm[ndx>>3] &= ~(1 << (ndx&0x07));
- }
+void clear(unsigned char *bm, int ndx);
 
 /* Set a bit to 1 */
- void static set(unsigned char *bm, int ndx) {
-     bm[ndx>>3] |= (1 << (ndx&0x07));
- }
+void set(unsigned char *bm, int ndx);
 
 /* Flip a bit's value 0->1 or 1->0 */
- void static toggle(unsigned char *bm, int ndx) {
-     bm[ndx>>3] ^= (1 << (ndx&0x07));
- }
+void toggle(unsigned char *bm, int ndx);
 
 #endif

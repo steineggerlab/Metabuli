@@ -42,6 +42,8 @@ private:
     // Parameters
     int threadNum;
     size_t bufferSize;
+    int reducedAA;
+    string spaceMask;
     
     // Inputs
     NcbiTaxonomy * taxonomy;
@@ -50,11 +52,11 @@ private:
     string taxonomyDir;
     string acc2taxidFileName;
 
-
     // Outputs
     string taxidListFileName;
     string taxonomyBinaryFileName;
     string versionFileName;
+    string paramterFileName;
 
     struct FASTA {
         string path;
@@ -104,6 +106,8 @@ private:
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
 
     void writeTaxonomyDB();
+
+    void writeDbParameters();
 
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
 
