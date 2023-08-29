@@ -88,6 +88,11 @@ int loadDbParameters(LocalParameters &par) {
           par.reducedAA = stoi(tokens[1]);
         } else if (tokens[0] == "Spaced_kmer_mask") {
           par.spaceMask = tokens[1];
+        } else if (tokens[0] == "Accession_level") {
+          if (tokens[1] == "0" && par.accessionLevel == 1){
+            par.accessionLevel = 0;
+            cerr << "Warning: Current DB doesn't support accession-level classification." << endl;
+          }
         }
       }
       return 1;

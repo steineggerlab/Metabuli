@@ -174,6 +174,13 @@ LocalParameters::LocalParameters() :
                     typeid(size_t),
                     (void *) &bufferSize,
                     "^[0-9]+$"),
+        ACCESSION_LEVEL(ACCESSION_LEVEL_ID,
+                        "--accession-level",
+                        "Build a database for accession level classification",
+                        "Build a database for accession level classification",
+                        typeid(int),
+                        (void *) &accessionLevel,
+                        "[0-1]"),
         TEST_RANK(TEST_RANK_ID,
                   "--test-rank",
                   ".",
@@ -249,6 +256,7 @@ LocalParameters::LocalParameters() :
     build.push_back(&PARAM_MASK_PROBABILTY);
     build.push_back(&PARAM_MASK_RESIDUES);
     build.push_back(&BUFFER_SIZE);
+    build.push_back(&ACCESSION_LEVEL);
 
     //classify
     classify.push_back(&PARAM_THREADS);
@@ -271,6 +279,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&PARAM_MASK_RESIDUES);
     classify.push_back(&PARAM_MASK_PROBABILTY);
     classify.push_back(&MATCH_PER_KMER);
+    classify.push_back(&ACCESSION_LEVEL);
 
     // filter 
     filter.push_back(&PARAM_THREADS);
@@ -295,7 +304,8 @@ LocalParameters::LocalParameters() :
     filter.push_back(&MATCH_PER_KMER);
     filter.push_back(&PRINT_MODE);
     filter.push_back(&CONTAM_LIST);
-
+    filter.push_back(&ACCESSION_LEVEL);
+    
     //updateTargetDB
     exclusiontest_hiv.push_back(&TEST_RANK);
 

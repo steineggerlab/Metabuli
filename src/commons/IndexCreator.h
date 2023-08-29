@@ -45,6 +45,7 @@ private:
     size_t bufferSize;
     int reducedAA;
     string spaceMask;
+    int accessionLevel;
     
     // Inputs
     NcbiTaxonomy * taxonomy;
@@ -112,6 +113,8 @@ private:
     void writeDbParameters();
 
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
+    
+    static bool compareForDiffIdx2(const TargetKmer & a, const TargetKmer & b);
 
 //    void maskLowComplexityRegions(char * seq, char * maskedSeq, ProbabilityMatrix & probMat,
 //                                  const LocalParameters & par);
@@ -122,6 +125,8 @@ private:
 
 
     void makeBlocksForParallelProcessing();
+
+    void makeBlocksForParallelProcessing_accession_level();
 
     void splitFastaForProdigalTraining(int file_idx, TaxID speciesID);
 
@@ -159,6 +164,11 @@ public:
                                   const string & seqFileName,
                                   const unordered_map<string, TaxID> & acc2taxid,
                                   vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid);
+
+    string getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
+                                  const string & seqFileName,
+                                  const unordered_map<string, TaxID> & acc2taxid,
+                                  unordered_map<string, TaxID> & foundAcc2taxid);
 
     static void getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const char * seqFileName);
     IndexCreator(const LocalParameters & par);

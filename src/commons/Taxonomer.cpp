@@ -220,7 +220,6 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
         queryList[currentQuery].taxCnt[genusMatches[i].targetId]++;
     }
 
-
     // Store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].classification = result;
