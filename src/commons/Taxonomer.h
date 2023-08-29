@@ -30,6 +30,7 @@ private:
     // Parameters
     int maxGap;
     int minCoveredPos;
+    int accessionLevel;
 
     struct MatchBlock {
         MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) {}

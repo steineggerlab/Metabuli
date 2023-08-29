@@ -23,6 +23,7 @@ void setFilterDefaults(LocalParameters & par) {
     par.matchPerKmer = 4;
     par.printMode = 1;
     par.contamList = ""; // TODO: set default
+    par.accessionLevel = 0;
 }
 
 int filter(int argc, const char **argv, const Command& command) {

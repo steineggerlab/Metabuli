@@ -1,4 +1,6 @@
 #include "Taxonomer.h"
+#include "NcbiTaxonomy.h"
+#include <unordered_map>
 
 
 Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxonomy(taxonomy) {
@@ -15,6 +17,7 @@ Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxon
     delete[] mask;
     maxGap = par.maxGap;
     minCoveredPos = par.minCoveredPos;
+    accessionLevel = par.accessionLevel;
 }
 
 Taxonomer::~Taxonomer() {
@@ -262,13 +265,42 @@ TaxID Taxonomer::lowerRankClassification(vector<Match> &matches, pair<int, int> 
             }
             i--;
         }
+        // if (accessionLevel == 2) {
+        //     if (taxonomy->taxonNode(minHammingTaxId).) {
+        //         minHammingTaxId = taxonomy->taxonNode(minHammingTaxId)->parentTaxId;
+        //     }
+        // }
         taxCnt[minHammingTaxId]++;
     }
 
     unordered_map<TaxID, TaxonCounts> cladeCnt;
     getSpeciesCladeCounts(taxCnt, cladeCnt, spTaxId);
 
-    return BFS(cladeCnt, spTaxId);
+    if (accessionLevel == 2) {
+        unordered_map<TaxID, TaxonCounts> trimmedCladeCnt;
+        // Remove leaf nodes
+        for (auto it = cladeCnt.begin(); it != cladeCnt.end(); it++) {
+            TaxonNode const * taxon = taxonomy->taxonNode(it->first);
+            if (strcmp(taxonomy->getString(taxon->rankIdx), "") == 0) {
+                // trimmedCladeCnt[it->first] = it->second;
+                cladeCnt[taxon->parentTaxId].children.clear();
+            } 
+            // if (strcmp(taxonomy->getString(taxonomy->taxonNode(it->first)->rankIdx), "") != 0) {
+            //     trimmedCladeCnt[it->first] = it->second;
+            // } else {
+            //     cout << it->first << endl;
+            // }
+
+            // if (!it->second.children.empty() || it->first == spTaxId) {
+            //     trimmedCladeCnt[it->first] = it->second;
+            // } else if (it->second.children.empty()) {
+            //     cout << it->first << endl;
+            // }
+        }
+        return BFS(cladeCnt, spTaxId);
+    } else {
+        return BFS(cladeCnt, spTaxId);
+    }
 }
 
 void Taxonomer::getSpeciesCladeCounts(const unordered_map<TaxID, unsigned int> &taxCnt,
@@ -294,6 +326,10 @@ void Taxonomer::getSpeciesCladeCounts(const unordered_map<TaxID, unsigned int> &
 
 TaxID Taxonomer::BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID root) {
     if (cladeCnt.at(root).children.empty()) { // root is a leaf
+        return root;
+    }
+    if (cladeCnt.find(cladeCnt.at(root).children[0]) == cladeCnt.end()) { // its children are trimmed
+        // cout << cladeCnt.at(root).children[0] << endl;
         return root;
     }
     unsigned int maxCnt = 3;

@@ -12,6 +12,7 @@ void setDefaults_build(LocalParameters & par){
     par.maskProb = 0.9;
     par.maskMode = 1;
     par.bufferSize = 1'000'000'000;
+    par.accessionLevel = 0;
 }
 
 int build(int argc, const char **argv, const Command &command){

@@ -94,18 +94,13 @@ void IndexCreator::createIndex(const LocalParameters &par) {
         // Sort the k-mers
         time_t start = time(nullptr);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
-                      IndexCreator::compareForDiffIdx2);
+                      IndexCreator::compareForDiffIdx);
         time_t sort = time(nullptr);
         cout << "Sort time: " << sort - start << endl;
         auto * uniqKmerIdx = new size_t[kmerBuffer.startIndexOfReserve + 1];
         size_t uniqKmerCnt = 0;
 
-        // Print out the k-mers
-        string tmpFileName = dbDir + "/tmp";
-        FILE * tmpFile = fopen(tmpFileName.c_str(), "wb");
-        fwrite(kmerBuffer.buffer, sizeof(uint16_t), kmerBuffer.startIndexOfReserve, tmpFile);
-        fclose(tmpFile);
-
+        // Reduce redundancy
         reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt, par);
         time_t reduction = time(nullptr);
         cout<<"Time spent for reducing redundancy: "<<(double) (reduction - sort) << endl;

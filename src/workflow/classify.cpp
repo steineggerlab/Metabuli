@@ -24,6 +24,7 @@ void setClassifyDefaults(LocalParameters & par){
     par.maskMode = 0;
     par.maskProb = 0.9;
     par.matchPerKmer = 4;
+    par.accessionLevel = 0;
 }
 
 int classify(int argc, const char **argv, const Command& command)

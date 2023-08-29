@@ -93,6 +93,9 @@ int loadDbParameters(LocalParameters &par) {
             par.accessionLevel = 0;
             cerr << "Warning: Current DB doesn't support accession-level classification." << endl;
           }
+          if (tokens[1] == "1" && par.accessionLevel == 0){
+            par.accessionLevel = 2;
+          }
         }
       }
       return 1;
