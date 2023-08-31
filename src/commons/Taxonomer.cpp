@@ -265,37 +265,22 @@ TaxID Taxonomer::lowerRankClassification(vector<Match> &matches, pair<int, int> 
             }
             i--;
         }
-        // if (accessionLevel == 2) {
-        //     if (taxonomy->taxonNode(minHammingTaxId).) {
-        //         minHammingTaxId = taxonomy->taxonNode(minHammingTaxId)->parentTaxId;
-        //     }
-        // }
         taxCnt[minHammingTaxId]++;
     }
 
     unordered_map<TaxID, TaxonCounts> cladeCnt;
     getSpeciesCladeCounts(taxCnt, cladeCnt, spTaxId);
 
-    if (accessionLevel == 2) {
-        unordered_map<TaxID, TaxonCounts> trimmedCladeCnt;
+    if (accessionLevel == 2) { // Don't do accession-level classification
         // Remove leaf nodes
         for (auto it = cladeCnt.begin(); it != cladeCnt.end(); it++) {
             TaxonNode const * taxon = taxonomy->taxonNode(it->first);
             if (strcmp(taxonomy->getString(taxon->rankIdx), "") == 0) {
-                // trimmedCladeCnt[it->first] = it->second;
-                cladeCnt[taxon->parentTaxId].children.clear();
+                // Remove current node from its parent's children list
+                cladeCnt[taxon->parentTaxId].children.erase(find(cladeCnt[taxon->parentTaxId].children.begin(),
+                                                                 cladeCnt[taxon->parentTaxId].children.end(),
+                                                                 it->first));
             } 
-            // if (strcmp(taxonomy->getString(taxonomy->taxonNode(it->first)->rankIdx), "") != 0) {
-            //     trimmedCladeCnt[it->first] = it->second;
-            // } else {
-            //     cout << it->first << endl;
-            // }
-
-            // if (!it->second.children.empty() || it->first == spTaxId) {
-            //     trimmedCladeCnt[it->first] = it->second;
-            // } else if (it->second.children.empty()) {
-            //     cout << it->first << endl;
-            // }
         }
         return BFS(cladeCnt, spTaxId);
     } else {
@@ -326,10 +311,6 @@ void Taxonomer::getSpeciesCladeCounts(const unordered_map<TaxID, unsigned int> &
 
 TaxID Taxonomer::BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID root) {
     if (cladeCnt.at(root).children.empty()) { // root is a leaf
-        return root;
-    }
-    if (cladeCnt.find(cladeCnt.at(root).children[0]) == cladeCnt.end()) { // its children are trimmed
-        // cout << cladeCnt.at(root).children[0] << endl;
         return root;
     }
     unsigned int maxCnt = 3;
@@ -1024,7 +1005,6 @@ TaxonScore Taxonomer::chooseSpecies(const vector<Match> &matches,
                                      unordered_map<TaxID, pair<int, int>> & speciesMatchRange) {
     // Score each species
     std::unordered_map<TaxID, TaxonScore> speciesScores;
-
 
     size_t i = 0;
     TaxID currentSpeices;
