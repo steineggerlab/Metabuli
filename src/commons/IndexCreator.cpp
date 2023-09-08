@@ -344,7 +344,7 @@ TaxID IndexCreator::load_accession2taxid(const string & mappingFileName, unorder
         char accession_version[2048];
         int taxID;
         fscanf(mappingFile, "%*s\t%*s\t%*s\t%*s");
-        while (fscanf(mappingFile, "%s\t%s\t%d\t%*d", accession, accession_version, &taxID) == 2 ){
+        while (fscanf(mappingFile, "%s\t%s\t%d\t%*d", accession, accession_version, &taxID) == 3 ){
             acc2taxid[string(accession_version)] = taxID;
             acc2taxid[string(accession)] = taxID;
             if (taxID > maxTaxID) {
@@ -701,18 +701,13 @@ string IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
         accession_version = firstLine.substr(1, LocalUtil::getFirstWhiteSpacePos(firstLine) - 1);
         newAcc2taxid.emplace_back(accession_version, make_pair(acc2taxid.at(accession), newTaxID));
         taxIdList.push_back(newTaxID++);
-//        cout << firstLine << endl;
-        // taxIdList.push_back(acc2taxid.at(firstLine.substr(1, firstLine.find('.') - 1)));
-        // foundAcc2taxid[firstLine.substr(1, firstLine.find(' ') - 1)] = taxIdList.back();
+
         while (getline(seqFile, eachLine, '\n')) {
             if (eachLine[0] == '>') {
                 accession = eachLine.substr(1, eachLine.find('.') - 1);
                 accession_version = eachLine.substr(1, LocalUtil::getFirstWhiteSpacePos(eachLine) - 1);
                 newAcc2taxid.emplace_back(accession_version, make_pair(acc2taxid.at(accession), newTaxID));
                 taxIdList.push_back(newTaxID++);
-//                cout << eachLine << endl;
-                // taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find('.') - 1)));
-                // foundAcc2taxid[eachLine.substr(1, eachLine.find(' ') - 1)] = taxIdList.back();
                 pos = (size_t) seqFile.tellg();
                 seqSegmentsTmp.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
                 start = pos - eachLine.length() - 1;
