@@ -5,7 +5,9 @@
 #include <bits/types/FILE.h>
 #include <cstdint>
 #include <cstdio>
+#include <unordered_map>
 #include <utility>
+#include "NcbiTaxonomy.cpp"
 
 IndexCreator::IndexCreator(const LocalParameters & par) {
     // Parameters
@@ -1021,6 +1023,26 @@ void IndexCreator::writeDbParameters() {
 }
 
 void IndexCreator::editTaxonomyDumpFiles(const vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid) {
+    // Load merged.dmp
+    string mergedFileName = taxonomyDir + "/merged.dmp";
+    std::ifstream ss(mergedFileName);
+    if (ss.fail()) {
+        Debug(Debug::ERROR) << "File " << mergedFileName << " not found!\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    std::string line;
+    size_t count = 0;
+    unordered_map<int, int> mergedMap;
+    while (std::getline(ss, line)) {
+        std::vector<std::string> result = splitByDelimiter(line, "\t|\t", 2);
+        if (result.size() != 2) {
+            Debug(Debug::ERROR) << "Invalid name entry!\n";
+            EXIT(EXIT_FAILURE);
+        }
+        mergedMap[atoi(result[0].c_str())] = atoi(result[1].c_str());
+    }
+
     // Edit names.dmp
     string nameFileName = taxonomyDir + "/names.dmp";
     string newNameFileName = taxonomyDir + "/names.dmp.new";
@@ -1048,10 +1070,19 @@ void IndexCreator::editTaxonomyDumpFiles(const vector<pair<string, pair<TaxID, T
     }
 
     for (size_t i = 0; i < newAcc2taxid.size() - 1; i++) {
-        fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\n", newAcc2taxid[i].second.second, newAcc2taxid[i].second.first);
+        // Check if the parent taxon is merged
+        if (mergedMap.find(newAcc2taxid[i].second.first) != mergedMap.end()) { // merged
+            fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\n", newAcc2taxid[i].second.second, mergedMap[newAcc2taxid[i].second.first]);
+        } else {
+            fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\n", newAcc2taxid[i].second.second, newAcc2taxid[i].second.first);
+        }
+        // fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\n", newAcc2taxid[i].second.second, taxonomy->taxonNode(newAcc2taxid[i].second.first)->taxId);
     }
-    fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|", newAcc2taxid.back().second.second, newAcc2taxid.back().second.first);
+    // Check if the parent taxon is merged
+    if (mergedMap.find(newAcc2taxid.back().second.first) != mergedMap.end()) { // merged
+        fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|", newAcc2taxid.back().second.second, mergedMap[newAcc2taxid.back().second.first]);
+    } else {
+        fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|", newAcc2taxid.back().second.second, newAcc2taxid.back().second.first);
+    }
     fclose(nodeFile);
-
-    // Edit node.dmp
 }
