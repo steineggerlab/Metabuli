@@ -340,11 +340,13 @@ TaxID IndexCreator::load_accession2taxid(const string & mappingFileName, unorder
     string eachLine;
     string eachItem;
     if (FILE * mappingFile = fopen(mappingFileName.c_str(), "r")) {
-        char buffer[512];
+        char accession[2048];
+        char accession_version[2048];
         int taxID;
         fscanf(mappingFile, "%*s\t%*s\t%*s\t%*s");
-        while (fscanf(mappingFile, "%s\t%*s\t%d\t%*d", buffer, &taxID) == 2 ){
-            acc2taxid[string(buffer)] = taxID;
+        while (fscanf(mappingFile, "%s\t%s\t%d\t%*d", accession, accession_version, &taxID) == 2 ){
+            acc2taxid[string(accession_version)] = taxID;
+            acc2taxid[string(accession)] = taxID;
             if (taxID > maxTaxID) {
                 maxTaxID = taxID;
             }

@@ -2,9 +2,15 @@
 
 # set output directory
 OUT=$1
+TAX_DIR="${OUT}/taxonomy"
 PWD=$(pwd)
 ar_gz="${PWD}/ar.tar.gz"
 bac_gz="${PWD}/bac.tar.gz"
+
+# mkdir TAX_DIR if it doesn't exist
+if [ ! -d "${TAX_DIR}" ]; then
+  mkdir -p "${TAX_DIR}"
+fi
 
 
 wget -O "${ar_gz}" https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/ar53_metadata.tar.gz
@@ -42,14 +48,14 @@ awk -F '\t' '$1 ~ /^(R|G)/{print $1,$55,$111}' "${ar_bac_meta_wTaxIDs}" | while 
 	fi
 done > "${map}"
 
-mv "${ar_bac_meta_wTaxIDs}" "${OUT}"
+mv "${ar_bac_meta_wTaxIDs}" "${TAX_DIR}"
 echo -e "\t|\t\t|" > "merged.dmp"
-mv "merged.dmp" "${OUT}"
-mv "names.dmp" "${OUT}"
-mv "nodes.dmp" "${OUT}"
-mv "delnodes.dmp" "${OUT}"
-mv "${map}" "${OUT}"
-mv "taxID_info.tsv" "${OUT}"
+mv "merged.dmp" "${TAX_DIR}"
+mv "names.dmp" "${TAX_DIR}"
+mv "nodes.dmp" "${TAX_DIR}"
+mv "delnodes.dmp" "${TAX_DIR}"
+mv "${map}" "${TAX_DIR}"
+mv "taxID_info.tsv" "${TAX_DIR}"
 
 
 #mv "${ar_bac_meta_wTaxIDs}" "../gtdb_taxdmp"
