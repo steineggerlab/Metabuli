@@ -138,6 +138,8 @@ private:
 
     static TaxID load_accession2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
 
+    TaxID getMaxTaxID();
+
     void editTaxonomyDumpFiles(const vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid);
 
     void reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniqeKmerIdx, size_t & uniqKmerCnt,

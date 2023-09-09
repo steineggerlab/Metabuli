@@ -17,42 +17,6 @@ KmerMatcher::KmerMatcher(const LocalParameters & par,
     this->taxonomy = taxonomy;
     loadTaxIdList(par);
 
-    // // Load the taxonomy ID list
-    // FILE * taxIdFile;
-    // if((taxIdFile = fopen((dbDir + "/taxID_list").c_str(),"r")) == NULL){
-    //     std::cout<<"Cannot open the taxID list file."<<std::endl;
-    //     return;
-    // }
-    // char taxID[100];
-    // while(feof(taxIdFile) == 0) {
-    //     fscanf(taxIdFile,"%s",taxID);
-    //     TaxID taxId = atol(taxID);
-    //     TaxonNode const * taxon = taxonomy->taxonNode(taxId);
-    //     if (taxId == taxon->taxId) {
-    //         TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
-    //         TaxID genusTaxID = taxonomy->getTaxIdAtRank(taxId, "genus");
-    //         while (taxon->taxId != speciesTaxID) {
-    //             taxId2speciesId[taxon->taxId] = speciesTaxID;
-    //             taxId2genusId[taxon->taxId] = genusTaxID;
-    //             taxon = taxonomy->taxonNode(taxon->parentTaxId);
-    //         }
-    //         taxId2speciesId[speciesTaxID] = speciesTaxID;
-    //         taxId2genusId[speciesTaxID] = genusTaxID;
-    //     } else {
-    //         TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
-    //         TaxID genusTaxID = taxonomy->getTaxIdAtRank(taxId, "genus");
-    //         while (taxon->taxId != speciesTaxID) {
-    //             taxId2speciesId[taxon->taxId] = speciesTaxID;
-    //             taxId2genusId[taxon->taxId] = genusTaxID;
-    //             taxon = taxonomy->taxonNode(taxon->parentTaxId);
-    //         }
-    //         taxId2speciesId[speciesTaxID] = speciesTaxID;
-    //         taxId2genusId[speciesTaxID] = genusTaxID;
-    //         taxId2speciesId[taxId] = speciesTaxID;
-    //         taxId2genusId[taxId] = genusTaxID;
-    //     }
-    // }
-    // fclose(taxIdFile);
 }
 
 
@@ -159,6 +123,13 @@ int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
     } 
     MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str(), 3);
     size_t numOfDiffIdx = FileUtil::getFileSize(targetDiffIdxFileName) / sizeof(uint16_t);
+
+    // // Print target k-mer information
+    // MmapedData<TargetKmerInfo> targetKmerInfo2 = mmapData<TargetKmerInfo>(targetInfoFileName.c_str(), 3);
+    // size_t numOfTargetKmer = targetKmerInfo2.fileSize / sizeof(TargetKmerInfo);
+    // for (size_t i = 0; i < numOfTargetKmer; i++) {
+    //     cout << targetKmerInfo2.data[i].sequenceID << "\t" << (int) targetKmerInfo2.data[i].redundancy << endl;
+    // }
 
     size_t queryKmerNum = queryKmerBuffer->startIndexOfReserve;
     QueryKmer *queryKmerList = queryKmerBuffer->buffer;
@@ -329,10 +300,10 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                         for (int k = 0; k < currMatchNum; k++) {
                             idx = selectedMatches[k];
                             // Check if candidateKmerInfos[idx].sequenceID is valid
-                            if (taxId2genusId.find(candidateKmerInfos[idx].sequenceID) == taxId2genusId.end() ||
-                                taxId2speciesId.find(candidateKmerInfos[idx].sequenceID) == taxId2speciesId.end()) {
-                                cout << "Error: " << candidateKmerInfos[idx].sequenceID << " is not found in the taxonomy database." << endl;
-                            }
+                            // if (taxId2genusId.find(candidateKmerInfos[idx].sequenceID) == taxId2genusId.end() ||
+                            //     taxId2speciesId.find(candidateKmerInfos[idx].sequenceID) == taxId2speciesId.end()) {
+                            //     cout << "Error: " << candidateKmerInfos[idx].sequenceID << " is not found in the taxonomy database." << endl;
+                            // }
                             matches[matchCnt] = {queryKmerList[j].info,
                                                  candidateKmerInfos[idx].sequenceID,
                                                  taxId2genusId[candidateKmerInfos[idx].sequenceID],
@@ -371,10 +342,10 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                         for (int k = 0; k < currMatchNum; k++) {
                             idx = selectedMatches[k];
                             // Check if candidateKmerInfos[idx].sequenceID is valid
-                            if (taxId2genusId.find(candidateKmerInfos[idx].sequenceID) == taxId2genusId.end() ||
-                                taxId2speciesId.find(candidateKmerInfos[idx].sequenceID) == taxId2speciesId.end()) {
-                                cout << "Error: " << candidateKmerInfos[idx].sequenceID << " is not found in the taxonomy database." << endl;
-                            }
+                            // if (taxId2genusId.find(candidateKmerInfos[idx].sequenceID) == taxId2genusId.end() ||
+                            //     taxId2speciesId.find(candidateKmerInfos[idx].sequenceID) == taxId2speciesId.end()) {
+                            //     cout << "Error: " << candidateKmerInfos[idx].sequenceID << " is not found in the taxonomy database." << endl;
+                            // }
                             matches[matchCnt] = {queryKmerList[j].info,
                                                  candidateKmerInfos[idx].sequenceID,
                                                  taxId2genusId[candidateKmerInfos[idx].sequenceID],
@@ -468,10 +439,10 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                     for (int k = 0; k < currMatchNum; k++) {
                         idx = selectedMatches[k];
                         // Check if candidateKmerInfos[idx].sequenceID is valid
-                        if (taxId2genusId.find(candidateKmerInfos[idx].sequenceID) == taxId2genusId.end() ||
-                            taxId2speciesId.find(candidateKmerInfos[idx].sequenceID) == taxId2speciesId.end()) {
-                            cout << "Error: " << candidateKmerInfos[idx].sequenceID << " is not found in the taxonomy database." << endl;
-                        }
+                        // if (taxId2genusId.find(candidateKmerInfos[idx].sequenceID) == taxId2genusId.end() ||
+                        //     taxId2speciesId.find(candidateKmerInfos[idx].sequenceID) == taxId2speciesId.end()) {
+                        //     cout << "Error: " << candidateKmerInfos[idx].sequenceID << " is not found in the taxonomy database." << endl;
+                        // }
                         matches[matchCnt] = {queryKmerList[j].info,
                                              candidateKmerInfos[idx].sequenceID,
                                              taxId2genusId[candidateKmerInfos[idx].sequenceID],

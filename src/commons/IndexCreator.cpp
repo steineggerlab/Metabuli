@@ -217,8 +217,8 @@ void IndexCreator::makeBlocksForParallelProcessing_accession_level() {
 
     unordered_map<string, TaxID> acc2taxid;
     TaxID maxTaxID = load_accession2taxid(acc2taxidFileName, acc2taxid);
-    newTaxID = maxTaxID + 1;
-
+    newTaxID = std::max(getMaxTaxID() + 1, maxTaxID + 1);
+    
     vector<pair<string,pair<TaxID, TaxID>>> newAcc2taxid; // accession.version -> (parent, newTaxID)
 
     // Make blocks of sequences that can be processed in parallel
@@ -1085,4 +1085,46 @@ void IndexCreator::editTaxonomyDumpFiles(const vector<pair<string, pair<TaxID, T
         fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|", newAcc2taxid.back().second.second, newAcc2taxid.back().second.first);
     }
     fclose(nodeFile);
+}
+
+TaxID IndexCreator::getMaxTaxID() {
+    // Check nodes.dmp
+    string nodeFileName = taxonomyDir + "/nodes.dmp";
+    std::ifstream ss(nodeFileName);
+    if (ss.fail()) {
+        Debug(Debug::ERROR) << "File " << nodeFileName << " not found!\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    std::string line;
+    TaxID maxTaxID = 0;
+    while (std::getline(ss, line)) {
+        std::vector<std::string> result = splitByDelimiter(line, "\t|\t", 2);
+        if (result.size() != 2) {
+            Debug(Debug::ERROR) << "Invalid name entry!\n";
+            EXIT(EXIT_FAILURE);
+        }
+        maxTaxID = std::max(maxTaxID, (TaxID) atoi(result[0].c_str()));
+    }
+    ss.close();
+
+    // Check names.dmp
+    string nameFileName = taxonomyDir + "/names.dmp";
+    ss = std::ifstream(nameFileName);
+    if (ss.fail()) {
+        Debug(Debug::ERROR) << "File " << nameFileName << " not found!\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    while (std::getline(ss, line)) {
+        std::vector<std::string> result = splitByDelimiter(line, "\t|\t", 2);
+        if (result.size() != 2) {
+            Debug(Debug::ERROR) << "Invalid name entry!\n";
+            EXIT(EXIT_FAILURE);
+        }
+        maxTaxID = std::max(maxTaxID, (TaxID) atoi(result[0].c_str()));
+    }
+    ss.close();
+
+    return maxTaxID;
 }
