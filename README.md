@@ -9,6 +9,14 @@ In addition, it can classify reads against a database of any size as long as it 
 
 <p align="center"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/marv_metabuli_small.png" height="350" /></p>
 
+## Update notes
+### v1.0.2
+- `--accession-level` option for `build` and `classify` workflow: It reports not only the taxon but also the accession of the best match.
+- Fix minor bugs in `build` workflow.
+- Generate `taxonomyDB` during `build` and load it during `classify` workflow for faster loading of taxonomy information.
+- Support gzipped FASTA/FASTQ files in `add-to-library` and `classify` workflows.
+- low-complexity filtering in `build` workflow as default with `--mask-prob 0.9`.
+- 
 ## Installation
 ### Precompiled binaries
 ```
@@ -79,8 +87,10 @@ metabuli classify --seq-mode 1 read.fna dbdir outdir jobid
    --min-score : The minimum score to be classified (0.15 for precision mode)
    --min-sp-score : The minimum score to be classified at or below species rank. (0.5 for precision mode)
    --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
-   --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids. Give the same value used for DB creation.
-   --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
+   --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids. 
+                  Give the same value used for DB creation.
+   --accession-level : Set 1 to use accession level classification (0 by default). 
+                       It is available when the DB is also built with accession level taxonomy.
    
   * Values of --min-score and --min-sp-score for precision mode are optimized only for short reads.
   * We don't recommend using them for long reads.
@@ -162,9 +172,12 @@ Accessions that are not included in the `<accession2taxid>` will be skipped and 
 #### 3. Build
 
 ```
-metabuli build <DBDIR> <FASTA list> <accession2taxid> [options]
+# Get the list of absoulte paths of files in your library
+find <DBDIR>/library -name '*.fna' > library-files.txt
+
+metabuli build <DBDIR> <LIB_FILES> <accession2taxid> [options]
 - DBDIR: The same DBDIR from the previous step. 
-- FASTA list: A file containing absolute paths of the FASTA files in DBDIR/library
+- LIB_FILES: A file containing absolute paths of the FASTA files in DBDIR/library (library-files.txt)
 - accession2taxid : A path to NCBI-style accession2taxid.
   
   * Options
@@ -172,6 +185,7 @@ metabuli build <DBDIR> <FASTA list> <accession2taxid> [options]
    --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
    --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids.
    --spacing-mask : Binary mask for spaced metamer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
+   --accession-level : Set 1 to use accession level taxonomy (0 by default).
 ```
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
 
@@ -201,16 +215,21 @@ This will add your FASTA files to DBDIR/library according to their species taxon
 
 #### 2. Build
 ```
-metabuli build <DBDIR> <FASTA list> <accession2taxid> [options]
+# Get the list of absoulte paths of files in your library
+find <DBDIR>/library -name '*.fna' > library-files.txt
+
+metabuli build <DBDIR> <LIB_FILES> <accession2taxid> [options]
 - DBDIR: The same DBDIR from the previous step. 
-- FASTA list: A file containing absolute paths of the FASTA files in DBDIR/library
+- <LIB_FILES>: A file containing absolute paths of the FASTA files in DBDIR/library (library-files.txt)
 - accession2taxid : A path to NCBI-style accession2taxid.
   
   * Options
    --threads : The number of CPU-cores used (all by default)
    --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
    --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids.
-   --spacing-mask : Binary mask for spaced metamer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
+   --spacing-mask : Binary mask for spaced metamer. The same mask must be used for DB creation and classification. 
+                    A mask should contain at least eight '1's, and '0' means skip.
+   --accession-level : Set 1 to use accession level taxonomy (0 by default).
 ```
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
 
