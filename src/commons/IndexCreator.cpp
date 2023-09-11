@@ -16,6 +16,11 @@ IndexCreator::IndexCreator(const LocalParameters & par) {
     reducedAA = par.reducedAA;
     spaceMask = par.spaceMask;
     accessionLevel = par.accessionLevel;
+    lowComplexityMasking = par.maskMode;
+    lowComplexityMaskingThreshold = par.maskProb;
+    dbName = par.dbName;
+    dbDate = par.dbDate;
+    
 
     // Input files
     dbDir = par.filenames[0];
@@ -167,7 +172,6 @@ void IndexCreator::updateIndex(const LocalParameters &par) {
         delete[] uniqKmerIdx;
     }
     delete[] splitChecker;
-
 }
 
 void IndexCreator::makeBlocksForParallelProcessing() {
@@ -1016,9 +1020,13 @@ void IndexCreator::writeDbParameters() {
         Debug(Debug::ERROR) << "Could not open " << paramterFileName << " for writing\n";
         EXIT(EXIT_FAILURE);
     }
+    fprintf(handle, "DB_name\t%s\n", dbName.c_str());
+    fprintf(handle, "Creation_date\t%s\n", dbDate.c_str());
     fprintf(handle, "Reduced_alphabet\t%d\n", reducedAA);
     fprintf(handle, "Spaced_kmer_mask\t%s\n", spaceMask.c_str());
     fprintf(handle, "Accession_level\t%d\n", accessionLevel);
+    fprintf(handle, "Mask_mode\t%d\n", lowComplexityMasking);
+    fprintf(handle, "Mask_prob\t%f\n", lowComplexityMaskingThreshold);
     fclose(handle);
 }
 

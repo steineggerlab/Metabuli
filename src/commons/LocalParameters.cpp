@@ -1,12 +1,18 @@
 #include "LocalParameters.h"
 #include "Parameters.h"
+#include "Debug.h"
+#include "CommandCaller.h"
+#include "Parameters.cpp"
+#include "ByteParser.h"
+#include <iomanip>
+#include "DistanceCalculator.h"
 
 LocalParameters::LocalParameters() :
         Parameters(),
         VIRUS_TAX_ID(VIRUS_TAX_ID_ID,
                      "--virus-taxid",
                      "Taxonomy ID of virus taxon",
-                     "NCBI: 10239 [Default]\nCUSTOM: Check names.dmp file ",
+                     "NCBI: 10239 \nCUSTOM: Check names.dmp file ",
                      typeid(int),
                      (void *) &virusTaxId,
                      "^[0-9]+$"),
@@ -34,28 +40,28 @@ LocalParameters::LocalParameters() :
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
                  "Sequencing type",
-                 "Single-end: 1 \nPaired-end: 2\nLong read: 3",
+                 "Single-end: 1, Paired-end: 2, Long read: 3",
                  typeid(int),
                  (void *) &seqMode,
                  "[1-3]"),
         REDUCED_AA(REDUCED_AA_ID,
                    "--reduced-aa",
-                   "Using reduced 15 alphabets to encode amino acids. It increases sensitivity",
-                   "Using 20 alphabets: 0 \nUsing 15 alphabets: 1",
+                   "Using 15 alphabets to encode AAs for sensitivity",
+                   "Set as 0 to use 15 alphabets to encode AAs for sensitivity",
                    typeid(int),
                    (void *) &reducedAA,
                    "[0-1]"),
         MIN_SCORE(MIN_SCORE_ID,
                   "--min-score",
-                  "The minimum score for classification",
-                  "You can set a value from 0.0 to 1.0",
+                  "Min. sequence similarity score",
+                  "Min. sequence similarity score (0.0-1.0)",
                   typeid(float),
                   (void *) &minScore,
                   "^0(\\.[0-9]+)?|1(\\.0+)?$"),
         MIN_COVERAGE(MIN_COVERAGE_ID,
                      "--min-cov",
-                     "The minimum coverage for classification",
-                     "You can set a value from 0.0 to 1.0",
+                     "Min. query coverage",
+                     "Min. query coverage (0.0-1.0)",
                      typeid(float),
                      (void *) &minCoverage,
                      "^0(\\.[0-9]+)?|1(\\.0+)?$"),
@@ -76,17 +82,15 @@ LocalParameters::LocalParameters() :
                         "^[0-9]+$"),
         HAMMING_MARGIN(HAMMING_MARGIN_ID,
                        "--hamming-margin",
-                       "If a query k-mer has multiple matches, the matches with hamming distance lower than sum of \n"
-                       "the minimum distance and this margin are selected for later steps.",
-                       "If a query k-mer has multiple matches, the matches with hamming distance lower than sum of \n"
-                       "the minimum distance and this margin are selected for later steps.",
+                       "Allowed extra Hamming distance", 
+                       "It allows extra Hamming distance than the minimum distance.",
                        typeid(int),
                        (void *) &hammingMargin,
                        ""),
         MIN_SP_SCORE(MIN_SP_SCORE_ID,
                      "--min-sp-score",
-                     "Minimum score to be classified at species or lower rank.",
-                     "Minimum score to be classified at the species level.",
+                     "Min. score for species- or lower-level classification.",
+                     "Min. score for species- or lower-level classification.",
                      typeid(float),
                      (void *) &minSpScore,
                      "^0(\\.[0-9]+)?|1(\\.0+)?$"),
@@ -120,22 +124,22 @@ LocalParameters::LocalParameters() :
                 "^[0-9]+$"),
         MIN_CONS_CNT(MIN_CONS_CNT_ID,
                      "--min-cons-cnt",
-                     "Minimum number of consecutive metamer matches to be used for prokaryote/virus classification",
-                     "Minimum number of consecutive metamer matches to be used for prokaryote/virus classification",
+                     "Min. num. of cons. matches for non-euk. classification",
+                     "Min. number of consecutive matches for prokaryote/virus classification",
                      typeid(int),
                      (void *) &minConsCnt,
                      "^[0-9]+$"),
         MIN_CONS_CNT_EUK(MIN_CONS_CNT_EUK_ID,
                          "--min-cons-cnt-euk",
-                         "Minimum number of consecutive metamer matches to be used for eukaryote classification",
-                         "Minimum number of consecutive metamer matches to be used for eukaryote classification",
+                         "Min. num. of cons. matches for euk. classification",
+                         "Min. number of consecutive matches for eukaryote classification",
                          typeid(int),
                          (void *) &minConsCntEuk,
                          "^[0-9]+$"),
         MATCH_PER_KMER(MATCH_PER_KMER_ID,
                        "--match-per-kmer",
-                       "Number of matches per query k-mer",
-                       "Number of matches per query k-mer. Larger values assign more memory for storing k-mer matches.",
+                       "Number of matches per query k-mer. ",
+                       "Num. of matches per query k-mer. Larger values assign more memory for storing k-mer matches. ",
                        typeid(int),
                        (void *) &matchPerKmer,
                        "^[0-9]+$"),
@@ -176,11 +180,25 @@ LocalParameters::LocalParameters() :
                     "^[0-9]+$"),
         ACCESSION_LEVEL(ACCESSION_LEVEL_ID,
                         "--accession-level",
-                        "Build a database for accession level classification",
-                        "Build a database for accession level classification",
+                        "Accession-level DB build/search",
+                        "Build or search a database for accession-level classification",
                         typeid(int),
                         (void *) &accessionLevel,
                         "[0-1]"),
+        DB_NAME(DB_NAME_ID,
+                "--db-name",
+                "Name of the database (a random number as default)",
+                "Name of the database",
+                typeid(std::string),
+                (void *) &dbName,
+                "^.*$"),
+        DB_DATE(DB_DATE_ID,
+                "--db-date",
+                "Date of the database creation (current date as default)",
+                "Date of the database creation",
+                typeid(std::string),
+                (void *) &dbDate,
+                "^.*$"),
         TEST_RANK(TEST_RANK_ID,
                   "--test-rank",
                   ".",
@@ -257,27 +275,29 @@ LocalParameters::LocalParameters() :
     build.push_back(&PARAM_MASK_RESIDUES);
     build.push_back(&BUFFER_SIZE);
     build.push_back(&ACCESSION_LEVEL);
+    build.push_back(&DB_NAME);
+    build.push_back(&DB_DATE);
 
     //classify
     classify.push_back(&PARAM_THREADS);
     classify.push_back(&SEQ_MODE);
-    classify.push_back(&VIRUS_TAX_ID);
-    classify.push_back(&REDUCED_AA);
+//     classify.push_back(&VIRUS_TAX_ID);
+//     classify.push_back(&REDUCED_AA);
     classify.push_back(&MIN_SCORE);
     classify.push_back(&MIN_COVERAGE);
-    classify.push_back(&SPACED);
-    classify.push_back(&HAMMING_MARGIN);
-    classify.push_back(&MIN_SP_SCORE);
-    classify.push_back(&PARAM_V);
-    classify.push_back(&RAM_USAGE);
-    classify.push_back(&MIN_COVERED_POS);
-    classify.push_back(&PRINT_LOG);
-    classify.push_back(&MAX_GAP);
-    classify.push_back(&TAXONOMY_PATH);
     classify.push_back(&MIN_CONS_CNT);
     classify.push_back(&MIN_CONS_CNT_EUK);
+    classify.push_back(&MIN_SP_SCORE);
+//     classify.push_back(&SPACED);
+    classify.push_back(&HAMMING_MARGIN);
+//     classify.push_back(&PARAM_V);
+//     classify.push_back(&MIN_COVERED_POS);
+//     classify.push_back(&PRINT_LOG);
+//     classify.push_back(&MAX_GAP);
+//     classify.push_back(&TAXONOMY_PATH);
     classify.push_back(&PARAM_MASK_RESIDUES);
     classify.push_back(&PARAM_MASK_PROBABILTY);
+    classify.push_back(&RAM_USAGE);
     classify.push_back(&MATCH_PER_KMER);
     classify.push_back(&ACCESSION_LEVEL);
 
@@ -338,3 +358,489 @@ LocalParameters::LocalParameters() :
     databaseReport.push_back(&TAXONOMY_PATH);
 }
 
+void LocalParameters::printParameters(const std::string &module, int argc, const char* pargv[],
+                                 const std::vector<MMseqsParameter*> &par){
+    if (Debug::debugLevel < Debug::INFO) {
+        return;
+    }
+
+    Debug(Debug::INFO) << module << " ";
+    for (int i = 0; i < argc; i++) {
+        // don't expose users to the interal b64 masking of whitespace characters
+        if (strncmp("b64:", pargv[i], 4) == 0) {
+            Debug(Debug::INFO) << "'" << base64_decode(pargv[i] + 4, strlen(pargv[i]) - 4) << "' ";
+        } else {
+            Debug(Debug::INFO) << pargv[i] << " ";
+        }
+    }
+    Debug(Debug::INFO) << "\n\n";
+
+    if (CommandCaller::getCallDepth() > 0) {
+        return;
+    }
+
+    size_t maxWidth = 0;
+    for(size_t i = 0; i < par.size(); i++) {
+        maxWidth = std::max(strlen(par[i]->display), maxWidth);
+    }
+
+    std::stringstream ss;
+    ss << std::boolalpha;
+
+     ss << std::setw(maxWidth) << std::left  << "Metabuli Version:" << "\t" << "1.0.2" << "\n";
+
+    for (size_t i = 0; i < par.size(); i++) {
+        if (par[i]->category & MMseqsParameter::COMMAND_HIDDEN) {
+            continue;
+        }
+        ss << std::setw(maxWidth) << std::left << par[i]->display << "\t";
+        if (typeid(int) == par[i]->type ) {
+            ss << *((int *)par[i]->value);
+        } else if(typeid(size_t) == par[i]->type ){
+            ss << *((size_t *)par[i]->value);
+        } else if(typeid(ByteParser) == par[i]->type) {
+            ss << ByteParser::format(*((size_t *)par[i]->value), 'a', 'h');
+        } else if(PARAM_SUB_MAT.uniqid == par[i]->uniqid || PARAM_SEED_SUB_MAT.uniqid == par[i]->uniqid) {
+            MultiParam<NuclAA<std::string>>* param = ((MultiParam<NuclAA<std::string>>*) par[i]->value);
+            MultiParam<NuclAA<std::string>> tmpPar(NuclAA<std::string>(
+                BaseMatrix::unserializeName(param->values.aminoacid().c_str()),
+                BaseMatrix::unserializeName(param->values.nucleotide().c_str())
+            ));
+            ss << MultiParam<NuclAA<std::string>>::format(tmpPar);
+        } else if(typeid(MultiParam<NuclAA<std::string>>) == par[i]->type) {
+            ss << MultiParam<NuclAA<std::string>>::format(*((MultiParam<NuclAA<std::string>> *)par[i]->value));
+        } else if(typeid(MultiParam<NuclAA<int>>) == par[i]->type) {
+            ss << MultiParam<NuclAA<int>>::format(*((MultiParam<NuclAA<int>> *)par[i]->value));
+        } else if(typeid(MultiParam<NuclAA<float>>) == par[i]->type) {
+            ss << MultiParam<NuclAA<float>>::format(*((MultiParam<NuclAA<float>> *)par[i]->value));
+        } else if(typeid(MultiParam<SeqProf<int>>) == par[i]->type) {
+            ss << MultiParam<SeqProf<int>>::format(*((MultiParam<SeqProf<int>> *)par[i]->value));
+        } else if(typeid(MultiParam<PseudoCounts>) == par[i]->type) {
+            ss << MultiParam<PseudoCounts>::format(*((MultiParam<PseudoCounts> *)par[i]->value));
+        } else if(typeid(float) == par[i]->type) {
+            ss << *((float *)par[i]->value);
+        } else if(typeid(double) == par[i]->type) {
+            ss << *((double *)par[i]->value);
+        } else if(typeid(std::string) == par[i]->type) {
+            ss << *((std::string *) par[i]->value);
+        } else if (typeid(bool) == par[i]->type) {
+            ss << *((bool *)par[i]->value);
+        }
+        ss << "\n";
+    }
+
+    Debug(Debug::INFO) << ss.str() << "\n";
+}
+
+void LocalParameters::parseParameters(int argc, const char *pargv[], const Command &command, bool printPar, int parseFlags,
+                                 int outputFlags) {
+    filenames.clear();
+    std::vector<MMseqsParameter*> & par = *command.params;
+
+    bool canHandleHelp = false;
+    for (size_t parIdx = 0; parIdx < par.size(); parIdx++) {
+        if (par[parIdx]->uniqid == PARAM_HELP_ID || par[parIdx]->uniqid == PARAM_HELP_LONG_ID) {
+            canHandleHelp = true;
+        }
+    }
+
+    size_t parametersFound = 0;
+    for (int argIdx = 0; argIdx < argc; argIdx++) {
+        // it is a parameter if it starts with - or --
+        const bool longParameter = (pargv[argIdx][0] == '-' && pargv[argIdx][1] == '-');
+        if (longParameter || (pargv[argIdx][0] == '-')) {
+            if ((parseFlags & PARSE_REST) && longParameter && pargv[argIdx][2] == '\0') {
+                restArgv = pargv + argIdx + 1;
+                restArgc = argc - (argIdx + 1);
+                break;
+            }
+            std::string parameter(pargv[argIdx]);
+            if (canHandleHelp == false && (parameter.compare("-h") == 0 || parameter.compare("--help") == 0)) {
+                printUsageMessage(command, 0xFFFFFFFF);
+                EXIT(EXIT_SUCCESS);
+            }
+
+            bool hasUnrecognizedParameter = true;
+            for (size_t parIdx = 0; parIdx < par.size(); parIdx++) {
+                if(parameter.compare(par[parIdx]->name) == 0) {
+                    if (typeid(bool) != par[parIdx]->type && argIdx + 1 == argc) {
+                        printUsageMessage(command, outputFlags);
+                        Debug(Debug::ERROR) << "Missing argument " << par[parIdx]->name << "\n";
+                        EXIT(EXIT_FAILURE);
+                    }
+
+                    if (par[parIdx]->wasSet) {
+                        printUsageMessage(command, outputFlags);
+                        Debug(Debug::ERROR) << "Duplicate parameter " << par[parIdx]->name << "\n";
+                        EXIT(EXIT_FAILURE);
+                    }
+
+                    if (typeid(int) == par[parIdx]->type) {
+                        regex_t regex;
+                        compileRegex(&regex, par[parIdx]->regex);
+                        int nomatch = regexec(&regex, pargv[argIdx+1], 0, NULL, 0);
+                        regfree(&regex);
+                        // if no match found or two matches found (we want exactly one match)
+                        if (nomatch){
+                            printUsageMessage(command, 0xFFFFFFFF);
+                            Debug(Debug::ERROR) << "Error in argument " << par[parIdx]->name << "\n";
+                            EXIT(EXIT_FAILURE);
+                        }else{
+                            *((int *) par[parIdx]->value) = atoi(pargv[argIdx+1]);
+                            par[parIdx]->wasSet = true;
+                        }
+                        argIdx++;
+                    } else if (typeid(size_t) == par[parIdx]->type) {
+                        regex_t regex;
+                        compileRegex(&regex, par[parIdx]->regex);
+                        int nomatch = regexec(&regex, pargv[argIdx+1], 0, NULL, 0);
+                        regfree(&regex);
+                        // if no match found or two matches found (we want exactly one match)
+                        if (nomatch){
+                            printUsageMessage(command, 0xFFFFFFFF);
+                            Debug(Debug::ERROR) << "Error in argument " << par[parIdx]->name << "\n";
+                            EXIT(EXIT_FAILURE);
+                        }else{
+                            *((size_t *) par[parIdx]->value) = atoi(pargv[argIdx+1]);
+                            par[parIdx]->wasSet = true;
+                        }
+                        argIdx++;
+                    } else if (typeid(ByteParser) == par[parIdx]->type) {
+                        regex_t regex;
+                        compileRegex(&regex, par[parIdx]->regex);
+                        int nomatch = regexec(&regex, pargv[argIdx+1], 0, NULL, 0);
+                        regfree(&regex);
+
+                        // if no match found or two matches found (we want exactly one match)
+                        if (nomatch){
+                            printUsageMessage(command, 0xFFFFFFFF);
+                            Debug(Debug::ERROR) << "Error in argument regex " << par[parIdx]->name << "\n";
+                            EXIT(EXIT_FAILURE);
+                        } else {
+                            size_t value = ByteParser::parse(pargv[argIdx+1]);
+                            if (value == ByteParser::INVALID_SIZE) {
+                                printUsageMessage(command, 0xFFFFFFFF);
+                                Debug(Debug::ERROR) << "Error in value parsing " << par[parIdx]->name << "\n";
+                                EXIT(EXIT_FAILURE);
+                            } else {
+                                *((size_t *) par[parIdx]->value) = value;
+                                par[parIdx]->wasSet = true;
+                            }
+                        }
+                        argIdx++;
+                    } else if (typeid(MultiParam<NuclAA<std::string>>) == par[parIdx]->type) {
+                        std::string val(pargv[argIdx+1]);
+                        if (Util::startWith("b64:", val)) {
+                            val = base64_decode(val.c_str() + 4, val.size() - 4);
+                        }
+                        NuclAA<std::string> value = MultiParam<NuclAA<std::string>>(val.c_str()).values;
+                        if (value.first == "INVALID" || value.second == "INVALID") {
+                            printUsageMessage(command, 0xFFFFFFFF);
+                            Debug(Debug::ERROR) << "Error in value parsing " << par[parIdx]->name << "\n";
+                            EXIT(EXIT_FAILURE);
+                        } else {
+                            *((MultiParam<NuclAA<std::string>> *) par[parIdx]->value) = value;
+                            par[parIdx]->wasSet = true;
+                        }
+                        argIdx++;
+                    }else if (typeid(MultiParam<NuclAA<int>>) == par[parIdx]->type) {
+                        NuclAA<int> value = MultiParam<NuclAA<int>>(pargv[argIdx+1]).values;
+                        if (value.first == INT_MAX || value.second == INT_MAX) {
+                            printUsageMessage(command, 0xFFFFFFFF);
+                            Debug(Debug::ERROR) << "Error in value parsing " << par[parIdx]->name << "\n";
+                            EXIT(EXIT_FAILURE);
+                        } else {
+                            *((MultiParam<NuclAA<int>> *) par[parIdx]->value) = value;
+                            par[parIdx]->wasSet = true;
+                        }
+                        argIdx++;
+                    }else if (typeid(MultiParam<NuclAA<float>>) == par[parIdx]->type) {
+                        NuclAA<float> value = MultiParam<NuclAA<float>>(pargv[argIdx + 1]).values;
+                        if (value.first == FLT_MAX || value.second == FLT_MAX) {
+                            printUsageMessage(command, 0xFFFFFFFF);
+                            Debug(Debug::ERROR) << "Error in value parsing " << par[parIdx]->name << "\n";
+                            EXIT(EXIT_FAILURE);
+                        } else {
+                            *((MultiParam<NuclAA<float>> *) par[parIdx]->value) = value;
+                            par[parIdx]->wasSet = true;
+                        }
+                        argIdx++;
+                    }else if (typeid(MultiParam<SeqProf<int>>) == par[parIdx]->type) {
+                        SeqProf<int> value = MultiParam<SeqProf<int>>(pargv[argIdx+1]).values;
+                        *((MultiParam<SeqProf<int>> *) par[parIdx]->value) = value;
+                        par[parIdx]->wasSet = true;
+                        argIdx++;
+                    }else if (typeid(MultiParam<PseudoCounts>) == par[parIdx]->type) {
+                        PseudoCounts value = MultiParam<PseudoCounts>(pargv[argIdx + 1]).values;
+                        if (value.first == FLT_MAX || value.second == FLT_MAX) {
+                            printUsageMessage(command, 0xFFFFFFFF);
+                            Debug(Debug::ERROR) << "Error in value parsing " << par[parIdx]->name << "\n";
+                            EXIT(EXIT_FAILURE);
+                        } else {
+                            *((MultiParam<PseudoCounts> *) par[parIdx]->value) = value;
+                            par[parIdx]->wasSet = true;
+                        }
+                        argIdx++;
+                    }else if (typeid(float) == par[parIdx]->type) {
+                        regex_t regex;
+                        compileRegex(&regex, par[parIdx]->regex);
+                        int nomatch = regexec(&regex, pargv[argIdx+1], 0, NULL, 0);
+                        regfree(&regex);
+                        if (nomatch){
+                            printUsageMessage(command, 0xFFFFFFFF);
+                            Debug(Debug::ERROR) << "Error in argument " << par[parIdx]->name << "\n";
+                            EXIT(EXIT_FAILURE);
+                        }else{
+                            double input = strtod(pargv[argIdx+1], NULL);
+                            *((float *) par[parIdx]->value) = static_cast<float>(input);
+                            par[parIdx]->wasSet = true;
+                        }
+                        argIdx++;
+                    } else if (typeid(double) == par[parIdx]->type) {
+                        regex_t regex;
+                        compileRegex(&regex, par[parIdx]->regex);
+                        int nomatch = regexec(&regex, pargv[argIdx+1], 0, NULL, 0);
+                        regfree(&regex);
+                        if (nomatch){
+                            printUsageMessage(command, 0xFFFFFFFF);
+                            Debug(Debug::ERROR) << "Error in argument " << par[parIdx]->name << "\n";
+                            EXIT(EXIT_FAILURE);
+                        }else{
+                            *((double *) par[parIdx]->value) = strtod(pargv[argIdx+1], NULL);
+                            par[parIdx]->wasSet = true;
+                        }
+                        argIdx++;
+                    } else if (typeid(std::string) == par[parIdx]->type) {
+                        std::string val(pargv[argIdx+1]);
+                        if (Util::startWith("b64:", val)) {
+                            val = base64_decode(val.c_str() + 4, val.size() - 4);
+                        }
+                        std::string* currVal = (std::string*)par[parIdx]->value;
+                        currVal->assign(val);
+                        par[parIdx]->wasSet = true;
+                        argIdx++;
+                    } else if (typeid(bool) == par[parIdx]->type) {
+                        bool *value = (bool *) par[parIdx]->value;
+                        if (argIdx + 1 == argc || pargv[argIdx+1][0] == '-') {
+                            *value = !*value;
+                        } else {
+                            *value = parseBool(pargv[argIdx+1]);
+                            argIdx++;
+                        }
+                        par[parIdx]->wasSet = true;
+                    } else {
+                        Debug(Debug::ERROR) << "Wrong parameter type in parseParameters. Please inform the developers\n";
+                        EXIT(EXIT_FAILURE);
+                    }
+
+                    hasUnrecognizedParameter = false;
+                    continue;
+                }
+            }
+
+            if (hasUnrecognizedParameter) {
+                printUsageMessage(command, 0xFFFFFFFF);
+
+                // Suggest some parameter that the user might have meant
+                std::vector<MMseqsParameter *>::const_iterator index = par.end();
+                int maxDistance = 0;
+                for (std::vector<MMseqsParameter *>::const_iterator it = par.begin(); it != par.end(); ++it) {
+                    int distance = DistanceCalculator::localLevenshteinDistance(parameter, (*it)->name);
+                    if (distance > maxDistance) {
+                        maxDistance = distance;
+                        index = it;
+                    }
+                }
+
+                Debug(Debug::ERROR) << "Unrecognized parameter \"" << parameter << "\"";
+                if (index != par.end()) {
+                    Debug(Debug::ERROR) << ". Did you mean \"" << (*index)->name << "\" (" << (*index)->display << ")?\n";
+                } else {
+                    Debug(Debug::ERROR) << "\n";
+                }
+
+                EXIT(EXIT_FAILURE);
+            }
+
+            parametersFound++;
+        } else {
+            // parameter is actually a filename
+#ifdef __CYGWIN__
+            // normalize windows paths to cygwin unix paths
+            const char *path = pargv[argIdx];
+            ssize_t size = cygwin_conv_path(CCP_WIN_A_TO_POSIX | CCP_RELATIVE, path, NULL, 0);
+            if (size < 0) {
+                Debug(Debug::ERROR) << "Could not convert cygwin path!\n";
+                EXIT(EXIT_FAILURE);
+            } else {
+                char *posix = new char[size];
+                if (cygwin_conv_path(CCP_WIN_A_TO_POSIX | CCP_RELATIVE, path, posix, size)) {
+                    Debug(Debug::ERROR) << "Could not convert cygwin path!\n";
+                    EXIT(EXIT_FAILURE);
+                }
+                filenames.emplace_back(posix);
+                delete posix;
+            }
+#else
+            filenames.emplace_back(pargv[argIdx]);
+#endif
+        }
+    }
+
+    if (MMseqsMPI::isMaster()) {
+        Debug::setDebugLevel(verbosity);
+    }
+
+#ifdef OPENMP
+    omp_set_num_threads(threads);
+#endif
+#ifndef OPENMP
+    threads = 1;
+#endif
+
+
+    bool ignorePathCountChecks = command.databases.empty() == false && command.databases[0].specialType & DbType::ZERO_OR_ALL && filenames.size() == 0;
+    const size_t MAX_DB_PARAMETER = 6;
+    if (ignorePathCountChecks == false && command.databases.size() > MAX_DB_PARAMETER) {
+        Debug(Debug::ERROR) << "Use argv if you need more than " << MAX_DB_PARAMETER << " db parameters" << "\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    if (ignorePathCountChecks == false && filenames.size() < command.databases.size()){
+        printUsageMessage(command, outputFlags);
+        Debug(Debug::ERROR) << "Not enough input paths provided. ";
+        if (command.databases.size() == 1) {
+            Debug(Debug::ERROR) << "1 path is required.\n";
+        } else {
+            Debug(Debug::ERROR) << command.databases.size() << " paths are required.\n";
+        }
+        EXIT(EXIT_FAILURE);
+    }
+
+    bool isVar = false;
+    bool isStartVar = false;
+    bool isMiddleVar = false;
+    bool isEndVar = false;
+    if(command.databases.empty() == false && command.databases[0].validator != NULL) {
+        if (command.databases.size() >= 2) {
+            for(size_t i = 0; i < command.databases.size();i++){
+                if(i == 0){
+                    isStartVar |= (command.databases[i].specialType & DbType::VARIADIC);
+                } else if(i == command.databases.size() - 1){
+                    isEndVar |= (command.databases[i].specialType & DbType::VARIADIC);
+                } else {
+                    isMiddleVar |= (command.databases[i].specialType & DbType::VARIADIC);
+                }
+
+            }
+            isVar = isStartVar | isMiddleVar | isEndVar;
+        }
+        if (ignorePathCountChecks == false && isVar == false && filenames.size() > command.databases.size()) {
+            printUsageMessage(command, outputFlags);
+            Debug(Debug::ERROR) << "Too many input paths provided. Only " << SSTR(command.databases.size()) << " are allowed\n";
+            EXIT(EXIT_FAILURE);
+        }
+    }
+    switch (std::min(filenames.size(), MAX_DB_PARAMETER)) {
+        case 6:
+            db6 = filenames[5];
+            db6Index = db6;
+            db6Index.append(".index");
+            db6dbtype = db6;
+            db6dbtype.append(".dbtype");
+            hdr6 = db6;
+            hdr6.append("_h");
+            hdr6Index = hdr6;
+            hdr6Index.append(".index");
+            hdr6dbtype = hdr6;
+            hdr6dbtype.append(".dbtype");
+            // FALLTHROUGH
+        case 5:
+            db5 = filenames[4];
+            db5Index = db5;
+            db5Index.append(".index");
+            db5dbtype = db5;
+            db5dbtype.append(".dbtype");
+            hdr5 = db5;
+            hdr5.append("_h");
+            hdr5Index = hdr5;
+            hdr5Index.append(".index");
+            hdr5dbtype = hdr5;
+            hdr5dbtype.append(".dbtype");
+            // FALLTHROUGH
+        case 4:
+            db4 = filenames[3];
+            db4Index = db4;
+            db4Index.append(".index");
+            db4dbtype = db4;
+            db4dbtype.append(".dbtype");
+            hdr4 = db4;
+            hdr4.append("_h");
+            hdr4Index = hdr4;
+            hdr4Index.append(".index");
+            hdr4dbtype = hdr4;
+            hdr4dbtype.append(".dbtype");
+            // FALLTHROUGH
+        case 3:
+            db3 = filenames[2];
+            db3Index = db3;
+            db3Index.append(".index");
+            db3dbtype = db3;
+            db3dbtype.append(".dbtype");
+            hdr3 = db3;
+            hdr3.append("_h");
+            hdr3Index = hdr3;
+            hdr3Index.append(".index");
+            hdr3dbtype = hdr3;
+            hdr3dbtype.append(".dbtype");
+            // FALLTHROUGH
+        case 2:
+            db2 = filenames[1];
+            db2Index = db2;
+            db2Index.append(".index");
+            db2dbtype = db2;
+            db2dbtype.append(".dbtype");
+            hdr2 = db2;
+            hdr2.append("_h");
+            hdr2Index = hdr2;
+            hdr2Index.append(".index");
+            hdr2dbtype = hdr2;
+            hdr2dbtype.append(".dbtype");
+            // FALLTHROUGH
+        case 1:
+            db1 = filenames[0];
+            db1Index = db1;
+            db1Index.append(".index");
+            db1dbtype = db1;
+            db1dbtype.append(".dbtype");
+            hdr1 = db1;
+            hdr1.append("_h");
+            hdr1Index = hdr1;
+            hdr1Index.append(".index");
+            hdr1dbtype = hdr1;
+            hdr1dbtype.append(".dbtype");
+            break;
+        default:
+            // Do not abort execution if we expect a variable amount of parameters
+            if (parseFlags & PARSE_VARIADIC)
+                break;
+            // FALLTHROUGH
+        case 0:
+            if (parseFlags & PARSE_ALLOW_EMPTY)
+                break;
+            printUsageMessage(command, outputFlags);
+            printParameters(command.cmd, argc, pargv, par);
+            Debug(Debug::ERROR) << "Unrecognized parameters!" << "\n";
+            EXIT(EXIT_FAILURE);
+    }
+
+    initMatrices();
+
+    if (ignorePathCountChecks == false) {
+        checkIfDatabaseIsValid(command, argc, pargv, isStartVar, isMiddleVar, isEndVar);
+    }
+
+    if (printPar == true) {
+        printParameters(command.cmd, argc, pargv, par);
+    }
+}

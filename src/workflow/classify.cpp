@@ -47,7 +47,6 @@ int classify(int argc, const char **argv, const Command& command)
     omp_set_num_threads(par.threads);
 #endif
 
-    cout << "Number of threads: " << par.threads << endl;
     Classifier * classifier = new Classifier(par);
     classifier->startClassify(par);
     delete classifier;

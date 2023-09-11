@@ -13,6 +13,15 @@ void setDefaults_build(LocalParameters & par){
     par.maskMode = 1;
     par.bufferSize = 1'000'000'000;
     par.accessionLevel = 0;
+    // Get current date
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    par.dbDate = to_string(1900 + ltm->tm_year) + "-" + to_string(1 + ltm->tm_mon) + "-" + to_string(ltm->tm_mday);
+    
+    // Get random alphanumeric string fore dbName from current time
+    srand(time(NULL));
+    string randStr = to_string(rand());
+    par.dbName = randStr.substr(0, 32);
 }
 
 int build(int argc, const char **argv, const Command &command){

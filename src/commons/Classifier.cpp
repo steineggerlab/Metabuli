@@ -7,6 +7,9 @@ Classifier::Classifier(LocalParameters & par) {
     dbDir = par.filenames[1 + (par.seqMode == 2)];
     matchPerKmer = par.matchPerKmer;
     loadDbParameters(par);
+
+    cout << "DB name: " << par.dbName << endl;
+    cout << "DB creation date: " << par.dbDate << endl;
     
     // Taxonomy
     taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);

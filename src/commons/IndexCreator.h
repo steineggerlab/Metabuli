@@ -46,6 +46,10 @@ private:
     int reducedAA;
     string spaceMask;
     int accessionLevel;
+    int lowComplexityMasking;
+    float lowComplexityMaskingThreshold;
+    string dbName;
+    string dbDate;
     
     // Inputs
     NcbiTaxonomy * taxonomy;

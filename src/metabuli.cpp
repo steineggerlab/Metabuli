@@ -10,7 +10,7 @@
 const char* binary_name = "metabuli";
 const char* tool_name = "metabuli";
 const char* tool_introduction = "Metabuli is a taxonomical classifier that jointly analyzes amino acid and DNA sequences.";
-const char* main_author = "Jaebeom Kim <jbeom0731@gmail.com> ";
+const char* main_author = "Jaebeom Kim <jbeom0731@gmail.com>";
 const char* show_extended_help = "1";
 const char* show_bash_info = nullptr;
 bool hide_base_commands = true;

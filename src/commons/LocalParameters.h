@@ -63,6 +63,8 @@ public:
     PARAMETER(SPLIT_NUM)
     PARAMETER(BUFFER_SIZE)
     PARAMETER(ACCESSION_LEVEL)
+    PARAMETER(DB_NAME)
+    PARAMETER(DB_DATE)
 
     // Test parameters
     PARAMETER(TEST_RANK)
@@ -104,6 +106,8 @@ public:
     std::string tinfoPath;
     std::string libraryPath;
     std::string taxonomyPath;
+    std::string dbName;
+    std::string dbDate;
     int splitNum;
     size_t bufferSize;
     int accessionLevel;
@@ -123,6 +127,13 @@ public:
     // Filter
     int printMode;
     std::string contamList;
+
+    void printParameters(const std::string &module, int argc,
+                         const char* pargv[],
+                         const std::vector<MMseqsParameter*> &par);
+    
+    void parseParameters(int argc, const char *pargv[], const Command &command, bool printPar, int parseFlags,
+                        int outputFlags);
 
 private:
     LocalParameters();

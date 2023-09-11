@@ -85,6 +85,15 @@ int loadDbParameters(LocalParameters &par) {
       while (getline(dbParametersFile, eachLine)) {
         std::vector<std::string> tokens = Util::split(eachLine, "\t");
         if (tokens[0] == "Reduced_alphabet") {
+          // if (stoi(tokens[1]) != par.reducedAA){
+          //   if (par.reducedAA == 0){ // DB with reduced AA
+          //     cerr << "Warning: Current DB is built with reduced 15 amino acid alphabets." << endl;
+          //     cerr << "         --reduce-aa option will be ignored " << endl;
+          //   } else {
+          //     cerr << "Warning: Current DB is built with 20 amino acid alphabets." << endl;
+          //     cerr << "         --reduce-aa option will be ignored " << endl;
+          //   }
+          // }
           par.reducedAA = stoi(tokens[1]);
         } else if (tokens[0] == "Spaced_kmer_mask") {
           par.spaceMask = tokens[1];
@@ -96,6 +105,10 @@ int loadDbParameters(LocalParameters &par) {
           if (tokens[1] == "1" && par.accessionLevel == 0){
             par.accessionLevel = 2;
           }
+        } else if (tokens[0] == "DB_name") {
+          par.dbName = tokens[1];
+        } else if (tokens[0] == "Creation_date") {
+          par.dbDate = tokens[1];
         }
       }
       return 1;
