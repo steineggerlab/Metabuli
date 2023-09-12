@@ -137,7 +137,7 @@ std::vector<KmerThreshold> externalThreshold = {};
 std::vector<DatabaseDownload> externalDownloads = {
         {
                 "RefSeq",
-                "Database built with NCBI RefSeq assemblies (Complete/Chromosome level only, Prokaryote & Virus) and Human genome (GRCh38.p14)",
+                "Database built with NCBI RefSeq assemblies (Complete/Chromosome level only, Prokaryote & Virus) and Human genome (CHM13v2.0)",
                 "O'Leary et al. Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation. Nucleic Acids Res. (2016)",
                 "https://www.ncbi.nlm.nih.gov/refseq/",
                 true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,
@@ -145,7 +145,7 @@ std::vector<DatabaseDownload> externalDownloads = {
         },
         {
                 "RefSeq217",
-                "Database built with genomes of NCBI release 217 (Prokaryote & Virus) and Human genome (GRCh38.p14)",
+                "Database built with genomes of NCBI release 217 (Prokaryote & Virus) and Human genome (CHM13v2.0)",
                 "O'Leary et al. Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation. Nucleic Acids Res. (2016)",
                 "https://www.ncbi.nlm.nih.gov/refseq/",
                 true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,
@@ -161,7 +161,7 @@ std::vector<DatabaseDownload> externalDownloads = {
         },
         {
                 "RefSeq_virus",
-                "Database built with NCBI RefSeq virus assemblies (Complete/Chromosome level only)",
+                "Database built with NCBI RefSeq virus assemblies (Complete/Chromosome level) and Human genome (CHM13v2.0)",
                 "O'Leary et al. Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation. Nucleic Acids Res. (2016)",
                 "https://www.ncbi.nlm.nih.gov/refseq/",
                 true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,

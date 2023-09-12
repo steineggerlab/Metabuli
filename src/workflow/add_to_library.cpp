@@ -77,26 +77,33 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             while (kseq->ReadEntry()) {
                 const KSeqWrapper::KSeqEntry & e = kseq->entry;
 
-                // Extract accession and Remove the version number
-                string accession = string(e.name.s);
-                size_t pos = accession.find('.');
-                if (pos != string::npos) { accession = accession.substr(0, pos); }
-
-                // Skip if accession is not in the mapping file
-                if (acc2taxid.find(accession) == acc2taxid.end()) {
-                    cout << "During processing " << fileNames[i] << ", accession " << accession <<
+                int taxID = searchAccession2TaxID(e.name.s, acc2taxid);
+                if (taxID == 0) {
+                    cout << "During processing " << fileNames[i] << ", accession " << e.name.s <<
                          " is not found in the mapping file. It is skipped." << endl;
-                    unmapped.push_back(accession);
+                    unmapped.push_back(e.name.s);
                     continue;
                 }
+                // string accession = string(e.name.s);
+                // size_t pos = accession.find('.');
+                // if (pos != string::npos) { accession = accession.substr(0, pos); }
+
+                // // Skip if accession is not in the mapping file
+                // if (acc2taxid.find(accession) == acc2taxid.end()) {
+                //     cout << "During processing " << fileNames[i] << ", accession " << accession <<
+                //          " is not found in the mapping file. It is skipped." << endl;
+                //     unmapped.push_back(accession);
+                //     continue;
+                // }
 
                 // Get species taxID
-                int speciesTaxID = taxonomy->getTaxIdAtRank(acc2taxid[accession], "species");
+                int speciesTaxID = taxonomy->getTaxIdAtRank(taxID, "species");
 
                 // Skip if species taxID is not found
                 if (speciesTaxID == 0) {
-                    cout << "During processing " << fileNames[i] << ", accession " << accession <<
+                    cout << "During processing " << fileNames[i] << ", accession " << e.name.s <<
                          " is not matched to any species. It is skipped." << endl;
+                    unmapped.push_back(e.name.s);
                     continue;
                 }
 

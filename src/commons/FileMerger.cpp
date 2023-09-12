@@ -1,6 +1,9 @@
 #include "FileMerger.h"
+#include "common.h"
 
 FileMerger::FileMerger(const LocalParameters & par) {
+    // Load parameters
+    dbDir = par.filenames[0];
     splitNum = par.splitNum;
     bufferSize = par.bufferSize;
     if (par.reducedAA == 1){
@@ -10,10 +13,11 @@ FileMerger::FileMerger(const LocalParameters & par) {
         MARKER = 16777215;
         MARKER = ~ MARKER;
     }
+    taxonomy = loadTaxonomy(dbDir, "");
 }
 
 FileMerger::~FileMerger() {
-
+    delete taxonomy;
 }
 
 //void FileMerger::mergeTargetFiles(std::vector<char*> diffIdxFileNames, std::vector<char*> infoFileNames, vector<int> & taxIdListAtRank, vector<int> & taxIdList) {
@@ -177,38 +181,32 @@ FileMerger::~FileMerger() {
 // Merge differential index and k-mer information files, reducing redundancy
 void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) {
     size_t writtenKmerCnt = 0;
-    const string dbDirectory = par.filenames[0];
-
-    // Taxonomy
-    NcbiTaxonomy taxonomy(par.taxonomyPath + "/names.dmp",
-                          par.taxonomyPath + "/nodes.dmp",
-                          par.taxonomyPath + "/merged.dmp");
-
+   
     // Load taxonomy ids
     FILE * taxIdFile;
-    if((taxIdFile = fopen((string(dbDirectory) + "/taxID_list").c_str(),"r")) == NULL){
+    if((taxIdFile = fopen((string(dbDir) + "/taxID_list").c_str(),"r")) == NULL){
         cout<<"Cannot open the taxID list file."<<endl;
         return;
     }
+
     char taxID[100];
     unordered_map<TaxID, TaxID> taxId2speciesId;
-    while(feof(taxIdFile) == 0)
-    {
+    while(feof(taxIdFile) == 0) {
         fscanf(taxIdFile,"%s",taxID);
         TaxID taxId = atol(taxID);
-        TaxonNode const * taxon = taxonomy.taxonNode(taxId);
+        TaxonNode const * taxon = taxonomy->taxonNode(taxId);
         if (taxId == taxon->taxId){
-            TaxID speciesTaxID = taxonomy.getTaxIdAtRank(taxId, "species");
+            TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
             while (taxon->taxId != speciesTaxID) {
                 taxId2speciesId[taxon->taxId] = speciesTaxID;
-                taxon = taxonomy.taxonNode(taxon->parentTaxId);
+                taxon = taxonomy->taxonNode(taxon->parentTaxId);
             }
             taxId2speciesId[speciesTaxID] = speciesTaxID;
         } else { // merged
-            TaxID speciesTaxID = taxonomy.getTaxIdAtRank(taxId, "species");
+            TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
             while (taxon->taxId != speciesTaxID) {
                 taxId2speciesId[taxon->taxId] = speciesTaxID;
-                taxon = taxonomy.taxonNode(taxon->parentTaxId);
+                taxon = taxonomy->taxonNode(taxon->parentTaxId);
             }
             taxId2speciesId[speciesTaxID] = speciesTaxID;
             taxId2speciesId[taxId] = speciesTaxID;
@@ -217,9 +215,9 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     fclose(taxIdFile);
 
     // File names for the final DB
-    string mergedDiffFileName = dbDirectory + "/diffIdx";
-    string mergedInfoFileName = dbDirectory + "/info";
-    string diffIdxSplitFileName = dbDirectory + "/split";
+    string mergedDiffFileName = dbDir + "/diffIdx";
+    string mergedInfoFileName = dbDir + "/info";
+    string diffIdxSplitFileName = dbDir + "/split";
 
     // Files to write
     FILE * mergedDiffFile = fopen(mergedDiffFileName.c_str(), "wb");
@@ -246,8 +244,8 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     struct MmapedData<uint16_t> *diffFileList = new struct MmapedData<uint16_t>[numOfSplits];
     struct MmapedData<TargetKmerInfo> *infoFileList = new struct MmapedData<TargetKmerInfo>[numOfSplits];
     for (int file = 0; file < numOfSplits; file++) {
-        diffFileList[file] = mmapData<uint16_t>((dbDirectory + "/" + to_string(file) + "_diffIdx").c_str());
-        infoFileList[file] = mmapData<TargetKmerInfo>((dbDirectory + "/" + to_string(file) + "_info").c_str());
+        diffFileList[file] = mmapData<uint16_t>((dbDir + "/" + to_string(file) + "_diffIdx").c_str());
+        infoFileList[file] = mmapData<TargetKmerInfo>((dbDir + "/" + to_string(file) + "_info").c_str());
         maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
         numOfKmerBeforeMerge += infoFileList[file].fileSize / sizeof(TargetKmerInfo);
     }
@@ -329,7 +327,7 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
         }
 
         if (taxIds.size() > 1) {
-            entryInfo.sequenceID = taxonomy.LCA(taxIds)->taxId;
+            entryInfo.sequenceID = taxonomy->LCA(taxIds)->taxId;
         } else {
             entryInfo.sequenceID = taxIds[0];
         }
@@ -388,7 +386,7 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     cout<<"Reference DB files you need are as below"<<endl;
     cout<<mergedDiffFileName<<endl;
     cout<<mergedInfoFileName<<endl;
-    cout<<string(dbDirectory) + "/taxID_list"<<endl;
+    cout<<string(dbDir) + "/taxID_list"<<endl;
     cout<<diffIdxSplitFileName<<endl;
 }
 

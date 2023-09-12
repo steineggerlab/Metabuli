@@ -116,3 +116,41 @@ int loadDbParameters(LocalParameters &par) {
   }
   return 0;
 }
+
+int searchAccession2TaxID(const std::string &name,
+                          const std::unordered_map<std::string, int> &acc2taxid) {
+  if (acc2taxid.find(name) != acc2taxid.end()) {
+    return acc2taxid.at(name);
+  } 
+
+  // Cannot fine with version --> Remove the version number
+  size_t pos = name.find('.');
+  if (pos != std::string::npos) {
+    std::string nameWithoutVersion = name.substr(0, pos);
+    if (acc2taxid.find(nameWithoutVersion) != acc2taxid.end()) {
+      return acc2taxid.at(nameWithoutVersion);
+    }
+  }
+
+  // With prefix? Ex) NZ_CP083375.1
+  pos = name.find('_');
+  std::string nameWithoutPrefix;
+  if (pos != std::string::npos) {
+    // Try without prefix
+    nameWithoutPrefix = name.substr(pos + 1); // CP083375.1
+    if (acc2taxid.find(nameWithoutPrefix) != acc2taxid.end()) {
+      return acc2taxid.at(nameWithoutPrefix);
+    }
+
+    // Remove version
+    pos = nameWithoutPrefix.find('.');
+    if (pos != std::string::npos) {
+      nameWithoutPrefix = nameWithoutPrefix.substr(0, pos); // CP083375
+      if (acc2taxid.find(nameWithoutPrefix) != acc2taxid.end()) {
+        return acc2taxid.at(nameWithoutPrefix);
+      }
+    }
+  }
+
+  return 0;
+}

@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <utility>
 #include "NcbiTaxonomy.cpp"
+#include "common.h"
 
 IndexCreator::IndexCreator(const LocalParameters & par) {
     // Parameters
@@ -190,6 +191,7 @@ void IndexCreator::makeBlocksForParallelProcessing() {
     }
     string eachFile;
     string seqHeader;
+    string accession_version;
 
     unordered_map<string, TaxID> foundAcc2taxid;
     for (int i = 0; i < fileNum; ++i) {
@@ -198,8 +200,8 @@ void IndexCreator::makeBlocksForParallelProcessing() {
         fastaList[i].path = eachFile;
         processedSeqCnt.push_back(taxIdList.size());
         seqHeader = getSeqSegmentsWithHead(fastaList[i].sequences, eachFile, acc2taxid, foundAcc2taxid);
-        seqHeader = seqHeader.substr(1, seqHeader.find('.') - 1);
-        TaxID speciesTaxid = taxonomy->getTaxIdAtRank(acc2taxid[seqHeader], "species");
+        accession_version = seqHeader.substr(1, LocalUtil::getFirstWhiteSpacePos(seqHeader) - 1);
+        TaxID speciesTaxid = taxonomy->getTaxIdAtRank(searchAccession2TaxID(accession_version, acc2taxid), "species");
 
         // Split current file into blocks for parallel processing
         splitFastaForProdigalTraining(i, speciesTaxid);
@@ -246,19 +248,9 @@ void IndexCreator::makeBlocksForParallelProcessing_accession_level() {
         getline(fnaListFile, eachFile);
         fastaList[i].path = eachFile;
         processedSeqCnt.push_back(taxIdList.size());
-
         seqHeader = getSeqSegmentsWithHead(fastaList[i].sequences, eachFile, acc2taxid, newAcc2taxid);
-        // accession_version = seqHeader.substr(1, seqHeader.find('.') - 1);
-        accession = seqHeader.substr(1, seqHeader.find('.') - 1);
         accession_version = seqHeader.substr(1, LocalUtil::getFirstWhiteSpacePos(seqHeader) - 1);
-        // newAcc2taxid.emplace_back(accession_version, make_pair(acc2taxid[accession], newTaxID));
-        tempTaxIDList.push_back(acc2taxid[accession]);   
-        
-        // TaxID speciesTaxid = taxonomy->getTaxIdAtRank(acc2taxid[accession], "species");
-
-        // // Split current file into blocks for parallel processing
-        // splitFastaForProdigalTraining(i, speciesTaxid);
-        // fastaList[i].speciesID = speciesTaxid;
+        tempTaxIDList.push_back(searchAccession2TaxID(accession_version, acc2taxid));   
     }
 
     // Edit taxonomy dump files
@@ -284,7 +276,6 @@ void IndexCreator::makeBlocksForParallelProcessing_accession_level() {
         fprintf(acc2taxidFile, "%s\t%d\t%d\n", it.first.c_str(), it.second.first, it.second.second);
     }
     fclose(acc2taxidFile);
-
 }
 
 void IndexCreator::splitFastaForProdigalTraining(int file_idx, TaxID speciesID) {
@@ -700,19 +691,30 @@ string IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
     vector<SequenceBlock> seqSegmentsTmp;
     string accession;
     string accession_version;
+    int taxid;
 
     if (seqFile.is_open()) {
         getline(seqFile, firstLine, '\n');
-        accession = firstLine.substr(1, firstLine.find('.') - 1);
         accession_version = firstLine.substr(1, LocalUtil::getFirstWhiteSpacePos(firstLine) - 1);
-        newAcc2taxid.emplace_back(accession_version, make_pair(acc2taxid.at(accession), newTaxID));
+        taxid = searchAccession2TaxID(accession_version, acc2taxid);
+        if (taxid == 0) {
+            cerr << "Cannot find accession: " << accession_version << endl;
+            cerr << "Please run 'add-to-library' first." << endl;
+            exit(1);
+        }
+        newAcc2taxid.emplace_back(accession_version, make_pair(taxid, newTaxID));
         taxIdList.push_back(newTaxID++);
 
         while (getline(seqFile, eachLine, '\n')) {
             if (eachLine[0] == '>') {
-                accession = eachLine.substr(1, eachLine.find('.') - 1);
                 accession_version = eachLine.substr(1, LocalUtil::getFirstWhiteSpacePos(eachLine) - 1);
-                newAcc2taxid.emplace_back(accession_version, make_pair(acc2taxid.at(accession), newTaxID));
+                taxid = searchAccession2TaxID(accession_version, acc2taxid);
+                if (taxid == 0) {
+                    cerr << "Cannot find accession: " << accession_version << endl;
+                    cerr << "Please run 'add-to-library' first." << endl;
+                    exit(1);
+                }
+                newAcc2taxid.emplace_back(accession_version, make_pair(taxid, newTaxID));
                 taxIdList.push_back(newTaxID++);
                 pos = (size_t) seqFile.tellg();
                 seqSegmentsTmp.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
@@ -744,16 +746,32 @@ string IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
     vector<SequenceBlock> seqSegmentsTmp;
     vector<string> headers;
     size_t seqCnt = taxIdList.size();
+    string accession_version;
+    int taxid;
+
     if (seqFile.is_open()) {
         getline(seqFile, firstLine, '\n');
-//        cout << firstLine << endl;
-        taxIdList.push_back(acc2taxid.at(firstLine.substr(1, firstLine.find('.') - 1)));
-        foundAcc2taxid[firstLine.substr(1, firstLine.find(' ') - 1)] = taxIdList.back();
+        accession_version = firstLine.substr(1, LocalUtil::getFirstWhiteSpacePos(firstLine) - 1);
+        taxid = searchAccession2TaxID(accession_version, acc2taxid);
+        if (taxid == 0) {
+            cerr << "Cannot find accession: " << accession_version << endl;
+            cerr << "Please run 'add-to-library' first." << endl;
+            exit(1);
+        }
+        taxIdList.push_back(taxid);
+
+        foundAcc2taxid[accession_version] = taxIdList.back();
         while (getline(seqFile, eachLine, '\n')) {
             if (eachLine[0] == '>') {
-//                cout << eachLine << endl;
-                taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find('.') - 1)));
-                foundAcc2taxid[eachLine.substr(1, eachLine.find(' ') - 1)] = taxIdList.back();
+                accession_version = eachLine.substr(1, LocalUtil::getFirstWhiteSpacePos(eachLine) - 1);
+                taxid = searchAccession2TaxID(accession_version, acc2taxid);
+                if (taxid == 0) {
+                    cerr << "Cannot find accession: " << accession_version << endl;
+                    cerr << "Please run 'add-to-library' first." << endl;
+                    exit(1);
+                }
+                taxIdList.push_back(taxid);
+                foundAcc2taxid[accession_version] = taxIdList.back();
                 pos = (size_t) seqFile.tellg();
                 seqSegmentsTmp.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
                 start = pos - eachLine.length() - 1;

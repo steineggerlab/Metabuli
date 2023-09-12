@@ -86,4 +86,6 @@ NcbiTaxonomy * loadTaxonomy(const std::string & dbDir, const std::string & taxon
 
 int loadDbParameters(LocalParameters & par);
 
+int searchAccession2TaxID(const std::string & name, const std::unordered_map<std::string, int> & acc2taxid);
+
 #endif //ADCLASSIFIER2_COMMON_H
