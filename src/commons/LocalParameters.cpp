@@ -268,7 +268,7 @@ LocalParameters::LocalParameters() :
     // build
     build.push_back(&PARAM_THREADS);
     build.push_back(&REDUCED_AA);
-    build.push_back(&SPACED);
+    // build.push_back(&SPACED);
     build.push_back(&TAXONOMY_PATH);
     build.push_back(&SPLIT_NUM);
     build.push_back(&PARAM_MASK_PROBABILTY);

@@ -34,7 +34,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
     }
 
     // Load taxonomy
-    NcbiTaxonomy * taxonomy = loadTaxonomy(dbDir);
+    NcbiTaxonomy * taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
 
     // Load file names
     ifstream fileListFile;
@@ -60,7 +60,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             char accession_version[2048];
             int taxID;
             fscanf(mappingFile, "%*s\t%*s\t%*s\t%*s");
-            while (fscanf(mappingFile, "%s\t%s\t%d\t%*d", accession, accession_version, &taxID) == 2) {
+            while (fscanf(mappingFile, "%s\t%s\t%d\t%*d", accession, accession_version, &taxID) == 3) {
                 acc2taxid[string(accession_version)] = taxID;
                 acc2taxid[string(accession)] = taxID;
             }

@@ -173,7 +173,7 @@ Accessions that are not included in the `<accession2taxid>` will be skipped and 
 
 ```
 # Get the list of absoulte paths of files in your library
-find <DBDIR>/library -name '*.fna' > library-files.txt
+find <DBDIR>/library -type f -name '*.fna' > library-files.txt
 
 metabuli build <DBDIR> <LIB_FILES> <accession2taxid> [options]
 - DBDIR: The same DBDIR from the previous step. 
@@ -216,7 +216,7 @@ This will add your FASTA files to DBDIR/library according to their species taxon
 #### 2. Build
 ```
 # Get the list of absoulte paths of files in your library
-find <DBDIR>/library -name '*.fna' > library-files.txt
+find <DBDIR>/library -type f -name '*.fna' > library-files.txt
 
 metabuli build <DBDIR> <LIB_FILES> <accession2taxid> [options]
 - DBDIR: The same DBDIR from the previous step. 
