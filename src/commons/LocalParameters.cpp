@@ -294,7 +294,7 @@ LocalParameters::LocalParameters() :
 //     classify.push_back(&MIN_COVERED_POS);
 //     classify.push_back(&PRINT_LOG);
 //     classify.push_back(&MAX_GAP);
-//     classify.push_back(&TAXONOMY_PATH);
+    classify.push_back(&TAXONOMY_PATH);
     classify.push_back(&PARAM_MASK_RESIDUES);
     classify.push_back(&PARAM_MASK_PROBABILTY);
     classify.push_back(&RAM_USAGE);

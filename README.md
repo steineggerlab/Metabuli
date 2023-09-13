@@ -164,7 +164,9 @@ The steps for building a database with NCBI or GTDB taxonomy are described below
 metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR>
 - FASTA list: A file containing absolute paths of each FASTA file.
 - accession2taxid: A path to NCBI-style accession2taxid.
-- DBDIR: Sequences will be stored in 'DBDIR/library'. 
+- DBDIR: Sequences will be stored in 'DBDIR/library'.
+
+** When resume is needed, remove the files in DBDIR/library and run the command again.
 ```
 It groups your sequences into separate files according to their species.
 Accessions that are not included in the `<accession2taxid>` will be skipped and listed in `unmapped.txt`.
@@ -191,17 +193,24 @@ This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some
 
 ### To build a database with GTDB taxonomy
 #### 1. Prepare GTDB taxonomy and accession2taxid
-*Requirements*: You need assembly FASTA files whose file name (or path) includes the assembly accession.
+*Requirements*: 
+You need assembly FASTA files whose file name (or path) includes the assembly accession.
 If you downloaded assemblies using `ncbi-genome-download`, you probably don't have to care about it.
 The regular expression of assembly accessions is (GC[AF]_[0-9].[0-9])
 
 ```
 # 1. 
-In the 'util' directory
+# 1-1. Move to the 'util' directory
+cd METABULI_DIR/util
+
+# 1-2. Run prepare_gtdb_taxonomy.sh
 ./prepare_gtdb_taxonomy.sh <DBDIR>
   - DBDIR : Result files are stored in 'DBDIR/taxonomy'. 
+
+** Please clone Metabuli's repository to use this script.
+** It is not provided in the precompiled binaries or bioconda package.
 ```
-This will generate taxonomy dump files and `assacc_to_taxid.tsv` with other files.
+In `DBDIR/taxonomy`, it will generate taxonomy `dmp` files and `assacc_to_taxid.tsv` with other files.
 
 ```
 # 2. 
@@ -210,6 +219,8 @@ metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR> --assembly true
     Each path must include a corresponding assembly accession. 
   - accession2taxid : 'assacc_to_taxid.tsv' from the previous step
   - DBDIR : The same DBDIR from the previous step.
+
+** When resume is needed, remove the files in DBDIR/library and run the command again.
 ```
 This will add your FASTA files to DBDIR/library according to their species taxonomy ID and generate 'my.accession2taxid'
 

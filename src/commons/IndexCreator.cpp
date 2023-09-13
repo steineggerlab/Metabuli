@@ -1004,7 +1004,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     munmap(fastaFile.data, fastaFile.fileSize + 1);
                 } else {
                     // Withdraw the reservation if the buffer is full.
-                    cout << "Buffer is full. Withdraw the reservation." << endl;
+                    // cout << "Buffer is full. Withdraw the reservation." << endl;
                     checker[i] = false;
                     __sync_fetch_and_add(&hasOverflow, 1);
                     __sync_fetch_and_sub(&kmerBuffer.startIndexOfReserve, estimatedKmerCnt);

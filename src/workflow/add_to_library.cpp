@@ -174,6 +174,10 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             KSeqWrapper* kseq = KSeqFactory(fileNames[i].c_str());
             while (kseq->ReadEntry()){
                 const KSeqWrapper::KSeqEntry & e = kseq->entry;
+                // Extract accession
+                string accession = string(e.name.s);
+                acc2taxid[accession] = assembly2taxid[assemblyID];
+
                 // Write to file
                 FILE *file = fopen((dbDir + "/library/" + to_string(speciesTaxID) + ".fna").c_str(), "a");
                 fprintf(file, ">%s %s\n", e.name.s, e.comment.s);
