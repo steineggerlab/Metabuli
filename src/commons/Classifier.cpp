@@ -98,26 +98,9 @@ void Classifier::startClassify(const LocalParameters &par) {
                                          kseq2);
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
 
-//#ifdef OPENMP
-//        if (par.printLog == 1) {
-//            omp_set_num_threads(1);
-//        } else {
-//            omp_set_num_threads(par.threads);
-//        }
-//#endif
-
         // Search matches between query and target k-mers
         kmerMatcher->matchKmers(&kmerBuffer, &matchBuffer);
         kmerMatcher->sortMatches(&matchBuffer);
-
-
-//#ifdef OPENMP
-//        if (par.printLog == 1) {
-//            omp_set_num_threads(1);
-//        } else {
-//            omp_set_num_threads(par.threads);
-//        }
-//#endif
 
         // Classify queries based on the matches
         taxonomer->assignTaxonomy(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
@@ -146,5 +129,4 @@ void Classifier::startClassify(const LocalParameters &par) {
     free(matchBuffer.buffer);
     delete kseq1;
     delete kseq2;
-
 }

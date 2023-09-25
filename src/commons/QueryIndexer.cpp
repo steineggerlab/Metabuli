@@ -30,26 +30,32 @@ void QueryIndexer::setAvailableRam() {
 void QueryIndexer::indexQueryFile() {
     // Read 1
     if (seqMode == 1 || seqMode == 3) {
-        KSeqWrapper* kseq;
-        kseq = KSeqFactory(queryPath_1.c_str());
+        KSeqWrapper* kseq = KSeqFactory(queryPath_1.c_str());
         size_t kmerCnt = 0;
         size_t seqCnt = 0;
         size_t start = 0;
         while (kseq->ReadEntry()) {
             readNum_1++;
-            const KSeqWrapper::KSeqEntry &e = kseq->entry;
-            totalReadLength += e.sequence.l;
-            size_t currentKmerCnt = LocalUtil::getQueryKmerNumber<size_t>(e.sequence.l, spaceNum);
-            kmerCnt += currentKmerCnt;
             seqCnt++;
+            totalReadLength += kseq->entry.sequence.l;
+            size_t currentKmerCnt = LocalUtil::getQueryKmerNumber<size_t>(kseq->entry.sequence.l, spaceNum);
+            kmerCnt += currentKmerCnt;
+            // std::cout << "currentKmerCnt: " << kmerCnt << "\n";
+        
             if (bytesPerKmer * kmerCnt + ((size_t) 200 * seqCnt) > availableRam) {
-                querySplits.emplace_back(start, readNum_1, kmerCnt - currentKmerCnt);
+                querySplits.emplace_back(start, readNum_1 - 1, kmerCnt - currentKmerCnt);
                 kmerCnt = currentKmerCnt;
-                start = readNum_1;
+                start = readNum_1 - 1;
                 seqCnt = 1;
             }
         }
         querySplits.emplace_back(start, readNum_1, kmerCnt);
+        // Print elements
+        for (auto & querySplit : querySplits) {
+            std::cout << "start: " << querySplit.start << "\t";
+            std::cout << "end: " << querySplit.end << "\t";
+            std::cout << "kmerCnt: " << querySplit.kmerCnt << "\n";
+        }
         delete kseq;
     } else {
         KSeqWrapper* kseq_1 = KSeqFactory(queryPath_1.c_str());
@@ -87,9 +93,9 @@ void QueryIndexer::indexQueryFile() {
             }
 
             if (bytesPerKmer * kmerCnt + ((size_t) 200 * seqCnt_1) > availableRam) {
-                querySplits.emplace_back(start, readNum_1, kmerCnt - currentKmerCnt);
+                querySplits.emplace_back(start, readNum_1 - 1, kmerCnt - currentKmerCnt);
                 kmerCnt = currentKmerCnt;
-                start = readNum_1;
+                start = readNum_1 - 1;
                 seqCnt_1 = 1;
             }
 

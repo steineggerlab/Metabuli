@@ -4,15 +4,10 @@
 #include <fstream>
 #include <iostream>
 #include <unistd.h>
-// #include "MathUtil.h"
 #include "Debug.h"
 #include "Reporter.h"
 #include "Util.h"
 #include "sys/mman.h"
-
-// #include <fstream>
-// #include <algorithm>
-// #include <cassert>
 
 void process_mem_usage(double &vm_usage, double &resident_set) {
   vm_usage = 0.0;
@@ -68,7 +63,6 @@ NcbiTaxonomy *loadTaxonomy(const std::string &dbDir,
                             taxonomyDir + "/nodes.dmp",
                             taxonomyDir + "/merged.dmp");
   }
-
   return new NcbiTaxonomy(dbDir + "/taxonomy/names.dmp",
                           dbDir + "/taxonomy/nodes.dmp",
                           dbDir + "/taxonomy/merged.dmp");

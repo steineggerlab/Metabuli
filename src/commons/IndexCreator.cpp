@@ -131,7 +131,6 @@ void IndexCreator::updateIndex(const LocalParameters &par) {
 
     // Train Prodigal for each species
     time_t prodigalStart = time(nullptr);
-    // trainProdigal();
     time_t prodigalEnd = time(nullptr);
     cout << "Prodigal training time: " << prodigalEnd - prodigalStart << " seconds" << endl;
 
@@ -521,6 +520,8 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
                 hasSeenOtherStrains = 0;
                 taxIds.clear();
                 taxIds.push_back(taxIdList[lookingKmer->info.sequenceID]);
+
+                // Scan redundancy
                 while(lookingKmer->taxIdAtRank == kmerBuffer.buffer[i].taxIdAtRank){
                     if (lookingKmer->ADkmer != kmerBuffer.buffer[i].ADkmer) {
                         break;
@@ -882,7 +883,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
                     lengthOfTrainingSeq = seq->seq.l;
-                    cout << "T: " << seq->name.s << " " << lengthOfTrainingSeq << " " << estimatedKmerCnt << endl;
+                    // cout << "T: " << seq->name.s << " " << lengthOfTrainingSeq << " " << estimatedKmerCnt << endl;
 
                     // Train prodigal
                     prodigal->is_meta = 0;
@@ -1009,7 +1010,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     __sync_fetch_and_add(&hasOverflow, 1);
                     __sync_fetch_and_sub(&kmerBuffer.startIndexOfReserve, estimatedKmerCnt);
                 }
-                cout << totalLength << " " << prodigal->fng << endl;
+                // cout << totalLength << " " << prodigal->fng << endl;
                 delete prodigal;
                 
             }

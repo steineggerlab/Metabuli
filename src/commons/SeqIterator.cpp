@@ -355,6 +355,7 @@ void SeqIterator::fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuff
             posToWrite++;
         }
     }
+    // cout << "posToWrite: " << posToWrite << endl;
 }
 
 void

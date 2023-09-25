@@ -305,6 +305,8 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
         int hasSeenOtherStrains = 0;
         taxIds.clear();
         taxIds.push_back(entryInfo.sequenceID); // Wrong
+        
+        // Scan redundant k-mers
         while(taxId2speciesId[entryInfo.sequenceID] == taxId2speciesId[lookingInfos[idxOfMin].sequenceID]){
             if(entryKmer != lookingKmers[idxOfMin]) break;
 

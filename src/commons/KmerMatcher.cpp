@@ -178,7 +178,8 @@ int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
         // Devide query k-mers into blocks
         size_t splitWidth = queryKmerNum / (threads - 1);
         querySplits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
-        for (size_t i = 1; i < threads; i++) {
+        size_t i = 1;
+        for (; (i < threads) && (splitWidth * i < queryKmerNum); i++) {
             queryAA = AminoAcidPart(queryKmerList[splitWidth * i].ADkmer);
             bool needLastTargetBlock = true;
             for (size_t j = 0; j < numOfDiffIdxSplits_use; j++) {
@@ -204,6 +205,10 @@ int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
                                              diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
                 }
             }
+        }
+
+        if (i != threads) {
+            threads = querySplits.size();
         }
     }
 

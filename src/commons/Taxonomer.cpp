@@ -75,13 +75,11 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
                                  vector<Query> & queryList,
                                  const LocalParameters &par) {
     TaxID selectedTaxon;
-//    if (par.printLog) {
+
+//    if (true) {
 //        cout << "# " << currentQuery << " " << queryList[currentQuery].name << endl;
 //        for (size_t i = offset; i < end + 1; i++) {
-//            cout << taxId2genusId[matchList[i].targetId] << " " << taxId2speciesId[matchList[i].targetId] <<
-//            " "  << matchList[i].targetId << " " << matchList[i].qInfo.frame << " ";
-//            print_binary16(16, matchList[i].rightEndHamming);
-//            cout << " " << matchList[i].qInfo.pos << " " << int(matchList[i].hamming) <<  " "  << int(matchList[i].redundancy) << endl;
+//            cout << matchList[i].targetId << " " << matchList[i].qInfo.frame << " " << matchList[i].qInfo.pos << " " << int(matchList[i].hamming) <<  " "  << int(matchList[i].redundancy) << endl;
 //        }
 //    }
 
@@ -111,14 +109,11 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
         }
     }
 
-//    if (par.printLog) {
+//    if (true) {
 //        cout << "# " << currentQuery << " " << queryList[currentQuery].name << " filtered\n";
 //        for (size_t i = 0; i < genusMatches.size(); i++) {
-//            cout << taxId2genusId[genusMatches[i].targetId] << " " << taxId2speciesId[genusMatches[i].targetId] <<
-//                 " "  << genusMatches[i].targetId << " " << genusMatches[i].qInfo.frame << " ";
-//            print_binary16(16, genusMatches[i].rightEndHamming);
-//            cout << " " << genusMatches[i].qInfo.pos << " " << int(genusMatches[i].hamming) <<  " "  << int(genusMatches[i].redundancy) << endl;
-//        }
+//           cout << genusMatches[i].targetId << " " << genusMatches[i].qInfo.frame << " " << genusMatches[i].qInfo.pos << " " << int(genusMatches[i].hamming) <<  " "  << int(genusMatches[i].redundancy) << endl;
+//         }
 //        cout << "Genus score: " << genusScore.score << "\n";
 //    }
 
@@ -481,7 +476,6 @@ void Taxonomer::remainConsecutiveMatches(vector<const Match *> & curFrameMatches
     for (const auto& entry : linkedMatches) {
         if (!used.count(entry.first)) {
             used.insert(entry.first);
-            vector<const Match*> curMatches;
             DFS(entry.first, linkedMatches, filteredMatchIdx, 0, MIN_DEPTH, used, idx2depth);
         }
     }
@@ -506,7 +500,7 @@ size_t Taxonomer::DFS(size_t curMatchIdx, const map<size_t, vector<size_t>> & li
     depth++;
     size_t maxDepth = 0;
     size_t returnDepth = 0;
-    if (linkedMatches.find(curMatchIdx) == linkedMatches.end()) { //|| linkedMatches.at(curMatchIdx).empty()) {
+    if (linkedMatches.find(curMatchIdx) == linkedMatches.end()) { 
         // reached a leaf node
         idx2depth[curMatchIdx] = depth;
         if (depth > MIN_DEPTH) {
