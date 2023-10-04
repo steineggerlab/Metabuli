@@ -446,10 +446,10 @@ SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock &block, const char
             kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0, false};
         } else {
             addDNAInfo_TargetKmer(tempKmer, seq, block, kmerCnt);
-            if(posToWrite >= kmerBuffer.bufferSize - 2) {
-                cout << "HERE " << posToWrite << endl;
-                return -1;
-            }
+            // if(posToWrite >= kmerBuffer.bufferSize - 2) {
+            //     cout << "HERE " << posToWrite << endl;
+            //     return -1;
+            // }
             kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, false};
         }
         posToWrite++;
