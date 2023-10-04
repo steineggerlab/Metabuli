@@ -51,6 +51,12 @@ ProdigalWrapper::ProdigalWrapper() {
 
 void ProdigalWrapper::
 trainASpecies(char * genome){
+    // Initialize memories to reuse them
+    memset(seq, 0, (slen / 4 + 1) * sizeof(unsigned char));
+    memset(rseq, 0, (slen / 4 + 1) * sizeof(unsigned char));
+    memset(useq, 0, (slen / 8 + 1) * sizeof(unsigned char));
+    memset(nodes, 0, nn * sizeof(struct _node));
+    nn = 0; slen = 0; ipath = 0; nmask = 0;
 
     // Initialize training information
     memset(mlist, 0, MAX_MASKS*sizeof(mask));
@@ -116,17 +122,17 @@ trainASpecies(char * genome){
     train_starts_sd(seq, rseq, slen, nodes, nn, &tinf);
     determine_sd_usage(&tinf);
     if(force_nonsd == 1) tinf.uses_sd = 0;
-    if(tinf.uses_sd == 0) train_starts_nonsd(seq, rseq, slen, nodes, nn, &tinf);
+    if(tinf.uses_sd == 0) train_starts_nonsd(seq, rseq, slen, nodes, nn, &tinf); 
+}
 
+void ProdigalWrapper::trainMeta(char *genome) {
     // Initialize memories to reuse them
     memset(seq, 0, (slen / 4 + 1) * sizeof(unsigned char));
     memset(rseq, 0, (slen / 4 + 1) * sizeof(unsigned char));
     memset(useq, 0, (slen / 8 + 1) * sizeof(unsigned char));
     memset(nodes, 0, nn * sizeof(struct _node));
     nn = 0; slen = 0; ipath = 0; nmask = 0;
-}
 
-void ProdigalWrapper::trainMeta(char *genome) {
     // Initialize training information
     memset(&tinf, 0, sizeof(struct _training));
     tinf.st_wt = 4.35;
@@ -173,15 +179,16 @@ void ProdigalWrapper::trainMeta(char *genome) {
             max_score = nodes[ipath].score;
         }
     }
+}
 
+void ProdigalWrapper::getPredictedGenes(char * genome) {
     // Initialize memories to reuse them
+    // Initialization should be done here not at the end of the function
     memset(seq, 0, (slen / 4 + 1) * sizeof(unsigned char));
     memset(rseq, 0, (slen / 4 + 1) * sizeof(unsigned char));
     memset(useq, 0, (slen / 8 + 1) * sizeof(unsigned char));
-    memset(nodes, 0, nn * sizeof(struct _node));
-    nn = 0; slen = 0; ipath = 0; nmask = 0;
-}
-void ProdigalWrapper::getPredictedGenes(char * genome){
+    memset(nodes, 0, nn*sizeof(struct _node));
+    nn = 0; slen = 0; nmask = 0; ipath=0;
 
     /* Initialize structure */
     slen = getNextSeq(genome, 0);
@@ -241,13 +248,6 @@ void ProdigalWrapper::getPredictedGenes(char * genome){
         tweak_final_starts(genes, ng, nodes, nn, meta[max_phase].tinf);
         record_gene_data(genes, ng, nodes, meta[max_phase].tinf, num_seq);
     }
-
-    // Initialize memories to reuse them
-    memset(seq, 0, (slen / 4 + 1) * sizeof(unsigned char));
-    memset(rseq, 0, (slen / 4 + 1) * sizeof(unsigned char));
-    memset(useq, 0, (slen / 8 + 1) * sizeof(unsigned char));
-    memset(nodes, 0, nn*sizeof(struct _node));
-    nn = 0; slen = 0; nmask = 0; ipath=0;
 }
 
 int ProdigalWrapper::getNextSeq(char * line, int training) {
