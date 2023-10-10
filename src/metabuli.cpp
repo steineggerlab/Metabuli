@@ -129,7 +129,15 @@ std::vector<Command> commands = {
                     CITATION_SPACEPHARER,
                     {{"Binning Result", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                      {"Genus list", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-                     {"TAXONOMY DIR", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}}
+                     {"TAXONOMY DIR", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
+        {"mapping2taxon", mapping2taxon, &localPar.mapping2taxon, COMMAND_EXPERT,
+                    "It takes a mapping file (multiple targets for each read) and generates a read2taxon file (one target for each read)",
+                nullptr,
+                    "Jaebeom Kim <jbeom0731@gmail.com>",
+                    "<i:mapping file> <i: taxonomy directory> ",
+                    CITATION_SPACEPHARER,
+                    {{"mapping file", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                     {"taxonomy directory", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}}
 
 };
 std::vector<KmerThreshold> externalThreshold = {};

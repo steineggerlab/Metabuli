@@ -31,7 +31,7 @@ public:
     std::vector<MMseqsParameter*> binning2report;
     std::vector<MMseqsParameter*> filterByGenus;
     std::vector<MMseqsParameter*> databaseReport;
-
+    std::vector<MMseqsParameter*> mapping2taxon;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)

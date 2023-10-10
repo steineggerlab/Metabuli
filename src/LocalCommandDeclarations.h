@@ -13,5 +13,6 @@ extern int applyThreshold(int argc, const char **argv, const Command& command);
 extern int binning2report(int argc, const char **argv, const Command& command);
 extern int filterByGenus(int argc, const char **argv, const Command& command);
 extern int databaseReport(int argc, const char **argv, const Command& command);
+extern int mapping2taxon(int argc, const char **argv, const Command& command);
 
 #endif //ADCLASSIFIER2_LOCALCOMMANDDECLARATIONS_H
