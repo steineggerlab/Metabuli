@@ -314,6 +314,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
                         for (const auto & value : idx2values[idx]) {
                             fnFile << value << "\t";
                         }
+                        fnFile << endl;
                     }
                     fnFile.close();
                 }
