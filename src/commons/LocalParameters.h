@@ -55,6 +55,7 @@ public:
     PARAMETER(MIN_CONS_CNT)
     PARAMETER(MIN_CONS_CNT_EUK)
     PARAMETER(MATCH_PER_KMER)
+    PARAMETER(MIN_SS_MATCH)
 
     // DB build parameters
     PARAMETER(LIBRARY_PATH)
@@ -101,6 +102,7 @@ public:
     int maxGap;
     int minConsCntEuk;
     int matchPerKmer;
+    int minSSMatch;
 
     // Database creation
     std::string tinfoPath;

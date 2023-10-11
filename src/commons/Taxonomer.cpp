@@ -18,6 +18,7 @@ Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxon
     maxGap = par.maxGap;
     minCoveredPos = par.minCoveredPos;
     accessionLevel = par.accessionLevel;
+    minSSMatch = par.minSSMatch;
 }
 
 Taxonomer::~Taxonomer() {
@@ -308,7 +309,7 @@ TaxID Taxonomer::BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID r
     if (cladeCnt.at(root).children.empty()) { // root is a leaf
         return root;
     }
-    unsigned int maxCnt = 3;
+    unsigned int maxCnt = minSSMatch;
     unsigned int currentCnt;
     vector<TaxID> bestChildren;
     for (auto it = cladeCnt.at(root).children.begin(); it != cladeCnt.at(root).children.end(); it++) {

@@ -143,6 +143,13 @@ LocalParameters::LocalParameters() :
                        typeid(int),
                        (void *) &matchPerKmer,
                        "^[0-9]+$"),
+        MIN_SS_MATCH(MIN_SS_MATCH_ID,
+                    "--min-ss-match",
+                    "Min. num. of ssp.-specific matches for ssp. classification",
+                    "Min. number of ssp.-specific matches for ssp. classification",
+                    typeid(int),
+                    (void *) &minSSMatch,
+                    "^[0-9]+$"),
         LIBRARY_PATH(LIBRARY_PATH_ID,
                      "--library-path",
                      "Path to library where the FASTA files are stored",
@@ -300,6 +307,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&RAM_USAGE);
     classify.push_back(&MATCH_PER_KMER);
     classify.push_back(&ACCESSION_LEVEL);
+    classify.push_back(&MIN_SS_MATCH);
 
     // filter 
     filter.push_back(&PARAM_THREADS);
