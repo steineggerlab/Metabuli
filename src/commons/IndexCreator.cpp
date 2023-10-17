@@ -961,7 +961,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                             }
                         } else { // Reverse complement
                             reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, seq->seq.l);
-
+                            
                             // Get extended ORFs
                             prodigal->getPredictedGenes(reverseCompliment);
                             prodigal->removeCompletelyOverlappingGenes();
