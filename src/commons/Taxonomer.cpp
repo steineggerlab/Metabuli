@@ -87,8 +87,6 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
     // Get the best genus for current query
     vector<Match> genusMatches;
     genusMatches.reserve(end - offset + 1);
-
-    int res;
     TaxonScore genusScore(0, 0, 0, 0);
     if (par.seqMode == 2) {
         if (par.spaceMask != "11111111"){
