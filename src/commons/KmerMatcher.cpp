@@ -1,4 +1,5 @@
 #include "KmerMatcher.h"
+#include "IndexCreator.h"
 #include "Kmer.h"
 #include "Mmap.h"
 #include <ostream>
@@ -145,6 +146,8 @@ int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
         }
     }
 
+    IndexCreator::printIndexSplitList(diffIdxSplits.data);
+    
     // Filter out meaningless target splits
     size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
     size_t numOfDiffIdxSplits_use = numOfDiffIdxSplits;
@@ -154,6 +157,11 @@ int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
             numOfDiffIdxSplits_use--;
         }
     }
+
+
+    cout << numOfDiffIdxSplits_use << endl;
+    IndexCreator::printIndexSplitList(diffIdxSplits.data);
+
 
     // Divide query k-mer list into blocks for multi threading.
     // Each split has start and end points of query list + proper offset point of target k-mer list

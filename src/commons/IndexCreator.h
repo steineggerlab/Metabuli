@@ -166,6 +166,14 @@ private:
 public:
     static void splitSequenceFile(vector<SequenceBlock> & seqSegments, MmapedData<char> seqFile);
 
+    static void printIndexSplitList(DiffIdxSplit * splitList) {
+        for (int i = 0; i < 4096; i++) {
+            cout << splitList[i].infoIdxOffset << " " << 
+                    splitList[i].diffIdxOffset << " " << 
+                    splitList[i].ADkmer << endl;
+        }
+    }
+
     string getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
                                   const string & seqFileName,
                                   const unordered_map<string, TaxID> & acc2taxid,
