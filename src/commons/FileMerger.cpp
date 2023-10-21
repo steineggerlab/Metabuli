@@ -257,6 +257,7 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     int offsetListIdx = 1;
     for(size_t os = 0; os < splitNum; os++){
         offsetList[os] = os * sizeOfSplit;
+        // cout << os * sizeOfSplit << endl;
     }
     offsetList[splitNum] = UINT64_MAX;
     DiffIdxSplit splitList[splitNum];
