@@ -407,17 +407,34 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     DiffIdxSplit splitList[par.splitNum];
     memset(splitList, 0, sizeof(DiffIdxSplit) * par.splitNum);
     size_t splitWidth = uniqKmerCnt / par.splitNum;
+    size_t remainder = uniqKmerCnt % par.splitNum;
     size_t splitCnt = 1;
+    size_t start = 0;
     for (size_t i = 1; i < (size_t) par.splitNum; i++) {
-        for (size_t j = uniqKmerIdx[0] + splitWidth * i; j + 1 < uniqKmerCnt; j++) {
-            if (AminoAcidPart(kmerBuffer[j].ADkmer) != AminoAcidPart(kmerBuffer[j + 1].ADkmer)) {
-                if (kmerBuffer[j].ADkmer != splitList[splitCnt - 1].ADkmer){
-                    splitList[splitCnt].ADkmer = kmerBuffer[j].ADkmer;
-                    splitCnt ++;
-                }
+        start = start + splitWidth;
+        if (remainder > 0) {
+            start++;
+            remainder--;
+        }
+        for (size_t j = start; j + 1 < start + splitWidth; j++) {
+            if (AminoAcidPart(kmerBuffer[uniqKmerIdx[j]].ADkmer) 
+                != AminoAcidPart(kmerBuffer[uniqKmerIdx[j + 1]].ADkmer)) {
+                splitList[splitCnt].ADkmer = kmerBuffer[uniqKmerIdx[j + 1]].ADkmer;
+                cout << splitList[splitCnt].ADkmer << endl;
+                splitCnt++;
                 break;
             }
         }
+        // for (size_t j = uniqKmerIdx[0] + splitWidth * i; j + 1 < uniqKmerCnt; j++) { // here is a bug
+        //     if (AminoAcidPart(kmerBuffer[j].ADkmer) != AminoAcidPart(kmerBuffer[j + 1].ADkmer)) {
+        //         if (kmerBuffer[j].ADkmer != splitList[splitCnt - 1].ADkmer){
+        //             splitList[splitCnt].ADkmer = kmerBuffer[j].ADkmer;
+        //             cout << splitList[splitCnt].ADkmer << endl;
+        //             splitCnt ++;
+        //         }
+        //         break;
+        //     }
+        // }
     }
 
     FILE * diffIdxFile = fopen(diffIdxFileName.c_str(), "wb");
@@ -446,6 +463,8 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
         if((splitIdx < splitCnt) && (lastKmer == splitList[splitIdx].ADkmer)){
             splitList[splitIdx].diffIdxOffset = totalDiffIdx;
             splitList[splitIdx].infoIdxOffset = write;
+            cout << "Split " << splitIdx << " at " << splitList[splitIdx].infoIdxOffset << " " << 
+            splitList[splitIdx].diffIdxOffset << " " << splitList[splitIdx].ADkmer << endl;
             splitIdx ++;
         }
     }
@@ -454,6 +473,7 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     cout<<"written k-mer count: "<< write << endl;
 
     flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
+    printIndexSplitList(splitList);
     fwrite(splitList, sizeof(DiffIdxSplit), par.splitNum, diffIdxSplitFile);
 
     free(diffIdxBuffer);
