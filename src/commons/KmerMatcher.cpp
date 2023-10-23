@@ -145,8 +145,6 @@ int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
             break;
         }
     }
-
-    IndexCreator::printIndexSplitList(diffIdxSplits.data);
     
     // Filter out meaningless target splits
     size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
@@ -157,11 +155,6 @@ int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
             numOfDiffIdxSplits_use--;
         }
     }
-
-
-    cout << numOfDiffIdxSplits_use << endl;
-    IndexCreator::printIndexSplitList(diffIdxSplits.data);
-
 
     // Divide query k-mer list into blocks for multi threading.
     // Each split has start and end points of query list + proper offset point of target k-mer list
@@ -192,62 +185,9 @@ int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
         }
         startIdx = endIdx + 1;
     }
- 
-    // if (threads == 1) { //Single thread
-    //     querySplits.emplace_back(0, queryKmerNum - 1, queryKmerNum, diffIdxSplits.data[0]);
-    // } else if (threads == 2) { //Two threads
-    //     size_t splitWidth = queryKmerNum / 2;
-    //     querySplits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
-    //     for (size_t tSplitCnt = 0; tSplitCnt < numOfDiffIdxSplits_use; tSplitCnt++) {
-    //         queryAA = AminoAcidPart(queryKmerList[splitWidth].ADkmer);
-    //         if (queryAA <= AminoAcidPart(diffIdxSplits.data[tSplitCnt].ADkmer)) {
-    //             tSplitCnt = tSplitCnt - (tSplitCnt != 0);
-    //             querySplits.emplace_back(splitWidth, queryKmerNum - 1, queryKmerNum - splitWidth,
-    //                                      diffIdxSplits.data[tSplitCnt]);
-    //             break;
-    //         }
-    //     }
-    // } else { //More than two threads
-    //     // Devide query k-mers into blocks
-    //     size_t splitWidth = queryKmerNum / (threads - 1);
-    //     querySplits.emplace_back(0, splitWidth - 1, splitWidth, diffIdxSplits.data[0]);
-    //     size_t i = 1;
-    //     for (; (i < threads) && (splitWidth * i < queryKmerNum); i++) {
-    //         queryAA = AminoAcidPart(queryKmerList[splitWidth * i].ADkmer);
-    //         bool needLastTargetBlock = true;
-    //         for (size_t j = 0; j < numOfDiffIdxSplits_use; j++) {
-    //             if (queryAA <= AminoAcidPart(diffIdxSplits.data[j].ADkmer)) {
-    //                 j = j - (j != 0);
-    //                 if (i != threads - 1) {
-    //                     querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth,
-    //                                              diffIdxSplits.data[j]);
-    //                 } else {
-    //                     querySplits.emplace_back(splitWidth * i, queryKmerNum - 1, queryKmerNum - splitWidth * i,
-    //                                              diffIdxSplits.data[j]);
-    //                 }
-    //                 needLastTargetBlock = false;
-    //                 break;
-    //             }
-    //         }
-    //         if (needLastTargetBlock) {
-    //             if (i != threads - 1) { // If it is not the last split
-    //                 querySplits.emplace_back(splitWidth * i, splitWidth * (i + 1) - 1, splitWidth,
-    //                                          diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
-    //             } else {
-    //                 querySplits.emplace_back(splitWidth * i, queryKmerNum - 1, queryKmerNum - splitWidth * i,
-    //                                          diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
-    //             }
-    //         }
-    //     }
 
-    //     if (i != threads) {
-    //         threads = querySplits.size();
-    //     }
-    // }
-
-    // Print query splits
-    for (size_t i = 0; i < querySplits.size(); i++) {
-        cout << i << "\t" << querySplits[i].start << "\t" << querySplits[i].end << endl;
+    if (querySplits.size() != threads) {
+        threads = querySplits.size();
     }
 
     bool *splitCheckList = (bool *) malloc(sizeof(bool) * threads);
