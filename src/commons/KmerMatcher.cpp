@@ -251,11 +251,13 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                 loadBuffer(kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx, BufferSize);
                 fseek(diffIdxFp, 2 * (long) (diffIdxBufferIdx), SEEK_SET);
                 loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize);
-
-                if (i == 0) {
+                
+                if (querySplits[i].diffIdxSplit.ADkmer == 0 && querySplits[i].diffIdxSplit.diffIdxOffset == 0 
+                    && querySplits[i].diffIdxSplit.infoIdxOffset == 0) {
                     currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
                                                           diffIdxBufferIdx, diffIdxPos);
                 }
+            
                 currentQuery = UINT64_MAX;
                 currentQueryAA = UINT64_MAX;
 
