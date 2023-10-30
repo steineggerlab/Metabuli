@@ -1,5 +1,7 @@
 #include "Taxonomer.h"
+#include "Match.h"
 #include "NcbiTaxonomy.h"
+#include <sys/types.h>
 #include <unordered_map>
 
 
@@ -325,6 +327,76 @@ TaxID Taxonomer::BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID r
     } else {
         return root;
     }
+}
+
+TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> &speciesMatches,
+                                            const Match *matchList,
+                                            size_t end,
+                                            size_t offset,
+                                            int queryLength,
+                                            const LocalParameters &par) {
+    TaxID currentSpecies;
+    vector<const Match *> filteredMatches;
+    vector<vector<const Match *>> matchesForEachSpecies;
+    vector<TaxonScore> speciesScores;
+    TaxonScore bestScore;
+    size_t i = offset;
+    uint8_t curFrame;
+    vector<const Match *> curFrameMatches;
+
+     while (i  < end + 1) {
+        currentSpecies = matchList[i].speciesId;
+        // For current species
+        while ((i < end + 1) && currentSpecies == matchList[i].speciesId) {
+            curFrame = matchList[i].qInfo.frame;
+            curFrameMatches.clear();
+            // For current frame
+            while ((i < end + 1) && currentSpecies == matchList[i].speciesId && curFrame == matchList[i].qInfo.frame) {
+                curFrameMatches.push_back(&matchList[i]);
+                i ++;
+            }
+            if (curFrameMatches.size() > 1) {
+                remainConsecutiveMatches(curFrameMatches, filteredMatches, currentSpecies, par);
+            }
+        }
+        // Construct a match combination using filtered matches of current species
+        // so that it can best cover the query, and score the combination
+        if (!filteredMatches.empty()) {
+            matchesForEachSpecies.push_back(filteredMatches);
+            speciesScores.push_back(scoreGenus(filteredMatches, queryLength));
+        }
+        filteredMatches.clear();
+    }
+    
+    // If there are no meaningful species
+    if (speciesScores.empty()) {
+        bestScore.score = 0;
+        return bestScore;
+    }
+
+    TaxonScore maxScore = *max_element(speciesScores.begin(), speciesScores.end(),
+                                       [](const TaxonScore & a, const TaxonScore & b) { return a.score < b.score; });
+
+    vector<size_t> maxIdx;
+    for (size_t g = 0; g < speciesScores.size(); g++) {
+        if (speciesScores[g].score == maxScore.score) {
+            maxIdx.push_back(g);
+        }
+    }
+    bestScore = maxScore;
+
+    for (unsigned long g : maxIdx) {
+        for (const Match * m : matchesForEachSpecies[g]) {
+            speciesMatches.push_back(*m);
+        }
+    }
+
+    // More than one species
+    if (maxIdx.size() > 1) {
+        bestScore.taxId = 0;
+    }
+
+    return bestScore;                    
 }
 
 TaxonScore Taxonomer::getBestGenusMatches(vector<Match> &genusMatches, const Match *matchList, size_t end,
@@ -1093,7 +1165,7 @@ TaxonScore Taxonomer::scoreSpecies(const vector<Match> &matches,
                                     int queryLength,
                                     int queryLength2) {
 
-    // Get the smallest hamming distance at each position of query
+    // Get the largest hamming distance at each position of query
     int aminoAcidNum_total = queryLength / 3 + queryLength2 / 3;
     int aminoAcidNum_read1 = queryLength / 3;
     auto *hammingsAtEachPos = new signed char[aminoAcidNum_total + 3];

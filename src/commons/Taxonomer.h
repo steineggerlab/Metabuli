@@ -62,6 +62,13 @@ public:
                          const Match *matchList,
                          vector<Query> & queryList,
                          const LocalParameters &par);
+    
+    void chooseBestTaxon2(uint32_t currentQuery,
+                          size_t offset,
+                          size_t end,
+                          const Match *matchList,
+                          vector<Query> & queryList,
+                          const LocalParameters &par);
 
     void remainConsecutiveMatches(vector<const Match *> & curFrameMatches,
                                   vector<const Match *> & filteredMatches,
@@ -79,6 +86,9 @@ public:
 
     TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
                                    int readLength1, int readLength2, const LocalParameters &par);
+
+    TaxonScore getBestSpeciesMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end,
+                                     size_t offset, int queryLength, const LocalParameters &par);
 
     TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
                                           int readLength1, int readLength2);
