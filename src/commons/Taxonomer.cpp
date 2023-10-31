@@ -362,7 +362,7 @@ TaxID Taxonomer::lowerRankClassification(vector<Match> &matches, TaxID spTaxId) 
 
     for (size_t i = 0; i < matchNum; i++) {
         size_t currQuotient = matches[i].qInfo.pos / 3;
-        uint8_t minHamming = matches[i].hamming;
+        uint8_t minHamming = 0; //matches[i].hamming;
         Match * minHammingMatch = & matches[i];
         TaxID minHammingTaxId = minHammingMatch->targetId;
         while ((i < matchNum) && (currQuotient == matches[i].qInfo.pos / 3)) {
@@ -1114,7 +1114,7 @@ TaxonScore Taxonomer::scoreTaxon(vector<const Match *> &filteredMatches,
 
     // Get the largest hamming distance at each position of query
     auto *hammingsAtEachPos = new signed char[aminoAcidNum + 1];
-    memset(hammingsAtEachPos, -1, (aminoAcidNum + 1));
+    memset(hammingsAtEachPos, 24, (aminoAcidNum + 1));
     while (f < matchNum) {
         currPos = filteredMatches[f]->qInfo.pos / 3;
         currHammings = filteredMatches[f]->rightEndHamming;
@@ -1171,27 +1171,27 @@ TaxonScore Taxonomer::scoreTaxon(vector<const Match *> &filteredMatches,
     size_t matchNum = filteredMatches.size();
     size_t f = 0;
 
-    // Get the largest hamming distance at each position of query
+    // Get the smallest hamming distance at each position of query
     auto *hammingsAtEachPos = new signed char[aminoAcidNum_total + 3];
-    memset(hammingsAtEachPos, -1, (aminoAcidNum_total + 3));
+    memset(hammingsAtEachPos, 24, (aminoAcidNum_total + 3));
     while (f < matchNum) {
         currPos = (int) filteredMatches[f]->qInfo.pos / 3;
         currHammings = filteredMatches[f]->rightEndHamming;
-        if (GET_2_BITS(currHammings) > hammingsAtEachPos[currPos + unmaskedPos[0]])
+        if (GET_2_BITS(currHammings) < hammingsAtEachPos[currPos + unmaskedPos[0]])
             hammingsAtEachPos[currPos + unmaskedPos[0]] = GET_2_BITS(currHammings);
-        if (GET_2_BITS(currHammings >> 2) > hammingsAtEachPos[currPos + unmaskedPos[1]])
+        if (GET_2_BITS(currHammings >> 2) < hammingsAtEachPos[currPos + unmaskedPos[1]])
             hammingsAtEachPos[currPos + unmaskedPos[1]] = GET_2_BITS(currHammings >> 2);
-        if (GET_2_BITS(currHammings >> 4) > hammingsAtEachPos[currPos + unmaskedPos[2]])
+        if (GET_2_BITS(currHammings >> 4) < hammingsAtEachPos[currPos + unmaskedPos[2]])
             hammingsAtEachPos[currPos + unmaskedPos[2]] = GET_2_BITS(currHammings >> 4);
-        if (GET_2_BITS(currHammings >> 6) > hammingsAtEachPos[currPos + unmaskedPos[3]])
+        if (GET_2_BITS(currHammings >> 6) < hammingsAtEachPos[currPos + unmaskedPos[3]])
             hammingsAtEachPos[currPos + unmaskedPos[3]] = GET_2_BITS(currHammings >> 6);
-        if (GET_2_BITS(currHammings >> 8) > hammingsAtEachPos[currPos + unmaskedPos[4]])
+        if (GET_2_BITS(currHammings >> 8) < hammingsAtEachPos[currPos + unmaskedPos[4]])
             hammingsAtEachPos[currPos + unmaskedPos[4]] = GET_2_BITS(currHammings >> 8);
-        if (GET_2_BITS(currHammings >> 10) > hammingsAtEachPos[currPos + unmaskedPos[5]])
+        if (GET_2_BITS(currHammings >> 10) < hammingsAtEachPos[currPos + unmaskedPos[5]])
             hammingsAtEachPos[currPos + unmaskedPos[5]] = GET_2_BITS(currHammings >> 10);
-        if (GET_2_BITS(currHammings >> 12) > hammingsAtEachPos[currPos + unmaskedPos[6]])
+        if (GET_2_BITS(currHammings >> 12) < hammingsAtEachPos[currPos + unmaskedPos[6]])
             hammingsAtEachPos[currPos + unmaskedPos[6]] = GET_2_BITS(currHammings >> 12);
-        if (GET_2_BITS(currHammings >> 14) > hammingsAtEachPos[currPos + unmaskedPos[7]])
+        if (GET_2_BITS(currHammings >> 14) < hammingsAtEachPos[currPos + unmaskedPos[7]])
             hammingsAtEachPos[currPos + unmaskedPos[7]] = GET_2_BITS(currHammings >> 14);
         f++;
     }
