@@ -32,6 +32,9 @@ private:
     int minCoveredPos;
     int accessionLevel;
     int minSSMatch;
+    int minConsCnt;
+    int minConsCntEuk;
+    int eukaryotaTaxId;
 
     struct MatchBlock {
         MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) {}
@@ -72,8 +75,7 @@ public:
 
     void remainConsecutiveMatches(vector<const Match *> & curFrameMatches,
                                   vector<const Match *> & filteredMatches,
-                                  TaxID genusId,
-                                  const LocalParameters & par);
+                                  TaxID genusId);
 
     size_t DFS(size_t curMatchIdx, const map<size_t, vector<size_t>>& linkedMatches,
                vector<size_t>& fiteredMatchIdx, size_t depth, size_t MIN_DEPTH, unordered_set<size_t>& used,
@@ -82,23 +84,28 @@ public:
     static bool isConsecutive(const Match * match1, const Match * match2);
 
     TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end,
-                                   size_t offset, int queryLength, const LocalParameters &par);
+                                   size_t offset, int queryLength);
 
     TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
-                                   int readLength1, int readLength2, const LocalParameters &par);
+                                   int readLength1, int readLength2);
 
     TaxonScore getBestSpeciesMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end,
-                                     size_t offset, int queryLength, const LocalParameters &par);
+                                     size_t offset, int queryLength);
+    
+    TaxonScore getBestSpeciesMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end,
+                                     size_t offset, int readLength1, int readLength2);
 
-    TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
-                                          int readLength1, int readLength2);
-    TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
-                                          int readLength1);
+    // TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
+    //                                       int readLength1, int readLength2);
+    // TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
+    //                                       int readLength1);
 
-    TaxonScore scoreGenus(vector<const Match *> &filteredMatches,
+    TaxonScore scoreTaxon(vector<const Match *> &filteredMatches,
+                          TaxID taxId,
                           int queryLength);
 
-    TaxonScore scoreGenus(vector<const Match *> &filteredMatches,
+    TaxonScore scoreTaxon(vector<const Match *> &filteredMatches,
+                          TaxID taxId,
                           int readLength1,
                           int readLength2);
 
@@ -129,7 +136,7 @@ public:
                             int queryLength,
                             int queryLength2);
 
-    TaxID lowerRankClassification(vector<Match> &matches, pair<int, int> &matchRange, TaxID speciesID);
+    TaxID lowerRankClassification(vector<Match> &matches, TaxID speciesID);
 
     void getSpeciesCladeCounts(const unordered_map<TaxID, unsigned int> & taxCnt,
                                unordered_map<TaxID, TaxonCounts> & cladeCnt,
