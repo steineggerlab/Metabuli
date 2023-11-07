@@ -168,7 +168,7 @@ void Taxonomer::chooseBestTaxon2(uint32_t currentQuery,
     // sort(speciesMatches.begin(), speciesMatches.end(),
     //      [](const Match & a, const Match & b) { return a.qInfo.pos < b.qInfo.pos; });
 
-    cout << "7 " << currentQuery << endl;
+    // cout << "7 " << currentQuery << endl;
 
     TaxID result = lowerRankClassification(speciesMatches, speciesScore.taxId);
 
@@ -184,7 +184,7 @@ void Taxonomer::chooseBestTaxon2(uint32_t currentQuery,
     queryList[currentQuery].coverage = speciesScore.coverage;
     queryList[currentQuery].hammingDist = speciesScore.hammingDist;
     queryList[currentQuery].newSpecies = false;
-    cout << "8" << currentQuery << endl;
+    // cout << "8" << currentQuery << endl;
 //    if (par.printLog) {
 //        cout << "# " << currentQuery << endl;
 //        for (size_t i = 0; i < genusMatches.size(); i++) {
@@ -592,9 +592,9 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> &speciesMatches,
             // Initialize species2matchPaths
             species2matchPaths[currentSpecies].emplace_back(0, 0, 0, 0);
             // cout << "2" << endl;
-            cout << currentSpecies << endl;
+            // cout << currentSpecies << endl;
             float score = combineMatchPaths(matchPaths, species2matchPaths[currentSpecies], readLength1 + readLength2);
-            cout << endl;
+            // cout << endl;
             species2score[currentSpecies] = score;
             if (score > bestSpScore) {
                 bestSpScore = score;
@@ -611,7 +611,7 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> &speciesMatches,
     // cout << "4" << endl;
     vector<TaxID> maxSpecies;
     for (auto & spScore : species2score) {
-        cout << spScore.first << " " << spScore.second << endl;
+        // cout << spScore.first << " " << spScore.second << endl;
         if (spScore.second == bestSpScore) {
             maxSpecies.push_back(spScore.first);
         }
@@ -664,10 +664,10 @@ float Taxonomer::combineMatchPaths(vector<MatchPath> & matchPaths,
     // 2. Add the matchPath with the highest score that is not overlapped with the matchPath in combinedMatchPaths
     // 3. Repeat 2 until no matchPath can be added
     for (size_t i = 0; i < matchPaths.size(); i++) {
-        cout << matchPaths[i].start << " " << matchPaths[i].end << " " << matchPaths[i].score << " " << matchPaths[i].matches.back()->targetId << " " << matchPaths[i].matches.back()->qInfo.frame <<endl;
+        // cout << matchPaths[i].start << " " << matchPaths[i].end << " " << matchPaths[i].score << " " << matchPaths[i].matches.back()->targetId << " " << matchPaths[i].matches.back()->qInfo.frame <<endl;
         if (combinedMatchPaths.empty()) {
             combinedMatchPaths.push_back(matchPaths[i]);
-            combinedMatchPaths.back().matches = matchPaths[i].matches;
+            // combinedMatchPaths.back().matches = matchPaths[i].matches;
             // cout << matchPaths[i].start << " " << matchPaths[i].end << " " << matchPaths[i].score << endl;
             // for (auto & match : matchPaths[i].matches) {
             //     match->printMatch();
@@ -685,7 +685,7 @@ float Taxonomer::combineMatchPaths(vector<MatchPath> & matchPaths,
             }
             if (!isOverlapped) {
                 combinedMatchPaths.push_back(matchPaths[i]);
-                combinedMatchPaths.back().matches = matchPaths[i].matches;
+                // combinedMatchPaths.back().matches = matchPaths[i].matches;
                 // cout << matchPaths[i].start << " " << matchPaths[i].end << " " << matchPaths[i].score << endl;
                 // for (auto & match : matchPaths[i].matches) {
                 //     match->printMatch();
