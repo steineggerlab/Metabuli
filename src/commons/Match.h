@@ -2,7 +2,9 @@
 #define ADCLASSIFIER2_MATCH_H
 
 #include "Kmer.h"
+#include <cstdint>
 #include <iostream>
+#include "BitManipulateMacros.h"
 
 struct Match { // 24 byte
     Match(){}
@@ -26,7 +28,22 @@ struct Match { // 24 byte
 
     void printMatch() const {
         std::cout << qInfo.sequenceID << " " << qInfo.pos << " " << qInfo.frame << " "
-        << targetId << " " << genusId << " " << speciesId << " " << rightEndHamming << " " << (int)hamming << std::endl;
+        << targetId << " " << genusId << " " << speciesId << " " << rightEndHamming << " " << (int)hamming << " " << getScore() << std::endl;
+    }
+
+
+    float getScore(float score = 0.0f, int cnt = 0) const {
+        int currentHamming = GET_2_BITS(rightEndHamming >> cnt * 2);
+        if (currentHamming == 0) {
+            score += 3.0f;
+        } else {
+            score += 2.0f - 0.5f * currentHamming;
+        }
+        if (cnt == 7) {
+            return score;
+        } else {
+            return getScore(score, cnt + 1);
+        }
     }
 };
 

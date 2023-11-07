@@ -14,10 +14,30 @@ struct TaxonScore {
     float score;
     float coverage;
     int hammingDist;
-    TaxonScore(TaxID taxId, float score, float coverage, int hammingDist) :
-            taxId(taxId), score(score), coverage(coverage), hammingDist(hammingDist) {}
-    TaxonScore() : taxId(0), score(0.0f), coverage(0.0f), hammingDist(0) {}
+    bool LCA;
+    TaxonScore(TaxID taxId, float score, float coverage, int hammingDist, bool LCA) :
+            taxId(taxId), score(score), coverage(coverage), hammingDist(hammingDist), LCA(LCA) {}
+    TaxonScore() : taxId(0), score(0.0f), coverage(0.0f), hammingDist(0), LCA(false) {}
 };
+
+struct depthScore {
+    depthScore(size_t depth, float score, int hammingDist) : depth(depth), score(score), hammingDist(hammingDist) {}
+    depthScore() : depth(0), score(0.f), hammingDist(0) {}
+    size_t depth;
+    float score;
+    int hammingDist;
+};
+
+struct MatchPath {
+    MatchPath(size_t start, size_t end, float score, int hammingDist) : start(start), end(end), score(score), hammingDist(hammingDist) {}
+    MatchPath() : start(0), end(0), score(0.f), hammingDist(0) {}
+    size_t start;
+    size_t end;
+    float score;
+    int hammingDist;
+    vector<const Match *> matches;
+};
+
 
 class Taxonomer {
 private:
@@ -73,13 +93,28 @@ public:
                           vector<Query> & queryList,
                           const LocalParameters &par);
 
-    void remainConsecutiveMatches(vector<const Match *> & curFrameMatches,
-                                  vector<const Match *> & filteredMatches,
+    void remainConsecutiveMatches(const vector<const Match *> & curFrameMatches,
+                                  vector<MatchPath> & matchPaths,
                                   TaxID genusId);
+    
+    float combineMatchPaths(vector<MatchPath> & matchPaths,
+                           vector<MatchPath> & combinedMatchPaths,
+                           int readLength);
 
-    size_t DFS(size_t curMatchIdx, const map<size_t, vector<size_t>>& linkedMatches,
-               vector<size_t>& fiteredMatchIdx, size_t depth, size_t MIN_DEPTH, unordered_set<size_t>& used,
-               unordered_map<size_t, size_t> & idx2depth);
+    bool isMatchPathNotOverlapped(const MatchPath & matchPath1,
+                                  const MatchPath & matchPath2);
+
+    depthScore DFS(const vector<const Match *> &matches, size_t curMatchIdx,
+                   const map<size_t, vector<size_t>> &linkedMatches,
+                   size_t depth, size_t MIN_DEPTH, unordered_set<size_t> &used,
+                   unordered_map<size_t, depthScore> &idx2depthScore,
+                   unordered_map<const Match *, const Match *> & edges, float score, int hammingDist);
+    // depthScore DFS(const vector<const Match *> & curFrameMatches,
+    //                size_t curMatchIdx,
+    //                const map<size_t, vector<size_t>>& linkedMatches,
+    //                size_t depth, size_t MIN_DEPTH, unordered_set<size_t>& used,
+    //            unordered_map<size_t, size_t> & idx2depth,
+    //            size_t startPos, vector<MatchPath> & matchPaths);
 
     static bool isConsecutive(const Match * match1, const Match * match2);
 
