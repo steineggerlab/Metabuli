@@ -99,10 +99,13 @@ public:
     
     float combineMatchPaths(vector<MatchPath> & matchPaths,
                            vector<MatchPath> & combinedMatchPaths,
-                           int readLength);
+                           int readLength, const Match * matchList);
 
-    bool isMatchPathNotOverlapped(const MatchPath & matchPath1,
-                                  const MatchPath & matchPath2);
+    bool isMatchPathOverlapped(const MatchPath & matchPath1, const MatchPath & matchPath2);
+
+    bool isMatchPathLinked(const MatchPath & matchPath1, const MatchPath & matchPath2);
+
+    void mergeMatchPaths(const MatchPath & source, MatchPath & target);
 
     depthScore DFS(const vector<const Match *> &matches, size_t curMatchIdx,
                    const map<size_t, vector<size_t>> &linkedMatches,
@@ -117,6 +120,8 @@ public:
     //            size_t startPos, vector<MatchPath> & matchPaths);
 
     static bool isConsecutive(const Match * match1, const Match * match2);
+
+    static bool isConsecutive_diffFrame(const Match * match1, const Match * match2);
 
     TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end,
                                    size_t offset, int queryLength);

@@ -1,4 +1,5 @@
 #include "Taxonomer.h"
+#include "BitManipulateMacros.h"
 #include "Match.h"
 #include "NcbiTaxonomy.h"
 #include <cstdint>
@@ -593,7 +594,7 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> &speciesMatches,
             species2matchPaths[currentSpecies].emplace_back(0, 0, 0, 0);
             // cout << "2" << endl;
             // cout << currentSpecies << endl;
-            float score = combineMatchPaths(matchPaths, species2matchPaths[currentSpecies], readLength1 + readLength2);
+            float score = combineMatchPaths(matchPaths, species2matchPaths[currentSpecies], readLength1 + readLength2, matchList);
             // cout << endl;
             species2score[currentSpecies] = score;
             if (score > bestSpScore) {
@@ -653,7 +654,7 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> &speciesMatches,
 
 float Taxonomer::combineMatchPaths(vector<MatchPath> & matchPaths,
                                    vector<MatchPath> & combinedMatchPaths,
-                                   int readLength) {
+                                   int readLength, const Match * matchList) {
     combinedMatchPaths.clear();
     // Sort matchPaths by the their score
     sort(matchPaths.begin(), matchPaths.end(),
@@ -675,13 +676,16 @@ float Taxonomer::combineMatchPaths(vector<MatchPath> & matchPaths,
         } else {
             bool isOverlapped = false;
             for (size_t j = 0; j < combinedMatchPaths.size(); j++) {
-                if (!isMatchPathNotOverlapped(matchPaths[i], combinedMatchPaths[j])) {
+                if (isMatchPathOverlapped(matchPaths[i], combinedMatchPaths[j])) { // overlap!
+                    if (isMatchPathLinked(matchPaths[i], combinedMatchPaths[j])) {
+                        // merge two linked matchPaths by editing the combinedMatchPaths[j]
+                        mergeMatchPaths(matchPaths[i], combinedMatchPaths[j]);                        
+                        break;
+                    } else {
+                        break;
+                    }
                     isOverlapped = true;
-                    break;
-                } else {
-                    // cout << matchPaths[i].start << " " << matchPaths[i].end << endl;
-                    // cout << combinedMatchPaths[j].start << " " << combinedMatchPaths[j].end << endl << endl;;
-                }
+                } 
             }
             if (!isOverlapped) {
                 combinedMatchPaths.push_back(matchPaths[i]);
@@ -693,10 +697,6 @@ float Taxonomer::combineMatchPaths(vector<MatchPath> & matchPaths,
             }
         }
     }
-    // cout << endl;
-
-
-
     // Calculate the score of combinedMatchPaths
     float score = 0;
     for (auto & matchPath : combinedMatchPaths) {
@@ -705,12 +705,59 @@ float Taxonomer::combineMatchPaths(vector<MatchPath> & matchPaths,
     return score / readLength;
 }
 
-bool Taxonomer::isMatchPathNotOverlapped(const MatchPath & matchPath1,
-                                         const MatchPath & matchPath2) {
-    return (matchPath1.end < matchPath2.start) || (matchPath2.end < matchPath1.start);                                       
+bool Taxonomer::isMatchPathLinked(const MatchPath & matchPath1, const MatchPath & matchPath2) {
+    int overlappedLength = min(matchPath1.end, matchPath2.end) - max(matchPath1.start, matchPath2.start) + 1;
+    if (!(20 < overlappedLength && overlappedLength < 24)) {
+        return false;
+    }
+    const Match * last;
+    const Match * first;
+    if (matchPath1.start < matchPath2.start) {
+        last = matchPath1.matches.back();
+        first = matchPath2.matches.front();
+    } else {
+        last = matchPath2.matches.back();
+        first = matchPath1.matches.front();
+    }
+    if (overlappedLength == 21) {
+        return isConsecutive(last, first);
+    } else {
+        return isConsecutive_diffFrame(last, first);
+    }
+    return false;
 }
 
-\
+bool Taxonomer::isMatchPathOverlapped(const MatchPath & matchPath1,
+                                      const MatchPath & matchPath2) {
+    return !((matchPath1.end < matchPath2.start) || (matchPath2.end < matchPath1.start));                                       
+}
+// 87654321
+void Taxonomer::mergeMatchPaths(const MatchPath & source, MatchPath & target) {
+    if (source.start < target.start) {
+        target.start = source.start;
+        uint8_t lastEndHamming = GET_2_BITS(target.matches.front()->rightEndHamming);
+        target.hammingDist += source.hammingDist - (source.matches.back()->hamming - lastEndHamming);
+        target.score += source.score - source.matches.back()->getScore();
+        if (lastEndHamming == 0) {
+            target.score += 3.0f;
+        } else {
+            target.score += 2.0f - 0.5f * lastEndHamming;
+        }
+        target.matches.insert(target.matches.begin(), source.matches.begin(), source.matches.end() - 1);
+    } else {
+        target.end = source.end;
+        uint8_t lastEndHamming = GET_2_BITS(source.matches.front()->rightEndHamming >> 14);
+        target.hammingDist += source.hammingDist - (source.matches.front()->hamming - lastEndHamming);
+        target.score += source.score - source.matches.front()->getScore();
+        if (lastEndHamming == 0) {
+            target.score += 3.0f;
+        } else {
+            target.score += 2.0f - 0.5f * lastEndHamming;
+        }
+        target.matches.insert(target.matches.end(), source.matches.begin() + 1, source.matches.end());
+    }
+}
+
 
 //     if (matchPath1.start > matchPath2.start) {
 //         return isMatchPathOverlapped(matchPath2, matchPath1, readLength);
@@ -1678,4 +1725,12 @@ bool Taxonomer::isConsecutive(const Match * match1, const Match * match2) {
     // match1 87654321 -> 08765432
     // match2 98765432 -> 08765432
     return (match1->rightEndHamming >> 2) == (match2->rightEndHamming & 0x3FFF);
+}
+
+bool Taxonomer::isConsecutive_diffFrame(const Match * match1, const Match * match2) {
+    // int hamming1 = match1->hamming - GET_2_BITS(match1->rightEndHamming);
+    // int hamming2 = match2->hamming - GET_2_BITS(match2->rightEndHamming >> 14);
+    // match1 87654321 -> 08765432
+    // match2 98765432 -> 08765432
+    return (match1->hamming - GET_2_BITS(match1->rightEndHamming)) == (match2->hamming - GET_2_BITS(match2->rightEndHamming >> 14));
 }
