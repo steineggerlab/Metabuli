@@ -539,11 +539,11 @@ void SeqIterator::getExtendedORFs(struct _gene *genes, struct _node *nodes, vect
         frame = (genes[0].begin - 1) % 3;
         leftEnd = 0;
         while (leftEnd % 3 != frame) leftEnd++;
-        blocks.emplace_back(leftEnd, genes[1].begin - 2, 1);
+        blocks.emplace_back(leftEnd, genes[1].begin - 1 + 22, 1);
         blockIdx++;
     } else {
         frame = (genes[0].end - 1) % 3;
-        rightEnd = genes[1].begin - 2;
+        rightEnd = genes[1].begin - 1 + 22;
         while (rightEnd % 3 != frame) rightEnd--;
         blocks.emplace_back(0, rightEnd, -1);
         blockIdx++;
@@ -583,12 +583,12 @@ void SeqIterator::getExtendedORFs(struct _gene *genes, struct _node *nodes, vect
             } else {
                 if (!isReverse) { //forward
                     frame = (genes[geneIdx].begin - 1) % 3;
-                    leftEnd = genes[geneIdx - 1].end;
+                    leftEnd = genes[geneIdx - 1].end -1 -22;
                     while (leftEnd % 3 != frame) leftEnd++;
                     blocks.emplace_back(leftEnd, genes[geneIdx].end - 1, 1);
                     blockIdx++;
                 } else { // reverse
-                    blocks.emplace_back(genes[geneIdx - 1].end, genes[geneIdx].end - 1, -1);
+                    blocks.emplace_back(genes[geneIdx - 1].end - 22 - 1, genes[geneIdx].end - 1, -1);
                     blockIdx++;
                 }
             }
@@ -597,24 +597,24 @@ void SeqIterator::getExtendedORFs(struct _gene *genes, struct _node *nodes, vect
             if (hasBeenExtendedToLeft) {
                 if (!isReverse) { //forward
                     frame = (genes[geneIdx].begin - 1) % 3;
-                    leftEnd = genes[geneIdx - 1].end;
+                    leftEnd = genes[geneIdx - 1].end - 1 - 22;
                     while (leftEnd % 3 != frame) leftEnd++;
-                    blocks.emplace_back(leftEnd, genes[geneIdx + 1].begin - 2, 1);
+                    blocks.emplace_back(leftEnd, genes[geneIdx + 1].begin - 1 + 22, 1);
                     blockIdx++;
                 } else {
                     frame = (genes[geneIdx].end - 1) % 3;
-                    rightEnd = genes[geneIdx + 1].begin - 2;
+                    rightEnd = genes[geneIdx + 1].begin - 1 + 22;
                     while (rightEnd % 3 != frame) rightEnd--;
-                    blocks.emplace_back(genes[geneIdx - 1].end, rightEnd, -1);
+                    blocks.emplace_back(genes[geneIdx - 1].end - 1 - 22, rightEnd, -1);
                     blockIdx++;
                 }
             } else {
                 if (!isReverse) { //forward
-                    blocks.emplace_back(genes[geneIdx].begin - 1, genes[geneIdx + 1].begin - 2, 1);
+                    blocks.emplace_back(genes[geneIdx].begin - 1, genes[geneIdx + 1].begin - 1 + 22, 1);
                     blockIdx++;
                 } else {
                     frame = (genes[geneIdx].end - 1) % 3;
-                    rightEnd = genes[geneIdx + 1].begin - 2;
+                    rightEnd = genes[geneIdx + 1].begin - 1 + 22;
                     while (rightEnd % 3 != frame) rightEnd--;
                     blocks.emplace_back(genes[geneIdx].begin - 1, rightEnd, -1);
                     blockIdx++;
@@ -639,7 +639,7 @@ void SeqIterator::getExtendedORFs(struct _gene *genes, struct _node *nodes, vect
     // If left region is not covered, cover it.
     leftEnd = genes[numOfGene - 1].begin - 1;
     if (hasBeenExtendedToLeft) {
-        leftEnd = genes[numOfGene - 2].end;
+        leftEnd = genes[numOfGene - 2].end - 1 - 22;
         if (!isReverse) {
             frame = (genes[numOfGene - 1].begin - 1) % 3;
             while (leftEnd % 3 != frame) leftEnd++;
