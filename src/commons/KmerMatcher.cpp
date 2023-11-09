@@ -292,7 +292,6 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                             // }
                             matches[matchCnt] = {queryKmerList[j].info,
                                                  candidateKmerInfos[idx].sequenceID,
-                                                 taxId2genusId[candidateKmerInfos[idx].sequenceID],
                                                  taxId2speciesId[candidateKmerInfos[idx].sequenceID],
                                                  selectedHammings[k],
                                                  selectedHammingSum[k],
@@ -334,7 +333,6 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                             // }
                             matches[matchCnt] = {queryKmerList[j].info,
                                                  candidateKmerInfos[idx].sequenceID,
-                                                 taxId2genusId[candidateKmerInfos[idx].sequenceID],
                                                  taxId2speciesId[candidateKmerInfos[idx].sequenceID],
                                                  selectedHammings[k],
                                                  selectedHammingSum[k],
@@ -430,7 +428,6 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                         // }
                         matches[matchCnt] = {queryKmerList[j].info,
                                              candidateKmerInfos[idx].sequenceID,
-                                             taxId2genusId[candidateKmerInfos[idx].sequenceID],
                                              taxId2speciesId[candidateKmerInfos[idx].sequenceID],
                                              selectedHammings[k],
                                              selectedHammingSum[k],
@@ -516,7 +513,7 @@ void KmerMatcher::compareDna(uint64_t query,
 
     // Select target k-mers that passed hamming criteria
     for (size_t h = 0; h < size; h++) {
-        if (hammingSums[h] <= 6) {// minHammingSum + hammingMargin) {
+        if (hammingSums[h] <= min(minHammingSum * 2, 6)) {
             selectedMatches.push_back(h);
             selectedHammingSum.push_back(hammingSums[h]);
             if (frame < 3) {
@@ -533,9 +530,6 @@ void KmerMatcher::compareDna(uint64_t query,
 bool KmerMatcher::compareMatches(const Match& a, const Match& b) {
     if (a.qInfo.sequenceID != b.qInfo.sequenceID)
         return a.qInfo.sequenceID < b.qInfo.sequenceID;
-
-    if (a.genusId != b.genusId)
-        return a.genusId < b.genusId;
 
     if (a.speciesId != b.speciesId)
         return a.speciesId < b.speciesId;

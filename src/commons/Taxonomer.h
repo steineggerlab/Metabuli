@@ -85,13 +85,6 @@ public:
                          const Match *matchList,
                          vector<Query> & queryList,
                          const LocalParameters &par);
-    
-    void chooseBestTaxon2(uint32_t currentQuery,
-                          size_t offset,
-                          size_t end,
-                          const Match *matchList,
-                          vector<Query> & queryList,
-                          const LocalParameters &par);
 
     void remainConsecutiveMatches(const vector<const Match *> & curFrameMatches,
                                   vector<MatchPath> & matchPaths,
@@ -99,13 +92,15 @@ public:
     
     float combineMatchPaths(vector<MatchPath> & matchPaths,
                            vector<MatchPath> & combinedMatchPaths,
-                           int readLength, const Match * matchList);
+                           int readLength);
 
     bool isMatchPathOverlapped(const MatchPath & matchPath1, const MatchPath & matchPath2);
 
     bool isMatchPathLinked(const MatchPath & matchPath1, const MatchPath & matchPath2);
 
     void mergeMatchPaths(const MatchPath & source, MatchPath & target);
+
+    void trimMatchPath(MatchPath & path1, const MatchPath & path2);
 
     depthScore DFS(const vector<const Match *> &matches, size_t curMatchIdx,
                    const map<size_t, vector<size_t>> &linkedMatches,
