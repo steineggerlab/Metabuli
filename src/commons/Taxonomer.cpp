@@ -91,7 +91,7 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
 //        }
 //    }
     // Get the best species for current query
-    vector<Match> speciesMatches;
+    vector<const Match*> speciesMatches;
     speciesMatches.reserve(end - offset + 1);
     TaxonScore speciesScore(0, 0, 0, 0, 0);
     if (par.seqMode == 2) {
@@ -132,6 +132,11 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
         return;
     }
 
+    // Filter redundant matches  
+    vector<const Match *> filteredMatches;
+    unordered_map<TaxID, unsigned int> taxCnt;
+    filterRedundantMatches(speciesMatches, filteredMatches, taxCnt);
+    
     // If score is not enough, classify to the parent of the selected species
     if (speciesScore.score < par.minSpScore) {
         queryList[currentQuery].isClassified = true;
@@ -140,21 +145,18 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
         queryList[currentQuery].score = speciesScore.score;
         queryList[currentQuery].coverage = speciesScore.coverage;
         queryList[currentQuery].hammingDist = speciesScore.hammingDist;
-        for (auto & spMatch : speciesMatches) {
-            queryList[currentQuery].taxCnt[spMatch.targetId]++;
+        for (auto spMatch : filteredMatches) {
+            queryList[currentQuery].taxCnt[spMatch->targetId]++;
         }
         return;
     }
 
-    // Sort matches by the coordinate of the query
-    sort(speciesMatches.begin(), speciesMatches.end(),
-         [](const Match & a, const Match & b) { return a.qInfo.pos < b.qInfo.pos; });
-
-    TaxID result = lowerRankClassification(speciesMatches, speciesScore.taxId);
+    // Lower rank classification
+    TaxID result = lowerRankClassification(taxCnt, speciesScore.taxId);
 
     // Record matches of selected species
-    for (auto & spMatch : speciesMatches) {
-            queryList[currentQuery].taxCnt[spMatch.targetId]++;
+    for (auto & spMatch : filteredMatches) {
+            queryList[currentQuery].taxCnt[spMatch->targetId]++;
     }
 
     // Store classification results
@@ -177,31 +179,59 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
 //    }
 }
 
-TaxID Taxonomer::lowerRankClassification(vector<Match> &matches, TaxID spTaxId) {
-    unordered_map<TaxID, unsigned int> taxCnt;
-    size_t matchNum = matches.size();
-
+void Taxonomer::filterRedundantMatches(vector<const Match *> & speciesMatches,
+                                       vector<const Match *> & filteredMatches,
+                                       unordered_map<TaxID, unsigned int> & taxCnt) {
+    filteredMatches.reserve(speciesMatches.size());
+    // Sort matches by the coordinate on the query
+    sort(speciesMatches.begin(), speciesMatches.end(),
+         [](const Match * a, const Match * b) { return a->qInfo.pos < b->qInfo.pos; });
+    
+    // Remove redundant matches
+    size_t matchNum = speciesMatches.size();
     for (size_t i = 0; i < matchNum; i++) {
-        // cout << matches[i].targetId << endl;
-        // taxCnt[matches[i].targetId] ++;
-        size_t currQuotient = matches[i].qInfo.pos / 3;
-        uint8_t minHamming = matches[i].hamming;
-        Match * minHammingMatch = & matches[i];
+        size_t currQuotient = speciesMatches[i]->qInfo.pos / 3;
+        uint8_t minHamming = speciesMatches[i]->hamming;
+        const Match * minHammingMatch = speciesMatches[i];
         TaxID minHammingTaxId = minHammingMatch->targetId;
-        while ((i < matchNum) && (currQuotient == matches[i].qInfo.pos / 3)) {
-            if (matches[i].hamming < minHamming) {
-                minHamming = matches[i].hamming;
-                minHammingMatch = & matches[i];
+        while ((i < matchNum) && (currQuotient == speciesMatches[i]->qInfo.pos / 3)) {
+            if (speciesMatches[i]->hamming < minHamming) {
+                minHamming = speciesMatches[i]->hamming;
+                minHammingMatch = speciesMatches[i];
                 minHammingTaxId = minHammingMatch->targetId;
-            } else if (matches[i].hamming == minHamming) {
-                minHammingTaxId = taxonomy->LCA(minHammingTaxId, matches[i].targetId);
-                minHammingMatch->redundancy = true;
-                matches[i].redundancy = true;
+            } else if (speciesMatches[i]->hamming == minHamming) {
+                minHammingTaxId = taxonomy->LCA(minHammingTaxId, speciesMatches[i]->targetId);
             }
             i++;
         }
-        taxCnt[minHammingTaxId]++;       
+        filteredMatches.push_back(&*minHammingMatch);
+        taxCnt[minHammingTaxId]++;
     }
+}
+
+TaxID Taxonomer::lowerRankClassification(const unordered_map<TaxID, unsigned int> & taxCnt, TaxID spTaxId) {
+    // size_t matchNum = matches.size();
+    // for (size_t i = 0; i < matchNum; i++) {
+    //     // cout << matches[i].targetId << endl;
+    //     // taxCnt[matches[i].targetId] ++;
+    //     size_t currQuotient = matches[i].qInfo.pos / 3;
+    //     uint8_t minHamming = matches[i].hamming;
+    //     Match * minHammingMatch = & matches[i];
+    //     TaxID minHammingTaxId = minHammingMatch->targetId;
+    //     while ((i < matchNum) && (currQuotient == matches[i].qInfo.pos / 3)) {
+    //         if (matches[i].hamming < minHamming) {
+    //             minHamming = matches[i].hamming;
+    //             minHammingMatch = & matches[i];
+    //             minHammingTaxId = minHammingMatch->targetId;
+    //         } else if (matches[i].hamming == minHamming) {
+    //             minHammingTaxId = taxonomy->LCA(minHammingTaxId, matches[i].targetId);
+    //             minHammingMatch->redundancy = true;
+    //             matches[i].redundancy = true;
+    //         }
+    //         i++;
+    //     }
+    //     taxCnt[minHammingTaxId]++;       
+    // }
 
     unordered_map<TaxID, TaxonCounts> cladeCnt;
     getSpeciesCladeCounts(taxCnt, cladeCnt, spTaxId);
@@ -265,7 +295,7 @@ TaxID Taxonomer::BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID r
     }
 }
 
-TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> &speciesMatches,
+TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match *> & speciesMatches,
                                             const Match *matchList,
                                             size_t end,
                                             size_t offset,
@@ -319,7 +349,7 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> &speciesMatches,
 
     vector<TaxID> maxSpecies;
     for (auto & spScore : species2score) {
-        if (spScore.second > bestSpScore * 0.99) {
+        if (spScore.second > bestSpScore * 0.95) {
             maxSpecies.push_back(spScore.first);
         }
     }
@@ -343,9 +373,12 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> &speciesMatches,
     for (auto & matchPath : species2matchPaths[maxSpecies[0]]) {
         coveredLength += matchPath.end - matchPath.start + 1;
         hammingDist += matchPath.hammingDist;
-        for (size_t i = speciesMatchRange[bestScore.taxId].first; i < speciesMatchRange[bestScore.taxId].second; i++) {
-            speciesMatches.push_back(matchList[i]);
-        }
+    }
+    speciesMatches.reserve(speciesMatchRange[bestScore.taxId].second
+                        - speciesMatchRange[bestScore.taxId].first + 1);
+
+    for (size_t j = speciesMatchRange[bestScore.taxId].first; j < speciesMatchRange[bestScore.taxId].second; j++) {
+        speciesMatches.push_back(& matchList[j]);
     }
     bestScore.coverage = coveredLength / queryLength;
     bestScore.hammingDist = hammingDist;
@@ -353,7 +386,7 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> &speciesMatches,
     return bestScore;                                  
 }
 
-TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> &speciesMatches,
+TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match *> & speciesMatches,
                                             const Match *matchList,
                                             size_t end,
                                             size_t offset,
@@ -408,7 +441,7 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> &speciesMatches,
 
     vector<TaxID> maxSpecies;
     for (auto & spScore : species2score) {
-        if (spScore.second > bestSpScore * 0.99) {
+        if (spScore.second > bestSpScore * 0.95) {
             maxSpecies.push_back(spScore.first);
         }
     }
@@ -432,9 +465,12 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> &speciesMatches,
     for (auto & matchPath : species2matchPaths[maxSpecies[0]]) {
         coveredLength += matchPath.end - matchPath.start + 1;
         hammingDist += matchPath.hammingDist;
-        for (size_t i = speciesMatchRange[bestScore.taxId].first; i < speciesMatchRange[bestScore.taxId].second; i++) {
-            speciesMatches.push_back(matchList[i]);
-        }
+    }
+    speciesMatches.reserve(speciesMatchRange[bestScore.taxId].second
+                        - speciesMatchRange[bestScore.taxId].first + 1);
+
+    for (size_t i = speciesMatchRange[bestScore.taxId].first; i < speciesMatchRange[bestScore.taxId].second; i++) {
+        speciesMatches.push_back(&matchList[i]);
     }
     bestScore.coverage = coveredLength / (readLength1 + readLength2);
     bestScore.hammingDist = hammingDist;
@@ -550,7 +586,7 @@ void Taxonomer::trimMatchPath(MatchPath & path1, const MatchPath & path2) {
         } else {
             path1.score += 2.0f - 0.5f * lastEndHamming;
         }
-        path1.matches.pop_back();
+        // path1.matches.pop_back();
     } else {
         path1.start = path2.end + 1;
         uint8_t lastEndHamming = GET_2_BITS(path1.matches.front()->rightEndHamming >> 14);
@@ -561,7 +597,7 @@ void Taxonomer::trimMatchPath(MatchPath & path1, const MatchPath & path2) {
         } else {
             path1.score += 2.0f - 0.5f * lastEndHamming;
         }
-        path1.matches.erase(path1.matches.begin());
+        // path1.matches.erase(path1.matches.begin());
     }
 }
 
@@ -691,6 +727,8 @@ depthScore Taxonomer::DFS(const vector<const Match *> &matches,
     depth++;
     depthScore bestDepthScore = depthScore(0, 0, 0);
     depthScore returnDepthScore;
+    depthScore curDepthScore;
+    float recievedScore = score;
     if (linkedMatches.find(curMatchIdx) == linkedMatches.end()) { // reached a leaf node
         uint8_t lastEndHamming = (matches[curMatchIdx]->rightEndHamming >> 14);
         if (lastEndHamming == 0) {
@@ -698,7 +736,7 @@ depthScore Taxonomer::DFS(const vector<const Match *> &matches,
         } else {
             score += 2.0f - 0.5f * lastEndHamming;
         }
-        idx2depthScore[curMatchIdx] = depthScore(depth, score, hammingDist + lastEndHamming);
+        idx2depthScore[curMatchIdx] = depthScore(1, score - recievedScore, lastEndHamming);
         return depthScore(depth, score, hammingDist + lastEndHamming);
     } else { // not a leaf node
         uint8_t lastEndHamming = (matches[curMatchIdx]->rightEndHamming >> 14);
@@ -709,26 +747,25 @@ depthScore Taxonomer::DFS(const vector<const Match *> &matches,
         }
         for (auto &nextMatchIdx: linkedMatches.at(curMatchIdx)) {
             used.insert(nextMatchIdx);
-
             // Reuse the depth score of nextMatchIdx if it has been calculated
-            if (idx2depthScore.find(nextMatchIdx) != idx2depthScore.end()) {
+            if (idx2depthScore.find(nextMatchIdx) != idx2depthScore.end()){
                 returnDepthScore = idx2depthScore[nextMatchIdx];
-                if (returnDepthScore.score > bestDepthScore.score
-                    && returnDepthScore.depth > MIN_DEPTH) {
-                    bestDepthScore = returnDepthScore;
-                    edges[matches[curMatchIdx]] = matches[nextMatchIdx];
-                }   
-                continue;
+                curDepthScore = depthScore(returnDepthScore.depth + depth,
+                                           returnDepthScore.score + score,
+                                           returnDepthScore.hammingDist + hammingDist + lastEndHamming);
+            } else {
+                curDepthScore = DFS(matches, nextMatchIdx, linkedMatches, depth, MIN_DEPTH, used, idx2depthScore, edges, score, hammingDist + lastEndHamming);
             }
-            returnDepthScore = DFS(matches, nextMatchIdx, linkedMatches, depth, MIN_DEPTH, used, idx2depthScore, edges, score, hammingDist + lastEndHamming);
-            if (returnDepthScore.score > bestDepthScore.score
-                && returnDepthScore.depth > MIN_DEPTH) {
-                bestDepthScore = returnDepthScore;
+            if (curDepthScore.score > bestDepthScore.score
+                && curDepthScore.depth > MIN_DEPTH) {
+                bestDepthScore = curDepthScore;
                 edges[matches[curMatchIdx]] = matches[nextMatchIdx];
-            } 
+            }
         }    
         if (bestDepthScore.depth > MIN_DEPTH) {
-            idx2depthScore[curMatchIdx] = bestDepthScore;
+            idx2depthScore[curMatchIdx] = depthScore(bestDepthScore.depth - depth + 1,
+                                                     bestDepthScore.score - recievedScore,
+                                                     bestDepthScore.hammingDist - hammingDist);
         }
     }
     return bestDepthScore;

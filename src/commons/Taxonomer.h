@@ -5,6 +5,7 @@
 #include "Match.h"
 #include "common.h"
 #include "BitManipulateMacros.h"
+#include <unordered_map>
 #include <unordered_set>
 
 using namespace std;
@@ -102,6 +103,10 @@ public:
 
     void trimMatchPath(MatchPath & path1, const MatchPath & path2);
 
+    void filterRedundantMatches(vector<const Match*> & matchPaths,
+                                vector<const Match*> & filteredMatches,
+                                unordered_map<TaxID, unsigned int> & taxCnt);
+
     depthScore DFS(const vector<const Match *> &matches, size_t curMatchIdx,
                    const map<size_t, vector<size_t>> &linkedMatches,
                    size_t depth, size_t MIN_DEPTH, unordered_set<size_t> &used,
@@ -124,10 +129,10 @@ public:
     TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
                                    int readLength1, int readLength2);
 
-    TaxonScore getBestSpeciesMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end,
+    TaxonScore getBestSpeciesMatches(vector<const Match*> &speciesMatches, const Match *matchList, size_t end,
                                      size_t offset, int queryLength);
     
-    TaxonScore getBestSpeciesMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end,
+    TaxonScore getBestSpeciesMatches(vector<const Match*> &speciesMatches, const Match *matchList, size_t end,
                                      size_t offset, int readLength1, int readLength2);
 
     // TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
@@ -171,7 +176,7 @@ public:
                             int queryLength,
                             int queryLength2);
 
-    TaxID lowerRankClassification(vector<Match> &matches, TaxID speciesID);
+    TaxID lowerRankClassification(const unordered_map<TaxID, unsigned int> & matches, TaxID speciesID);
 
     void getSpeciesCladeCounts(const unordered_map<TaxID, unsigned int> & taxCnt,
                                unordered_map<TaxID, TaxonCounts> & cladeCnt,
