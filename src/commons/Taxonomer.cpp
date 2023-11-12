@@ -133,9 +133,9 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
     }
 
     // Filter redundant matches  
-    vector<const Match *> filteredMatches;
-    unordered_map<TaxID, unsigned int> taxCnt;
-    filterRedundantMatches(speciesMatches, filteredMatches, taxCnt);
+    // vector<const Match *> filteredMatches;
+    // cout << "# " << currentQuery << " " << queryList[currentQuery].name << " filtered" << endl;
+    filterRedundantMatches(speciesMatches, queryList[currentQuery].taxCnt);
     
     // If score is not enough, classify to the parent of the selected species
     if (speciesScore.score < par.minSpScore) {
@@ -145,19 +145,11 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
         queryList[currentQuery].score = speciesScore.score;
         queryList[currentQuery].coverage = speciesScore.coverage;
         queryList[currentQuery].hammingDist = speciesScore.hammingDist;
-        for (auto spMatch : filteredMatches) {
-            queryList[currentQuery].taxCnt[spMatch->targetId]++;
-        }
         return;
     }
 
     // Lower rank classification
-    TaxID result = lowerRankClassification(taxCnt, speciesScore.taxId);
-
-    // Record matches of selected species
-    for (auto & spMatch : filteredMatches) {
-            queryList[currentQuery].taxCnt[spMatch->targetId]++;
-    }
+    TaxID result = lowerRankClassification(queryList[currentQuery].taxCnt, speciesScore.taxId);
 
     // Store classification results
     queryList[currentQuery].isClassified = true;
@@ -180,16 +172,14 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
 }
 
 void Taxonomer::filterRedundantMatches(vector<const Match *> & speciesMatches,
-                                       vector<const Match *> & filteredMatches,
-                                       unordered_map<TaxID, unsigned int> & taxCnt) {
-    filteredMatches.reserve(speciesMatches.size());
+                                       map<TaxID, int > & taxCnt) {
     // Sort matches by the coordinate on the query
     sort(speciesMatches.begin(), speciesMatches.end(),
          [](const Match * a, const Match * b) { return a->qInfo.pos < b->qInfo.pos; });
     
     // Remove redundant matches
     size_t matchNum = speciesMatches.size();
-    for (size_t i = 0; i < matchNum; i++) {
+    for (size_t i = 0; i < matchNum;) {
         size_t currQuotient = speciesMatches[i]->qInfo.pos / 3;
         uint8_t minHamming = speciesMatches[i]->hamming;
         const Match * minHammingMatch = speciesMatches[i];
@@ -204,12 +194,13 @@ void Taxonomer::filterRedundantMatches(vector<const Match *> & speciesMatches,
             }
             i++;
         }
-        filteredMatches.push_back(&*minHammingMatch);
+        // cout << minHammingMatch->targetId << " " << minHammingMatch->qInfo.frame << " " << minHammingMatch->qInfo.pos << " " << int(minHammingMatch->hamming) <<  " "  << int(minHammingMatch->redundancy) << endl;
+
         taxCnt[minHammingTaxId]++;
     }
 }
 
-TaxID Taxonomer::lowerRankClassification(const unordered_map<TaxID, unsigned int> & taxCnt, TaxID spTaxId) {
+TaxID Taxonomer::lowerRankClassification(const map<TaxID, int> & taxCnt, TaxID spTaxId) {
     // size_t matchNum = matches.size();
     // for (size_t i = 0; i < matchNum; i++) {
     //     // cout << matches[i].targetId << endl;
@@ -252,7 +243,7 @@ TaxID Taxonomer::lowerRankClassification(const unordered_map<TaxID, unsigned int
     }
 }
 
-void Taxonomer::getSpeciesCladeCounts(const unordered_map<TaxID, unsigned int> &taxCnt,
+void Taxonomer::getSpeciesCladeCounts(const map<TaxID, int> &taxCnt,
                                        unordered_map<TaxID, TaxonCounts> & cladeCount,
                                        TaxID speciesTaxID) {
     for (auto it = taxCnt.begin(); it != taxCnt.end(); ++it) {
@@ -586,7 +577,7 @@ void Taxonomer::trimMatchPath(MatchPath & path1, const MatchPath & path2) {
         } else {
             path1.score += 2.0f - 0.5f * lastEndHamming;
         }
-        // path1.matches.pop_back();
+        path1.matches.pop_back();
     } else {
         path1.start = path2.end + 1;
         uint8_t lastEndHamming = GET_2_BITS(path1.matches.front()->rightEndHamming >> 14);
