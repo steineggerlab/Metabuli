@@ -48,7 +48,7 @@ private:
     int unmaskedPos[9];
     int spaceNum;
 
-    // Parameters
+    // Parameters from user
     int maxGap;
     int minCoveredPos;
     int accessionLevel;
@@ -56,6 +56,9 @@ private:
     int minConsCnt;
     int minConsCntEuk;
     int eukaryotaTaxId;
+
+    // Internal
+    int denominator;
 
     struct MatchBlock {
         MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) {}

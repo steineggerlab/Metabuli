@@ -27,6 +27,12 @@ Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxon
     minConsCnt = par.minConsCnt;
     minConsCntEuk = par.minConsCntEuk;
     eukaryotaTaxId = par.eukaryotaTaxId;
+
+    if (par.seqMode == 1 || par.seqMode == 2) {
+        denominator = 100;
+    } else {
+        denominator = 1000;
+    }
 }
 
 Taxonomer::~Taxonomer() {
@@ -196,36 +202,12 @@ void Taxonomer::filterRedundantMatches(vector<const Match *> & speciesMatches,
             }
             i++;
         }
-        // cout << minHammingMatch->targetId << " " << minHammingMatch->qInfo.frame << " " << minHammingMatch->qInfo.pos << " " << int(minHammingMatch->hamming) <<  " "  << int(minHammingMatch->redundancy) << endl;
-
         taxCnt[minHammingTaxId]++;
     }
 }
 
 TaxID Taxonomer::lowerRankClassification(const map<TaxID, int> & taxCnt, TaxID spTaxId, int queryLength) {
-    // size_t matchNum = matches.size();
-    // for (size_t i = 0; i < matchNum; i++) {
-    //     // cout << matches[i].targetId << endl;
-    //     // taxCnt[matches[i].targetId] ++;
-    //     size_t currQuotient = matches[i].qInfo.pos / 3;
-    //     uint8_t minHamming = matches[i].hamming;
-    //     Match * minHammingMatch = & matches[i];
-    //     TaxID minHammingTaxId = minHammingMatch->targetId;
-    //     while ((i < matchNum) && (currQuotient == matches[i].qInfo.pos / 3)) {
-    //         if (matches[i].hamming < minHamming) {
-    //             minHamming = matches[i].hamming;
-    //             minHammingMatch = & matches[i];
-    //             minHammingTaxId = minHammingMatch->targetId;
-    //         } else if (matches[i].hamming == minHamming) {
-    //             minHammingTaxId = taxonomy->LCA(minHammingTaxId, matches[i].targetId);
-    //             minHammingMatch->redundancy = true;
-    //             matches[i].redundancy = true;
-    //         }
-    //         i++;
-    //     }
-    //     taxCnt[minHammingTaxId]++;       
-    // }
-    unsigned int maxCnt = (queryLength - 1)/100 + 1;
+    unsigned int maxCnt = (queryLength - 1)/denominator + 1;
     unordered_map<TaxID, TaxonCounts> cladeCnt;
     getSpeciesCladeCounts(taxCnt, cladeCnt, spTaxId);
     if (accessionLevel == 2) { // Don't do accession-level classification

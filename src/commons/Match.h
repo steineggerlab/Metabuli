@@ -43,7 +43,6 @@ struct Match { // 20 byte
         }
     }
 
-    // 87654321에서 678을 알고 싶은 거임
     float getRightPartScore(const int range, float score = 0.0f, int cnt = 0) const {
         if (cnt == range) {
             return score;
@@ -57,7 +56,6 @@ struct Match { // 20 byte
         return getRightPartScore(range, score, cnt + 1);    
     }
 
-    // 87654321
     float getLeftPartScore(const int range, float score = 0.0f, int cnt = 0) const {
         if (cnt == range) {
             return score;
