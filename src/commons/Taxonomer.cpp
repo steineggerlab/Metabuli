@@ -84,12 +84,12 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
                                 vector<Query> & queryList,
                                 const LocalParameters &par) {
 
-//    if (true) {
-//        cout << "# " << currentQuery << " " << queryList[currentQuery].name << endl;
-//        for (size_t i = offset; i < end + 1; i++) {
-//            cout << matchList[i].targetId << " " << matchList[i].qInfo.frame << " " << matchList[i].qInfo.pos << " " << int(matchList[i].hamming) <<  " "  << int(matchList[i].redundancy) << endl;
-//        }
-//    }
+   if (true) {
+       cout << "# " << currentQuery << " " << queryList[currentQuery].name << endl;
+       for (size_t i = offset; i < end + 1; i++) {
+           cout << matchList[i].targetId << " " << matchList[i].qInfo.frame << " " << matchList[i].qInfo.pos << " " << int(matchList[i].hamming) <<  " "  << int(matchList[i].redundancy) << endl;
+       }
+   }
     // Get the best species for current query
     vector<const Match*> speciesMatches;
     speciesMatches.reserve(end - offset + 1);
@@ -149,7 +149,9 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
     }
 
     // Lower rank classification
-    TaxID result = lowerRankClassification(queryList[currentQuery].taxCnt, speciesScore.taxId);
+    TaxID result = lowerRankClassification(queryList[currentQuery].taxCnt,
+                                         speciesScore.taxId,
+                                          queryList[currentQuery].queryLength + queryList[currentQuery].queryLength2);
 
     // Store classification results
     queryList[currentQuery].isClassified = true;
@@ -200,7 +202,7 @@ void Taxonomer::filterRedundantMatches(vector<const Match *> & speciesMatches,
     }
 }
 
-TaxID Taxonomer::lowerRankClassification(const map<TaxID, int> & taxCnt, TaxID spTaxId) {
+TaxID Taxonomer::lowerRankClassification(const map<TaxID, int> & taxCnt, TaxID spTaxId, int queryLength) {
     // size_t matchNum = matches.size();
     // for (size_t i = 0; i < matchNum; i++) {
     //     // cout << matches[i].targetId << endl;
@@ -223,7 +225,7 @@ TaxID Taxonomer::lowerRankClassification(const map<TaxID, int> & taxCnt, TaxID s
     //     }
     //     taxCnt[minHammingTaxId]++;       
     // }
-
+    unsigned int maxCnt = (queryLength - 1)/100 + 1;
     unordered_map<TaxID, TaxonCounts> cladeCnt;
     getSpeciesCladeCounts(taxCnt, cladeCnt, spTaxId);
     if (accessionLevel == 2) { // Don't do accession-level classification
@@ -237,9 +239,9 @@ TaxID Taxonomer::lowerRankClassification(const map<TaxID, int> & taxCnt, TaxID s
                                                                  it->first));
             } 
         }
-        return BFS(cladeCnt, spTaxId);
+        return BFS(cladeCnt, spTaxId, maxCnt);
     } else {
-        return BFS(cladeCnt, spTaxId);
+        return BFS(cladeCnt, spTaxId, maxCnt);
     }
 }
 
@@ -262,11 +264,11 @@ void Taxonomer::getSpeciesCladeCounts(const map<TaxID, int> &taxCnt,
     }
 }
 
-TaxID Taxonomer::BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID root) {
+TaxID Taxonomer::BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID root, unsigned int maxCnt) {
+    unsigned int maxCnt2 = maxCnt;
     if (cladeCnt.at(root).children.empty()) { // root is a leaf
         return root;
     }
-    unsigned int maxCnt = minSSMatch;
     unsigned int currentCnt;
     vector<TaxID> bestChildren;
     for (auto it = cladeCnt.at(root).children.begin(); it != cladeCnt.at(root).children.end(); it++) {
@@ -280,7 +282,7 @@ TaxID Taxonomer::BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID r
         }
     }
     if (bestChildren.size() == 1) {
-        return BFS(cladeCnt, bestChildren[0]);
+        return BFS(cladeCnt, bestChildren[0], maxCnt2);
     } else {
         return root;
     }
@@ -346,20 +348,27 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match *> & speciesMatch
     }
 
     // More than one species --> LCA
+    float coveredLength = 0.f;
     if (maxSpecies.size() > 1) {
         bestScore.LCA = true;
         bestScore.taxId = taxonomy->LCA(maxSpecies)->taxId;
         for (auto & sp : maxSpecies) {
             bestScore.score += species2score[sp];
+            coveredLength = 0;
+            for (auto & matchPath : species2matchPaths[maxSpecies[0]]) {
+                coveredLength += matchPath.end - matchPath.start + 1;
+            }
+            bestScore.coverage += coveredLength / queryLength;
         }
         bestScore.score /= maxSpecies.size();
+        bestScore.coverage /= maxSpecies.size();
         return bestScore;
     }
+    
 
     // One species
     bestScore.taxId = maxSpecies[0];
     bestScore.score = species2score[maxSpecies[0]];
-    float coveredLength = 0.f;
     int hammingDist = 0;
     for (auto & matchPath : species2matchPaths[maxSpecies[0]]) {
         coveredLength += matchPath.end - matchPath.start + 1;
@@ -438,20 +447,27 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match *> & speciesMatch
     }
 
     // More than one species --> LCA
+    float coveredLength = 0.f;
     if (maxSpecies.size() > 1) {
         bestScore.LCA = true;
         bestScore.taxId = taxonomy->LCA(maxSpecies)->taxId;
         for (auto & sp : maxSpecies) {
             bestScore.score += species2score[sp];
+            coveredLength = 0;
+            for (auto & matchPath : species2matchPaths[maxSpecies[0]]) {
+                coveredLength += matchPath.end - matchPath.start + 1;
+            }
+            bestScore.coverage += coveredLength / (readLength1 + readLength2);
         }
         bestScore.score /= maxSpecies.size();
+        bestScore.coverage /= maxSpecies.size();
         return bestScore;
     }
     
     // One species
     bestScore.taxId = maxSpecies[0];
     bestScore.score = species2score[maxSpecies[0]];
-    float coveredLength = 0.f;
+    
     int hammingDist = 0;
     for (auto & matchPath : species2matchPaths[maxSpecies[0]]) {
         coveredLength += matchPath.end - matchPath.start + 1;
@@ -698,14 +714,6 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
             }
         }
     }
-
-//    if (par.printLog) {
-//        cout << "filteredMatchIdx: ";
-//        for (auto &idx: filteredMatchIdx) {
-//            cout << idx << " ";
-//        }
-//        cout << endl;
-//    }
 }
 
 depthScore Taxonomer::DFS(const vector<const Match *> &matches,

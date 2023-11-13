@@ -513,7 +513,7 @@ void KmerMatcher::compareDna(uint64_t query,
 
     // Select target k-mers that passed hamming criteria
     for (size_t h = 0; h < size; h++) {
-        if (hammingSums[h] <= min(minHammingSum * 2, 6)) {
+        if (hammingSums[h] <= min(minHammingSum * 2, 8)) {
             selectedMatches.push_back(h);
             selectedHammingSum.push_back(hammingSums[h]);
             if (frame < 3) {

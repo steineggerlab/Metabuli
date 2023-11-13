@@ -307,7 +307,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&RAM_USAGE);
     classify.push_back(&MATCH_PER_KMER);
     classify.push_back(&ACCESSION_LEVEL);
-    classify.push_back(&MIN_SS_MATCH);
+    // classify.push_back(&MIN_SS_MATCH);
 
     // filter 
     filter.push_back(&PARAM_THREADS);

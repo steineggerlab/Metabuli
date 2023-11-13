@@ -111,12 +111,6 @@ public:
                    size_t depth, size_t MIN_DEPTH, unordered_set<size_t> &used,
                    unordered_map<size_t, depthScore> &idx2depthScore,
                    unordered_map<const Match *, const Match *> & edges, float score, int hammingDist);
-    // depthScore DFS(const vector<const Match *> & curFrameMatches,
-    //                size_t curMatchIdx,
-    //                const map<size_t, vector<size_t>>& linkedMatches,
-    //                size_t depth, size_t MIN_DEPTH, unordered_set<size_t>& used,
-    //            unordered_map<size_t, size_t> & idx2depth,
-    //            size_t startPos, vector<MatchPath> & matchPaths);
 
     static bool isConsecutive(const Match * match1, const Match * match2);
 
@@ -175,13 +169,13 @@ public:
                             int queryLength,
                             int queryLength2);
 
-    TaxID lowerRankClassification(const map<TaxID, int> & matches, TaxID speciesID);
+    TaxID lowerRankClassification(const map<TaxID, int> & matches, TaxID speciesID, int queryLength);
 
     void getSpeciesCladeCounts(const map<TaxID, int> & taxCnt,
                                unordered_map<TaxID, TaxonCounts> & cladeCnt,
                                TaxID spciesID);
 
-    TaxID BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID root);
+    TaxID BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID root, unsigned int maxCnt);
 
     // Getters
     unordered_map<TaxID, unsigned int> & getTaxCounts() { return taxCounts; }
