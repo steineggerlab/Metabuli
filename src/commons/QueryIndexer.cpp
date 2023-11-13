@@ -51,11 +51,11 @@ void QueryIndexer::indexQueryFile() {
         }
         querySplits.emplace_back(start, readNum_1, kmerCnt);
         // Print elements
-        for (auto & querySplit : querySplits) {
-            std::cout << "start: " << querySplit.start << "\t";
-            std::cout << "end: " << querySplit.end << "\t";
-            std::cout << "kmerCnt: " << querySplit.kmerCnt << "\n";
-        }
+        // for (auto & querySplit : querySplits) {
+        //     std::cout << "start: " << querySplit.start << "\t";
+        //     std::cout << "end: " << querySplit.end << "\t";
+        //     std::cout << "kmerCnt: " << querySplit.kmerCnt << "\n";
+        // }
         delete kseq;
     } else {
         KSeqWrapper* kseq_1 = KSeqFactory(queryPath_1.c_str());

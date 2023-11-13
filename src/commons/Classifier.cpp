@@ -102,7 +102,8 @@ void Classifier::startClassify(const LocalParameters &par) {
         kmerMatcher->matchKmers(&kmerBuffer, &matchBuffer);
         kmerMatcher->sortMatches(&matchBuffer);
 
-        // Classify queries based on the matches
+        // Classify queries based on the matches.
+        //  omp_set_num_threads(1);
         taxonomer->assignTaxonomy(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
         processedSeqCnt += queryReadSplit[splitIdx].end - queryReadSplit[splitIdx].start;
         cout << "The number of processed sequences: " << processedSeqCnt << " (" << (double) processedSeqCnt / (double) numOfSeq << ")" << endl;

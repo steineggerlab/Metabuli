@@ -196,7 +196,7 @@ void KmerExtractor::fillQueryKmerBufferParallel_paired(KSeqWrapper *kseq1,
                 // Process Read 2
                 seqIterator2.sixFrameTranslation(maskedSeq2, (int) reads2[i].length());
                 seqIterator2.fillQueryKmerBuffer(maskedSeq2, (int) reads2[i].length(), kmerBuffer, posToWrite,
-                                                 (uint32_t) queryIdx, queryList[queryIdx].queryLength);
+                                                 (uint32_t) queryIdx, queryList[queryIdx].queryLength+3);
 
                 if (maskMode) {
                     delete[] maskedSeq1;

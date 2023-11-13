@@ -583,7 +583,7 @@ void SeqIterator::getExtendedORFs(struct _gene *genes, struct _node *nodes, vect
             } else {
                 if (!isReverse) { //forward
                     frame = (genes[geneIdx].begin - 1) % 3;
-                    leftEnd = genes[geneIdx - 1].end - 1 - 22;
+                    leftEnd = genes[geneIdx - 1].end -1 -22;
                     while (leftEnd % 3 != frame) leftEnd++;
                     blocks.emplace_back(leftEnd, genes[geneIdx].end - 1, 1);
                     blockIdx++;
@@ -628,76 +628,78 @@ void SeqIterator::getExtendedORFs(struct _gene *genes, struct _node *nodes, vect
         }
     }
 
-    // For the last gene
-    // Extend to the end of the genome
-    isReverse = !(nodes[genes[numOfGene - 1].start_ndx].strand == 1);    
-    rightEnd = length - 1;
-    if (isReverse) {
-        frame = (genes[numOfGene - 1].end - 1) % 3;
-        while (rightEnd % 3 != frame) rightEnd--;
-    }
-    // If left region is not covered, cover it.
-    leftEnd = genes[numOfGene - 1].begin - 1;
-    if (hasBeenExtendedToLeft) {
-        leftEnd = genes[numOfGene - 2].end - 1 - 22;
-        if (!isReverse) {
-            frame = (genes[numOfGene - 1].begin - 1) % 3;
-            while (leftEnd % 3 != frame) leftEnd++;
-        }
-    }
-    blocks.emplace_back(leftEnd, rightEnd, isReverse ? -1 : 1);
-    if (find(intergenicKmerList.begin(), intergenicKmerList.end(), rightKmerHash) == intergenicKmerList.end()) {
-            intergenicKmerList.push_back(rightKmerHash);
-    }
-
-    // if (find(intergenicKmerList.begin(), intergenicKmerList.end(), leftKmerHash) !=
-    //     intergenicKmerList.end()) { //extension to left
-    //     if (!isReverse) { //forward
+    // // For the last gene
+    // // Extend to the end of the genome
+    // isReverse = !(nodes[genes[numOfGene - 1].start_ndx].strand == 1);    
+    // rightEnd = length - 1;
+    // if (isReverse) {
+    //     frame = (genes[numOfGene - 1].end - 1) % 3;
+    //     while (rightEnd % 3 != frame) rightEnd--;
+    // }
+    // // If left region is not covered, cover it.
+    // leftEnd = genes[numOfGene - 1].begin - 1;
+    // if (hasBeenExtendedToLeft) {
+    //     leftEnd = genes[numOfGene - 2].end - 1 - 22;
+    //     if (!isReverse) {
     //         frame = (genes[numOfGene - 1].begin - 1) % 3;
-    //         leftEnd = genes[numOfGene - 2].end - 1 - 22;
     //         while (leftEnd % 3 != frame) leftEnd++;
-    //         blocks.emplace_back(leftEnd, length - 1, 1);
-    //         blockIdx++;
-    //     } else { // reverse
-    //         frame = (genes[numOfGene - 1].end - 1) % 3;
-    //         rightEnd = length - 1;
-    //         while (rightEnd % 3 != frame) rightEnd--;
-    //         blocks.emplace_back(genes[numOfGene - 2].end - 22 - 1, rightEnd, -1);
-    //         blockIdx++;
-    //     }
-    // } else { //extension to right
-    //     if (hasBeenExtendedToLeft) {
-    //         if (!isReverse) { //forward
-    //             frame = (genes[numOfGene - 1].begin - 1) % 3;
-    //             leftEnd = genes[numOfGene - 2].end - 1 - 22;
-    //             while (leftEnd % 3 != frame) leftEnd++;
-    //             blocks.emplace_back(leftEnd, length - 1, 1);
-    //             blockIdx++;
-    //         } else {
-    //             frame = (genes[numOfGene - 1].end - 1) % 3;
-    //             rightEnd = length - 1;
-    //             while (rightEnd % 3 != frame) rightEnd--;
-    //             blocks.emplace_back(genes[numOfGene - 2].end - 22 - 1, rightEnd, -1);
-    //             blockIdx++;
-    //         }
-    //     } else {
-    //         if (!isReverse) {
-    //             blocks.emplace_back(genes[numOfGene - 1].begin, length - 1, 1);
-    //             blockIdx++;
-    //         } else {
-    //             frame = (genes[numOfGene - 1].end - 1) % 3;
-    //             rightEnd = length - 1;
-    //             while (rightEnd % 3 != frame) rightEnd--;
-    //             blocks.emplace_back(genes[numOfGene - 1].begin - 1, rightEnd, -1);
-    //             blockIdx++;
-    //         }
-    //     }
-
-    //     //If current intergenic sequences is new, update intergenicKmerList.
-    //     if (find(intergenicKmerList.begin(), intergenicKmerList.end(), rightKmerHash) == intergenicKmerList.end()) {
-    //         intergenicKmerList.push_back(rightKmerHash);
     //     }
     // }
+    // blocks.emplace_back(leftEnd, rightEnd, isReverse ? -1 : 1);
+    // if (find(intergenicKmerList.begin(), intergenicKmerList.end(), rightKmerHash) == intergenicKmerList.end()) {
+    //         intergenicKmerList.push_back(rightKmerHash);
+    // }
+
+    //For the last gene
+    if (find(intergenicKmerList.begin(), intergenicKmerList.end(), leftKmerHash) !=
+        intergenicKmerList.end()) { //extension to left
+        if (!isReverse) { //forward
+            frame = (genes[numOfGene - 1].begin - 1) % 3;
+            leftEnd = genes[numOfGene - 2].end - 1 - 22;
+            while (leftEnd % 3 != frame) leftEnd++;
+            blocks.emplace_back(leftEnd, length - 1, 1);
+            blockIdx++;
+        } else { // reverse
+            frame = (genes[numOfGene - 1].end - 1) % 3;
+            rightEnd = length - 1;
+            while (rightEnd % 3 != frame) rightEnd--;
+            blocks.emplace_back(genes[numOfGene - 2].end - 22 - 1, rightEnd, -1);
+            blockIdx++;
+        }
+    } else { //extension to right
+        if (hasBeenExtendedToLeft) {
+            if (!isReverse) { //forward
+                frame = (genes[numOfGene - 1].begin - 1) % 3;
+                leftEnd = genes[numOfGene - 2].end - 1 - 22;
+                while (leftEnd % 3 != frame) leftEnd++;
+                blocks.emplace_back(leftEnd, length - 1, 1);
+                blockIdx++;
+            } else {
+                frame = (genes[numOfGene - 1].end - 1) % 3;
+                rightEnd = length - 1;
+                while (rightEnd % 3 != frame) rightEnd--;
+                blocks.emplace_back(genes[numOfGene - 2].end - 22 - 1, rightEnd, -1);
+                blockIdx++;
+            }
+        } else {
+            if (!isReverse) {
+                blocks.emplace_back(genes[numOfGene - 1].begin, length - 1, 1);
+                blockIdx++;
+            } else {
+                frame = (genes[numOfGene - 1].end - 1) % 3;
+                rightEnd = length - 1;
+                while (rightEnd % 3 != frame) rightEnd--;
+                blocks.emplace_back(genes[numOfGene - 1].begin - 1, rightEnd, -1);
+                blockIdx++;
+            }
+        }
+
+        //If current intergenic sequences is new, update intergenicKmerList.
+        if (find(intergenicKmerList.begin(), intergenicKmerList.end(), rightKmerHash) == intergenicKmerList.end()) {
+            intergenicKmerList.push_back(rightKmerHash);
+        }
+    }
+
 
     free(newIntergenicKmer);
     free(leftKmer);

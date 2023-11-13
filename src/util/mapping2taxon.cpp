@@ -100,4 +100,8 @@ int mapping2taxon(int argc, const char **argv, const Command &command) {
     }
 
     return 0;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> newScore
