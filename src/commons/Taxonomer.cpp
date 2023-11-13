@@ -84,12 +84,12 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
                                 vector<Query> & queryList,
                                 const LocalParameters &par) {
 
-   if (true) {
-       cout << "# " << currentQuery << " " << queryList[currentQuery].name << endl;
-       for (size_t i = offset; i < end + 1; i++) {
-           cout << matchList[i].targetId << " " << matchList[i].qInfo.frame << " " << matchList[i].qInfo.pos << " " << int(matchList[i].hamming) <<  " "  << int(matchList[i].redundancy) << endl;
-       }
-   }
+//    if (true) {
+//        cout << "# " << currentQuery << " " << queryList[currentQuery].name << endl;
+//        for (size_t i = offset; i < end + 1; i++) {
+//            cout << matchList[i].targetId << " " << matchList[i].qInfo.frame << " " << matchList[i].qInfo.pos << " " << int(matchList[i].hamming) <<  " "  << int(matchList[i].redundancy) << endl;
+//        }
+//    }
     // Get the best species for current query
     vector<const Match*> speciesMatches;
     speciesMatches.reserve(end - offset + 1);
@@ -504,14 +504,23 @@ float Taxonomer::combineMatchPaths(vector<MatchPath> & matchPaths,
             bool isOverlapped = false;
             for (size_t j = 0; j < combinedMatchPaths.size(); j++) {
                 if (isMatchPathOverlapped(matchPaths[i], combinedMatchPaths[j])) { // overlap!
-                    if (isMatchPathLinked(matchPaths[i], combinedMatchPaths[j])) {
-                        // merge two linked matchPaths by editing the combinedMatchPaths[j]
-                        trimMatchPath(matchPaths[i], combinedMatchPaths[j]);                        
+                    int overlappedLength = min(matchPaths[i].end, combinedMatchPaths[j].end) 
+                                            - max(matchPaths[i].start, combinedMatchPaths[j].start) + 1;
+                    if (overlappedLength < 24) {
+                        trimMatchPath(matchPaths[i], combinedMatchPaths[j], overlappedLength);
                         continue;
                     } else {
                         isOverlapped = true;
                         break;
                     }
+                    // if (isMatchPathLinked(matchPaths[i], combinedMatchPaths[j])) {
+                    //     // merge two linked matchPaths by editing the combinedMatchPaths[j]
+                    //     trimMatchPath(matchPaths[i], combinedMatchPaths[j]);                        
+                    //     continue;
+                    // } else {
+                    //     isOverlapped = true;
+                    //     break;
+                    // }
                 } 
             }
             if (!isOverlapped) {
@@ -581,29 +590,29 @@ void Taxonomer::mergeMatchPaths(const MatchPath & source, MatchPath & target) {
     }
 }
 
-void Taxonomer::trimMatchPath(MatchPath & path1, const MatchPath & path2) {
-    int margin = min(path1.end, path2.end) - max(path1.start, path2.start) + 1 - 21;
+void Taxonomer::trimMatchPath(MatchPath & path1, const MatchPath & path2, int overlapLength) {
+    // int margin = min(path1.end, path2.end) - max(path1.start, path2.start) + 1 - 21;
     if (path1.start < path2.start) { 
         path1.end = path2.start - 1;
         uint8_t lastEndHamming = GET_2_BITS(path1.matches.back()->rightEndHamming);
         path1.hammingDist = path1.hammingDist - (path1.matches.back()->hamming - lastEndHamming);
-        path1.score = path1.score - path1.matches.back()->getScore() - margin;
-        if (lastEndHamming == 0) {
-            path1.score += 3.0f;
-        } else {
-            path1.score += 2.0f - 0.5f * lastEndHamming;
-        }
-        path1.matches.pop_back();
+        path1.score = path1.score - path1.matches.back()->getRightPartScore(overlapLength/3) - (overlapLength % 3);
+        // if (lastEndHamming == 0) {
+        //     path1.score += 3.0f;
+        // } else {
+        //     path1.score += 2.0f - 0.5f * lastEndHamming;
+        // }
+        // path1.matches.pop_back(); // unnecessary without checking isLikned
     } else {
         path1.start = path2.end + 1;
         uint8_t lastEndHamming = GET_2_BITS(path1.matches.front()->rightEndHamming >> 14);
         path1.hammingDist = path1.hammingDist - (path1.matches.front()->hamming - lastEndHamming);
-        path1.score = path1.score - path1.matches.front()->getScore() - margin;
-        if (lastEndHamming == 0) {
-            path1.score += 3.0f;
-        } else {
-            path1.score += 2.0f - 0.5f * lastEndHamming;
-        }
+        path1.score = path1.score - path1.matches.front()->getLeftPartScore(overlapLength/3) - (overlapLength % 3);
+        // if (lastEndHamming == 0) {
+        //     path1.score += 3.0f;
+        // } else {
+        //     path1.score += 2.0f - 0.5f * lastEndHamming;
+        // }
         // path1.matches.erase(path1.matches.begin());
     }
 }

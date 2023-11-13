@@ -29,8 +29,8 @@ struct Match { // 20 byte
         << targetId << " " << speciesId << " " << rightEndHamming << " " << (int)hamming << " " << getScore() << std::endl;
     }
 
-    float getScore(float score = 0.0f, int cnt = 0) const {
-        int currentHamming = GET_2_BITS(rightEndHamming >> cnt * 2);
+    float getScore(float score = 0.0f, int cnt = 0) const { 
+        int currentHamming = GET_2_BITS(rightEndHamming >> (cnt * 2));
         if (currentHamming == 0) {
             score += 3.0f;
         } else {
@@ -39,8 +39,36 @@ struct Match { // 20 byte
         if (cnt == 7) {
             return score;
         } else {
-            return getScore(score, cnt + 1);
+        return getScore(score, cnt + 1);    
         }
+    }
+
+    // 87654321에서 678을 알고 싶은 거임
+    float getRightPartScore(const int range, float score = 0.0f, int cnt = 0) const {
+        if (cnt == range) {
+            return score;
+        }
+        int currentHamming = GET_2_BITS(rightEndHamming >> (14 - cnt * 2));
+        if (currentHamming == 0) {
+            score += 3.0f;
+        } else {
+            score += 2.0f - 0.5f * currentHamming;
+        }
+        return getRightPartScore(range, score, cnt + 1);    
+    }
+
+    // 87654321
+    float getLeftPartScore(const int range, float score = 0.0f, int cnt = 0) const {
+        if (cnt == range) {
+            return score;
+        }
+        int currentHamming = GET_2_BITS(rightEndHamming >> (cnt * 2));
+        if (currentHamming == 0) {
+            score += 3.0f;
+        } else {
+            score += 2.0f - 0.5f * currentHamming;
+        }
+        return getLeftPartScore(range, score, cnt + 1);    
     }
 };
 

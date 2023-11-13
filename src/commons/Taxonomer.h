@@ -101,7 +101,7 @@ public:
 
     void mergeMatchPaths(const MatchPath & source, MatchPath & target);
 
-    void trimMatchPath(MatchPath & path1, const MatchPath & path2);
+    void trimMatchPath(MatchPath & path1, const MatchPath & path2, int overlapLength);
 
     void filterRedundantMatches(vector<const Match*> & speciesMatches,
                                 map<TaxID, int> & taxCnt);
