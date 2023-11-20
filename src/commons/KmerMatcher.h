@@ -10,6 +10,7 @@
 #include "common.h"
 #include "unordered_map"
 #include <string>
+#include <vector>
 
 #define BufferSize 16'777'216 // 16 * 1024 * 1024 // 16 M
 
@@ -81,7 +82,9 @@ protected:
   void compareDna(uint64_t query, std::vector<uint64_t> &targetKmersToCompare,
                   std::vector<size_t> &selectedMatches,
                   std::vector<uint8_t> &selectedHammingSum,
-                  std::vector<uint16_t> &rightEndHammings, uint8_t frame);
+                  std::vector<uint16_t> &rightEndHammings,
+                  std::vector<uint32_t> &selectedDnaEncodings,
+                  uint8_t frame);
 
   virtual uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2);
 
@@ -160,7 +163,7 @@ inline uint16_t KmerMatcher::getHammings(uint64_t kmer1,
                                          uint64_t kmer2) { // hammings 87654321
   uint16_t hammings = 0;
   for (int i = 0; i < 8; i++) {
-    hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U * i;
+    hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U * i);
     kmer1 >>= bitsForCodon;
     kmer2 >>= bitsForCodon;
   }
@@ -180,25 +183,5 @@ KmerMatcher::getHammings_reverse(uint64_t kmer1,
   return hammings;
 }
 
-// struct sortMatch {
-//     bool operator() (const Match& a, const Match& b) const {
-//         if (a.qInfo.sequenceID != b.qInfo.sequenceID)
-//             return a.qInfo.sequenceID < b.qInfo.sequenceID;
-
-//         if (a.genusId != b.genusId)
-//             return a.genusId < b.genusId;
-
-//         if (a.speciesId != b.speciesId)
-//             return a.speciesId < b.speciesId;
-
-//         if (a.qInfo.frame != b.qInfo.frame)
-//             return a.qInfo.frame < b.qInfo.frame;
-
-//         if (a.qInfo.pos != b.qInfo.pos)
-//             return a.qInfo.pos < b.qInfo.pos;
-
-//         return a.hamming < b.hamming;
-//     }
-// };
 
 #endif // METABULI_KMERMATCHER_H

@@ -109,10 +109,10 @@ public:
     void filterRedundantMatches(vector<const Match*> & speciesMatches,
                                 map<TaxID, int> & taxCnt);
 
-    depthScore DFS(const vector<const Match *> &matches, size_t curMatchIdx,
-                   const map<size_t, vector<size_t>> &linkedMatches,
-                   size_t depth, size_t MIN_DEPTH, unordered_set<size_t> &used,
-                   unordered_map<size_t, depthScore> &idx2depthScore,
+    depthScore DFS(const vector<const Match *> &matches, const Match * curMatchIdx,
+                   const map<const Match *, vector<const Match *>> &linkedMatches,
+                   size_t depth, size_t MIN_DEPTH, unordered_set<const Match *> &used,
+                   unordered_map<const Match *, depthScore> &match2depthScore,
                    unordered_map<const Match *, const Match *> & edges, float score, int hammingDist);
 
     static bool isConsecutive(const Match * match1, const Match * match2);
