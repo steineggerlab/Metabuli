@@ -98,6 +98,5 @@ int mapping2taxon(int argc, const char **argv, const Command &command) {
     for (size_t i = 1; i < read2taxon.size(); i++) {
         out << read2taxon[i].read << "\t" << read2taxon[i].taxon << "\n";
     }
-
     return 0;
 }

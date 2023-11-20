@@ -307,8 +307,10 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match *> & speciesMatch
             // cout << currentSpecies << endl;
             float score = combineMatchPaths(matchPaths, species2matchPaths[currentSpecies], queryLength);
             // cout << endl;
-            if (score > 1.0f) {score = 1.0f;}
-            species2score[currentSpecies] = score;
+            score = min(score, 1.0f);
+            if (score > 0.f) {
+                species2score[currentSpecies] = score;
+            }
             if (score > bestSpScore) {
                 bestSpScore = score;
             }
@@ -403,11 +405,11 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match *> & speciesMatch
         speciesMatchRange[currentSpecies] = make_pair(start, i);
         // Combine MatchPaths
         if (!matchPaths.empty()) {
-            // cout << currentSpecies << endl;
             float score = combineMatchPaths(matchPaths, species2matchPaths[currentSpecies], readLength1 + readLength2);
-            // cout << endl;
-            if (score > 1.0f) {score = 1.0f;}
-            species2score[currentSpecies] = score;
+            score = min(score, 1.0f);
+            if (score > 0.f) {
+                species2score[currentSpecies] = score;
+            }
             if (score > bestSpScore) {
                 bestSpScore = score;
             }
@@ -495,14 +497,6 @@ float Taxonomer::combineMatchPaths(vector<MatchPath> & matchPaths,
                         isOverlapped = true;
                         break;
                     }
-                    // if (isMatchPathLinked(matchPaths[i], combinedMatchPaths[j])) {
-                    //     // merge two linked matchPaths by editing the combinedMatchPaths[j]
-                    //     trimMatchPath(matchPaths[i], combinedMatchPaths[j]);                        
-                    //     continue;
-                    // } else {
-                    //     isOverlapped = true;
-                    //     break;
-                    // }
                 } 
             }
             if (!isOverlapped) {
@@ -573,29 +567,16 @@ void Taxonomer::mergeMatchPaths(const MatchPath & source, MatchPath & target) {
 }
 
 void Taxonomer::trimMatchPath(MatchPath & path1, const MatchPath & path2, int overlapLength) {
-    // int margin = min(path1.end, path2.end) - max(path1.start, path2.start) + 1 - 21;
     if (path1.start < path2.start) { 
         path1.end = path2.start - 1;
-        uint8_t lastEndHamming = GET_2_BITS(path1.matches.back()->rightEndHamming);
-        path1.hammingDist = path1.hammingDist - (path1.matches.back()->hamming - lastEndHamming);
+        // uint8_t lastEndHamming = GET_2_BITS(path1.matches.back()->rightEndHamming);
+        path1.hammingDist = path1.hammingDist - path1.matches.back()->getRightPartHammingDist(overlapLength/3);
         path1.score = path1.score - path1.matches.back()->getRightPartScore(overlapLength/3) - (overlapLength % 3);
-        // if (lastEndHamming == 0) {
-        //     path1.score += 3.0f;
-        // } else {
-        //     path1.score += 2.0f - 0.5f * lastEndHamming;
-        // }
-        // path1.matches.pop_back(); // unnecessary without checking isLikned
     } else {
         path1.start = path2.end + 1;
-        uint8_t lastEndHamming = GET_2_BITS(path1.matches.front()->rightEndHamming >> 14);
-        path1.hammingDist = path1.hammingDist - (path1.matches.front()->hamming - lastEndHamming);
+        // uint8_t lastEndHamming = GET_2_BITS(path1.matches.front()->rightEndHamming >> 14);
+        path1.hammingDist = path1.hammingDist - path1.matches.front()->getLeftPartHammingDist(overlapLength/3);
         path1.score = path1.score - path1.matches.front()->getLeftPartScore(overlapLength/3) - (overlapLength % 3);
-        // if (lastEndHamming == 0) {
-        //     path1.score += 3.0f;
-        // } else {
-        //     path1.score += 2.0f - 0.5f * lastEndHamming;
-        // }
-        // path1.matches.erase(path1.matches.begin());
     }
 }
 
@@ -664,8 +645,6 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
             used.insert(entry.first);
             depthScore bestPath{};
             size_t bestNextIdx = 0;
-            float curScore = curFrameMatches[entry.first]->getScore();
-            // cout << curFrameMatches[entry.first]
             for (size_t j = 0; j < entry.second.size(); j++) {
                 used.insert(entry.second[j]);
                 depthScore curPath = DFS(curFrameMatches,
@@ -676,7 +655,8 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
                                          used, 
                                          idx2depthScore,
                                          edges, 
-                                         curScore, 0);
+                                         curFrameMatches[entry.first]->getScore(),
+                                         curFrameMatches[entry.first]->hamming);
                 if (curPath.score > bestPath.score && curPath.depth > MIN_DEPTH) {
                     bestNextIdx = entry.second[j];
                     bestPath = curPath;
