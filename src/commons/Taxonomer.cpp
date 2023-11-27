@@ -139,8 +139,6 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
     }
 
     // Filter redundant matches  
-    // vector<const Match *> filteredMatches;
-    // cout << "# " << currentQuery << " " << queryList[currentQuery].name << " filtered" << endl;
     filterRedundantMatches(speciesMatches, queryList[currentQuery].taxCnt);
     
     // If score is not enough, classify to the parent of the selected species
@@ -304,9 +302,7 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match *> & speciesMatch
         speciesMatchRange[currentSpecies] = make_pair(start, i);
         // Combine MatchPaths
         if (!matchPaths.empty()) {
-            // cout << currentSpecies << endl;
             float score = combineMatchPaths(matchPaths, species2matchPaths[currentSpecies], queryLength);
-            // cout << endl;
             score = min(score, 1.0f);
             if (score > 0.f) {
                 species2score[currentSpecies] = score;
@@ -539,7 +535,7 @@ bool Taxonomer::isMatchPathOverlapped(const MatchPath & matchPath1,
                                       const MatchPath & matchPath2) {
     return !((matchPath1.end < matchPath2.start) || (matchPath2.end < matchPath1.start));                                       
 }
-// 87654321
+
 void Taxonomer::mergeMatchPaths(const MatchPath & source, MatchPath & target) {
     if (source.start < target.start) {
         target.start = source.start;
@@ -587,9 +583,7 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
     size_t end = curFrameMatches.size();
     vector<const Match *> curPosMatches;
     vector<const Match *> nextPosMatches;
-    // vector<pair<const Match *, size_t>> curPosMatches; // <match, index>
-    // vector<pair<const Match *, size_t>> nextPosMatches;
-    map<const Match *, vector<const Match *>> linkedMatches; // <index, linked indexes>
+    map<const Match *, vector<const Match *>> linkedMatches; 
 
     size_t currPos = curFrameMatches[0]->qInfo.pos;
     uint64_t frame = curFrameMatches[0]->qInfo.frame;
@@ -671,7 +665,6 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
     }
     unordered_set<const Match *> used;
     unordered_map<const Match *, depthScore> idx2depthScore;
-    // unordered_map<size_t, size_t> edges;
     unordered_map<const Match *, const Match *> edges;
 
     for (const auto& entry : linkedMatches) {
@@ -698,24 +691,16 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
             }
             // Store the best path
             if (bestPath.depth > MIN_DEPTH) {
-                // cout << entry.first << endl;
-                // curFrameMatches[entry.first]->printMatch();
                 matchPaths.emplace_back(entry.first->qInfo.pos, // start coordinate on query
                                         entry.first->qInfo.pos + bestPath.depth * 3 + 20, // end coordinate on query
                                         bestPath.score, bestPath.hammingDist);
                 const Match * curMatch = entry.first;
                 edges[curMatch] = bestNextMatch;
                 matchPaths.back().matches.push_back(curMatch);
-                // curMatch = edges[curMatch];                        
-                // edges2[curFrameMatches[entry.first]] = curFrameMatches[bestNextIdx];
-                // Retrieve the best path
-                // cout << bestPath.depth << endl;
                 while (edges.find(curMatch) != edges.end()) {
-                    // cout << curMatch << " ";
                     matchPaths.back().matches.push_back(edges[curMatch]);
                     curMatch = edges[curMatch];
                 }
-                // cout << endl;
             }
         }
     }
