@@ -75,6 +75,7 @@ public:
     PARAMETER(SCORE_COL)
     PARAMETER(COVERAGE_COL)
     PARAMETER(PRINT_COLUMNS)
+    PARAMETER(CLADE_RANK)
 
     // Filter
     PARAMETER(PRINT_MODE)
@@ -122,6 +123,7 @@ public:
     int taxidCol;
     int scoreCol;
     int coverageCol;
+    std::string cladeRank;
 
     // Add to library
     bool assembly;

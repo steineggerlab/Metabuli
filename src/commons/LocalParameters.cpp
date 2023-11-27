@@ -255,6 +255,13 @@ LocalParameters::LocalParameters() :
                       typeid(std::string),
                       (void *) &printColumns,
                       "^.*$"),
+        CLADE_RANK(CLADE_RANK_ID,
+                     "--clade-rank",
+                     "Rank of clade to be tested",
+                     "Rank of clade to be tested",
+                     typeid(std::string),
+                     (void *) &cladeRank,
+                     "^.*$"),
         PRINT_MODE(PRINT_MODE_ID,
                         "--print-mode",
                        "[1] Only filtered reads [2] Both filtered and removed reads",
@@ -347,6 +354,7 @@ LocalParameters::LocalParameters() :
     grade.push_back(&SCORE_COL);
     grade.push_back(&COVERAGE_COL);
     grade.push_back(&PRINT_COLUMNS);
+    grade.push_back(&CLADE_RANK);
 
     // Apply thresholds
     applyThreshold.push_back(&MIN_SP_SCORE);
