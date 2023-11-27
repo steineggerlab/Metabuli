@@ -6,7 +6,7 @@
 #include <iostream>
 #include "BitManipulateMacros.h"
 
-struct Match { // 20 byte
+struct Match { // 24 byte
     Match(){}
     Match(QueryKmerInfo qInfo,
           int targetId,
