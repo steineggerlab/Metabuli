@@ -7,6 +7,7 @@
 #include "BitManipulateMacros.h"
 #include <unordered_map>
 #include <unordered_set>
+#include <algorithm>
 
 using namespace std;
 
@@ -30,10 +31,10 @@ struct depthScore {
 };
 
 struct MatchPath {
-    MatchPath(size_t start, size_t end, float score, int hammingDist) : start(start), end(end), score(score), hammingDist(hammingDist) {}
+    MatchPath(int start, int end, float score, int hammingDist) : start(start), end(end), score(score), hammingDist(hammingDist) {}
     MatchPath() : start(0), end(0), score(0.f), hammingDist(0) {}
-    size_t start;
-    size_t end;
+    int start;
+    int end;
     float score;
     int hammingDist;
     vector<const Match *> matches;
@@ -109,10 +110,10 @@ public:
     void filterRedundantMatches(vector<const Match*> & speciesMatches,
                                 map<TaxID, int> & taxCnt);
 
-    depthScore DFS(const vector<const Match *> &matches, size_t curMatchIdx,
-                   const map<size_t, vector<size_t>> &linkedMatches,
-                   size_t depth, size_t MIN_DEPTH, unordered_set<size_t> &used,
-                   unordered_map<size_t, depthScore> &idx2depthScore,
+    depthScore DFS(const vector<const Match *> &matches, const Match * curMatchIdx,
+                   const map<const Match *, vector<const Match *>> &linkedMatches,
+                   size_t depth, size_t MIN_DEPTH, unordered_set<const Match *> &used,
+                   unordered_map<const Match *, depthScore> &match2depthScore,
                    unordered_map<const Match *, const Match *> & edges, float score, int hammingDist);
 
     static bool isConsecutive(const Match * match1, const Match * match2);

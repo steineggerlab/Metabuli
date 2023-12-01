@@ -32,8 +32,6 @@ void Reporter::writeReadClassification(const vector<Query> & queryList, bool cla
                                << queryList[i].classification << "\t"
                                << queryList[i].queryLength + queryList[i].queryLength2 << "\t"
                                << queryList[i].score << "\t"
-                               << queryList[i].coverage << "\t"
-                               << queryList[i].hammingDist << "\t"
                                << taxonomy->getString(taxonomy->taxonNode(queryList[i].classification)->rankIdx) << "\t";
         for (auto it = queryList[i].taxCnt.begin(); it != queryList[i].taxCnt.end(); ++it) {
             readClassificationFile << it->first << ":" << it->second << " ";

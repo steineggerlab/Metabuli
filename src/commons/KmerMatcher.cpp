@@ -1,8 +1,10 @@
 #include "KmerMatcher.h"
+#include "BitManipulateMacros.h"
 #include "IndexCreator.h"
 #include "Kmer.h"
 #include "Mmap.h"
 #include <ostream>
+#include <vector>
 
 KmerMatcher::KmerMatcher(const LocalParameters & par,
                          NcbiTaxonomy * taxonomy) {
@@ -231,6 +233,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
             std::vector<uint8_t> selectedHammingSum;
             std::vector<size_t> selectedMatches;
             std::vector<uint16_t> selectedHammings;
+            std::vector<uint32_t> selectedDnaEncodings;
             size_t posToWrite;
 
             int currMatchNum;
@@ -293,6 +296,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                             matches[matchCnt] = {queryKmerList[j].info,
                                                  candidateKmerInfos[idx].sequenceID,
                                                  taxId2speciesId[candidateKmerInfos[idx].sequenceID],
+                                                 selectedDnaEncodings[k],
                                                  selectedHammings[k],
                                                  selectedHammingSum[k],
                                                  (bool) candidateKmerInfos[idx].redundancy};
@@ -303,11 +307,12 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                     selectedMatches.clear();
                     selectedHammingSum.clear();
                     selectedHammings.clear();
+                    selectedDnaEncodings.clear();
 
                     // Reuse the candidate target k-mers to compare in DNA level if queries are the same at amino acid level but not at DNA level
                     if (currentQueryAA == AminoAcidPart(queryKmerList[j].ADkmer)) {
                         compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, selectedMatches,
-                                   selectedHammingSum, selectedHammings,queryKmerList[j].info.frame);
+                                   selectedHammingSum, selectedHammings, selectedDnaEncodings, queryKmerList[j].info.frame);
                         currMatchNum = selectedMatches.size();
 
                         // If local buffer is full, copy them to the shared buffer.
@@ -334,6 +339,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                             matches[matchCnt] = {queryKmerList[j].info,
                                                  candidateKmerInfos[idx].sequenceID,
                                                  taxId2speciesId[candidateKmerInfos[idx].sequenceID],
+                                                 selectedDnaEncodings[k],
                                                  selectedHammings[k],
                                                  selectedHammingSum[k],
                                                  (bool) candidateKmerInfos[idx].redundancy};
@@ -401,7 +407,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
 
                     // Compare the current query and the loaded target k-mers and select
                     compareDna(currentQuery, candidateTargetKmers, selectedMatches, selectedHammingSum,
-                               selectedHammings, queryKmerList[j].info.frame);
+                               selectedHammings, selectedDnaEncodings, queryKmerList[j].info.frame);
 
                     // If local buffer is full, copy them to the shared buffer.
                     currMatchNum = selectedMatches.size();
@@ -429,6 +435,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                         matches[matchCnt] = {queryKmerList[j].info,
                                              candidateKmerInfos[idx].sequenceID,
                                              taxId2speciesId[candidateKmerInfos[idx].sequenceID],
+                                             selectedDnaEncodings[k],
                                              selectedHammings[k],
                                              selectedHammingSum[k],
                                              (bool) candidateKmerInfos[idx].redundancy};
@@ -495,8 +502,9 @@ void KmerMatcher::compareDna(uint64_t query,
                              std::vector<uint64_t> &targetKmersToCompare,
                              std::vector<size_t> &selectedMatches,
                              std::vector<uint8_t> &selectedHammingSum,
-                             std::vector<uint16_t> &selectedHammings, uint8_t frame) {
-
+                             std::vector<uint16_t> &selectedHammings,
+                             std::vector<uint32_t> &selectedDnaEncodings,
+                             uint8_t frame) {
     size_t size = targetKmersToCompare.size();
     auto *hammingSums = new uint8_t[size + 1];
     uint8_t currentHammingSum;
@@ -516,11 +524,13 @@ void KmerMatcher::compareDna(uint64_t query,
         if (hammingSums[h] <= min(minHammingSum * 2, 7)) {
             selectedMatches.push_back(h);
             selectedHammingSum.push_back(hammingSums[h]);
-            if (frame < 3) {
+            if (frame < 3) { // Frame of query k-mer
                 selectedHammings.push_back(getHammings(query, targetKmersToCompare[h]));
             } else {
                 selectedHammings.push_back(getHammings_reverse(query, targetKmersToCompare[h]));
             }
+            // Store right 24 bits of the target k-mer in selectedDnaEncodings
+            selectedDnaEncodings.push_back(GET_24_BITS_UINT(targetKmersToCompare[h]));
         }
     }
     delete[] hammingSums;

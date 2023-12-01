@@ -16,7 +16,7 @@ In addition, it can classify reads against a database of any size as long as it 
 - Generate `taxonomyDB` during `build` and load it during `classify` workflow for faster loading of taxonomy information.
 - Support gzipped FASTA/FASTQ files in `add-to-library` and `classify` workflows.
 - low-complexity filtering in `build` workflow as default with `--mask-prob 0.9`.
-- 
+  
 ## Installation
 ### Precompiled binaries
 ```
@@ -81,20 +81,25 @@ metabuli classify read_1.fna read_2.fna dbdir outdir jobid
 # Single-end
 metabuli classify --seq-mode 1 read.fna dbdir outdir jobid
 
+# Long-read 
+metabuli classify --seq-mode 3 read.fna dbdir outdir jobid
+
   * Important parameters:
-   --threads : The number of CPU-cores used (all by default)
+   --threads : The number of threads used (all by default)
    --max-ram : The maximum RAM usage. (128 GiB by default)
-   --min-score : The minimum score to be classified (0.15 for precision mode)
-   --min-sp-score : The minimum score to be classified at or below species rank. (0.5 for precision mode)
+   --min-score : The minimum score to be classified 
+   --min-sp-score : The minimum score to be classified at or below species rank. 
    --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
    --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids. 
                   Give the same value used for DB creation.
    --accession-level : Set 1 to use accession level classification (0 by default). 
                        It is available when the DB is also built with accession level taxonomy.
-   
-  * Values of --min-score and --min-sp-score for precision mode are optimized only for short reads.
-  * We don't recommend using them for long reads.
 ```
+- Paratemers for precision mode (Metabuli-P)
+  - Illumina short reads: `--min-score 0.15 --min-sp-score 0.5`
+  - PacBio HiFi reads: `--min-score 0.07 --min-sp-score 0.3`
+  - PacBio Sequel II reads: `--min-score 0.005`
+  - ONT reads: `--min-score 0.008`
 
 This will generate two result files: `JobID_classifications.tsv`, `JobID_report.tsv`, and `JobID_krona.html`.
 #### JobID_classifications.tsv
@@ -103,16 +108,14 @@ This will generate two result files: `JobID_classifications.tsv`, `JobID_report.
 3. Taxonomy identifier
 4. Effective read length
 5. DNA level identity score
-6. Amino-acid level identity score
-7. Total Hamming distance
-8. Classification Rank
-9. List of "taxID : k-mer match count"
+6. Classification Rank
+7. List of "taxID : k-mer match count"
 
 ```
 #Example
-1       read_1     2688    294     0.627551        0.806122        35      subspecies      2688:65
-1       read_2     2688    294     0.816327        1       36      subspecies      2688:78
-0       read_3     0       294     0       0       0       no rank
+1 read_1  2688  294     0.627551 subspecies  2688:65
+1 read_2  2688  294     0.816327 subspecies  2688:78
+0 read_3  0     294     0        no rank
 ```
 
 #### JobID_report.tsv
@@ -246,27 +249,36 @@ This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some
 
 
 ## Example
-```
+
 Classifying RNA-seq reads from a COVID-19 patient to identify the culprit variant.
 The whole process must take less than 10 mins using a personal machine.
 
-1. Download RefSeq Virus DB (1.5 GiB)
-metabuli databases RefSeq_virus refseq_virus tmp
+#### 1. Download RefSeq Virus DB (1.5 GiB)
+`metabuli databases RefSeq_virus refseq_virus tmp`
 
-2. Download an RNA-seq result (SRR14484345) from this link
-  - https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&page_size=10&acc=SRR14484345&display=data-access
+#### 2. Download an RNA-seq result (SRR14484345)
+   Option 1. Download using SRA Toolkit 
+   ```
+   fasterq-dump --split-files SRR14484345
+   ```
+   Option 2. Download from web browser as FASTQ format
+   - link: https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&page_size=10&acc=SRR14484345&display=download
+   - If the donwnloaded file includes both R1 and R2, use following commands.
+``` 
+cat SRR14484345.fastq | paste - - - - - - - - | tee >(cut -f 1-4 | tr "\t" "\n" > SRR14484345_1.fq) | cut -f 5-8 | tr "\t" "\n" > SRR14484345_2.fq
+``` 
 
-3. Classify the reads using metabuli
-metabuli classify SRR14484345_1.fq SRR14484345_2.fq refseq_virus RESULT_DIR JOB_ID --max-ram RAM_SIZE
-
-4. Check RESULT_DIR/JOB_ID_report.tsv
-  - Find a section like the example below
-...
-92.1346 509945  492302  no rank 2697049                           Severe acute respiratory syndrome coronavirus 2
-3.1174  17254   17254   subspecies      3000001                             SARS-CoV-2 beta
-0.0558  309     309     subspecies      3000000                             SARS-CoV-2 alpha
-0.0065  36      36      subspecies      3000004                             SARS-CoV-2 omicron
-0.0045  25      25      subspecies      3000003                             SARS-CoV-2 gamma
-0.0034  19      19      subspecies      3000002                             SARS-CoV-2 delta
-...
-```
+#### 3. Classify the reads using metabuli
+   ```
+   metabuli classify SRR14484345_1.fq SRR14484345_2.fq refseq_virus RESULT_DIR JOB_ID --max-ram RAM_SIZE
+   ```
+#### 4. Check RESULT_DIR/JOB_ID_report.tsv
+  Find a section like the example below
+  ```
+  92.1796 510194  489403  no rank 2697049 Severe acute respiratory syndrome coronavirus 2
+  3.4290  18979 18979 subspecies  3000001   SARS-CoV-2 beta
+  0.2488  1377  1377  subspecies  3000003   SARS-CoV-2 gamma
+  0.0459  254   254   subspecies  3000000   SARS-CoV-2 alpha
+  0.0284  157   157   subspecies  3000004   SARS-CoV-2 omicron
+  0.0043  24    24    subspecies  3000002   SARS-CoV-2 delta
+  ```

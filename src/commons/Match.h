@@ -6,20 +6,22 @@
 #include <iostream>
 #include "BitManipulateMacros.h"
 
-struct Match { // 20 byte
+struct Match { // 24 byte
     Match(){}
     Match(QueryKmerInfo qInfo,
           int targetId,
           TaxID speciesId,
+          uint32_t dnaEncoding,
           uint16_t eachHamming,
           uint8_t hamming,
           bool redundancy):
-          qInfo(qInfo), targetId(targetId), speciesId(speciesId),
+          qInfo(qInfo), targetId(targetId), speciesId(speciesId), dnaEncoding(dnaEncoding),
           rightEndHamming(eachHamming), hamming(hamming), redundancy(redundancy) { }
 
     QueryKmerInfo qInfo; // 8
     TaxID targetId; // 4 taxonomy id infact
     TaxID speciesId; // 4
+    uint32_t dnaEncoding; // 4
     uint16_t rightEndHamming; // 2
     uint8_t hamming; // 1
     bool redundancy; // 1
@@ -41,6 +43,12 @@ struct Match { // 20 byte
         } else {
         return getScore(score, cnt + 1);    
         }
+    }
+
+    bool isConsecutive_DNA(const Match * match2) const {
+        // match1 87654321 -> 08765432
+        // match2 98765432 -> 08765432
+        return (dnaEncoding >> 3) == (match2->dnaEncoding & 0x1FFFFF);
     }
 
     float getRightPartScore(const int range, float score = 0.0f, int cnt = 0) const {
@@ -67,6 +75,22 @@ struct Match { // 20 byte
             score += 2.0f - 0.5f * currentHamming;
         }
         return getLeftPartScore(range, score, cnt + 1);    
+    }
+
+    int getRightPartHammingDist(const int range) const {
+        int sum = 0;
+        for (int i = 0; i < range; i++) {
+            sum += GET_2_BITS(rightEndHamming >> (14 - i * 2));
+        }
+        return sum;
+    }
+
+    int getLeftPartHammingDist(const int range) const {
+        int sum = 0;
+        for (int i = 0; i < range; i++) {
+            sum += GET_2_BITS(rightEndHamming >> (i * 2));
+        }
+        return sum;
     }
 };
 

@@ -108,13 +108,6 @@ void Classifier::startClassify(const LocalParameters &par) {
         processedSeqCnt += queryReadSplit[splitIdx].end - queryReadSplit[splitIdx].start;
         cout << "The number of processed sequences: " << processedSeqCnt << " (" << (double) processedSeqCnt / (double) numOfSeq << ")" << endl;
 
-//        for (size_t i = 0; i < matchBuffer.startIndexOfReserve; i++) {
-//            cout << matchBuffer.buffer[i].queryId << " " <<  matchBuffer.buffer[i].splitIdx << " " <<
-//            matchBuffer.buffer[i].targetSplitIdx << " " << matchBuffer.buffer[i].targetId << " " <<
-//            genusTaxIdList[matchBuffer.buffer[i].targetId] << " " << speciesTaxIdList[matchBuffer.buffer[i].targetId] << " "
-//            << matchBuffer.buffer[i].position << " " << (int) matchBuffer.buffer[i].hamming << " " << taxIdList[matchBuffer.buffer[i].targetId] << endl;
-//        }
-
         // Write classification results
         reporter->writeReadClassification(queryList);
     }

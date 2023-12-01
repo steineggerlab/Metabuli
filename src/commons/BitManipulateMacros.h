@@ -12,6 +12,7 @@
 #define GET_4_BITS(num)             (0XfU    & (num))
 #define GET_2_BITS(num) (signed char)(0x3U & (num))
 #define GET_2_BITS_INT(num) (int)(0x3U & (num))
+#define GET_24_BITS_UINT(num) (unsigned int)(0xffffffU & (num))
 #define GET_2_BITS_FL(num) (float)(0x3U & (num))
 #define GET_2_BITS_2(num) (signed char)(0xCu & (num))
 #define GET_2_BITS_3(num) (signed char)(0x30u & (num))

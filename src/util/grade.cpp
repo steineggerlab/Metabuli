@@ -6,7 +6,6 @@
 #include <string>
 #include <iostream>
 #include <regex>
-//#include "benchmark.h"
 
 using namespace std;
 
