@@ -179,7 +179,7 @@ std::vector<DatabaseDownload> externalDownloads = {
         },
         {
                 "RefSeq_virus",
-                "Database built with NCBI RefSeq virus assemblies (Complete/Chromosome level) and Human genome (CHM13v2.0)",
+                "Database built with NCBI RefSeq virus assemblies (Complete/Chromosome level)",
                 "O'Leary et al. Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation. Nucleic Acids Res. (2016)",
                 "https://www.ncbi.nlm.nih.gov/refseq/",
                 true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,
