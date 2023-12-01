@@ -103,16 +103,14 @@ This will generate two result files: `JobID_classifications.tsv`, `JobID_report.
 3. Taxonomy identifier
 4. Effective read length
 5. DNA level identity score
-6. Amino-acid level identity score
-7. Total Hamming distance
-8. Classification Rank
-9. List of "taxID : k-mer match count"
+6. Classification Rank
+7. List of "taxID : k-mer match count"
 
 ```
 #Example
-1       read_1     2688    294     0.627551        0.806122        35      subspecies      2688:65
-1       read_2     2688    294     0.816327        1       36      subspecies      2688:78
-0       read_3     0       294     0       0       0       no rank
+1 read_1  2688  294     0.627551 subspecies  2688:65
+1 read_2  2688  294     0.816327 subspecies  2688:78
+0 read_3  0     294     0        no rank
 ```
 
 #### JobID_report.tsv
