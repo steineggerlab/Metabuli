@@ -118,7 +118,7 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
 //    }
 
     // If there is no proper species for current query, it is un-classified.
-    if (speciesScore.score == 0 || speciesScore.coverage < par.minCoverage || speciesScore.score < par.minScore) {
+    if (speciesScore.score == 0 || speciesScore.score < par.minScore) {
         queryList[currentQuery].isClassified = false;
         queryList[currentQuery].classification = 0;
         queryList[currentQuery].score = speciesScore.score;
@@ -493,6 +493,11 @@ float Taxonomer::combineMatchPaths(vector<MatchPath> & matchPaths,
                         isOverlapped = true;
                         break;
                     }
+                    // Current path trimmed too much 
+                    if (matchPaths[i].end - matchPaths[i].start + 1 < 24) {
+                        isOverlapped = true;
+                        break;
+                    }
                 } 
             }
             if (!isOverlapped) {
@@ -566,12 +571,12 @@ void Taxonomer::trimMatchPath(MatchPath & path1, const MatchPath & path2, int ov
     if (path1.start < path2.start) { 
         path1.end = path2.start - 1;
         // uint8_t lastEndHamming = GET_2_BITS(path1.matches.back()->rightEndHamming);
-        path1.hammingDist = path1.hammingDist - path1.matches.back()->getRightPartHammingDist(overlapLength/3);
+        path1.hammingDist = max(0, path1.hammingDist - path1.matches.back()->getRightPartHammingDist(overlapLength/3));
         path1.score = path1.score - path1.matches.back()->getRightPartScore(overlapLength/3) - (overlapLength % 3);
     } else {
         path1.start = path2.end + 1;
         // uint8_t lastEndHamming = GET_2_BITS(path1.matches.front()->rightEndHamming >> 14);
-        path1.hammingDist = path1.hammingDist - path1.matches.front()->getLeftPartHammingDist(overlapLength/3);
+        path1.hammingDist = max(0, path1.hammingDist - path1.matches.front()->getLeftPartHammingDist(overlapLength/3));
         path1.score = path1.score - path1.matches.front()->getLeftPartScore(overlapLength/3) - (overlapLength % 3);
     }
 }

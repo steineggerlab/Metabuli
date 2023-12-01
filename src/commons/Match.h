@@ -77,7 +77,7 @@ struct Match { // 24 byte
         return getLeftPartScore(range, score, cnt + 1);    
     }
 
-    float getRightPartHammingDist(const int range) const {
+    int getRightPartHammingDist(const int range) const {
         int sum = 0;
         for (int i = 0; i < range; i++) {
             sum += GET_2_BITS(rightEndHamming >> (14 - i * 2));
@@ -85,7 +85,7 @@ struct Match { // 24 byte
         return sum;
     }
 
-    float getLeftPartHammingDist(const int range) const {
+    int getLeftPartHammingDist(const int range) const {
         int sum = 0;
         for (int i = 0; i < range; i++) {
             sum += GET_2_BITS(rightEndHamming >> (i * 2));

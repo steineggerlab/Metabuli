@@ -7,6 +7,7 @@
 #include "BitManipulateMacros.h"
 #include <unordered_map>
 #include <unordered_set>
+#include <algorithm>
 
 using namespace std;
 
@@ -30,10 +31,10 @@ struct depthScore {
 };
 
 struct MatchPath {
-    MatchPath(size_t start, size_t end, float score, int hammingDist) : start(start), end(end), score(score), hammingDist(hammingDist) {}
+    MatchPath(int start, int end, float score, int hammingDist) : start(start), end(end), score(score), hammingDist(hammingDist) {}
     MatchPath() : start(0), end(0), score(0.f), hammingDist(0) {}
-    size_t start;
-    size_t end;
+    int start;
+    int end;
     float score;
     int hammingDist;
     vector<const Match *> matches;
