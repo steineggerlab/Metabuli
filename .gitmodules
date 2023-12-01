@@ -1,3 +1,4 @@
-[submodule "util/Metabuli-regression"]
+[submodule "regression"]
 	path = util/Metabuli-regression
 	url = https://github.com/steineggerlab/Metabuli-regression.git
+	branch = main

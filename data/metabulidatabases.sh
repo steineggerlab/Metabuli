@@ -115,10 +115,10 @@ case "${SELECTION}" in
          # INPUT_TYPE="METABULI_DB"
     ;;
     "RefSeq_virus")
-	        if notExists "${TMP_PATH}/refseq_virus+human.tar.gz"; then
-		          downloadFile "https://metabuli.steineggerlab.workers.dev/refseq_virus+human.tar.gz" "${TMP_PATH}/refseq_virus+human.tar.gz"
+	        if notExists "${TMP_PATH}/refseq_virus.tar.gz"; then
+		          downloadFile "https://metabuli.steineggerlab.workers.dev/refseq_virus.tar.gz" "${TMP_PATH}/refseq_virus.tar.gz"
           fi
-          tar zxvf "${TMP_PATH}/refseq_virus+human.tar.gz" -C "${OUTDB}"
+          tar zxvf "${TMP_PATH}/refseq_virus.tar.gz" -C "${OUTDB}"
           # push_back "${TMP_PATH}/refseq_virus"
           # INPUT_TYPE="METABULI_DB"
     ;;
