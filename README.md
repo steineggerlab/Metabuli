@@ -9,6 +9,14 @@ In addition, it can classify reads against a database of any size as long as it 
 
 <p align="center"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/marv_metabuli_small.png" height="350" /></p>
 
+## Update notes
+### v1.0.2
+- `--accession-level` option for `build` and `classify` workflow: It reports not only the taxon but also the accession of the best match.
+- Fix minor bugs in `build` workflow.
+- Generate `taxonomyDB` during `build` and load it during `classify` workflow for faster loading of taxonomy information.
+- Support gzipped FASTA/FASTQ files in `add-to-library` and `classify` workflows.
+- low-complexity filtering in `build` workflow as default with `--mask-prob 0.9`.
+- 
 ## Installation
 ### Precompiled binaries
 ```
@@ -79,10 +87,12 @@ metabuli classify --seq-mode 1 read.fna dbdir outdir jobid
    --min-score : The minimum score to be classified (0.15 for precision mode)
    --min-sp-score : The minimum score to be classified at or below species rank. (0.5 for precision mode)
    --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
-   --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids. Give the same value used for DB creation.
-   --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
+   --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids. 
+                  Give the same value used for DB creation.
+   --accession-level : Set 1 to use accession level classification (0 by default). 
+                       It is available when the DB is also built with accession level taxonomy.
    
-  * --min-score and --min-sp-score for precision mode are optimized only for short reads.
+  * Values of --min-score and --min-sp-score for precision mode are optimized only for short reads.
   * We don't recommend using them for long reads.
 ```
 
@@ -135,78 +145,105 @@ We tested it with a MacBook Air (2020, M1, 8 GiB), where we classified about 1.5
 
 ## Custom database
 To build a custom database, you need three things:
-1. **FASTA files** : Each sequence of your FASTA files must be separated by '>accession.version' like '>CP001849.1'
-2. **accession2taxid** : Mapping from acession to taxonomy identifier. Sequences whose accessions are not listed in this file will be skipped.
-3. **NCBI-style taxonomy dump** : 'names.dmp' , 'nodes.dmp', and 'merged.dmp' are required. Sequences whose taxid are not included here will be skipped.
+1. **FASTA files** : Each sequence of your FASTA files must be separated by '>accession.version' like '>CP001849.1'.
+2. **accession2taxid** : Mapping from accession to taxonomy ID. The sequences whose accessions are not listed here will be skipped.
+3. **NCBI-style taxonomy dump** : 'names.dmp' , 'nodes.dmp', and 'merged.dmp' are required. The sequences whose taxonomy IDs are not included here will be skipped.
 
-Next, the steps for creating a database based on NCBI or GTDB taxonomy are described.
+The steps for building a database with NCBI or GTDB taxonomy are described below.
 
+### To build a database with NCBI taxonomy
 #### 1. Prepare taxonomy and accession2taxid
-##### NCBI taxonomy
-  
   * accession2taxid can be downloaded from
   https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/
   
   * Taxonomy dump files can be downloaded from 
   https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/
-  
-##### GTDB taxonomy
-  
-  Follow two steps below to generate GTDB taxonomy and accession2taxid file.
-  * Requirements: You need assembly FASTA files whose file name (or path) includes the assembly accession.  
-    If you downloaded assemblies using [ncbi-genome-download](https://github.com/kblin/ncbi-genome-download), you probably don't have to care about it.  
-    The regular expression of assembly accessions is (GC[AF]_[0-9].[0-9])
-    
-  ```
-  # 1. 
-  In 'util' directory
-  ./prepare_gtdb_taxonomy.sh <DBDIR>
-    - DBDIR : Result files are stored in 'DBDIR/taxonomy'. 
-      Make sure that 'DBDIR/taxonomy' is exist and empty. 
-      The same path should be used in step 1.
-  ```
-  This will generate taxonomy dump files and `assacc_to_taxid.tsv` with other files.
-    
-  ```
-  # 2. 
-  metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR> --assembly true
-    - FASTA list : A list of absolute paths of each assembly files.
-      Each absolute path must include assembly accession. 
-    - accession2taxid : 'assacc_to_taxid.tsv' from the previous step
-    - DBDIR : The same DBDIR from the previous step.
-  ```
-  This will add your FASTA files to `DBDIR/library` according to their species taxonomy ID and generate 'my.accession2taxid' 
 
-  
-#### 2. Add to libarary (optional)
+#### 2. Add to library
 ```
 metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR>
-  - FASTA list: A list of absolute paths of each FASTA files.
-  - accession2taxid: A path to NCBI-style accession2taxid
-  - DBDIR: The same DBDIR from the previous step.
-```
-This command groups your FASTA files of the same species and add stores them in separate files to DBDIR/library.  
-You can skip this step in the case of
-1. You have already used this command during the preparation for GTDB taxonomy.
-2. Your FASTA list includes only one FASTA file per species.
+- FASTA list: A file containing absolute paths of each FASTA file.
+- accession2taxid: A path to NCBI-style accession2taxid.
+- DBDIR: Sequences will be stored in 'DBDIR/library'.
 
+** When resume is needed, remove the files in DBDIR/library and run the command again.
+```
+It groups your sequences into separate files according to their species.
+Accessions that are not included in the `<accession2taxid>` will be skipped and listed in `unmapped.txt`.
 
 #### 3. Build
 
 ```
-metabuli build <DBDIR> <FASTA list> <accession2taxid> [options]
+# Get the list of absoulte paths of files in your library
+find <DBDIR>/library -type f -name '*.fna' > library-files.txt
+
+metabuli build <DBDIR> <LIB_FILES> <accession2taxid> [options]
 - DBDIR: The same DBDIR from the previous step. 
-- FASTA list: A list of absolute paths to your FASTA files (in DBDIR/library)
-- accession2taxid : accession2taxid file
+- LIB_FILES: A file containing absolute paths of the FASTA files in DBDIR/library (library-files.txt)
+- accession2taxid : A path to NCBI-style accession2taxid.
   
   * Options
    --threads : The number of CPU-cores used (all by default)
-   --tinfo-path : Path to prodigal training information files. (DBDIR/prodigal by default)
    --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
    --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids.
-   --spacing-mask : Binary patterend mask for spaced k-mer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
+   --spacing-mask : Binary mask for spaced metamer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
+   --accession-level : Set 1 to use accession level taxonomy (0 by default).
 ```
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
+
+### To build a database with GTDB taxonomy
+#### 1. Prepare GTDB taxonomy and accession2taxid
+*Requirements*: 
+You need assembly FASTA files whose file name (or path) includes the assembly accession.
+If you downloaded assemblies using `ncbi-genome-download`, you probably don't have to care about it.
+The regular expression of assembly accessions is (GC[AF]_[0-9].[0-9])
+
+```
+# 1. 
+# 1-1. Move to the 'util' directory
+cd METABULI_DIR/util
+
+# 1-2. Run prepare_gtdb_taxonomy.sh
+./prepare_gtdb_taxonomy.sh <DBDIR>
+  - DBDIR : Result files are stored in 'DBDIR/taxonomy'. 
+
+** Please clone Metabuli's repository to use this script.
+** It is not provided in the precompiled binaries or bioconda package.
+```
+In `DBDIR/taxonomy`, it will generate taxonomy `dmp` files and `assacc_to_taxid.tsv` with other files.
+
+```
+# 2. 
+metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR> --assembly true
+  - FASTA list : A file containing absolute paths of each assembly file.
+    Each path must include a corresponding assembly accession. 
+  - accession2taxid : 'assacc_to_taxid.tsv' from the previous step
+  - DBDIR : The same DBDIR from the previous step.
+
+** When resume is needed, remove the files in DBDIR/library and run the command again.
+```
+This will add your FASTA files to DBDIR/library according to their species taxonomy ID and generate 'my.accession2taxid'
+
+#### 2. Build
+```
+# Get the list of absoulte paths of files in your library
+find <DBDIR>/library -type f -name '*.fna' > library-files.txt
+
+metabuli build <DBDIR> <LIB_FILES> <accession2taxid> [options]
+- DBDIR: The same DBDIR from the previous step. 
+- <LIB_FILES>: A file containing absolute paths of the FASTA files in DBDIR/library (library-files.txt)
+- accession2taxid : A path to NCBI-style accession2taxid.
+  
+  * Options
+   --threads : The number of CPU-cores used (all by default)
+   --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
+   --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids.
+   --spacing-mask : Binary mask for spaced metamer. The same mask must be used for DB creation and classification. 
+                    A mask should contain at least eight '1's, and '0' means skip.
+   --accession-level : Set 1 to use accession level taxonomy (0 by default).
+```
+This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
+
 
 ## Example
 ```

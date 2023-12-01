@@ -1,7 +1,3 @@
-//
-// Created by KJB on 26/08/2020.
-//
-
 #ifndef ADKMER3_MMAP_H
 #define ADKMER3_MMAP_H
 #include <cerrno>

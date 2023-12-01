@@ -68,7 +68,7 @@ public:
     static size_t getTargetKmerBufferSize(){
         size_t memLimit = Util::getTotalSystemMemory() * 0.5;
         size_t bufferSize = memLimit / sizeof(TargetKmer);
-        cout<<Util::getTotalSystemMemory()<<endl;
+        std::cout << Util::getTotalSystemMemory() << std::endl;
         if(bufferSize > 10000000000){
             bufferSize = 10000000000;
         }

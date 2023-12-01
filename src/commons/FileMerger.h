@@ -5,6 +5,7 @@
 #include "Kmer.h"
 #include <iostream>
 #include "IndexCreator.h"
+#include "NcbiTaxonomy.h"
 #include "printBinary.h"
 #include "common.h"
 
@@ -14,6 +15,8 @@ using namespace std;
 
 class FileMerger {
 private:
+    NcbiTaxonomy * taxonomy;
+    string dbDir;
     uint64_t MARKER;
     int splitNum;
     size_t bufferSize;

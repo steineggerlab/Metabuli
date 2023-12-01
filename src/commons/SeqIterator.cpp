@@ -1,7 +1,3 @@
-//
-// Created by KJB on 01/09/2020.
-//
-
 #include "SeqIterator.h"
 
 const string SeqIterator::atcg = "................................................................"
@@ -359,6 +355,7 @@ void SeqIterator::fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuff
             posToWrite++;
         }
     }
+    // cout << "posToWrite: " << posToWrite << endl;
 }
 
 void
@@ -449,10 +446,10 @@ SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock &block, const char
             kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0, false};
         } else {
             addDNAInfo_TargetKmer(tempKmer, seq, block, kmerCnt);
-            if(posToWrite >= kmerBuffer.bufferSize - 2) {
-                cout << "HERE " << posToWrite << endl;
-                return -1;
-            }
+            // if(posToWrite >= kmerBuffer.bufferSize - 2) {
+            //     cout << "HERE " << posToWrite << endl;
+            //     return -1;
+            // }
             kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, false};
         }
         posToWrite++;
@@ -586,7 +583,7 @@ void SeqIterator::getExtendedORFs(struct _gene *genes, struct _node *nodes, vect
             } else {
                 if (!isReverse) { //forward
                     frame = (genes[geneIdx].begin - 1) % 3;
-                    leftEnd = genes[geneIdx - 1].end - 1 - 22;
+                    leftEnd = genes[geneIdx - 1].end -1 -22;
                     while (leftEnd % 3 != frame) leftEnd++;
                     blocks.emplace_back(leftEnd, genes[geneIdx].end - 1, 1);
                     blockIdx++;
@@ -630,6 +627,28 @@ void SeqIterator::getExtendedORFs(struct _gene *genes, struct _node *nodes, vect
             }
         }
     }
+
+    // // For the last gene
+    // // Extend to the end of the genome
+    // isReverse = !(nodes[genes[numOfGene - 1].start_ndx].strand == 1);    
+    // rightEnd = length - 1;
+    // if (isReverse) {
+    //     frame = (genes[numOfGene - 1].end - 1) % 3;
+    //     while (rightEnd % 3 != frame) rightEnd--;
+    // }
+    // // If left region is not covered, cover it.
+    // leftEnd = genes[numOfGene - 1].begin - 1;
+    // if (hasBeenExtendedToLeft) {
+    //     leftEnd = genes[numOfGene - 2].end - 1 - 22;
+    //     if (!isReverse) {
+    //         frame = (genes[numOfGene - 1].begin - 1) % 3;
+    //         while (leftEnd % 3 != frame) leftEnd++;
+    //     }
+    // }
+    // blocks.emplace_back(leftEnd, rightEnd, isReverse ? -1 : 1);
+    // if (find(intergenicKmerList.begin(), intergenicKmerList.end(), rightKmerHash) == intergenicKmerList.end()) {
+    //         intergenicKmerList.push_back(rightKmerHash);
+    // }
 
     //For the last gene
     if (find(intergenicKmerList.begin(), intergenicKmerList.end(), leftKmerHash) !=
@@ -680,6 +699,7 @@ void SeqIterator::getExtendedORFs(struct _gene *genes, struct _node *nodes, vect
             intergenicKmerList.push_back(rightKmerHash);
         }
     }
+
 
     free(newIntergenicKmer);
     free(leftKmer);

@@ -14,25 +14,17 @@
 #include "common.h"
 #include "NcbiTaxonomy.h"
 #include "FastSort.h"
-#include "Classifier.h"
 #include "LocalParameters.h"
-
-// For masking
 #include "NucleotideMatrix.h"
 #include "SubstitutionMatrix.h"
 #include "tantan.h"
-//#include "DBReader.h"
-//#include "DBWriter.h"
-//#include "Debug.h"
-//#include "Util.h"
-//#include "FileUtil.h"
+#include "LocalUtil.h"
+
 
 #ifdef OPENMP
 #include <omp.h>
 #endif
 
-
-#define kmerLength 8
 
 struct TaxId2Fasta{
     TaxID species;
@@ -46,20 +38,31 @@ using namespace std;
 class IndexCreator{
 private:
     uint64_t MARKER;
-    string tinfo_path;
-    string tinfo_list;
-    vector<TaxID> trainedSpecies;
-    unordered_map<TaxID, _training> trainingInfo;
-    int threadNum;
     BaseMatrix *subMat;
 
-    // parameters
+    // Parameters
+    int threadNum;
+    size_t bufferSize;
+    int reducedAA;
+    string spaceMask;
+    int accessionLevel;
+    int lowComplexityMasking;
+    float lowComplexityMaskingThreshold;
+    string dbName;
+    string dbDate;
+    
+    // Inputs
     NcbiTaxonomy * taxonomy;
     string dbDir;
     string fnaListFileName;
     string taxonomyDir;
     string acc2taxidFileName;
-    size_t bufferSize;
+
+    // Outputs
+    string taxidListFileName;
+    string taxonomyBinaryFileName;
+    string versionFileName;
+    string paramterFileName;
 
     struct FASTA {
         string path;
@@ -68,6 +71,7 @@ private:
         vector<SequenceBlock> sequences;
     };
 
+    TaxID newTaxID;
     vector<FASTA> fastaList;
     vector<TaxID> taxIdList;
     vector<size_t> processedSeqCnt; // Index of this vector is the same as the index of fnaList
@@ -102,14 +106,19 @@ private:
 
     size_t numOfFlush=0;
 
-    void trainProdigal();
-
-//    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const char * outputFileName,const vector<int> & taxIdList);
     void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
 
     void writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
+
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
+
+    void writeTaxonomyDB();
+
+    void writeDbParameters();
+
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
+    
+    static bool compareForDiffIdx2(const TargetKmer & a, const TargetKmer & b);
 
 //    void maskLowComplexityRegions(char * seq, char * maskedSeq, ProbabilityMatrix & probMat,
 //                                  const LocalParameters & par);
@@ -121,6 +130,8 @@ private:
 
     void makeBlocksForParallelProcessing();
 
+    void makeBlocksForParallelProcessing_accession_level();
+
     void splitFastaForProdigalTraining(int file_idx, TaxID speciesID);
 
     void unzipAndList(const string & folder, const string & fastaList_fname){
@@ -128,7 +139,12 @@ private:
     }
 
     void load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
-    static void load_accession2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
+
+    static TaxID load_accession2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
+
+    TaxID getMaxTaxID();
+
+    void editTaxonomyDumpFiles(const vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid);
 
     void reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniqeKmerIdx, size_t & uniqKmerCnt,
                           const LocalParameters & par);
@@ -150,12 +166,26 @@ private:
 public:
     static void splitSequenceFile(vector<SequenceBlock> & seqSegments, MmapedData<char> seqFile);
 
-    string getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const string & seqFileName,
+    static void printIndexSplitList(DiffIdxSplit * splitList) {
+        for (int i = 0; i < 4096; i++) {
+            cout << splitList[i].infoIdxOffset << " " << 
+                    splitList[i].diffIdxOffset << " " << 
+                    splitList[i].ADkmer << endl;
+        }
+    }
+
+    string getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
+                                  const string & seqFileName,
+                                  const unordered_map<string, TaxID> & acc2taxid,
+                                  vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid);
+
+    string getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
+                                  const string & seqFileName,
                                   const unordered_map<string, TaxID> & acc2taxid,
                                   unordered_map<string, TaxID> & foundAcc2taxid);
+
     static void getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const char * seqFileName);
     IndexCreator(const LocalParameters & par);
-    IndexCreator(const LocalParameters & par, string dbDir, string fnaListFileName, string acc2taxidFile);
     IndexCreator() {taxonomy = nullptr;}
     ~IndexCreator();
     int getNumOfFlush();

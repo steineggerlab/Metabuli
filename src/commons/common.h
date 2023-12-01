@@ -1,11 +1,13 @@
 #ifndef ADCLASSIFIER2_COMMON_H
 #define ADCLASSIFIER2_COMMON_H
 #include <utility>
+#include "LocalParameters.h"
 #include "NcbiTaxonomy.h"
 #include <iostream>
 
 #define likely(x) __builtin_expect((x),1)
 #define unlikely(x) __builtin_expect((x),0)
+#define kmerLength 8
 
 struct SequenceBlock{
     SequenceBlock(size_t start, size_t end, size_t length, size_t seqLength = 0)
@@ -44,6 +46,31 @@ struct Query{
               queryLength2(0), kmerCnt(0), isClassified(false), newSpecies(false) {}
 };
 
+template<typename T>
+struct Buffer {
+    T *buffer;
+    size_t startIndexOfReserve;
+    size_t bufferSize;
+
+    explicit Buffer(size_t sizeOfBuffer=100) {
+        buffer = (T *) malloc(sizeof(T) * sizeOfBuffer);
+        bufferSize = sizeOfBuffer;
+        startIndexOfReserve = 0;
+    };
+
+    size_t reserveMemory(size_t numOfKmer) {
+        size_t offsetToWrite = __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
+        return offsetToWrite;
+    };
+
+    void reallocateMemory(size_t sizeOfBuffer) {
+        if (sizeOfBuffer > bufferSize) {
+            buffer = (T *) realloc(buffer, sizeof(T) * sizeOfBuffer);
+            bufferSize = sizeOfBuffer;
+        }
+    };
+};
+
 inline bool fileExist(const std::string& name) {
     if (FILE *file = fopen(name.c_str(), "r")) {
         fclose(file);
@@ -54,5 +81,11 @@ inline bool fileExist(const std::string& name) {
 }
 
 void process_mem_usage(double& vm_usage, double& resident_set);
+
+NcbiTaxonomy * loadTaxonomy(const std::string & dbDir, const std::string & taxonomyDir = "");
+
+int loadDbParameters(LocalParameters & par);
+
+int searchAccession2TaxID(const std::string & name, const std::unordered_map<std::string, int> & acc2taxid);
 
 #endif //ADCLASSIFIER2_COMMON_H

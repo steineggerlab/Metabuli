@@ -121,7 +121,7 @@ int grade(int argc, const char **argv, const Command &command) {
     }
     cout << "Classification results loaded" << endl;
 
-    size_t numberOfFiles = mappingFileNames.size();
+    size_t numberOfFiles = readClassificationFileNames.size();
     vector<GradeResult> results;
     results.resize(numberOfFiles);
 
@@ -172,37 +172,21 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
             mappingFile = mappingFileNames[i];
             readClassificationFileName = readClassificationFileNames[i];
 
-            if (par.testType == "cami-long"){
-                // Load mapping file
-                ifstream mappingFileFile;
-                mappingFileFile.open(mappingFile);
-                string line;
-                if (mappingFileFile.is_open()) {
-                    getline(mappingFileFile, line);
-                    while (getline(mappingFileFile, line)) {
-                        vector<string> splitLine = Util::split(line, "\t");
-                        assacc2taxid[splitLine[0]] = stoi(splitLine[2]);
-                    }
-                } else {
-                    cerr << "Cannot open file for answer" << endl;
+            // Load the mapping file (answer sheet) (accession to taxID)
+            string key, value;
+            ifstream map;
+            map.open(mappingFile);
+            size_t numberOfAnswers = 0;
+            if (map.is_open()) {
+                while (getline(map, key, '\t')) {
+                    getline(map, value, '\n');
+                    assacc2taxid[key] = stoi(value);
+                    numberOfAnswers++;
                 }
             } else {
-                // Load the mapping file (answer sheet) (accession to taxID)
-                string key, value;
-                ifstream map;
-                map.open(mappingFile);
-                size_t numberOfAnswers = 0;
-                if (map.is_open()) {
-                    while (getline(map, key, '\t')) {
-                        getline(map, value, '\n');
-                        assacc2taxid[key] = stoi(value);
-                        numberOfAnswers++;
-                    }
-                } else {
-                    cout << "Cannot open file for answer" << endl;
-                }
-                map.close();
+                cout << "Cannot open file for answer" << endl;
             }
+            map.close();
 
             // Load classification results
             string resultLine;
@@ -330,6 +314,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
                         for (const auto & value : idx2values[idx]) {
                             fnFile << value << "\t";
                         }
+                        fnFile << endl;
                     }
                     fnFile.close();
                 }

@@ -6,4 +6,5 @@ set(util_source_files
         util/report.cpp
         util/grade.cpp
         util/database-report.cpp
+        util/mapping2taxon.cpp
         PARENT_SCOPE)

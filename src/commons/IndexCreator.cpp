@@ -1,22 +1,50 @@
 #include "IndexCreator.h"
-
+#include "FileUtil.h"
+#include "LocalUtil.h"
+#include "ProdigalWrapper.h"
+#include <bits/types/FILE.h>
+#include <cstdint>
+#include <cstdio>
+#include <unordered_map>
 #include <utility>
+#include "NcbiTaxonomy.cpp"
+#include "common.h"
 
-IndexCreator::IndexCreator(const LocalParameters & par)
-{
-    dbDir = par.filenames[0];
-    fnaListFileName = par.filenames[1];
-    taxonomyDir = par.filenames[0] + "/taxonomy";
+IndexCreator::IndexCreator(const LocalParameters & par) {
+    // Parameters
     threadNum = par.threads;
     bufferSize = par.bufferSize;
+    reducedAA = par.reducedAA;
+    spaceMask = par.spaceMask;
+    accessionLevel = par.accessionLevel;
+    lowComplexityMasking = par.maskMode;
+    lowComplexityMaskingThreshold = par.maskProb;
+    dbName = par.dbName;
+    dbDate = par.dbDate;
+    
 
+    // Input files
+    dbDir = par.filenames[0];
+    if (par.taxonomyPath.empty()) {
+        taxonomyDir = dbDir + "/taxonomy/";
+    } else {
+        taxonomyDir = par.taxonomyPath + "/";
+    }
+    cout << "Taxonomy path: " << par.taxonomyPath << endl;
+    fnaListFileName = par.filenames[1];
+    acc2taxidFileName = par.filenames[2];
 
-    // Load taxonomy
-    taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp",
-                                taxonomyDir + "/nodes.dmp",
-                                taxonomyDir + "/merged.dmp");
+    // Output files
+    taxidListFileName = dbDir + "/taxID_list";
+    taxonomyBinaryFileName = dbDir + "/taxonomyDB";
+    versionFileName = dbDir + "/db.version";
+    paramterFileName = dbDir + "/db.parameters";
 
-    // ======================================================= //
+    if (!par.accessionLevel){
+        taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp",
+                                    taxonomyDir + "/nodes.dmp",
+                                    taxonomyDir + "/merged.dmp");
+    }
 
     if (par.reducedAA == 1){
         MARKER = 0Xffffffff;
@@ -30,27 +58,6 @@ IndexCreator::IndexCreator(const LocalParameters & par)
     subMat = new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0);
 }
 
-IndexCreator::IndexCreator(const LocalParameters &par, string dbDir, string fnaListFileName, string acc2taxidFile)
-        : dbDir(std::move(dbDir)), fnaListFileName(std::move(fnaListFileName)),
-          taxonomyDir(par.taxonomyPath), acc2taxidFileName(std::move(acc2taxidFile))
-{
-    // Load taxonomy
-    taxonomy = new NcbiTaxonomy(this->taxonomyDir + "/names.dmp",
-                                this->taxonomyDir + "/nodes.dmp",
-                                this->taxonomyDir + "/merged.dmp");
-
-    if (par.reducedAA == 1){
-        MARKER = 0Xffffffff;
-        MARKER = ~ MARKER;
-    } else {
-        MARKER = 16777215;
-        MARKER = ~ MARKER;
-    }
-    tinfo_path = par.tinfoPath;
-
-    // For masking low complexity regions
-    subMat = new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0);
-}
 
 IndexCreator::~IndexCreator() {
     delete taxonomy;
@@ -60,17 +67,15 @@ IndexCreator::~IndexCreator() {
 void IndexCreator::createIndex(const LocalParameters &par) {
 
     // Read through FASTA files and make blocks of sequences to be processed by each thread
-    makeBlocksForParallelProcessing();
+    if (par.accessionLevel) {
+        makeBlocksForParallelProcessing_accession_level();
+    } else {
+        makeBlocksForParallelProcessing();
+    }
+    
     cout << "Made blocks for each thread" << endl;
 
-    // Train Prodigal for each species
-//    time_t prodigalStart = time(nullptr);
-//    trainProdigal();
-//    time_t prodigalEnd = time(nullptr);
-//    cout << "Prodigal training time: " << prodigalEnd - prodigalStart << " seconds" << endl;
-
     // Write taxonomy id list
-    string taxidListFileName = dbDir + "/taxID_list";
     FILE * taxidListFile = fopen(taxidListFileName.c_str(), "w");
     for (auto & taxid : taxIdList) {
         fprintf(taxidListFile, "%d\n", taxid);
@@ -93,9 +98,9 @@ void IndexCreator::createIndex(const LocalParameters &par) {
 
         // Extract Target k-mers
         fillTargetKmerBuffer(kmerBuffer, splitChecker, processedSplitCnt, par);
-        time_t start = time(nullptr);
 
         // Sort the k-mers
+        time_t start = time(nullptr);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
                       IndexCreator::compareForDiffIdx);
         time_t sort = time(nullptr);
@@ -103,6 +108,7 @@ void IndexCreator::createIndex(const LocalParameters &par) {
         auto * uniqKmerIdx = new size_t[kmerBuffer.startIndexOfReserve + 1];
         size_t uniqKmerCnt = 0;
 
+        // Reduce redundancy
         reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt, par);
         time_t reduction = time(nullptr);
         cout<<"Time spent for reducing redundancy: "<<(double) (reduction - sort) << endl;
@@ -114,6 +120,8 @@ void IndexCreator::createIndex(const LocalParameters &par) {
         delete[] uniqKmerIdx;
     }
     delete[] splitChecker;
+    writeTaxonomyDB();
+    writeDbParameters();
 }
 
 void IndexCreator::updateIndex(const LocalParameters &par) {
@@ -123,7 +131,6 @@ void IndexCreator::updateIndex(const LocalParameters &par) {
 
     // Train Prodigal for each species
     time_t prodigalStart = time(nullptr);
-    trainProdigal();
     time_t prodigalEnd = time(nullptr);
     cout << "Prodigal training time: " << prodigalEnd - prodigalStart << " seconds" << endl;
 
@@ -165,10 +172,9 @@ void IndexCreator::updateIndex(const LocalParameters &par) {
         delete[] uniqKmerIdx;
     }
     delete[] splitChecker;
-
 }
-void IndexCreator::makeBlocksForParallelProcessing(){
 
+void IndexCreator::makeBlocksForParallelProcessing() {
     unordered_map<string, TaxID> acc2taxid;
     load_accession2taxid(acc2taxidFileName, acc2taxid);
 
@@ -184,6 +190,7 @@ void IndexCreator::makeBlocksForParallelProcessing(){
     }
     string eachFile;
     string seqHeader;
+    string accession_version;
 
     unordered_map<string, TaxID> foundAcc2taxid;
     for (int i = 0; i < fileNum; ++i) {
@@ -192,8 +199,8 @@ void IndexCreator::makeBlocksForParallelProcessing(){
         fastaList[i].path = eachFile;
         processedSeqCnt.push_back(taxIdList.size());
         seqHeader = getSeqSegmentsWithHead(fastaList[i].sequences, eachFile, acc2taxid, foundAcc2taxid);
-        seqHeader = seqHeader.substr(1, seqHeader.find('.') - 1);
-        TaxID speciesTaxid = taxonomy->getTaxIdAtRank(acc2taxid[seqHeader], "species");
+        accession_version = seqHeader.substr(1, LocalUtil::getFirstWhiteSpacePos(seqHeader) - 1);
+        TaxID speciesTaxid = taxonomy->getTaxIdAtRank(searchAccession2TaxID(accession_version, acc2taxid), "species");
 
         // Split current file into blocks for parallel processing
         splitFastaForProdigalTraining(i, speciesTaxid);
@@ -211,6 +218,65 @@ void IndexCreator::makeBlocksForParallelProcessing(){
 
 }
 
+void IndexCreator::makeBlocksForParallelProcessing_accession_level() {
+
+    unordered_map<string, TaxID> acc2taxid;
+    TaxID maxTaxID = load_accession2taxid(acc2taxidFileName, acc2taxid);
+    newTaxID = std::max(getMaxTaxID() + 1, maxTaxID + 1);
+    
+    vector<pair<string,pair<TaxID, TaxID>>> newAcc2taxid; // accession.version -> (parent, newTaxID)
+
+    // Make blocks of sequences that can be processed in parallel
+    int fileNum = getNumberOfLines(fnaListFileName);
+    fastaList.resize(fileNum);
+
+    ifstream fnaListFile;
+    fnaListFile.open(fnaListFileName);
+    if (!fnaListFile.is_open()) {
+        Debug(Debug::ERROR) << "Cannot open file for file list" << "\n";
+        EXIT(EXIT_FAILURE);
+    }
+    string eachFile;
+    string seqHeader;
+    string accession_version;
+    string accession;
+    vector<TaxID> tempTaxIDList;
+
+    for (int i = 0; i < fileNum; ++i) {
+        // Get start and end position of each sequence in the file
+        getline(fnaListFile, eachFile);
+        fastaList[i].path = eachFile;
+        processedSeqCnt.push_back(taxIdList.size());
+        seqHeader = getSeqSegmentsWithHead(fastaList[i].sequences, eachFile, acc2taxid, newAcc2taxid);
+        accession_version = seqHeader.substr(1, LocalUtil::getFirstWhiteSpacePos(seqHeader) - 1);
+        tempTaxIDList.push_back(searchAccession2TaxID(accession_version, acc2taxid));   
+    }
+
+    // Edit taxonomy dump files
+    editTaxonomyDumpFiles(newAcc2taxid);
+
+    // Load taxonomy
+    taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp.new",
+                                taxonomyDir + "/nodes.dmp.new",
+                                taxonomyDir + "/merged.dmp");
+
+
+    for (int i = 0; i < fileNum; ++i) {
+        TaxID speciesTaxid = taxonomy->getTaxIdAtRank(tempTaxIDList[i], "species");
+        splitFastaForProdigalTraining(i, speciesTaxid);
+        fastaList[i].speciesID = speciesTaxid;
+    }
+    fnaListFile.close();
+
+    // Write accession to taxid map to file
+    string acc2taxidFileName2 = dbDir + "/acc2taxid.map";
+    FILE * acc2taxidFile = fopen(acc2taxidFileName2.c_str(), "w");
+    for (auto it : newAcc2taxid) {
+        fprintf(acc2taxidFile, "%s\t%d\t%d\n", it.first.c_str(), it.second.first, it.second.second);
+    }
+    fclose(acc2taxidFile);
+}
+
 void IndexCreator::splitFastaForProdigalTraining(int file_idx, TaxID speciesID) {
     uint32_t offset = 0;
     uint32_t cnt = 0;
@@ -223,22 +289,34 @@ void IndexCreator::splitFastaForProdigalTraining(int file_idx, TaxID speciesID) 
     bool stored = false;
     while(seqIdx < fastaList[file_idx].sequences.size()){
         stored = false;
+        
+        // Skip
         if(speciesID == 0) { seqIdx++; continue;}
 
+        // Length
         currLength = fastaList[file_idx].sequences[seqIdx].length;
         if (currLength > maxLength){
             maxLength = currLength;
             seqForTraining = seqIdx;
         }
         lengthSum += currLength;
+        
         cnt ++;
+        // Check the size of current split
         if(lengthSum > 100'000'000 || cnt > 300 || (cnt > 100 && lengthSum > 50'000'000)){
-            tempSplits.emplace_back(0, offset, cnt - 1, speciesID, file_idx);
-            offset += cnt - 1;
+            tempSplits.emplace_back(0, offset, cnt, speciesID, file_idx);
+            offset += cnt;
             lengthSum = 0;
-            cnt = 1;
+            cnt = 0;
             stored = true;
         }
+        // if(lengthSum > 100'000'000 || cnt > 300 || (cnt > 100 && lengthSum > 50'000'000)){
+        //     tempSplits.emplace_back(0, offset, cnt - 1, speciesID, file_idx);
+        //     offset += cnt - 1;
+        //     lengthSum = 0;
+        //     cnt = 1;
+        //     stored = true;
+        // }
         seqIdx ++;
     }
     if(!stored){
@@ -252,21 +330,28 @@ void IndexCreator::splitFastaForProdigalTraining(int file_idx, TaxID speciesID) 
     fastaList[file_idx].trainingSeqIdx = seqForTraining;
 }
 
-void IndexCreator::load_accession2taxid(const string & mappingFileName, unordered_map<string, int> & acc2taxid) {
+TaxID IndexCreator::load_accession2taxid(const string & mappingFileName, unordered_map<string, int> & acc2taxid) {
+    TaxID maxTaxID = 0;
     cerr << "Load mapping from accession ID to taxonomy ID ... " << flush;
     string eachLine;
     string eachItem;
     if (FILE * mappingFile = fopen(mappingFileName.c_str(), "r")) {
-        char buffer[512];
+        char accession[2048];
+        char accession_version[2048];
         int taxID;
         fscanf(mappingFile, "%*s\t%*s\t%*s\t%*s");
-        while (fscanf(mappingFile, "%s\t%*s\t%d\t%*d", buffer, &taxID) == 2 ){
-            acc2taxid[string(buffer)] = taxID;
+        while (fscanf(mappingFile, "%s\t%s\t%d\t%*d", accession, accession_version, &taxID) == 3 ){
+            acc2taxid[string(accession_version)] = taxID;
+            acc2taxid[string(accession)] = taxID;
+            if (taxID > maxTaxID) {
+                maxTaxID = taxID;
+            }
         }
     } else {
         cerr << "Cannot open file for mapping from accession to tax ID" << endl;
     }
     cerr << "Done" << endl;
+    return maxTaxID;
 }
 
 // This function sort the TargetKmerBuffer, do redundancy reducing task, write the differential index of them
@@ -322,14 +407,21 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     DiffIdxSplit splitList[par.splitNum];
     memset(splitList, 0, sizeof(DiffIdxSplit) * par.splitNum);
     size_t splitWidth = uniqKmerCnt / par.splitNum;
+    size_t remainder = uniqKmerCnt % par.splitNum;
     size_t splitCnt = 1;
+    size_t start = 0;
     for (size_t i = 1; i < (size_t) par.splitNum; i++) {
-        for (size_t j = uniqKmerIdx[0] + splitWidth * i; j + 1 < uniqKmerCnt; j++) {
-            if (AminoAcidPart(kmerBuffer[j].ADkmer) != AminoAcidPart(kmerBuffer[j + 1].ADkmer)) {
-                if (kmerBuffer[j].ADkmer != splitList[splitCnt - 1].ADkmer){
-                    splitList[splitCnt].ADkmer = kmerBuffer[j].ADkmer;
-                    splitCnt ++;
-                }
+        start = start + splitWidth;
+        if (remainder > 0) {
+            start++;
+            remainder--;
+        }
+        for (size_t j = start; j + 1 < start + splitWidth; j++) {
+            if (AminoAcidPart(kmerBuffer[uniqKmerIdx[j]].ADkmer) 
+                != AminoAcidPart(kmerBuffer[uniqKmerIdx[j + 1]].ADkmer)) {
+                splitList[splitCnt].ADkmer = kmerBuffer[uniqKmerIdx[j + 1]].ADkmer;
+                cout << splitList[splitCnt].ADkmer << endl;
+                splitCnt++;
                 break;
             }
         }
@@ -361,6 +453,8 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
         if((splitIdx < splitCnt) && (lastKmer == splitList[splitIdx].ADkmer)){
             splitList[splitIdx].diffIdxOffset = totalDiffIdx;
             splitList[splitIdx].infoIdxOffset = write;
+            // cout << "Split " << splitIdx << " at " << splitList[splitIdx].infoIdxOffset << " " << 
+            // splitList[splitIdx].diffIdxOffset << " " << splitList[splitIdx].ADkmer << endl;
             splitIdx ++;
         }
     }
@@ -369,6 +463,7 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     cout<<"written k-mer count: "<< write << endl;
 
     flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
+    printIndexSplitList(splitList);
     fwrite(splitList, sizeof(DiffIdxSplit), par.splitNum, diffIdxSplitFile);
 
     free(diffIdxBuffer);
@@ -419,7 +514,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
         idxOfEachSplit[i] = new size_t[splits[i].end - splits[i].offset + 2];
         cntOfEachSplit[i] = 0;
     }
-#pragma omp parallel default(none), shared(kmerBuffer, idxOfEachSplit, cntOfEachSplit, splits)
+#pragma omp parallel default(none), shared(kmerBuffer, idxOfEachSplit, cntOfEachSplit, splits, par)
     {
         TargetKmer * lookingKmer;
         size_t lookingIndex;
@@ -435,12 +530,19 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
                 hasSeenOtherStrains = 0;
                 taxIds.clear();
                 taxIds.push_back(taxIdList[lookingKmer->info.sequenceID]);
+
+                // Scan redundancy
                 while(lookingKmer->taxIdAtRank == kmerBuffer.buffer[i].taxIdAtRank){
                     if (lookingKmer->ADkmer != kmerBuffer.buffer[i].ADkmer) {
                         break;
                     }
                     taxIds.push_back(taxIdList[kmerBuffer.buffer[i].info.sequenceID]);
-                    hasSeenOtherStrains += (taxIdList[lookingKmer->info.sequenceID] != taxIdList[kmerBuffer.buffer[i].info.sequenceID]);
+                    if (par.accessionLevel) {
+                        hasSeenOtherStrains += (taxonomy->taxonNode(taxIdList[lookingKmer->info.sequenceID])->parentTaxId 
+                                                != taxonomy->taxonNode(taxIdList[kmerBuffer.buffer[i].info.sequenceID]) -> parentTaxId);
+                    } else {
+                        hasSeenOtherStrains += (taxIdList[lookingKmer->info.sequenceID] != taxIdList[kmerBuffer.buffer[i].info.sequenceID]);
+                    }
                     i++;
                     if(i == splits[split].end + 1){
                         endFlag = 1;
@@ -548,8 +650,29 @@ int IndexCreator::getNumOfFlush()
 }
 
 inline bool IndexCreator::compareForDiffIdx(const TargetKmer & a, const TargetKmer & b){
-    return a.ADkmer < b.ADkmer || (a.ADkmer == b.ADkmer && a.taxIdAtRank < b.taxIdAtRank);
+    if (a.ADkmer != b.ADkmer) {
+        return a.ADkmer < b.ADkmer;
+    }
+    return a.taxIdAtRank < b.taxIdAtRank;
 }
+
+inline bool IndexCreator::compareForDiffIdx2(const TargetKmer & a, const TargetKmer & b){
+    if (a.ADkmer != b.ADkmer) {
+        return a.ADkmer < b.ADkmer;
+    }
+
+    if (a.taxIdAtRank != b.taxIdAtRank) {
+        return a.taxIdAtRank < b.taxIdAtRank;
+    }
+
+    if (a.info.sequenceID != b.info.sequenceID) {
+        return a.info.sequenceID < b.info.sequenceID;
+    }
+
+    return a.info.redundancy < b.info.redundancy;
+}
+
+
 
 void IndexCreator::splitSequenceFile(vector<SequenceBlock> & seqSegments, MmapedData<char> seqFile) {
     size_t start = 0;
@@ -563,7 +686,63 @@ void IndexCreator::splitSequenceFile(vector<SequenceBlock> & seqSegments, Mmaped
     seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
 }
 
-string IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const string & seqFileName,
+string IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
+                                            const string & seqFileName,
+                                            const unordered_map<string, TaxID> & acc2taxid,
+                                            vector<pair<string,pair<TaxID, TaxID>>> & newAcc2taxid) {
+    struct stat stat1{};
+    stat(seqFileName.c_str(), &stat1);
+    size_t numOfChar = stat1.st_size;
+    string firstLine;
+    ifstream seqFile;
+    seqFile.open(seqFileName);
+    string eachLine;
+    size_t start = 0;
+    size_t pos;
+    vector<SequenceBlock> seqSegmentsTmp;
+    string accession;
+    string accession_version;
+    int taxid;
+
+    if (seqFile.is_open()) {
+        getline(seqFile, firstLine, '\n');
+        accession_version = firstLine.substr(1, LocalUtil::getFirstWhiteSpacePos(firstLine) - 1);
+        taxid = searchAccession2TaxID(accession_version, acc2taxid);
+        if (taxid == 0) {
+            cerr << "Cannot find accession: " << accession_version << endl;
+            cerr << "Please run 'add-to-library' first." << endl;
+            exit(1);
+        }
+        newAcc2taxid.emplace_back(accession_version, make_pair(taxid, newTaxID));
+        taxIdList.push_back(newTaxID++);
+
+        while (getline(seqFile, eachLine, '\n')) {
+            if (eachLine[0] == '>') {
+                accession_version = eachLine.substr(1, LocalUtil::getFirstWhiteSpacePos(eachLine) - 1);
+                taxid = searchAccession2TaxID(accession_version, acc2taxid);
+                if (taxid == 0) {
+                    cerr << "Cannot find accession: " << accession_version << endl;
+                    cerr << "Please run 'add-to-library' first." << endl;
+                    exit(1);
+                }
+                newAcc2taxid.emplace_back(accession_version, make_pair(taxid, newTaxID));
+                taxIdList.push_back(newTaxID++);
+                pos = (size_t) seqFile.tellg();
+                seqSegmentsTmp.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
+                start = pos - eachLine.length() - 1;
+            }
+        }
+        seqSegmentsTmp.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
+    } else {
+        cerr << "Unable to open file: " << seqFileName << endl;
+    }
+    seqFile.close();
+    seqSegments = std::move(seqSegmentsTmp);
+    return firstLine;
+}
+
+string IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
+                                            const string & seqFileName,
                                             const unordered_map<string, TaxID> & acc2taxid,
                                             unordered_map<string, TaxID> & foundAcc2taxid) {
     struct stat stat1{};
@@ -578,16 +757,32 @@ string IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
     vector<SequenceBlock> seqSegmentsTmp;
     vector<string> headers;
     size_t seqCnt = taxIdList.size();
+    string accession_version;
+    int taxid;
+
     if (seqFile.is_open()) {
         getline(seqFile, firstLine, '\n');
-//        cout << firstLine << endl;
-        taxIdList.push_back(acc2taxid.at(firstLine.substr(1, firstLine.find('.') - 1)));
-        foundAcc2taxid[firstLine.substr(1, firstLine.find(' ') - 1)] = taxIdList.back();
+        accession_version = firstLine.substr(1, LocalUtil::getFirstWhiteSpacePos(firstLine) - 1);
+        taxid = searchAccession2TaxID(accession_version, acc2taxid);
+        if (taxid == 0) {
+            cerr << "Cannot find accession: " << accession_version << endl;
+            cerr << "Please run 'add-to-library' first." << endl;
+            exit(1);
+        }
+        taxIdList.push_back(taxid);
+
+        foundAcc2taxid[accession_version] = taxIdList.back();
         while (getline(seqFile, eachLine, '\n')) {
             if (eachLine[0] == '>') {
-//                cout << eachLine << endl;
-                taxIdList.push_back(acc2taxid.at(eachLine.substr(1, eachLine.find('.') - 1)));
-                foundAcc2taxid[eachLine.substr(1, eachLine.find(' ') - 1)] = taxIdList.back();
+                accession_version = eachLine.substr(1, LocalUtil::getFirstWhiteSpacePos(eachLine) - 1);
+                taxid = searchAccession2TaxID(accession_version, acc2taxid);
+                if (taxid == 0) {
+                    cerr << "Cannot find accession: " << accession_version << endl;
+                    cerr << "Please run 'add-to-library' first." << endl;
+                    exit(1);
+                }
+                taxIdList.push_back(taxid);
+                foundAcc2taxid[accession_version] = taxIdList.back();
                 pos = (size_t) seqFile.tellg();
                 seqSegmentsTmp.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
                 start = pos - eachLine.length() - 1;
@@ -599,12 +794,12 @@ string IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
     }
     seqFile.close();
     seqSegments = std::move(seqSegmentsTmp);
-    return firstLine;
+    return firstLine;                            
 }
 
 void IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const char * seqFileName) {
     struct stat stat1{};
-    int a = stat(seqFileName, &stat1);
+    stat(seqFileName, &stat1);
     size_t numOfChar = stat1.st_size;
 
     ifstream seqFile;
@@ -657,7 +852,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
 #pragma omp parallel default(none), shared(kmerBuffer, checker, processedSplitCnt, hasOverflow, par, cout)
     {
         ProbabilityMatrix probMatrix(*subMat);
-        ProdigalWrapper prodigal;
+        // ProdigalWrapper prodigal;
         SeqIterator seqIterator(par);
         size_t posToWrite;
         size_t orfNum;
@@ -683,10 +878,12 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                 for (size_t p = 0; p < fnaSplits[i].cnt; p++) {
                     totalLength += fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].offset + p].length;
                 }
-                size_t estimatedKmerCnt = (totalLength + totalLength / 1000) / 3;
+                
+                size_t estimatedKmerCnt = (totalLength + totalLength / 10) / 3;
 
                 // Process current split if buffer has enough space.
                 posToWrite = kmerBuffer.reserveMemory(estimatedKmerCnt);
+                ProdigalWrapper * prodigal = new ProdigalWrapper();
                 if (posToWrite + estimatedKmerCnt < kmerBuffer.bufferSize) {
                     // MMap FASTA file of current split
                     struct MmapedData<char> fastaFile = mmapData<char>(fastaList[fnaSplits[i].file_idx].path.c_str());
@@ -696,17 +893,16 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
                     lengthOfTrainingSeq = seq->seq.l;
-                    cout << "T: " << seq->name.s << " " << lengthOfTrainingSeq << " " << estimatedKmerCnt << endl;
+                    // cout << "T: " << seq->name.s << " " << lengthOfTrainingSeq << " " << estimatedKmerCnt << endl;
 
-                    // Train prodigal.
-                    prodigal.is_meta = 0;
+                    // Train prodigal
+                    prodigal->is_meta = 0;
                     if (lengthOfTrainingSeq < 100'000) {
-                        prodigal.is_meta = 1;
-                        prodigal.trainMeta(seq->seq.s);
+                        prodigal->is_meta = 1;
+                        prodigal->trainMeta(seq->seq.s);
                     } else {
-                        prodigal.trainASpecies(seq->seq.s);
+                        prodigal->trainASpecies(seq->seq.s);
                     }
-
 
 //                    // Load training information
 //                    int read_check = read_training_file(const_cast<char *>((par.tinfoPath + to_string(fnaSplits[i].speciesID) + ".tinfo").c_str()),
@@ -717,9 +913,9 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
 //                    }
 
                     // Generate intergenic 23-mer list. It is used to determine extension direction of intergenic sequences.
-                    prodigal.getPredictedGenes(seq->seq.s);
-                    seqIterator.generateIntergenicKmerList(prodigal.genes, prodigal.nodes,
-                                                           prodigal.getNumberOfPredictedGenes(),
+                    prodigal->getPredictedGenes(seq->seq.s);
+                    seqIterator.generateIntergenicKmerList(prodigal->genes, prodigal->nodes,
+                                                           prodigal->getNumberOfPredictedGenes(),
                                                            intergenicKmers,seq->seq.s);
 
                     // Get min k-mer hash list for determining strandness
@@ -742,10 +938,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                         if (seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, // Forward
                                                            strlen(seq->seq.s))) {
                             // Get extended ORFs
-                            prodigal.getPredictedGenes(seq->seq.s);
-                            prodigal.removeCompletelyOverlappingGenes();
-                            seqIterator.getExtendedORFs(prodigal.finalGenes, prodigal.nodes, extendedORFs,
-                                                             prodigal.fng, strlen(seq->seq.s),
+                            prodigal->getPredictedGenes(seq->seq.s);
+                            prodigal->removeCompletelyOverlappingGenes();
+                            seqIterator.getExtendedORFs(prodigal->finalGenes, prodigal->nodes, extendedORFs,
+                                                             prodigal->fng, strlen(seq->seq.s),
                                                         orfNum, intergenicKmers, seq->seq.s);
                             // Get masked sequence
                             char *maskedSeq = nullptr;
@@ -775,12 +971,12 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                             }
                         } else { // Reverse complement
                             reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, seq->seq.l);
-
+                            
                             // Get extended ORFs
-                            prodigal.getPredictedGenes(reverseCompliment);
-                            prodigal.removeCompletelyOverlappingGenes();
-                            seqIterator.getExtendedORFs(prodigal.finalGenes, prodigal.nodes, extendedORFs,
-                                                             prodigal.fng, strlen(reverseCompliment),
+                            prodigal->getPredictedGenes(reverseCompliment);
+                            prodigal->removeCompletelyOverlappingGenes();
+                            seqIterator.getExtendedORFs(prodigal->finalGenes, prodigal->nodes, extendedORFs,
+                                                             prodigal->fng, strlen(reverseCompliment),
                                                         orfNum, intergenicKmers, reverseCompliment);
 
                             // Get masked sequence
@@ -817,13 +1013,16 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     cout << omp_get_thread_num() << " Processed " << i << "th splits (" << processedSplitCnt << ")" << endl;
 #endif
                     munmap(fastaFile.data, fastaFile.fileSize + 1);
-                }else {
+                } else {
                     // Withdraw the reservation if the buffer is full.
-                    cout << "Buffer is full. Withdraw the reservation." << endl;
+                    // cout << "Buffer is full. Withdraw the reservation." << endl;
                     checker[i] = false;
                     __sync_fetch_and_add(&hasOverflow, 1);
                     __sync_fetch_and_sub(&kmerBuffer.startIndexOfReserve, estimatedKmerCnt);
                 }
+                // cout << totalLength << " " << prodigal->fng << endl;
+                delete prodigal;
+                
             }
         }
     }
@@ -832,64 +1031,137 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
     return 0;
 }
 
-
-void IndexCreator::trainProdigal() {
-    // Train prodigal for each FASTA.
-#pragma omp parallel default(none), shared(cerr, fastaList, tinfo_path)
-    {
-        ProdigalWrapper prodigal;
-        kseq_buffer_t buffer;
-        kseq_t *seq;
-        size_t lengthOfTrainingSeq;
-#pragma omp for schedule(dynamic, 1)
-        for (size_t i = 0; i < fastaList.size(); i++) {
-            FASTA &currentFasta = fastaList[i];
-            TaxID currentSpecies = currentFasta.speciesID;
-            string fileName =  tinfo_path + to_string(currentSpecies) + ".tinfo";
-
-            // Skip if the training file for current species already exists.
-            if (fileExist(fileName)) {
-                cerr << "Training file for " << currentSpecies << " already exists. Skip." << endl;
-                continue;
-            }
-
-            // Load sequence for training.
-            struct MmapedData<char> fastaFile = mmapData<char>(currentFasta.path.c_str());
-            buffer = {const_cast<char *>(&fastaFile.data[currentFasta.sequences[currentFasta.trainingSeqIdx].start]),
-                      static_cast<size_t>(currentFasta.sequences[currentFasta.trainingSeqIdx].length)};
-            seq = kseq_init(&buffer);
-            kseq_read(seq);
-
-            // Train prodigal.
-            prodigal.is_meta = 0;
-            lengthOfTrainingSeq = seq->seq.l;
-            if (lengthOfTrainingSeq < 100'000) {
-                prodigal.is_meta = 1;
-                prodigal.trainMeta(seq->seq.s);
-            } else {
-                prodigal.trainASpecies(seq->seq.s);
-            }
-
-            // Write training result into a file for later use.
-            _training *tinfo = prodigal.getTrainingInfo();
-            write_training_file(const_cast<char *>(fileName.c_str()), tinfo);
-
-            kseq_destroy(seq);
-            munmap(fastaFile.data, fastaFile.fileSize + 1);
-        }
+void IndexCreator::writeTaxonomyDB() {
+    std::pair<char *, size_t> serialized = NcbiTaxonomy::serialize(*taxonomy);
+    FILE *handle = fopen(taxonomyBinaryFileName.c_str(), "w");
+    if (handle == NULL) {
+        Debug(Debug::ERROR) << "Could not open " << taxonomyBinaryFileName << " for writing\n";
+        EXIT(EXIT_FAILURE);
     }
-//    // TODO: Write species ID of newly trained species into a file.
-//    // Write trained species into a file.
-//    for (int i = 0; i < threadNum; i++) {
-//        for (auto &species : newSpeciesList[i]) {
-//            trainedSpecies.push_back(species);
-//        }
-//    }
-//    FILE *fp = fopen((tinfo_path + "/species-list.txt").c_str(), "w");
-//    for (int trainedSpecie: trainedSpecies) {
-//        fprintf(fp, "%d\n", trainedSpecie);
-//    }
-//    fclose(fp);
+    fwrite(serialized.first, serialized.second, sizeof(char), handle);
+    fclose(handle);
+    free(serialized.first);
 }
 
+void IndexCreator::writeDbParameters() {
+    FILE *handle = fopen(paramterFileName.c_str(), "w");
+    if (handle == NULL) {
+        Debug(Debug::ERROR) << "Could not open " << paramterFileName << " for writing\n";
+        EXIT(EXIT_FAILURE);
+    }
+    fprintf(handle, "DB_name\t%s\n", dbName.c_str());
+    fprintf(handle, "Creation_date\t%s\n", dbDate.c_str());
+    fprintf(handle, "Reduced_alphabet\t%d\n", reducedAA);
+    fprintf(handle, "Spaced_kmer_mask\t%s\n", spaceMask.c_str());
+    fprintf(handle, "Accession_level\t%d\n", accessionLevel);
+    fprintf(handle, "Mask_mode\t%d\n", lowComplexityMasking);
+    fprintf(handle, "Mask_prob\t%f\n", lowComplexityMaskingThreshold);
+    fclose(handle);
+}
 
+void IndexCreator::editTaxonomyDumpFiles(const vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid) {
+    // Load merged.dmp
+    string mergedFileName = taxonomyDir + "/merged.dmp";
+    std::ifstream ss(mergedFileName);
+    if (ss.fail()) {
+        Debug(Debug::ERROR) << "File " << mergedFileName << " not found!\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    std::string line;
+    size_t count = 0;
+    unordered_map<int, int> mergedMap;
+    while (std::getline(ss, line)) {
+        std::vector<std::string> result = splitByDelimiter(line, "\t|\t", 2);
+        if (result.size() != 2) {
+            Debug(Debug::ERROR) << "Invalid name entry!\n";
+            EXIT(EXIT_FAILURE);
+        }
+        mergedMap[atoi(result[0].c_str())] = atoi(result[1].c_str());
+    }
+
+    // Edit names.dmp
+    string nameFileName = taxonomyDir + "/names.dmp";
+    string newNameFileName = taxonomyDir + "/names.dmp.new";
+    FileUtil::copyFile(nameFileName.c_str(), newNameFileName.c_str());
+    FILE *nameFile = fopen(newNameFileName.c_str(), "a");
+    if (nameFile == NULL) {
+        Debug(Debug::ERROR) << "Could not open " << newNameFileName << " for writing\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    for (size_t i = 0; i < newAcc2taxid.size() - 1; i++) {
+        fprintf(nameFile, "%d\t|\t%s\t|\t\t|\tscientific name\t|\n", newAcc2taxid[i].second.second, newAcc2taxid[i].first.c_str());
+    }
+    fprintf(nameFile, "%d\t|\t%s\t|\t\t|\tscientific name\t|", newAcc2taxid.back().second.second, newAcc2taxid.back().first.c_str());
+    fclose(nameFile);
+
+    // Edit nodes.dmp
+    string nodeFileName = taxonomyDir + "/nodes.dmp";
+    string newNodeFileName = taxonomyDir + "/nodes.dmp.new";
+    FileUtil::copyFile(nodeFileName.c_str(), newNodeFileName.c_str());
+    FILE *nodeFile = fopen(newNodeFileName.c_str(), "a");
+    if (nodeFile == NULL) {
+        Debug(Debug::ERROR) << "Could not open " << newNodeFileName << " for writing\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    for (size_t i = 0; i < newAcc2taxid.size() - 1; i++) {
+        // Check if the parent taxon is merged
+        if (mergedMap.find(newAcc2taxid[i].second.first) != mergedMap.end()) { // merged
+            fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\n", newAcc2taxid[i].second.second, mergedMap[newAcc2taxid[i].second.first]);
+        } else {
+            fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\n", newAcc2taxid[i].second.second, newAcc2taxid[i].second.first);
+        }
+        // fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\n", newAcc2taxid[i].second.second, taxonomy->taxonNode(newAcc2taxid[i].second.first)->taxId);
+    }
+    // Check if the parent taxon is merged
+    if (mergedMap.find(newAcc2taxid.back().second.first) != mergedMap.end()) { // merged
+        fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|", newAcc2taxid.back().second.second, mergedMap[newAcc2taxid.back().second.first]);
+    } else {
+        fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|", newAcc2taxid.back().second.second, newAcc2taxid.back().second.first);
+    }
+    fclose(nodeFile);
+}
+
+TaxID IndexCreator::getMaxTaxID() {
+    // Check nodes.dmp
+    string nodeFileName = taxonomyDir + "/nodes.dmp";
+    std::ifstream ss(nodeFileName);
+    if (ss.fail()) {
+        Debug(Debug::ERROR) << "File " << nodeFileName << " not found!\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    std::string line;
+    TaxID maxTaxID = 0;
+    while (std::getline(ss, line)) {
+        std::vector<std::string> result = splitByDelimiter(line, "\t|\t", 2);
+        if (result.size() != 2) {
+            Debug(Debug::ERROR) << "Invalid name entry!\n";
+            EXIT(EXIT_FAILURE);
+        }
+        maxTaxID = std::max(maxTaxID, (TaxID) atoi(result[0].c_str()));
+    }
+    ss.close();
+
+    // Check names.dmp
+    string nameFileName = taxonomyDir + "/names.dmp";
+    ss = std::ifstream(nameFileName);
+    if (ss.fail()) {
+        Debug(Debug::ERROR) << "File " << nameFileName << " not found!\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    while (std::getline(ss, line)) {
+        std::vector<std::string> result = splitByDelimiter(line, "\t|\t", 2);
+        if (result.size() != 2) {
+            Debug(Debug::ERROR) << "Invalid name entry!\n";
+            EXIT(EXIT_FAILURE);
+        }
+        maxTaxID = std::max(maxTaxID, (TaxID) atoi(result[0].c_str()));
+    }
+    ss.close();
+
+    return maxTaxID;
+}

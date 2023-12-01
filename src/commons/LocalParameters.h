@@ -1,7 +1,7 @@
 #ifndef ADCLASSIFIER2_LOCALPARAMETERS_H
 #define ADCLASSIFIER2_LOCALPARAMETERS_H
 
-#include <Parameters.h>
+#include "Parameters.h"
 
 const int CITATION_SPACEPHARER = CITATION_END;
 
@@ -21,6 +21,7 @@ public:
     }
 
     std::vector<MMseqsParameter*> classify;
+    std::vector<MMseqsParameter*> filter;
     std::vector<MMseqsParameter*> exclusiontest_hiv;
     std::vector<MMseqsParameter*> seqHeader2TaxId;
     std::vector<MMseqsParameter*> grade;
@@ -30,7 +31,7 @@ public:
     std::vector<MMseqsParameter*> binning2report;
     std::vector<MMseqsParameter*> filterByGenus;
     std::vector<MMseqsParameter*> databaseReport;
-
+    std::vector<MMseqsParameter*> mapping2taxon;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
@@ -40,7 +41,6 @@ public:
 
     // Classify
     PARAMETER(SEQ_MODE)
-    PARAMETER(MEMORY_MODE)
     PARAMETER(REDUCED_AA)
     PARAMETER(MIN_SCORE)
     PARAMETER(MIN_COVERAGE)
@@ -55,6 +55,7 @@ public:
     PARAMETER(MIN_CONS_CNT)
     PARAMETER(MIN_CONS_CNT_EUK)
     PARAMETER(MATCH_PER_KMER)
+    PARAMETER(MIN_SS_MATCH)
 
     // DB build parameters
     PARAMETER(LIBRARY_PATH)
@@ -62,6 +63,9 @@ public:
     PARAMETER(IS_ASSEMBLY)
     PARAMETER(SPLIT_NUM)
     PARAMETER(BUFFER_SIZE)
+    PARAMETER(ACCESSION_LEVEL)
+    PARAMETER(DB_NAME)
+    PARAMETER(DB_DATE)
 
     // Test parameters
     PARAMETER(TEST_RANK)
@@ -72,6 +76,10 @@ public:
     PARAMETER(COVERAGE_COL)
     PARAMETER(PRINT_COLUMNS)
 
+    // Filter
+    PARAMETER(PRINT_MODE)
+    PARAMETER(CONTAM_LIST)
+
     // Superkingdom taxonomy id
     int virusTaxId;
     int bacteriaTaxId;
@@ -81,7 +89,6 @@ public:
 
     // Classify
     int seqMode;
-    int memoryMode;
     int reducedAA;
     float minScore;
     std::string spaceMask;
@@ -95,13 +102,17 @@ public:
     int maxGap;
     int minConsCntEuk;
     int matchPerKmer;
+    int minSSMatch;
 
     // Database creation
     std::string tinfoPath;
     std::string libraryPath;
     std::string taxonomyPath;
+    std::string dbName;
+    std::string dbDate;
     int splitNum;
     size_t bufferSize;
+    int accessionLevel;
 
     // Test parameters
     std::string testRank;
@@ -114,6 +125,17 @@ public:
 
     // Add to library
     bool assembly;
+
+    // Filter
+    int printMode;
+    std::string contamList;
+
+    void printParameters(const std::string &module, int argc,
+                         const char* pargv[],
+                         const std::vector<MMseqsParameter*> &par);
+    
+    void parseParameters(int argc, const char *pargv[], const Command &command, bool printPar, int parseFlags,
+                        int outputFlags);
 
 private:
     LocalParameters();

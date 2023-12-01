@@ -132,6 +132,10 @@ public:
     TaxID getTaxIdAtRank(int taxId, const std::string & rank);
     void createTaxIdListAtRank(std::vector<int> & taxIdList, std::vector<int> & taxIdListAtRank,
                                const std::string & rank);
+    void setMmapData(char* data, size_t size) {
+        mmapData = data;
+        mmapSize = size;
+    }
 
 private:
     size_t loadNodes(std::vector<TaxonNode> &tmpNodes, const std::string &nodesFile);

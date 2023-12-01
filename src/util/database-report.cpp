@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include "IndexCreator.h"
+#include "common.h"
 #include "report.h"
 #include "FileUtil.h"
 
@@ -20,13 +21,15 @@ int databaseReport(int argc, const char **argv, const Command &command) {
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
     string dbDir = par.filenames[0];
 
-    // Check if taxonomy path exists
+    // Load taxonomy
     if (par.taxonomyPath == "DBDIR/taxonomy/") par.taxonomyPath = dbDir + "/taxonomy/";
-    if (!FileUtil::directoryExists(par.taxonomyPath.c_str())) {
-        cerr << "Error: taxonomy path " << par.taxonomyPath << " does not exist." << endl;
-        cerr << "Please specify the path to the taxonomy directory using the --taxonomy-path option." << endl;
-        return 1;
-    }
+    NcbiTaxonomy * taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
+
+    // if (!FileUtil::directoryExists(par.taxonomyPath.c_str())) {
+    //     cerr << "Error: taxonomy path " << par.taxonomyPath << " does not exist." << endl;
+    //     cerr << "Please specify the path to the taxonomy directory using the --taxonomy-path option." << endl;
+    //     return 1;
+    // }
 
     // Check if acc2taxid.map exists
     string acc2taxid = dbDir + "/acc2taxid.map";
@@ -35,11 +38,11 @@ int databaseReport(int argc, const char **argv, const Command &command) {
         return 1;
     }
 
-    // Load taxonomy
-    const string names = par.taxonomyPath + "/names.dmp";
-    const string nodes = par.taxonomyPath + "/nodes.dmp";
-    const string merged = par.taxonomyPath + "/merged.dmp";
-    auto * taxonomy = new NcbiTaxonomy(names, nodes, merged);
+    // // Load taxonomy
+    // const string names = par.taxonomyPath + "/names.dmp";
+    // const string nodes = par.taxonomyPath + "/nodes.dmp";
+    // const string merged = par.taxonomyPath + "/merged.dmp";
+    // auto * taxonomy = new NcbiTaxonomy(names, nodes, merged);
 
     // Load only the second column of acc2taxid.map as integers
     vector<int> taxids;
@@ -49,8 +52,23 @@ int databaseReport(int argc, const char **argv, const Command &command) {
         return 1;
     }
     string line;
+    // Check if there is third column
+    getline(acc2taxidFile, line);
+    vector<string> tokens = Util::split(line, "\t");
+    int using_token = 0;
+    if (tokens.size() == 2) { // accession and taxid
+        using_token = 1;
+        taxids.push_back(stoi(tokens[using_token]));        
+    } else if (tokens.size() == 3) { // accession and taxid and accession_id
+        using_token = 2;
+        taxids.push_back(stoi(tokens[using_token]));
+    } else {
+        cerr << "Error: acc2taxid.map file " << acc2taxid << " has wrong format." << endl;
+        return 1;
+    }
     while (getline(acc2taxidFile, line)) {
-        int taxid = stoi(line.substr(line.find('\t') + 1));
+        tokens = Util::split(line, "\t");
+        int taxid = stoi(tokens[using_token]);
         if (find(taxids.begin(), taxids.end(), taxid) == taxids.end()) {
             taxids.push_back(taxid);
         }
