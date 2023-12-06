@@ -49,22 +49,26 @@ The built binary can be found in `./build/src`.
 ## Pre-built databases
 You can download [pre-built databases](https://metabuli.steineggerlab.workers.dev/) using `databases` workflow.
 ```
+Usage:
+metabuli databases DB_NAME OUTDIR tmp
+
 # RefSeq Complete/Chromosome (115.6 GiB)
 # - Complete Genome or Chromosome level assemblies of virus and prokaryotes in RefSeq (2023-04-04) and human genome (GRCh38.p14)
-metabuli databases RefSeq DBDIR tmp
+metabuli databases RefSeq OUTDIR tmp
 
 # RefSeq Releases 217 (480.5 GiB)
 # - Viral and prokaryotic genomes of RefSeq release 217 and human genome (GRCh38.p14)
-metabuli databases RefSeq217 DBDIR tmp
+metabuli databases RefSeq217 OUTDIR tmp
 
 # GTDB 207 (81.2 GiB)
 # - Complete Genome or Chromosome level assemblies in GTDB207 (CheckM Completeness > 90, CheckM Contamination < 5) with GTDB taxonomy.
-metabuli databases GTDB207 DBDIR tmp
+metabuli databases GTDB207 OUTDIR tmp
 
 # RefSeq Virus (1.5 GiB)
 # - Viral RefSeq genomes and five SARS-CoV-2 variants (alpha, beta, delta, gamma, and omicron)
-metabuli databases RefSeq_virus DBDIR tmp
+metabuli databases RefSeq_virus OUT_DIR tmp
 ```
+Downloaded files are stored in `OUTDIR/DB_NAME` directory, which can be provided for `classify` module as `DBDIR`.
 
 
 ## Classification
@@ -254,7 +258,11 @@ Classifying RNA-seq reads from a COVID-19 patient to identify the culprit varian
 The whole process must take less than 10 mins using a personal machine.
 
 #### 1. Download RefSeq Virus DB (1.5 GiB)
-`metabuli databases RefSeq_virus refseq_virus tmp`
+```
+metabuli databases RefSeq_virus OUTDIR tmp
+```
+`OUTDIR/refseq_virus` is the `DBDIR` in step 3.
+
 
 #### 2. Download an RNA-seq result (SRR14484345)
    Option 1. Download using SRA Toolkit 
@@ -270,7 +278,7 @@ cat SRR14484345.fastq | paste - - - - - - - - | tee >(cut -f 1-4 | tr "\t" "\n" 
 
 #### 3. Classify the reads using metabuli
    ```
-   metabuli classify SRR14484345_1.fq SRR14484345_2.fq refseq_virus RESULT_DIR JOB_ID --max-ram RAM_SIZE
+   metabuli classify SRR14484345_1.fq SRR14484345_2.fq DBDIR RESULT_DIR JOB_ID --max-ram RAM_SIZE
    ```
 #### 4. Check RESULT_DIR/JOB_ID_report.tsv
   Find a section like the example below
