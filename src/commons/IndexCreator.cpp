@@ -2,7 +2,6 @@
 #include "FileUtil.h"
 #include "LocalUtil.h"
 #include "ProdigalWrapper.h"
-#include <bits/types/FILE.h>
 #include <cstdint>
 #include <cstdio>
 #include <unordered_map>
