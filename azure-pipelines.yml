@@ -7,6 +7,32 @@ variables:
     regression: 1
 
 jobs:
+ - job: build_macos_11
+    displayName: macOS 11
+    pool:
+      vmImage: 'macos-11'
+    steps:
+      - checkout: self
+        submodules: true
+      - script: |
+          rustup update
+          rustup target install x86_64-apple-darwin
+          rustup target install aarch64-apple-darwin
+        displayName: Install Rust Toolchain
+      - script: |
+          cd ${BUILD_SOURCESDIRECTORY}
+          ./util/build_osx.sh . build metabuli
+        displayName: Build Metabuli
+      - script: |
+          cd ${BUILD_SOURCESDIRECTORY}
+          ./util/Metabuli-regression/run_regression.sh ./build/metabuli examples 
+        displayName: Run Regression Suite
+        condition: eq(variables['regression'], 1)
+      - task: PublishPipelineArtifact@0
+        inputs:
+          targetPath: $(Build.SourcesDirectory)/build/metabuli
+          artifactName: metabuli-darwin-universal
+          
   - job: build_ubuntu_2004
     displayName: Ubuntu 2004
     pool:
@@ -120,32 +146,6 @@ jobs:
         inputs:
           targetPath: $(Build.SourcesDirectory)/build/src/metabuli
           artifactName: metabuli-linux-$(SIMD)
-
-  - job: build_macos_11
-    displayName: macOS 11
-    pool:
-      vmImage: 'macos-11'
-    steps:
-      - checkout: self
-        submodules: true
-      - script: |
-          rustup update
-          rustup target install x86_64-apple-darwin
-          rustup target install aarch64-apple-darwin
-        displayName: Install Rust Toolchain
-      - script: |
-          cd ${BUILD_SOURCESDIRECTORY}
-          ./util/build_osx.sh . build metabuli
-        displayName: Build Metabuli
-      - script: |
-          cd ${BUILD_SOURCESDIRECTORY}
-          ./util/Metabuli-regression/run_regression.sh ./build/metabuli examples 
-        displayName: Run Regression Suite
-        condition: eq(variables['regression'], 1)
-      - task: PublishPipelineArtifact@0
-        inputs:
-          targetPath: $(Build.SourcesDirectory)/build/metabuli
-          artifactName: metabuli-darwin-universal
 
   - job: upload_artifacts
     displayName: Upload Artifacts
