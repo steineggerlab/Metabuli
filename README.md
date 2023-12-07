@@ -261,8 +261,6 @@ The whole process must take less than 10 mins using a personal machine.
 ```
 metabuli databases RefSeq_virus OUTDIR tmp
 ```
-`OUTDIR/refseq_virus` is the `DBDIR` in step 3.
-
 
 #### 2. Download an RNA-seq result (SRR14484345)
    Option 1. Download using SRA Toolkit 
@@ -278,7 +276,7 @@ cat SRR14484345.fastq | paste - - - - - - - - | tee >(cut -f 1-4 | tr "\t" "\n" 
 
 #### 3. Classify the reads using metabuli
    ```
-   metabuli classify SRR14484345_1.fq SRR14484345_2.fq DBDIR RESULT_DIR JOB_ID --max-ram RAM_SIZE
+   metabuli classify SRR14484345_1.fq SRR14484345_2.fq OUTDIR/refseq_virus RESULT_DIR JOB_ID --max-ram RAM_SIZE
    ```
 #### 4. Check RESULT_DIR/JOB_ID_report.tsv
   Find a section like the example below

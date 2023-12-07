@@ -23,21 +23,25 @@ struct TaxonScore {
 };
 
 struct depthScore {
-    depthScore(size_t depth, float score, int hammingDist) : depth(depth), score(score), hammingDist(hammingDist) {}
-    depthScore() : depth(0), score(0.f), hammingDist(0) {}
+    depthScore(size_t depth, float score, int hammingDist, const Match * endMatch) : 
+        depth(depth), score(score), hammingDist(hammingDist), endMatch(endMatch) {}
+    depthScore() : depth(0), score(0.f), hammingDist(0), endMatch(nullptr) {}
     size_t depth;
     float score;
     int hammingDist;
+    const Match * endMatch;
 };
 
 struct MatchPath {
-    MatchPath(int start, int end, float score, int hammingDist) : start(start), end(end), score(score), hammingDist(hammingDist) {}
-    MatchPath() : start(0), end(0), score(0.f), hammingDist(0) {}
+    MatchPath(int start, int end, float score, int hammingDist, const Match * startMatch, const Match * endMatch) :
+         start(start), end(end), score(score), hammingDist(hammingDist), startMatch(startMatch), endMatch(endMatch) {}
+    MatchPath() : start(0), end(0), score(0.f), hammingDist(0), startMatch(nullptr), endMatch(nullptr) {}
     int start;
     int end;
     float score;
     int hammingDist;
-    vector<const Match *> matches;
+    const Match * startMatch;
+    const Match * endMatch;
 };
 
 
@@ -114,7 +118,7 @@ public:
                    const map<const Match *, vector<const Match *>> &linkedMatches,
                    size_t depth, size_t MIN_DEPTH, unordered_set<const Match *> &used,
                    unordered_map<const Match *, depthScore> &match2depthScore,
-                   unordered_map<const Match *, const Match *> & edges, float score, int hammingDist);
+                   float score, int hammingDist);
 
     static bool isConsecutive(const Match * match1, const Match * match2);
 
