@@ -97,7 +97,7 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
 //        }
 //    }
     // Get the best species for current query
-    vector<const Match*> speciesMatches;
+    vector<Match> speciesMatches;
     speciesMatches.reserve(end - offset + 1);
     TaxonScore speciesScore(0, 0, 0, 0, 0);
     if (par.seqMode == 2) {
@@ -177,26 +177,26 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
 //    }
 }
 
-void Taxonomer::filterRedundantMatches(vector<const Match *> & speciesMatches,
+void Taxonomer::filterRedundantMatches(vector<Match> & speciesMatches,
                                        map<TaxID, int > & taxCnt) {
     // Sort matches by the coordinate on the query
     sort(speciesMatches.begin(), speciesMatches.end(),
-         [](const Match * a, const Match * b) { return a->qInfo.pos < b->qInfo.pos; });
+         [](const Match & a, const Match & b) { return a.qInfo.pos < b.qInfo.pos; });
     
     // Remove redundant matches
     size_t matchNum = speciesMatches.size();
     for (size_t i = 0; i < matchNum;) {
-        size_t currQuotient = speciesMatches[i]->qInfo.pos / 3;
-        uint8_t minHamming = speciesMatches[i]->hamming;
-        const Match * minHammingMatch = speciesMatches[i];
-        TaxID minHammingTaxId = minHammingMatch->targetId;
-        while ((i < matchNum) && (currQuotient == speciesMatches[i]->qInfo.pos / 3)) {
-            if (speciesMatches[i]->hamming < minHamming) {
-                minHamming = speciesMatches[i]->hamming;
+        size_t currQuotient = speciesMatches[i].qInfo.pos / 3;
+        uint8_t minHamming = speciesMatches[i].hamming;
+        Match minHammingMatch = speciesMatches[i];
+        TaxID minHammingTaxId = minHammingMatch.targetId;
+        while ((i < matchNum) && (currQuotient == speciesMatches[i].qInfo.pos / 3)) {
+            if (speciesMatches[i].hamming < minHamming) {
+                minHamming = speciesMatches[i].hamming;
                 minHammingMatch = speciesMatches[i];
-                minHammingTaxId = minHammingMatch->targetId;
-            } else if (speciesMatches[i]->hamming == minHamming) {
-                minHammingTaxId = taxonomy->LCA(minHammingTaxId, speciesMatches[i]->targetId);
+                minHammingTaxId = minHammingMatch.targetId;
+            } else if (speciesMatches[i].hamming == minHamming) {
+                minHammingTaxId = taxonomy->LCA(minHammingTaxId, speciesMatches[i].targetId);
             }
             i++;
         }
@@ -268,7 +268,7 @@ TaxID Taxonomer::BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID r
     }
 }
 
-TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match *> & speciesMatches,
+TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> & speciesMatches,
                                             const Match *matchList,
                                             size_t end,
                                             size_t offset,
@@ -358,7 +358,7 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match *> & speciesMatch
                         - speciesMatchRange[bestScore.taxId].first + 1);
 
     for (size_t j = speciesMatchRange[bestScore.taxId].first; j < speciesMatchRange[bestScore.taxId].second; j++) {
-        speciesMatches.push_back(& matchList[j]);
+        speciesMatches.push_back(matchList[j]);
     }
     bestScore.coverage = coveredLength / queryLength;
     bestScore.hammingDist = hammingDist;
@@ -366,7 +366,7 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match *> & speciesMatch
     return bestScore;                                  
 }
 
-TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match *> & speciesMatches,
+TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> & speciesMatches,
                                             const Match *matchList,
                                             size_t end,
                                             size_t offset,
@@ -455,7 +455,7 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match *> & speciesMatch
                         - speciesMatchRange[bestScore.taxId].first + 1);
 
     for (size_t i = speciesMatchRange[bestScore.taxId].first; i < speciesMatchRange[bestScore.taxId].second; i++) {
-        speciesMatches.push_back(&matchList[i]);
+        speciesMatches.push_back(matchList[i]);
     }
     bestScore.coverage = coveredLength / (readLength1 + readLength2);
     bestScore.hammingDist = hammingDist;

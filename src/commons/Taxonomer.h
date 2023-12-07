@@ -111,7 +111,7 @@ public:
 
     void trimMatchPath(MatchPath & path1, const MatchPath & path2, int overlapLength);
 
-    void filterRedundantMatches(vector<const Match*> & speciesMatches,
+    void filterRedundantMatches(vector<Match> & speciesMatches,
                                 map<TaxID, int> & taxCnt);
 
     depthScore DFS(const vector<const Match *> &matches, const Match * curMatchIdx,
@@ -130,10 +130,10 @@ public:
     TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
                                    int readLength1, int readLength2);
 
-    TaxonScore getBestSpeciesMatches(vector<const Match*> &speciesMatches, const Match *matchList, size_t end,
+    TaxonScore getBestSpeciesMatches(vector<Match> &speciesMatches, const Match *matchList, size_t end,
                                      size_t offset, int queryLength);
     
-    TaxonScore getBestSpeciesMatches(vector<const Match*> &speciesMatches, const Match *matchList, size_t end,
+    TaxonScore getBestSpeciesMatches(vector<Match> &speciesMatches, const Match *matchList, size_t end,
                                      size_t offset, int readLength1, int readLength2);
 
     // TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
