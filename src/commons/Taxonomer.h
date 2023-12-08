@@ -23,21 +23,25 @@ struct TaxonScore {
 };
 
 struct depthScore {
-    depthScore(size_t depth, float score, int hammingDist) : depth(depth), score(score), hammingDist(hammingDist) {}
-    depthScore() : depth(0), score(0.f), hammingDist(0) {}
+    depthScore(size_t depth, float score, int hammingDist, const Match * endMatch) : 
+        depth(depth), score(score), hammingDist(hammingDist), endMatch(endMatch) {}
+    depthScore() : depth(0), score(0.f), hammingDist(0), endMatch(nullptr) {}
     size_t depth;
     float score;
     int hammingDist;
+    const Match * endMatch;
 };
 
 struct MatchPath {
-    MatchPath(int start, int end, float score, int hammingDist) : start(start), end(end), score(score), hammingDist(hammingDist) {}
-    MatchPath() : start(0), end(0), score(0.f), hammingDist(0) {}
+    MatchPath(int start, int end, float score, int hammingDist, const Match * startMatch, const Match * endMatch) :
+         start(start), end(end), score(score), hammingDist(hammingDist), startMatch(startMatch), endMatch(endMatch) {}
+    MatchPath() : start(0), end(0), score(0.f), hammingDist(0), startMatch(nullptr), endMatch(nullptr) {}
     int start;
     int end;
     float score;
     int hammingDist;
-    vector<const Match *> matches;
+    const Match * startMatch;
+    const Match * endMatch;
 };
 
 
@@ -107,14 +111,14 @@ public:
 
     void trimMatchPath(MatchPath & path1, const MatchPath & path2, int overlapLength);
 
-    void filterRedundantMatches(vector<const Match*> & speciesMatches,
-                                map<TaxID, int> & taxCnt);
+    void filterRedundantMatches(vector<Match> & speciesMatches,
+                                unordered_map<TaxID, unsigned int> & taxCnt);
 
     depthScore DFS(const vector<const Match *> &matches, const Match * curMatchIdx,
                    const map<const Match *, vector<const Match *>> &linkedMatches,
                    size_t depth, size_t MIN_DEPTH, unordered_set<const Match *> &used,
                    unordered_map<const Match *, depthScore> &match2depthScore,
-                   unordered_map<const Match *, const Match *> & edges, float score, int hammingDist);
+                   float score, int hammingDist);
 
     static bool isConsecutive(const Match * match1, const Match * match2);
 
@@ -126,10 +130,10 @@ public:
     TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
                                    int readLength1, int readLength2);
 
-    TaxonScore getBestSpeciesMatches(vector<const Match*> &speciesMatches, const Match *matchList, size_t end,
+    TaxonScore getBestSpeciesMatches(vector<Match> &speciesMatches, const Match *matchList, size_t end,
                                      size_t offset, int queryLength);
     
-    TaxonScore getBestSpeciesMatches(vector<const Match*> &speciesMatches, const Match *matchList, size_t end,
+    TaxonScore getBestSpeciesMatches(vector<Match> &speciesMatches, const Match *matchList, size_t end,
                                      size_t offset, int readLength1, int readLength2);
 
     // TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
@@ -173,9 +177,9 @@ public:
                             int queryLength,
                             int queryLength2);
 
-    TaxID lowerRankClassification(const map<TaxID, int> & matches, TaxID speciesID, int queryLength);
+    TaxID lowerRankClassification(const unordered_map<TaxID, unsigned int> & taxCnt, TaxID speciesID, int queryLength);
 
-    void getSpeciesCladeCounts(const map<TaxID, int> & taxCnt,
+    void getSpeciesCladeCounts(const unordered_map<TaxID, unsigned int> & taxCnt,
                                unordered_map<TaxID, TaxonCounts> & cladeCnt,
                                TaxID spciesID);
 

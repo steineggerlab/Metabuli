@@ -14,6 +14,7 @@ QueryIndexer::QueryIndexer(const LocalParameters & par) {
     maxRam = par.ramUsage;
     threads = par.threads;
     bytesPerKmer = sizeof(QueryKmer) + matchPerKmer * sizeof(Match);
+    // std::cout << "bytesPerKmer: " << bytesPerKmer << "\n";
     readNum_1 = 0;
     readNum_2 = 0;
     spaceNum = par.spaceMask.length() - kmerLength;
@@ -25,6 +26,7 @@ QueryIndexer::QueryIndexer(const LocalParameters & par) {
 void QueryIndexer::setAvailableRam() {
     availableRam = ((size_t) maxRam * (size_t) 1024 * 1024 * 1024)
                          - ((size_t) 128 * 1024 * 1024 * (size_t) threads);
+    // std::cout << "availableRam: " << availableRam << "\n";
 }
 
 void QueryIndexer::indexQueryFile() {
@@ -40,7 +42,6 @@ void QueryIndexer::indexQueryFile() {
             totalReadLength += kseq->entry.sequence.l;
             size_t currentKmerCnt = LocalUtil::getQueryKmerNumber<size_t>(kseq->entry.sequence.l, spaceNum);
             kmerCnt += currentKmerCnt;
-            // std::cout << "currentKmerCnt: " << kmerCnt << "\n";
         
             if (bytesPerKmer * kmerCnt + ((size_t) 200 * seqCnt) > availableRam) {
                 querySplits.emplace_back(start, readNum_1 - 1, kmerCnt - currentKmerCnt);
@@ -72,7 +73,6 @@ void QueryIndexer::indexQueryFile() {
                 seqCnt_1++;
                 totalReadLength += kseq_1->entry.sequence.l;
                 currentKmerCnt = LocalUtil::getQueryKmerNumber<size_t>(kseq_1->entry.sequence.l, spaceNum);
-                kmerCnt += currentKmerCnt;
             } else {
                 end = true;
             }
@@ -82,7 +82,7 @@ void QueryIndexer::indexQueryFile() {
                 seqCnt_2++;
                 totalReadLength += kseq_2->entry.sequence.l;
                 currentKmerCnt += LocalUtil::getQueryKmerNumber<size_t>(kseq_2->entry.sequence.l, spaceNum);
-                kmerCnt += currentKmerCnt;
+                
             } else {
                 end = true;
             }
@@ -92,6 +92,7 @@ void QueryIndexer::indexQueryFile() {
                 EXIT(EXIT_FAILURE);
             }
 
+            kmerCnt += currentKmerCnt;
             if (bytesPerKmer * kmerCnt + ((size_t) 200 * seqCnt_1) > availableRam) {
                 querySplits.emplace_back(start, readNum_1 - 1, kmerCnt - currentKmerCnt);
                 kmerCnt = currentKmerCnt;
