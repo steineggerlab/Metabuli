@@ -35,11 +35,11 @@ void LocalUtil::splitQueryFile(std::vector<SequenceBlock> & sequences, const std
 
 int LocalUtil::getMaxCoveredLength(int queryLength) {
     if (queryLength % 3 == 2) {
-        return queryLength - 2; // 2
+        return queryLength - 2; 
     } else if (queryLength % 3 == 1) {
-        return queryLength - 4; // 4
+        return queryLength - 4; 
     } else {
-        return queryLength - 3; // 3
+        return queryLength - 3; 
     }
 }
 

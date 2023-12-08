@@ -331,11 +331,6 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                         }
                         for (int k = 0; k < currMatchNum; k++) {
                             idx = selectedMatches[k];
-                            // Check if candidateKmerInfos[idx].sequenceID is valid
-                            // if (taxId2genusId.find(candidateKmerInfos[idx].sequenceID) == taxId2genusId.end() ||
-                            //     taxId2speciesId.find(candidateKmerInfos[idx].sequenceID) == taxId2speciesId.end()) {
-                            //     cout << "Error: " << candidateKmerInfos[idx].sequenceID << " is not found in the taxonomy database." << endl;
-                            // }
                             matches[matchCnt] = {queryKmerList[j].info,
                                                  candidateKmerInfos[idx].sequenceID,
                                                  taxId2speciesId[candidateKmerInfos[idx].sequenceID],
@@ -474,10 +469,6 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
     free(splitCheckList);
     queryKmerNum = 0;
 
-#ifdef OPENMP
-    omp_set_num_threads(threads);
-#endif
-
     totalMatchCnt += matchBuffer->startIndexOfReserve;
     return 1;
 }
@@ -520,8 +511,9 @@ void KmerMatcher::compareDna(uint64_t query,
     }
 
     // Select target k-mers that passed hamming criteria
+    uint8_t maxHamming = min(minHammingSum * 2, 7);
     for (size_t h = 0; h < size; h++) {
-        if (hammingSums[h] <= min(minHammingSum * 2, 7)) {
+        if (hammingSums[h] <= maxHamming) {
             selectedMatches.push_back(h);
             selectedHammingSum.push_back(hammingSums[h]);
             if (frame < 3) { // Frame of query k-mer

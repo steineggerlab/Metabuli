@@ -89,13 +89,6 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
                                 const Match *matchList,
                                 vector<Query> & queryList,
                                 const LocalParameters &par) {
-
-//    if (true) {
-//        cout << "# " << currentQuery << " " << queryList[currentQuery].name << endl;
-//        for (size_t i = offset; i < end + 1; i++) {
-//            cout << matchList[i].targetId << " " << matchList[i].qInfo.frame << " " << matchList[i].qInfo.pos << " " << int(matchList[i].hamming) <<  " "  << int(matchList[i].redundancy) << endl;
-//        }
-//    }
     // Get the best species for current query
     vector<Match> speciesMatches;
     speciesMatches.reserve(end - offset + 1);
@@ -108,14 +101,6 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
         speciesScore = getBestSpeciesMatches(speciesMatches, matchList, end, offset,
                                              queryList[currentQuery].queryLength);
     }
-
-//    if (true) {
-//        cout << "# " << currentQuery << " " << queryList[currentQuery].name << " filtered\n";
-//        for (size_t i = 0; i < genusMatches.size(); i++) {
-//           cout << genusMatches[i].targetId << " " << genusMatches[i].qInfo.frame << " " << genusMatches[i].qInfo.pos << " " << int(genusMatches[i].hamming) <<  " "  << int(genusMatches[i].redundancy) << endl;
-//         }
-//        cout << "Genus score: " << genusScore.score << "\n";
-//    }
 
     // If there is no proper species for current query, it is un-classified.
     if (speciesScore.score == 0 || speciesScore.score < par.minScore) {
@@ -138,8 +123,12 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
         return;
     }
 
-    // Filter redundant matches  
-    filterRedundantMatches(speciesMatches, queryList[currentQuery].taxCnt);
+    // Filter redundant matches
+    unordered_map<TaxID, unsigned int> taxCnt;
+    filterRedundantMatches(speciesMatches, taxCnt);
+    for (auto & tax : taxCnt) {
+        queryList[currentQuery].taxCnt[tax.first] = tax.second;    
+    }
     
     // If score is not enough, classify to the parent of the selected species
     if (speciesScore.score < par.minSpScore) {
@@ -153,7 +142,7 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
     }
 
     // Lower rank classification
-    TaxID result = lowerRankClassification(queryList[currentQuery].taxCnt,
+    TaxID result = lowerRankClassification(taxCnt,
                                          speciesScore.taxId,
                                           queryList[currentQuery].queryLength + queryList[currentQuery].queryLength2);
 
@@ -164,21 +153,10 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
     queryList[currentQuery].coverage = speciesScore.coverage;
     queryList[currentQuery].hammingDist = speciesScore.hammingDist;
     queryList[currentQuery].newSpecies = false;
-//    if (par.printLog) {
-//        cout << "# " << currentQuery << endl;
-//        for (size_t i = 0; i < genusMatches.size(); i++) {
-//            cout << i << " " << genusMatches[i].qInfo.pos << " " <<
-//            genusMatches[i].targetId << " " << int(genusMatches[i].hamming) << endl;
-//        }
-//        cout << "Score: " << speciesScore.score << "  " << selectedSpecies << " "
-//             << taxonomy->getString(taxonomy->taxonNode(selectedSpecies)->rankIdx)
-//
-//             << endl;
-//    }
 }
 
 void Taxonomer::filterRedundantMatches(vector<Match> & speciesMatches,
-                                       map<TaxID, int > & taxCnt) {
+                                        unordered_map<TaxID, unsigned int> & taxCnt) {
     // Sort matches by the coordinate on the query
     sort(speciesMatches.begin(), speciesMatches.end(),
          [](const Match & a, const Match & b) { return a.qInfo.pos < b.qInfo.pos; });
@@ -204,7 +182,7 @@ void Taxonomer::filterRedundantMatches(vector<Match> & speciesMatches,
     }
 }
 
-TaxID Taxonomer::lowerRankClassification(const map<TaxID, int> & taxCnt, TaxID spTaxId, int queryLength) {
+TaxID Taxonomer::lowerRankClassification(const unordered_map<TaxID, unsigned int> & taxCnt, TaxID spTaxId, int queryLength) {
     unsigned int maxCnt = (queryLength - 1)/denominator + 1;
     unordered_map<TaxID, TaxonCounts> cladeCnt;
     getSpeciesCladeCounts(taxCnt, cladeCnt, spTaxId);
@@ -225,7 +203,7 @@ TaxID Taxonomer::lowerRankClassification(const map<TaxID, int> & taxCnt, TaxID s
     }
 }
 
-void Taxonomer::getSpeciesCladeCounts(const map<TaxID, int> &taxCnt,
+void Taxonomer::getSpeciesCladeCounts(const unordered_map<TaxID, unsigned int> &taxCnt,
                                        unordered_map<TaxID, TaxonCounts> & cladeCount,
                                        TaxID speciesTaxID) {
     for (auto it = taxCnt.begin(); it != taxCnt.end(); ++it) {
@@ -475,9 +453,11 @@ float Taxonomer::combineMatchPaths(vector<MatchPath> & matchPaths,
     // 1. Add the matchPath with the highest score to combinedMatchPaths
     // 2. Add the matchPath with the highest score that is not overlapped with the matchPath in combinedMatchPaths
     // 3. Repeat 2 until no matchPath can be added
+    float score = 0;
     for (size_t i = 0; i < matchPaths.size(); i++) {
         if (combinedMatchPaths.empty()) {
             combinedMatchPaths.push_back(matchPaths[i]);
+            score += matchPaths[i].score;
         } else {
             bool isOverlapped = false;
             for (size_t j = 0; j < combinedMatchPaths.size(); j++) {
@@ -486,27 +466,26 @@ float Taxonomer::combineMatchPaths(vector<MatchPath> & matchPaths,
                                             - max(matchPaths[i].start, combinedMatchPaths[j].start) + 1;
                     if (overlappedLength < 24) {
                         trimMatchPath(matchPaths[i], combinedMatchPaths[j], overlappedLength);
+                       
                         continue;
                     } else {
                         isOverlapped = true;
                         break;
                     }
-                    // Current path trimmed too much 
-                    if (matchPaths[i].end - matchPaths[i].start + 1 < 24) {
+                    if (matchPaths[i].end - matchPaths[i].start + 1 < 24) { // Current path trimmed too much 
                         isOverlapped = true;
                         break;
-                    }
+                    }  
                 } 
             }
             if (!isOverlapped) {
                 combinedMatchPaths.push_back(matchPaths[i]);
+                score += matchPaths[i].score;           
             }
         }
-    }
-    // Calculate the score of combinedMatchPaths
-    float score = 0;
-    for (auto & matchPath : combinedMatchPaths) {
-        score += matchPath.score;
+        // if (score / readLength >= 1) {
+        //     break;
+        // }
     }
     return score / readLength;
 }
@@ -520,12 +499,10 @@ bool Taxonomer::isMatchPathOverlapped(const MatchPath & matchPath1,
 void Taxonomer::trimMatchPath(MatchPath & path1, const MatchPath & path2, int overlapLength) {
     if (path1.start < path2.start) { 
         path1.end = path2.start - 1;
-        // uint8_t lastEndHamming = GET_2_BITS(path1.matches.back()->rightEndHamming);
         path1.hammingDist = max(0, path1.hammingDist - path1.endMatch->getRightPartHammingDist(overlapLength/3));
         path1.score = path1.score - path1.endMatch->getRightPartScore(overlapLength/3) - (overlapLength % 3);
     } else {
         path1.start = path2.end + 1;
-        // uint8_t lastEndHamming = GET_2_BITS(path1.matches.front()->rightEndHamming >> 14);
         path1.hammingDist = max(0, path1.hammingDist - path1.startMatch->getLeftPartHammingDist(overlapLength/3));
         path1.score = path1.score - path1.startMatch->getLeftPartScore(overlapLength/3) - (overlapLength % 3);
     }
@@ -558,7 +535,7 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
                 // Compare curPosMatches and nextPosMatches
                 for (auto &curPosMatch: curPosMatches) {
                     for (auto &nextPosMatch: nextPosMatches) {
-                        if (curPosMatch->isConsecutive_DNA(nextPosMatch)) {
+                        if (isConsecutive(curPosMatch, nextPosMatch)){
                             linkedMatches[curPosMatch].push_back(nextPosMatch);
                         }
                     }
@@ -586,9 +563,12 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
                 // Compare curPosMatches and nextPosMatches
                 for (auto &curPosMatch: curPosMatches) {
                     for (auto &nextPosMatch: nextPosMatches) {
-                        if (nextPosMatch->isConsecutive_DNA(curPosMatch)) {
+                        if (isConsecutive(nextPosMatch, curPosMatch)){
                             linkedMatches[curPosMatch].push_back(nextPosMatch);
                         }
+                        // if (nextPosMatch->isConsecutive_DNA(curPosMatch)) {
+                        //     linkedMatches[curPosMatch].push_back(nextPosMatch);
+                        // }
                     }
                 }
 
@@ -1052,7 +1032,7 @@ TaxonScore Taxonomer::scoreSpecies(const vector<Match> &matches,
 bool Taxonomer::isConsecutive(const Match * match1, const Match * match2) {
     // match1 87654321 -> 08765432
     // match2 98765432 -> 08765432
-    return (match1->rightEndHamming >> 2) == (match2->rightEndHamming & 0x3FFF);
+    return (match1->dnaEncoding >> 3) == (match2->dnaEncoding & 0x1FFFFF);
 }
 
 bool Taxonomer::isConsecutive_diffFrame(const Match * match1, const Match * match2) {

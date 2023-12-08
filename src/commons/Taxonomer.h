@@ -112,7 +112,7 @@ public:
     void trimMatchPath(MatchPath & path1, const MatchPath & path2, int overlapLength);
 
     void filterRedundantMatches(vector<Match> & speciesMatches,
-                                map<TaxID, int> & taxCnt);
+                                unordered_map<TaxID, unsigned int> & taxCnt);
 
     depthScore DFS(const vector<const Match *> &matches, const Match * curMatchIdx,
                    const map<const Match *, vector<const Match *>> &linkedMatches,
@@ -177,9 +177,9 @@ public:
                             int queryLength,
                             int queryLength2);
 
-    TaxID lowerRankClassification(const map<TaxID, int> & matches, TaxID speciesID, int queryLength);
+    TaxID lowerRankClassification(const unordered_map<TaxID, unsigned int> & taxCnt, TaxID speciesID, int queryLength);
 
-    void getSpeciesCladeCounts(const map<TaxID, int> & taxCnt,
+    void getSpeciesCladeCounts(const unordered_map<TaxID, unsigned int> & taxCnt,
                                unordered_map<TaxID, TaxonCounts> & cladeCnt,
                                TaxID spciesID);
 
