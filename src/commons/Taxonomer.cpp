@@ -27,6 +27,7 @@ Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxon
     minConsCnt = par.minConsCnt;
     minConsCntEuk = par.minConsCntEuk;
     eukaryotaTaxId = par.eukaryotaTaxId;
+    tieRatio = par.tieRatio;
 
     if (par.seqMode == 1 || par.seqMode == 2) {
         denominator = 100;
@@ -300,7 +301,7 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> & speciesMatches,
 
     vector<TaxID> maxSpecies;
     for (auto & spScore : species2score) {
-        if (spScore.second > bestSpScore * 0.95) {
+        if (spScore.second >= bestSpScore * tieRatio) {
             maxSpecies.push_back(spScore.first);
         }
     }
@@ -397,7 +398,7 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> & speciesMatches,
     }
     vector<TaxID> maxSpecies;
     for (auto & spScore : species2score) {
-        if (spScore.second > bestSpScore * 0.95) {
+        if (spScore.second >= bestSpScore * tieRatio) {
             maxSpecies.push_back(spScore.first);
         }
     }

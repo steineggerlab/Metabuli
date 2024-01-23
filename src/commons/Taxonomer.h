@@ -61,6 +61,7 @@ private:
     int minConsCnt;
     int minConsCntEuk;
     int eukaryotaTaxId;
+    float tieRatio;
 
     // Internal
     int denominator;
