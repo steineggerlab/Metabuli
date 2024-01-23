@@ -150,6 +150,13 @@ LocalParameters::LocalParameters() :
                     typeid(int),
                     (void *) &minSSMatch,
                     "^[0-9]+$"),
+        TIE_RATIO(TIE_RATIO_ID,
+                      "--tie-ratio",
+                      "Best * --tie-ratio is considered as a tie",
+                      "Best * --tie-ratio is considered as a tie",
+                      typeid(float),
+                      (void *) &tieRatio,
+                      "^0(\\.[0-9]+)?|1(\\.0+)?$"),
         LIBRARY_PATH(LIBRARY_PATH_ID,
                      "--library-path",
                      "Path to library where the FASTA files are stored",
@@ -314,6 +321,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&RAM_USAGE);
     classify.push_back(&MATCH_PER_KMER);
     classify.push_back(&ACCESSION_LEVEL);
+    classify.push_back(&TIE_RATIO);
     // classify.push_back(&MIN_SS_MATCH);
 
     // filter 

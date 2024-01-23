@@ -56,6 +56,7 @@ public:
     PARAMETER(MIN_CONS_CNT_EUK)
     PARAMETER(MATCH_PER_KMER)
     PARAMETER(MIN_SS_MATCH)
+    PARAMETER(TIE_RATIO)
 
     // DB build parameters
     PARAMETER(LIBRARY_PATH)
@@ -104,6 +105,7 @@ public:
     int minConsCntEuk;
     int matchPerKmer;
     int minSSMatch;
+    float tieRatio;
 
     // Database creation
     std::string tinfoPath;
