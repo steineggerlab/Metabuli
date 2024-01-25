@@ -199,6 +199,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
             regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
             smatch assacc;
             size_t numberOfClassifications = 0;
+            unordered_map<string, int> observed;
             while (getline(readClassification, resultLine, '\n')) {
 
                 // Parse classification result
@@ -209,27 +210,39 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
                     continue;
                 }
 
-                // Read ID -> right answer
+                // Skip if the read is already observed
+                
                 string id = fields[par.readIdCol];
+                string id2 = id;
                 if (par.testType == "gtdb") {
                     regex_search(id, assacc, regex1);
-                    readIds.push_back(assacc[0]);
-                    rightAnswers.push_back(assacc2taxid[assacc[0]]);
+                    id = assacc[0];
                 } else if (par.testType == "hiv" || par.testType == "hiv-ex") {
                     size_t pos = id.find('_');
                     id = id.substr(0, pos);
-//                    cout << assacc2taxid[id] << endl;
-                    rightAnswers.push_back(assacc2taxid[id]);
                 } else if (par.testType == "cami" || par.testType == "cami-long" || par.testType == "cami-euk") {
                     size_t pos = id.find('/');
                     id = id.substr(0, pos);
-                    rightAnswers.push_back(assacc2taxid[id]);
-                    readIds.push_back(id);
                 } else if (par.testType == "over") {
                     regex_search(id, assacc, regex1);
-                    readIds.push_back(assacc[0]);
-                    rightAnswers.push_back(ncbiTaxonomy.getTaxIdAtRank(assacc2taxid[assacc[0]], par.testRank));
+                    id = assacc[0];
                 }
+
+                // size_t pos = id2.find('/');
+                // id2 = id2.substr(0, pos);
+                
+                // if (observed.find(id2) != observed.end()) {
+                //     // cout << "Duplicated read ID: " << id2 << endl;
+                //     continue;
+                // } else {
+                //     // cout << id2 << endl;
+                //     observed[id2] = 1;
+                // }
+                
+                // readIds.push_back(id2);
+                
+                // Read ID -> right answer
+                rightAnswers.push_back(assacc2taxid[id]);
 
                 // Read classification
                 classInt = stoi(fields[par.taxidCol]);
