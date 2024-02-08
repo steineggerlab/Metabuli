@@ -10,10 +10,10 @@ QueryIndexer::QueryIndexer(const LocalParameters & par) {
         queryPath_2 = par.filenames[1];
     }
 
-    matchPerKmer = par.matchPerKmer;
+    // matchPerKmer = par.matchPerKmer;
     maxRam = par.ramUsage;
     threads = par.threads;
-    bytesPerKmer = sizeof(QueryKmer) + matchPerKmer * sizeof(Match);
+    // bytesPerKmer = sizeof(QueryKmer) + matchPerKmer * sizeof(Match);
     // std::cout << "bytesPerKmer: " << bytesPerKmer << "\n";
     readNum_1 = 0;
     readNum_2 = 0;
@@ -29,13 +29,19 @@ void QueryIndexer::setAvailableRam() {
     // std::cout << "availableRam: " << availableRam << "\n";
 }
 
-void QueryIndexer::indexQueryFile() {
+void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
     // Read 1
     if (seqMode == 1 || seqMode == 3) {
         KSeqWrapper* kseq = KSeqFactory(queryPath_1.c_str());
+        
+        // Skip processed reads
+        for (size_t i = 0; i < processedQueryNum; i++) {
+            kseq->ReadEntry();
+            // start++;
+        }
+        size_t start = 0;
         size_t kmerCnt = 0;
         size_t seqCnt = 0;
-        size_t start = 0;
         while (kseq->ReadEntry()) {
             readNum_1++;
             seqCnt++;
@@ -44,13 +50,13 @@ void QueryIndexer::indexQueryFile() {
             kmerCnt += currentKmerCnt;
         
             if (bytesPerKmer * kmerCnt + ((size_t) 200 * seqCnt) > availableRam) {
-                querySplits.emplace_back(start, readNum_1 - 1, kmerCnt - currentKmerCnt);
+                querySplits.emplace_back(start, readNum_1 - 1, kmerCnt - currentKmerCnt, seqCnt - 1);
                 kmerCnt = currentKmerCnt;
                 start = readNum_1 - 1;
                 seqCnt = 1;
             }
         }
-        querySplits.emplace_back(start, readNum_1, kmerCnt);
+        querySplits.emplace_back(start, readNum_1, kmerCnt, seqCnt);
         // Print elements
         // for (auto & querySplit : querySplits) {
         //     std::cout << "start: " << querySplit.start << "\t";
@@ -61,6 +67,11 @@ void QueryIndexer::indexQueryFile() {
     } else {
         KSeqWrapper* kseq_1 = KSeqFactory(queryPath_1.c_str());
         KSeqWrapper* kseq_2 = KSeqFactory(queryPath_2.c_str());
+        // Skip processed reads
+        for (size_t i = 0; i < processedQueryNum; i++) {
+            kseq_1->ReadEntry();
+            kseq_2->ReadEntry();
+        }
         size_t kmerCnt = 0;
         size_t seqCnt_1 = 0;
         size_t seqCnt_2 = 0;
@@ -94,14 +105,14 @@ void QueryIndexer::indexQueryFile() {
 
             kmerCnt += currentKmerCnt;
             if (bytesPerKmer * kmerCnt + ((size_t) 200 * seqCnt_1) > availableRam) {
-                querySplits.emplace_back(start, readNum_1 - 1, kmerCnt - currentKmerCnt);
+                querySplits.emplace_back(start, readNum_1 - 1, kmerCnt - currentKmerCnt, seqCnt_1 - 1);
                 kmerCnt = currentKmerCnt;
                 start = readNum_1 - 1;
                 seqCnt_1 = 1;
             }
 
             if (end) {
-                querySplits.emplace_back(start, readNum_1, kmerCnt);
+                querySplits.emplace_back(start, readNum_1, kmerCnt, seqCnt_1);
                 break;
             }
         }

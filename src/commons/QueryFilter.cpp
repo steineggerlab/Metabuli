@@ -110,7 +110,7 @@ void QueryFilter::printFilteredReads() {
 void QueryFilter::filterReads(LocalParameters & par) {
 
     cout << "Indexing query file ...";
-    queryIndexer->indexQueryFile();
+    queryIndexer->indexQueryFile(0);
     size_t numOfSeq = queryIndexer->getReadNum_1();
     size_t totalReadLength = queryIndexer->getTotalReadLength();
     const vector<QuerySplit> & queryReadSplit = queryIndexer->getQuerySplits();

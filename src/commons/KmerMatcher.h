@@ -42,6 +42,11 @@ protected:
   unordered_map<TaxID, TaxID> taxId2speciesId;
   unordered_map<TaxID, TaxID> taxId2genusId;
 
+  string targetDiffIdxFileName;
+  string targetInfoFileName;
+  string diffIdxSplitFileName;
+    
+
   struct QueryKmerSplit {
     QueryKmerSplit(size_t start, size_t end, size_t length,
                    const DiffIdxSplit &diffIdxSplit)
@@ -101,8 +106,9 @@ public:
 
   virtual ~KmerMatcher();
   
-  int matchKmers(QueryKmerBuffer *queryKmerBuffer, Buffer<Match> *matchBuffer,
-                 const string &db = string());
+  bool matchKmers(QueryKmerBuffer *queryKmerBuffer,
+                  Buffer<Match> *matchBuffer,
+                  const string &db = string());
   
   void sortMatches(Buffer<Match> *matchBuffer);
 

@@ -109,18 +109,15 @@ void KmerMatcher::loadTaxIdList(const LocalParameters & par) {
 }
 
 
-int KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
-                            Buffer<Match> * matchBuffer,
-                            const string & db){
+bool KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
+                             Buffer<Match> * matchBuffer,
+                             const string & db){
     // Set database files
-    string targetDiffIdxFileName;
-    string targetInfoFileName;
-    string diffIdxSplitFileName;
     if (db.empty()) {
         targetDiffIdxFileName = dbDir + "/diffIdx";
         targetInfoFileName = dbDir + "/info";
         diffIdxSplitFileName = dbDir + "/split";
-    } else {
+    } else { // for the case of multiple databases
         targetDiffIdxFileName = dbDir + "/" + db + "/diffIdx";
         targetInfoFileName = dbDir + "/" + db + "/info";
         diffIdxSplitFileName = dbDir + "/" + db + "/split";
@@ -462,7 +459,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
         } // End of omp parallel
         if (hasOverflow) {
             std::cout << "overflow!!!" << std::endl;
-            return 2;
+            return false;
         }
     } // end of while(completeSplitCnt < threadNum)
     std::cout << "Time spent for the comparison: " << double(time(nullptr) - beforeSearch) << std::endl;
@@ -470,7 +467,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
     queryKmerNum = 0;
 
     totalMatchCnt += matchBuffer->startIndexOfReserve;
-    return 1;
+    return true;
 }
 
 void KmerMatcher::sortMatches(Buffer<Match> * matchBuffer) {
