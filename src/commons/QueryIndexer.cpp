@@ -15,8 +15,6 @@ QueryIndexer::QueryIndexer(const LocalParameters & par) {
     threads = par.threads;
     // bytesPerKmer = sizeof(QueryKmer) + matchPerKmer * sizeof(Match);
     // std::cout << "bytesPerKmer: " << bytesPerKmer << "\n";
-    readNum_1 = 0;
-    readNum_2 = 0;
     spaceNum = par.spaceMask.length() - kmerLength;
     totalReadLength = 0;
 
@@ -30,6 +28,8 @@ void QueryIndexer::setAvailableRam() {
 }
 
 void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
+    readNum_1 = 0;
+    readNum_2 = 0;
     // Read 1
     if (seqMode == 1 || seqMode == 3) {
         KSeqWrapper* kseq = KSeqFactory(queryPath_1.c_str());

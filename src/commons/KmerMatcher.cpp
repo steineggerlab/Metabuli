@@ -457,11 +457,13 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
             free(diffIdxBuffer);
             free(kmerInfoBuffer);
         } // End of omp parallel
+        
         if (hasOverflow) {
             std::cout << "overflow!!!" << std::endl;
             return false;
         }
     } // end of while(completeSplitCnt < threadNum)
+    
     std::cout << "Time spent for the comparison: " << double(time(nullptr) - beforeSearch) << std::endl;
     free(splitCheckList);
     queryKmerNum = 0;
