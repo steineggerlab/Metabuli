@@ -126,15 +126,20 @@ void Classifier::startClassify(const LocalParameters &par) {
             } else { // search was incomplete
                 // Increase matchPerKmer and try again 
                 matchPerKmer *= 2;
-                delete kseq1;
-                delete kseq2;
+                // delete kseq1;
+                // delete kseq2;
                 cout << "The search was incomplete. Increasing --match-per-kmer to " << matchPerKmer << " and trying again." << endl;
                 break;
             }
          }
+         
         delete kseq1;
-        delete kseq2;
-        complete = true;
+        if (par.seqMode == 2) {
+            delete kseq2;
+        }
+        if (processedReadCnt == totalSeqCnt) {
+            complete = true;
+        }
     }
 
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;

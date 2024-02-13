@@ -28,6 +28,7 @@ void QueryIndexer::setAvailableRam() {
 }
 
 void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
+    querySplits.clear();
     readNum_1 = 0;
     readNum_2 = 0;
     // Read 1
