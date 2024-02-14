@@ -466,7 +466,6 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
     
     std::cout << "Time spent for the comparison: " << double(time(nullptr) - beforeSearch) << std::endl;
     free(splitCheckList);
-    queryKmerNum = 0;
 
     totalMatchCnt += matchBuffer->startIndexOfReserve;
     return true;
