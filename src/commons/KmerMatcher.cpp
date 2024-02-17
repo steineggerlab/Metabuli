@@ -540,5 +540,8 @@ bool KmerMatcher::compareMatches(const Match& a, const Match& b) {
     if (a.qInfo.pos != b.qInfo.pos)
         return a.qInfo.pos < b.qInfo.pos;
 
-    return a.hamming < b.hamming;
+    if (a.hamming != b.hamming)
+        return a.hamming < b.hamming;
+
+    return a.dnaEncoding < b.dnaEncoding;
 }

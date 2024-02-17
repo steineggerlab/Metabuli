@@ -2,6 +2,7 @@
 #include "BitManipulateMacros.h"
 #include "Match.h"
 #include "NcbiTaxonomy.h"
+#include "common.h"
 #include "printBinary.h"
 #include <cstdint>
 #include <sys/types.h>
@@ -90,18 +91,16 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
                                 const Match *matchList,
                                 vector<Query> & queryList,
                                 const LocalParameters &par) {
-    // Get the best species for current query
+    // Get the best species and its matches for the current query
     vector<Match> speciesMatches;
     speciesMatches.reserve(end - offset + 1);
     TaxonScore speciesScore(0, 0, 0, 0, 0);
-    if (par.seqMode == 2) {
-        speciesScore = getBestSpeciesMatches(speciesMatches, matchList, end, offset,
-                                             queryList[currentQuery].queryLength,
-                                             queryList[currentQuery].queryLength2);
-    } else {
-        speciesScore = getBestSpeciesMatches(speciesMatches, matchList, end, offset,
-                                             queryList[currentQuery].queryLength);
-    }
+    speciesScore = getBestSpeciesMatches(speciesMatches,
+                                            matchList,
+                                            end,
+                                            offset,                        
+                                            queryList[currentQuery].queryLength + queryList[currentQuery].queryLength2);
+    
 
     // If there is no proper species for current query, it is un-classified.
     if (speciesScore.score == 0 || speciesScore.score < par.minScore) {
@@ -345,117 +344,127 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> & speciesMatches,
     return bestScore;                                  
 }
 
-TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> & speciesMatches,
-                                            const Match *matchList,
-                                            size_t end,
-                                            size_t offset,
-                                            int readLength1,
-                                            int readLength2) {
-    vector<vector<const Match *>> matchesForEachSpecies;
-    TaxonScore bestScore;    
-    vector<const Match *> curFrameMatches;
-    vector<MatchPath> matchPaths;
-    unordered_map<TaxID, float> species2score;
-    unordered_map<TaxID, vector<MatchPath>> species2matchPaths;
-    float bestSpScore = 0;
-    unordered_map<TaxID, pair<size_t, size_t>> speciesMatchRange;
+// TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> & speciesMatches,
+//                                             const Match *matchList,
+//                                             size_t end,
+//                                             size_t offset,
+//                                             Query & currentQuery) {
+//     vector<vector<const Match *>> matchesForEachSpecies;
+//     TaxonScore bestScore;    
+//     vector<const Match *> curFrameMatches;
+//     vector<MatchPath> matchPaths;
+//     unordered_map<TaxID, float> species2score;
+//     unordered_map<TaxID, vector<MatchPath>> species2matchPaths;
+//     float bestSpScore = 0;
+//     unordered_map<TaxID, pair<size_t, size_t>> speciesMatchRange;
     
-    size_t i = offset;
-    while (i  < end + 1) {
-        TaxID currentSpecies = matchList[i].speciesId;
-        size_t start = i;
-        // For current species
-        while ((i < end + 1) && currentSpecies == matchList[i].speciesId) {
-            uint8_t curFrame = matchList[i].qInfo.frame;
-            curFrameMatches.clear();
-            // For current frame
-            while ((i < end + 1) && currentSpecies == matchList[i].speciesId && curFrame == matchList[i].qInfo.frame) {
-                curFrameMatches.push_back(&matchList[i]);
-                i ++;
-            }
-            if (curFrameMatches.size() > 1) {
-                remainConsecutiveMatches(curFrameMatches, matchPaths, currentSpecies);
-            }
-        }
-        speciesMatchRange[currentSpecies] = make_pair(start, i);
-        // Combine MatchPaths
-        if (!matchPaths.empty()) {
-            float score = combineMatchPaths(matchPaths, species2matchPaths[currentSpecies], readLength1 + readLength2);
-            score = min(score, 1.0f);
-            if (score > 0.f) {
-                species2score[currentSpecies] = score;
-            }
-            if (score > bestSpScore) {
-                bestSpScore = score;
-            }
-        }
-        matchPaths.clear();
-    }
-    // If there are no meaningful species
-    if (species2score.empty()) {
-        bestScore.score = 0;
-        return bestScore;
-    }
-    vector<TaxID> maxSpecies;
-    for (auto & spScore : species2score) {
-        if (spScore.second >= bestSpScore * tieRatio) {
-            maxSpecies.push_back(spScore.first);
-        }
-    }
+//     size_t i = offset;
+//     while (i  < end + 1) {
+//         TaxID currentSpecies = matchList[i].speciesId;
+//         size_t start = i;
+//         // For current species
+//         while ((i < end + 1) && currentSpecies == matchList[i].speciesId) {
+//             uint8_t curFrame = matchList[i].qInfo.frame;
+//             curFrameMatches.clear();
+//             // For current frame
+//             while ((i < end + 1) && currentSpecies == matchList[i].speciesId && curFrame == matchList[i].qInfo.frame) {
+//                 curFrameMatches.push_back(&matchList[i]);
+//                 i ++;
+//             }
+//             if (curFrameMatches.size() > 1) {
+//                 remainConsecutiveMatches(curFrameMatches, matchPaths, currentSpecies);
+//             }
+//         }
+//         speciesMatchRange[currentSpecies] = make_pair(start, i);
 
-    // More than one species --> LCA
-    float coveredLength = 0.f;
-    if (maxSpecies.size() > 1) {
-        bestScore.LCA = true;
-        bestScore.taxId = taxonomy->LCA(maxSpecies)->taxId;
-        for (auto & sp : maxSpecies) {
-            bestScore.score += species2score[sp];
-            coveredLength = 0;
-            for (auto & matchPath : species2matchPaths[maxSpecies[0]]) {
-                coveredLength += matchPath.end - matchPath.start + 1;
-            }
-            bestScore.coverage += coveredLength / (readLength1 + readLength2);
-        }
-        bestScore.score /= maxSpecies.size();
-        bestScore.coverage /= maxSpecies.size();
-        return bestScore;
-    }
+//         // Combine MatchPaths
+//         if (!matchPaths.empty()) {
+//             float score = combineMatchPaths(matchPaths, species2matchPaths[currentSpecies], currentQuery.queryLength + currentQuery.queryLength2);
+
+//             score = min(score, 1.0f);
+//             if (score > 0.f) {
+//                 species2score[currentSpecies] = score;
+//             }
+//             if (score > bestSpScore) {
+//                 bestSpScore = score;
+//             }
+//         }
+//         matchPaths.clear();
+//     }
+//     // If there are no meaningful species
+//     if (species2score.empty()) {
+//         bestScore.score = 0;
+//         return bestScore;
+//     }
+//     vector<TaxID> maxSpecies;
+//     for (auto & spScore : species2score) {
+//         if (spScore.second >= bestSpScore * tieRatio) {
+//             maxSpecies.push_back(spScore.first);
+//         }
+//     }
+
+//     // More than one species --> LCA
+//     float coveredLength = 0.f;
+//     if (maxSpecies.size() > 1) {
+//         bestScore.LCA = true;
+//         bestScore.taxId = taxonomy->LCA(maxSpecies)->taxId;
+//         for (auto & sp : maxSpecies) {
+//             bestScore.score += species2score[sp];
+//             coveredLength = 0;
+//             for (auto & matchPath : species2matchPaths[maxSpecies[0]]) {
+//                 coveredLength += matchPath.end - matchPath.start + 1;
+//             }
+//             bestScore.coverage += coveredLength / (currentQuery.queryLength + currentQuery.queryLength2);
+//         }
+//         bestScore.score /= maxSpecies.size();
+//         bestScore.coverage /= maxSpecies.size();
+//         return bestScore;
+//     }
     
-    // One species
-    bestScore.taxId = maxSpecies[0];
-    bestScore.score = species2score[maxSpecies[0]];
+//     // One species
+//     bestScore.taxId = maxSpecies[0];
+//     bestScore.score = species2score[maxSpecies[0]];
     
-    int hammingDist = 0;
-    for (auto & matchPath : species2matchPaths[maxSpecies[0]]) {
-        coveredLength += matchPath.end - matchPath.start + 1;
-        hammingDist += matchPath.hammingDist;
-    }
-    speciesMatches.reserve(speciesMatchRange[bestScore.taxId].second
-                        - speciesMatchRange[bestScore.taxId].first + 1);
+//     int hammingDist = 0;
+//     for (auto & matchPath : species2matchPaths[maxSpecies[0]]) {
+//         coveredLength += matchPath.end - matchPath.start + 1;
+//         hammingDist += matchPath.hammingDist;
+//     }
+//     speciesMatches.reserve(speciesMatchRange[bestScore.taxId].second
+//                         - speciesMatchRange[bestScore.taxId].first + 1);
 
-    for (size_t i = speciesMatchRange[bestScore.taxId].first; i < speciesMatchRange[bestScore.taxId].second; i++) {
-        speciesMatches.push_back(matchList[i]);
-    }
-    bestScore.coverage = coveredLength / (readLength1 + readLength2);
-    bestScore.hammingDist = hammingDist;
+//     for (size_t i = speciesMatchRange[bestScore.taxId].first; i < speciesMatchRange[bestScore.taxId].second; i++) {
+//         speciesMatches.push_back(matchList[i]);
+//     }
+//     bestScore.coverage = coveredLength / (currentQuery.queryLength + currentQuery.queryLength2);
+//     bestScore.hammingDist = hammingDist;
 
-    return bestScore;                    
-}
+//     return bestScore;                    
+// }
 
 float Taxonomer::combineMatchPaths(vector<MatchPath> & matchPaths,
                                    vector<MatchPath> & combinedMatchPaths,
                                    int readLength) {
     combinedMatchPaths.clear();
+
     // Sort matchPaths by the their score
     sort(matchPaths.begin(), matchPaths.end(),
-         [](const MatchPath & a, const MatchPath & b) { return a.score > b.score;});
+         [](const MatchPath &a, const MatchPath &b) {
+           if (a.score != b.score) {
+             return a.score > b.score;
+           }
+           if (a.hammingDist != b.hammingDist) {
+             return a.hammingDist < b.hammingDist;
+           }
+           return a.start > b.start;
+         });
 
     // Combine matchPaths
     // 1. Add the matchPath with the highest score to combinedMatchPaths
     // 2. Add the matchPath with the highest score that is not overlapped with the matchPath in combinedMatchPaths
     // 3. Repeat 2 until no matchPath can be added
     float score = 0;
-    for (size_t i = 0; i < matchPaths.size(); i++) {
+    for (size_t i = 0; i < matchPaths.size(); i++) {  
         if (combinedMatchPaths.empty()) {
             combinedMatchPaths.push_back(matchPaths[i]);
             score += matchPaths[i].score;
@@ -484,9 +493,6 @@ float Taxonomer::combineMatchPaths(vector<MatchPath> & matchPaths,
                 score += matchPaths[i].score;           
             }
         }
-        // if (score / readLength >= 1) {
-        //     break;
-        // }
     }
     return score / readLength;
 }
@@ -511,7 +517,7 @@ void Taxonomer::trimMatchPath(MatchPath & path1, const MatchPath & path2, int ov
 
 void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameMatches,
                                          vector<MatchPath> & matchPaths,
-                                         TaxID genusId) {
+                                         TaxID speciesId) {
     size_t i = 0;
     size_t end = curFrameMatches.size();
     vector<const Match *> curPosMatches;
@@ -541,7 +547,6 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
                         }
                     }
                 }
-
             }
             // Update curPosMatches and nextPosMatches
             curPosMatches = nextPosMatches;
@@ -584,7 +589,7 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
     // Iterate linkedMatches to get filteredMatches 
     // (ignore matches not enoughly consecutive)
     size_t MIN_DEPTH = minConsCnt - 1;
-    if (taxonomy->IsAncestor(eukaryotaTaxId, genusId)) {
+    if (taxonomy->IsAncestor(eukaryotaTaxId, speciesId)) {
         MIN_DEPTH = minConsCntEuk - 1;
     }
     unordered_set<const Match *> used;

@@ -33,6 +33,9 @@ void Reporter::writeReadClassification(const vector<Query> & queryList, bool cla
                                << queryList[i].queryLength + queryList[i].queryLength2 << "\t"
                                << queryList[i].score << "\t"
                                << taxonomy->getString(taxonomy->taxonNode(queryList[i].classification)->rankIdx) << "\t";
+        // for (size_t j = 0; j < queryList[i].pathScores.size(); j++) {
+        //     readClassificationFile << queryList[i].pathScores[j] << " ";
+        // }
         for (auto it = queryList[i].taxCnt.begin(); it != queryList[i].taxCnt.end(); ++it) {
             readClassificationFile << it->first << ":" << it->second << " ";
         }

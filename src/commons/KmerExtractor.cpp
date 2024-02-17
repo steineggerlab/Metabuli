@@ -48,12 +48,12 @@ void KmerExtractor::fillQueryKmerBufferParallel(KSeqWrapper *kseq1,
                                                 QueryKmerBuffer &kmerBuffer,
                                                 vector<Query> &queryList,
                                                 const QuerySplit &currentSplit,
-                                                const LocalParameters &par) {
+                                                const LocalParameters &par) {                                                   
     size_t processedQueryNum = 0;
-
-    // Array to store reads of thread number
-    vector<string> reads1(par.threads);
-
+ 
+     // Array to store reads of thread number
+     vector<string> reads1(par.threads);
+ 
     while (processedQueryNum < currentSplit.readCnt) {
         size_t currentQueryNum = min(currentSplit.readCnt - processedQueryNum, (size_t) par.threads);
         size_t count = 0;

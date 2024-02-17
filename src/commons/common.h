@@ -33,6 +33,7 @@ struct Query{
 
     std::string name;
     std::map<TaxID,int> taxCnt; // 8 byte per element
+    // std::vector<float> pathScores;
 
     bool operator==(int id) const { return queryId == id;}
 
