@@ -77,6 +77,7 @@ public:
     PARAMETER(COVERAGE_COL)
     PARAMETER(PRINT_COLUMNS)
     PARAMETER(CLADE_RANK)
+    PARAMETER(SKIP_SECONDARY)
 
     // Filter
     PARAMETER(PRINT_MODE)
@@ -126,6 +127,7 @@ public:
     int scoreCol;
     int coverageCol;
     std::string cladeRank;
+    int skipSecondary;
 
     // Add to library
     bool assembly;

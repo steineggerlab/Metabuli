@@ -55,6 +55,8 @@ void setGradeDefault(LocalParameters & par){
     par.verbosity = 2;
     par.scoreCol = 0;
     par.testRank = "";
+    par.testType = "gtdb";
+    par.skipSecondary = 0;
 }
 
 int grade(int argc, const char **argv, const Command &command) {
@@ -84,7 +86,6 @@ int grade(int argc, const char **argv, const Command &command) {
             printColumnsIdx.push_back(stoi(printColumn));
         }
     }
-
 
     // Load Taxonomy
     string names = taxonomy + "/names.dmp";
@@ -175,12 +176,10 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
             string key, value;
             ifstream map;
             map.open(mappingFile);
-            size_t numberOfAnswers = 0;
             if (map.is_open()) {
                 while (getline(map, key, '\t')) {
                     getline(map, value, '\n');
                     assacc2taxid[key] = stoi(value);
-                    numberOfAnswers++;
                 }
             } else {
                 cout << "Cannot open file for answer" << endl;
@@ -210,10 +209,10 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
                     continue;
                 }
 
-                // Skip if the read is already observed
+      
                 
                 string id = fields[par.readIdCol];
-                string id2 = id;
+                string fullId = id;
                 if (par.testType == "gtdb") {
                     regex_search(id, assacc, regex1);
                     id = assacc[0];
@@ -228,24 +227,37 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
                     id = assacc[0];
                 }
 
-                // size_t pos = id2.find('/');
-                // id2 = id2.substr(0, pos);
+                classInt = stoi(fields[par.taxidCol]);
+
+                // Skip if the read is already classified
+                if (par.skipSecondary == 1) {
+                    size_t pos = fullId.find('/');
+                    fullId = fullId.substr(0, pos);
+                    if (par.testType != "gtdb") {
+                        cerr << "skipSecondary is only available for GTDB" << endl;
+                        exit(1);
+                    }
+                    if (observed.find(fullId) == observed.end()) { // first observation
+                        if (classInt != 0) { // classified
+                            observed[fullId] = 1;
+                        } else { // not classified
+                            observed[fullId] = 0;
+                            continue;
+                        }
+                    } else { // second observation
+                        if (observed[fullId] == 1) { // already classified
+                            continue;
+                        } 
+                    }
+                }
                 
-                // if (observed.find(id2) != observed.end()) {
-                //     // cout << "Duplicated read ID: " << id2 << endl;
-                //     continue;
-                // } else {
-                //     // cout << id2 << endl;
-                //     observed[id2] = 1;
-                // }
-                
-                // readIds.push_back(id2);
+                readIds.push_back(fullId);
                 
                 // Read ID -> right answer
                 rightAnswers.push_back(assacc2taxid[id]);
 
                 // Read classification
-                classInt = stoi(fields[par.taxidCol]);
+                
                 classList.push_back(classInt);
                 if (classInt != 0) {
                     numberOfClassifications++;
