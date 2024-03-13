@@ -459,7 +459,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
         } // End of omp parallel
         
         if (hasOverflow) {
-            std::cout << "overflow!!!" << std::endl;
+            // std::cout << "overflow!!!" << std::endl;
             return false;
         }
     } // end of while(completeSplitCnt < threadNum)
