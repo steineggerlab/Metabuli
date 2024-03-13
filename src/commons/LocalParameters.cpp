@@ -269,6 +269,13 @@ LocalParameters::LocalParameters() :
                      typeid(std::string),
                      (void *) &cladeRank,
                      "^.*$"),
+        SKIP_SECONDARY(SKIP_SECONDARY_ID,
+                          "--skip-secondary",
+                          "Skip the results of already observed reads. (0: No, 1: Yes)",
+                          "Skip secondary classification",
+                          typeid(int),
+                          (void *) &skipSecondary,
+                          "[0-1]"),
         PRINT_MODE(PRINT_MODE_ID,
                         "--print-mode",
                        "[1] Only filtered reads [2] Both filtered and removed reads",
@@ -363,6 +370,7 @@ LocalParameters::LocalParameters() :
     grade.push_back(&COVERAGE_COL);
     grade.push_back(&PRINT_COLUMNS);
     grade.push_back(&CLADE_RANK);
+    grade.push_back(&SKIP_SECONDARY);
 
     // Apply thresholds
     applyThreshold.push_back(&MIN_SP_SCORE);

@@ -1,5 +1,6 @@
 #include "Classifier.h"
 #include "FileUtil.h"
+#include "QueryIndexer.h"
 #include "common.h"
 
 Classifier::Classifier(LocalParameters & par) {
@@ -36,80 +37,109 @@ Classifier::~Classifier() {
 }
 
 void Classifier::startClassify(const LocalParameters &par) {
-
-    cout << "Indexing query file ...";
-    queryIndexer->indexQueryFile();
-    size_t numOfSeq = queryIndexer->getReadNum_1();
-    size_t totalReadLength = queryIndexer->getTotalReadLength();
-    const vector<QuerySplit> & queryReadSplit = queryIndexer->getQuerySplits();
-    cout << "Done" << endl;
-    cout << "Total number of sequences: " << numOfSeq << endl;
-    cout << "Total read length: " << totalReadLength <<  "nt" << endl;
-
-    QueryKmerBuffer kmerBuffer;
+    QueryKmerBuffer queryKmerBuffer;
     Buffer<Match> matchBuffer;
     vector<Query> queryList;
-
     size_t numOfTatalQueryKmerCnt = 0;
-    size_t processedSeqCnt = 0;
-
     reporter->openReadClassificationFile();
-#ifdef OPENMP
-    omp_set_num_threads(par.threads);
-#endif
+
+    bool complete = false;
+    size_t processedReadCnt = 0;
+    size_t tries = 0;
+    size_t totalSeqCnt = 0;
+    
     // Extract k-mers from query sequences and compare them to target k-mer DB
-    KSeqWrapper* kseq1 = KSeqFactory(par.filenames[0].c_str());
-    KSeqWrapper* kseq2 = nullptr;
-    if (par.seqMode == 2) { kseq2 = KSeqFactory(par.filenames[1].c_str()); }
-//    while (true) {
-//        bool success = false;
-//        while (!success) {
-//
-//        }
-//        if (complete) {
-//            break;
-//        }
-//    }
+    while (!complete) {
+        tries++;
 
-    for (size_t splitIdx = 0; splitIdx < queryReadSplit.size(); splitIdx++) {
-        // Allocate memory for query list
-        queryList.clear();
-        queryList.resize(queryReadSplit[splitIdx].end - queryReadSplit[splitIdx].start);
+        // Get splits for remaining sequences
+        if (tries == 1) {
+                cout << "Indexing query file ...";
+        }
+        queryIndexer->setBytesPerKmer(matchPerKmer);
+        queryIndexer->indexQueryFile(processedReadCnt);
+        const vector<QuerySplit> & queryReadSplit = queryIndexer->getQuerySplits();
 
-        // Allocate memory for query k-mer list and match list
-        kmerBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt);
-        if (queryReadSplit.size() == 1) {
-            size_t remain = queryIndexer->getAvailableRam() - queryReadSplit[splitIdx].kmerCnt * sizeof(QueryKmer) - numOfSeq * 200;
-            matchBuffer.reallocateMemory(remain / sizeof(Match));
-        } else {
-            matchBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt * matchPerKmer);
+        if (tries == 1) {
+            totalSeqCnt = queryIndexer->getReadNum_1();
+            cout << "Done" << endl;
+            cout << "Total number of sequences: " << queryIndexer->getReadNum_1() << endl;
+            cout << "Total read length: " << queryIndexer->getTotalReadLength() <<  "nt" << endl;
         }
 
-        // Initialize query k-mer buffer and match buffer
-        kmerBuffer.startIndexOfReserve = 0;
-        matchBuffer.startIndexOfReserve = 0;
+        // Set up kseq
+        KSeqWrapper* kseq1 = KSeqFactory(par.filenames[0].c_str());
+        KSeqWrapper* kseq2 = nullptr;
+        if (par.seqMode == 2) { kseq2 = KSeqFactory(par.filenames[1].c_str()); }
 
-        // Extract query k-mer
-        kmerExtractor->extractQueryKmers(kmerBuffer,
-                                         queryList,
-                                         queryReadSplit[splitIdx],
-                                         par,
-                                         kseq1,
-                                         kseq2);
-        numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
+        // Move kseq to unprocessed reads
+        for (size_t i = 0; i < processedReadCnt; i++) {
+            kseq1->ReadEntry();
+            if (par.seqMode == 2) { kseq2->ReadEntry(); }
+        }
 
-        // Search matches between query and target k-mers
-        kmerMatcher->matchKmers(&kmerBuffer, &matchBuffer);
-        kmerMatcher->sortMatches(&matchBuffer);
+        for (size_t splitIdx = 0; splitIdx < queryReadSplit.size(); splitIdx++) {
+            // Allocate memory for query list
+            queryList.clear();
+            queryList.resize(queryReadSplit[splitIdx].end - queryReadSplit[splitIdx].start);
 
-        // Classify queries based on the matches.
-        // omp_set_num_threads(1);
-        taxonomer->assignTaxonomy(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
-        processedSeqCnt += queryReadSplit[splitIdx].end - queryReadSplit[splitIdx].start;
-        cout << "The number of processed sequences: " << processedSeqCnt << " (" << (double) processedSeqCnt / (double) numOfSeq << ")" << endl;
+            // Allocate memory for query k-mer buffer
+            queryKmerBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt);
 
-        // Write classification results
-        reporter->writeReadClassification(queryList);
+            // Allocate memory for match buffer
+            if (queryReadSplit.size() == 1) {
+                size_t remain = queryIndexer->getAvailableRam() 
+                                - (queryReadSplit[splitIdx].kmerCnt * sizeof(QueryKmer)) 
+                                - (queryIndexer->getReadNum_1() * 200); // TODO: check it later
+                matchBuffer.reallocateMemory(remain / sizeof(Match));
+            } else {
+                matchBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt * matchPerKmer);
+            }
+
+            // Initialize query k-mer buffer and match buffer
+            queryKmerBuffer.startIndexOfReserve = 0;
+            matchBuffer.startIndexOfReserve = 0;
+
+            // Extract query k-mers
+            kmerExtractor->extractQueryKmers(queryKmerBuffer,
+                                             queryList,
+                                             queryReadSplit[splitIdx],
+                                             par,
+                                             kseq1,
+                                             kseq2); // sync kseq1 and kseq2
+            
+            // Search matches between query and target k-mers
+            if (kmerMatcher->matchKmers(&queryKmerBuffer, &matchBuffer)) {
+                kmerMatcher->sortMatches(&matchBuffer);
+                
+                // Classify queries based on the matches.
+                taxonomer->assignTaxonomy(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
+
+                // Write classification results
+                reporter->writeReadClassification(queryList);
+
+                // Print progress
+                processedReadCnt += queryReadSplit[splitIdx].readCnt;
+                cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
+
+                numOfTatalQueryKmerCnt += queryKmerBuffer.startIndexOfReserve;
+            } else { // search was incomplete
+                // Increase matchPerKmer and try again 
+                matchPerKmer *= 2;
+                // delete kseq1;
+                // delete kseq2;
+                cout << "The search was incomplete. Increasing --match-per-kmer to " << matchPerKmer << " and trying again." << endl;
+                break;
+            }
+         }
+         
+        delete kseq1;
+        if (par.seqMode == 2) {
+            delete kseq2;
+        }
+        if (processedReadCnt == totalSeqCnt) {
+            complete = true;
+        }
     }
 
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
@@ -117,10 +147,8 @@ void Classifier::startClassify(const LocalParameters &par) {
     reporter->closeReadClassificationFile();
 
     // Write report files
-    reporter->writeReportFile(numOfSeq, taxonomer->getTaxCounts());
+    reporter->writeReportFile(totalSeqCnt, taxonomer->getTaxCounts());
 
     // Memory deallocation
     free(matchBuffer.buffer);
-    delete kseq1;
-    delete kseq2;
 }

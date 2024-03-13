@@ -55,6 +55,8 @@ void setGradeDefault(LocalParameters & par){
     par.verbosity = 2;
     par.scoreCol = 0;
     par.testRank = "";
+    par.testType = "gtdb";
+    par.skipSecondary = 0;
 }
 
 int grade(int argc, const char **argv, const Command &command) {
@@ -84,7 +86,6 @@ int grade(int argc, const char **argv, const Command &command) {
             printColumnsIdx.push_back(stoi(printColumn));
         }
     }
-
 
     // Load Taxonomy
     string names = taxonomy + "/names.dmp";
@@ -175,12 +176,10 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
             string key, value;
             ifstream map;
             map.open(mappingFile);
-            size_t numberOfAnswers = 0;
             if (map.is_open()) {
                 while (getline(map, key, '\t')) {
                     getline(map, value, '\n');
                     assacc2taxid[key] = stoi(value);
-                    numberOfAnswers++;
                 }
             } else {
                 cout << "Cannot open file for answer" << endl;
@@ -199,6 +198,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
             regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
             smatch assacc;
             size_t numberOfClassifications = 0;
+            unordered_map<string, int> observed;
             while (getline(readClassification, resultLine, '\n')) {
 
                 // Parse classification result
@@ -209,30 +209,55 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
                     continue;
                 }
 
-                // Read ID -> right answer
+      
+                
                 string id = fields[par.readIdCol];
+                string fullId = id;
                 if (par.testType == "gtdb") {
                     regex_search(id, assacc, regex1);
-                    readIds.push_back(assacc[0]);
-                    rightAnswers.push_back(assacc2taxid[assacc[0]]);
+                    id = assacc[0];
                 } else if (par.testType == "hiv" || par.testType == "hiv-ex") {
                     size_t pos = id.find('_');
                     id = id.substr(0, pos);
-//                    cout << assacc2taxid[id] << endl;
-                    rightAnswers.push_back(assacc2taxid[id]);
                 } else if (par.testType == "cami" || par.testType == "cami-long" || par.testType == "cami-euk") {
                     size_t pos = id.find('/');
                     id = id.substr(0, pos);
-                    rightAnswers.push_back(assacc2taxid[id]);
-                    readIds.push_back(id);
                 } else if (par.testType == "over") {
                     regex_search(id, assacc, regex1);
-                    readIds.push_back(assacc[0]);
-                    rightAnswers.push_back(ncbiTaxonomy.getTaxIdAtRank(assacc2taxid[assacc[0]], par.testRank));
+                    id = assacc[0];
                 }
 
-                // Read classification
                 classInt = stoi(fields[par.taxidCol]);
+
+                // Skip if the read is already classified
+                if (par.skipSecondary == 1) {
+                    size_t pos = fullId.find('/');
+                    fullId = fullId.substr(0, pos);
+                    if (par.testType != "gtdb") {
+                        cerr << "skipSecondary is only available for GTDB" << endl;
+                        exit(1);
+                    }
+                    if (observed.find(fullId) == observed.end()) { // first observation
+                        if (classInt != 0) { // classified
+                            observed[fullId] = 1;
+                        } else { // not classified
+                            observed[fullId] = 0;
+                            continue;
+                        }
+                    } else { // second observation
+                        if (observed[fullId] == 1) { // already classified
+                            continue;
+                        } 
+                    }
+                }
+                
+                readIds.push_back(fullId);
+                
+                // Read ID -> right answer
+                rightAnswers.push_back(assacc2taxid[id]);
+
+                // Read classification
+                
                 classList.push_back(classInt);
                 if (classInt != 0) {
                     numberOfClassifications++;

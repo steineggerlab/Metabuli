@@ -48,15 +48,14 @@ void KmerExtractor::fillQueryKmerBufferParallel(KSeqWrapper *kseq1,
                                                 QueryKmerBuffer &kmerBuffer,
                                                 vector<Query> &queryList,
                                                 const QuerySplit &currentSplit,
-                                                const LocalParameters &par) {
-    size_t queryNum = currentSplit.end - currentSplit.start;
+                                                const LocalParameters &par) {                                                   
     size_t processedQueryNum = 0;
-
-    // Array to store reads of thread number
-    vector<string> reads1(par.threads);
-
-    while (processedQueryNum < queryNum) {
-        size_t currentQueryNum = min(queryNum - processedQueryNum, (size_t) par.threads);
+ 
+     // Array to store reads of thread number
+     vector<string> reads1(par.threads);
+ 
+    while (processedQueryNum < currentSplit.readCnt) {
+        size_t currentQueryNum = min(currentSplit.readCnt - processedQueryNum, (size_t) par.threads);
         size_t count = 0;
         while (count < currentQueryNum) {
             // Read query
@@ -120,15 +119,14 @@ void KmerExtractor::fillQueryKmerBufferParallel_paired(KSeqWrapper *kseq1,
                                                        vector<Query> &queryList,
                                                        const QuerySplit &currentSplit,
                                                        const LocalParameters &par) {
-    size_t queryNum = currentSplit.end - currentSplit.start;
     size_t processedQueryNum = 0;
 
     // Array to store reads of thread number
     vector<string> reads1(par.threads);
     vector<string> reads2(par.threads);
 
-    while (processedQueryNum < queryNum) {
-        size_t currentQueryNum = min(queryNum - processedQueryNum, (size_t) par.threads);
+    while (processedQueryNum < currentSplit.readCnt) {
+        size_t currentQueryNum = min(currentSplit.readCnt - processedQueryNum, (size_t) par.threads);
         size_t count = 0;
 
         // Fill reads in sequential

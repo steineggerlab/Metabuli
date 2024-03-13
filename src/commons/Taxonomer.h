@@ -42,6 +42,7 @@ struct MatchPath {
     int hammingDist;
     const Match * startMatch;
     const Match * endMatch;
+
 };
 
 
@@ -98,7 +99,7 @@ public:
 
     void remainConsecutiveMatches(const vector<const Match *> & curFrameMatches,
                                   vector<MatchPath> & matchPaths,
-                                  TaxID genusId);
+                                  TaxID speciesID);
     
     float combineMatchPaths(vector<MatchPath> & matchPaths,
                            vector<MatchPath> & combinedMatchPaths,
@@ -125,18 +126,11 @@ public:
 
     static bool isConsecutive_diffFrame(const Match * match1, const Match * match2);
 
-    TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end,
-                                   size_t offset, int queryLength);
-
-    TaxonScore getBestGenusMatches(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
-                                   int readLength1, int readLength2);
-
     TaxonScore getBestSpeciesMatches(vector<Match> &speciesMatches, const Match *matchList, size_t end,
                                      size_t offset, int queryLength);
     
-    TaxonScore getBestSpeciesMatches(vector<Match> &speciesMatches, const Match *matchList, size_t end,
-                                     size_t offset, int readLength1, int readLength2);
-
+    // TaxonScore getBestSpeciesMatches(vector<Match> &speciesMatches, const Match *matchList, size_t end,
+    //                                  size_t offset, Query & currentQuery);
     // TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
     //                                       int readLength1, int readLength2);
     // TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
@@ -188,6 +182,15 @@ public:
 
     // Getters
     unordered_map<TaxID, unsigned int> & getTaxCounts() { return taxCounts; }
+
+
+    bool compareMatchPaths(const MatchPath& a, const MatchPath& b) const {
+        if (a.score != b.score)
+            return a.score < b.score;
+        if (a.hammingDist != b.hammingDist)
+            return a.hammingDist < b.hammingDist;
+        return a.start < b.start;
+    }
 };
 
 
