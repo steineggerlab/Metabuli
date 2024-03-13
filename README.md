@@ -11,14 +11,11 @@ Presentation video from ISMB/ECCB 2023: [link](https://www.youtube.com/watch?v=v
 
 <p align="center"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/marv_metabuli_small.png" height="350" /></p>
 
-## Update notes
-### v1.0.2
-- `--accession-level` option for `build` and `classify` workflow: It reports not only the taxon but also the accession of the best match.
-- Fix minor bugs in `build` workflow.
-- Generate `taxonomyDB` during `build` and load it during `classify` workflow for faster loading of taxonomy information.
-- Support gzipped FASTA/FASTQ files in `add-to-library` and `classify` workflows.
-- low-complexity filtering in `build` workflow as default with `--mask-prob 0.9`.
-  
+## Update in v1.0.4
+- Fixed a minor reproducibility issue.
+- Auto adjustment of `--match-per-kmer` parameter. Issue #20 solved.
+
+
 ## Installation
 ### Precompiled binaries
 ```
