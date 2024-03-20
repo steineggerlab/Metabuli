@@ -14,7 +14,7 @@ Presentation video from ISMB/ECCB 2023: [link](https://www.youtube.com/watch?v=v
 ## Update in v1.0.4
 - Fixed a minor reproducibility issue.
 - Auto adjustment of `--match-per-kmer` parameter. Issue #20 solved.
-
+- Record version info. in `db.parameter`
 
 ## Installation
 ### Precompiled binaries
