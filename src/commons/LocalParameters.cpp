@@ -7,6 +7,8 @@
 #include <iomanip>
 #include "DistanceCalculator.h"
 
+extern const char *version;
+
 LocalParameters::LocalParameters() :
         Parameters(),
         VIRUS_TAX_ID(VIRUS_TAX_ID_ID,
@@ -419,7 +421,7 @@ void LocalParameters::printParameters(const std::string &module, int argc, const
     std::stringstream ss;
     ss << std::boolalpha;
 
-     ss << std::setw(maxWidth) << std::left  << "Metabuli Version:" << "\t" << "1.0.2" << "\n";
+    ss << std::setw(maxWidth) << std::left  << "Metabuli Version (commit):" << "\t" << version << "\n";
 
     for (size_t i = 0; i < par.size(); i++) {
         if (par[i]->category & MMseqsParameter::COMMAND_HIDDEN) {
