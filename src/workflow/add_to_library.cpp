@@ -28,11 +28,14 @@ int addToLibrary(int argc, const char **argv, const Command &command){
     if (par.taxonomyPath == "DBDIR/taxonomy/") par.taxonomyPath = dbDir + "/taxonomy/";
     if (par.libraryPath == "DBDIR/library/") par.libraryPath = dbDir + "/library/";
 
+ 
+
     // If the library directory does not exist, create it
     if (!FileUtil::directoryExists(par.libraryPath.c_str())) {
         FileUtil::makeDir(par.libraryPath.c_str());
     }
 
+    
     // Load taxonomy
     NcbiTaxonomy * taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
 

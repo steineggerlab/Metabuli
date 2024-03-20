@@ -1052,7 +1052,7 @@ void IndexCreator::writeDbParameters() {
     }
     fprintf(handle, "DB_name\t%s\n", dbName.c_str());
     fprintf(handle, "Creation_date\t%s\n", dbDate.c_str());
-    fprintf(handle, "Metabuli version used to create the DB\t%s\n", version);
+    fprintf(handle, "Metabuli commit used to create the DB\t%s\n", version);
     fprintf(handle, "Reduced_alphabet\t%d\n", reducedAA);
     fprintf(handle, "Spaced_kmer_mask\t%s\n", spaceMask.c_str());
     fprintf(handle, "Accession_level\t%d\n", accessionLevel);
