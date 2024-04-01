@@ -28,7 +28,7 @@ std::vector<Command> commands = {
                 "List and download databases",
                 nullptr,
                 "Milot Mirdita <milot@mirdita.de>",
-                "<name> <o:sequenceDB> <tmpDir>",
+                "<i:Name> <o:OUTDIR> <tmpDir>",
                 CITATION_SPACEPHARER, {{"selection", 0, DbType::ZERO_OR_ALL, &DbValidator::empty },
                                           {"sequenceDB", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::sequenceDb },
                                           {"tmpDir",     DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory }}},
@@ -118,14 +118,6 @@ std::vector<DatabaseDownload> externalDownloads = {
                 {}
         },
         {
-                "RefSeq_release",
-                "NCBI release 217 (Prokaryote & Virus) and a human genome (CHM13v2.0)",
-                "O'Leary et al. Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation. Nucleic Acids Res. (2016)",
-                "https://www.ncbi.nlm.nih.gov/refseq/",
-                true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,
-                {}
-        },
-        {
                 "GTDB",
                 "GTDB 214.1 (Complete/Chromosome level only, CheckM completeness > 90 and contamination < 5) and a human genome (T2T-CHM13v2.0)",
                 "Donovan et al. GTDB: an ongoing census of bacterial and archaeal diversity through a phylogenetically consistent, rank normalized and complete genome-based taxonomy. Nucleic Acids Res. (2022)",
@@ -136,6 +128,14 @@ std::vector<DatabaseDownload> externalDownloads = {
         {
                 "RefSeq_virus",
                 "NCBI RefSeq release 223 virus genomes and a human genome (T2T-CHM13v2.0)",
+                "O'Leary et al. Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation. Nucleic Acids Res. (2016)",
+                "https://www.ncbi.nlm.nih.gov/refseq/",
+                true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,
+                {}
+        },
+        {
+                "RefSeq_release",
+                "NCBI release 217 (Prokaryote & Virus) and a human genome (GRCh38.p14)",
                 "O'Leary et al. Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation. Nucleic Acids Res. (2016)",
                 "https://www.ncbi.nlm.nih.gov/refseq/",
                 true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,

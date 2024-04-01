@@ -48,25 +48,39 @@ The built binary can be found in `./build/src`.
 
 ## Pre-built databases
 You can download [pre-built databases](https://metabuli.steineggerlab.workers.dev/) using `databases` workflow.
+
+NOTE: The `databases` workflow may not work if you don't use the latest version of Metabuli.
+In that case, please manually download databases from this [link](https://metabuli.steineggerlab.workers.dev/).
+
+
 ```
 Usage:
 metabuli databases DB_NAME OUTDIR tmp
 
-# RefSeq Complete/Chromosome (115.6 GiB)
-# - Complete Genome or Chromosome level assemblies of virus and prokaryotes in RefSeq (2023-04-04) and human genome (GRCh38.p14)
+# NOTE
+- A human genome (T2T-CHM13v2.0) is included in all databases except RefSeq_release.
+- A human genome (GRCh38.p14) is included in RefSeq_release.  
+
+# RefSeq Virus (8.1 GiB)
+# - NCBI RefSeq release 223 virus genomes
+# - Database will be in OUT_DIR/refseq_virus
+metabuli databases RefSeq_virus OUT_DIR tmp
+
+# RefSeq Prokaryote and Virus (115.6 GiB)
+# - RefSeq prokaryote genomes (Complete Genome/Chromosome, 2024-03-26) + RefSeq Virus above.
+# - Database will be in OUT_DIR/refseq
 metabuli databases RefSeq OUTDIR tmp
 
-# RefSeq Releases 217 (480.5 GiB)
+# RefSeq Releases 217 (480.5 GiB) (OLD)
 # - Viral and prokaryotic genomes of RefSeq release 217 and human genome (GRCh38.p14)
-metabuli databases RefSeq217 OUTDIR tmp
+metabuli databases RefSeq_release OUTDIR tmp
 
-# GTDB 207 (81.2 GiB)
-# - Complete Genome or Chromosome level assemblies in GTDB207 (CheckM Completeness > 90, CheckM Contamination < 5) with GTDB taxonomy.
-metabuli databases GTDB207 OUTDIR tmp
+# GTDB (101 GiB)
+# - GTDB 214.1 (Complete Genome/Chromosome, CheckM completeness > 90 and contamination < 5).
+# - Database will be in OUT_DIR/gtdb 
+metabuli databases GTDB OUTDIR tmp
 
-# RefSeq Virus (1.5 GiB)
-# - Viral RefSeq genomes and five SARS-CoV-2 variants (alpha, beta, delta, gamma, and omicron)
-metabuli databases RefSeq_virus OUT_DIR tmp
+
 ```
 Downloaded files are stored in `OUTDIR/DB_NAME` directory, which can be provided for `classify` module as `DBDIR`.
 
