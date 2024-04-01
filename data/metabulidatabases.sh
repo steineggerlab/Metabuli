@@ -90,11 +90,11 @@ mkdir -p "${OUTDB}"
 
 #INPUT_TYPE=""
 case "${SELECTION}" in
-    "GTDB207")
-        if notExists "${TMP_PATH}/gtdb207+human.tar.gz"; then
-            downloadFile "https://metabuli.steineggerlab.workers.dev/gtdb207+human.tar.gz" "${TMP_PATH}/gtdb207+human.tar.gz"
+    "GTDB")
+        if notExists "${TMP_PATH}/gtdb+human.tar.gz"; then
+            downloadFile "https://metabuli.steineggerlab.workers.dev/gtdb+human.tar.gz" "${TMP_PATH}/gtdb+human.tar.gz"
         fi
-        tar zxvf "${TMP_PATH}/gtdb207+human.tar.gz" -C "${OUTDB}"
+        tar zxvf "${TMP_PATH}/gtdb+human.tar.gz" -C "${OUTDB}"
        # push_back "${TMP_PATH}/gtdb207+human"
        # INPUT_TYPE="METABULI_DB"
     ;;
@@ -106,7 +106,7 @@ case "${SELECTION}" in
         # push_back "${TMP_PATH}/refseq_complete_chromosome+human"
         # INPUT_TYPE="METABULI_DB"
     ;;
-   "RefSeq217")
+   "RefSeq_release")
           if notExists "${TMP_PATH}/refseq_release217+human.tar.gz"; then
               downloadFile "https://metabuli.steineggerlab.workers.dev/refseq_release217+human.tar.gz" "${TMP_PATH}/refseq_release217+human.tar.gz"
           fi
