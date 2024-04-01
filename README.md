@@ -61,24 +61,25 @@ metabuli databases DB_NAME OUTDIR tmp
 - A human genome (T2T-CHM13v2.0) is included in all databases except RefSeq_release.
 - A human genome (GRCh38.p14) is included in RefSeq_release.  
 
-# RefSeq Virus (8.1 GiB)
-# - NCBI RefSeq release 223 virus genomes
-# - Database will be in OUT_DIR/refseq_virus
+1. RefSeq Virus (8.1 GiB)
+- NCBI RefSeq release 223 virus genomes
+- Database will be in OUT_DIR/refseq_virus
 metabuli databases RefSeq_virus OUT_DIR tmp
 
-# RefSeq Prokaryote and Virus (115.6 GiB)
-# - RefSeq prokaryote genomes (Complete Genome/Chromosome, 2024-03-26) + RefSeq Virus above.
-# - Database will be in OUT_DIR/refseq
+2. RefSeq Prokaryote and Virus (115.6 GiB)
+ - RefSeq prokaryote genomes (Complete Genome/Chromosome, 2024-03-26) + RefSeq Virus above.
+ - Database will be in OUT_DIR/refseq
 metabuli databases RefSeq OUTDIR tmp
 
-# RefSeq Releases 217 (480.5 GiB) (OLD)
-# - Viral and prokaryotic genomes of RefSeq release 217 and human genome (GRCh38.p14)
+3. GTDB (101 GiB)
+- GTDB 214.1 (Complete Genome/Chromosome, CheckM completeness > 90 and contamination < 5).
+- Database will be in OUT_DIR/gtdb 
+metabuli databases GTDB OUTDIR tmp
+
+4. RefSeq Releases 217 (480.5 GiB) (OLD)
+- Viral and prokaryotic genomes of RefSeq release 217 and human genome (GRCh38.p14)
 metabuli databases RefSeq_release OUTDIR tmp
 
-# GTDB (101 GiB)
-# - GTDB 214.1 (Complete Genome/Chromosome, CheckM completeness > 90 and contamination < 5).
-# - Database will be in OUT_DIR/gtdb 
-metabuli databases GTDB OUTDIR tmp
 
 
 ```
@@ -166,28 +167,36 @@ We tested it with a MacBook Air (2020, M1, 8 GiB), where we classified about 1.5
 
 ## Custom database
 To build a custom database, you need three things:
-1. **FASTA files** : Each sequence of your FASTA files must be separated by '>accession.version' like '>CP001849.1'.
+1. **FASTA files** : Each sequence of your FASTA files must be separated by '>accession.version' like '>CP001849.1'. The accession doesn't have to follow the NCBI format, but it must be unique and included in the accession2taxid file. 
 2. **accession2taxid** : Mapping from accession to taxonomy ID. The sequences whose accessions are not listed here will be skipped.
 3. **NCBI-style taxonomy dump** : 'names.dmp' , 'nodes.dmp', and 'merged.dmp' are required. The sequences whose taxonomy IDs are not included here will be skipped.
 
 The steps for building a database with NCBI or GTDB taxonomy are described below.
 
-### To build a database with NCBI taxonomy
+### Building a DB with NCBI taxonomy
 #### 1. Prepare taxonomy and accession2taxid
-  * accession2taxid can be downloaded from
-  https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/
-  
-  * Taxonomy dump files can be downloaded from 
-  https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/
-
-#### 2. Add to library
+  * Download `accession2taxid` from [here](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/).
+  * Download `taxdump` files from [here](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/).
+ 
+#### 2. Add your sequences to Metabuli library
+* If a custom sequence is to be included, edit `accession2taxid` and `taxdump` files properly as follows.
+    * `accession2taxid`
+      * For a sequence whose header is `>custom`, add `custom[tab]custom[tab]taxid[tab]anynumber`.
+      * As above, version number is not necessary.
+      * `taxid` must be included in the `nodes.dmp` and `names.dmp`.
+      * Put any number for the last column. It is not used in Metabuli.
+    * `taxdump`
+      * Edit `nodes.dmp` and `names.dmp` if you introduced a new `taxid` in `accession2taxid`.
 ```
 metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR>
 - FASTA list: A file containing absolute paths of each FASTA file.
 - accession2taxid: A path to NCBI-style accession2taxid.
 - DBDIR: Sequences will be stored in 'DBDIR/library'.
 
-** When resume is needed, remove the files in DBDIR/library and run the command again.
+* Option
+  --taxonomy-path: Directory of taxdump files. (DBDIR/taxonomy by default)
+
+* NOTE: When resume is needed, remove the files in DBDIR/library and run the command again.
 ```
 It groups your sequences into separate files according to their species.
 Accessions that are not included in the `<accession2taxid>` will be skipped and listed in `unmapped.txt`.
@@ -212,7 +221,7 @@ metabuli build <DBDIR> <LIB_FILES> <accession2taxid> [options]
 ```
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
 
-### To build a database with GTDB taxonomy
+### Building a DB with GTDB taxonomy
 #### 1. Prepare GTDB taxonomy and accession2taxid
 *Requirements*: 
 You need assembly FASTA files whose file name (or path) includes the assembly accession.
