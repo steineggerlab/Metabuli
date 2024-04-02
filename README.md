@@ -79,9 +79,6 @@ metabuli databases GTDB OUTDIR tmp
 4. RefSeq Releases 217 (480.5 GiB) (OLD)
 - Viral and prokaryotic genomes of RefSeq release 217 and human genome (GRCh38.p14)
 metabuli databases RefSeq_release OUTDIR tmp
-
-
-
 ```
 Downloaded files are stored in `OUTDIR/DB_NAME` directory, which can be provided for `classify` module as `DBDIR`.
 
