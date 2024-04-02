@@ -90,28 +90,28 @@ mkdir -p "${OUTDB}"
 
 #INPUT_TYPE=""
 case "${SELECTION}" in
-    "GTDB207")
-        if notExists "${TMP_PATH}/gtdb207+human.tar.gz"; then
-            downloadFile "https://metabuli.steineggerlab.workers.dev/gtdb207+human.tar.gz" "${TMP_PATH}/gtdb207+human.tar.gz"
+    "GTDB")
+        if notExists "${TMP_PATH}/gtdb.tar.gz"; then
+            downloadFile "https://metabuli.steineggerlab.workers.dev/gtdb.tar.gz" "${TMP_PATH}/gtdb.tar.gz"
         fi
-        tar zxvf "${TMP_PATH}/gtdb207+human.tar.gz" -C "${OUTDB}"
-       # push_back "${TMP_PATH}/gtdb207+human"
+        tar zxvf "${TMP_PATH}/gtdb.tar.gz" -C "${OUTDB}"
+       # push_back "${TMP_PATH}/gtdb"
        # INPUT_TYPE="METABULI_DB"
     ;;
     "RefSeq")
-        if notExists "${TMP_PATH}/refseq_complete_chromosome+human.tar.gz"; then
-            downloadFile "https://metabuli.steineggerlab.workers.dev/refseq_complete_chromosome+human.tar.gz" "${TMP_PATH}/refseq_complete_chromosome+human.tar.gz"
+        if notExists "${TMP_PATH}/refseq.tar.gz"; then
+            downloadFile "https://metabuli.steineggerlab.workers.dev/refseq.tar.gz" "${TMP_PATH}/refseq.tar.gz"
         fi
-        tar zxvf "${TMP_PATH}/refseq_complete_chromosome+human.tar.gz" -C "${OUTDB}"
-        # push_back "${TMP_PATH}/refseq_complete_chromosome+human"
+        tar zxvf "${TMP_PATH}/refseq.tar.gz" -C "${OUTDB}"
+        # push_back "${TMP_PATH}/refseq"
         # INPUT_TYPE="METABULI_DB"
     ;;
-   "RefSeq217")
-          if notExists "${TMP_PATH}/refseq_release217+human.tar.gz"; then
-              downloadFile "https://metabuli.steineggerlab.workers.dev/refseq_release217+human.tar.gz" "${TMP_PATH}/refseq_release217+human.tar.gz"
+   "RefSeq_release")
+          if notExists "${TMP_PATH}/refseq_release.tar.gz"; then
+              downloadFile "https://metabuli.steineggerlab.workers.dev/refseq_release.tar.gz" "${TMP_PATH}/refseq_release.tar.gz"
           fi
-          tar zxvf "${TMP_PATH}/refseq_release217+human.tar.gz" -C "${OUTDB}"
-         # push_back "${TMP_PATH}/refseq_release217+human"
+          tar zxvf "${TMP_PATH}/refseq_release.tar.gz" -C "${OUTDB}"
+         # push_back "${TMP_PATH}/refseq_release"
          # INPUT_TYPE="METABULI_DB"
     ;;
     "RefSeq_virus")
