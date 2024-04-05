@@ -68,7 +68,7 @@ metabuli databases RefSeq_virus OUT_DIR tmp
 
 2. RefSeq Prokaryote and Virus (115.6 GiB)
  - RefSeq prokaryote genomes (Complete Genome/Chromosome, 2024-03-26) + RefSeq Virus above.
- - Database will be in OUT_DIR/refseq
+ - Database will be in OUT_DIR/refseq_prokaryote_virus
 metabuli databases RefSeq OUTDIR tmp
 
 3. GTDB (101 GiB)
