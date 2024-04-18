@@ -1,3 +1,4 @@
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/metabuli/README.html)
 # Metabuli
 Metabuli is metagenomic classifier that jointly analyze both DNA and amino acid (AA) sequences.
 DNA-based classifiers can make specific classifications, exploiting point mutations to distinguish close taxa.
