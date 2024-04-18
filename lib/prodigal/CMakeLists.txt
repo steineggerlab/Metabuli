@@ -15,4 +15,5 @@ add_library(prodigal
         training.cpp
         training.h)
 
+set_source_files_properties(training.cpp PROPERTIES COMPILE_OPTIONS "-O0")
 set_target_properties(prodigal PROPERTIES COMPILE_FLAGS "${MMSEQS_CXX_FLAGS} -w" LINK_FLAGS "${MMSEQS_CXX_FLAGS} -w")
