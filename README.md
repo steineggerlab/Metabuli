@@ -6,9 +6,10 @@ AA-based classifiers have higher sensitivity in detecting homology between query
 Metabuli combines the information of both sequence types using a novel k-mer structure, _metamer_, to enable both specific and sensitive characterization of metagenomic samples.
 In addition, it can classify reads against a database of any size as long as it fits in the hard disk. 
 
-[Kim J and Steinegger M. Metabuli: sensitive and specific metagenomic classification via joint analysis of amino-acid and DNA. bioRxiv (2023)](https://www.biorxiv.org/content/10.1101/2023.05.31.543018v2).
-
-Presentation video from ISMB/ECCB 2023: [link](https://www.youtube.com/watch?v=vz2fuRcVwyk)
+For more details of Metabuli, please see
+[Nature Methods](https://www.nature.com/articles/s41592-024-02273-y), 
+[PDF](rdcu.be/dIrgm), 
+[bioRxiv](https://www.biorxiv.org/content/10.1101/2023.05.31.543018v2), or [ISMB 2023 talk](https://www.youtube.com/watch?v=vz2fuRcVwyk).
 
 <p align="center"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/marv_metabuli_small.png" height="350" /></p>
 
