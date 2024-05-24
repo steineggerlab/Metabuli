@@ -90,7 +90,7 @@ Downloaded files are stored in `OUTDIR/DB_NAME` directory, which can be provided
 ## Classification
 ```
 metabuli classify <i:FASTA> <i:DBDIR> <o:OUTDIR> <Job ID> [options]
-- INPUT : FASTA or FASTQ file (not compressed) of reads you want to classify. 
+- INPUT : FASTA or FASTQ file of reads you want to classify. 
 - DBDIR : The directory of reference DB. 
 - OUTDIR : The directory where the result files will be generated.
 - Job ID: It will be the prefix of result files.  
