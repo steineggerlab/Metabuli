@@ -535,7 +535,8 @@ void LocalParameters::parseParameters(int argc, const char *pargv[], const Comma
                             Debug(Debug::ERROR) << "Error in argument " << par[parIdx]->name << "\n";
                             EXIT(EXIT_FAILURE);
                         }else{
-                            *((size_t *) par[parIdx]->value) = atoi(pargv[argIdx+1]);
+                            *((size_t *) par[parIdx]->value) = strtoull(pargv[argIdx+1], nullptr, 10); //atoi(pargv[argIdx+1]);
+                            // std::cout << "Value: " << *((size_t *) par[parIdx]->value) << std::endl;
                             par[parIdx]->wasSet = true;
                         }
                         argIdx++;
