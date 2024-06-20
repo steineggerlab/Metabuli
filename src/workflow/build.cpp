@@ -11,7 +11,7 @@ void setDefaults_build(LocalParameters & par){
     par.splitNum = 4096;
     par.maskProb = 0.9;
     par.maskMode = 1;
-    par.bufferSize = 1'000'000'000;
+    par.bufferSize = 10'000'000'000;
     par.accessionLevel = 0;
     // Get current date
     time_t now = time(0);
