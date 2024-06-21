@@ -1,5 +1,6 @@
 #include "QueryFilter.h"
 #include "common.h"
+#include <unordered_map>
 
 QueryFilter::QueryFilter(LocalParameters & par) {
     // Load parameters

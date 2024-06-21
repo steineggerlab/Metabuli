@@ -7,6 +7,8 @@
 #include "KSeqWrapper.h"
 #include "LocalUtil.h"
 #include "Debug.h"
+#include "common.h"
+#include <unordered_map>
 
 struct QuerySplit {
     size_t start;

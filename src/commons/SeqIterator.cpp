@@ -318,7 +318,6 @@ void SeqIterator::fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuff
     int forOrRev;
     uint64_t tempKmer = 0;
     int checkN;
-
     for (uint8_t frame = 0; frame < 6; frame++) {
         uint32_t len = aaFrames[frame].size();
         forOrRev = frame / 3;
@@ -355,7 +354,6 @@ void SeqIterator::fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuff
             posToWrite++;
         }
     }
-    // cout << "posToWrite: " << posToWrite << endl;
 }
 
 void

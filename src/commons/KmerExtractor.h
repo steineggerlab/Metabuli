@@ -3,6 +3,8 @@
 #include "SeqIterator.h"
 #include "QueryIndexer.h"
 #include "KSeqWrapper.h"
+#include "common.h"
+#include <unordered_map>
 
 class KmerExtractor {
 private:
