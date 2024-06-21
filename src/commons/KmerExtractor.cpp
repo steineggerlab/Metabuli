@@ -1,4 +1,6 @@
 #include "KmerExtractor.h"
+#include "common.h"
+#include <unordered_map>
 
 KmerExtractor::KmerExtractor(const LocalParameters &par) {
     spaceNum = par.spaceMask.length() - 8;
@@ -76,7 +78,7 @@ void KmerExtractor::fillQueryKmerBufferParallel(KSeqWrapper *kseq1,
             processedQueryNum ++;
             count ++;
         }
-#pragma omp parallel default(none), shared(par, kmerBuffer, cout, processedQueryNum, queryList, currentQueryNum, currentSplit, count, reads1)
+#pragma omp parallel default(none), shared(par, kmerBuffer, cout, processedQueryNum, queryList, currentQueryNum, count, reads1)
         {
             SeqIterator seqIterator(par);
             size_t posToWrite;
@@ -165,8 +167,8 @@ void KmerExtractor::fillQueryKmerBufferParallel_paired(KSeqWrapper *kseq1,
             for (size_t i = 0; i < currentQueryNum; i ++) {
                 size_t queryIdx = processedQueryNum - currentQueryNum + i;
                 // Get k-mer count
-                auto kmerCnt = LocalUtil::getQueryKmerNumber<size_t>(reads1[i].length(), spaceNum);
-                auto kmerCnt2 = LocalUtil::getQueryKmerNumber<size_t>(reads2[i].length(), spaceNum);
+                int kmerCnt = LocalUtil::getQueryKmerNumber<int>(reads1[i].length(), spaceNum);
+                int kmerCnt2 = LocalUtil::getQueryKmerNumber<int>(reads2[i].length(), spaceNum);
 
                 // Ignore short read
                 if (kmerCnt2 < 1 || kmerCnt < 1) { continue; }

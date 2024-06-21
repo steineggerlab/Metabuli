@@ -1,5 +1,6 @@
 #ifndef ADCLASSIFIER2_COMMON_H
 #define ADCLASSIFIER2_COMMON_H
+#include <cstddef>
 #include <utility>
 #include "LocalParameters.h"
 #include "NcbiTaxonomy.h"
@@ -9,6 +10,13 @@
 #define unlikely(x) __builtin_expect((x),0)
 #define kmerLength 8
 
+struct KmerCnt {
+    KmerCnt(size_t length, size_t kmerCnt, size_t totalCnt) : length(length), kmerCnt(kmerCnt), totalCnt(totalCnt) {}
+    KmerCnt() : length(0), kmerCnt(0), totalCnt(0){}
+    size_t length;
+    size_t kmerCnt;
+    size_t totalCnt;
+};
 struct SequenceBlock{
     SequenceBlock(size_t start, size_t end, size_t length, size_t seqLength = 0)
             : start(start), end(end), length(length), seqLength(seqLength) {}

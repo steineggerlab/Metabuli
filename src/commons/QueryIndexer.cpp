@@ -47,12 +47,15 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
             readNum_1++;
             seqCnt++;
             totalReadLength += kseq->entry.sequence.l;
-            size_t currentKmerCnt = LocalUtil::getQueryKmerNumber<size_t>(kseq->entry.sequence.l, spaceNum);
-            kmerCnt += currentKmerCnt;
-        
+            int kmerCnt_int = LocalUtil::getQueryKmerNumber<int>(kseq->entry.sequence.l, spaceNum);
+            if (kmerCnt_int > 0) {
+                kmerCnt += (size_t) kmerCnt_int;  
+            } else {
+                continue;
+            }
             if (bytesPerKmer * kmerCnt + ((size_t) 200 * seqCnt) > availableRam) {
-                querySplits.emplace_back(start, readNum_1 - 1, kmerCnt - currentKmerCnt, seqCnt - 1);
-                kmerCnt = currentKmerCnt;
+                querySplits.emplace_back(start, readNum_1 - 1, kmerCnt - (size_t) kmerCnt_int, seqCnt - 1);
+                kmerCnt = (size_t) kmerCnt_int;
                 start = readNum_1 - 1;
                 seqCnt = 1;
             }
@@ -77,14 +80,15 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
         size_t seqCnt_1 = 0;
         size_t seqCnt_2 = 0;
         size_t start = 0;
-        size_t currentKmerCnt;
         bool end = false;
+        int kmerCnt_int_1;
+        int kmerCnt_int_2; 
         while(true) {
             if (kseq_1->ReadEntry()) {
                 readNum_1++;
                 seqCnt_1++;
                 totalReadLength += kseq_1->entry.sequence.l;
-                currentKmerCnt = LocalUtil::getQueryKmerNumber<size_t>(kseq_1->entry.sequence.l, spaceNum);
+                kmerCnt_int_1 = LocalUtil::getQueryKmerNumber<int>(kseq_1->entry.sequence.l, spaceNum);
             } else {
                 end = true;
             }
@@ -93,8 +97,7 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
                 readNum_2++;
                 seqCnt_2++;
                 totalReadLength += kseq_2->entry.sequence.l;
-                currentKmerCnt += LocalUtil::getQueryKmerNumber<size_t>(kseq_2->entry.sequence.l, spaceNum);
-                
+                kmerCnt_int_2 = LocalUtil::getQueryKmerNumber<int>(kseq_1->entry.sequence.l, spaceNum);                
             } else {
                 end = true;
             }
@@ -104,10 +107,15 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
                 EXIT(EXIT_FAILURE);
             }
 
-            kmerCnt += currentKmerCnt;
+            if (kmerCnt_int_1 > 0 && kmerCnt_int_2 > 0) {
+                kmerCnt += (size_t) kmerCnt_int_1 + (size_t) kmerCnt_int_2;
+            } else {
+                continue;
+            }
+
             if (bytesPerKmer * kmerCnt + ((size_t) 200 * seqCnt_1) > availableRam) {
-                querySplits.emplace_back(start, readNum_1 - 1, kmerCnt - currentKmerCnt, seqCnt_1 - 1);
-                kmerCnt = currentKmerCnt;
+                querySplits.emplace_back(start, readNum_1 - 1, kmerCnt - ((size_t) kmerCnt_int_1 + (size_t) kmerCnt_int_2), seqCnt_1 - 1);
+                kmerCnt = (size_t) kmerCnt_int_1 + (size_t) kmerCnt_int_2;
                 start = readNum_1 - 1;
                 seqCnt_1 = 1;
             }

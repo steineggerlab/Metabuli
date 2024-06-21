@@ -33,15 +33,7 @@ void LocalUtil::splitQueryFile(std::vector<SequenceBlock> & sequences, const std
     delete kseq;
 }
 
-int LocalUtil::getMaxCoveredLength(int queryLength) {
-    if (queryLength % 3 == 2) {
-        return queryLength - 2; 
-    } else if (queryLength % 3 == 1) {
-        return queryLength - 4; 
-    } else {
-        return queryLength - 3; 
-    }
-}
+
 
 int LocalUtil::getFirstWhiteSpacePos(const std::string &str) {
     for (size_t i = 0; i < str.size(); ++i) {
