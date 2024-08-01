@@ -20,14 +20,15 @@ SeqIterator::~SeqIterator() {
 SeqIterator::SeqIterator(const LocalParameters &par) {
 
     // Mask for spaced k-mer
-    size_t maskLen = par.spaceMask.length();
+    size_t maskLen = 8; // par.spaceMask.length();
     mask = new uint32_t[maskLen+1];
     mask_int = new int[maskLen+1];
     spaceNum = 0;
     spaceNum_int = 0;
+    string spaceMask = "11111111"; // par.spaceMask;
     for(size_t i = 0; i < maskLen; i++){
-        mask[i] = par.spaceMask[i] - 48;
-        mask_int[i] = par.spaceMask[i] - 48;
+        mask[i] = spaceMask[i] - 48;
+        mask_int[i] = spaceMask[i] - 48;
         spaceNum += (mask[i] == 0);
         spaceNum_int += (mask[i] == 0);
     }

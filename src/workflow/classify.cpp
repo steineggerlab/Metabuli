@@ -6,7 +6,7 @@
 
 void setClassifyDefaults(LocalParameters & par){
     par.reducedAA = 0;
-    par.spaceMask = "11111111";
+    // par.spaceMask = "11111111";
     par.seqMode = 2;    
     par.minScore = 0;
     par.minCoverage = 0;

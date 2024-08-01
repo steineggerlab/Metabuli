@@ -44,7 +44,7 @@ public:
     PARAMETER(REDUCED_AA)
     PARAMETER(MIN_SCORE)
     PARAMETER(MIN_COVERAGE)
-    PARAMETER(SPACED)
+    // PARAMETER(SPACED)
     PARAMETER(MIN_COVERED_POS)
     PARAMETER(HAMMING_MARGIN)
     PARAMETER(MIN_SP_SCORE)
@@ -94,7 +94,7 @@ public:
     int seqMode;
     int reducedAA;
     float minScore;
-    std::string spaceMask;
+    // std::string spaceMask;
     int minConsCnt;
     uint8_t hammingMargin;
     float minSpScore;
