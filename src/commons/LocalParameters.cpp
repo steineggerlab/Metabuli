@@ -293,7 +293,59 @@ LocalParameters::LocalParameters() :
                         (void *) &contamList,
                         "^.*$") 
   {
-    //add_to_library
+    // Initialize the parameters
+        // Superkingdom taxonomy id
+    virusTaxId = 10239;
+    bacteriaTaxId = 2;
+    archaeaTaxId = 2157;
+    eukaryotaTaxId = 2759;
+
+
+    // Classify
+    seqMode = 2;
+    reducedAA = 0;
+    minScore = 0;
+    minConsCnt = 4;
+    hammingMargin = 0;
+    minSpScore = 0;
+    minCoverage = 0;
+    ramUsage = 0;
+    minCoveredPos = 0;
+    printLog = 0;
+    maxGap = 0;
+    minConsCntEuk = 0;
+    matchPerKmer = 0;
+    minSSMatch = 0;
+    tieRatio = 0;
+
+    // Database creation
+    tinfoPath = "";
+    libraryPath = "";
+    taxonomyPath = "";
+    dbName = "";
+    dbDate = "";
+    splitNum = 0;
+    bufferSize = 0;
+    accessionLevel = 0;
+
+    // Test parameters
+    testRank = "";
+    testType = "";
+    printColumns = "";
+    readIdCol = 0;
+    taxidCol = 0;
+    scoreCol = 0;
+    coverageCol = 0;
+    cladeRank = "";
+    skipSecondary = 0;
+
+    // Add to library
+    assembly = false;
+
+    // Filter
+    printMode = 0;
+    contamList = "";
+
 
     // build
     build.push_back(&PARAM_THREADS);
