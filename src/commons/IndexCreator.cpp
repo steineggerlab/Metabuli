@@ -421,7 +421,7 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
             if (AminoAcidPart(kmerBuffer[uniqKmerIdx[j]].ADkmer) 
                 != AminoAcidPart(kmerBuffer[uniqKmerIdx[j + 1]].ADkmer)) {
                 splitList[splitCnt].ADkmer = kmerBuffer[uniqKmerIdx[j + 1]].ADkmer;
-                cout << splitList[splitCnt].ADkmer << endl;
+                // cout << splitList[splitCnt].ADkmer << endl;
                 splitCnt++;
                 break;
             }
@@ -464,7 +464,7 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     cout<<"written k-mer count: "<< write << endl;
 
     flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
-    printIndexSplitList(splitList);
+    // printIndexSplitList(splitList);
     fwrite(splitList, sizeof(DiffIdxSplit), par.splitNum, diffIdxSplitFile);
 
     free(diffIdxBuffer);
