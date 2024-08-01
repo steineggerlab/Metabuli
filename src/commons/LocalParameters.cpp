@@ -67,14 +67,14 @@ LocalParameters::LocalParameters() :
                      typeid(float),
                      (void *) &minCoverage,
                      "^0(\\.[0-9]+)?|1(\\.0+)?$"),
-        SPACED(SPACED_ID,
-               "--spacing-mask",
-               "Binary patterned mask for spaced k-mer.\nThe same mask must be used for DB creation and classification",
-               "Binary patterned mask for spaced k-mer. The same mask must be used for DB creation and classification.\n"
-               "A mask should contain at least eight '1's, and '0' means skip.",
-               typeid(std::string),
-               (void *) &spaceMask,
-               "^.*$"),
+        // SPACED(SPACED_ID,
+        //        "--spacing-mask",
+        //        "Binary patterned mask for spaced k-mer.\nThe same mask must be used for DB creation and classification",
+        //        "Binary patterned mask for spaced k-mer. The same mask must be used for DB creation and classification.\n"
+        //        "A mask should contain at least eight '1's, and '0' means skip.",
+        //        typeid(std::string),
+        //        (void *) &spaceMask,
+        //        "^.*$"),
         MIN_COVERED_POS(MIN_COVERED_POS_ID,
                         "--min-covered-pos",
                         "Minimum number of covered positions of a range",
@@ -340,7 +340,7 @@ LocalParameters::LocalParameters() :
     filter.push_back(&REDUCED_AA);
     filter.push_back(&MIN_SCORE);
     filter.push_back(&MIN_COVERAGE);
-    filter.push_back(&SPACED);
+    // filter.push_back(&SPACED);
     filter.push_back(&HAMMING_MARGIN);
     filter.push_back(&MIN_SP_SCORE);
     filter.push_back(&PARAM_V);

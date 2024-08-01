@@ -6,7 +6,7 @@
 
 void setDefaults_updateDB(LocalParameters & par){
     par.reducedAA = 0;
-    par.spaceMask = "11111111";
+    // par.spaceMask = "11111111";
     par.taxonomyPath = "" ;
 }
 

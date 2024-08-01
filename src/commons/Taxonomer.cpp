@@ -11,9 +11,10 @@
 
 Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxonomy(taxonomy) {
     // Parameters
-    auto mask = new uint32_t[par.spaceMask.length()];
-    for(size_t i = 0, j = 0; i < par.spaceMask.length(); i++){
-        mask[i] = par.spaceMask[i] - 48;
+    string spaceMask = "11111111";
+    auto mask = new uint32_t[spaceMask.length()];
+    for(size_t i = 0, j = 0; i < spaceMask.length(); i++){
+        mask[i] = spaceMask[i] - 48;
         spaceNum += (mask[i] == 0);
         if(mask[i] == 1){
             unmaskedPos[j] = (int) i;

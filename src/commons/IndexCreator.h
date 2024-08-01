@@ -44,7 +44,7 @@ private:
     int threadNum;
     size_t bufferSize;
     int reducedAA;
-    string spaceMask;
+    // string spaceMask;
     int accessionLevel;
     int lowComplexityMasking;
     float lowComplexityMaskingThreshold;
