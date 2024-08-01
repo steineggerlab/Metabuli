@@ -9,13 +9,14 @@ class LocalParameters : public Parameters {
 public:
     static const int DBTYPE_METABULI = 100;
 
-    static void initInstance() {
-        new LocalParameters;
-    }
+    // static void initInstance() {
+    //     new LocalParameters;
+    // }
 
+    LocalParameters();
     static LocalParameters& getLocalInstance() {
         if (instance == NULL) {
-            initInstance();
+            initParameterSingleton();
         }
         return static_cast<LocalParameters&>(LocalParameters::getInstance());
     }
@@ -144,7 +145,6 @@ public:
                         int outputFlags);
 
 private:
-    LocalParameters();
 
     LocalParameters(LocalParameters const&);
     ~LocalParameters() {};
