@@ -232,6 +232,19 @@ jobs:
           archiveType: tar
       - task: DownloadPipelineArtifact@1
         inputs:
+          artifactName: metabuli-win64
+          targetPath: $(Build.SourcesDirectory)
+      - script:
+          unzip "${BUILD_SOURCESDIRECTORY}/metabuli-win64.zip"
+          chmod +x metabuli/metabuli.bat metabuli/bin/*
+      - task: ArchiveFiles@2
+        inputs:
+          rootFolderOrFile: $(Build.SourcesDirectory)/metabuli
+          archiveFile: $(Build.SourcesDirectory)/metabuli-win64.zip
+          includeRootFolder: true
+          archiveType: tar
+      - task: DownloadPipelineArtifact@1
+        inputs:
           artifactName: metabuli-linux-SSE2
           targetPath: $(Build.SourcesDirectory)/metabuli/bin
       - script:
@@ -316,11 +329,13 @@ jobs:
              metabuli-osx-universal.tar.gz \
              metabuli-linux-sse2.tar.gz \
              metabuli-linux-avx2.tar.gz \
-             metabuli-linux-arm64.tar.gz
+             metabuli-linux-arm64.tar.gz \
+             metabuli-win64.zip
           curl --retry 5 --retry-all-errors -X POST \
             -F file[]=@metabuli-osx-universal.tar.gz -F signature[]=@metabuli-osx-universal.tar.gz.sig \
             -F file[]=@metabuli-linux-sse2.tar.gz -F signature[]=@metabuli-linux-sse2.tar.gz.sig \
             -F file[]=@metabuli-linux-avx2.tar.gz -F signature[]=@metabuli-linux-avx2.tar.gz.sig \
             -F file[]=@metabuli-linux-arm64.tar.gz -F signature[]=@metabuli-linux-arm64.tar.gz.sig \
+            -F file[]=@metabuli-win64.zip  -F signature[]=@metabuli-win64.zip.sig \
             -F identifier="metabuli" -F directory="${BUILD_SOURCEVERSION}" \
               https://mmseqs.com/upload
