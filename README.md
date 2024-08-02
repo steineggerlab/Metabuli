@@ -290,17 +290,10 @@ metabuli databases RefSeq_virus OUTDIR tmp
 ```
 
 #### 2. Download an RNA-seq result (SRR14484345)
-   Option 1. Download using SRA Toolkit 
-   ```
-   fasterq-dump --split-files SRR14484345
-   ```
-   Option 2. Download from web browser as FASTQ format
-   - link: https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&page_size=10&acc=SRR14484345&display=download
-   - If the donwnloaded file includes both R1 and R2, use following commands.
-``` 
-cat SRR14484345.fastq | paste - - - - - - - - | tee >(cut -f 1-4 | tr "\t" "\n" > SRR14484345_1.fq) | cut -f 5-8 | tr "\t" "\n" > SRR14484345_2.fq
-``` 
-
+```
+fasterq-dump --split-files SRR14484345
+```
+>- Download SRA Toolkit containing `fasterq-dump` [here](https://github.com/ncbi/sra-tools/wiki/02.-Installing-SRA-Toolkit)
 #### 3. Classify the reads using metabuli
    ```
    metabuli classify SRR14484345_1.fq SRR14484345_2.fq OUTDIR/refseq_virus RESULT_DIR JOB_ID --max-ram RAM_SIZE
