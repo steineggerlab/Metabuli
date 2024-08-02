@@ -97,7 +97,7 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
                 readNum_2++;
                 seqCnt_2++;
                 totalReadLength += kseq_2->entry.sequence.l;
-                kmerCnt_int_2 = LocalUtil::getQueryKmerNumber<int>(kseq_1->entry.sequence.l, spaceNum);                
+                kmerCnt_int_2 = LocalUtil::getQueryKmerNumber<int>(kseq_2->entry.sequence.l, spaceNum);                
             } else {
                 end = true;
             }
