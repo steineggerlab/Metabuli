@@ -235,7 +235,7 @@ jobs:
         inputs:
           artifactName: metabuli-win64
           targetPath: $(Build.SourcesDirectory)
-      - script:
+      - script: |
           unzip "${BUILD_SOURCESDIRECTORY}/metabuli-win64.zip"
           chmod +x metabuli/metabuli.bat metabuli/bin/*
       - task: ArchiveFiles@2
@@ -243,7 +243,7 @@ jobs:
           rootFolderOrFile: $(Build.SourcesDirectory)/metabuli
           archiveFile: $(Build.SourcesDirectory)/metabuli-win64.zip
           includeRootFolder: true
-          archiveType: tar
+          archiveType: zip
       - task: DownloadPipelineArtifact@1
         inputs:
           artifactName: metabuli-linux-SSE2
