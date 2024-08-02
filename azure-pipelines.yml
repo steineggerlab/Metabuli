@@ -179,7 +179,8 @@ jobs:
           busybox-standalone,^
           git,^
           binutils,^
-          wget
+          wget,^
+          bc
         displayName: Install Dependencies
       - script: |
           %CYGWIN_ROOT%\bin\bash.exe -cl "${BUILD_SOURCESDIRECTORY}/util/build_windows.sh $(cygpath ${BUILD_SOURCESDIRECTORY}) $(cygpath ${BUILD_SOURCESDIRECTORY}/build)"
