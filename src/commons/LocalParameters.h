@@ -9,13 +9,14 @@ class LocalParameters : public Parameters {
 public:
     static const int DBTYPE_METABULI = 100;
 
-    static void initInstance() {
-        new LocalParameters;
-    }
+    // static void initInstance() {
+    //     new LocalParameters;
+    // }
 
+    LocalParameters();
     static LocalParameters& getLocalInstance() {
         if (instance == NULL) {
-            initInstance();
+            initParameterSingleton();
         }
         return static_cast<LocalParameters&>(LocalParameters::getInstance());
     }
@@ -44,7 +45,7 @@ public:
     PARAMETER(REDUCED_AA)
     PARAMETER(MIN_SCORE)
     PARAMETER(MIN_COVERAGE)
-    PARAMETER(SPACED)
+    // PARAMETER(SPACED)
     PARAMETER(MIN_COVERED_POS)
     PARAMETER(HAMMING_MARGIN)
     PARAMETER(MIN_SP_SCORE)
@@ -94,7 +95,7 @@ public:
     int seqMode;
     int reducedAA;
     float minScore;
-    std::string spaceMask;
+    // std::string spaceMask;
     int minConsCnt;
     uint8_t hammingMargin;
     float minSpScore;
@@ -144,7 +145,6 @@ public:
                         int outputFlags);
 
 private:
-    LocalParameters();
 
     LocalParameters(LocalParameters const&);
     ~LocalParameters() {};

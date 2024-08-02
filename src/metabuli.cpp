@@ -20,9 +20,10 @@ bool hide_base_downloads = true;
 void (*validatorUpdate)(void) = 0;
 
 
-
+void initParameterSingleton() { new LocalParameters; }
 
 LocalParameters& localPar = LocalParameters::getLocalInstance();
+
 std::vector<Command> commands = {
         {"databases",            databases,            &localPar.databases,            COMMAND_DATABASE_CREATION,
                 "List and download databases",

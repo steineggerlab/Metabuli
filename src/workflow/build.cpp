@@ -6,7 +6,7 @@
 
 void setDefaults_build(LocalParameters & par){
     par.reducedAA = 0;
-    par.spaceMask = "11111111";
+    // par.spaceMask = "11111111";
     par.taxonomyPath = "" ;
     par.splitNum = 4096;
     par.maskProb = 0.9;

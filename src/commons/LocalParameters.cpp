@@ -67,14 +67,14 @@ LocalParameters::LocalParameters() :
                      typeid(float),
                      (void *) &minCoverage,
                      "^0(\\.[0-9]+)?|1(\\.0+)?$"),
-        SPACED(SPACED_ID,
-               "--spacing-mask",
-               "Binary patterned mask for spaced k-mer.\nThe same mask must be used for DB creation and classification",
-               "Binary patterned mask for spaced k-mer. The same mask must be used for DB creation and classification.\n"
-               "A mask should contain at least eight '1's, and '0' means skip.",
-               typeid(std::string),
-               (void *) &spaceMask,
-               "^.*$"),
+        // SPACED(SPACED_ID,
+        //        "--spacing-mask",
+        //        "Binary patterned mask for spaced k-mer.\nThe same mask must be used for DB creation and classification",
+        //        "Binary patterned mask for spaced k-mer. The same mask must be used for DB creation and classification.\n"
+        //        "A mask should contain at least eight '1's, and '0' means skip.",
+        //        typeid(std::string),
+        //        (void *) &spaceMask,
+        //        "^.*$"),
         MIN_COVERED_POS(MIN_COVERED_POS_ID,
                         "--min-covered-pos",
                         "Minimum number of covered positions of a range",
@@ -293,7 +293,59 @@ LocalParameters::LocalParameters() :
                         (void *) &contamList,
                         "^.*$") 
   {
-    //add_to_library
+    // Initialize the parameters
+        // Superkingdom taxonomy id
+    virusTaxId = 10239;
+    bacteriaTaxId = 2;
+    archaeaTaxId = 2157;
+    eukaryotaTaxId = 2759;
+
+
+    // Classify
+    seqMode = 2;
+    reducedAA = 0;
+    minScore = 0;
+    minConsCnt = 4;
+    hammingMargin = 0;
+    minSpScore = 0;
+    minCoverage = 0;
+    ramUsage = 0;
+    minCoveredPos = 0;
+    printLog = 0;
+    maxGap = 0;
+    minConsCntEuk = 0;
+    matchPerKmer = 0;
+    minSSMatch = 0;
+    tieRatio = 0;
+
+    // Database creation
+    tinfoPath = "";
+    libraryPath = "";
+    taxonomyPath = "";
+    dbName = "";
+    dbDate = "";
+    splitNum = 0;
+    bufferSize = 0;
+    accessionLevel = 0;
+
+    // Test parameters
+    testRank = "";
+    testType = "";
+    printColumns = "";
+    readIdCol = 0;
+    taxidCol = 0;
+    scoreCol = 0;
+    coverageCol = 0;
+    cladeRank = "";
+    skipSecondary = 0;
+
+    // Add to library
+    assembly = false;
+
+    // Filter
+    printMode = 0;
+    contamList = "";
+
 
     // build
     build.push_back(&PARAM_THREADS);
@@ -340,7 +392,7 @@ LocalParameters::LocalParameters() :
     filter.push_back(&REDUCED_AA);
     filter.push_back(&MIN_SCORE);
     filter.push_back(&MIN_COVERAGE);
-    filter.push_back(&SPACED);
+    // filter.push_back(&SPACED);
     filter.push_back(&HAMMING_MARGIN);
     filter.push_back(&MIN_SP_SCORE);
     filter.push_back(&PARAM_V);

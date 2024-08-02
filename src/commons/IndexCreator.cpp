@@ -16,7 +16,7 @@ IndexCreator::IndexCreator(const LocalParameters & par) {
     threadNum = par.threads;
     bufferSize = par.bufferSize;
     reducedAA = par.reducedAA;
-    spaceMask = par.spaceMask;
+    // spaceMask = par.spaceMask;
     accessionLevel = par.accessionLevel;
     lowComplexityMasking = par.maskMode;
     lowComplexityMaskingThreshold = par.maskProb;
@@ -421,7 +421,7 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
             if (AminoAcidPart(kmerBuffer[uniqKmerIdx[j]].ADkmer) 
                 != AminoAcidPart(kmerBuffer[uniqKmerIdx[j + 1]].ADkmer)) {
                 splitList[splitCnt].ADkmer = kmerBuffer[uniqKmerIdx[j + 1]].ADkmer;
-                cout << splitList[splitCnt].ADkmer << endl;
+                // cout << splitList[splitCnt].ADkmer << endl;
                 splitCnt++;
                 break;
             }
@@ -464,7 +464,7 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & k
     cout<<"written k-mer count: "<< write << endl;
 
     flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
-    printIndexSplitList(splitList);
+    // printIndexSplitList(splitList);
     fwrite(splitList, sizeof(DiffIdxSplit), par.splitNum, diffIdxSplitFile);
 
     free(diffIdxBuffer);
@@ -1054,7 +1054,7 @@ void IndexCreator::writeDbParameters() {
     fprintf(handle, "Creation_date\t%s\n", dbDate.c_str());
     fprintf(handle, "Metabuli commit used to create the DB\t%s\n", version);
     fprintf(handle, "Reduced_alphabet\t%d\n", reducedAA);
-    fprintf(handle, "Spaced_kmer_mask\t%s\n", spaceMask.c_str());
+    // fprintf(handle, "Spaced_kmer_mask\t%s\n", spaceMask.c_str());
     fprintf(handle, "Accession_level\t%d\n", accessionLevel);
     fprintf(handle, "Mask_mode\t%d\n", lowComplexityMasking);
     fprintf(handle, "Mask_prob\t%f\n", lowComplexityMaskingThreshold);

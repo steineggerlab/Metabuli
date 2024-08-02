@@ -15,7 +15,7 @@ QueryIndexer::QueryIndexer(const LocalParameters & par) {
     threads = par.threads;
     // bytesPerKmer = sizeof(QueryKmer) + matchPerKmer * sizeof(Match);
     // std::cout << "bytesPerKmer: " << bytesPerKmer << "\n";
-    spaceNum = par.spaceMask.length() - kmerLength;
+    spaceNum = 0; // par.spaceMask.length() - kmerLength;
     totalReadLength = 0;
 
     setAvailableRam();
