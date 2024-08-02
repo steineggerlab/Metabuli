@@ -15,6 +15,9 @@ Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic 
 
 <p align="center"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/marv_metabuli_small.png" height="350" /></p>
 
+## Update in v1.0.6
+- Windows OS is supported.
+
 ## Update in v1.0.4
 - Fixed a minor reproducibility issue.
 - Fixed a performance-harming bug occurring with sequences containing lowercased bases.
