@@ -280,8 +280,9 @@ This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some
 
 
 ## Example
+> The example here was detecting SARS-CoV-2 variant-specific reads, but has changed since the pre-built DB no longer contains the variant genomes.
 
-Classifying RNA-seq reads from a COVID-19 patient to identify the culprit variant.
+Classifying RNA-seq reads from a COVID-19 patient.
 The whole process must take less than 10 mins using a personal machine.
 
 #### 1. Download RefSeq Virus DB (1.5 GiB)
@@ -293,7 +294,7 @@ metabuli databases RefSeq_virus OUTDIR tmp
 ```
 fasterq-dump --split-files SRR14484345
 ```
->- Download SRA Toolkit containing `fasterq-dump` [here](https://github.com/ncbi/sra-tools/wiki/02.-Installing-SRA-Toolkit)
+> Download SRA Toolkit containing `fasterq-dump` [here](https://github.com/ncbi/sra-tools/wiki/02.-Installing-SRA-Toolkit)
 #### 3. Classify the reads using metabuli
    ```
    metabuli classify SRR14484345_1.fq SRR14484345_2.fq OUTDIR/refseq_virus RESULT_DIR JOB_ID --max-ram RAM_SIZE
@@ -301,10 +302,6 @@ fasterq-dump --split-files SRR14484345
 #### 4. Check RESULT_DIR/JOB_ID_report.tsv
   Find a section like the example below
   ```
-  92.1796 510194  489403  no rank 2697049 Severe acute respiratory syndrome coronavirus 2
-  3.4290  18979 18979 subspecies  3000001   SARS-CoV-2 beta
-  0.2488  1377  1377  subspecies  3000003   SARS-CoV-2 gamma
-  0.0459  254   254   subspecies  3000000   SARS-CoV-2 alpha
-  0.0284  157   157   subspecies  3000004   SARS-CoV-2 omicron
-  0.0043  24    24    subspecies  3000002   SARS-CoV-2 delta
+  92.2331 510490  442     species 694009  Severe acute respiratory syndrome-related coronavirus
+  92.1433 509993  509993  no rank 2697049 Severe acute respiratory syndrome coronavirus 2
   ```
