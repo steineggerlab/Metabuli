@@ -17,6 +17,7 @@ Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic 
 
 ## Update in v1.0.6
 - Windows OS is supported.
+> We found Metabuli is too slow with Windows OS. Currently making it faster.
 
 ## Update in v1.0.4
 - Fixed a minor reproducibility issue.
