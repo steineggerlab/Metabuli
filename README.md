@@ -113,8 +113,6 @@ metabuli classify --seq-mode 3 read.fna dbdir outdir jobid
    --min-score : The minimum score to be classified 
    --min-sp-score : The minimum score to be classified at or below species rank. 
    --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
-   --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids. 
-                  Give the same value used for DB creation.
    --accession-level : Set 1 to use accession level classification (0 by default). 
                        It is available when the DB is also built with accession level taxonomy.
 ```
@@ -217,10 +215,8 @@ metabuli build <DBDIR> <LIB_FILES> <accession2taxid> [options]
 - accession2taxid : A path to NCBI-style accession2taxid.
   
   * Options
-   --threads : The number of CPU-cores used (all by default)
+   --threads : The number of threads used (all by default)
    --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
-   --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids.
-   --spacing-mask : Binary mask for spaced metamer. The same mask must be used for DB creation and classification. A mask should contain at least eight '1's, and '0' means skip.
    --accession-level : Set 1 to use accession level taxonomy (0 by default).
 ```
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
