@@ -45,6 +45,13 @@ struct MatchPath {
 
 };
 
+struct MatchBlock {
+    MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) {}
+    MatchBlock() : start(0), end(0), id(0) {}
+    size_t start;
+    size_t end;
+    uint32_t id;
+};
 
 class Taxonomer {
 private:
@@ -67,18 +74,12 @@ private:
     // Internal
     int denominator;
 
-    struct MatchBlock {
-        MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) {}
-        MatchBlock() : start(0), end(0), id(0) {}
-        size_t start;
-        size_t end;
-        uint32_t id;
-    };
+
 
 
 
     // Output
-    unordered_map<TaxID, unsigned int> taxCounts;
+   unordered_map<TaxID, unsigned int> taxCounts;
 
 
 public:

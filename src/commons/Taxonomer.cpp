@@ -97,12 +97,11 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
     speciesMatches.reserve(end - offset + 1);
     TaxonScore speciesScore(0, 0, 0, 0, 0);
     speciesScore = getBestSpeciesMatches(speciesMatches,
-                                            matchList,
-                                            end,
-                                            offset,                        
-                                            queryList[currentQuery].queryLength + queryList[currentQuery].queryLength2);
+                                         matchList,
+                                         end,
+                                         offset,                        
+                                         queryList[currentQuery].queryLength + queryList[currentQuery].queryLength2);
     
-
     // If there is no proper species for current query, it is un-classified.
     if (speciesScore.score == 0 || speciesScore.score < par.minScore) {
         queryList[currentQuery].isClassified = false;
@@ -128,18 +127,18 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
     unordered_map<TaxID, unsigned int> taxCnt;
     filterRedundantMatches(speciesMatches, taxCnt);
     for (auto & tax : taxCnt) {
-        queryList[currentQuery].taxCnt[tax.first] = tax.second;    
+      queryList[currentQuery].taxCnt[tax.first] = tax.second;    
     }
     
     // If score is not enough, classify to the parent of the selected species
     if (speciesScore.score < par.minSpScore) {
-        queryList[currentQuery].isClassified = true;
-        queryList[currentQuery].classification = taxonomy->taxonNode(
-                taxonomy->getTaxIdAtRank(speciesScore.taxId, "species"))->parentTaxId;
-        queryList[currentQuery].score = speciesScore.score;
-        queryList[currentQuery].coverage = speciesScore.coverage;
-        queryList[currentQuery].hammingDist = speciesScore.hammingDist;
-        return;
+      queryList[currentQuery].isClassified = true;
+      queryList[currentQuery].classification = taxonomy->taxonNode(
+              taxonomy->getTaxIdAtRank(speciesScore.taxId, "species"))->parentTaxId;
+      queryList[currentQuery].score = speciesScore.score;
+      queryList[currentQuery].coverage = speciesScore.coverage;
+      queryList[currentQuery].hammingDist = speciesScore.hammingDist;
+      return;
     }
 
     // Lower rank classification

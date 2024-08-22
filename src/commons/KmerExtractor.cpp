@@ -58,7 +58,7 @@ void KmerExtractor::fillQueryKmerBufferParallel(KSeqWrapper *kseq,
  
     // Reserve memory for each read of the chunk for each thread
     std::vector<std::vector<string>> chunkReads_thread(par.threads);
-    for (size_t i = 0; i < par.threads; ++i) {
+    for (int i = 0; i < par.threads; ++i) {
         chunkReads_thread[i].resize(chunkSize);
         for (size_t j = 0; j < chunkSize; ++j) {
             chunkReads_thread[i][j].reserve(readLength);
@@ -66,7 +66,7 @@ void KmerExtractor::fillQueryKmerBufferParallel(KSeqWrapper *kseq,
     }
 
     // Initialize atomic variable for active tasks
-    std::vector<std::atomic<bool>> busyThreads(par.threads);
+    std::vector<atomic<bool>> busyThreads(par.threads);
     for (size_t i = 0; i < par.threads; ++i) {
         busyThreads[i].store(false);
     }
@@ -290,103 +290,3 @@ chunkSize, chunkReads1_thread, chunkReads2_thread, busyThreads, cout)
         delete[] maskedSeq2;
     }
 }
-    
-
-
-// void KmerExtractor::fillQueryKmerBufferParallel_paired2(KSeqWrapper *kseq1,
-//                                                        KSeqWrapper *kseq2,
-//                                                        QueryKmerBuffer &kmerBuffer,
-//                                                        vector<Query> &queryList,
-//                                                        const QuerySplit &currentSplit,
-//                                                        const LocalParameters &par) {
-//     size_t processedQueryNum = 0;
-
-//     // Array to store reads of thread number
-//     vector<string> reads1(par.threads);
-//     vector<string> reads2(par.threads);
-
-//     while (processedQueryNum < currentSplit.readCnt) {
-//         size_t currentQueryNum = min(currentSplit.readCnt - processedQueryNum, (size_t) par.threads);
-//         size_t count = 0;
-
-//         // Fill reads in sequential
-//         while (count < currentQueryNum) {
-//             // Read query
-//             kseq1->ReadEntry();
-//             kseq2->ReadEntry();
-//             const KSeqWrapper::KSeqEntry & e1 = kseq1->entry;
-//             const KSeqWrapper::KSeqEntry & e2 = kseq2->entry;
-
-//             // Get k-mer count
-//             int kmerCnt = LocalUtil::getQueryKmerNumber<int>((int) e1.sequence.l, spaceNum);
-//             int kmerCnt2 = LocalUtil::getQueryKmerNumber<int>((int) e2.sequence.l, spaceNum);
-
-//             // Query Info
-//             queryList[processedQueryNum].queryLength = LocalUtil::getMaxCoveredLength((int) e1.sequence.l);
-//             queryList[processedQueryNum].queryLength2 = LocalUtil::getMaxCoveredLength((int) e2.sequence.l);
-//             queryList[processedQueryNum].name = string(e1.name.s);
-//             queryList[processedQueryNum].kmerCnt = (int) (kmerCnt + kmerCnt2);
-
-//             // Store reads
-//             reads1[count] = string(kseq1->entry.sequence.s);
-//             reads2[count] = string(kseq2->entry.sequence.s);
-
-//             processedQueryNum ++;
-//             count ++;
-//         }
-
-//         // Process reads in parallel
-// #pragma omp parallel default(none), shared(par, kmerBuffer, cout, processedQueryNum, queryList, currentQueryNum, currentSplit, count, reads1, reads2)
-//         {
-//             size_t posToWrite;
-//             size_t readLength = 1000;
-//             char *maskedSeq1 = new char[readLength];
-//             char *maskedSeq2 = new char[readLength];
-//             char *seq1 = nullptr;
-//             char *seq2 = nullptr;            
-// #pragma omp for schedule(dynamic, 1)
-//             for (size_t i = 0; i < currentQueryNum; i ++) {
-//                 size_t queryIdx = processedQueryNum - currentQueryNum + i;
-//                 // Get k-mer count
-//                 int kmerCnt = LocalUtil::getQueryKmerNumber<int>(reads1[i].length(), spaceNum);
-//                 int kmerCnt2 = LocalUtil::getQueryKmerNumber<int>(reads2[i].length(), spaceNum);
-
-//                 // Ignore short read
-//                 if (kmerCnt2 < 1 || kmerCnt < 1) { continue; }
-
-//                 // Get masked sequence
-//                 if (maskMode) {
-//                     if (readLength < reads1[i].length() + 1 || readLength < reads2[i].length() + 1) {
-//                         readLength = max(reads1[i].length() + 1, reads2[i].length() + 1);
-//                         delete[] maskedSeq1;
-//                         delete[] maskedSeq2;
-//                         maskedSeq1 = new char[readLength];
-//                         maskedSeq2 = new char[readLength];
-//                     }
-//                     SeqIterator::maskLowComplexityRegions(reads1[i].c_str(),maskedSeq1, *probMatrix, maskProb, subMat);
-//                     SeqIterator::maskLowComplexityRegions(reads2[i].c_str(),maskedSeq2, *probMatrix, maskProb, subMat);
-//                     seq1 = maskedSeq1;
-//                     seq2 = maskedSeq2;
-//                 } else {
-//                     seq1 = const_cast<char *>(reads1[i].c_str());
-//                     seq2 = const_cast<char *>(reads2[i].c_str());
-//                 }
-
-//                 posToWrite = kmerBuffer.reserveMemory(kmerCnt + kmerCnt2);
-
-//                 // Process Read 1
-//                 seqIterator->sixFrameTranslation(seq1, (int) reads1[i].length());
-//                 seqIterator->fillQueryKmerBuffer(seq1, (int) reads1[i].length(), kmerBuffer, posToWrite,
-//                                                 (uint32_t) queryIdx);
-
-//                 // Process Read 2
-//                 seqIterator->sixFrameTranslation(seq2, (int) reads2[i].length());
-//                 seqIterator->fillQueryKmerBuffer(seq2, (int) reads2[i].length(), kmerBuffer, posToWrite,
-//                                                  (uint32_t) queryIdx, queryList[queryIdx].queryLength+3);
-//             }
-//             delete[] maskedSeq1;
-//             delete[] maskedSeq2;
-//         }
-//     }
-// }
-

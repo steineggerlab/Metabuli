@@ -5,6 +5,7 @@
 #include "KSeqWrapper.h"
 #include "common.h"
 #include <unordered_map>
+#include <atomic>
 
 class KmerExtractor {
 private:
@@ -31,14 +32,7 @@ private:
                                             vector<Query> &queryList,
                                             const QuerySplit & currentSplit,
                                             const LocalParameters &par);
-
-    void fillQueryKmerBufferParallel_paired2(KSeqWrapper* kseq1,
-                                            KSeqWrapper* kseq2,
-                                            QueryKmerBuffer &kmerBuffer,
-                                            vector<Query> &queryList,
-                                            const QuerySplit & currentSplit,
-                                            const LocalParameters &par);                                        
-
+                                      
 public:
     explicit KmerExtractor(const LocalParameters & par);
     ~KmerExtractor();
