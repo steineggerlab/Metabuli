@@ -38,12 +38,20 @@ Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxon
     }
 
     // Reserve memoory for internal containers
-    speciesMatches.reserve(1000);
-    curFrameMatches.reserve(1000);
-    matchPaths.reserve(1000);
-    maxSpecies.reserve(1000);
-    curPosMatches.reserve(1000);
-    nextPosMatches.reserve(1000);
+    speciesMatches.reserve(4096);
+    curFrameMatches.reserve(4096);
+    matchPaths.reserve(4096);
+    maxSpecies.reserve(4096);
+    curPosMatches.reserve(4096);
+    nextPosMatches.reserve(4096);
+    
+    species2score.reserve(4096);
+    species2matchPaths.reserve(4096);
+    speciesMatchRange.reserve(4096);
+    taxCnt.reserve(4096);
+    cladeCnt.reserve(4096);
+    used.reserve(4096);
+    idx2depthScore.reserve(4096);    
 }
 
 Taxonomer::~Taxonomer() {
@@ -135,7 +143,7 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
     }
 
     // Filter redundant matches
-    unordered_map<TaxID, unsigned int> taxCnt;
+    taxCnt.clear();
     filterRedundantMatches(speciesMatches, taxCnt);
     for (auto & tax : taxCnt) {
       queryList[currentQuery].taxCnt[tax.first] = tax.second;    
@@ -195,7 +203,7 @@ void Taxonomer::filterRedundantMatches(vector<Match> & speciesMatches,
 
 TaxID Taxonomer::lowerRankClassification(const unordered_map<TaxID, unsigned int> & taxCnt, TaxID spTaxId, int queryLength) {
     unsigned int maxCnt = (queryLength - 1)/denominator + 1;
-    unordered_map<TaxID, TaxonCounts> cladeCnt;
+    cladeCnt.clear();
     getSpeciesCladeCounts(taxCnt, cladeCnt, spTaxId);
     if (accessionLevel == 2) { // Don't do accession-level classification
         // Remove leaf nodes
@@ -262,13 +270,13 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> & speciesMatches,
                                             size_t end,
                                             size_t offset,
                                             int queryLength) {
-    TaxonScore bestScore;
     matchPaths.clear();
-    unordered_map<TaxID, float> species2score;
-    unordered_map<TaxID, vector<MatchPath>> species2matchPaths;
+    species2score.clear();
+    species2matchPaths.clear();
+    speciesMatchRange.clear();
+    
+    TaxonScore bestScore;
     float bestSpScore = 0;
-    unordered_map<TaxID, pair<size_t, size_t>> speciesMatchRange;
-
     size_t i = offset;
     while (i  < end + 1) {
         TaxID currentSpecies = matchList[i].speciesId;
@@ -501,9 +509,9 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
     if (taxonomy->IsAncestor(eukaryotaTaxId, speciesId)) {
         MIN_DEPTH = minConsCntEuk - 1;
     }
-    unordered_set<const Match *> used;
-    unordered_map<const Match *, depthScore> idx2depthScore;
-    
+
+    used.clear();
+    idx2depthScore.clear();
     for (const auto& entry : linkedMatches) {
         if (!used.count(entry.first)) {
             used.insert(entry.first);

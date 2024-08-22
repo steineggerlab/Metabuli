@@ -75,18 +75,25 @@ private:
     int denominator;
     vector<Match> speciesMatches;
 
+    // chooseBestTaxon
+    unordered_map<TaxID, unsigned int> taxCnt;
+
     // getBestSpeciesMatches
     vector<const Match *> curFrameMatches;
     vector<MatchPath> matchPaths;
     vector<TaxID> maxSpecies;
+    unordered_map<TaxID, float> species2score;
+    unordered_map<TaxID, vector<MatchPath>> species2matchPaths;
+    unordered_map<TaxID, pair<size_t, size_t>> speciesMatchRange;
 
     // remainConsecutiveMatches
     vector<const Match *> curPosMatches;
     vector<const Match *> nextPosMatches;
+    unordered_set<const Match *> used;
+    unordered_map<const Match *, depthScore> idx2depthScore;
 
-
-
-
+    // lowerRankClassification
+    unordered_map<TaxID, TaxonCounts> cladeCnt;
 
     // Output
    unordered_map<TaxID, unsigned int> taxCounts;
