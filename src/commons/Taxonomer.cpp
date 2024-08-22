@@ -143,11 +143,11 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
     }
 
     // Filter redundant matches
-    taxCnt.clear();
-    filterRedundantMatches(speciesMatches, taxCnt);
-    for (auto & tax : taxCnt) {
-      queryList[currentQuery].taxCnt[tax.first] = tax.second;    
-    }
+    // taxCnt.clear();
+    // filterRedundantMatches(speciesMatches, taxCnt);
+    // for (auto & tax : taxCnt) {
+    //   queryList[currentQuery].taxCnt[tax.first] = tax.second;    
+    // }
     
     // If score is not enough, classify to the parent of the selected species
     if (speciesScore.score < par.minSpScore) {
@@ -162,8 +162,8 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
 
     // Lower rank classification
     // TaxID result = lowerRankClassification(taxCnt,
-    //                                      speciesScore.taxId,
-    //                                       queryList[currentQuery].queryLength + queryList[currentQuery].queryLength2);
+    //                                        speciesScore.taxId,
+    //                                        queryList[currentQuery].queryLength + queryList[currentQuery].queryLength2);
     
     TaxID result = speciesScore.taxId;
 
