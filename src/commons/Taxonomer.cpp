@@ -161,9 +161,11 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
     }
 
     // Lower rank classification
-    TaxID result = lowerRankClassification(taxCnt,
-                                         speciesScore.taxId,
-                                          queryList[currentQuery].queryLength + queryList[currentQuery].queryLength2);
+    // TaxID result = lowerRankClassification(taxCnt,
+    //                                      speciesScore.taxId,
+    //                                       queryList[currentQuery].queryLength + queryList[currentQuery].queryLength2);
+    
+    TaxID result = speciesScore.taxId;
 
     // Store classification results
     queryList[currentQuery].isClassified = true;
