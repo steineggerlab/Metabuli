@@ -73,6 +73,16 @@ private:
 
     // Internal
     int denominator;
+    vector<Match> speciesMatches;
+
+    // getBestSpeciesMatches
+    vector<const Match *> curFrameMatches;
+    vector<MatchPath> matchPaths;
+    vector<TaxID> maxSpecies;
+
+    // remainConsecutiveMatches
+    vector<const Match *> curPosMatches;
+    vector<const Match *> nextPosMatches;
 
 
 
@@ -85,6 +95,7 @@ private:
 public:
     Taxonomer(const LocalParameters & par, NcbiTaxonomy * taxonomy);
     ~Taxonomer();
+
 
     void assignTaxonomy(const Match *matchList,
                         size_t numOfMatches,
