@@ -27,6 +27,18 @@ struct SequenceBlock{
     size_t seqLength;
 };
 
+typedef struct PredictedBlock {
+    PredictedBlock(int start, int end, int strand) : start(start), end(end), strand(strand) {}
+
+    void printPredictedBlock() {
+        std::cout << strand << " " << start << " " << end << std::endl;
+    }
+
+    int start;
+    int end;
+    int strand; //true for forward
+} PredictedBlock;
+
 struct Query{
     int queryId;
     int classification;

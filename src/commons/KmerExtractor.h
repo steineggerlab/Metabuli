@@ -8,6 +8,7 @@
 
 class KmerExtractor {
 private:
+    SeqIterator * seqIterator;
     // Parameters
     int spaceNum;
     int maskMode;
@@ -30,6 +31,13 @@ private:
                                             vector<Query> &queryList,
                                             const QuerySplit & currentSplit,
                                             const LocalParameters &par);
+
+    void fillQueryKmerBufferParallel_paired2(KSeqWrapper* kseq1,
+                                            KSeqWrapper* kseq2,
+                                            QueryKmerBuffer &kmerBuffer,
+                                            vector<Query> &queryList,
+                                            const QuerySplit & currentSplit,
+                                            const LocalParameters &par);                                        
 
 public:
     explicit KmerExtractor(const LocalParameters & par);

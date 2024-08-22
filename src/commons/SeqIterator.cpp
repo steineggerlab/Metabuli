@@ -10,8 +10,6 @@ const string SeqIterator::iRCT = "..............................................
                                  "................................................................"
                                  "................................................................";
 
-
-
 SeqIterator::~SeqIterator() {
     delete[] mask;
     delete[] mask_int;
@@ -255,7 +253,7 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
 }
 
 // It translates a DNA sequence to amino acid sequences with six frames
-void SeqIterator::sixFrameTranslation(const char *seq, int len) {
+void SeqIterator::sixFrameTranslation(const char *seq, int len, vector<int> *aaFrames) {
     for (int i = 0; i < 6; i++) { aaFrames[i].clear(); }
 
     size_t end = len - 1;
@@ -314,8 +312,15 @@ void SeqIterator::sixFrameTranslation(const char *seq, int len) {
     }
 }
 
-void SeqIterator::fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite, uint32_t seqID,
-                                 uint32_t offset) {
+void SeqIterator::fillQueryKmerBuffer(
+    const char *seq,
+    int seqLen, 
+    QueryKmerBuffer &kmerBuffer, 
+    size_t &posToWrite, 
+    uint32_t seqID, 
+    vector<int> *aaFrames,
+    uint32_t offset) 
+    {
     int forOrRev;
     uint64_t tempKmer = 0;
     int checkN;
@@ -386,18 +391,18 @@ SeqIterator::addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev,
     }
 }
 
-bool SeqIterator::translateBlock(const char *seq, PredictedBlock block) {
-    aaFrames[0].clear();
-    if(aaFrames->capacity() < strlen(seq) / 3 + 1) {
-        aaFrames->reserve(strlen(seq) / 3 + 1);
+bool SeqIterator::translateBlock(const char *seq, PredictedBlock block, vector<int> & aaSeq) {
+    aaSeq.clear();
+    if(aaSeq.capacity() < strlen(seq) / 3 + 1) {
+        aaSeq.reserve(strlen(seq) / 3 + 1);
     }
     if (block.strand == 1) {
         for (int i = block.start; i + 2 <= block.end; i = i + 3) {
-            aaFrames[0].push_back(nuc2aa[nuc2int(atcg[seq[i]])][nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])]);
+            aaSeq.push_back(nuc2aa[nuc2int(atcg[seq[i]])][nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])]);
         }
     } else {
         for (int i = block.end; i >= (int) block.start + 2; i = i - 3) {
-            aaFrames[0].push_back(nuc2aa[nuc2int(iRCT[atcg[seq[i]]])][nuc2int(iRCT[atcg[seq[i - 1]]])][
+            aaSeq.push_back(nuc2aa[nuc2int(iRCT[atcg[seq[i]]])][nuc2int(iRCT[atcg[seq[i - 1]]])][
                                           nuc2int(iRCT[atcg[seq[i - 2]]])]);
         }
     }
@@ -427,19 +432,19 @@ char *SeqIterator::reverseCompliment(char *read, size_t length) const {
 // It extracts kmers from amino acid sequence with DNA information and fill the kmerBuffer with them.
 int
 SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock &block, const char *seq, TargetKmerBuffer &kmerBuffer,
-                                         size_t &posToWrite, int seqID, int taxIdAtRank) {
+                                         size_t &posToWrite, int seqID, int taxIdAtRank, const vector<int> & aaSeq) {
     uint64_t tempKmer = 0;
-    int len = (int) aaFrames[0].size();
+    int len = (int) aaSeq.size();
     int checkN;
     for (int kmerCnt = 0; kmerCnt < len - kmerLength - spaceNum_int + 1; kmerCnt++) {
         tempKmer = 0;
         checkN = 0;
         for (uint32_t i = 0, j = 0; i < kmerLength + spaceNum; i++, j += mask[i]) {
-            if (-1 == aaFrames[0][kmerCnt + i]) {
+            if (-1 == aaSeq[kmerCnt + i]) {
                 checkN = 1;
                 break;
             }
-            tempKmer += aaFrames[0][kmerCnt + i] * powers[j] * mask[i];
+            tempKmer += aaSeq[kmerCnt + i] * powers[j] * mask[i];
         }
         if (checkN == 1) {
             kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0, false};
@@ -485,227 +490,6 @@ size_t SeqIterator::getNumOfKmerForBlock(const PredictedBlock &block) {
     return len / 3 - 7;
 }
 
-// It makes the blocks for translation
-// Each block has a predicted gene part and an intergenic region. When another gene shows up, new block starts.
-void SeqIterator::getExtendedORFs(struct _gene *genes, struct _node *nodes, vector<PredictedBlock> &blocks,
-                                       size_t numOfGene, size_t length,
-                                       size_t &blockIdx, vector<uint64_t> &intergenicKmerList, const char *seq) {
-
-    //Exceptional case 1: 0 prdicted gene
-    if (numOfGene == 0) {
-        blocks.emplace_back(0, length - 1, 1);
-        blockIdx++;
-        return;
-    }
-
-    //Exceptional case 2: Only 1 prdicted gene
-    int frame;
-    int rightEnd = 0;
-    int leftEnd = 0;
-    if (numOfGene == 1) {
-        if (nodes[genes[0].start_ndx].strand == 1) { //forward
-            frame = (genes[0].begin - 1) % 3;
-            leftEnd = 0;
-            while (leftEnd % 3 != frame) leftEnd++; // y - (y - x) % 3 .. which would be faster?
-            blocks.emplace_back(leftEnd, length - 1, 1);
-            blockIdx++;
-        } else { //reverse
-            frame = (genes[0].end - 1) % 3;
-            rightEnd = length - 1;
-            while (rightEnd % 3 != frame) rightEnd--;
-            blocks.emplace_back(0, rightEnd, -1);
-            blockIdx++;
-        }
-        return;
-    }
-
-
-    /* Main routine */
-
-    bool hasBeenExtendedToLeft = false;
-    int k = 23;
-    char *newIntergenicKmer = (char *) malloc(sizeof(char) * (k + 1));
-    char *leftKmer = (char *) malloc(sizeof(char) * (k + 1));
-    char *rightKmer = (char *) malloc(sizeof(char) * (k + 1));
-    char *leftKmerReverse = (char *) malloc(sizeof(char) * (k + 1));
-    char *rightKmerReverse = (char *) malloc(sizeof(char) * (k + 1));
-    bool isReverse = false;
-    uint64_t leftKmerHash = 0, rightKmerHash = 0;
-
-
-    // Extend the first gene to cover intergenic regions
-    if (nodes[genes[0].start_ndx].strand == 1) { //forward
-        frame = (genes[0].begin - 1) % 3;
-        leftEnd = 0;
-        while (leftEnd % 3 != frame) leftEnd++;
-        blocks.emplace_back(leftEnd, genes[1].begin - 1 + 22, 1);
-        blockIdx++;
-    } else {
-        frame = (genes[0].end - 1) % 3;
-        rightEnd = genes[1].begin - 1 + 22;
-        while (rightEnd % 3 != frame) rightEnd--;
-        blocks.emplace_back(0, rightEnd, -1);
-        blockIdx++;
-    }
-
-    // From the second gene to the second last gene
-    for (size_t geneIdx = 1; geneIdx < numOfGene - 1; geneIdx++) {
-        isReverse = false;
-
-        // Make two k-mer hash; each from left and right of current gene. They are used for choosing extension direction.
-        strncpy(leftKmer, seq + genes[geneIdx].begin - 1 - k, k);
-        strncpy(rightKmer, seq + genes[geneIdx].end, k);
-        if (nodes[genes[geneIdx].start_ndx].strand == 1) {
-            leftKmerHash = XXH64(leftKmer, k, 0);
-            rightKmerHash = XXH64(rightKmer, k, 0);
-        } else {
-            isReverse = true;
-            for (int j = k - 1; j >= 0; j--) {
-                leftKmerReverse[k - j - 1] = iRCT[leftKmer[j]];
-                rightKmerReverse[k - j - 1] = iRCT[rightKmer[j]];
-            }
-            leftKmerHash = XXH64(leftKmerReverse, k, 0);
-            rightKmerHash = XXH64(rightKmerReverse, k, 0);
-        }
-
-        // Extend genes to cover intergenic regions
-        if (find(intergenicKmerList.begin(), intergenicKmerList.end(), leftKmerHash) !=
-            intergenicKmerList.end()) { //Extension to left
-            if (!hasBeenExtendedToLeft) {
-                if (!isReverse) { // Forward
-                    blocks.emplace_back(genes[geneIdx].begin - 1, genes[geneIdx].end - 1, 1);
-                    blockIdx++;
-                } else { // Reverse
-                    blocks.emplace_back(genes[geneIdx].begin - 1, genes[geneIdx].end - 1, -1);
-                    blockIdx++;
-                }
-            } else {
-                if (!isReverse) { //forward
-                    frame = (genes[geneIdx].begin - 1) % 3;
-                    leftEnd = genes[geneIdx - 1].end -1 -22;
-                    while (leftEnd % 3 != frame) leftEnd++;
-                    blocks.emplace_back(leftEnd, genes[geneIdx].end - 1, 1);
-                    blockIdx++;
-                } else { // reverse
-                    blocks.emplace_back(genes[geneIdx - 1].end - 22 - 1, genes[geneIdx].end - 1, -1);
-                    blockIdx++;
-                }
-            }
-            hasBeenExtendedToLeft = true;
-        } else { // Extension to right
-            if (hasBeenExtendedToLeft) {
-                if (!isReverse) { //forward
-                    frame = (genes[geneIdx].begin - 1) % 3;
-                    leftEnd = genes[geneIdx - 1].end - 1 - 22;
-                    while (leftEnd % 3 != frame) leftEnd++;
-                    blocks.emplace_back(leftEnd, genes[geneIdx + 1].begin - 1 + 22, 1);
-                    blockIdx++;
-                } else {
-                    frame = (genes[geneIdx].end - 1) % 3;
-                    rightEnd = genes[geneIdx + 1].begin - 1 + 22;
-                    while (rightEnd % 3 != frame) rightEnd--;
-                    blocks.emplace_back(genes[geneIdx - 1].end - 1 - 22, rightEnd, -1);
-                    blockIdx++;
-                }
-            } else {
-                if (!isReverse) { //forward
-                    blocks.emplace_back(genes[geneIdx].begin - 1, genes[geneIdx + 1].begin - 1 + 22, 1);
-                    blockIdx++;
-                } else {
-                    frame = (genes[geneIdx].end - 1) % 3;
-                    rightEnd = genes[geneIdx + 1].begin - 1 + 22;
-                    while (rightEnd % 3 != frame) rightEnd--;
-                    blocks.emplace_back(genes[geneIdx].begin - 1, rightEnd, -1);
-                    blockIdx++;
-                }
-            }
-            hasBeenExtendedToLeft = false;
-
-            if (find(intergenicKmerList.begin(), intergenicKmerList.end(), rightKmerHash) == intergenicKmerList.end()) {
-                intergenicKmerList.push_back(rightKmerHash);
-            }
-        }
-    }
-
-    // // For the last gene
-    // // Extend to the end of the genome
-    // isReverse = !(nodes[genes[numOfGene - 1].start_ndx].strand == 1);    
-    // rightEnd = length - 1;
-    // if (isReverse) {
-    //     frame = (genes[numOfGene - 1].end - 1) % 3;
-    //     while (rightEnd % 3 != frame) rightEnd--;
-    // }
-    // // If left region is not covered, cover it.
-    // leftEnd = genes[numOfGene - 1].begin - 1;
-    // if (hasBeenExtendedToLeft) {
-    //     leftEnd = genes[numOfGene - 2].end - 1 - 22;
-    //     if (!isReverse) {
-    //         frame = (genes[numOfGene - 1].begin - 1) % 3;
-    //         while (leftEnd % 3 != frame) leftEnd++;
-    //     }
-    // }
-    // blocks.emplace_back(leftEnd, rightEnd, isReverse ? -1 : 1);
-    // if (find(intergenicKmerList.begin(), intergenicKmerList.end(), rightKmerHash) == intergenicKmerList.end()) {
-    //         intergenicKmerList.push_back(rightKmerHash);
-    // }
-
-    //For the last gene
-    if (find(intergenicKmerList.begin(), intergenicKmerList.end(), leftKmerHash) !=
-        intergenicKmerList.end()) { //extension to left
-        if (!isReverse) { //forward
-            frame = (genes[numOfGene - 1].begin - 1) % 3;
-            leftEnd = genes[numOfGene - 2].end - 1 - 22;
-            while (leftEnd % 3 != frame) leftEnd++;
-            blocks.emplace_back(leftEnd, length - 1, 1);
-            blockIdx++;
-        } else { // reverse
-            frame = (genes[numOfGene - 1].end - 1) % 3;
-            rightEnd = length - 1;
-            while (rightEnd % 3 != frame) rightEnd--;
-            blocks.emplace_back(genes[numOfGene - 2].end - 22 - 1, rightEnd, -1);
-            blockIdx++;
-        }
-    } else { //extension to right
-        if (hasBeenExtendedToLeft) {
-            if (!isReverse) { //forward
-                frame = (genes[numOfGene - 1].begin - 1) % 3;
-                leftEnd = genes[numOfGene - 2].end - 1 - 22;
-                while (leftEnd % 3 != frame) leftEnd++;
-                blocks.emplace_back(leftEnd, length - 1, 1);
-                blockIdx++;
-            } else {
-                frame = (genes[numOfGene - 1].end - 1) % 3;
-                rightEnd = length - 1;
-                while (rightEnd % 3 != frame) rightEnd--;
-                blocks.emplace_back(genes[numOfGene - 2].end - 22 - 1, rightEnd, -1);
-                blockIdx++;
-            }
-        } else {
-            if (!isReverse) {
-                blocks.emplace_back(genes[numOfGene - 1].begin, length - 1, 1);
-                blockIdx++;
-            } else {
-                frame = (genes[numOfGene - 1].end - 1) % 3;
-                rightEnd = length - 1;
-                while (rightEnd % 3 != frame) rightEnd--;
-                blocks.emplace_back(genes[numOfGene - 1].begin - 1, rightEnd, -1);
-                blockIdx++;
-            }
-        }
-
-        //If current intergenic sequences is new, update intergenicKmerList.
-        if (find(intergenicKmerList.begin(), intergenicKmerList.end(), rightKmerHash) == intergenicKmerList.end()) {
-            intergenicKmerList.push_back(rightKmerHash);
-        }
-    }
-
-
-    free(newIntergenicKmer);
-    free(leftKmer);
-    free(rightKmer);
-    free(leftKmerReverse);
-    free(rightKmerReverse);
-}
 
 bool SeqIterator::compareMinHashList(priority_queue <uint64_t> list1, priority_queue <uint64_t> &list2, size_t length1,
                                      size_t length2) {
