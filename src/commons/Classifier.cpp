@@ -194,6 +194,7 @@ void Classifier::assignTaxonomy(const Match *matchList,
     for (size_t i = 0; i < seqNum; i++) {
         ++taxCounts[queryList[i].classification];
     }
+    
     delete[] matchBlocks;
     cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
 

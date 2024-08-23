@@ -471,8 +471,7 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
                 }
             }
             // Update curPosMatches and nextPosMatches
-            curPosMatches = nextPosMatches;
-            nextPosMatches.clear();
+            curPosMatches = std::move(nextPosMatches);
             currPos = nextPos;
         }
     } else {
@@ -499,8 +498,7 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
 
             }
             // Update curPosMatches and nextPosMatches
-            curPosMatches = nextPosMatches;
-            nextPosMatches.clear();
+            curPosMatches = std::move(nextPosMatches);
             currPos = nextPos;
         }
     }
