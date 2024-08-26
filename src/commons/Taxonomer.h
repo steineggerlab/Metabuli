@@ -89,6 +89,9 @@ private:
     // remainConsecutiveMatches
     vector<const Match *> curPosMatches;
     vector<const Match *> nextPosMatches;
+    vector<const Match *> linkedMatchKeys;
+    vector<const Match *> linkedMatchValues;
+    vector<size_t> linkedMatchValuesIdx;
     unordered_set<const Match *> used;
     unordered_map<const Match *, depthScore> idx2depthScore;
 
@@ -97,6 +100,16 @@ private:
 
     // Output
    unordered_map<TaxID, unsigned int> taxCounts;
+
+   depthScore DFS(const vector<const Match *> &matches,
+                                         const Match *curMatch,
+                                         const vector<const Match *> &linkedMatchesKeys,
+                                         const vector<const Match *> &linkedMatchesValues,
+                                         const vector<size_t> &linkedMatchesIndices,
+                                         size_t depth, size_t MIN_DEPTH,
+                                         unordered_set<const Match *> &used,
+                                         unordered_map<const Match *, depthScore> &match2depthScore,
+                                         float score, int hammingDist);
 
 
 public:
@@ -134,12 +147,6 @@ public:
 
     void filterRedundantMatches(vector<Match> & speciesMatches,
                                 unordered_map<TaxID, unsigned int> & taxCnt);
-
-    depthScore DFS(const vector<const Match *> &matches, const Match * curMatchIdx,
-                   const map<const Match *, vector<const Match *>> &linkedMatches,
-                   size_t depth, size_t MIN_DEPTH, unordered_set<const Match *> &used,
-                   unordered_map<const Match *, depthScore> &match2depthScore,
-                   float score, int hammingDist);
 
     static bool isConsecutive(const Match * match1, const Match * match2);
 
