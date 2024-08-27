@@ -87,8 +87,6 @@ private:
     vector<float> speciesScores;
 
     // remainConsecutiveMatches
-    vector<const Match *> curPosMatches;
-    vector<const Match *> nextPosMatches;
     vector<const Match *> linkedMatchKeys;
     vector<const Match *> linkedMatchValues;
     vector<size_t> linkedMatchValuesIdx;

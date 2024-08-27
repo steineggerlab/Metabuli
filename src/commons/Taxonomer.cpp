@@ -52,8 +52,6 @@ Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxon
     speciesScores.reserve(4096);
 
     // remainConsecutiveMatches
-    curPosMatches.reserve(4096);
-    nextPosMatches.reserve(4096);
     linkedMatchKeys.reserve(4096);
     linkedMatchValues.reserve(4096);
     linkedMatchValuesIdx.reserve(4096);
@@ -455,8 +453,6 @@ void Taxonomer::remainConsecutiveMatches(const Match * matchList,
                                          vector<MatchPath> & matchPaths,
                                          TaxID speciesId) {
     size_t i = start;
-    curPosMatches.clear();
-    nextPosMatches.clear();
     linkedMatchKeys.clear();
     linkedMatchValues.clear();
     linkedMatchValuesIdx.clear();
@@ -464,70 +460,82 @@ void Taxonomer::remainConsecutiveMatches(const Match * matchList,
     size_t currPos = matchList[start].qInfo.pos;
     uint64_t frame = matchList[start].qInfo.frame;
     if (frame < 3) { // Forward frame
-        while ( i < end && matchList[i].qInfo.pos == currPos) {
-            curPosMatches.emplace_back(matchList + i);
-            i++;
+        size_t curPosMatchStart = i;        
+        while (i < end && matchList[i].qInfo.pos == currPos) {
+            ++ i;
         }
+        size_t curPosMatchEnd = i; // exclusive
+
         while (i < end) {
             uint32_t nextPos = matchList[i].qInfo.pos;
+            size_t nextPosMatchStart = i;
             while (i < end  && nextPos == matchList[i].qInfo.pos) {
-                nextPosMatches.emplace_back(matchList + i);
                 ++ i;
             }
+            size_t nextPosMatchEnd = i; // exclusive
+
             // Check if current position and next position are consecutive
             if (currPos + 3 == nextPos) {
                 // Compare curPosMatches and nextPosMatches
-                for (auto &curPosMatch: curPosMatches) {
+                for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++curIdx) {
                     size_t startIdx = linkedMatchValues.size();
                     bool found = false;
-                    for (auto &nextPosMatch: nextPosMatches) {
-                        if (isConsecutive(curPosMatch, nextPosMatch)){
-                            linkedMatchValues.push_back(nextPosMatch);
+                    for (size_t nextIdx = nextPosMatchStart; nextIdx < nextPosMatchEnd; nextIdx++) {
+                        if (isConsecutive(matchList + curIdx, matchList + nextIdx)){
+                            linkedMatchValues.push_back(matchList + nextIdx);
                             found = true;
                         }
                     }
                     if (found) {
-                        linkedMatchKeys.push_back(curPosMatch);
+                        linkedMatchKeys.push_back(matchList + curIdx);
                         linkedMatchValuesIdx.push_back(startIdx);
                     }
                 }
             }
             // Update curPosMatches and nextPosMatches
-            curPosMatches = std::move(nextPosMatches);
+            curPosMatchStart = nextPosMatchStart;
+            curPosMatchEnd = nextPosMatchEnd;
             currPos = nextPos;
         }
     } else {
+        size_t curPosMatchStart = i;
+
         while ( i < end && matchList[i].qInfo.pos == currPos) {
             curPosMatches.emplace_back(matchList + i);
             i++;
         }
+        size_t curPosMatchEnd = i; // exclusive
+
         while (i < end) {
             uint32_t nextPos = matchList[i].qInfo.pos;
+            size_t nextPosMatchStart = i;
             while (i < end  && nextPos == matchList[i].qInfo.pos) {
                 nextPosMatches.emplace_back(matchList + i);
                 ++ i;
             }
+            size_t nextPosMatchEnd = i; // exclusive
+
             // Check if current position and next position are consecutive
             if (currPos + 3 == nextPos) {
                 // Compare curPosMatches and nextPosMatches
-                for (auto &curPosMatch: curPosMatches) {
+                for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++curIdx) {
                     size_t startIdx = linkedMatchValues.size();
                     bool found = false;
-                    for (auto &nextPosMatch: nextPosMatches) {
-                        if (isConsecutive(nextPosMatch, curPosMatch)){
-                            linkedMatchValues.push_back(nextPosMatch);
+                    for (size_t nextIdx = nextPosMatchStart; nextIdx < nextPosMatchEnd; nextIdx++) {
+                        if (isConsecutive(matchList + nextIdx, matchList + curIdx)){
+                            linkedMatchValues.push_back(matchList + nextIdx);
                             found = true;
                         }
                     }
                     if (found) {
-                        linkedMatchKeys.push_back(curPosMatch);
+                        linkedMatchKeys.push_back(matchList + curIdx);
                         linkedMatchValuesIdx.push_back(startIdx);
                     }
                 }
-
             }
             // Update curPosMatches and nextPosMatches
-            curPosMatches = std::move(nextPosMatches);
+            curPosMatchStart = nextPosMatchStart;
+            curPosMatchEnd = nextPosMatchEnd;
             currPos = nextPos;
         }
     }
