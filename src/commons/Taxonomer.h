@@ -78,7 +78,6 @@ private:
     unordered_map<TaxID, unsigned int> taxCnt;
 
     // getBestSpeciesMatches
-    vector<const Match *> curFrameMatches;
     vector<MatchPath> matchPaths;
     vector<MatchPath> combinedMatchPaths;
     vector<TaxID> maxSpecies;
@@ -101,8 +100,7 @@ private:
     // Output
     unordered_map<TaxID, unsigned int> taxCounts;
 
-    depthScore DFS(const vector<const Match *> &matches,
-                   const Match *curMatch,
+    depthScore DFS(const Match *curMatch,
                    const vector<const Match *> &linkedMatchesKeys,
                    const vector<const Match *> &linkedMatchesValues,
                    const vector<size_t> &linkedMatchesIndices,
@@ -127,9 +125,11 @@ public:
                          vector<Query> & queryList,
                          const LocalParameters &par);
 
-    void remainConsecutiveMatches(const vector<const Match *> & curFrameMatches,
+    void remainConsecutiveMatches(const Match * matchList,
+                                  size_t start,
+                                  size_t end,
                                   vector<MatchPath> & matchPaths,
-                                  TaxID speciesID);
+                                  TaxID speciesId);
     
     float combineMatchPaths(vector<MatchPath> & matchPaths,
                             size_t matchPathStart,

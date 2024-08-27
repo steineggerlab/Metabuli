@@ -43,7 +43,6 @@ Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxon
 
     // getBestSpeciesMatches
     speciesMatches.reserve(4096);
-    curFrameMatches.reserve(4096);
     matchPaths.reserve(4096);
     combinedMatchPaths.reserve(4096);
     maxSpecies.reserve(4096);
@@ -304,14 +303,13 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match * > & speciesMatc
         // For current species
         while ((i < end + 1) && currentSpecies == matchList[i].speciesId) {
             uint8_t curFrame = matchList[i].qInfo.frame;
-            curFrameMatches.clear();
+            size_t start = i;
             // For current frame
             while ((i < end + 1) && currentSpecies == matchList[i].speciesId && curFrame == matchList[i].qInfo.frame) {
-                curFrameMatches.push_back(&matchList[i]);
                 i ++;
             }
-            if (curFrameMatches.size() > 1) {
-                remainConsecutiveMatches(curFrameMatches, matchPaths, currentSpecies);
+            if (i - start >= minConsCnt) {
+                remainConsecutiveMatches(matchList, start, i, matchPaths, currentSpecies);
             }
         }
         size_t pathSize = matchPaths.size();
@@ -451,28 +449,29 @@ void Taxonomer::trimMatchPath(MatchPath & path1, const MatchPath & path2, int ov
     }
 }
 
-void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameMatches,
+void Taxonomer::remainConsecutiveMatches(const Match * matchList,
+                                         size_t start,
+                                         size_t end,
                                          vector<MatchPath> & matchPaths,
                                          TaxID speciesId) {
-    size_t i = 0;
-    size_t end = curFrameMatches.size();
+    size_t i = start;
     curPosMatches.clear();
     nextPosMatches.clear();
     linkedMatchKeys.clear();
     linkedMatchValues.clear();
     linkedMatchValuesIdx.clear();
 
-    size_t currPos = curFrameMatches[0]->qInfo.pos;
-    uint64_t frame = curFrameMatches[0]->qInfo.frame;
+    size_t currPos = matchList[start].qInfo.pos;
+    uint64_t frame = matchList[start].qInfo.frame;
     if (frame < 3) { // Forward frame
-        while ( i < end && curFrameMatches[i]->qInfo.pos == currPos) {
-            curPosMatches.emplace_back(curFrameMatches[i]);
+        while ( i < end && matchList[i].qInfo.pos == currPos) {
+            curPosMatches.emplace_back(matchList + i);
             i++;
         }
         while (i < end) {
-            uint32_t nextPos = curFrameMatches[i]->qInfo.pos;
-            while (i < end  && nextPos == curFrameMatches[i]->qInfo.pos) {
-                nextPosMatches.emplace_back(curFrameMatches[i]);
+            uint32_t nextPos = matchList[i].qInfo.pos;
+            while (i < end  && nextPos == matchList[i].qInfo.pos) {
+                nextPosMatches.emplace_back(matchList + i);
                 ++ i;
             }
             // Check if current position and next position are consecutive
@@ -485,7 +484,6 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
                         if (isConsecutive(curPosMatch, nextPosMatch)){
                             linkedMatchValues.push_back(nextPosMatch);
                             found = true;
-                            // linkedMatches[curPosMatch].push_back(nextPosMatch);
                         }
                     }
                     if (found) {
@@ -499,14 +497,14 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
             currPos = nextPos;
         }
     } else {
-        while ( i < end && curFrameMatches[i]->qInfo.pos == currPos) {
-            curPosMatches.emplace_back(curFrameMatches[i]);
+        while ( i < end && matchList[i].qInfo.pos == currPos) {
+            curPosMatches.emplace_back(matchList + i);
             i++;
         }
         while (i < end) {
-            uint32_t nextPos = curFrameMatches[i]->qInfo.pos;
-            while (i < end  && nextPos == curFrameMatches[i]->qInfo.pos) {
-                nextPosMatches.emplace_back(curFrameMatches[i]);
+            uint32_t nextPos = matchList[i].qInfo.pos;
+            while (i < end  && nextPos == matchList[i].qInfo.pos) {
+                nextPosMatches.emplace_back(matchList + i);
                 ++ i;
             }
             // Check if current position and next position are consecutive
@@ -519,7 +517,6 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
                         if (isConsecutive(nextPosMatch, curPosMatch)){
                             linkedMatchValues.push_back(nextPosMatch);
                             found = true;
-                            // linkedMatches[curPosMatch].push_back(nextPosMatch);
                         }
                     }
                     if (found) {
@@ -552,8 +549,7 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
         if (match2depthScore.find(key) == match2depthScore.end()) {
             depthScore bestPath{};
             for (size_t j = startIdx; j < endIdx; j++) {
-                depthScore curPath = DFS(curFrameMatches,
-                                         linkedMatchValues[j],
+                depthScore curPath = DFS(linkedMatchValues[j],
                                          linkedMatchKeys,
                                          linkedMatchValues,
                                          linkedMatchValuesIdx,
@@ -579,7 +575,6 @@ void Taxonomer::remainConsecutiveMatches(const vector<const Match *> & curFrameM
 }
 
 depthScore Taxonomer::DFS(
-    const vector<const Match *> &matches,
     const Match *curMatch,
     const vector<const Match *> &linkedMatchesKeys,
     const vector<const Match *> &linkedMatchesValues,
@@ -624,7 +619,7 @@ depthScore Taxonomer::DFS(
                                            returnDepthScore.hammingDist + hammingDist + lastEndHamming,
                                            returnDepthScore.endMatch);
             } else {
-                curDepthScore = DFS(matches, nextMatch, linkedMatchesKeys, linkedMatchesValues, linkedMatchesIndices, depth, MIN_DEPTH, match2depthScore, score, hammingDist + lastEndHamming);
+                curDepthScore = DFS(nextMatch, linkedMatchesKeys, linkedMatchesValues, linkedMatchesIndices, depth, MIN_DEPTH, match2depthScore, score, hammingDist + lastEndHamming);
             }
             if (curDepthScore.score > bestDepthScore.score && curDepthScore.depth > MIN_DEPTH) {
                 bestDepthScore = curDepthScore;
