@@ -90,6 +90,7 @@ private:
     vector<const Match *> curPosMatches;
     vector<const Match *> nextPosMatches;
     vector<const Match *> linkedMatchKeys;
+    unordered_set<const Match *> linkedMatchKeySet;
     vector<const Match *> linkedMatchValues;
     vector<size_t> linkedMatchValuesIdx;
     unordered_set<const Match *> used;
@@ -104,6 +105,7 @@ private:
    depthScore DFS(const vector<const Match *> &matches,
                                          const Match *curMatch,
                                          const vector<const Match *> &linkedMatchesKeys,
+                                         const unordered_set<const Match *> &linkedMatchKeySet,
                                          const vector<const Match *> &linkedMatchesValues,
                                          const vector<size_t> &linkedMatchesIndices,
                                          size_t depth, size_t MIN_DEPTH,

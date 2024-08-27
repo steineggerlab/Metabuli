@@ -175,7 +175,6 @@ void Classifier::assignTaxonomy(const Match *matchList,
         matchBlocks[blockIdx].end = matchIdx - 1;
         blockIdx++;
     }
-    cout << "Time spent for spliting matches: " << double(time(nullptr) - beforeAnalyze) << endl;
     // Process each block
 #pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqNum, queryList, blockIdx, par)
     {
