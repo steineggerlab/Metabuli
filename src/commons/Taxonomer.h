@@ -93,30 +93,27 @@ private:
     vector<const Match *> linkedMatchKeys;
     vector<const Match *> linkedMatchValues;
     vector<size_t> linkedMatchValuesIdx;
-    unordered_set<const Match *> used;
-    unordered_map<const Match *, depthScore> idx2depthScore;
+    unordered_map<const Match *, depthScore> match2depthScore;
 
     // lowerRankClassification
     unordered_map<TaxID, TaxonCounts> cladeCnt;
 
     // Output
-   unordered_map<TaxID, unsigned int> taxCounts;
+    unordered_map<TaxID, unsigned int> taxCounts;
 
-   depthScore DFS(const vector<const Match *> &matches,
-                  const Match *curMatch,
-                  const vector<const Match *> &linkedMatchesKeys,
-                  const vector<const Match *> &linkedMatchesValues,
-                  const vector<size_t> &linkedMatchesIndices,
-                  size_t depth, size_t MIN_DEPTH,
-                  unordered_set<const Match *> &used,
-                  unordered_map<const Match *, depthScore> &match2depthScore,
-                  float score, int hammingDist);
+    depthScore DFS(const vector<const Match *> &matches,
+                   const Match *curMatch,
+                   const vector<const Match *> &linkedMatchesKeys,
+                   const vector<const Match *> &linkedMatchesValues,
+                   const vector<size_t> &linkedMatchesIndices,
+                   size_t depth, size_t MIN_DEPTH,
+                   unordered_map<const Match *, depthScore> &match2depthScore,
+                   float score, int hammingDist);
 
 
 public:
     Taxonomer(const LocalParameters & par, NcbiTaxonomy * taxonomy);
     ~Taxonomer();
-
 
     void assignTaxonomy(const Match *matchList,
                         size_t numOfMatches,
