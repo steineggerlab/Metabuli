@@ -200,16 +200,16 @@ void Taxonomer::filterRedundantMatches(vector<const Match *> & speciesMatches,
     size_t matchNum = speciesMatches.size();
     for (size_t i = 0; i < matchNum;) {
         size_t currQuotient = speciesMatches[i]->qInfo.pos / 3;
-        uint8_t minHamming = speciesMatches[i].hamming;
-        Match minHammingMatch = speciesMatches[i];
+        uint8_t minHamming = speciesMatches[i]->hamming;
+        Match minHammingMatch = *speciesMatches[i];
         TaxID minHammingTaxId = minHammingMatch.targetId;
-        while ((i < matchNum) && (currQuotient == speciesMatches[i].qInfo.pos / 3)) {
-            if (speciesMatches[i].hamming < minHamming) {
-                minHamming = speciesMatches[i].hamming;
-                minHammingMatch = speciesMatches[i];
+        while ((i < matchNum) && (currQuotient == speciesMatches[i]->qInfo.pos / 3)) {
+            if (speciesMatches[i]->hamming < minHamming) {
+                minHamming = speciesMatches[i]->hamming;
+                minHammingMatch = *speciesMatches[i];
                 minHammingTaxId = minHammingMatch.targetId;
-            } else if (speciesMatches[i].hamming == minHamming) {
-                minHammingTaxId = taxonomy->LCA(minHammingTaxId, speciesMatches[i].targetId);
+            } else if (speciesMatches[i]->hamming == minHamming) {
+                minHammingTaxId = taxonomy->LCA(minHammingTaxId, speciesMatches[i]->targetId);
             }
             i++;
         }
@@ -281,7 +281,7 @@ TaxID Taxonomer::BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID r
     }
 }
 
-TaxonScore Taxonomer::getBestSpeciesMatches(vector<Match> & speciesMatches,
+TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match * > & speciesMatches,
                                             const Match *matchList,
                                             size_t end,
                                             size_t offset,

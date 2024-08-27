@@ -148,7 +148,7 @@ public:
 
     void trimMatchPath(MatchPath & path1, const MatchPath & path2, int overlapLength);
 
-    void filterRedundantMatches(vector<Match> & speciesMatches,
+    void filterRedundantMatches(vector<const Match *> & speciesMatches,
                                 unordered_map<TaxID, unsigned int> & taxCnt);
 
     static bool isConsecutive(const Match * match1, const Match * match2);
