@@ -501,7 +501,6 @@ void Taxonomer::remainConsecutiveMatches(const Match * matchList,
         size_t curPosMatchStart = i;
 
         while ( i < end && matchList[i].qInfo.pos == currPos) {
-            curPosMatches.emplace_back(matchList + i);
             i++;
         }
         size_t curPosMatchEnd = i; // exclusive
@@ -510,7 +509,6 @@ void Taxonomer::remainConsecutiveMatches(const Match * matchList,
             uint32_t nextPos = matchList[i].qInfo.pos;
             size_t nextPosMatchStart = i;
             while (i < end  && nextPos == matchList[i].qInfo.pos) {
-                nextPosMatches.emplace_back(matchList + i);
                 ++ i;
             }
             size_t nextPosMatchEnd = i; // exclusive
