@@ -42,7 +42,6 @@ struct MatchPath {
     int hammingDist;
     const Match * startMatch;
     const Match * endMatch;
-
 };
 
 struct MatchBlock {
@@ -73,7 +72,7 @@ private:
 
     // Internal
     int denominator;
-    vector<Match> speciesMatches;
+    vector<const Match *> speciesMatches;
 
     // chooseBestTaxon
     unordered_map<TaxID, unsigned int> taxCnt;
@@ -81,10 +80,12 @@ private:
     // getBestSpeciesMatches
     vector<const Match *> curFrameMatches;
     vector<MatchPath> matchPaths;
+    vector<MatchPath> combinedMatchPaths;
     vector<TaxID> maxSpecies;
-    unordered_map<TaxID, float> species2score;
-    unordered_map<TaxID, vector<MatchPath>> species2matchPaths;
-    unordered_map<TaxID, pair<size_t, size_t>> speciesMatchRange;
+    vector<TaxID> speciesList;
+    vector<size_t> speciesPathIdx;
+    vector<size_t> speciesCombPathIdx;
+    vector<float> speciesScores;
 
     // remainConsecutiveMatches
     vector<const Match *> curPosMatches;
@@ -134,8 +135,10 @@ public:
                                   TaxID speciesID);
     
     float combineMatchPaths(vector<MatchPath> & matchPaths,
-                           vector<MatchPath> & combinedMatchPaths,
-                           int readLength);
+                            size_t matchPathStart,
+                            vector<MatchPath> & combMatchPaths,
+                            size_t combMatchPathStart,
+                            int readLength);
 
     bool isMatchPathOverlapped(const MatchPath & matchPath1, const MatchPath & matchPath2);
 
@@ -152,7 +155,7 @@ public:
 
     static bool isConsecutive_diffFrame(const Match * match1, const Match * match2);
 
-    TaxonScore getBestSpeciesMatches(vector<Match> &speciesMatches, const Match *matchList, size_t end,
+    TaxonScore getBestSpeciesMatches(vector<const Match *> &speciesMatches, const Match *matchList, size_t end,
                                      size_t offset, int queryLength);
     
     // TaxonScore getBestSpeciesMatches(vector<Match> &speciesMatches, const Match *matchList, size_t end,
