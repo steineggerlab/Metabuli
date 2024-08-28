@@ -42,7 +42,6 @@ Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxon
     taxCnt.reserve(4096);
 
     // getBestSpeciesMatches
-    speciesMatches.reserve(4096);
     matchPaths.reserve(4096);
     combinedMatchPaths.reserve(4096);
     maxSpecies.reserve(4096);
@@ -60,12 +59,21 @@ Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxon
     // lowerRankClassification
     cladeCnt.reserve(4096);
 
+    // filterRedundantMatches
+    arraySize_filterRedundantMatches = 4096;
+    bestMatchForQuotient = new const Match*[arraySize_filterRedundantMatches]();
+    bestMatchTaxIdForQuotient = new TaxID[arraySize_filterRedundantMatches];
+    minHammingForQuotient = new uint8_t[arraySize_filterRedundantMatches];
+
+
     // Output
     taxCounts.reserve(4096);
 }
 
 Taxonomer::~Taxonomer() {
-
+    delete[] bestMatchForQuotient;
+    delete[] bestMatchTaxIdForQuotient;
+    delete[] minHammingForQuotient;
 }
 
 void Taxonomer::assignTaxonomy(const Match *matchList,
@@ -119,13 +127,9 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
                                 vector<Query> & queryList,
                                 const LocalParameters &par) {
     // Get the best species and its matches for the current query
-    if (speciesMatches.size() < end - offset + 1) {
-        speciesMatches.reserve(end - offset + 1);
-    }
-    speciesMatches.clear();
-
     TaxonScore speciesScore(0, 0, 0, 0, 0);
-    speciesScore = getBestSpeciesMatches(speciesMatches,
+    std::pair<size_t, size_t> bestSpeciesRange;
+    speciesScore = getBestSpeciesMatches(bestSpeciesRange,
                                          matchList,
                                          end,
                                          offset,                        
@@ -154,7 +158,10 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
 
     // Filter redundant matches
     taxCnt.clear();
-    filterRedundantMatches(speciesMatches, taxCnt);
+    filterRedundantMatches(matchList,
+                           bestSpeciesRange,
+                           taxCnt,
+                           queryList[currentQuery].queryLength + queryList[currentQuery].queryLength2);
     for (auto & tax : taxCnt) {
       queryList[currentQuery].taxCnt[tax.first] = tax.second;    
     }
@@ -186,30 +193,41 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
     queryList[currentQuery].newSpecies = false;
 }
 
-void Taxonomer::filterRedundantMatches(vector<const Match *> & speciesMatches,
-                                        unordered_map<TaxID, unsigned int> & taxCnt) {
-    // Sort matches by the coordinate on the query
-    sort(speciesMatches.begin(), speciesMatches.end(),
-         [](const Match * a, const Match * b) { return a->qInfo.pos < b->qInfo.pos; });
+void Taxonomer::filterRedundantMatches(const Match *matchList,
+                                       const std::pair<size_t, size_t> & bestSpeciesRange,
+                                       unordered_map<TaxID, unsigned int> & taxCnt,
+                                       int queryLength) {    
+    // Determine the maximum quotient we need to handle
+    size_t maxQuotient = (queryLength + 3) / 3;
     
-    // Remove redundant matches
-    size_t matchNum = speciesMatches.size();
-    for (size_t i = 0; i < matchNum;) {
-        size_t currQuotient = speciesMatches[i]->qInfo.pos / 3;
-        uint8_t minHamming = speciesMatches[i]->hamming;
-        Match minHammingMatch = *speciesMatches[i];
-        TaxID minHammingTaxId = minHammingMatch.targetId;
-        while ((i < matchNum) && (currQuotient == speciesMatches[i]->qInfo.pos / 3)) {
-            if (speciesMatches[i]->hamming < minHamming) {
-                minHamming = speciesMatches[i]->hamming;
-                minHammingMatch = *speciesMatches[i];
-                minHammingTaxId = minHammingMatch.targetId;
-            } else if (speciesMatches[i]->hamming == minHamming) {
-                minHammingTaxId = taxonomy->LCA(minHammingTaxId, speciesMatches[i]->targetId);
+    ensureArraySize(maxQuotient + 1);
+
+    // std::fill_n(bestMatchTaxIdForQuotient, maxQuotient + 1, 0);
+
+    for (size_t i = bestSpeciesRange.first; i < bestSpeciesRange.second; i ++) {
+        size_t currQuotient = matchList[i].qInfo.pos / 3;
+        uint8_t hamming = matchList[i].hamming;
+
+        if (bestMatchForQuotient[currQuotient] == nullptr) {
+            bestMatchForQuotient[currQuotient] = matchList + i;
+            bestMatchTaxIdForQuotient[currQuotient] = matchList[i].targetId;
+            minHammingForQuotient[currQuotient] = hamming;
+        } else {
+            if (hamming < minHammingForQuotient[currQuotient]) {
+                bestMatchForQuotient[currQuotient] = matchList + i;
+                bestMatchTaxIdForQuotient[currQuotient] = matchList[i].targetId;
+                minHammingForQuotient[currQuotient] = hamming;
+            } else if (hamming == minHammingForQuotient[currQuotient]) {
+                bestMatchTaxIdForQuotient[currQuotient] = taxonomy->LCA(
+                    bestMatchTaxIdForQuotient[currQuotient], matchList[i].targetId);
             }
-            i++;
         }
-        taxCnt[minHammingTaxId]++;
+    }
+
+    for (size_t i = 0; i <= maxQuotient; ++i) {
+        if (bestMatchForQuotient[i] != nullptr) {
+            taxCnt[bestMatchTaxIdForQuotient[i]]++;
+        }
     }
 }
 
@@ -277,7 +295,7 @@ TaxID Taxonomer::BFS(const unordered_map<TaxID, TaxonCounts> & cladeCnt, TaxID r
     }
 }
 
-TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match * > & speciesMatches,
+TaxonScore Taxonomer::getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpeciesRange,
                                             const Match *matchList,
                                             size_t end,
                                             size_t offset,
@@ -289,7 +307,6 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match * > & speciesMatc
     speciesCombPathIdx.clear();
     speciesScores.clear();
     
-    pair<size_t, size_t> bestSpeciesRange;
     TaxonScore bestScore;
     float bestSpScore = 0;
     size_t i = offset;
@@ -364,11 +381,6 @@ TaxonScore Taxonomer::getBestSpeciesMatches(vector<const Match * > & speciesMatc
     
     // One species
     bestScore.taxId = maxSpecies[0];
-    speciesMatches.reserve(bestSpeciesRange.second - bestSpeciesRange.first + 1);
-
-    for (size_t j = bestSpeciesRange.first; j < bestSpeciesRange.second; j++) {
-        speciesMatches.push_back(&matchList[j]);
-    }
     
     return bestScore;                                  
 }
@@ -653,4 +665,19 @@ bool Taxonomer::isConsecutive_diffFrame(const Match * match1, const Match * matc
     // match1 87654321 -> 08765432
     // match2 98765432 -> 08765432
     return (match1->hamming - GET_2_BITS(match1->rightEndHamming)) == (match2->hamming - GET_2_BITS(match2->rightEndHamming >> 14));
+}
+
+
+void Taxonomer::ensureArraySize(size_t newSize) {
+    if (newSize > arraySize_filterRedundantMatches) {
+        delete[] bestMatchForQuotient;
+        delete[] bestMatchTaxIdForQuotient;
+        delete[] minHammingForQuotient;
+        bestMatchForQuotient = new const Match*[newSize]();
+        bestMatchTaxIdForQuotient = new TaxID[newSize]();
+        minHammingForQuotient = new uint8_t[newSize];
+        arraySize_filterRedundantMatches = newSize;
+    }
+    std::memset(bestMatchForQuotient, 0, newSize * sizeof(const Match*));
+    std::memset(minHammingForQuotient, std::numeric_limits<uint8_t>::max(), newSize * sizeof(uint8_t));
 }

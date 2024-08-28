@@ -72,7 +72,7 @@ private:
 
     // Internal
     int denominator;
-    vector<const Match *> speciesMatches;
+    // vector<const Match *> speciesMatches;
 
     // chooseBestTaxon
     unordered_map<TaxID, unsigned int> taxCnt;
@@ -95,6 +95,13 @@ private:
     // lowerRankClassification
     unordered_map<TaxID, TaxonCounts> cladeCnt;
 
+    // filterRedundantMatches
+    const Match **bestMatchForQuotient;
+    TaxID *bestMatchTaxIdForQuotient;
+    uint8_t *minHammingForQuotient;
+    size_t arraySize_filterRedundantMatches;
+
+
     // Output
     unordered_map<TaxID, unsigned int> taxCounts;
 
@@ -105,6 +112,8 @@ private:
                    size_t depth, size_t MIN_DEPTH,
                    unordered_map<const Match *, depthScore> &match2depthScore,
                    float score, int hammingDist);
+
+    void ensureArraySize(size_t newSize);
 
 
 public:
@@ -143,18 +152,19 @@ public:
 
     void trimMatchPath(MatchPath & path1, const MatchPath & path2, int overlapLength);
 
-    void filterRedundantMatches(vector<const Match *> & speciesMatches,
-                                unordered_map<TaxID, unsigned int> & taxCnt);
+    void filterRedundantMatches(const Match *matchList,
+                                const std::pair<size_t, size_t> & bestSpeciesRange,
+                                unordered_map<TaxID, unsigned int> & taxCnt,
+                                int queryLength);
 
     static bool isConsecutive(const Match * match1, const Match * match2);
 
     static bool isConsecutive_diffFrame(const Match * match1, const Match * match2);
 
-    TaxonScore getBestSpeciesMatches(vector<const Match *> &speciesMatches, const Match *matchList, size_t end,
+    TaxonScore getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpeciesRange,
+                                     const Match *matchList, size_t end,
                                      size_t offset, int queryLength);
     
-    // TaxonScore getBestSpeciesMatches(vector<Match> &speciesMatches, const Match *matchList, size_t end,
-    //                                  size_t offset, Query & currentQuery);
     // TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
     //                                       int readLength1, int readLength2);
     // TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
