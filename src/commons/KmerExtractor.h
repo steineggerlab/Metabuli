@@ -32,6 +32,28 @@ private:
                                             vector<Query> &queryList,
                                             const QuerySplit & currentSplit,
                                             const LocalParameters &par);
+
+    void loadChunkOfReads(KSeqWrapper *kseq,
+                          vector<Query> & queryList,
+                          size_t & processedQueryNum,
+                          size_t chunkSize,
+                          size_t chunkEnd,
+                          vector<string> & reads,
+                          vector<bool> & emptyReads,
+                          size_t & count,
+                          bool isReverse);
+
+    void processSequence(size_t count,
+                         size_t processedQueryNum,
+                         const vector<string> & reads,
+                         const vector<bool> & emptyReads,
+                         char *seq,
+                         char *maskedSeq,
+                         size_t & maxReadLength,
+                         QueryKmerBuffer &kmerBuffer,
+                         const vector<Query> & queryList,
+                         vector<int> *aaFrames,
+                         bool isReverse);
                                       
 public:
     explicit KmerExtractor(const LocalParameters & par);
@@ -42,6 +64,8 @@ public:
                            const LocalParameters &par,
                            KSeqWrapper* kseq1,
                            KSeqWrapper* kseq2 = nullptr);
+
+
 
 
 };

@@ -65,15 +65,24 @@ void KmerExtractor::fillQueryKmerBufferParallel(KSeqWrapper *kseq,
         }
     }
 
+    // Vector to check empty reads
+    std::vector<std::vector<bool>> emptyReads(par.threads);
+    for (int i = 0; i < par.threads; ++i) {
+        emptyReads[i].resize(chunkSize);
+        for (size_t j = 0; j < chunkSize; ++j) {
+            emptyReads[i][j] = false;
+        }
+    }
+
     // Initialize atomic variable for active tasks
     std::vector<atomic<bool>> busyThreads(par.threads);
-    for (size_t i = 0; i < par.threads; ++i) {
+    for (int i = 0; i < par.threads; ++i) {
         busyThreads[i].store(false);
     }
 
     // OpenMP parallel region with tasks
 #pragma omp parallel default(none) shared(par, readLength, kmerBuffer, \
-queryList, currentSplit, processedQueryNum, kseq, chunkSize, chunkReads_thread, busyThreads)
+queryList, currentSplit, processedQueryNum, kseq, chunkSize, chunkReads_thread, busyThreads, emptyReads)
     {
         char *maskedSeq = new char[readLength];
         char *seq = nullptr;
@@ -89,11 +98,15 @@ queryList, currentSplit, processedQueryNum, kseq, chunkSize, chunkReads_thread, 
             while (processedQueryNum < currentSplit.readCnt) {
                 // Find an idle thread
                 int threadId;
-                for (threadId = 0; threadId < par.threads; ++threadId) {
-                    if (threadId == masterThread) { continue; }
-                    if (!busyThreads[threadId].load()) {
-                        busyThreads[threadId].store(true);
-                        break;
+                if (par.threads == 1) {
+                    threadId = 0;
+                } else {
+                    for (threadId = 0; threadId < par.threads; ++threadId) {
+                        if (threadId == masterThread) { continue; }
+                        if (!busyThreads[threadId].load()) {
+                            busyThreads[threadId].store(true);
+                            break;
+                        }
                     }
                 }
                 
@@ -104,52 +117,24 @@ queryList, currentSplit, processedQueryNum, kseq, chunkSize, chunkReads_thread, 
                 size_t chunkEnd = min(processedQueryNum + chunkSize, currentSplit.readCnt);
                 count = 0;
 
-                for (size_t i = 0; i < chunkSize && processedQueryNum < chunkEnd; ++i, ++processedQueryNum) {
-                    kseq->ReadEntry();
-                    queryList[processedQueryNum].name = string(kseq->entry.name.s);
-                    queryList[processedQueryNum].queryLength = LocalUtil::getMaxCoveredLength((int) kseq->entry.sequence.l);
-                    
-                    // Check if the read is too short
-                    int kmerCnt = LocalUtil::getQueryKmerNumber<int>((int) kseq->entry.sequence.l, spaceNum);
-                    if (kmerCnt < 1) {
-                        chunkReads_thread[threadId][i] = "";
-                        queryList[processedQueryNum].kmerCnt = 0;
-                    } else {
-                        chunkReads_thread[threadId][i] = string(kseq->entry.sequence.s);
-                        queryList[processedQueryNum].kmerCnt = kmerCnt;
+                loadChunkOfReads(kseq,
+                                 queryList,
+                                 processedQueryNum,
+                                 chunkSize,
+                                 chunkEnd,
+                                 chunkReads_thread[threadId],
+                                 emptyReads[threadId],
+                                 count,
+                                 false);
+                if (par.threads == 1) {
+                    processSequence(count, processedQueryNum, chunkReads_thread[threadId], emptyReads[threadId], seq, maskedSeq, readLength, kmerBuffer, queryList, aaFrames_read, false);
+                } else {
+                    #pragma omp task firstprivate(count, processedQueryNum, threadId)
+                    {
+                        processSequence(count, processedQueryNum, chunkReads_thread[threadId], emptyReads[threadId], seq, maskedSeq, readLength, kmerBuffer, queryList, aaFrames_read, false);
+                        busyThreads[threadId].store(false);
                     }
-                    count++;
-                }
-                
-                // Process each chunk by idle threads
-                #pragma omp task firstprivate(count, processedQueryNum, threadId)
-                {
-                    for (size_t i = 0; i < count; ++i) {
-                        size_t queryIdx = processedQueryNum - count + i;
-                        if (chunkReads_thread[threadId][i].empty()) { continue; }
-                        
-                        // Get masked sequence
-                        if (maskMode) {
-                            if (readLength < chunkReads_thread[threadId][i].length() + 1) {
-                                readLength = chunkReads_thread[threadId][i].length() + 1;
-                                delete[] maskedSeq;
-                                maskedSeq = new char[readLength];
-                            }
-                            SeqIterator::maskLowComplexityRegions(chunkReads_thread[threadId][i].c_str(), maskedSeq, *probMatrix, maskProb, subMat);
-                            seq = maskedSeq;
-                        } else {
-                            seq = const_cast<char *>(chunkReads_thread[threadId][i].c_str());
-                        }
-
-                        size_t posToWrite = kmerBuffer.reserveMemory(queryList[queryIdx].kmerCnt);
-                        
-                        // Process Read 1
-                        seqIterator->sixFrameTranslation(seq, (int) chunkReads_thread[threadId][i].length(), aaFrames_read);
-                        seqIterator->fillQueryKmerBuffer(seq, (int) chunkReads_thread[threadId][i].length(), kmerBuffer, posToWrite, 
-                                                        (uint32_t) queryIdx, aaFrames_read);
-                    }
-                    busyThreads[threadId].store(false);
-                }   
+                }  
             }
         }
         delete[] maskedSeq;
@@ -168,7 +153,7 @@ void KmerExtractor::fillQueryKmerBufferParallel_paired(KSeqWrapper *kseq1,
     // Reserve memory for each read of the chunk for each thread
     std::vector<std::vector<string>> chunkReads1_thread(par.threads);
     std::vector<std::vector<string>> chunkReads2_thread(par.threads);
-    for (size_t i = 0; i < par.threads; ++i) {
+    for (int i = 0; i < par.threads; ++i) {
         chunkReads1_thread[i].resize(chunkSize);
         chunkReads2_thread[i].resize(chunkSize);
         for (size_t j = 0; j < chunkSize; ++j) {
@@ -176,20 +161,30 @@ void KmerExtractor::fillQueryKmerBufferParallel_paired(KSeqWrapper *kseq1,
             chunkReads2_thread[i][j].reserve(readLength);
         }
     }
+    // Vector to check empty reads
+    std::vector<std::vector<bool>> emptyReads(par.threads);
+    for (int i = 0; i < par.threads; ++i) {
+        emptyReads[i].resize(chunkSize);
+        for (size_t j = 0; j < chunkSize; ++j) {
+            emptyReads[i][j] = false;
+        }
+    }
 
     // Initialize atomic variable for active tasks
     std::vector<std::atomic<bool>> busyThreads(par.threads);
-    for (size_t i = 0; i < par.threads; ++i) {
+    for (int i = 0; i < par.threads; ++i) {
         busyThreads[i].store(false);
     }
 
     // OpenMP parallel region with tasks
 #pragma omp parallel default(none) shared(par, readLength, \
 kmerBuffer, queryList, currentSplit, processedQueryNum, kseq1, kseq2, \
-chunkSize, chunkReads1_thread, chunkReads2_thread, busyThreads, cout)
+chunkSize, chunkReads1_thread, chunkReads2_thread, busyThreads, cout, emptyReads)
     {
-        char *maskedSeq1 = new char[readLength];
-        char *maskedSeq2 = new char[readLength];   
+        size_t maxReadLength1 = 1000;
+        size_t maxReadLength2 = 1000;
+        char *maskedSeq1 = new char[maxReadLength1];
+        char *maskedSeq2 = new char[maxReadLength2];   
         char *seq1 = nullptr;
         char *seq2 = nullptr;
         vector<int> aaFrames_read1[6];
@@ -202,91 +197,159 @@ chunkSize, chunkReads1_thread, chunkReads2_thread, busyThreads, cout)
 #pragma omp single nowait
         {
             int masterThread = omp_get_thread_num();
-            size_t count = 0;
+           
             while (processedQueryNum < currentSplit.readCnt) {
                 // Find an idle thread
                 int threadId;
-                for (threadId = 0; threadId < par.threads; ++threadId) {
-                    if (threadId == masterThread) { continue; }
-                    if (!busyThreads[threadId].load()) {
-                        busyThreads[threadId].store(true);
-                        break;
+                if (par.threads == 1) {
+                    threadId = 0;
+                } else {
+                    for (threadId = 0; threadId < par.threads; ++threadId) {
+                        if (threadId == masterThread) { continue; }
+                        if (!busyThreads[threadId].load()) {
+                            busyThreads[threadId].store(true);
+                            break;
+                        }
                     }
                 }
-
                 if (threadId == par.threads) {
                     continue;
                 }
 
                 size_t chunkEnd = min(processedQueryNum + chunkSize, currentSplit.readCnt);
-                count = 0;
-
-                for (size_t i = 0; i < chunkSize && processedQueryNum < chunkEnd; ++i, ++processedQueryNum) {
-                    kseq1->ReadEntry();
-                    kseq2->ReadEntry();
-                    queryList[processedQueryNum].name = string(kseq1->entry.name.s);
-                    queryList[processedQueryNum].queryLength = LocalUtil::getMaxCoveredLength((int) kseq1->entry.sequence.l);
-                    queryList[processedQueryNum].queryLength2 = LocalUtil::getMaxCoveredLength((int) kseq2->entry.sequence.l);
-                    
-                    // Check if the read is too short
-                    int kmerCnt1 = LocalUtil::getQueryKmerNumber<int>((int) kseq1->entry.sequence.l, spaceNum);
-                    int kmerCnt2 = LocalUtil::getQueryKmerNumber<int>((int) kseq2->entry.sequence.l, spaceNum);
-                    if (kmerCnt1 < 1 || kmerCnt2 < 1) {
-                        chunkReads1_thread[threadId][i] = "";
-                        chunkReads2_thread[threadId][i] = "";
-                        queryList[processedQueryNum].kmerCnt = 0;
-                    } else {
-                        // cout << threadId << endl
-                        chunkReads1_thread[threadId][i] = string(kseq1->entry.sequence.s);
-                        chunkReads2_thread[threadId][i] = string(kseq2->entry.sequence.s);
-                        queryList[processedQueryNum].kmerCnt = kmerCnt1 + kmerCnt2;
-                    }
-                    count++;
-                }
                 
+                size_t count = 0;
+                size_t processedQueryNumCopy = processedQueryNum;
+                loadChunkOfReads(kseq1,
+                                 queryList,
+                                 processedQueryNum,
+                                 chunkSize,
+                                 chunkEnd,
+                                 chunkReads1_thread[threadId],
+                                 emptyReads[threadId],
+                                 count,
+                                 false);
 
-                // Process each chunk by idle threads
-                #pragma omp task firstprivate(count, processedQueryNum, threadId)
-                {
-                    for (size_t i = 0; i < count; ++i) {
-                        size_t queryIdx = processedQueryNum - count + i;
-                        if (chunkReads1_thread[threadId][i].empty() || chunkReads2_thread[threadId][i].empty()) { continue; }
-                        
-                        // Get masked sequence
-                        if (maskMode) {
-                            if (readLength < chunkReads1_thread[threadId][i].length() + 1 || readLength < chunkReads2_thread[threadId][i].length() + 1) {
-                                readLength = max(chunkReads1_thread[threadId][i].length() + 1, chunkReads2_thread[threadId][i].length() + 1);
-                                delete[] maskedSeq1;
-                                delete[] maskedSeq2;
-                                maskedSeq1 = new char[readLength];
-                                maskedSeq2 = new char[readLength];
-                            }
-                            SeqIterator::maskLowComplexityRegions(chunkReads1_thread[threadId][i].c_str(),maskedSeq1, *probMatrix, maskProb, subMat);
-                            SeqIterator::maskLowComplexityRegions(chunkReads2_thread[threadId][i].c_str(),maskedSeq2, *probMatrix, maskProb, subMat);
-                            seq1 = maskedSeq1;
-                            seq2 = maskedSeq2;
-                        } else {
-                            seq1 = const_cast<char *>(chunkReads1_thread[threadId][i].c_str());
-                            seq2 = const_cast<char *>(chunkReads2_thread[threadId][i].c_str());
-                        }
+                count = 0;
+                processedQueryNum = processedQueryNumCopy;
+                loadChunkOfReads(kseq2,
+                                 queryList,
+                                 processedQueryNum,
+                                 chunkSize,
+                                 chunkEnd,
+                                 chunkReads2_thread[threadId],
+                                 emptyReads[threadId],
+                                 count,
+                                 true);
 
-                        size_t posToWrite = kmerBuffer.reserveMemory(queryList[queryIdx].kmerCnt);
-                        
-                        // Process Read 1
-                        seqIterator->sixFrameTranslation(seq1, (int) chunkReads1_thread[threadId][i].length(), aaFrames_read1);
-                        seqIterator->fillQueryKmerBuffer(seq1, (int) chunkReads1_thread[threadId][i].length(), kmerBuffer, posToWrite, 
-                                                        (uint32_t) queryIdx, aaFrames_read1);
-
-                        // Process Read 2
-                        seqIterator->sixFrameTranslation(seq2, (int) chunkReads2_thread[threadId][i].length(), aaFrames_read2);
-                        seqIterator->fillQueryKmerBuffer(seq2, (int) chunkReads2_thread[threadId][i].length(), kmerBuffer, posToWrite,
-                                                        (uint32_t) queryIdx, aaFrames_read2, queryList[queryIdx].queryLength+3);
+                if (par.threads == 1) {
+                    processSequence(count, processedQueryNum, chunkReads1_thread[threadId], emptyReads[threadId], seq1, maskedSeq1, maxReadLength1, kmerBuffer, queryList, aaFrames_read1, false);
+                    processSequence(count, processedQueryNum, chunkReads2_thread[threadId], emptyReads[threadId], seq2, maskedSeq2, maxReadLength2, kmerBuffer, queryList, aaFrames_read2, true);
+                } 
+                else {
+                    #pragma omp task firstprivate(count, processedQueryNum, threadId)
+                    {
+                        processSequence(count, processedQueryNum, chunkReads1_thread[threadId], emptyReads[threadId], seq1, maskedSeq1, maxReadLength1, kmerBuffer, queryList, aaFrames_read1, false);
+                        processSequence(count, processedQueryNum, chunkReads2_thread[threadId], emptyReads[threadId], seq2, maskedSeq2, maxReadLength2, kmerBuffer, queryList, aaFrames_read2, true);
+                        busyThreads[threadId].store(false);
                     }
-                    busyThreads[threadId].store(false);
                 }   
-            }
-        }
+            }   
+        }   
         delete[] maskedSeq1;
         delete[] maskedSeq2;
+    }
+}
+
+void KmerExtractor::processSequence(size_t count,
+                                    size_t processedQueryNum,
+                                    const vector<string> & reads,
+                                    const vector<bool> & emptyReads,
+                                    char *seq,
+                                    char *maskedSeq,
+                                    size_t & maxReadLength,
+                                    QueryKmerBuffer &kmerBuffer,
+                                    const vector<Query> & queryList,
+                                    vector<int> *aaFrames,
+                                    bool isReverse) {
+    for (size_t i = 0; i < count; ++i) {
+        size_t queryIdx = processedQueryNum - count + i;
+        if (emptyReads[i]) { continue; }
+        // Get masked sequence
+        if (maskMode) {
+            if (maxReadLength < reads[i].length() + 1) {
+                maxReadLength = reads[i].length() + 1;
+                delete[] maskedSeq;
+                maskedSeq = new char[maxReadLength];
+            }
+            SeqIterator::maskLowComplexityRegions(reads[i].c_str(), maskedSeq, *probMatrix, maskProb, subMat);
+            seq = maskedSeq;
+        } else {
+            seq = const_cast<char *>(reads[i].c_str());
+        }
+
+        size_t posToWrite = 0;
+        if (isReverse) {
+            posToWrite = kmerBuffer.reserveMemory(queryList[queryIdx].kmerCnt2);
+            seqIterator->sixFrameTranslation(seq, (int) reads[i].length(), aaFrames);
+            seqIterator->fillQueryKmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
+                                            (uint32_t) queryIdx, aaFrames, queryList[queryIdx].queryLength+3);
+        } else {
+            posToWrite = kmerBuffer.reserveMemory(queryList[queryIdx].kmerCnt);
+            seqIterator->sixFrameTranslation(seq, (int) reads[i].length(), aaFrames);
+            seqIterator->fillQueryKmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
+                                            (uint32_t) queryIdx, aaFrames);
+        }
+    }
+}
+
+void KmerExtractor::loadChunkOfReads(KSeqWrapper *kseq,
+                                     vector<Query> & queryList,
+                                     size_t & processedQueryNum,
+                                     size_t chunkSize,
+                                     size_t chunkEnd,
+                                     vector<string> & reads,
+                                     vector<bool> & emptyReads,
+                                     size_t & count,
+                                     bool isReverse) {
+    if (isReverse) {
+        for (size_t i = 0; i < chunkSize && processedQueryNum < chunkEnd; ++i, ++processedQueryNum) {
+            kseq->ReadEntry();
+            queryList[processedQueryNum].queryLength2 = LocalUtil::getMaxCoveredLength((int) kseq->entry.sequence.l);   
+            
+            if (emptyReads[i]) { continue; }
+
+            // Check if the read is too short
+            int kmerCnt = LocalUtil::getQueryKmerNumber<int>((int) kseq->entry.sequence.l, spaceNum);
+            if (kmerCnt < 1) {
+                reads[i] = "";
+                emptyReads[i] = true;
+                queryList[processedQueryNum].kmerCnt2 = 0;
+            } else {
+                reads[i] = string(kseq->entry.sequence.s);
+                // emptyReads[i] = false; // already set to false
+                queryList[processedQueryNum].kmerCnt2 = kmerCnt;
+            }
+            count++;
+        }
+    } else {
+        for (size_t i = 0; i < chunkSize && processedQueryNum < chunkEnd; ++i, ++processedQueryNum) {
+            kseq->ReadEntry();
+            queryList[processedQueryNum].name = string(kseq->entry.name.s);
+            queryList[processedQueryNum].queryLength = LocalUtil::getMaxCoveredLength((int) kseq->entry.sequence.l);
+
+            // Check if the read is too short
+            int kmerCnt = LocalUtil::getQueryKmerNumber<int>((int) kseq->entry.sequence.l, spaceNum);
+            if (kmerCnt < 1) {
+                reads[i] = "";
+                emptyReads[i] = true;
+                queryList[processedQueryNum].kmerCnt = 0;
+            } else {
+                reads[i] = string(kseq->entry.sequence.s);
+                emptyReads[i] = false;
+                queryList[processedQueryNum].kmerCnt = kmerCnt;
+            }
+            count++;
+        }
     }
 }

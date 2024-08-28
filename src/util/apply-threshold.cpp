@@ -61,7 +61,7 @@ int applyThreshold(int argc, const char **argv, const Command &command) {
             // Low coverage or low score
             if (stof(columns[par.coverageCol]) < par.minCoverage || stof(columns[par.scoreCol]) < par.minScore) {
                 newResults.emplace_back(lineCnt, 0, stof(columns[par.scoreCol]), stof(columns[par.coverageCol]), stoi(columns[6]),
-                                        stoi(columns[3]),0, 0, false, false, columns[1]);
+                                        stoi(columns[3]),0, 0, 0, false, false, columns[1]);
                 //int queryId, int classification, float score, float coverage, int hammingDist, int queryLength,
                         //          int queryLength2, int kmerCnt, bool isClassified, bool newSpecies, std::string name
                 taxonCounts[0]++;
@@ -70,11 +70,11 @@ int applyThreshold(int argc, const char **argv, const Command &command) {
             else if (stof(columns[par.scoreCol]) < par.minSpScore && ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(stoi(columns[2]), "species"))->rankIdx == 4) {
                 TaxID parentTaxId = ncbiTaxonomy.taxonNode(ncbiTaxonomy.getTaxIdAtRank(stoi(columns[2]), "species"))->parentTaxId;
                 newResults.emplace_back(lineCnt, parentTaxId, stof(columns[4]), stof(columns[5]), stoi(columns[6]),
-                                        stoi(columns[3]),0, 0, true, false, columns[1]);
+                                        stoi(columns[3]),0, 0, 0, true, false, columns[1]);
                 taxonCounts[parentTaxId]++;
             } else {
                 newResults.emplace_back(lineCnt, stoi(columns[2]), stof(columns[4]), stof(columns[5]), stoi(columns[6]),
-                                        stoi(columns[3]),0, 0, stoi(columns[0]), false, columns[1]);
+                                        stoi(columns[3]),0, 0, 0, stoi(columns[0]), false, columns[1]);
                 taxonCounts[stoi(columns[2])]++;
             }
             lineCnt++;

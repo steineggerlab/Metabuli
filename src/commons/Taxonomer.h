@@ -107,6 +107,7 @@ private:
 
     depthScore DFS(const Match *curMatch,
                    const vector<const Match *> &linkedMatchesKeys,
+                   size_t linkedMatchKeysIdx,
                    const vector<const Match *> &linkedMatchesValues,
                    const vector<size_t> &linkedMatchesIndices,
                    size_t depth, size_t MIN_DEPTH,
