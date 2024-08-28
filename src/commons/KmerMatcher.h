@@ -14,6 +14,8 @@
 
 #define BufferSize 16'777'216 // 16 * 1024 * 1024 // 16 M
 
+#define AMINO_ACID_PART(kmer) ((kmer) & MARKER)
+
 // Input
 // 1. Query K-mers
 // 2. Reference K-mers
@@ -58,7 +60,7 @@ protected:
                                // search begins.
   };
 
-  size_t AminoAcidPart(size_t kmer) const { return (kmer)&MARKER; }
+  inline size_t AminoAcidPart(size_t kmer) const { return (kmer)&MARKER; }
 
   template <typename T>
   static void loadBuffer(FILE *fp, T *buffer, size_t &bufferIdx, size_t size) {
@@ -89,6 +91,7 @@ protected:
                   std::vector<uint8_t> &selectedHammingSum,
                   std::vector<uint16_t> &rightEndHammings,
                   std::vector<uint32_t> &selectedDnaEncodings,
+                  size_t & selectedMatchIdx,
                   uint8_t frame);
 
   virtual uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2);
