@@ -866,6 +866,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
         kseq_buffer_t buffer;
         kseq_t *seq;
         vector<uint64_t> intergenicKmers;
+        vector<int> aaSeq;
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < fnaSplits.size(); i++) {
             if (!checker[i] && !hasOverflow) {
@@ -917,7 +918,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     prodigal->getPredictedGenes(seq->seq.s);
                     seqIterator.generateIntergenicKmerList(prodigal->genes, prodigal->nodes,
                                                            prodigal->getNumberOfPredictedGenes(),
-                                                           intergenicKmers,seq->seq.s);
+                                                           intergenicKmers, seq->seq.s);
 
                     // Get min k-mer hash list for determining strandness
                     seqIterator.getMinHashList(standardList, seq->seq.s);
@@ -941,7 +942,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                             // Get extended ORFs
                             prodigal->getPredictedGenes(seq->seq.s);
                             prodigal->removeCompletelyOverlappingGenes();
-                            seqIterator.getExtendedORFs(prodigal->finalGenes, prodigal->nodes, extendedORFs,
+                            prodigal->getExtendedORFs(prodigal->finalGenes, prodigal->nodes, extendedORFs,
                                                              prodigal->fng, strlen(seq->seq.s),
                                                         orfNum, intergenicKmers, seq->seq.s);
                             // Get masked sequence
@@ -955,14 +956,16 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
 
                             // Get k-mers from extended ORFs
                             for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
-                                seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt]);
+                                aaSeq.clear();
+                                seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt], aaSeq);
                                 tempCheck = seqIterator.fillBufferWithKmerFromBlock(
                                         extendedORFs[orfCnt],
                                         maskedSeq,
                                         kmerBuffer,
                                         posToWrite,
                                         int(processedSeqCnt[fnaSplits[i].file_idx] + fnaSplits[i].offset + s_cnt),
-                                        fnaSplits[i].speciesID);
+                                        fnaSplits[i].speciesID,
+                                        aaSeq);
                                 if (tempCheck == -1) {
                                     cout << "ERROR: Buffer overflow " << seq->name.s << seq->seq.l << endl;
                                 }
@@ -976,7 +979,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                             // Get extended ORFs
                             prodigal->getPredictedGenes(reverseCompliment);
                             prodigal->removeCompletelyOverlappingGenes();
-                            seqIterator.getExtendedORFs(prodigal->finalGenes, prodigal->nodes, extendedORFs,
+                            prodigal->getExtendedORFs(prodigal->finalGenes, prodigal->nodes, extendedORFs,
                                                              prodigal->fng, strlen(reverseCompliment),
                                                         orfNum, intergenicKmers, reverseCompliment);
 
@@ -990,14 +993,16 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                             }
 
                             for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
-                                seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt]);
+                                aaSeq.clear();
+                                seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt], aaSeq);
                                 tempCheck = seqIterator.fillBufferWithKmerFromBlock(
                                         extendedORFs[orfCnt],
                                         maskedSeq,
                                         kmerBuffer,
                                         posToWrite,
                                         int(processedSeqCnt[fnaSplits[i].file_idx] + fnaSplits[i].offset + s_cnt),
-                                        fnaSplits[i].speciesID);
+                                        fnaSplits[i].speciesID,
+                                        aaSeq);
                                 if (tempCheck == -1) {
                                     cout << "ERROR: Buffer overflow " << seq->name.s << seq->seq.l << endl;
                                 }

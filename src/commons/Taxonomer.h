@@ -42,9 +42,15 @@ struct MatchPath {
     int hammingDist;
     const Match * startMatch;
     const Match * endMatch;
-
 };
 
+struct MatchBlock {
+    MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) {}
+    MatchBlock() : start(0), end(0), id(0) {}
+    size_t start;
+    size_t end;
+    uint32_t id;
+};
 
 class Taxonomer {
 private:
@@ -66,19 +72,49 @@ private:
 
     // Internal
     int denominator;
+    // vector<const Match *> speciesMatches;
 
-    struct MatchBlock {
-        MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) {}
-        MatchBlock() : start(0), end(0), id(0) {}
-        size_t start;
-        size_t end;
-        uint32_t id;
-    };
+    // chooseBestTaxon
+    unordered_map<TaxID, unsigned int> taxCnt;
 
+    // getBestSpeciesMatches
+    vector<MatchPath> matchPaths;
+    vector<MatchPath> combinedMatchPaths;
+    vector<TaxID> maxSpecies;
+    vector<TaxID> speciesList;
+    vector<size_t> speciesPathIdx;
+    vector<size_t> speciesCombPathIdx;
+    vector<float> speciesScores;
+
+    // remainConsecutiveMatches
+    vector<const Match *> linkedMatchKeys;
+    vector<const Match *> linkedMatchValues;
+    vector<size_t> linkedMatchValuesIdx;
+    unordered_map<const Match *, depthScore> match2depthScore;
+
+    // lowerRankClassification
+    unordered_map<TaxID, TaxonCounts> cladeCnt;
+
+    // filterRedundantMatches
+    const Match **bestMatchForQuotient;
+    TaxID *bestMatchTaxIdForQuotient;
+    uint8_t *minHammingForQuotient;
+    size_t arraySize_filterRedundantMatches;
 
 
     // Output
     unordered_map<TaxID, unsigned int> taxCounts;
+
+    depthScore DFS(const Match *curMatch,
+                   const vector<const Match *> &linkedMatchesKeys,
+                   size_t linkedMatchKeysIdx,
+                   const vector<const Match *> &linkedMatchesValues,
+                   const vector<size_t> &linkedMatchesIndices,
+                   size_t depth, size_t MIN_DEPTH,
+                   unordered_map<const Match *, depthScore> &match2depthScore,
+                   float score, int hammingDist);
+
+    void ensureArraySize(size_t newSize);
 
 
 public:
@@ -97,13 +133,17 @@ public:
                          vector<Query> & queryList,
                          const LocalParameters &par);
 
-    void remainConsecutiveMatches(const vector<const Match *> & curFrameMatches,
+    void remainConsecutiveMatches(const Match * matchList,
+                                  size_t start,
+                                  size_t end,
                                   vector<MatchPath> & matchPaths,
-                                  TaxID speciesID);
+                                  TaxID speciesId);
     
     float combineMatchPaths(vector<MatchPath> & matchPaths,
-                           vector<MatchPath> & combinedMatchPaths,
-                           int readLength);
+                            size_t matchPathStart,
+                            vector<MatchPath> & combMatchPaths,
+                            size_t combMatchPathStart,
+                            int readLength);
 
     bool isMatchPathOverlapped(const MatchPath & matchPath1, const MatchPath & matchPath2);
 
@@ -113,24 +153,19 @@ public:
 
     void trimMatchPath(MatchPath & path1, const MatchPath & path2, int overlapLength);
 
-    void filterRedundantMatches(vector<Match> & speciesMatches,
-                                unordered_map<TaxID, unsigned int> & taxCnt);
-
-    depthScore DFS(const vector<const Match *> &matches, const Match * curMatchIdx,
-                   const map<const Match *, vector<const Match *>> &linkedMatches,
-                   size_t depth, size_t MIN_DEPTH, unordered_set<const Match *> &used,
-                   unordered_map<const Match *, depthScore> &match2depthScore,
-                   float score, int hammingDist);
+    void filterRedundantMatches(const Match *matchList,
+                                const std::pair<size_t, size_t> & bestSpeciesRange,
+                                unordered_map<TaxID, unsigned int> & taxCnt,
+                                int queryLength);
 
     static bool isConsecutive(const Match * match1, const Match * match2);
 
     static bool isConsecutive_diffFrame(const Match * match1, const Match * match2);
 
-    TaxonScore getBestSpeciesMatches(vector<Match> &speciesMatches, const Match *matchList, size_t end,
+    TaxonScore getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpeciesRange,
+                                     const Match *matchList, size_t end,
                                      size_t offset, int queryLength);
     
-    // TaxonScore getBestSpeciesMatches(vector<Match> &speciesMatches, const Match *matchList, size_t end,
-    //                                  size_t offset, Query & currentQuery);
     // TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,
     //                                       int readLength1, int readLength2);
     // TaxonScore getBestGenusMatches_spaced(vector<Match> &matchesForMajorityLCA, const Match *matchList, size_t end, size_t offset,

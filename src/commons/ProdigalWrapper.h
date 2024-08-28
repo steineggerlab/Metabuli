@@ -16,6 +16,10 @@
 #include "prodigalsequence.h"
 #include "training.h"
 #include "printBinary.h"
+#include "common.h"
+#include <vector>
+#include "xxhash.h"
+#include "SeqIterator.h"
 
 #define MIN_SINGLE_GENOME 20000
 #define IDEAL_SINGLE_GENOME 100000
@@ -60,5 +64,7 @@ public:
     void printGenes();
     ProdigalWrapper();
     ~ProdigalWrapper();
+    void getExtendedORFs(struct _gene *genes, struct _node *nodes, std::vector<PredictedBlock> &blocks, size_t numOfGene,
+            size_t length, size_t &numOfBlocks, std::vector<uint64_t> &intergenicKmerList, const char *seq);    
 };
 #endif //ADCLASSIFIER2_PRODIGALWRAPPER_H

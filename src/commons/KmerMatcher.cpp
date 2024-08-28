@@ -210,23 +210,23 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
             size_t kmerInfoBufferIdx = 0;
             size_t diffIdxBufferIdx = 0;
 
-            //query variables
+            // Query variables
             uint64_t currentQuery = UINT64_MAX;
             uint64_t currentQueryAA = UINT64_MAX;
             QueryKmerInfo currentQueryInfo;
             
-            //target variables
+            // Target variables
             size_t diffIdxPos = 0;
             std::vector<uint64_t> candidateTargetKmers; //vector for candidate target k-mer, some of which are selected after based on hamming distance
             std::vector<TargetKmerInfo> candidateKmerInfos;
             uint64_t currentTargetKmer;
 
-            //Match buffer for each thread
+            // Match buffer for each thread
             int localBufferSize = 2'000'000; // 32 Mb
             auto *matches = new Match[localBufferSize]; // 16 * 2'000'000 = 32 Mb
             int matchCnt = 0;
 
-            //vectors for selected target k-mers
+            // Vectors for selected target k-mers
             std::vector<uint8_t> selectedHammingSum;
             std::vector<size_t> selectedMatches;
             std::vector<uint16_t> selectedHammings;
