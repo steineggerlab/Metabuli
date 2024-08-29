@@ -102,6 +102,9 @@ private:
     vector<size_t> linkedMatchValuesIdx;
     unordered_map<const Match *, depthScore> match2depthScore;
 
+    unordered_map<const Match *, MatchPath> match2path;
+    unordered_map<const Match *, MatchPath> start2bestPath;
+
     // lowerRankClassification
     unordered_map<TaxID, TaxonCounts> cladeCnt;
 

@@ -56,6 +56,9 @@ Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxon
     linkedMatchValuesIdx.reserve(4096);
     match2depthScore.reserve(4096); 
 
+    match2path.reserve(4096);
+    start2bestPath.reserve(4096);
+
     // lowerRankClassification
     cladeCnt.reserve(4096);
 
@@ -471,9 +474,11 @@ void Taxonomer::getMatchPaths(const Match * matchList,
     if (taxonomy->IsAncestor(eukaryotaTaxId, speciesId)) {
         MIN_DEPTH = minConsCntEuk - 1;
     }
-
-    unordered_map<const Match *, MatchPath> match2path;
-    unordered_map<const Match *, MatchPath> start2bestPath;
+    
+    match2path.clear();
+    start2bestPath.clear();
+    // unordered_map<const Match *, MatchPath> match2path;
+    // unordered_map<const Match *, MatchPath> start2bestPath;
 
     if (frame < 3) { // Forward frame
         size_t curPosMatchStart = i;        
