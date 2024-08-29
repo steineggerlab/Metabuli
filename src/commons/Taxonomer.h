@@ -33,13 +33,23 @@ struct depthScore {
 };
 
 struct MatchPath {
-    MatchPath(int start, int end, float score, int hammingDist, const Match * startMatch, const Match * endMatch) :
-         start(start), end(end), score(score), hammingDist(hammingDist), startMatch(startMatch), endMatch(endMatch) {}
-    MatchPath() : start(0), end(0), score(0.f), hammingDist(0), startMatch(nullptr), endMatch(nullptr) {}
-    int start;
-    int end;
+    MatchPath(int start, int end, float score, int hammingDist, int depth, const Match * startMatch, const Match * endMatch) :
+         start(start), end(end), score(score), hammingDist(hammingDist), depth(depth), startMatch(startMatch), endMatch(endMatch) {}
+    MatchPath() : start(0), end(0), score(0.f), hammingDist(0), depth(0), startMatch(nullptr), endMatch(nullptr) {}
+    MatchPath(const Match * startMatch) 
+        : start(startMatch->qInfo.pos),
+          end(startMatch->qInfo.pos + 23),
+          score(startMatch->getScore()),
+          hammingDist(startMatch->hamming),
+          depth(1),
+          startMatch(startMatch),
+          endMatch(startMatch) {}
+    
+    int start;                // query coordinate
+    int end;                  // query coordinate
     float score;
     int hammingDist;
+    int depth;
     const Match * startMatch;
     const Match * endMatch;
 };
@@ -138,6 +148,12 @@ public:
                                   size_t end,
                                   vector<MatchPath> & matchPaths,
                                   TaxID speciesId);
+
+    void getMatchPaths(const Match * matchList,
+                       size_t start,
+                       size_t end,
+                       vector<MatchPath> & matchPaths,
+                       TaxID speciesId);                                  
     
     float combineMatchPaths(vector<MatchPath> & matchPaths,
                             size_t matchPathStart,

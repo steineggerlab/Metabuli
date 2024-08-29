@@ -324,7 +324,7 @@ TaxonScore Taxonomer::getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpec
                 i ++;
             }
             if (i - start >= minConsCnt) {
-                remainConsecutiveMatches(matchList, start, i, matchPaths, currentSpecies);
+                getMatchPaths(matchList, start, i, matchPaths, currentSpecies);
             }
         }
         size_t pathSize = matchPaths.size();
@@ -458,6 +458,203 @@ void Taxonomer::trimMatchPath(MatchPath & path1, const MatchPath & path2, int ov
     }
 }
 
+void Taxonomer::getMatchPaths(const Match * matchList,
+                              size_t start,
+                              size_t end,
+                              vector<MatchPath> & matchPaths,
+                              TaxID speciesId) {
+    size_t i = start;
+    size_t currPos = matchList[start].qInfo.pos;
+    uint64_t frame = matchList[start].qInfo.frame;
+    size_t MIN_DEPTH = minConsCnt - 1;
+
+    if (taxonomy->IsAncestor(eukaryotaTaxId, speciesId)) {
+        MIN_DEPTH = minConsCntEuk - 1;
+    }
+
+    unordered_map<const Match *, MatchPath> match2path;
+    unordered_map<const Match *, MatchPath> start2bestPath;
+
+    if (frame < 3) { // Forward frame
+        size_t curPosMatchStart = i;        
+        while (i < end && matchList[i].qInfo.pos == currPos) {
+            ++ i;
+        }
+        size_t curPosMatchEnd = i; // exclusive
+
+        while (i < end) {
+            uint32_t nextPos = matchList[i].qInfo.pos;
+            size_t nextPosMatchStart = i;
+            while (i < end  && nextPos == matchList[i].qInfo.pos) {
+                ++ i;
+            }
+            size_t nextPosMatchEnd = i; // exclusive
+
+            // Check if current position and next position are consecutive
+            if (currPos + 3 == nextPos) {
+                // Compare curPosMatches and nextPosMatches.
+                for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++curIdx) {
+                    if (match2path.find(matchList + curIdx) == match2path.end()) {
+                        match2path[matchList + curIdx] = MatchPath(matchList + curIdx);
+                    }
+                    float currentScore = match2path[matchList + curIdx].score;
+                    bool connected = false;
+                    for (size_t nextIdx = nextPosMatchStart; nextIdx < nextPosMatchEnd; nextIdx++) {
+                        if (isConsecutive(matchList + curIdx, matchList + nextIdx)){
+                            connected = true;
+                            uint8_t lastEndHamming = (matchList[nextIdx].rightEndHamming >> 14);
+                            float scoreIncrement = (lastEndHamming == 0) ? 3.0f : 2.0f - 0.5f * lastEndHamming;
+
+                            if (match2path.find(matchList + nextIdx) == match2path.end()) {
+                                match2path[matchList + nextIdx] = match2path[matchList + curIdx];
+                                match2path[matchList + nextIdx].score += scoreIncrement;
+                                match2path[matchList + nextIdx].hammingDist += lastEndHamming;
+                                match2path[matchList + nextIdx].depth += 1;
+                                match2path[matchList + nextIdx].endMatch = matchList + nextIdx;
+                                match2path[matchList + nextIdx].end += 3;
+                            } else {
+                                if (currentScore + scoreIncrement > match2path[matchList + nextIdx].score) {
+                                    match2path[matchList + nextIdx] = match2path[matchList + curIdx];
+                                    match2path[matchList + nextIdx].score += scoreIncrement;
+                                    match2path[matchList + nextIdx].hammingDist += lastEndHamming;
+                                    match2path[matchList + nextIdx].depth += 1;
+                                    match2path[matchList + nextIdx].endMatch = matchList + nextIdx;
+                                    match2path[matchList + nextIdx].end += 3;
+                                }
+                            }
+                        }
+                    }
+                    if (!connected) {
+                        if (match2path[matchList + curIdx].depth <= MIN_DEPTH) {
+                            continue;
+                        }
+                        if (start2bestPath.find(match2path[matchList + curIdx].startMatch) == start2bestPath.end()) {
+                            start2bestPath[match2path[matchList + curIdx].startMatch] = match2path[matchList + curIdx];
+                        } else {
+                            if (match2path[matchList + curIdx].score > start2bestPath[match2path[matchList + curIdx].startMatch].score) {
+                                start2bestPath[match2path[matchList + curIdx].startMatch] = match2path[matchList + curIdx];
+                            }
+                        }
+                    }
+                }
+            } 
+            // Update curPosMatches and nextPosMatches
+            curPosMatchStart = nextPosMatchStart;
+            curPosMatchEnd = nextPosMatchEnd;
+            currPos = nextPos;
+
+            if (i == end || currPos + 3 != matchList[i].qInfo.pos) {
+                for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++ curIdx) {
+                    if (match2path.find(matchList + curIdx) == match2path.end()) {
+                        continue;
+                    }
+                    if (match2path[matchList + curIdx].depth <= MIN_DEPTH) {
+                        continue;
+                    }
+                    if (start2bestPath.find(match2path[matchList + curIdx].startMatch) == start2bestPath.end()) {
+                        start2bestPath[match2path[matchList + curIdx].startMatch] = match2path[matchList + curIdx];
+                    } else {
+                        if (match2path[matchList + curIdx].score > start2bestPath[match2path[matchList + curIdx].startMatch].score) {
+                            start2bestPath[match2path[matchList + curIdx].startMatch] = match2path[matchList + curIdx];
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        size_t curPosMatchStart = i;
+
+        while ( i < end && matchList[i].qInfo.pos == currPos) {
+            i++;
+        }
+        size_t curPosMatchEnd = i; // exclusive
+
+        while (i < end) {
+            uint32_t nextPos = matchList[i].qInfo.pos;
+            size_t nextPosMatchStart = i;
+            while (i < end  && nextPos == matchList[i].qInfo.pos) {
+                ++ i;
+            }
+            size_t nextPosMatchEnd = i; // exclusive
+
+            // Check if current position and next position are consecutive
+            if (currPos + 3 == nextPos) {
+                // Compare curPosMatches and nextPosMatches
+                for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++curIdx) {
+                    if (match2path.find(matchList + curIdx) == match2path.end()) {
+                        match2path[matchList + curIdx] = MatchPath(matchList + curIdx);
+                    }
+                    float currentScore = match2path[matchList + curIdx].score;
+                    bool connected = false;
+                    for (size_t nextIdx = nextPosMatchStart; nextIdx < nextPosMatchEnd; nextIdx++) {
+                        if (isConsecutive(matchList + nextIdx, matchList + curIdx)){
+                            connected = true;
+                            uint8_t lastEndHamming = (matchList[nextIdx].rightEndHamming >> 14);
+                            float scoreIncrement = (lastEndHamming == 0) ? 3.0f : 2.0f - 0.5f * lastEndHamming;
+
+                            if (match2path.find(matchList + nextIdx) == match2path.end()) {
+                                match2path[matchList + nextIdx] = match2path[matchList + curIdx];
+                                match2path[matchList + nextIdx].score += scoreIncrement;
+                                match2path[matchList + nextIdx].hammingDist += lastEndHamming;
+                                match2path[matchList + nextIdx].depth += 1;
+                                match2path[matchList + nextIdx].endMatch = matchList + nextIdx;
+                                match2path[matchList + nextIdx].end += 3;
+                            } else {
+                                if (currentScore + scoreIncrement > match2path[matchList + nextIdx].score) {
+                                    match2path[matchList + nextIdx] = match2path[matchList + curIdx];
+                                    match2path[matchList + nextIdx].score += scoreIncrement;
+                                    match2path[matchList + nextIdx].hammingDist += lastEndHamming;
+                                    match2path[matchList + nextIdx].depth += 1;
+                                    match2path[matchList + nextIdx].endMatch = matchList + nextIdx;
+                                    match2path[matchList + nextIdx].end +=  3;
+                                }
+                            }
+                        }
+                    }
+                    if (!connected) {
+                        if (match2path[matchList + curIdx].depth <= MIN_DEPTH) {
+                            continue;
+                        }
+                        if (start2bestPath.find(match2path[matchList + curIdx].startMatch) == start2bestPath.end()) {
+                            start2bestPath[match2path[matchList + curIdx].startMatch] = match2path[matchList + curIdx];
+                        } else {
+                            if (match2path[matchList + curIdx].score > start2bestPath[match2path[matchList + curIdx].startMatch].score) {
+                                start2bestPath[match2path[matchList + curIdx].startMatch] = match2path[matchList + curIdx];
+                            }
+                        }
+                    }
+                }
+            }
+            // Update curPosMatches and nextPosMatches
+            curPosMatchStart = nextPosMatchStart;
+            curPosMatchEnd = nextPosMatchEnd;
+            currPos = nextPos;
+
+            if (i == end || currPos + 3 != matchList[i].qInfo.pos) {
+                for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++ curIdx) {
+                    if (match2path.find(matchList + curIdx) == match2path.end()) {
+                        continue;
+                    }
+                    if (match2path[matchList + curIdx].depth <= MIN_DEPTH) {
+                        continue;
+                    }
+                    if (start2bestPath.find(match2path[matchList + curIdx].startMatch) == start2bestPath.end()) {
+                        start2bestPath[match2path[matchList + curIdx].startMatch] = match2path[matchList + curIdx];
+                    } else {
+                        if (match2path[matchList + curIdx].score > start2bestPath[match2path[matchList + curIdx].startMatch].score) {
+                            start2bestPath[match2path[matchList + curIdx].startMatch] = match2path[matchList + curIdx];
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (auto & it : start2bestPath) {
+        matchPaths.push_back(it.second);
+    }
+}
+
 void Taxonomer::remainConsecutiveMatches(const Match * matchList,
                                          size_t start,
                                          size_t end,
@@ -471,8 +668,6 @@ void Taxonomer::remainConsecutiveMatches(const Match * matchList,
     linkedMatchKeys.resize(end - start);
     linkedMatchValuesIdx.resize(end - start);
     size_t linkedMatchKeysIdx = 0;
-
-    
 
     size_t currPos = matchList[start].qInfo.pos;
     uint64_t frame = matchList[start].qInfo.frame;
@@ -590,7 +785,7 @@ void Taxonomer::remainConsecutiveMatches(const Match * matchList,
             if (bestPath.depth > MIN_DEPTH) {
                 matchPaths.emplace_back(key->qInfo.pos, // start coordinate on query
                                         key->qInfo.pos + bestPath.depth * 3 + 20, // end coordinate on query
-                                        bestPath.score, bestPath.hammingDist,
+                                        bestPath.score, bestPath.hammingDist, bestPath.depth,
                                         key,
                                         bestPath.endMatch);
             }
