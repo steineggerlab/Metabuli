@@ -52,6 +52,10 @@ struct MatchPath {
     int depth;
     const Match * startMatch;
     const Match * endMatch;
+
+    void printMatchPath() {
+        std::cout << start << " " << end << " " << score << " " << hammingDist << " " << depth << std::endl;
+    }
 };
 
 struct MatchBlock {
@@ -101,6 +105,10 @@ private:
     vector<const Match *> linkedMatchValues;
     vector<size_t> linkedMatchValuesIdx;
     unordered_map<const Match *, depthScore> match2depthScore;
+
+    // getMatchPaths
+    vector<bool> connectedToNext;
+    vector<MatchPath> localMatchPaths;
 
     unordered_map<const Match *, MatchPath> match2path;
     unordered_map<const Match *, MatchPath> start2bestPath;
@@ -157,7 +165,13 @@ public:
                        size_t end,
                        vector<MatchPath> & matchPaths,
                        TaxID speciesId);                                  
-    
+
+    void getMatchPaths2(const Match * matchList,
+                       size_t start,
+                       size_t end,
+                       vector<MatchPath> & matchPaths,
+                       TaxID speciesId);  
+
     float combineMatchPaths(vector<MatchPath> & matchPaths,
                             size_t matchPathStart,
                             vector<MatchPath> & combMatchPaths,
