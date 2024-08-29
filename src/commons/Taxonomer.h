@@ -110,9 +110,6 @@ private:
     vector<bool> connectedToNext;
     vector<MatchPath> localMatchPaths;
 
-    unordered_map<const Match *, MatchPath> match2path;
-    unordered_map<const Match *, MatchPath> start2bestPath;
-
     // lowerRankClassification
     unordered_map<TaxID, TaxonCounts> cladeCnt;
 
@@ -164,13 +161,7 @@ public:
                        size_t start,
                        size_t end,
                        vector<MatchPath> & matchPaths,
-                       TaxID speciesId);                                  
-
-    void getMatchPaths2(const Match * matchList,
-                       size_t start,
-                       size_t end,
-                       vector<MatchPath> & matchPaths,
-                       TaxID speciesId);  
+                       TaxID speciesId);                                    
 
     float combineMatchPaths(vector<MatchPath> & matchPaths,
                             size_t matchPathStart,
