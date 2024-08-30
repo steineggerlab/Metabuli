@@ -86,7 +86,9 @@ protected:
 
   void moveMatches(Match *dest, Match *src, int &matchNum);
 
-  void compareDna(uint64_t query, std::vector<uint64_t> &targetKmersToCompare,
+  void compareDna(uint64_t query,
+                  std::vector<uint64_t> &targetKmersToCompare,
+                  std::vector<uint8_t> & hammingDists,
                   std::vector<size_t> &selectedMatches,
                   std::vector<uint8_t> &selectedHammingSum,
                   std::vector<uint16_t> &rightEndHammings,

@@ -217,8 +217,9 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
             
             // Target variables
             size_t diffIdxPos = 0;
-            std::vector<uint64_t> candidateTargetKmers; //vector for candidate target k-mer, some of which are selected after based on hamming distance
+            std::vector<uint64_t> candidateTargetKmers; // vector for candidate target k-mer, some of which are selected after based on hamming distance
             std::vector<TargetKmerInfo> candidateKmerInfos;
+            std::vector<uint8_t> hammingDists;
             uint64_t currentTargetKmer;
 
             // Match buffer for each thread
@@ -309,7 +310,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
 
                     // Reuse the candidate target k-mers to compare in DNA level if queries are the same at amino acid level but not at DNA level
                     if (currentQueryAA == AMINO_ACID_PART(queryKmerList[j].ADkmer)) {
-                        compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, selectedMatches,
+                        compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, hammingDists, selectedMatches,
                                    selectedHammingSum, selectedHammings, selectedDnaEncodings, selectedMatchCnt, queryKmerList[j].info.frame);
 
                         // If local buffer is full, copy them to the shared buffer.
@@ -405,7 +406,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                     }
 
                     // Compare the current query and the loaded target k-mers and select
-                    compareDna(currentQuery, candidateTargetKmers, selectedMatches, selectedHammingSum,
+                    compareDna(currentQuery, candidateTargetKmers, hammingDists, selectedMatches, selectedHammingSum,
                                selectedHammings, selectedDnaEncodings, selectedMatchCnt, queryKmerList[j].info.frame);
 
                     // If local buffer is full, copy them to the shared buffer.
@@ -495,14 +496,15 @@ void KmerMatcher::moveMatches(Match *dest, Match *src, int &matchNum) {
 // If a query has matches, the matches with the smallest hamming distance will be selected
 void KmerMatcher::compareDna(uint64_t query,
                              std::vector<uint64_t> &targetKmersToCompare,
+                             std::vector<uint8_t> & hammingDists,
                              std::vector<size_t> &selectedMatches,
                              std::vector<uint8_t> &selectedHammingSum,
                              std::vector<uint16_t> &selectedHammings,
                              std::vector<uint32_t> &selectedDnaEncodings,
                              size_t & selectedMatchIdx,
                              uint8_t frame) {
+    hammingDists.resize(targetKmersToCompare.size());
     size_t size = targetKmersToCompare.size();
-    auto *hammingSums = new uint8_t[size + 1];
     uint8_t currentHammingSum;
     uint8_t minHammingSum = UINT8_MAX;
 
@@ -512,16 +514,16 @@ void KmerMatcher::compareDna(uint64_t query,
         if (currentHammingSum < minHammingSum) {
             minHammingSum = currentHammingSum;
         }
-        hammingSums[i] = currentHammingSum;
+        hammingDists[i] = currentHammingSum;
     }
 
     // Select target k-mers that passed hamming criteria
     selectedMatchIdx = 0;
     uint8_t maxHamming = min(minHammingSum * 2, 7);
     for (size_t h = 0; h < size; h++) {
-        if (hammingSums[h] <= maxHamming) {
+        if (hammingDists[h] <= maxHamming) {
             selectedMatches[selectedMatchIdx] = h;
-            selectedHammingSum[selectedMatchIdx] = hammingSums[h];
+            selectedHammingSum[selectedMatchIdx] = hammingDists[h];
             if (frame < 3) { // Frame of query k-mer
                 selectedHammings[selectedMatchIdx] = getHammings(query, targetKmersToCompare[h]);
             } else {
@@ -532,7 +534,6 @@ void KmerMatcher::compareDna(uint64_t query,
             selectedMatchIdx++;
         }
     }
-    delete[] hammingSums;
 }
 
 
