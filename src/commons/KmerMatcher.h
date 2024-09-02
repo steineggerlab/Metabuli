@@ -136,39 +136,39 @@ public:
   size_t getTotalMatchCnt() const { return totalMatchCnt; }
 };
 
-// inline uint64_t KmerMatcher::getNextTargetKmer(uint64_t lookingTarget,
-//                                                const uint16_t *diffIdxBuffer,
-//                                                size_t &diffBufferIdx,
-//                                                size_t &totalPos) {
-//   uint16_t fragment;
-//   uint16_t check = 32768; // 2^15
-//   uint64_t diffIn64bit = 0;
-//   fragment = diffIdxBuffer[diffBufferIdx++];
-//   totalPos++;
-//   while (!(fragment & check)) { // 27 %
-//     diffIn64bit |= fragment;
-//     diffIn64bit <<= 15u;
-//     fragment = diffIdxBuffer[diffBufferIdx++];
-//     totalPos++;
-//   }
-//   fragment &= ~check;      // not; 8.47 %
-//   diffIn64bit |= fragment; // or : 23.6%
-//   return diffIn64bit + lookingTarget;
-// }
-
 inline uint64_t KmerMatcher::getNextTargetKmer(uint64_t lookingTarget,
                                                const uint16_t *diffIdxBuffer,
                                                size_t &diffBufferIdx,
                                                size_t &totalPos) {
-  uint64_t diffIn64bit = 0;
   uint16_t fragment;
-  do {
-      fragment = diffIdxBuffer[diffBufferIdx++];
-      diffIn64bit = (diffIn64bit << 15) | (fragment & 0x7FFF);
-      totalPos++;
-  } while (!(fragment & 0x8000)); // 0x8000 is 2^15 (or 32768)
+  uint16_t check = 32768; // 2^15
+  uint64_t diffIn64bit = 0;
+  fragment = diffIdxBuffer[diffBufferIdx++];
+  totalPos++;
+  while (!(fragment & check)) { // 27 %
+    diffIn64bit |= fragment;
+    diffIn64bit <<= 15u;
+    fragment = diffIdxBuffer[diffBufferIdx++];
+    totalPos++;
+  }
+  fragment &= ~check;      // not; 8.47 %
+  diffIn64bit |= fragment; // or : 23.6%
   return diffIn64bit + lookingTarget;
 }
+
+// inline uint64_t KmerMatcher::getNextTargetKmer(uint64_t lookingTarget,
+//                                                const uint16_t *diffIdxBuffer,
+//                                                size_t &diffBufferIdx,
+//                                                size_t &totalPos) {
+//   uint64_t diffIn64bit = 0;
+//   uint16_t fragment;
+//   do {
+//       fragment = diffIdxBuffer[diffBufferIdx++];
+//       diffIn64bit = (diffIn64bit << 15) | (fragment & 0x7FFF);
+//       totalPos++;
+//   } while (!(fragment & 0x8000)); // 0x8000 is 2^15 (or 32768)
+//   return diffIn64bit + lookingTarget;
+// }
 
 inline TargetKmerInfo KmerMatcher::getKmerInfo(size_t bufferSize,
                                                FILE *kmerInfoFp,
