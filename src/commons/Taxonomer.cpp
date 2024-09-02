@@ -832,13 +832,13 @@ bool Taxonomer::isConsecutive(const Match * match1, const Match * match2) {
     return (match1->dnaEncoding >> 3) == (match2->dnaEncoding & 0x1FFFFF);
 }
 
-bool Taxonomer::isConsecutive_diffFrame(const Match * match1, const Match * match2) {
-    // int hamming1 = match1->hamming - GET_2_BITS(match1->rightEndHamming);
-    // int hamming2 = match2->hamming - GET_2_BITS(match2->rightEndHamming >> 14);
-    // match1 87654321 -> 08765432
-    // match2 98765432 -> 08765432
-    return (match1->hamming - GET_2_BITS(match1->rightEndHamming)) == (match2->hamming - GET_2_BITS(match2->rightEndHamming >> 14));
-}
+// bool Taxonomer::isConsecutive_diffFrame(const Match * match1, const Match * match2) {
+//     // int hamming1 = match1->hamming - GET_2_BITS(match1->rightEndHamming);
+//     // int hamming2 = match2->hamming - GET_2_BITS(match2->rightEndHamming >> 14);
+//     // match1 87654321 -> 08765432
+//     // match2 98765432 -> 08765432
+//     return (match1->hamming - GET_2_BITS(match1->rightEndHamming)) == (match2->hamming - GET_2_BITS(match2->rightEndHamming >> 14));
+// }
 
 
 void Taxonomer::ensureArraySize(size_t newSize) {

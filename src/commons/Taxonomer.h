@@ -180,7 +180,7 @@ public:
 
     static bool isConsecutive(const Match * match1, const Match * match2);
 
-    static bool isConsecutive_diffFrame(const Match * match1, const Match * match2);
+    // static bool isConsecutive_diffFrame(const Match * match1, const Match * match2);
 
     TaxonScore getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpeciesRange,
                                      const Match *matchList, size_t end,

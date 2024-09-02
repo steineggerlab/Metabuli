@@ -300,8 +300,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                                                  taxId2speciesId[candidateKmerInfos[idx].sequenceID],
                                                  selectedDnaEncodings[k],
                                                  selectedHammings[k],
-                                                 selectedHammingSum[k],
-                                                 (bool) candidateKmerInfos[idx].redundancy};
+                                                 selectedHammingSum[k]};
                             matchCnt++;
                         }
                         continue;
@@ -334,8 +333,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                                                  taxId2speciesId[candidateKmerInfos[idx].sequenceID],
                                                  selectedDnaEncodings[k],
                                                  selectedHammings[k],
-                                                 selectedHammingSum[k],
-                                                 (bool) candidateKmerInfos[idx].redundancy};
+                                                 selectedHammingSum[k]};
                             matchCnt++;
                         }
                         currentQuery = queryKmerList[j].ADkmer;
@@ -431,8 +429,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                                              taxId2speciesId[candidateKmerInfos[idx].sequenceID],
                                              selectedDnaEncodings[k],
                                              selectedHammings[k],
-                                             selectedHammingSum[k],
-                                             (bool) candidateKmerInfos[idx].redundancy};
+                                             selectedHammingSum[k]};
                         matchCnt++;
                     }
                 } // End of one split
@@ -568,6 +565,28 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
             // FILE
             FILE * diffIdxFp = fopen(targetDiffIdxFileName.c_str(), "rb");
             FILE * kmerInfoFp = fopen(targetInfoFileName.c_str(), "rb");
+#if !defined(O_DIRECT)
+            const int mode = (O_RDONLY | O_SYNC);
+#else
+            const int mode = (O_RDONLY | O_DIRECT | O_SYNC);
+#endif      
+            // Open target table
+            int fdDiffIdx = open(targetDiffIdxFileName.c_str(), mode);
+            if (fdDiffIdx < 0) {
+                cout << "Open target table " << targetDiffIdxFileName << " failed\n";
+                // EXIT(EXIT_FAILURE);
+            }
+
+            int fdKmerInfo = open(targetInfoFileName.c_str(), mode);
+            if (fdKmerInfo < 0) {
+                cout << "Open target table " << targetInfoFileName << " failed\n";
+                // EXIT(EXIT_FAILURE);
+            }
+
+#if !defined(O_DIRECT) && defined(F_NOCACHE)
+            fcntl(fdDiffIdxFp, F_NOCACHE, 1);
+            fcntl(fdKmerInfoFp, F_NOCACHE, 1);
+#endif
 
             // Target K-mer buffer
             uint16_t * diffIdxBuffer = (uint16_t *) malloc(sizeof(uint16_t) * (BufferSize + 1)); // size = 32 Mb
@@ -620,10 +639,13 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                                     - (querySplits[i].diffIdxSplit.ADkmer != 0);
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
 
-                fseek(kmerInfoFp, 4 * (long)(kmerInfoBufferIdx), SEEK_SET);
-                loadBuffer(kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx, BufferSize);
-                fseek(diffIdxFp, 2 * (long) (diffIdxBufferIdx), SEEK_SET);
-                loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize);
+                // fseek(kmerInfoFp, 4 * (long)(kmerInfoBufferIdx), SEEK_SET);
+                // loadBuffer(kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx, BufferSize);
+                // fseek(diffIdxFp, 2 * (long) (diffIdxBufferIdx), SEEK_SET);
+                // loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize);
+
+                loadBuffer2(fdKmerInfo, kmerInfoBuffer, kmerInfoBufferIdx, BufferSize, 4 * static_cast<long>(kmerInfoBufferIdx));
+                loadBuffer2(fdDiffIdx, diffIdxBuffer, diffIdxBufferIdx, BufferSize, 2 * static_cast<long>(diffIdxBufferIdx));
                 
                 if (querySplits[i].diffIdxSplit.ADkmer == 0 && querySplits[i].diffIdxSplit.diffIdxOffset == 0 
                     && querySplits[i].diffIdxSplit.infoIdxOffset == 0) {
@@ -667,8 +689,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                                                  taxId2speciesId[candidateKmerInfos[idx].sequenceID],
                                                  selectedDnaEncodings[k],
                                                  selectedHammings[k],
-                                                 selectedHammingSum[k],
-                                                 (bool) candidateKmerInfos[idx].redundancy};
+                                                 selectedHammingSum[k]};
                             matchCnt++;
                         }
                         continue;
@@ -701,8 +722,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                                                  taxId2speciesId[candidateKmerInfos[idx].sequenceID],
                                                  selectedDnaEncodings[k],
                                                  selectedHammings[k],
-                                                 selectedHammingSum[k],
-                                                 (bool) candidateKmerInfos[idx].redundancy};
+                                                 selectedHammingSum[k]};
                             matchCnt++;
                         }
                         currentQuery = queryKmerList[j].ADkmer;
@@ -797,8 +817,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                                              taxId2speciesId[candidateKmerInfos[idx].sequenceID],
                                              selectedDnaEncodings[k],
                                              selectedHammings[k],
-                                             selectedHammingSum[k],
-                                             (bool) candidateKmerInfos[idx].redundancy};
+                                             selectedHammingSum[k]};
                         matchCnt++;
                     }
                 } // End of one split
@@ -866,34 +885,25 @@ void KmerMatcher::compareDna(uint64_t query,
                              size_t & selectedMatchIdx,
                              uint8_t frame) {
     hammingDists.resize(targetKmersToCompare.size());
-    size_t size = targetKmersToCompare.size();
-    uint8_t currentHammingSum;
     uint8_t minHammingSum = UINT8_MAX;
 
     // Calculate hamming distance
-    for (size_t i = 0; i < size; i++) {
-        currentHammingSum = getHammingDistanceSum(query, targetKmersToCompare[i]);
-        if (currentHammingSum < minHammingSum) {
-            minHammingSum = currentHammingSum;
-        }
-        hammingDists[i] = currentHammingSum;
+    for (size_t i = 0; i < targetKmersToCompare.size(); i++) {
+        hammingDists[i] = getHammingDistanceSum(query, targetKmersToCompare[i]);
+        minHammingSum = min(minHammingSum, hammingDists[i]);
     }
 
     // Select target k-mers that passed hamming criteria
     selectedMatchIdx = 0;
     uint8_t maxHamming = min(minHammingSum * 2, 7);
-    for (size_t h = 0; h < size; h++) {
+    for (size_t h = 0; h < targetKmersToCompare.size(); h++) {
         if (hammingDists[h] <= maxHamming) {
-            selectedMatches[selectedMatchIdx] = h;
             selectedHammingSum[selectedMatchIdx] = hammingDists[h];
-            if (frame < 3) { // Frame of query k-mer
-                selectedHammings[selectedMatchIdx] = getHammings(query, targetKmersToCompare[h]);
-            } else {
-                selectedHammings[selectedMatchIdx] = getHammings_reverse(query, targetKmersToCompare[h]);
-            }
-            // Store right 24 bits of the target k-mer in selectedDnaEncodings
             selectedDnaEncodings[selectedMatchIdx] = GET_24_BITS_UINT(targetKmersToCompare[h]);
-            selectedMatchIdx++;
+            selectedHammings[selectedMatchIdx] = (frame < 3)
+                ? getHammings(query, targetKmersToCompare[h])
+                : getHammings_reverse(query, targetKmersToCompare[h]);
+            selectedMatches[selectedMatchIdx++] = h;
         }
     }
 }
@@ -911,16 +921,14 @@ void KmerMatcher::compareDna2(uint64_t query,
                               size_t & selectedMatchIdx,
                               uint8_t frame) {
     hammingDists.resize(candidateCnt);
-    uint8_t currentHammingSum;
     uint8_t minHammingSum = UINT8_MAX;
 
     // Calculate hamming distance
     for (size_t i = 0; i < candidateCnt; i++) {
-        currentHammingSum = getHammingDistanceSum(query, targetKmersToCompare[i]);
-        if (currentHammingSum < minHammingSum) {
-            minHammingSum = currentHammingSum;
+        hammingDists[i] = getHammingDistanceSum(query, targetKmersToCompare[i]);
+        if (hammingDists[i] < minHammingSum) {
+            minHammingSum = hammingDists[i];
         }
-        hammingDists[i] = currentHammingSum;
     }
 
     // Select target k-mers that passed hamming criteria

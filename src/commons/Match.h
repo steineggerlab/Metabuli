@@ -13,18 +13,16 @@ struct Match { // 24 byte
           TaxID speciesId,
           uint32_t dnaEncoding,
           uint16_t eachHamming,
-          uint8_t hamming,
-          bool redundancy):
+          uint8_t hamming):
           qInfo(qInfo), targetId(targetId), speciesId(speciesId), dnaEncoding(dnaEncoding),
-          rightEndHamming(eachHamming), hamming(hamming), redundancy(redundancy) { }
+          rightEndHamming(eachHamming), hamming(hamming) { }
 
-    QueryKmerInfo qInfo; // 8
-    TaxID targetId; // 4 taxonomy id infact
-    TaxID speciesId; // 4
-    uint32_t dnaEncoding; // 4
-    uint16_t rightEndHamming; // 2
-    uint8_t hamming; // 1
-    bool redundancy; // 1
+    QueryKmerInfo qInfo;      // 8 // Query K-mer information
+    TaxID targetId;           // 4 // axonomy id infact
+    TaxID speciesId;          // 4 // Used to group matches by species
+    uint32_t dnaEncoding;     // 4 // Used to check if two matches are consecutive
+    uint16_t rightEndHamming; // 2 // Used to calculate score
+    uint8_t hamming;          // 1 // Used to filter redundant matches
 
     void printMatch() const {
         std::cout << qInfo.sequenceID << " " << qInfo.pos << " " << qInfo.frame << " "
