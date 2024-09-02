@@ -96,6 +96,17 @@ protected:
                   size_t & selectedMatchIdx,
                   uint8_t frame);
 
+  void compareDna2(uint64_t query,
+                  const uint64_t * targetKmersToCompare,
+                  size_t candidateCnt,
+                  std::vector<uint8_t> & hammingDists,
+                  std::vector<size_t> &selectedMatches,
+                  std::vector<uint8_t> &selectedHammingSum,
+                  std::vector<uint16_t> &rightEndHammings,
+                  std::vector<uint32_t> &selectedDnaEncodings,
+                  size_t & selectedMatchIdx,
+                  uint8_t frame);
+
   virtual uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2);
 
   virtual uint16_t getHammings(uint64_t kmer1, uint64_t kmer2);
@@ -114,6 +125,10 @@ public:
   bool matchKmers(QueryKmerBuffer *queryKmerBuffer,
                   Buffer<Match> *matchBuffer,
                   const string &db = string());
+
+  bool matchKmers2(QueryKmerBuffer *queryKmerBuffer,
+                  Buffer<Match> *matchBuffer,
+                  const string &db = string());
   
   void sortMatches(Buffer<Match> *matchBuffer);
 
@@ -121,23 +136,37 @@ public:
   size_t getTotalMatchCnt() const { return totalMatchCnt; }
 };
 
+// inline uint64_t KmerMatcher::getNextTargetKmer(uint64_t lookingTarget,
+//                                                const uint16_t *diffIdxBuffer,
+//                                                size_t &diffBufferIdx,
+//                                                size_t &totalPos) {
+//   uint16_t fragment;
+//   uint16_t check = 32768; // 2^15
+//   uint64_t diffIn64bit = 0;
+//   fragment = diffIdxBuffer[diffBufferIdx++];
+//   totalPos++;
+//   while (!(fragment & check)) { // 27 %
+//     diffIn64bit |= fragment;
+//     diffIn64bit <<= 15u;
+//     fragment = diffIdxBuffer[diffBufferIdx++];
+//     totalPos++;
+//   }
+//   fragment &= ~check;      // not; 8.47 %
+//   diffIn64bit |= fragment; // or : 23.6%
+//   return diffIn64bit + lookingTarget;
+// }
+
 inline uint64_t KmerMatcher::getNextTargetKmer(uint64_t lookingTarget,
                                                const uint16_t *diffIdxBuffer,
                                                size_t &diffBufferIdx,
                                                size_t &totalPos) {
-  uint16_t fragment;
-  uint16_t check = 32768; // 2^15
   uint64_t diffIn64bit = 0;
-  fragment = diffIdxBuffer[diffBufferIdx++];
-  totalPos++;
-  while (!(fragment & check)) { // 27 %
-    diffIn64bit |= fragment;
-    diffIn64bit <<= 15u;
-    fragment = diffIdxBuffer[diffBufferIdx++];
-    totalPos++;
-  }
-  fragment &= ~check;      // not; 8.47 %
-  diffIn64bit |= fragment; // or : 23.6%
+  uint16_t fragment;
+  do {
+      fragment = diffIdxBuffer[diffBufferIdx++];
+      diffIn64bit = (diffIn64bit << 15) | (fragment & 0x7FFF);
+      totalPos++;
+  } while (!(fragment & 0x8000)); // 0x8000 is 2^15 (or 32768)
   return diffIn64bit + lookingTarget;
 }
 
