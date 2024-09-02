@@ -79,8 +79,8 @@ private:
     int minCoveredPos;
     int accessionLevel;
     int minSSMatch;
-    int minConsCnt;
-    int minConsCntEuk;
+    size_t minConsCnt;
+    size_t minConsCntEuk;
     int eukaryotaTaxId;
     float tieRatio;
 

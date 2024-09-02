@@ -104,7 +104,7 @@ static void loadBuffer2(int fd, T *buffer, size_t &bufferIdx, size_t size, off_t
                                     TargetKmerInfo *infoBuffer,
                                     size_t &infoBufferIdx);
 
-  void moveMatches(Match *dest, Match *src, int &matchNum);
+  void moveMatches(Match *dest, Match *src, size_t & matchNum);
 
   void compareDna(uint64_t query,
                   std::vector<uint64_t> &targetKmersToCompare,

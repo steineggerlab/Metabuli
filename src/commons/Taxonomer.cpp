@@ -26,8 +26,8 @@ Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxon
     minCoveredPos = par.minCoveredPos;
     accessionLevel = par.accessionLevel;
     minSSMatch = par.minSSMatch;
-    minConsCnt = par.minConsCnt;
-    minConsCntEuk = par.minConsCntEuk;
+    minConsCnt = (size_t) par.minConsCnt;
+    minConsCntEuk = (size_t) par.minConsCntEuk;
     eukaryotaTaxId = par.eukaryotaTaxId;
     tieRatio = par.tieRatio;
 
@@ -362,7 +362,7 @@ TaxonScore Taxonomer::getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpec
     }
 
     maxSpecies.clear();
-    float coveredLength = 0.f;
+    // float coveredLength = 0.f;
     for (size_t i = 0; i < speciesList.size(); i++) {
         if (speciesScores[i] >= bestSpScore * tieRatio) {
             maxSpecies.push_back(speciesList[i]);
@@ -481,17 +481,13 @@ void Taxonomer::getMatchPaths(const Match * matchList,
                               size_t end,
                               vector<MatchPath> & filteredMatchPaths,
                               TaxID speciesId) {
-    // cout << "getMatchPaths2" << endl;
-    // for (size_t i = start; i < end; i ++) {
-    //     matchList[i].printMatch();
-    // }
     size_t i = start;
     size_t currPos = matchList[start].qInfo.pos;
     uint64_t frame = matchList[start].qInfo.frame;
-    size_t MIN_DEPTH = minConsCnt - 1;
+    int MIN_DEPTH = (int) minConsCnt - 1;
 
     if (taxonomy->IsAncestor(eukaryotaTaxId, speciesId)) {
-        MIN_DEPTH = minConsCntEuk - 1;
+        MIN_DEPTH = (int) minConsCntEuk - 1;
     }
     
     connectedToNext.resize(end - start + 1);

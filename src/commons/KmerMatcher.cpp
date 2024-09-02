@@ -223,9 +223,9 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
             uint64_t currentTargetKmer;
 
             // Match buffer for each thread
-            int localBufferSize = 2'000'000; // 32 Mb
+            size_t localBufferSize = 2'000'000; // 32 Mb
             auto *matches = new Match[localBufferSize]; // 16 * 2'000'000 = 32 Mb
-            int matchCnt = 0;
+            size_t matchCnt = 0;
 
             // Vectors for selected target k-mers
             std::vector<uint8_t> selectedHammingSum;
@@ -275,20 +275,19 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                     if (currentQuery == queryKmerList[j].ADkmer
                         && (currentQueryInfo.frame/3 == queryKmerList[j].info.frame/3)) {
                         // If local buffer is full, copy them to the shared buffer.
-                        if (matchCnt + selectedMatchCnt > localBufferSize) {
+                        if (unlikely(matchCnt + selectedMatchCnt > localBufferSize)) {
                             // Check if the shared buffer is full.
                             posToWrite = matchBuffer->reserveMemory(matchCnt);
-                            if (posToWrite + matchCnt >= matchBuffer->bufferSize) {
+                            if (unlikely(posToWrite + matchCnt >= matchBuffer->bufferSize)) {
                                 hasOverflow = true;
                                 querySplits[i].start = lastMovedQueryIdx + 1;
                                 __sync_fetch_and_sub(& matchBuffer->startIndexOfReserve, matchCnt);
                                 break;
-                            } else { // not full -> copy matches to the shared buffer
-                                moveMatches(matchBuffer->buffer + posToWrite, matches, matchCnt);
-                                lastMovedQueryIdx = j;
-                            }
+                            } 
+                            moveMatches(matchBuffer->buffer + posToWrite, matches, matchCnt);
+                            lastMovedQueryIdx = j;
                         }
-                        for (int k = 0; k < selectedMatchCnt; k++) {
+                        for (size_t k = 0; k < selectedMatchCnt; k++) {
                             idx = selectedMatches[k];
                             // Check if candidateKmerInfos[idx].sequenceID is valid
                             // if (taxId2genusId.find(candidateKmerInfos[idx].sequenceID) == taxId2genusId.end() ||
@@ -313,20 +312,19 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                                    selectedHammingSum, selectedHammings, selectedDnaEncodings, selectedMatchCnt, queryKmerList[j].info.frame);
 
                         // If local buffer is full, copy them to the shared buffer.
-                        if (matchCnt + selectedMatchCnt > localBufferSize) {
+                        if (unlikely(matchCnt + selectedMatchCnt > localBufferSize)) {
                             // Check if the shared buffer is full.
                             posToWrite = matchBuffer->reserveMemory(matchCnt);
-                            if (posToWrite + matchCnt >= matchBuffer->bufferSize) {
+                            if (unlikely(posToWrite + matchCnt >= matchBuffer->bufferSize)) {
                                 hasOverflow = true;
                                 querySplits[i].start = lastMovedQueryIdx + 1;
                                 __sync_fetch_and_sub(& matchBuffer->startIndexOfReserve, matchCnt);
                                 break;
-                            } else { // not full -> copy matches to the shared buffer
-                                moveMatches(matchBuffer->buffer + posToWrite, matches, matchCnt);
-                                lastMovedQueryIdx = j;
-                            }
+                            } 
+                            moveMatches(matchBuffer->buffer + posToWrite, matches, matchCnt);
+                            lastMovedQueryIdx = j;
                         }
-                        for (int k = 0; k < selectedMatchCnt; k++) {
+                        for (size_t k = 0; k < selectedMatchCnt; k++) {
                             idx = selectedMatches[k];
                             matches[matchCnt] = {queryKmerList[j].info,
                                                  candidateKmerInfos[idx].sequenceID,
@@ -408,21 +406,20 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                                selectedHammings, selectedDnaEncodings, selectedMatchCnt, queryKmerList[j].info.frame);
 
                     // If local buffer is full, copy them to the shared buffer.
-                    if (matchCnt + selectedMatchCnt > localBufferSize) {
+                    if (unlikely(matchCnt + selectedMatchCnt > localBufferSize)) {
                         // Check if the shared buffer is full.
                         posToWrite = matchBuffer->reserveMemory(matchCnt);
-                        if (posToWrite + matchCnt >= matchBuffer->bufferSize) { // full -> write matches to file first
+                        if (unlikely(posToWrite + matchCnt >= matchBuffer->bufferSize)) { // full -> write matches to file first
                             hasOverflow = true;
                             querySplits[i].start = lastMovedQueryIdx + 1;
                             __sync_fetch_and_sub(&matchBuffer->startIndexOfReserve, matchCnt);
                             break;
-                        } else { // not full -> copy matches to the shared buffer
-                            moveMatches(matchBuffer->buffer + posToWrite, matches, matchCnt);
-                            lastMovedQueryIdx = j;
-                        }
+                        } 
+                        moveMatches(matchBuffer->buffer + posToWrite, matches, matchCnt);
+                        lastMovedQueryIdx = j;
                     }
 
-                    for (int k = 0; k < selectedMatchCnt; k++) {
+                    for (size_t k = 0; k < selectedMatchCnt; k++) {
                         idx = selectedMatches[k];
                         matches[matchCnt] = {queryKmerList[j].info,
                                              candidateKmerInfos[idx].sequenceID,
@@ -436,7 +433,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
 
                 // Move matches in the local buffer to the shared buffer
                 posToWrite = matchBuffer->reserveMemory(matchCnt);
-                if (posToWrite + matchCnt >= matchBuffer->bufferSize) {
+                if (unlikely(posToWrite + matchCnt >= matchBuffer->bufferSize)) {
                     hasOverflow = true;
                     querySplits[i].start = lastMovedQueryIdx + 1;
                     __sync_fetch_and_sub(& matchBuffer->startIndexOfReserve, matchCnt);
@@ -595,9 +592,9 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
             size_t diffIdxBufferIdx = 0;
 
             // Match buffer for each thread
-            int localBufferSize = 2'000'000; // 32 Mb
+            size_t localBufferSize = 2'000'000; // 32 Mb
             auto *matches = new Match[localBufferSize]; // 16 * 2'000'000 = 32 Mb
-            int matchCnt = 0;
+            size_t matchCnt = 0;
 
             // Query variables
             uint64_t currentQuery = UINT64_MAX;
@@ -677,7 +674,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                                 lastMovedQueryIdx = j;
                             }
                         }
-                        for (int k = 0; k < selectedMatchCnt; k++) {
+                        for (size_t k = 0; k < selectedMatchCnt; k++) {
                             idx = selectedMatches[k];
                             // Check if candidateKmerInfos[idx].sequenceID is valid
                             // if (taxId2genusId.find(candidateKmerInfos[idx].sequenceID) == taxId2genusId.end() ||
@@ -715,7 +712,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                                 lastMovedQueryIdx = j;
                             }
                         }
-                        for (int k = 0; k < selectedMatchCnt; k++) {
+                        for (size_t k = 0; k < selectedMatchCnt; k++) {
                             idx = selectedMatches[k];
                             matches[matchCnt] = {queryKmerList[j].info,
                                                  candidateKmerInfos[idx].sequenceID,
@@ -810,7 +807,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                         }
                     }
 
-                    for (int k = 0; k < selectedMatchCnt; k++) {
+                    for (size_t k = 0; k < selectedMatchCnt; k++) {
                         idx = selectedMatches[k];
                         matches[matchCnt] = {queryKmerList[j].info,
                                              candidateKmerInfos[idx].sequenceID,
@@ -839,12 +836,12 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                 }
             } // End of omp for (Iterating for splits)
             delete[] matches;
+            delete[] candidateKmers;
+            delete[] candidateKmerInfos;
             fclose(diffIdxFp);
             fclose(kmerInfoFp);
             free(diffIdxBuffer);
             free(kmerInfoBuffer);
-            free(candidateKmers);
-            free(candidateKmerInfos);
         } // End of omp parallel
         
         if (hasOverflow) {
@@ -868,7 +865,7 @@ void KmerMatcher::sortMatches(Buffer<Match> * matchBuffer) {
     std::cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << std::endl;
 }
 
-void KmerMatcher::moveMatches(Match *dest, Match *src, int &matchNum) {
+void KmerMatcher::moveMatches(Match *dest, Match *src, size_t & matchNum) {
     memcpy(dest, src, sizeof(Match) * matchNum);
     matchNum = 0;
 }
