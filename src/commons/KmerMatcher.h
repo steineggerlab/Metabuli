@@ -11,6 +11,7 @@
 #include "unordered_map"
 #include <string>
 #include <vector>
+#include <unistd.h>
 
 #define BufferSize 16'777'216 // 16 * 1024 * 1024 // 16 M
 
@@ -75,6 +76,25 @@ protected:
     fread(buffer, sizeof(T), size, fp);
     bufferIdx = 0;
   }
+
+  template <typename T>
+static void loadBuffer2(int fd, T *buffer, size_t &bufferIdx, size_t size, off_t offset) {
+    ssize_t bytesRead = pread(fd, buffer, size * sizeof(T), offset);
+    if (bytesRead == -1) {
+      cerr << "Error reading file" << std::endl;
+    }
+    bufferIdx = 0;
+}
+
+template <typename T>
+static void loadBuffer2(int fd, T *buffer, size_t &bufferIdx, size_t size, off_t offset, int cnt) {
+    off_t newOffset = offset + cnt * sizeof(T);
+    ssize_t bytesRead = pread(fd, buffer, size * sizeof(T), newOffset);
+    if (bytesRead == -1) {
+      cerr << "Error reading file" << std::endl;
+    }
+    bufferIdx = 0;
+}
 
   static uint64_t getNextTargetKmer(uint64_t lookingTarget,
                                     const uint16_t *diffIdxBuffer,
@@ -151,8 +171,8 @@ inline uint64_t KmerMatcher::getNextTargetKmer(uint64_t lookingTarget,
     fragment = diffIdxBuffer[diffBufferIdx++];
     totalPos++;
   }
-  fragment &= ~check;      // not; 8.47 %
-  diffIn64bit |= fragment; // or : 23.6%
+  // fragment &= 0x7FFF;      // not; 8.47 %
+  diffIn64bit |= (fragment & 0x7FFF); // or : 23.6%
   return diffIn64bit + lookingTarget;
 }
 
@@ -188,39 +208,82 @@ inline uint8_t KmerMatcher::getHammingDistanceSum(uint64_t kmer1,
   hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 3U)][GET_3_BITS(kmer2 >> 3U)];
   hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 6U)][GET_3_BITS(kmer2 >> 6U)];
   hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 9U)][GET_3_BITS(kmer2 >> 9U)];
-  hammingSum +=
-      hammingLookup[GET_3_BITS(kmer1 >> 12U)][GET_3_BITS(kmer2 >> 12U)];
-  hammingSum +=
-      hammingLookup[GET_3_BITS(kmer1 >> 15U)][GET_3_BITS(kmer2 >> 15U)];
-  hammingSum +=
-      hammingLookup[GET_3_BITS(kmer1 >> 18U)][GET_3_BITS(kmer2 >> 18U)];
-  hammingSum +=
-      hammingLookup[GET_3_BITS(kmer1 >> 21U)][GET_3_BITS(kmer2 >> 21U)];
+  hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 12U)][GET_3_BITS(kmer2 >> 12U)];
+  hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 15U)][GET_3_BITS(kmer2 >> 15U)];
+  hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 18U)][GET_3_BITS(kmer2 >> 18U)];
+  hammingSum += hammingLookup[GET_3_BITS(kmer1 >> 21U)][GET_3_BITS(kmer2 >> 21U)];
   return hammingSum;
 }
 
 inline uint16_t KmerMatcher::getHammings(uint64_t kmer1,
                                          uint64_t kmer2) { // hammings 87654321
   uint16_t hammings = 0;
-  for (int i = 0; i < 8; i++) {
-    hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U * i);
-    kmer1 >>= bitsForCodon;
-    kmer2 >>= bitsForCodon;
-  }
+  hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)]);
+  kmer1 >>= bitsForCodon;
+  kmer2 >>= bitsForCodon;
+  hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U);
+  kmer1 >>= bitsForCodon;
+  kmer2 >>= bitsForCodon;
+  hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 4U);
+  kmer1 >>= bitsForCodon;
+  kmer2 >>= bitsForCodon;
+  hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 6U);
+  kmer1 >>= bitsForCodon;
+  kmer2 >>= bitsForCodon;
+  hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 8U);
+  kmer1 >>= bitsForCodon;
+  kmer2 >>= bitsForCodon;
+  hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 10U);
+  kmer1 >>= bitsForCodon;
+  kmer2 >>= bitsForCodon;
+  hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 12U);
+  kmer1 >>= bitsForCodon;
+  kmer2 >>= bitsForCodon;
+  hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 14U);
   return hammings;
+  // for (int i = 0; i < 8; i++) {
+  //   hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U * i);
+  //   kmer1 >>= bitsForCodon;
+  //   kmer2 >>= bitsForCodon;
+  // }
+  // return hammings;
 }
 
 inline uint16_t
 KmerMatcher::getHammings_reverse(uint64_t kmer1,
                                  uint64_t kmer2) { // hammings 87654321
   uint16_t hammings = 0;
-  for (int i = 0; i < 8; i++) {
-    hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)]
-                << 2U * (7 - i);
-    kmer1 >>= bitsForCodon;
-    kmer2 >>= bitsForCodon;
-  }
+  hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 14U;
+  kmer1 >>= bitsForCodon;
+  kmer2 >>= bitsForCodon;
+  hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 12U;
+  kmer1 >>= bitsForCodon;
+  kmer2 >>= bitsForCodon;
+  hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 10U;
+  kmer1 >>= bitsForCodon;
+  kmer2 >>= bitsForCodon;
+  hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 8U;
+  kmer1 >>= bitsForCodon;
+  kmer2 >>= bitsForCodon;
+  hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 6U;
+  kmer1 >>= bitsForCodon;
+  kmer2 >>= bitsForCodon;
+  hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 4U;
+  kmer1 >>= bitsForCodon;
+  kmer2 >>= bitsForCodon;
+  hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U;
+  kmer1 >>= bitsForCodon;
+  kmer2 >>= bitsForCodon;
+  hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
   return hammings;
+
+  // for (int i = 0; i < 8; i++) {
+  //   hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)]
+  //               << 2U * (7 - i);
+  //   kmer1 >>= bitsForCodon;
+  //   kmer2 >>= bitsForCodon;
+  // }
+  // return hammings;
 }
 
 
