@@ -7,7 +7,7 @@
 #include <vector>
 
 KmerMatcher::KmerMatcher(const LocalParameters & par,
-                         NcbiTaxonomy * taxonomy) {
+                         NcbiTaxonomy * taxonomy) : par(par) {                        
     // Parameters
     threads = par.threads;
     dbDir = par.filenames[1 + (par.seqMode == 2)];
@@ -121,9 +121,18 @@ bool KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
         targetDiffIdxFileName = dbDir + "/" + db + "/diffIdx";
         targetInfoFileName = dbDir + "/" + db + "/info";
         diffIdxSplitFileName = dbDir + "/" + db + "/split";
-    } 
+    }
+ 
     MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str(), 3);
     size_t numOfDiffIdx = FileUtil::getFileSize(targetDiffIdxFileName) / sizeof(uint16_t);
+
+    // Load diffIdx count list
+    string diffIdxCntFileName = targetDiffIdxFileName + ".cnt";
+    string diffIdxAAFileName = targetDiffIdxFileName + ".aa";
+    MmapedData<uint64_t> aminoacids = mmapData<uint64_t>(diffIdxAAFileName.c_str(), 3);
+    MmapedData<uint32_t> diffIdxCnts = mmapData<uint32_t>(diffIdxCntFileName.c_str(), 3);
+    size_t aaOffsetCnt = FileUtil::getFileSize(diffIdxAAFileName) / sizeof(uint64_t);
+    cout << "aaOffsetCnt: " << aaOffsetCnt << endl;
 
     // // Print target k-mer information
     // MmapedData<TargetKmerInfo> targetKmerInfo2 = mmapData<TargetKmerInfo>(targetInfoFileName.c_str(), 3);
@@ -189,20 +198,55 @@ bool KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
         threads = querySplits.size();
     }
 
+    // Map querySplits to amino acid offset
+    vector<uint64_t> offsets;
+    size_t aaOffset = 0;
+    bool isFound = false;
+    for (size_t i = 0; i < querySplits.size(); i++) {
+        for (; aaOffset < aaOffsetCnt; aaOffset++) {
+            if (AMINO_ACID_PART(querySplits[i].diffIdxSplit.ADkmer) < aminoacids.data[aaOffset]) {
+                offsets.push_back(aaOffset);
+                isFound = true;
+                break;
+            }
+        }
+        if (!isFound) {
+            offsets.push_back(offsets.back());
+        }
+        isFound = false;
+        cout << offsets.back() << endl;
+    }
+
+
     bool *splitCheckList = (bool *) malloc(sizeof(bool) * threads);
     std::fill_n(splitCheckList, threads, false);
     size_t completedSplitCnt = 0;
 
     time_t beforeSearch = time(nullptr);
 
+    // development
+    size_t totalSkip = 0;
+
     while (completedSplitCnt < threads) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(completedSplitCnt, splitCheckList, hasOverflow, \
-querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffIdx, targetInfoFileName)
+querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffIdx, targetInfoFileName, \
+offsets, aaOffsetCnt, totalSkip)
         {
             // FILE
             FILE * diffIdxFp = fopen(targetDiffIdxFileName.c_str(), "rb");
             FILE * kmerInfoFp = fopen(targetInfoFileName.c_str(), "rb");
+            FILE * aaFp = fopen((targetDiffIdxFileName + ".aa").c_str(), "rb");
+            FILE * cntFp = fopen((targetDiffIdxFileName + ".deltaCnt").c_str(), "rb");
+            FILE * kmerCntFp = fopen((targetDiffIdxFileName + ".kmerCnt").c_str(), "rb");
+            FILE * kmerFp = fopen((targetDiffIdxFileName + ".kmers").c_str(), "rb");
+
+            uint64_t * aaBuffer = (uint64_t *) malloc(sizeof(uint64_t) * (BufferSize + 1)); 
+            uint64_t * nextKmers = (uint64_t *) malloc(sizeof(uint64_t) * (BufferSize + 1));
+            uint32_t * cntBuffer = (uint32_t *) malloc(sizeof(uint32_t) * (BufferSize + 1));
+            uint32_t * kmerCntBuffer = (uint32_t *) malloc(sizeof(uint32_t) * (BufferSize + 1));
+            size_t aaOffsetIdx = 0;
+            size_t totalOffsetIdx = 0;
 
             // Target K-mer buffer
             uint16_t * diffIdxBuffer = (uint16_t *) malloc(sizeof(uint16_t) * (BufferSize + 1)); // size = 32 Mb
@@ -239,19 +283,33 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
             size_t selectedMatchCnt = 0;
 
             size_t posToWrite;
-
             size_t idx;
+
+            size_t localSkip = 0;
+
+            SeqIterator * seqIterator = new SeqIterator(par);
 #pragma omp for schedule(dynamic, 1)
             for (size_t i = 0; i < querySplits.size(); i++) {
                 if (hasOverflow || splitCheckList[i]) {
                     continue;
                 }
-
+                aaOffsetIdx = offsets[i];
+                totalOffsetIdx = aaOffsetIdx;
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 diffIdxBufferIdx = querySplits[i].diffIdxSplit.diffIdxOffset;
                 kmerInfoBufferIdx = querySplits[i].diffIdxSplit.infoIdxOffset
                                     - (querySplits[i].diffIdxSplit.ADkmer != 0);
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
+
+                fseek(aaFp, 8 * (long) (aaOffsetIdx), SEEK_SET);
+                loadBuffer(aaFp, aaBuffer, BufferSize);
+                fseek(kmerFp, 8 * (long) (aaOffsetIdx), SEEK_SET);
+                loadBuffer(kmerFp, nextKmers, BufferSize);
+                fseek(cntFp, 4 * (long) (aaOffsetIdx), SEEK_SET);
+                loadBuffer(cntFp, cntBuffer, BufferSize);
+                fseek(kmerCntFp, 4 * (long) (aaOffsetIdx), SEEK_SET);
+                loadBuffer(kmerCntFp, kmerCntBuffer, aaOffsetIdx, BufferSize);
+
 
                 fseek(kmerInfoFp, 4 * (long)(kmerInfoBufferIdx), SEEK_SET);
                 loadBuffer(kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx, BufferSize);
@@ -269,8 +327,6 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
 
                 size_t lastMovedQueryIdx = 0;
                 for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
-                    querySplits[i].start++;
-
                     // Reuse the comparison data if queries are exactly identical
                     if (currentQuery == queryKmerList[j].ADkmer
                         && (currentQueryInfo.frame/3 == queryKmerList[j].info.frame/3)) {
@@ -280,7 +336,6 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                             posToWrite = matchBuffer->reserveMemory(matchCnt);
                             if (unlikely(posToWrite + matchCnt >= matchBuffer->bufferSize)) {
                                 hasOverflow = true;
-                                querySplits[i].start = lastMovedQueryIdx + 1;
                                 __sync_fetch_and_sub(& matchBuffer->startIndexOfReserve, matchCnt);
                                 break;
                             } 
@@ -317,7 +372,6 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                             posToWrite = matchBuffer->reserveMemory(matchCnt);
                             if (unlikely(posToWrite + matchCnt >= matchBuffer->bufferSize)) {
                                 hasOverflow = true;
-                                querySplits[i].start = lastMovedQueryIdx + 1;
                                 __sync_fetch_and_sub(& matchBuffer->startIndexOfReserve, matchCnt);
                                 break;
                             } 
@@ -350,17 +404,51 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                     // Skip target k-mers that are not matched in amino acid level
                     while (diffIdxPos != numOfDiffIdx
                            && (currentQueryAA > AMINO_ACID_PART(currentTargetKmer))) {
+                        // seqIterator->printKmerInDNAsequence(currentTargetKmer); cout << " " << diffIdxPos << " " << diffIdxBufferIdx << " ";
+                        // seqIterator->printAAKmer(AMINO_ACID_PART(aaBuffer[aaOffsetIdx]), 24); cout << "\n";
+                        if (AMINO_ACID_PART(currentTargetKmer) == aaBuffer[aaOffsetIdx]) {
+                            diffIdxBufferIdx += cntBuffer[aaOffsetIdx];
+                            diffIdxPos += cntBuffer[aaOffsetIdx];
+                            kmerInfoBufferIdx += kmerCntBuffer[aaOffsetIdx];
+                            currentTargetKmer = nextKmers[aaOffsetIdx];
+                            localSkip += cntBuffer[aaOffsetIdx];    
+                            aaOffsetIdx++;
+                            totalOffsetIdx ++;
+                            if (aaOffsetIdx == BufferSize) {
+                                loadBuffer(aaFp, aaBuffer, aaOffsetIdx, BufferSize);
+                                loadBuffer(kmerFp, nextKmers, aaOffsetIdx, BufferSize);
+                                loadBuffer(cntFp, cntBuffer, aaOffsetIdx, BufferSize);
+                                loadBuffer(kmerCntFp, kmerCntBuffer, aaOffsetIdx, BufferSize);
+                            }
+                            if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
+                                loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
+                            }
+                            continue;
+                        } else if (AMINO_ACID_PART(currentTargetKmer) > aaBuffer[aaOffsetIdx]) {
+                            while (totalOffsetIdx < aaOffsetCnt && AMINO_ACID_PART(currentTargetKmer) >= aaBuffer[aaOffsetIdx]) {
+                                aaOffsetIdx++;
+                                totalOffsetIdx++;
+                                if (aaOffsetIdx == BufferSize) {
+                                    loadBuffer(aaFp, aaBuffer, aaOffsetIdx, BufferSize);
+                                    loadBuffer(kmerFp, nextKmers, aaOffsetIdx, BufferSize);
+                                    loadBuffer(cntFp, cntBuffer, aaOffsetIdx, BufferSize);
+                                    loadBuffer(kmerCntFp, kmerCntBuffer, aaOffsetIdx, BufferSize);
+                                }
+                            }                            
+                        } 
                         if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
                             loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
                         }
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
                                                               diffIdxBufferIdx, diffIdxPos);
+                        
                         kmerInfoBufferIdx ++;
                     }
 
-                    if (currentQueryAA != AMINO_ACID_PART(currentTargetKmer)) // Move to next query k-mer if there isn't any match.
+                    if (currentQueryAA != AMINO_ACID_PART(currentTargetKmer)) {
                         continue;
-
+                    } 
+                    
                     // Load target k-mers that are matched in amino acid level
                     while (diffIdxPos != numOfDiffIdx &&
                            currentQueryAA == AMINO_ACID_PART(currentTargetKmer)) {
@@ -411,7 +499,6 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                         posToWrite = matchBuffer->reserveMemory(matchCnt);
                         if (unlikely(posToWrite + matchCnt >= matchBuffer->bufferSize)) { // full -> write matches to file first
                             hasOverflow = true;
-                            querySplits[i].start = lastMovedQueryIdx + 1;
                             __sync_fetch_and_sub(&matchBuffer->startIndexOfReserve, matchCnt);
                             break;
                         } 
@@ -435,14 +522,13 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                 posToWrite = matchBuffer->reserveMemory(matchCnt);
                 if (unlikely(posToWrite + matchCnt >= matchBuffer->bufferSize)) {
                     hasOverflow = true;
-                    querySplits[i].start = lastMovedQueryIdx + 1;
                     __sync_fetch_and_sub(& matchBuffer->startIndexOfReserve, matchCnt);
                 } else {
                     moveMatches(matchBuffer->buffer + posToWrite, matches, matchCnt);
                 }
 
                 // Check whether current split is completed or not
-                if (querySplits[i].start - 1 == querySplits[i].end) {
+                if (!hasOverflow) {
                     splitCheckList[i] = true;
                     __sync_fetch_and_add(&completedSplitCnt, 1);
                 }
@@ -452,13 +538,16 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
             fclose(kmerInfoFp);
             free(diffIdxBuffer);
             free(kmerInfoBuffer);
+
+            __sync_fetch_and_add(&totalSkip, localSkip);
+
         } // End of omp parallel
         
         if (hasOverflow) {
             return false;
         }
     } // end of while(completeSplitCnt < threadNum)
-    
+    cout << "Total skipped diffIdx: " << totalSkip << endl;
     std::cout << "Time spent for the comparison: " << double(time(nullptr) - beforeSearch) << std::endl;
     free(splitCheckList);
 
@@ -590,6 +679,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
             TargetKmerInfo * kmerInfoBuffer = (TargetKmerInfo *) malloc(sizeof(TargetKmerInfo) * (BufferSize + 1)); // 64 Mb
             size_t kmerInfoBufferIdx = 0;
             size_t diffIdxBufferIdx = 0;
+            size_t diffIdxOffset = 0;
 
             // Match buffer for each thread
             size_t localBufferSize = 2'000'000; // 32 Mb
@@ -635,6 +725,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                 kmerInfoBufferIdx = querySplits[i].diffIdxSplit.infoIdxOffset
                                     - (querySplits[i].diffIdxSplit.ADkmer != 0);
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
+                diffIdxOffset = querySplits[i].diffIdxSplit.diffIdxOffset;
 
                 // fseek(kmerInfoFp, 4 * (long)(kmerInfoBufferIdx), SEEK_SET);
                 // loadBuffer(kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx, BufferSize);
@@ -642,6 +733,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                 // loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize);
 
                 loadBuffer2(fdKmerInfo, kmerInfoBuffer, kmerInfoBufferIdx, BufferSize, 4 * static_cast<long>(kmerInfoBufferIdx));
+                
                 loadBuffer2(fdDiffIdx, diffIdxBuffer, diffIdxBufferIdx, BufferSize, 2 * static_cast<long>(diffIdxBufferIdx));
                 
                 if (querySplits[i].diffIdxSplit.ADkmer == 0 && querySplits[i].diffIdxSplit.diffIdxOffset == 0 
@@ -738,7 +830,8 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                     while (diffIdxPos != numOfDiffIdx
                            && (currentQueryAA > AMINO_ACID_PART(currentTargetKmer))) {
                         if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
-                            loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
+                            // loadBuffer2(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
+                            // loadBuffer2(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, 2 * static_cast<long>(diffIdxBufferIdx));
                         }
                         currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
                                                               diffIdxBufferIdx, diffIdxPos);

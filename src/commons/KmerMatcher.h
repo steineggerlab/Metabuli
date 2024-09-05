@@ -28,6 +28,7 @@ using namespace std;
 
 class KmerMatcher {
 protected:
+  const LocalParameters &par;
   NcbiTaxonomy *taxonomy;
   size_t threads;
   std::string dbDir;
@@ -63,21 +64,27 @@ protected:
 
   inline size_t AminoAcidPart(size_t kmer) const { return (kmer)&MARKER; }
 
-  template <typename T>
-  static void loadBuffer(FILE *fp, T *buffer, size_t &bufferIdx, size_t size) {
-    fread(buffer, sizeof(T), size, fp);
-    bufferIdx = 0;
-  }
 
-  template <typename T>
-  static void loadBuffer(FILE *fp, T *buffer, size_t &bufferIdx, size_t size,
-                         int cnt) {
-    fseek(fp, cnt * sizeof(T), SEEK_CUR);
-    fread(buffer, sizeof(T), size, fp);
-    bufferIdx = 0;
-  }
+template <typename T>
+static size_t loadBuffer(FILE *fp, T *buffer, size_t size) {
+  return fread(buffer, sizeof(T), size, fp);
+}
 
-  template <typename T>
+template <typename T>
+static size_t loadBuffer(FILE *fp, T *buffer, size_t &bufferIdx, size_t size) {
+  bufferIdx = 0;
+  return fread(buffer, sizeof(T), size, fp);
+}
+
+template <typename T>
+static size_t loadBuffer(FILE *fp, T *buffer, size_t &bufferIdx, size_t size,
+                       int cnt) {
+  bufferIdx = 0;                      
+  fseek(fp, cnt * sizeof(T), SEEK_CUR);
+  return fread(buffer, sizeof(T), size, fp);
+}
+
+template <typename T>
 static void loadBuffer2(int fd, T *buffer, size_t &bufferIdx, size_t size, off_t offset) {
     ssize_t bytesRead = pread(fd, buffer, size * sizeof(T), offset);
     if (bytesRead == -1) {
@@ -96,10 +103,7 @@ static void loadBuffer2(int fd, T *buffer, size_t &bufferIdx, size_t size, off_t
     bufferIdx = 0;
 }
 
-  static uint64_t getNextTargetKmer(uint64_t lookingTarget,
-                                    const uint16_t *diffIdxBuffer,
-                                    size_t &diffBufferIdx, size_t &totalPos);
-
+  
   static TargetKmerInfo getKmerInfo(size_t bufferSize, FILE *kmerInfoFp,
                                     TargetKmerInfo *infoBuffer,
                                     size_t &infoBufferIdx);
@@ -152,6 +156,11 @@ public:
   
   void sortMatches(Buffer<Match> *matchBuffer);
 
+  static uint64_t getNextTargetKmer(uint64_t lookingTarget,
+                                    const uint16_t *diffIdxBuffer,
+                                    size_t &diffBufferIdx, size_t &totalPos);
+
+
   // Getters
   size_t getTotalMatchCnt() const { return totalMatchCnt; }
 };
@@ -160,19 +169,18 @@ inline uint64_t KmerMatcher::getNextTargetKmer(uint64_t lookingTarget,
                                                const uint16_t *diffIdxBuffer,
                                                size_t &diffBufferIdx,
                                                size_t &totalPos) {
-  uint16_t fragment;
-  uint16_t check = 32768; // 2^15
+  // uint16_t fragment;
+  // uint16_t check = 32768; // 2^15
   uint64_t diffIn64bit = 0;
-  fragment = diffIdxBuffer[diffBufferIdx++];
+  uint16_t fragment = diffIdxBuffer[diffBufferIdx++];
   totalPos++;
-  while (!(fragment & check)) { // 27 %
+  while (!(fragment & 0x8000)) {
     diffIn64bit |= fragment;
     diffIn64bit <<= 15u;
     fragment = diffIdxBuffer[diffBufferIdx++];
     totalPos++;
   }
-  // fragment &= 0x7FFF;      // not; 8.47 %
-  diffIn64bit |= (fragment & 0x7FFF); // or : 23.6%
+  diffIn64bit |= (fragment & 0x7FFF);
   return diffIn64bit + lookingTarget;
 }
 

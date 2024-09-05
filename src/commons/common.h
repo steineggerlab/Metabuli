@@ -9,6 +9,7 @@
 #define likely(x) __builtin_expect((x),1)
 #define unlikely(x) __builtin_expect((x),0)
 #define kmerLength 8
+#define AA(kmer) ((kmer) & ~16777215)
 
 struct KmerCnt {
     KmerCnt(size_t length, size_t kmerCnt, size_t totalCnt) : length(length), kmerCnt(kmerCnt), totalCnt(totalCnt) {}
@@ -109,5 +110,18 @@ NcbiTaxonomy * loadTaxonomy(const std::string & dbDir, const std::string & taxon
 int loadDbParameters(LocalParameters & par);
 
 int searchAccession2TaxID(const std::string & name, const std::unordered_map<std::string, int> & acc2taxid);
+
+template <typename T>
+size_t loadBuffer(FILE *fp, T *buffer, size_t &bufferIdx, size_t number, int cnt) {
+    bufferIdx = 0;
+    fseek(fp, cnt * sizeof(T), SEEK_CUR);
+    return fread(buffer, sizeof(T), number, fp);
+}
+
+template <typename T>
+size_t loadBuffer(FILE *fp, T *buffer, size_t &bufferIdx, size_t number) {
+    bufferIdx = 0;
+    return fread(buffer, sizeof(T), number, fp);
+}
 
 #endif //ADCLASSIFIER2_COMMON_H

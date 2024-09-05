@@ -1076,7 +1076,6 @@ void IndexCreator::editTaxonomyDumpFiles(const vector<pair<string, pair<TaxID, T
     }
 
     std::string line;
-    size_t count = 0;
     unordered_map<int, int> mergedMap;
     while (std::getline(ss, line)) {
         std::vector<std::string> result = splitByDelimiter(line, "\t|\t", 2);
