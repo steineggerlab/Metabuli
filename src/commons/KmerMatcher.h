@@ -104,9 +104,9 @@ static void loadBuffer2(int fd, T *buffer, size_t &bufferIdx, size_t size, off_t
 }
 
   
-  static TargetKmerInfo getKmerInfo(size_t bufferSize, FILE *kmerInfoFp,
-                                    TargetKmerInfo *infoBuffer,
-                                    size_t &infoBufferIdx);
+  // static TargetKmerInfo getKmerInfo(size_t bufferSize, FILE *kmerInfoFp,
+  //                                   TargetKmerInfo *infoBuffer,
+  //                                   size_t &infoBufferIdx);
 
   void moveMatches(Match *dest, Match *src, size_t & matchNum);
 
@@ -140,6 +140,18 @@ static void loadBuffer2(int fd, T *buffer, size_t &bufferIdx, size_t size, off_t
   static bool compareMatches(const Match &a, const Match &b);
 
   void loadTaxIdList(const LocalParameters & par);
+
+  template <typename T>
+  inline T getKmerInfo(size_t bufferSize,
+                       FILE *kmerInfoFp,
+                       T *infoBuffer,
+                       size_t &infoBufferIdx) {
+    if (unlikely(infoBufferIdx >= bufferSize)) {
+      loadBuffer(kmerInfoFp, infoBuffer, infoBufferIdx, bufferSize,
+                 static_cast<int>(infoBufferIdx - bufferSize));
+    }
+    return infoBuffer[infoBufferIdx];
+  }
 
 public:
   KmerMatcher(const LocalParameters &par, NcbiTaxonomy *taxonomy);
@@ -203,16 +215,18 @@ inline uint64_t KmerMatcher::getNextTargetKmer(uint64_t lookingTarget,
 //   return diffIn64bit + lookingTarget;
 // }
 
-inline TargetKmerInfo KmerMatcher::getKmerInfo(size_t bufferSize,
-                                               FILE *kmerInfoFp,
-                                               TargetKmerInfo *infoBuffer,
-                                               size_t &infoBufferIdx) {
-  if (unlikely(infoBufferIdx >= bufferSize)) {
-    loadBuffer(kmerInfoFp, infoBuffer, infoBufferIdx, bufferSize,
-               (int)(infoBufferIdx - bufferSize));
-  }
-  return infoBuffer[infoBufferIdx];
-}
+// inline TargetKmerInfo KmerMatcher::getKmerInfo(size_t bufferSize,
+//                                                FILE *kmerInfoFp,
+//                                                TargetKmerInfo *infoBuffer,
+//                                                size_t &infoBufferIdx) {
+//   if (unlikely(infoBufferIdx >= bufferSize)) {
+//     loadBuffer(kmerInfoFp, infoBuffer, infoBufferIdx, bufferSize,
+//                (int)(infoBufferIdx - bufferSize));
+//   }
+//   return infoBuffer[infoBufferIdx];
+// }
+
+
 
 inline uint8_t KmerMatcher::getHammingDistanceSum(uint64_t kmer1,
                                                   uint64_t kmer2) { // 12345678

@@ -109,7 +109,7 @@ void Classifier::startClassify(const LocalParameters &par) {
                                              kseq2); // sync kseq1 and kseq2
             
             // Search matches between query and target k-mers
-            if (kmerMatcher->matchKmers3(&queryKmerBuffer, &matchBuffer)) {
+            if (kmerMatcher->matchKmers(&queryKmerBuffer, &matchBuffer)) {
                 kmerMatcher->sortMatches(&matchBuffer);
                 
                 // Classify queries based on the matches.

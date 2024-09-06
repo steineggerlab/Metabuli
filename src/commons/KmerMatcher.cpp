@@ -246,6 +246,7 @@ offsets, aaOffsetCnt, totalSkip)
             uint32_t * cntBuffer = (uint32_t *) malloc(sizeof(uint32_t) * (BufferSize + 1));
             uint32_t * kmerCntBuffer = (uint32_t *) malloc(sizeof(uint32_t) * (BufferSize + 1));
             size_t aaOffsetIdx = 0;
+            size_t aaOffsetIdx2 = 0;
             size_t totalOffsetIdx = 0;
 
             // Target K-mer buffer
@@ -294,6 +295,7 @@ offsets, aaOffsetCnt, totalSkip)
                     continue;
                 }
                 aaOffsetIdx = offsets[i];
+                aaOffsetIdx2 = offsets[i];
                 totalOffsetIdx = aaOffsetIdx;
                 currentTargetKmer = querySplits[i].diffIdxSplit.ADkmer;
                 diffIdxBufferIdx = querySplits[i].diffIdxSplit.diffIdxOffset;
@@ -303,12 +305,13 @@ offsets, aaOffsetCnt, totalSkip)
 
                 fseek(aaFp, 8 * (long) (aaOffsetIdx), SEEK_SET);
                 loadBuffer(aaFp, aaBuffer, BufferSize);
-                fseek(kmerFp, 8 * (long) (aaOffsetIdx), SEEK_SET);
+
+                fseek(kmerFp, 8 * (long) (aaOffsetIdx2), SEEK_SET);
                 loadBuffer(kmerFp, nextKmers, BufferSize);
-                fseek(cntFp, 4 * (long) (aaOffsetIdx), SEEK_SET);
+                fseek(cntFp, 4 * (long) (aaOffsetIdx2), SEEK_SET);
                 loadBuffer(cntFp, cntBuffer, BufferSize);
                 fseek(kmerCntFp, 4 * (long) (aaOffsetIdx), SEEK_SET);
-                loadBuffer(kmerCntFp, kmerCntBuffer, aaOffsetIdx, BufferSize);
+                loadBuffer(kmerCntFp, kmerCntBuffer, aaOffsetIdx2, BufferSize);
 
 
                 fseek(kmerInfoFp, 4 * (long)(kmerInfoBufferIdx), SEEK_SET);
@@ -407,18 +410,27 @@ offsets, aaOffsetCnt, totalSkip)
                         // seqIterator->printKmerInDNAsequence(currentTargetKmer); cout << " " << diffIdxPos << " " << diffIdxBufferIdx << " ";
                         // seqIterator->printAAKmer(AMINO_ACID_PART(aaBuffer[aaOffsetIdx]), 24); cout << "\n";
                         if (AMINO_ACID_PART(currentTargetKmer) == aaBuffer[aaOffsetIdx]) {
-                            diffIdxBufferIdx += cntBuffer[aaOffsetIdx];
-                            diffIdxPos += cntBuffer[aaOffsetIdx];
-                            kmerInfoBufferIdx += kmerCntBuffer[aaOffsetIdx];
-                            currentTargetKmer = nextKmers[aaOffsetIdx];
+                            size_t temp = aaOffsetIdx2;
+                            diffIdxBufferIdx += getKmerInfo(BufferSize, cntFp, cntBuffer, aaOffsetIdx2);
+                            // diffIdxBufferIdx += cntBuffer[aaOffsetIdx];
+                            // aaOffsetIdx2 = temp;
+                            diffIdxPos += getKmerInfo(BufferSize, cntFp, cntBuffer, aaOffsetIdx2);
+                            // diffIdxPos += cntBuffer[aaOffsetIdx];
+                            aaOffsetIdx2 = temp;
+                            kmerInfoBufferIdx += getKmerInfo(BufferSize, kmerCntFp, kmerCntBuffer, aaOffsetIdx2);
+                            // kmerInfoBufferIdx += kmerCntBuffer[aaOffsetIdx];
+                            aaOffsetIdx2 = temp;
+                            currentTargetKmer = getKmerInfo(BufferSize, kmerFp, nextKmers, aaOffsetIdx2);
+                            // currentTargetKmer = nextKmers[aaOffsetIdx];
                             // localSkip += cntBuffer[aaOffsetIdx];    
                             aaOffsetIdx++;
+                            aaOffsetIdx2++;
                             totalOffsetIdx ++;
                             if (aaOffsetIdx == BufferSize) {
                                 loadBuffer(aaFp, aaBuffer, aaOffsetIdx, BufferSize);
-                                loadBuffer(kmerFp, nextKmers, aaOffsetIdx, BufferSize);
-                                loadBuffer(cntFp, cntBuffer, aaOffsetIdx, BufferSize);
-                                loadBuffer(kmerCntFp, kmerCntBuffer, aaOffsetIdx, BufferSize);
+                                // loadBuffer(kmerFp, nextKmers, aaOffsetIdx, BufferSize);
+                                // loadBuffer(cntFp, cntBuffer, aaOffsetIdx, BufferSize);
+                                // loadBuffer(kmerCntFp, kmerCntBuffer, aaOffsetIdx, BufferSize);
                             }
                             if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
                                 loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
@@ -427,12 +439,13 @@ offsets, aaOffsetCnt, totalSkip)
                         } else {
                             while (totalOffsetIdx < aaOffsetCnt && AMINO_ACID_PART(currentTargetKmer) >= aaBuffer[aaOffsetIdx]) {
                                 aaOffsetIdx++;
+                                aaOffsetIdx2++;
                                 totalOffsetIdx++;
                                 if (aaOffsetIdx == BufferSize) {
                                     loadBuffer(aaFp, aaBuffer, aaOffsetIdx, BufferSize);
-                                    loadBuffer(kmerFp, nextKmers, aaOffsetIdx, BufferSize);
-                                    loadBuffer(cntFp, cntBuffer, aaOffsetIdx, BufferSize);
-                                    loadBuffer(kmerCntFp, kmerCntBuffer, aaOffsetIdx, BufferSize);
+                                    // loadBuffer(kmerFp, nextKmers, aaOffsetIdx, BufferSize);
+                                    // loadBuffer(cntFp, cntBuffer, aaOffsetIdx, BufferSize);
+                                    // loadBuffer(kmerCntFp, kmerCntBuffer, aaOffsetIdx, BufferSize);
                                 }
                             }                            
                         }  
