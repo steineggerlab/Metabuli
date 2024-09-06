@@ -154,6 +154,11 @@ public:
                   Buffer<Match> *matchBuffer,
                   const string &db = string());
   
+
+  bool matchKmers3(QueryKmerBuffer *queryKmerBuffer,
+                  Buffer<Match> *matchBuffer,
+                  const string &db = string());
+
   void sortMatches(Buffer<Match> *matchBuffer);
 
   static uint64_t getNextTargetKmer(uint64_t lookingTarget,
