@@ -109,7 +109,7 @@ void KmerMatcher::loadTaxIdList(const LocalParameters & par) {
 }
 
 
-bool KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
+bool KmerMatcher::matchKmers3(QueryKmerBuffer * queryKmerBuffer,
                              Buffer<Match> * matchBuffer,
                              const string & db){
     // Set database files
@@ -556,7 +556,7 @@ offsets, aaOffsetCnt, totalSkip)
     return true;
 }
 
-bool KmerMatcher::matchKmers3(QueryKmerBuffer * queryKmerBuffer,
+bool KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
                              Buffer<Match> * matchBuffer,
                              const string & db){
     // Set database files
@@ -653,17 +653,6 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
             // FILE
             FILE * diffIdxFp = fopen(targetDiffIdxFileName.c_str(), "rb");
             FILE * kmerInfoFp = fopen(targetInfoFileName.c_str(), "rb");
-            FILE * aaFp = fopen((targetDiffIdxFileName + ".aa").c_str(), "rb");
-            FILE * cntFp = fopen((targetDiffIdxFileName + ".deltaCnt").c_str(), "rb");
-            FILE * kmerCntFp = fopen((targetDiffIdxFileName + ".kmerCnt").c_str(), "rb");
-            FILE * kmerFp = fopen((targetDiffIdxFileName + ".kmers").c_str(), "rb");
-
-            uint64_t * aaBuffer = (uint64_t *) malloc(sizeof(uint64_t) * (BufferSize + 1)); 
-            uint64_t * nextKmers = (uint64_t *) malloc(sizeof(uint64_t) * (BufferSize + 1));
-            uint32_t * cntBuffer = (uint32_t *) malloc(sizeof(uint32_t) * (BufferSize + 1));
-            uint32_t * kmerCntBuffer = (uint32_t *) malloc(sizeof(uint32_t) * (BufferSize + 1));
-            size_t aaOffsetIdx = 0;
-            size_t totalOffsetIdx = 0;
 
             // Target K-mer buffer
             uint16_t * diffIdxBuffer = (uint16_t *) malloc(sizeof(uint16_t) * (BufferSize + 1)); // size = 32 Mb
@@ -701,8 +690,6 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
 
             size_t posToWrite;
             size_t idx;
-
-            size_t localSkip = 0;
 
 #pragma omp for schedule(dynamic, 1)
             for (size_t i = 0; i < querySplits.size(); i++) {

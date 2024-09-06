@@ -198,8 +198,6 @@ inline uint64_t KmerMatcher::getNextTargetKmer(uint64_t lookingTarget,
                                                const uint16_t *diffIdxBuffer,
                                                size_t &diffBufferIdx,
                                                size_t &totalPos) {
-  // uint16_t fragment;
-  // uint16_t check = 32768; // 2^15
   uint64_t diffIn64bit = 0;
   uint16_t fragment = diffIdxBuffer[diffBufferIdx++];
   totalPos++;
