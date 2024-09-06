@@ -153,6 +153,18 @@ static void loadBuffer2(int fd, T *buffer, size_t &bufferIdx, size_t size, off_t
     return infoBuffer[infoBufferIdx];
   }
 
+  template <typename T>
+  inline T getElement(size_t bufferSize,
+                       FILE *kmerInfoFp,
+                       T *infoBuffer,
+                       size_t &infoBufferIdx) {
+    if (unlikely(infoBufferIdx >= bufferSize)) {
+      loadBuffer(kmerInfoFp, infoBuffer, infoBufferIdx, bufferSize,
+                 static_cast<int>(infoBufferIdx - bufferSize));
+    }
+    return infoBuffer[infoBufferIdx];
+  }
+
 public:
   KmerMatcher(const LocalParameters &par, NcbiTaxonomy *taxonomy);
 

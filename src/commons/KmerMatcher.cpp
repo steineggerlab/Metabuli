@@ -127,12 +127,10 @@ bool KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
     size_t numOfDiffIdx = FileUtil::getFileSize(targetDiffIdxFileName) / sizeof(uint16_t);
 
     // Load diffIdx count list
-    string diffIdxCntFileName = targetDiffIdxFileName + ".cnt";
     string diffIdxAAFileName = targetDiffIdxFileName + ".aa";
     MmapedData<uint64_t> aminoacids = mmapData<uint64_t>(diffIdxAAFileName.c_str(), 3);
-    MmapedData<uint32_t> diffIdxCnts = mmapData<uint32_t>(diffIdxCntFileName.c_str(), 3);
     size_t aaOffsetCnt = FileUtil::getFileSize(diffIdxAAFileName) / sizeof(uint64_t);
-    cout << "aaOffsetCnt: " << aaOffsetCnt << endl;
+    // cout << "aaOffsetCnt: " << aaOffsetCnt << endl;
 
     // // Print target k-mer information
     // MmapedData<TargetKmerInfo> targetKmerInfo2 = mmapData<TargetKmerInfo>(targetInfoFileName.c_str(), 3);
@@ -193,6 +191,7 @@ bool KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
         }
         startIdx = endIdx + 1;
     }
+    munmap(diffIdxSplits.data, diffIdxSplits.fileSize + 1);
 
     if (querySplits.size() != threads) {
         threads = querySplits.size();
@@ -214,8 +213,9 @@ bool KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
             offsets.push_back(offsets.back());
         }
         isFound = false;
-        cout << offsets.back() << endl;
+        // cout << offsets.back() << endl;
     }
+    munmap(aminoacids.data, aminoacids.fileSize + 1);
 
 
     bool *splitCheckList = (bool *) malloc(sizeof(bool) * threads);
@@ -288,7 +288,6 @@ offsets, aaOffsetCnt, totalSkip)
 
             size_t localSkip = 0;
 
-            // SeqIterator * seqIterator = new SeqIterator(par);
 #pragma omp for schedule(dynamic, 1)
             for (size_t i = 0; i < querySplits.size(); i++) {
                 if (hasOverflow || splitCheckList[i]) {
@@ -304,15 +303,14 @@ offsets, aaOffsetCnt, totalSkip)
                 diffIdxPos = querySplits[i].diffIdxSplit.diffIdxOffset;
 
                 fseek(aaFp, 8 * (long) (aaOffsetIdx), SEEK_SET);
-                loadBuffer(aaFp, aaBuffer, BufferSize);
+                loadBuffer(aaFp, aaBuffer, aaOffsetIdx, BufferSize);
 
                 fseek(kmerFp, 8 * (long) (aaOffsetIdx2), SEEK_SET);
                 loadBuffer(kmerFp, nextKmers, BufferSize);
                 fseek(cntFp, 4 * (long) (aaOffsetIdx2), SEEK_SET);
                 loadBuffer(cntFp, cntBuffer, BufferSize);
-                fseek(kmerCntFp, 4 * (long) (aaOffsetIdx), SEEK_SET);
+                fseek(kmerCntFp, 4 * (long) (aaOffsetIdx2), SEEK_SET);
                 loadBuffer(kmerCntFp, kmerCntBuffer, aaOffsetIdx2, BufferSize);
-
 
                 fseek(kmerInfoFp, 4 * (long)(kmerInfoBufferIdx), SEEK_SET);
                 loadBuffer(kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx, BufferSize);
@@ -347,11 +345,6 @@ offsets, aaOffsetCnt, totalSkip)
                         }
                         for (size_t k = 0; k < selectedMatchCnt; k++) {
                             idx = selectedMatches[k];
-                            // Check if candidateKmerInfos[idx].sequenceID is valid
-                            // if (taxId2genusId.find(candidateKmerInfos[idx].sequenceID) == taxId2genusId.end() ||
-                            //     taxId2speciesId.find(candidateKmerInfos[idx].sequenceID) == taxId2speciesId.end()) {
-                            //     cout << "Error: " << candidateKmerInfos[idx].sequenceID << " is not found in the taxonomy database." << endl;
-                            // }
                             matches[matchCnt] = {queryKmerList[j].info,
                                                  candidateKmerInfos[idx].sequenceID,
                                                  taxId2speciesId[candidateKmerInfos[idx].sequenceID],
@@ -411,26 +404,18 @@ offsets, aaOffsetCnt, totalSkip)
                         // seqIterator->printAAKmer(AMINO_ACID_PART(aaBuffer[aaOffsetIdx]), 24); cout << "\n";
                         if (AMINO_ACID_PART(currentTargetKmer) == aaBuffer[aaOffsetIdx]) {
                             size_t temp = aaOffsetIdx2;
-                            diffIdxBufferIdx += getKmerInfo(BufferSize, cntFp, cntBuffer, aaOffsetIdx2);
-                            // diffIdxBufferIdx += cntBuffer[aaOffsetIdx];
-                            // aaOffsetIdx2 = temp;
-                            diffIdxPos += getKmerInfo(BufferSize, cntFp, cntBuffer, aaOffsetIdx2);
-                            // diffIdxPos += cntBuffer[aaOffsetIdx];
+                            diffIdxBufferIdx += getElement(BufferSize, cntFp, cntBuffer, aaOffsetIdx2);
+                            diffIdxPos += getElement(BufferSize, cntFp, cntBuffer, aaOffsetIdx2);
+                            localSkip += getElement(BufferSize, cntFp, kmerCntBuffer, aaOffsetIdx2);
                             aaOffsetIdx2 = temp;
-                            kmerInfoBufferIdx += getKmerInfo(BufferSize, kmerCntFp, kmerCntBuffer, aaOffsetIdx2);
-                            // kmerInfoBufferIdx += kmerCntBuffer[aaOffsetIdx];
+                            kmerInfoBufferIdx += getElement(BufferSize, kmerCntFp, kmerCntBuffer, aaOffsetIdx2);
                             aaOffsetIdx2 = temp;
-                            currentTargetKmer = getKmerInfo(BufferSize, kmerFp, nextKmers, aaOffsetIdx2);
-                            // currentTargetKmer = nextKmers[aaOffsetIdx];
-                            // localSkip += cntBuffer[aaOffsetIdx];    
+                            currentTargetKmer = getElement(BufferSize, kmerFp, nextKmers, aaOffsetIdx2);
                             aaOffsetIdx++;
                             aaOffsetIdx2++;
                             totalOffsetIdx ++;
-                            if (aaOffsetIdx == BufferSize) {
+                            if (unlikely(aaOffsetIdx == BufferSize)) {
                                 loadBuffer(aaFp, aaBuffer, aaOffsetIdx, BufferSize);
-                                // loadBuffer(kmerFp, nextKmers, aaOffsetIdx, BufferSize);
-                                // loadBuffer(cntFp, cntBuffer, aaOffsetIdx, BufferSize);
-                                // loadBuffer(kmerCntFp, kmerCntBuffer, aaOffsetIdx, BufferSize);
                             }
                             if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
                                 loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
@@ -441,11 +426,8 @@ offsets, aaOffsetCnt, totalSkip)
                                 aaOffsetIdx++;
                                 aaOffsetIdx2++;
                                 totalOffsetIdx++;
-                                if (aaOffsetIdx == BufferSize) {
+                                if (unlikely(aaOffsetIdx == BufferSize)) {
                                     loadBuffer(aaFp, aaBuffer, aaOffsetIdx, BufferSize);
-                                    // loadBuffer(kmerFp, nextKmers, aaOffsetIdx, BufferSize);
-                                    // loadBuffer(cntFp, cntBuffer, aaOffsetIdx, BufferSize);
-                                    // loadBuffer(kmerCntFp, kmerCntBuffer, aaOffsetIdx, BufferSize);
                                 }
                             }                            
                         }  
@@ -549,19 +531,17 @@ offsets, aaOffsetCnt, totalSkip)
             delete[] matches;
             fclose(diffIdxFp);
             fclose(kmerInfoFp);
+            fclose(aaFp);
+            fclose(cntFp);
+            fclose(kmerCntFp);
+            fclose(kmerFp);
             free(diffIdxBuffer);
             free(kmerInfoBuffer);
             free(aaBuffer);
             free(nextKmers);
             free(cntBuffer);
             free(kmerCntBuffer);
-            fclose(aaFp);
-            fclose(cntFp);
-            fclose(kmerCntFp);
-            fclose(kmerFp);
-
-            // __sync_fetch_anㅊㅇd_add(&totalSkip, localSkip);
-
+            __sync_fetch_and_add(&totalSkip, localSkip);
         } // End of omp parallel
         
         if (hasOverflow) {
@@ -571,7 +551,7 @@ offsets, aaOffsetCnt, totalSkip)
     cout << "Total skipped diffIdx: " << totalSkip << endl;
     std::cout << "Time spent for the comparison: " << double(time(nullptr) - beforeSearch) << std::endl;
     free(splitCheckList);
-
+    cout << "Match count: " << matchBuffer->startIndexOfReserve << endl;
     totalMatchCnt += matchBuffer->startIndexOfReserve;
     return true;
 }
