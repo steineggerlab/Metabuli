@@ -424,18 +424,19 @@ offsets, aaOffsetCnt, totalSkip)
                                 loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
                             }
                             continue;
-                        } else if (AMINO_ACID_PART(currentTargetKmer) > aaBuffer[aaOffsetIdx]) {
-                            while (totalOffsetIdx < aaOffsetCnt && AMINO_ACID_PART(currentTargetKmer) >= aaBuffer[aaOffsetIdx]) {
-                                aaOffsetIdx++;
-                                totalOffsetIdx++;
-                                if (aaOffsetIdx == BufferSize) {
-                                    loadBuffer(aaFp, aaBuffer, aaOffsetIdx, BufferSize);
-                                    loadBuffer(kmerFp, nextKmers, aaOffsetIdx, BufferSize);
-                                    loadBuffer(cntFp, cntBuffer, aaOffsetIdx, BufferSize);
-                                    loadBuffer(kmerCntFp, kmerCntBuffer, aaOffsetIdx, BufferSize);
-                                }
-                            }                            
-                        } 
+                        }
+                         
+                        while (totalOffsetIdx < aaOffsetCnt && AMINO_ACID_PART(currentTargetKmer) >= aaBuffer[aaOffsetIdx]) {
+                            aaOffsetIdx++;
+                            totalOffsetIdx++;
+                            if (aaOffsetIdx == BufferSize) {
+                                loadBuffer(aaFp, aaBuffer, aaOffsetIdx, BufferSize);
+                                loadBuffer(kmerFp, nextKmers, aaOffsetIdx, BufferSize);
+                                loadBuffer(cntFp, cntBuffer, aaOffsetIdx, BufferSize);
+                                loadBuffer(kmerCntFp, kmerCntBuffer, aaOffsetIdx, BufferSize);
+                            }
+                        }                            
+                        
                         if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
                             loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
                         }
