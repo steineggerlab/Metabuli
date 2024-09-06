@@ -402,35 +402,35 @@ offsets, aaOffsetCnt, totalSkip)
                            && (currentQueryAA > AMINO_ACID_PART(currentTargetKmer))) {
                         // seqIterator->printKmerInDNAsequence(currentTargetKmer); cout << " " << diffIdxPos << " " << diffIdxBufferIdx << " ";
                         // seqIterator->printAAKmer(AMINO_ACID_PART(aaBuffer[aaOffsetIdx]), 24); cout << "\n";
-                        if (AMINO_ACID_PART(currentTargetKmer) == aaBuffer[aaOffsetIdx]) {
-                            size_t temp = aaOffsetIdx2;
-                            diffIdxBufferIdx += getElement(BufferSize, cntFp, cntBuffer, aaOffsetIdx2);
-                            diffIdxPos += getElement(BufferSize, cntFp, cntBuffer, aaOffsetIdx2);
-                            localSkip += getElement(BufferSize, cntFp, kmerCntBuffer, aaOffsetIdx2);
-                            aaOffsetIdx2 = temp;
-                            kmerInfoBufferIdx += getElement(BufferSize, kmerCntFp, kmerCntBuffer, aaOffsetIdx2);
-                            aaOffsetIdx2 = temp;
-                            currentTargetKmer = getElement(BufferSize, kmerFp, nextKmers, aaOffsetIdx2);
-                            aaOffsetIdx++;
-                            aaOffsetIdx2++;
-                            totalOffsetIdx ++;
-                            if (unlikely(aaOffsetIdx == BufferSize)) {
-                                loadBuffer(aaFp, aaBuffer, aaOffsetIdx, BufferSize);
-                            }
-                            if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
-                                loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
-                            }
-                            continue;
-                        } else {
-                            while (totalOffsetIdx < aaOffsetCnt && AMINO_ACID_PART(currentTargetKmer) >= aaBuffer[aaOffsetIdx]) {
-                                aaOffsetIdx++;
-                                aaOffsetIdx2++;
-                                totalOffsetIdx++;
-                                if (unlikely(aaOffsetIdx == BufferSize)) {
-                                    loadBuffer(aaFp, aaBuffer, aaOffsetIdx, BufferSize);
-                                }
-                            }                            
-                        }  
+                        // if (AMINO_ACID_PART(currentTargetKmer) == aaBuffer[aaOffsetIdx]) {
+                        //     size_t temp = aaOffsetIdx2;
+                        //     diffIdxBufferIdx += getElement(BufferSize, cntFp, cntBuffer, aaOffsetIdx2);
+                        //     diffIdxPos += getElement(BufferSize, cntFp, cntBuffer, aaOffsetIdx2);
+                        //     localSkip += getElement(BufferSize, cntFp, kmerCntBuffer, aaOffsetIdx2);
+                        //     aaOffsetIdx2 = temp;
+                        //     kmerInfoBufferIdx += getElement(BufferSize, kmerCntFp, kmerCntBuffer, aaOffsetIdx2);
+                        //     aaOffsetIdx2 = temp;
+                        //     currentTargetKmer = getElement(BufferSize, kmerFp, nextKmers, aaOffsetIdx2);
+                        //     aaOffsetIdx++;
+                        //     aaOffsetIdx2++;
+                        //     totalOffsetIdx ++;
+                        //     if (unlikely(aaOffsetIdx == BufferSize)) {
+                        //         loadBuffer(aaFp, aaBuffer, aaOffsetIdx, BufferSize);
+                        //     }
+                        //     if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
+                        //         loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
+                        //     }
+                        //     continue;
+                        // } else {
+                        //     while (totalOffsetIdx < aaOffsetCnt && AMINO_ACID_PART(currentTargetKmer) >= aaBuffer[aaOffsetIdx]) {
+                        //         aaOffsetIdx++;
+                        //         aaOffsetIdx2++;
+                        //         totalOffsetIdx++;
+                        //         if (unlikely(aaOffsetIdx == BufferSize)) {
+                        //             loadBuffer(aaFp, aaBuffer, aaOffsetIdx, BufferSize);
+                        //         }
+                        //     }                            
+                        // }  
                         if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
                             loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
                         }
