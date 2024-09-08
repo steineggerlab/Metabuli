@@ -179,9 +179,9 @@ public:
                   const string &db = string());
   
 
-  bool matchKmers3(QueryKmerBuffer *queryKmerBuffer,
-                  Buffer<Match> *matchBuffer,
-                  const string &db = string());
+  bool matchKmers_skipDecoding(QueryKmerBuffer *queryKmerBuffer,
+                               Buffer<Match> *matchBuffer,
+                               const string &db = string());
 
   void sortMatches(Buffer<Match> *matchBuffer);
 
