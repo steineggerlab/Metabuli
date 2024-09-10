@@ -73,4 +73,6 @@ int filterByGenus(int argc, const char **argv, const Command &command) {
         // Print line
         cout << line << endl;
     }
+
+    return 0;
 }

@@ -185,11 +185,14 @@ public:
                                   unordered_map<string, TaxID> & foundAcc2taxid);
 
     static void getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const char * seqFileName);
+
     IndexCreator(const LocalParameters & par);
+
     IndexCreator() {taxonomy = nullptr;}
+
     ~IndexCreator();
+    
     int getNumOfFlush();
-    void startIndexCreatingParallel(const LocalParameters & par);
 
     void createIndex(const LocalParameters & par);
 
@@ -197,11 +200,17 @@ public:
 
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
                     uint16_t *kmerBuf, size_t & localBufIdx);
+
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
                     uint16_t *kmerBuf, size_t & localBufIdx, size_t & totalBufferIdx);
+
     void writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t & infoBufferIdx);
+
     static void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
+
     static void flushInfoBuf(TargetKmerInfo * buffer, FILE * infoFile, size_t & localBufIdx );
+
+    void makeAAoffsets(const LocalParameters & par);
 
 };
 #endif //ADKMER4_INDEXCREATOR_H

@@ -1222,3 +1222,18 @@ void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
         }
     }
 }
+
+
+void SeqIterator::printAAKmer(uint64_t kmer, int shifts) {
+    kmer >>= shifts;
+    vector<int> aa8mer(8);
+    for (int i = 0; i < 8; i++) {
+        int quotient = kmer / powers[7 - i];
+        kmer = kmer - (quotient * powers[7 - i]);
+        aa8mer[7 - i] = quotient;
+    }
+    string aminoacid = "ARNDCQEGHILKMFPSTWYVX";
+    for (int i = 0; i < 8; i++) {
+        cout << aminoacid[aa8mer[i]];
+    }
+} 

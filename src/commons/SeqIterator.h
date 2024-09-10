@@ -86,6 +86,8 @@ public:
 
     void printKmerInDNAsequence(uint64_t kmer);
 
+    void printAAKmer(uint64_t kmer, int shits = 28);
+
     explicit SeqIterator(const LocalParameters &par);
     ~SeqIterator();
 };

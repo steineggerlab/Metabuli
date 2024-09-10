@@ -35,9 +35,9 @@ int updateDB(int argc, const char **argv, const Command &command){
 
     const char * seqFileName = argv[0];
     const char * taxIdFileName = argv[1];
-    const char * outdatedFileName = argv[2];
+    // const char * outdatedFileName = argv[2];
     const char * outdatedTaxIdList = argv[3];///before _diffIdx or _info
-    const char * updatedFileName = argv[4];
+    // const char * updatedFileName = argv[4];
 
     ifstream seqFile;
     seqFile.open(seqFileName);
@@ -143,4 +143,5 @@ int updateDB(int argc, const char **argv, const Command &command){
 //
 //
 //    return 0;
+    return 0;
 }
