@@ -211,33 +211,6 @@ inline uint64_t KmerMatcher::getNextTargetKmer(uint64_t lookingTarget,
   return diffIn64bit + lookingTarget;
 }
 
-// inline uint64_t KmerMatcher::getNextTargetKmer(uint64_t lookingTarget,
-//                                                const uint16_t *diffIdxBuffer,
-//                                                size_t &diffBufferIdx,
-//                                                size_t &totalPos) {
-//   uint64_t diffIn64bit = 0;
-//   uint16_t fragment;
-//   do {
-//       fragment = diffIdxBuffer[diffBufferIdx++];
-//       diffIn64bit = (diffIn64bit << 15) | (fragment & 0x7FFF);
-//       totalPos++;
-//   } while (!(fragment & 0x8000)); // 0x8000 is 2^15 (or 32768)
-//   return diffIn64bit + lookingTarget;
-// }
-
-// inline TargetKmerInfo KmerMatcher::getKmerInfo(size_t bufferSize,
-//                                                FILE *kmerInfoFp,
-//                                                TargetKmerInfo *infoBuffer,
-//                                                size_t &infoBufferIdx) {
-//   if (unlikely(infoBufferIdx >= bufferSize)) {
-//     loadBuffer(kmerInfoFp, infoBuffer, infoBufferIdx, bufferSize,
-//                (int)(infoBufferIdx - bufferSize));
-//   }
-//   return infoBuffer[infoBufferIdx];
-// }
-
-
-
 inline uint8_t KmerMatcher::getHammingDistanceSum(uint64_t kmer1,
                                                   uint64_t kmer2) { // 12345678
   uint8_t hammingSum = 0;
@@ -255,29 +228,6 @@ inline uint8_t KmerMatcher::getHammingDistanceSum(uint64_t kmer1,
 inline uint16_t KmerMatcher::getHammings(uint64_t kmer1,
                                          uint64_t kmer2) { // hammings 87654321
   uint16_t hammings = 0;
-  // hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)]);
-  // kmer1 >>= bitsForCodon;
-  // kmer2 >>= bitsForCodon;
-  // hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U);
-  // kmer1 >>= bitsForCodon;
-  // kmer2 >>= bitsForCodon;
-  // hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 4U);
-  // kmer1 >>= bitsForCodon;
-  // kmer2 >>= bitsForCodon;
-  // hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 6U);
-  // kmer1 >>= bitsForCodon;
-  // kmer2 >>= bitsForCodon;
-  // hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 8U);
-  // kmer1 >>= bitsForCodon;
-  // kmer2 >>= bitsForCodon;
-  // hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 10U);
-  // kmer1 >>= bitsForCodon;
-  // kmer2 >>= bitsForCodon;
-  // hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 12U);
-  // kmer1 >>= bitsForCodon;
-  // kmer2 >>= bitsForCodon;
-  // hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 14U);
-  // return hammings;
   for (int i = 0; i < 8; i++) {
     hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U * i);
     kmer1 >>= bitsForCodon;
@@ -290,30 +240,6 @@ inline uint16_t
 KmerMatcher::getHammings_reverse(uint64_t kmer1,
                                  uint64_t kmer2) { // hammings 87654321
   uint16_t hammings = 0;
-  // hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 14U;
-  // kmer1 >>= bitsForCodon;
-  // kmer2 >>= bitsForCodon;
-  // hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 12U;
-  // kmer1 >>= bitsForCodon;
-  // kmer2 >>= bitsForCodon;
-  // hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 10U;
-  // kmer1 >>= bitsForCodon;
-  // kmer2 >>= bitsForCodon;
-  // hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 8U;
-  // kmer1 >>= bitsForCodon;
-  // kmer2 >>= bitsForCodon;
-  // hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 6U;
-  // kmer1 >>= bitsForCodon;
-  // kmer2 >>= bitsForCodon;
-  // hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 4U;
-  // kmer1 >>= bitsForCodon;
-  // kmer2 >>= bitsForCodon;
-  // hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U;
-  // kmer1 >>= bitsForCodon;
-  // kmer2 >>= bitsForCodon;
-  // hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)];
-  // return hammings;
-
   for (int i = 0; i < 8; i++) {
     hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)]
                 << 2U * (7 - i);

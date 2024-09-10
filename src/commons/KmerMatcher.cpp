@@ -423,8 +423,6 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
     return true;
 }
 
-
-
 bool KmerMatcher::matchKmers2(QueryKmerBuffer * queryKmerBuffer,
                              Buffer<Match> * matchBuffer,
                              const string & db){
@@ -519,28 +517,28 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
             // FILE
             FILE * diffIdxFp = fopen(targetDiffIdxFileName.c_str(), "rb");
             FILE * kmerInfoFp = fopen(targetInfoFileName.c_str(), "rb");
-#if !defined(O_DIRECT)
-            const int mode = (O_RDONLY | O_SYNC);
-#else
-            const int mode = (O_RDONLY | O_DIRECT | O_SYNC);
-#endif      
-            // Open target table
-            int fdDiffIdx = open(targetDiffIdxFileName.c_str(), mode);
-            if (fdDiffIdx < 0) {
-                cout << "Open target table " << targetDiffIdxFileName << " failed\n";
-                // EXIT(EXIT_FAILURE);
-            }
+// #if !defined(O_DIRECT)
+//             const int mode = (O_RDONLY | O_SYNC);
+// #else
+//             const int mode = (O_RDONLY | O_DIRECT | O_SYNC);
+// #endif      
+//             // Open target table
+//             int fdDiffIdx = open(targetDiffIdxFileName.c_str(), mode);
+//             if (fdDiffIdx < 0) {
+//                 cout << "Open target table " << targetDiffIdxFileName << " failed\n";
+//                 // EXIT(EXIT_FAILURE);
+//             }
 
-            int fdKmerInfo = open(targetInfoFileName.c_str(), mode);
-            if (fdKmerInfo < 0) {
-                cout << "Open target table " << targetInfoFileName << " failed\n";
-                // EXIT(EXIT_FAILURE);
-            }
+//             int fdKmerInfo = open(targetInfoFileName.c_str(), mode);
+//             if (fdKmerInfo < 0) {
+//                 cout << "Open target table " << targetInfoFileName << " failed\n";
+//                 // EXIT(EXIT_FAILURE);
+//             }
 
-#if !defined(O_DIRECT) && defined(F_NOCACHE)
-            fcntl(fdDiffIdxFp, F_NOCACHE, 1);
-            fcntl(fdKmerInfoFp, F_NOCACHE, 1);
-#endif
+// #if !defined(O_DIRECT) && defined(F_NOCACHE)
+//             fcntl(fdDiffIdx, F_NOCACHE, 1);
+//             fcntl(fdKmerInfo, F_NOCACHE, 1);
+// #endif
 
             // Target K-mer buffer
             uint16_t * diffIdxBuffer = (uint16_t *) malloc(sizeof(uint16_t) * (BufferSize + 1)); // size = 32 Mb
