@@ -174,9 +174,9 @@ public:
                   Buffer<Match> *matchBuffer,
                   const string &db = string());
 
-  bool matchKmers2(QueryKmerBuffer *queryKmerBuffer,
-                  Buffer<Match> *matchBuffer,
-                  const string &db = string());
+  // bool matchKmers2(QueryKmerBuffer *queryKmerBuffer,
+  //                 Buffer<Match> *matchBuffer,
+  //                 const string &db = string());
   
 
   bool matchKmers_skipDecoding(QueryKmerBuffer *queryKmerBuffer,
