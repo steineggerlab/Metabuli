@@ -27,15 +27,15 @@ Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic 
 ### 🖥️  GUI apps for Windows, MacOS, and Linux are [here](https://github.com/steineggerlab/Metabuli-App).
 ---
 ### Update in v1.0.7
-- Metabuli became faster.
-  - Windows: 8.3 times faster
+- **Metabuli became faster 🚀**
+  - Windows: *8.3* times faster
   - MacOS: ~
-  - Linux: 1.3 times faster
-  - Detail are in release note.
+  - Linux: *1.3* times faster
+  - Test details are in release note.
 - Fixed a bug in score calculation that could affect classification results.
 ### Update in v1.0.6
 - Windows OS is supported.
-
+> Metabuli v1.0.6 is too slow on Windows OS. Please use v1.0.7 or later.
 
 ### Update in v1.0.4
 - Fixed a minor reproducibility issue.
