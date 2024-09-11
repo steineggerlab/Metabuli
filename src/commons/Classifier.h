@@ -33,7 +33,8 @@
 #define BufferSize 16'777'216 //16 * 1024 * 1024 // 16 M
 using namespace std;
 
-
+// new code
+void saveQueryMatchesToFile(const std::unordered_map<int, std::unordered_map<int, int>> &queryMatches, const std::string &filename);
 
 class Classifier {
 protected:
@@ -45,25 +46,16 @@ protected:
     QueryIndexer * queryIndexer;
     KmerExtractor * kmerExtractor;
     KmerMatcher * kmerMatcher;
-    // Taxonomer * taxonomer;
+    Taxonomer * taxonomer;
     Reporter * reporter;
     NcbiTaxonomy * taxonomy;
-
-    unordered_map<TaxID, unsigned int> taxCounts;
 
 public:
     void startClassify(const LocalParameters &par);
 
-    void assignTaxonomy(const Match *matchList,
-                        size_t numOfMatches,
-                        std::vector<Query> & queryList,
-                        const LocalParameters &par);
-
     explicit Classifier(LocalParameters & par);
 
     virtual ~Classifier();
-
-    unordered_map<TaxID, unsigned int> & getTaxCounts() { return taxCounts; }
 
 };
 

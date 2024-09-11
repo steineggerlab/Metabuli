@@ -3,6 +3,30 @@
 #include "QueryIndexer.h"
 #include "common.h"
 
+// new code
+void saveQueryMatchesToFile(const std::unordered_map<std::string, std::unordered_map<std::string, int>> &queryMatches, const std::string &filename) {
+    std::ofstream outFile(filename);
+    
+    if (!outFile.is_open()) {
+        std::cerr << "Error: Could not open file " << filename << " for writing." << std::endl;
+        return;
+    }
+    
+    for (const auto& outer_pair : queryMatches) {
+        std::string first_query = outer_pair.first;
+        for (const auto& inner_pair : outer_pair.second) {
+            std::string second_query = inner_pair.first;
+            int numKmer = inner_pair.second;
+            outFile << first_query << "," << second_query << "," << numKmer << std::endl;
+        }
+    }
+    
+    outFile.close();
+    std::cout << "Results have been written to " << filename << std::endl;
+
+    return;
+}
+
 Classifier::Classifier(LocalParameters & par) {
     // Load parameters
     dbDir = par.filenames[1 + (par.seqMode == 2)];
@@ -23,7 +47,7 @@ Classifier::Classifier(LocalParameters & par) {
     } else {
         kmerMatcher = new KmerMatcher(par, taxonomy);
     }
-    // taxonomer = new Taxonomer(par, taxonomy);
+    taxonomer = new Taxonomer(par, taxonomy);
     reporter = new Reporter(par, taxonomy);
 }
 
@@ -32,7 +56,7 @@ Classifier::~Classifier() {
     delete queryIndexer;
     delete kmerExtractor;
     delete kmerMatcher;
-    // delete taxonomer;
+    delete taxonomer;
     delete reporter;
 }
 
@@ -47,6 +71,10 @@ void Classifier::startClassify(const LocalParameters &par) {
     size_t processedReadCnt = 0;
     size_t tries = 0;
     size_t totalSeqCnt = 0;
+    
+    // new code
+    // unorderes_map to count number of same kmers
+    std::unordered_map<std::string, std::unordered_map<std::string, int>> queryMatches;
     
     // Extract k-mers from query sequences and compare them to target k-mer DB
     while (!complete) {
@@ -109,11 +137,12 @@ void Classifier::startClassify(const LocalParameters &par) {
                                              kseq2); // sync kseq1 and kseq2
             
             // Search matches between query and target k-mers
-            if (kmerMatcher->matchKmers(&queryKmerBuffer, &matchBuffer)) {
+            if (kmerMatcher->matchKmers(&queryKmerBuffer, &matchBuffer, queryMatches, queryList)) {
+                
                 kmerMatcher->sortMatches(&matchBuffer);
                 
                 // Classify queries based on the matches.
-                assignTaxonomy(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
+                taxonomer->assignTaxonomy(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
 
                 // Write classification results
                 reporter->writeReadClassification(queryList);
@@ -142,59 +171,17 @@ void Classifier::startClassify(const LocalParameters &par) {
             complete = true;
         }
     }
+    
+    // new code
+    saveQueryMatchesToFile(queryMatches, "/home/lunajang/workspace/metabuli_query_binning/query_matches.csv");
 
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
     cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
     reporter->closeReadClassificationFile();
 
     // Write report files
-    reporter->writeReportFile(totalSeqCnt, taxCounts);
+    reporter->writeReportFile(totalSeqCnt, taxonomer->getTaxCounts());
 
     // Memory deallocation
     free(matchBuffer.buffer);
-}
-
-void Classifier::assignTaxonomy(const Match *matchList,
-                               size_t numOfMatches,
-                               std::vector<Query> &queryList,
-                               const LocalParameters &par) {
-    time_t beforeAnalyze = time(nullptr);
-    cout << "Analyzing matches ..." << endl;
-
-    // Divide matches into blocks for multi threading
-    size_t seqNum = queryList.size();
-    MatchBlock *matchBlocks = new MatchBlock[seqNum];
-    size_t matchIdx = 0;
-    size_t blockIdx = 0;
-    uint32_t currentQuery;
-    while (matchIdx < numOfMatches) {
-        currentQuery = matchList[matchIdx].qInfo.sequenceID;
-        matchBlocks[blockIdx].id = currentQuery;
-        matchBlocks[blockIdx].start = matchIdx;
-        while ((currentQuery == matchList[matchIdx].qInfo.sequenceID) && (matchIdx < numOfMatches)) ++matchIdx;
-        matchBlocks[blockIdx].end = matchIdx - 1;
-        blockIdx++;
-    }
-    // Process each block
-#pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqNum, queryList, blockIdx, par)
-    {
-        Taxonomer taxonomer(par, taxonomy);
-#pragma omp for schedule(dynamic, 1)
-        for (size_t i = 0; i < blockIdx; ++i) {
-            taxonomer.chooseBestTaxon(matchBlocks[i].id,
-                            matchBlocks[i].start,
-                            matchBlocks[i].end,
-                            matchList,
-                            queryList,
-                            par);
-        }
-    }
-
-    for (size_t i = 0; i < seqNum; i++) {
-        ++taxCounts[queryList[i].classification];
-    }
-    
-    delete[] matchBlocks;
-    cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
-
 }
