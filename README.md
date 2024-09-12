@@ -29,7 +29,7 @@ Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic 
 ### Update in v1.0.7
 - **Metabuli became faster 🚀**
   - Windows: *8.3* times faster
-  - MacOS: ~
+  - MacOS: *1.7* times faster
   - Linux: *1.3* times faster
   - Test details are in release note.
 - Fixed a bug in score calculation that could affect classification results.
