@@ -1,12 +1,20 @@
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/metabuli/README.html)
 # Metabuli
-Metabuli is metagenomic classifier that jointly analyze both DNA and amino acid (AA) sequences.
-DNA-based classifiers can make specific classifications, exploiting point mutations to distinguish close taxa.
-AA-based classifiers have higher sensitivity in detecting homology between query and reference sequences, leverageing higher conservation of AA sequences.
-Metabuli combines the information of both sequence types using a novel k-mer structure, _metamer_, to enable both specific and sensitive characterization of metagenomic samples.
-In addition, it can classify reads against a database of any size as long as it fits in the hard disk. 
+***Metabuli*** classifies metagenomic reads by comparing them to reference genomes. You can use Metabuli to profile the taxonomic composition of your samples or to detect specific (pathogenic) species. 
 
-For more details of Metabuli, please see
+***Sensitive and Specific.*** Metabuli uses a novel k-mer structure, called *metamer*, to analyze both amino acid (AA) and DNA sequences. It leverages AA conservation for sensitive homology detection and DNA mutations for specific differentiation between closely related taxa.
+
+***A laptop is enough.*** Metabuli operates within user-specified RAM limits, allowing it to search any database that fits in storage. A PC with 8 GiB of RAM is sufficient for most analyses.
+
+***A few clicks are enough.*** A GUI is available [here](https://github.com/steineggerlab/Metabuli-App). You can run Metabuli and browse the results with just a few clicks on your PC.
+
+***Short reads, long reads, and contigs.*** Metabuli can classify all types of sequences.
+
+
+---
+
+  
+For more details, please see
 [Nature Methods](https://www.nature.com/articles/s41592-024-02273-y), 
 [PDF](https://www.nature.com/articles/s41592-024-02273-y.epdf?sharing_token=je_2D5Su0-xVOSjuKSAXF9RgN0jAjWel9jnR3ZoTv0M7gE7NDF_xi_3sW8QdRiwfSJNwqaXItSoeCvr7cvcoQxKLt0oROgWc6urmki9tP80cXEuHPN0D7b4y9y3i8Yv7sZw8MxxhAj7W6p9eZE2zaK3eozdOkXvwADVfso9cXIM%3D), 
 [bioRxiv](https://www.biorxiv.org/content/10.1101/2023.05.31.543018v2), or [ISMB 2023 talk](https://www.youtube.com/watch?v=vz2fuRcVwyk).
@@ -15,16 +23,28 @@ Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic 
 
 <p align="center"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/marv_metabuli_small.png" height="350" /></p>
 
-## Update in v1.0.6
+---
+### 🖥️  GUI apps for Windows, MacOS, and Linux are [here](https://github.com/steineggerlab/Metabuli-App).
+---
+### Update in v1.0.7
+- **Metabuli became faster 🚀**
+  - Windows: *8.3* times faster
+  - MacOS: *1.7* times faster
+  - Linux: *1.3* times faster
+  - Test details are in release note.
+- Fixed a bug in score calculation that could affect classification results.
+### Update in v1.0.6
 - Windows OS is supported.
-> We found Metabuli is too slow with Windows OS. Currently making it faster.
+> Metabuli v1.0.6 is too slow on Windows OS. Please use v1.0.7 or later.
 
-## Update in v1.0.4
+
+### Update in v1.0.4
 - Fixed a minor reproducibility issue.
 - Fixed a performance-harming bug occurring with sequences containing lowercased bases.
 - Auto adjustment of `--match-per-kmer` parameter. Issue #20 solved.
 - Record version info. in `db.parameter`
 
+---
 ## Installation
 ### Precompiled binaries
 ```
@@ -40,8 +60,9 @@ wget https://mmseqs.com/metabuli/metabuli-linux-sse2.tar.gz; tar xvzf metabuli-l
 
 # MacOS (Universal, works on Apple Silicon and Intel Macs)
 wget https://mmseqs.com/metabuli/metabuli-osx-universal.tar.gz; tar xvzf metabuli-osx-universal.tar.gz; export PATH=$(pwd)/metabuli/bin/:$PATH
+
 ```
-Metabuli also works on Linux ARM64 systems. Please check [https://mmseqs.com/metabuli](https://mmseqs.com/metabuli) for static builds for other architectures.
+Metabuli also works on Linux ARM64 and Windows systems. Please check [https://mmseqs.com/metabuli](https://mmseqs.com/metabuli) for static builds for other architectures.
 
 ### Compile from source code
 To compile Metabuli from source code use the following commands:
@@ -123,7 +144,9 @@ metabuli classify --seq-mode 3 read.fna dbdir outdir jobid
   - PacBio Sequel II reads: `--min-score 0.005`
   - ONT reads: `--min-score 0.008`
 
-This will generate two result files: `JobID_classifications.tsv`, `JobID_report.tsv`, and `JobID_krona.html`.
+This will generate three result files: `JobID_classifications.tsv`, `JobID_report.tsv`, and `JobID_krona.html`.
+> Sankey diagram is available in the [GUI app](https://github.com/steineggerlab/Metabuli-App).
+
 #### JobID_classifications.tsv
 1. Classified or not
 2. Read ID
@@ -134,7 +157,6 @@ This will generate two result files: `JobID_classifications.tsv`, `JobID_report.
 7. List of "taxID : k-mer match count"
 
 ```
-#Example
 1 read_1  2688  294     0.627551 subspecies  2688:65
 1 read_2  2688  294     0.816327 subspecies  2688:78
 0 read_3  0     294     0        no rank
@@ -143,7 +165,6 @@ This will generate two result files: `JobID_classifications.tsv`, `JobID_report.
 #### JobID_report.tsv
 The proportion of reads that are assigned to each taxon.
 ```
-#Example
 33.73   77571   77571   0       no rank unclassified
 66.27   152429  132     1       no rank root
 64.05   147319  2021    8034    superkingdom      d__Bacteria
@@ -164,9 +185,10 @@ The proportion of reads that are assigned to each taxon.
 It is for an interactive taxonomy report (Krona). You can use any modern web browser to open `JobID_krona.html`.
 <p align="left"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/image.png" height="350" /></p>
 
-#### Resource requirements
+
+### Resource requirements
 Metabuli can classify reads against a database of any size as long as the database is fits in the hard disk, regardless of the machine's RAM size.
-We tested it with a MacBook Air (2020, M1, 8 GiB), where we classified about 1.5 M paired-end 150 bp reads (~5 GiB in size) against a database built with ~23K prokaryotic genomes (~69 GiB in size)
+We tested it with a MacBook Air (2020, M1, 8 GiB), where we classified about 15 M paired-end 150 bp reads (~5 GiB in size) against a database built with ~23K prokaryotic genomes (~69 GiB in size).
 
 ## Custom database
 To build a custom database, you need three things:
