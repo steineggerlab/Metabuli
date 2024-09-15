@@ -6,7 +6,7 @@
 
 ***A laptop is enough.*** Metabuli operates within user-specified RAM limits, allowing it to search any database that fits in storage. A PC with 8 GiB of RAM is sufficient for most analyses.
 
-***A few clicks are enough.*** A GUI is available [here](https://github.com/steineggerlab/Metabuli-App). You can run Metabuli and browse the results with just a few clicks on your PC.
+***A few clicks are enough.*** Metabuli App is now available [here](https://github.com/steineggerlab/Metabuli-App). With just a few clicks, you can run Metabuli and browse the results with Sankey and Krona plots on your PC.
 
 ***Short reads, long reads, and contigs.*** Metabuli can classify all types of sequences.
 
@@ -24,7 +24,7 @@ Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic 
 <p align="center"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/marv_metabuli_small.png" height="350" /></p>
 
 ---
-### 🖥️  GUI apps for Windows, MacOS, and Linux are [here](https://github.com/steineggerlab/Metabuli-App).
+### 🖥️  Metabuli App for Windows, MacOS, and Linux are [here](https://github.com/steineggerlab/Metabuli-App).
 ---
 ### Update in v1.0.7
 - **Metabuli became faster 🚀**
