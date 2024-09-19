@@ -25,6 +25,8 @@ Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic 
 
 ---
 ### 🖥️  Metabuli App for Windows, MacOS, and Linux are [here](https://github.com/steineggerlab/Metabuli-App).
+<p align="center"><img src="https://raw.githubusercontent.com/jaebeom-kim/Metabuli/master/.github/metabuli_app_screen.jpg" height="450" /></p>
+
 ---
 ### Update in v1.0.7
 - **Metabuli became faster 🚀**
