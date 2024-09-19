@@ -1,4 +1,5 @@
-[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/metabuli/README.html)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/metabuli/README.html) 
+![Platform](https://img.shields.io/badge/platform-Mac%20%7C%20Windows%20%7C%20Linux-brightgreen)
 # Metabuli
 ***Metabuli*** classifies metagenomic reads by comparing them to reference genomes. You can use Metabuli to profile the taxonomic composition of your samples or to detect specific (pathogenic) species. 
 
@@ -24,8 +25,12 @@ Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic 
 <p align="center"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/marv_metabuli_small.png" height="350" /></p>
 
 ---
-### 🖥️  Metabuli App for Windows, MacOS, and Linux are [here](https://github.com/steineggerlab/Metabuli-App).
-<p align="center"><img src="https://raw.githubusercontent.com/jaebeom-kim/Metabuli/master/.github/metabuli.jpg" height="600" /></p>
+### 🖥️  [Metabuli App](https://github.com/steineggerlab/Metabuli-App) for Windows, MacOS, and Linux are now available!
+> Run taxonomic profiling in just a few clicks and explore results with Sankey and Krona plots.
+
+> Download the app for your OS [here](https://github.com/steineggerlab/Metabuli-App/releases)—no separate Metabuli installation needed.
+<p align="center"><img src="https://raw.githubusercontent.com/jaebeom-kim/Metabuli/master/.github/metabuli.jpg" height="500" /></p>
+
 
 ---
 ### Update in v1.0.7
@@ -77,6 +82,8 @@ make -j 16
 ```
 The built binary can be found in `./build/src`.
 
+---
+
 ## Pre-built databases
 You can download [pre-built databases](https://metabuli.steineggerlab.workers.dev/) using `databases` workflow.
 
@@ -113,6 +120,7 @@ metabuli databases RefSeq_release OUTDIR tmp
 ```
 Downloaded files are stored in `OUTDIR/DB_NAME` directory, which can be provided for `classify` module as `DBDIR`.
 
+---
 
 ## Classification
 ```
@@ -191,6 +199,8 @@ It is for an interactive taxonomy report (Krona). You can use any modern web bro
 ### Resource requirements
 Metabuli can classify reads against a database of any size as long as the database is fits in the hard disk, regardless of the machine's RAM size.
 We tested it with a MacBook Air (2020, M1, 8 GiB), where we classified about 15 M paired-end 150 bp reads (~5 GiB in size) against a database built with ~23K prokaryotic genomes (~69 GiB in size).
+
+---
 
 ## Custom database
 To build a custom database, you need three things:
@@ -299,6 +309,7 @@ metabuli build <DBDIR> <LIB_FILES> <accession2taxid> [options]
 ```
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
 
+---
 
 ## Example
 > The example here was detecting SARS-CoV-2 variant-specific reads, but has changed since the pre-built DB no longer contains the variant genomes.
