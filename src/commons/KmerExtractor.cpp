@@ -317,7 +317,10 @@ void KmerExtractor::loadChunkOfReads(KSeqWrapper *kseq,
             kseq->ReadEntry();
             queryList[processedQueryNum].queryLength2 = LocalUtil::getMaxCoveredLength((int) kseq->entry.sequence.l);   
             
-            if (emptyReads[i]) { continue; }
+            if (emptyReads[i]) { 
+                count ++;
+                continue; 
+            }
 
             // Check if the read is too short
             int kmerCnt = LocalUtil::getQueryKmerNumber<int>((int) kseq->entry.sequence.l, spaceNum);

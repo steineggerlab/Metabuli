@@ -4,4 +4,5 @@ set(workflow_source_files
         workflow/add_to_library.cpp
         workflow/build.cpp
         workflow/filter.cpp
+        workflow/extract.cpp
         PARENT_SCOPE)
