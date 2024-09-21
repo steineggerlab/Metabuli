@@ -2,6 +2,7 @@
 #include "taxonomyreport.cpp"
 
 Reporter::Reporter(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxonomy(taxonomy) {
+    if (par.targetTaxId != 0) {return;}
     if (par.contamList == "") { // classify module
         if (par.seqMode == 2) {
             outDir = par.filenames[3];
@@ -13,10 +14,7 @@ Reporter::Reporter(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxonom
         // Output file names
         reportFileName = outDir + + "/" + jobId + "_report.tsv";
         readClassificationFileName = outDir + "/" + jobId + "_classifications.tsv";
-    }
-
-    
-    
+    }    
 }
 
 void Reporter::openReadClassificationFile() {
@@ -105,4 +103,90 @@ unsigned int Reporter::cladeCountVal(const std::unordered_map<TaxID, TaxonCounts
     } else {
         return it->second.cladeCount;
     }
+}
+
+void Reporter::getReadsClassifiedToClade(TaxID cladeId,
+                                         const string &readClassificationFileName,
+                                         vector<size_t> &readIdxs) {
+    FILE *results = fopen(readClassificationFileName.c_str(), "r");
+    if (!results) {
+        perror("Failed to open read-by-read classification file");
+        return;
+    }
+
+    char line[4096];
+    size_t idx = 0;
+    // int classification;
+
+    while (fgets(line, sizeof(line), results)) {
+        int taxId;
+        if (sscanf(line, "%*s %*s %d", &taxId) == 1) {
+            if (taxonomy->IsAncestor(cladeId, taxId)) {
+                readIdxs.push_back(idx);
+            }
+        }
+        idx++;
+    }
+
+    fclose(results);
+}
+
+void Reporter::printSpecifiedReads(const vector<size_t> & readIdxs,
+                                   const string & readFileName,
+                                   const string & outFileName) {
+    // Check FASTA or FASTQ
+    KSeqWrapper* tempKseq = KSeqFactory(readFileName.c_str());
+    tempKseq->ReadEntry();
+    bool isFasta = tempKseq->entry.qual.l == 0;
+    delete tempKseq;
+
+    KSeqWrapper* kseq = KSeqFactory(readFileName.c_str());
+
+    FILE *outFile = fopen(outFileName.c_str(), "w");
+    if (!outFile) {
+        perror("Failed to open file");
+        return;
+    }
+
+    size_t readCnt = 0;
+    size_t idx = 0;
+
+    if (isFasta) {
+        while (kseq->ReadEntry()) {
+            if (readCnt == readIdxs[idx]) {
+                fprintf(outFile, ">%s\n%s\n", kseq->entry.name.s, kseq->entry.sequence.s);
+                idx++;
+                if (idx == readIdxs.size()) {
+                    break;
+                }
+            }
+            readCnt++;
+        }
+    } else {
+        while (kseq->ReadEntry()) {
+            if (readCnt == readIdxs[idx]) {
+                fprintf(outFile, "@%s", kseq->entry.name.s);
+                if (kseq->entry.comment.l > 0) {
+                    fprintf(outFile, " %s\n", kseq->entry.comment.s);
+                } else {
+                    fprintf(outFile, "\n");
+                }
+                fprintf(outFile, "%s\n", kseq->entry.sequence.s);
+                fprintf(outFile, "+%s", kseq->entry.name.s);
+                if (kseq->entry.comment.l > 0) {
+                    fprintf(outFile, " %s\n", kseq->entry.comment.s);
+                } else {
+                    fprintf(outFile, "\n");
+                }
+                fprintf(outFile, "%s\n", kseq->entry.qual.s);
+
+                idx++;
+                if (idx == readIdxs.size()) {
+                    break;
+                }
+            }
+            readCnt++;
+        }
+    }
+    delete kseq;
 }

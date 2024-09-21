@@ -6,9 +6,9 @@
 #include <unordered_map>
 #include "NcbiTaxonomy.h"
 #include "LocalParameters.h"
+#include "KSeqWrapper.h"
 
 using namespace std;
-
 
 class Reporter {
 private:
@@ -34,6 +34,15 @@ public:
     void closeReadClassificationFile();
 
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts> &map, TaxID key);
+
+    // Extract reads classified to a specific clade
+    void getReadsClassifiedToClade(TaxID cladeId,
+                                   const string &readClassificationFileName,
+                                   vector<size_t> &readIdxs);
+
+    void printSpecifiedReads(const vector<size_t> & readIdxs,
+                             const string & readFileName,
+                             const string & outFileName); 
 
     // Setter
     void setReportFileName(const string &reportFileName) {

@@ -159,6 +159,13 @@ LocalParameters::LocalParameters() :
                       typeid(float),
                       (void *) &tieRatio,
                       "^0(\\.[0-9]+)?|1(\\.0+)?$"),
+        TARGET_TAX_ID(TARGET_TAX_ID_ID,
+               "--tax-id",
+               "Tax. ID of clade to be extracted",
+               "Tax. ID of clade to be extracted",
+               typeid(int),
+               (void *) &targetTaxId,
+               "^[0-9]+$"),
         LIBRARY_PATH(LIBRARY_PATH_ID,
                      "--library-path",
                      "Path to library where the FASTA files are stored",
@@ -384,6 +391,11 @@ LocalParameters::LocalParameters() :
     classify.push_back(&ACCESSION_LEVEL);
     classify.push_back(&TIE_RATIO);
     // classify.push_back(&MIN_SS_MATCH);
+
+    // extract
+    extract.push_back(&TAXONOMY_PATH);
+    extract.push_back(&SEQ_MODE);
+    extract.push_back(&TARGET_TAX_ID);
 
     // filter 
     filter.push_back(&PARAM_THREADS);

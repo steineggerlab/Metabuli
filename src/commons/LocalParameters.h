@@ -22,6 +22,7 @@ public:
     }
 
     std::vector<MMseqsParameter*> classify;
+    std::vector<MMseqsParameter*> extract;
     std::vector<MMseqsParameter*> filter;
     std::vector<MMseqsParameter*> exclusiontest_hiv;
     std::vector<MMseqsParameter*> seqHeader2TaxId;
@@ -58,6 +59,9 @@ public:
     PARAMETER(MATCH_PER_KMER)
     PARAMETER(MIN_SS_MATCH)
     PARAMETER(TIE_RATIO)
+
+    // extract
+    PARAMETER(TARGET_TAX_ID)
 
     // DB build parameters
     PARAMETER(LIBRARY_PATH)
@@ -108,6 +112,9 @@ public:
     int matchPerKmer;
     int minSSMatch;
     float tieRatio;
+
+    // Extract
+    int targetTaxId;
 
     // Database creation
     std::string tinfoPath;
