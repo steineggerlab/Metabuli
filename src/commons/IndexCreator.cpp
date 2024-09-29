@@ -220,7 +220,6 @@ void IndexCreator::makeBlocksForParallelProcessing() {
 }
 
 void IndexCreator::makeBlocksForParallelProcessing_accession_level() {
-
     unordered_map<string, TaxID> acc2taxid;
     TaxID maxTaxID = load_accession2taxid(acc2taxidFileName, acc2taxid);
     newTaxID = std::max(getMaxTaxID() + 1, maxTaxID + 1);
@@ -498,9 +497,9 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
     // Make splits
     vector<Split> splits;
     size_t splitWidth = (kmerBuffer.startIndexOfReserve - startIdx) / par.threads;
-    for (size_t i = 0; i < par.threads - 1; i++) {
+    for (int i = 0; i < par.threads - 1; i++) {
         for (size_t j = startIdx + splitWidth; j + 1 < kmerBuffer.startIndexOfReserve; j++) {
-            if (kmerBuffer.buffer[j].taxIdAtRank != kmerBuffer.buffer[j + 1].taxIdAtRank) {
+            if (kmerBuffer.buffer[j].ADkmer != kmerBuffer.buffer[j + 1].ADkmer) {
                 splits.emplace_back(startIdx, j);
                 startIdx = j + 1;
                 break;
@@ -520,7 +519,6 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
         TargetKmer * lookingKmer;
         size_t lookingIndex;
         int endFlag;
-        int hasSeenOtherStrains;
         vector<TaxID> taxIds;
 #pragma omp for schedule(dynamic, 1)
         for(size_t split = 0; split < splits.size(); split ++){
@@ -528,38 +526,25 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
             lookingIndex = splits[split].offset;
             endFlag = 0;
             for(size_t i = 1 + splits[split].offset; i < splits[split].end + 1 ; i++) {
-                hasSeenOtherStrains = 0;
                 taxIds.clear();
                 taxIds.push_back(taxIdList[lookingKmer->info.sequenceID]);
-
                 // Scan redundancy
-                while(lookingKmer->taxIdAtRank == kmerBuffer.buffer[i].taxIdAtRank){
-                    if (lookingKmer->ADkmer != kmerBuffer.buffer[i].ADkmer) {
-                        break;
-                    }
+                while(lookingKmer->taxIdAtRank == kmerBuffer.buffer[i].taxIdAtRank &&
+                      lookingKmer->ADkmer == kmerBuffer.buffer[i].ADkmer){
                     taxIds.push_back(taxIdList[kmerBuffer.buffer[i].info.sequenceID]);
-                    if (par.accessionLevel) {
-                        hasSeenOtherStrains += (taxonomy->taxonNode(taxIdList[lookingKmer->info.sequenceID])->parentTaxId 
-                                                != taxonomy->taxonNode(taxIdList[kmerBuffer.buffer[i].info.sequenceID]) -> parentTaxId);
-                    } else {
-                        hasSeenOtherStrains += (taxIdList[lookingKmer->info.sequenceID] != taxIdList[kmerBuffer.buffer[i].info.sequenceID]);
-                    }
                     i++;
                     if(i == splits[split].end + 1){
                         endFlag = 1;
                         break;
                     }
                 }
-
-                lookingKmer->info.redundancy = (hasSeenOtherStrains > 0);
                 if(taxIds.size() > 1){
                     lookingKmer->info.sequenceID = taxonomy->LCA(taxIds)->taxId;
                 } else {
                     lookingKmer->info.sequenceID = taxIds[0];
                 }
 
-                idxOfEachSplit[split][cntOfEachSplit[split]] = lookingIndex;
-                cntOfEachSplit[split] ++;
+                idxOfEachSplit[split][cntOfEachSplit[split]++] = lookingIndex;
                 if(endFlag == 1) break;
                 lookingKmer = & kmerBuffer.buffer[i];
                 lookingIndex = i;
@@ -569,8 +554,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
             if(!((kmerBuffer.buffer[splits[split].end - 1].ADkmer == kmerBuffer.buffer[splits[split].end].ADkmer) &&
                  (kmerBuffer.buffer[splits[split].end - 1].taxIdAtRank == kmerBuffer.buffer[splits[split].end].taxIdAtRank))){
                 kmerBuffer.buffer[splits[split].end].info.sequenceID = taxIdList[kmerBuffer.buffer[splits[split].end].info.sequenceID];
-                idxOfEachSplit[split][cntOfEachSplit[split]] = splits[split].end;
-                cntOfEachSplit[split] ++;
+                idxOfEachSplit[split][cntOfEachSplit[split]++] = splits[split].end;
             }
         }
     }

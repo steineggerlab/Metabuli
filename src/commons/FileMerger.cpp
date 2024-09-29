@@ -263,7 +263,17 @@ size_t FileMerger::smallest(const uint64_t lookingKmers[],
 {
     size_t idxOfMin = 0;
     uint64_t min = lookingKmers[0];
-    int minTaxIdAtRank = taxId2speciesId.at((int) lookingInfos[0].sequenceID);
+    int minTaxIdAtRank;
+    if (min == UINT64_MAX) {
+        minTaxIdAtRank = INT_MAX;
+    } else {
+        // if (taxId2speciesId.find((int) lookingInfos[0].sequenceID) == taxId2speciesId.end()) {
+        //     cerr << lookingKmers[0] << endl;
+        //     cerr << "TaxID not found 1: " << lookingInfos[0].sequenceID << endl;
+        //     exit(1);
+        // }
+        minTaxIdAtRank = taxId2speciesId.at((int) lookingInfos[0].sequenceID);
+    }
     for(size_t i = 1; i < fileCnt; i++)
     {
         if(lookingKmers[i] < min ||

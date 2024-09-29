@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <ctime>
 #include <fstream>
+#include <unordered_set>
 #include "printBinary.h"
 #include "Mmap.h"
 #include "Kmer.h"
