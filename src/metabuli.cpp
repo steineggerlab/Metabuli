@@ -159,7 +159,7 @@ std::vector<DatabaseDownload> externalDownloads = {
         },
         {
                 "RefSeq_release",
-                "NCBI release 217 (Prokaryote & Virus) and a human genome (GRCh38.p14)",
+                "NCBI release 224 (Prokaryote & Virus) and a human genome (T2T-CHM13v2.0)",
                 "O'Leary et al. Reference sequence (RefSeq) database at NCBI: current status, taxonomic expansion, and functional annotation. Nucleic Acids Res. (2016)",
                 "https://www.ncbi.nlm.nih.gov/refseq/",
                 true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,
