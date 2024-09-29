@@ -519,6 +519,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
         TargetKmer * lookingKmer;
         size_t lookingIndex;
         int endFlag;
+        int hasSeenOtherStrains;
         vector<TaxID> taxIds;
 #pragma omp for schedule(dynamic, 1)
         for(size_t split = 0; split < splits.size(); split ++){
@@ -526,12 +527,19 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
             lookingIndex = splits[split].offset;
             endFlag = 0;
             for(size_t i = 1 + splits[split].offset; i < splits[split].end + 1 ; i++) {
+                hasSeenOtherStrains = 0;
                 taxIds.clear();
                 taxIds.push_back(taxIdList[lookingKmer->info.sequenceID]);
                 // Scan redundancy
                 while(lookingKmer->taxIdAtRank == kmerBuffer.buffer[i].taxIdAtRank &&
                       lookingKmer->ADkmer == kmerBuffer.buffer[i].ADkmer){
                     taxIds.push_back(taxIdList[kmerBuffer.buffer[i].info.sequenceID]);
+                    if (par.accessionLevel) {
+                        hasSeenOtherStrains += (taxonomy->taxonNode(taxIdList[lookingKmer->info.sequenceID])->parentTaxId 
+                                                != taxonomy->taxonNode(taxIdList[kmerBuffer.buffer[i].info.sequenceID]) -> parentTaxId);
+                    } else {
+                        hasSeenOtherStrains += (taxIdList[lookingKmer->info.sequenceID] != taxIdList[kmerBuffer.buffer[i].info.sequenceID]);
+                    }
                     i++;
                     if(i == splits[split].end + 1){
                         endFlag = 1;
@@ -543,7 +551,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniq
                 } else {
                     lookingKmer->info.sequenceID = taxIds[0];
                 }
-
+                lookingKmer->info.redundancy = (hasSeenOtherStrains > 0);
                 idxOfEachSplit[split][cntOfEachSplit[split]++] = lookingIndex;
                 if(endFlag == 1) break;
                 lookingKmer = & kmerBuffer.buffer[i];
