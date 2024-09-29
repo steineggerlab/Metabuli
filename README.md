@@ -96,8 +96,7 @@ Usage:
 metabuli databases DB_NAME OUTDIR tmp
 
 # NOTE
-- A human genome (T2T-CHM13v2.0) is included in all databases except RefSeq_release.
-- A human genome (GRCh38.p14) is included in RefSeq_release.  
+- A human genome (T2T-CHM13v2.0) is included in all databases below.
 
 1. RefSeq Virus (8.1 GiB)
 - NCBI RefSeq release 223 virus genomes
@@ -114,8 +113,8 @@ metabuli databases RefSeq OUTDIR tmp
 - Database will be in OUT_DIR/gtdb 
 metabuli databases GTDB OUTDIR tmp
 
-4. RefSeq Releases 217 (480.5 GiB) (OLD)
-- Viral and prokaryotic genomes of RefSeq release 217 and human genome (GRCh38.p14)
+4. RefSeq Releases 224 (619 GiB)
+- Viral and prokaryotic genomes of RefSeq release 224.
 metabuli databases RefSeq_release OUTDIR tmp
 ```
 Downloaded files are stored in `OUTDIR/DB_NAME` directory, which can be provided for `classify` module as `DBDIR`.
