@@ -34,7 +34,9 @@
 using namespace std;
 
 // new code
-void saveQueryListToFile(const std::vector<Query>& queryList, const std::string& queryIdFileDir);
+void saveQueryIdToFile(const std::vector<Query>& queryIdMap, const std::string& queryIdFileDir);
+void loadQueryIdFromFile(const std::string& queryIdFileDir, 
+                           std::unordered_map<std::string, std::string>& queryIdMap);
 void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t &localBufIdx);
 void getDiffIdx(const uint64_t &lastKmer, const uint64_t &entryToWrite, FILE *handleKmerTable, uint16_t *buffer, size_t &localBufIdx);
 void writeDiffIdx(uint16_t *buffer, FILE *handleKmerTable, uint16_t *toWrite, size_t size, size_t &localBufIdx);
@@ -42,12 +44,27 @@ void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& qu
 void processKmerQuery(const std::unordered_map<uint64_t, std::set<int>>& kmerQuery, const std::string& queryKmerFileDir);
 void makeGraph(const std::string& queryKmerFileDir, 
                std::unordered_map<std::string, std::unordered_map<std::string, int>>& relation);
-void makeGroups(std::unordered_map<std::string, std::unordered_map<std::string, int>> relation,
+void makeGroups(std::unordered_map<std::string, std::unordered_map<std::string, int>>& relation,
                 std::unordered_map<std::string, std::unordered_set<std::string>>& groupInfo,
-                std::unordered_map<std::string, std::string> &queryGroupInfo);
+                std::unordered_map<std::string, std::string>& queryGroupInfo);
 void saveGroupsToFile(const std::unordered_map<std::string, std::unordered_set<std::string>>& groupMap, 
-                      std::unordered_map<std::string, std::string>& queryGroupInfo,
+                      const std::unordered_map<std::string, std::string>& queryGroupInfo,
                       const std::string& filename);
+void loadGroupInfo(const std::string& groupFileDir, 
+                    std::unordered_map<std::string, std::unordered_set<std::string>>& groupInfo);
+void loadQueryGroupInfo(const std::string& groupFileDir, 
+                        std::unordered_map<std::string, std::string>& queryGroupInfo);
+void loadMetabuliResult(const std::string& filename, 
+                        std::unordered_map<std::string, std::string>& queryIdMap, 
+                        std::unordered_map<std::string, int>& metabuliResult);
+void getRepLabel(const std::unordered_map<std::string, int>& metabuliResult,
+                 const std::unordered_map<std::string, std::unordered_set<std::string>>& groupInfo,
+                 std::unordered_map<std::string, int>& repLabel);
+void applyRepLabel(const std::string& resultFileDir, 
+                   const std::string& newResultFileDir, 
+                   const std::unordered_map<std::string, std::string>& queryIdMap,
+                   const std::unordered_map<std::string, std::string>& queryGroupInfo,
+                   const std::unordered_map<std::string, int>& repLabel);
 
 extern int kmerQueryFileNumber;
 const size_t bufferSize = 1024 * 1024;

@@ -36,12 +36,12 @@ void DisjointSet::unionSets(const std::string& set1, const std::string& set2) {
     }
 }
 
-void saveQueryListToFile(const std::vector<Query>& queryList, const std::string& queryIdFileDir) {
+void saveQueryIdToFile(const std::vector<Query>& queryList, const std::string& queryIdFileDir) {
     std::string queryIdFileName = queryIdFileDir + "queryid" + std::to_string(kmerQueryFileNumber);
     std::ofstream outFile(queryIdFileName);
     
     if (!outFile.is_open()) {
-        std::cerr << "Could not open file" << queryIdFileDir << std::endl;
+        std::cerr << "Could not open file" << queryIdFileName << std::endl;
     }
 
     for (std::size_t i = 0; i < queryList.size(); ++i) {
@@ -51,6 +51,34 @@ void saveQueryListToFile(const std::vector<Query>& queryList, const std::string&
     outFile.close();
 
     std::cout << "Query IDs saved to " << queryIdFileName << " successfully." << std::endl;
+}
+
+void loadQueryIdFromFile(const std::string& queryIdFileDir, 
+                           std::unordered_map<std::string, std::string>& queryIdMap) {
+    for (int i = 0; i < kmerQueryFileNumber; i++){
+        std::string queryIdFileName = queryIdFileDir + "queryid" + std::to_string(i);
+        std::ifstream inFile(queryIdFileName);
+        
+        if (!inFile.is_open()) {
+            std::cerr << "Error opening file: " << queryIdFileName << std::endl;
+            return;
+        }
+
+        std::string line;
+        while (std::getline(inFile, line)) {
+            std::stringstream ss(line);
+            std::string queryName, queryId;
+
+            ss >> queryName >> queryId;
+            queryId = std::to_string(i) + "_" + queryId;
+            queryIdMap[queryName] = queryId;
+        }
+
+        inFile.close();        
+    }                     
+
+    std::cout << "query name and id loaded from " << queryIdFileDir << " successfully." << std::endl;
+    std::cout << "total query count  : "<< queryIdMap.size() << endl;
 }
 
 // Flush remaining buffer content to file
@@ -99,12 +127,12 @@ void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& qu
     FILE * diffIdxFile = fopen(diffIdxFileName.c_str(), "wb");
     FILE * infoFile = fopen(infoFileName.c_str(), "wb");
     if (diffIdxFile == nullptr || infoFile == nullptr){
-        cout<<"Cannot open the file for writing target DB"<<endl;
+        std::cout<<"Cannot open the file for writing target DB"<<endl;
         return;
     }
     kmerQueryFileNumber++;
 
-    uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 10'000'000'000);
+    uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 10'000'000);
     size_t localBufIdx = 0;
     uint64_t lastKmer = 0;
     size_t write = 0;
@@ -116,8 +144,8 @@ void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& qu
         lastKmer = queryKmerList[i].ADkmer;
     }
 
-    cout<<"total k-mer count  : "<< queryKmerNum << endl;
-    cout<<"written k-mer count: "<< write <<endl;
+    std::cout<<"total k-mer count  : "<< queryKmerNum << endl;
+    std::cout<<"written k-mer count: "<< write <<endl;
 
     flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
     free(diffIdxBuffer);
@@ -250,23 +278,11 @@ void makeGraph(const std::string& queryKmerFileDir,
 
     std::cout << "Relations generated from files successfully." << std::endl;
     std::cout << "Relation size: " << relation.size() << std::endl;
-
-    int temp_cnt = 0;
-    for (const auto& r : relation) {
-        std::cout << "Query ID: " << r.first << " Relations: ";
-        for (const auto& sub : r.second) {
-            std::cout << "(" << sub.first << ", " << sub.second << ") ";
-        }
-        std::cout << std::endl;
-        temp_cnt++;
-        if (temp_cnt == 10){ break; }
-    }
-
     std::cout << "Time spent: " << double(time(nullptr) - beforeSearch) << " seconds." << std::endl;
 }
 
 // Create groups based on shared counts and threshold
-void makeGroups(std::unordered_map<std::string, std::unordered_map<std::string, int>> relation,
+void makeGroups(std::unordered_map<std::string, std::unordered_map<std::string, int>>& relation,
                 std::unordered_map<std::string, std::unordered_set<std::string>>& groupInfo,
                 std::unordered_map<std::string, std::string> &queryGroupInfo) {
 
@@ -310,10 +326,8 @@ void makeGroups(std::unordered_map<std::string, std::unordered_map<std::string, 
     return;
 }
 
-
-// Save groups to a file
 void saveGroupsToFile(const std::unordered_map<std::string, std::unordered_set<std::string>>& groupInfo, 
-                      std::unordered_map<std::string, std::string>& queryGroupInfo,
+                      const std::unordered_map<std::string, std::string>& queryGroupInfo,
                       const std::string& groupFileDir) {
     
     // save group in txt file
@@ -326,7 +340,7 @@ void saveGroupsToFile(const std::unordered_map<std::string, std::unordered_set<s
     }
 
     for (const auto& [groupName, queryIDs] : groupInfo) {
-        outFile1 << "Group for X node " << groupName << ": ";
+        outFile1 << groupName << " ";
         for (const auto& queryID : queryIDs) {
             outFile1 << queryID << " ";
         }
@@ -357,14 +371,203 @@ void saveGroupsToFile(const std::unordered_map<std::string, std::unordered_set<s
     return;
 }
 
+void loadGroupInfo(const std::string& groupFileDir, 
+                    std::unordered_map<std::string, std::unordered_set<std::string>>& groupInfo) {
+    const std::string& groupInfoFileName = groupFileDir + "metabuli_group.txt";
+    std::ifstream inFile(groupInfoFileName);
+    if (!inFile.is_open()) {
+        std::cerr << "Error opening file: " << groupInfoFileName << std::endl;
+        return;
+    }
+
+    std::string line;
+    while (std::getline(inFile, line)) {
+        std::stringstream ss(line);
+        std::string groupName;
+        ss >> groupName;  
+        
+        std::unordered_set<std::string> queryIds;
+        std::string queryId;
+        while (ss >> queryId) { 
+            queryIds.insert(queryId);  
+        }
+
+        groupInfo[groupName] = queryIds; 
+    }
+
+    inFile.close();
+    std::cout << "Group info loaded from " << groupInfoFileName << " successfully." << std::endl;
+}
+
+void loadQueryGroupInfo(const std::string& groupFileDir, 
+                        std::unordered_map<std::string, std::string>& queryGroupInfo) {
+    const std::string& queryGroupInfoFileName = groupFileDir + "metabuli_group.csv";
+    std::ifstream inFile(queryGroupInfoFileName);
+    if (!inFile.is_open()) {
+        std::cerr << "Error opening file: " << queryGroupInfoFileName << std::endl;
+        return;
+    }
+
+    std::string line;
+    while (std::getline(inFile, line)) {
+        std::stringstream ss(line);
+        std::string queryId, groupName;
+
+        std::getline(ss, groupName, ',');
+        std::getline(ss, queryId);
+
+        queryGroupInfo[queryId] = groupName;
+    }
+
+    inFile.close();
+    std::cout << "Query group info loaded from " << queryGroupInfoFileName << " successfully." << std::endl;
+}
+
+void loadMetabuliResult(const std::string& filename, 
+                        std::unordered_map<std::string, std::string>& queryIdMap, 
+                        std::unordered_map<std::string, int>& metabuliResult) {
+    std::ifstream file(filename);
+    std::string line;
+
+    if (!file.is_open()) {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return;
+    }
+
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        int label, query_label;
+        std::string query_name;
+        ss >> label >> query_name >> query_label;
+
+        metabuliResult[queryIdMap[query_name]] = query_label;
+    }
+
+    file.close();
+}
+
+void getRepLabel(const std::string& groupRepFileDir,
+                 const std::unordered_map<std::string, int>& metabuliResult,
+                 const std::unordered_map<std::string, std::unordered_set<std::string>>& groupInfo,
+                 std::unordered_map<std::string, int>& repLabel) {
+    
+    for (const auto& group : groupInfo) {
+        const std::string& groupId = group.first;
+        const std::unordered_set<std::string>& queryIds = group.second;
+
+        std::unordered_map<int, int> labelFrequency;
+
+        for (const auto& queryId : queryIds) {
+            auto it = metabuliResult.find(queryId);
+            if (it != metabuliResult.end()) {
+                int label = it->second;
+                if (label != 0){
+                    labelFrequency[label]++;
+                }
+            }
+        }
+
+        int mostFrequentLabel = -1;
+        int maxFrequency = 0;
+        for (const auto& entry : labelFrequency) {
+            if (entry.second > maxFrequency) {
+                maxFrequency = entry.second;
+                mostFrequentLabel = entry.first;
+            }
+        }
+
+        if (mostFrequentLabel != -1) {
+            repLabel[groupId] = mostFrequentLabel;
+        }
+    }
+
+    const std::string& groupRepFileName = groupRepFileDir + "groupRep";
+    std::ofstream outFile(groupRepFileName);
+    if (!outFile.is_open()) {
+        std::cerr << "Error opening file: " << groupRepFileName << std::endl;
+        return;
+    }
+
+    for (const auto& [groupId, groupRep] : repLabel) {
+        outFile << groupId << "\t" << groupRep << "\n";
+    }
+
+    outFile.close();
+
+    std::cout << "Query group representative label saved to " << groupRepFileName << " successfully." << std::endl;
+}
+
+void applyRepLabel(const std::string& resultFileDir, 
+                   const std::string& newResultFileDir, 
+                   const std::unordered_map<std::string, std::string>& queryIdMap, 
+                   const std::unordered_map<std::string, std::string>& queryGroupInfo,
+                   const std::unordered_map<std::string, int>& repLabel) {
+    
+    std::ifstream inFile(resultFileDir);
+    if (!inFile.is_open()) {
+        std::cerr << "Error opening file: " << resultFileDir << std::endl;
+        return;
+    }
+
+    std::ofstream outFile(newResultFileDir);
+    if (!outFile.is_open()) {
+        std::cerr << "Error opening file: " << newResultFileDir << std::endl;
+        return;
+    }
+
+    std::string line;
+    while (std::getline(inFile, line)) {
+        std::stringstream ss(line);
+        std::vector<std::string> fields;
+        std::string field;
+
+        while (std::getline(ss, field, '\t')) {
+            fields.push_back(field);
+        }
+
+        if (fields.size() > 2 && fields[0] == "0") {
+            std::string queryName = fields[1];
+
+            auto queryIdIt = queryIdMap.find(queryName);
+            if (queryIdIt != queryIdMap.end()) {
+                std::string queryId = queryIdIt->second;
+
+                auto queryGroupInfoIt = queryGroupInfo.find(queryId);
+                if (queryGroupInfoIt != queryGroupInfo.end()) {
+                    std::string groupId = queryGroupInfoIt->second;
+
+                    auto repLabelIt = repLabel.find(groupId);
+                    if (repLabelIt != repLabel.end()) {
+                        fields[2] = std::to_string(repLabelIt->second);
+                        fields[0] = "1";
+                    }
+                }
+            }
+        }
+
+        for (size_t i = 0; i < fields.size(); ++i) {
+            outFile << fields[i]; 
+            if (i < fields.size() - 1) {  
+                outFile << "\t";
+            }
+        }
+        outFile << std::endl;
+    }
+
+    inFile.close();
+    outFile.close();
+    
+    std::cout << "Result saved to " << newResultFileDir << " successfully." << std::endl;
+}
+
 Classifier::Classifier(LocalParameters & par) {
     // Load parameters
     dbDir = par.filenames[1 + (par.seqMode == 2)];
     matchPerKmer = par.matchPerKmer;
     loadDbParameters(par);
 
-    cout << "DB name: " << par.dbName << endl;
-    cout << "DB creation date: " << par.dbDate << endl;
+    std::cout << "DB name: " << par.dbName << endl;
+    std::cout << "DB creation date: " << par.dbDate << endl;
     
     // Taxonomy
     taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
@@ -401,9 +604,12 @@ void Classifier::startClassify(const LocalParameters &par) {
     size_t tries = 0;
     size_t totalSeqCnt = 0;
 
-    const std::string queryKmerFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240923/";
-    const std::string groupFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240923/";
-    const std::string queryIdFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240923/";
+    const std::string queryKmerFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/";
+    const std::string groupFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/";
+    const std::string queryIdFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/";
+    const std::string groupRepFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/";
+    const std::string resultFileDir = "/home/lunajang/workspace/metabuli_query_binning/classify_result/1_classifications.tsv";
+    const std::string newResultFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/1_classifications.tsv";
 
 
     // Extract k-mers from query sequences and compare them to target k-mer DB
@@ -411,10 +617,8 @@ void Classifier::startClassify(const LocalParameters &par) {
         tries++;
 
         // new code
-        // map of vector to save kmer: query_id, query_id, query_id...
-        // Get splits for remaining sequences
         if (tries == 1) {
-                cout << "Indexing query file ...";
+                std::cout << "Indexing query file ...";
         }
         queryIndexer->setBytesPerKmer(matchPerKmer);
         queryIndexer->indexQueryFile(processedReadCnt);
@@ -422,9 +626,9 @@ void Classifier::startClassify(const LocalParameters &par) {
 
         if (tries == 1) {
             totalSeqCnt = queryIndexer->getReadNum_1();
-            cout << "Done" << endl;
-            cout << "Total number of sequences: " << queryIndexer->getReadNum_1() << endl;
-            cout << "Total read length: " << queryIndexer->getTotalReadLength() <<  "nt" << endl;
+            std::cout << "Done" << endl;
+            std::cout << "Total number of sequences: " << queryIndexer->getReadNum_1() << endl;
+            std::cout << "Total read length: " << queryIndexer->getTotalReadLength() <<  "nt" << endl;
         }
 
         // Set up kseq
@@ -458,12 +662,12 @@ void Classifier::startClassify(const LocalParameters &par) {
                                              kseq1,
                                              kseq2); // sync kseq1 and kseq2
             
-            saveQueryListToFile(queryList, queryIdFileDir);
+            saveQueryIdToFile(queryList, queryIdFileDir);
             writeQueryKmerFile(&queryKmerBuffer, queryKmerFileDir);
 
             // Print progress
             processedReadCnt += queryReadSplit[splitIdx].readCnt;
-            cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
+            std::cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
 
             numOfTatalQueryKmerCnt += queryKmerBuffer.startIndexOfReserve;
         }
@@ -477,7 +681,23 @@ void Classifier::startClassify(const LocalParameters &par) {
             complete = true;
         }
     }
-    //make group
     
     processKmerQuery(queryKmerFileDir, groupFileDir);
+
+    std::unordered_map<std::string, std::string> queryIdMap;     // queryName, queryId
+    loadQueryIdFromFile(queryIdFileDir, queryIdMap);
+
+    std::unordered_map<std::string, std::unordered_set<std::string>> groupInfo;      // groupId, [queryIds]
+    std::unordered_map<std::string, std::string> queryGroupInfo;
+    loadGroupInfo(groupFileDir, groupInfo);      // queryId, groupId
+    loadQueryGroupInfo(groupFileDir, queryGroupInfo);
+    
+    std::unordered_map<std::string, int> metabuliResult;       // queryId, queryLabel
+    loadMetabuliResult(resultFileDir, queryIdMap, metabuliResult);
+
+    std::unordered_map<std::string, int> repLabel; // groupId, repLable
+    getRepLabel(groupRepFileDir, metabuliResult, groupInfo, repLabel);
+
+    applyRepLabel(resultFileDir, newResultFileDir, queryIdMap, queryGroupInfo, repLabel);
+
 }
