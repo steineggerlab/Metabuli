@@ -30,41 +30,54 @@
 #include "KmerExtractor.h"
 #include "Taxonomer.h"
 #include "Reporter.h"
+#include <cassert>
 #define BufferSize 16'777'216 //16 * 1024 * 1024 // 16 M
 using namespace std;
 
 // new code
-void saveQueryIdToFile(const std::vector<Query>& queryIdMap, const std::string& queryIdFileDir);
-void loadQueryIdFromFile(const std::string& queryIdFileDir, 
-                           std::unordered_map<std::string, std::string>& queryIdMap);
+// void saveQueryIdToFile(const std::vector<Query>& queryIdMap, const std::string& queryIdFileDir);
+// void loadQueryIdFromFile(const std::string& queryIdFileDir, 
+//                            std::unordered_map<std::string, std::string>& queryIdMap);
 void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t &localBufIdx);
 void getDiffIdx(const uint64_t &lastKmer, const uint64_t &entryToWrite, FILE *handleKmerTable, uint16_t *buffer, size_t &localBufIdx);
 void writeDiffIdx(uint16_t *buffer, FILE *handleKmerTable, uint16_t *toWrite, size_t size, size_t &localBufIdx);
 void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& queryKmerFileDir);
-void processKmerQuery(const std::unordered_map<uint64_t, std::set<int>>& kmerQuery, const std::string& queryKmerFileDir);
+
+void processKmerQuery(const std::string& queryKmerFileDir, 
+                      const std::string& groupFileDir,
+                      size_t processedReadCnt);
+
 void makeGraph(const std::string& queryKmerFileDir, 
-               std::unordered_map<std::string, std::unordered_map<std::string, int>>& relation);
-void makeGroups(std::unordered_map<std::string, std::unordered_map<std::string, int>>& relation,
-                std::unordered_map<std::string, std::unordered_set<std::string>>& groupInfo,
-                std::unordered_map<std::string, std::string>& queryGroupInfo);
-void saveGroupsToFile(const std::unordered_map<std::string, std::unordered_set<std::string>>& groupMap, 
-                      const std::unordered_map<std::string, std::string>& queryGroupInfo,
-                      const std::string& filename);
+               std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation);
+               
+void makeGroups(const std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation, //std::unordered_map<std::string, std::unordered_map<std::string, int>>& relation,
+                std::unordered_map<uint32_t, std::unordered_set<uint32_t>>& groupInfo,
+                std::vector<uint32_t> &queryGroupInfo);
+
+void saveGroupsToFile(const std::unordered_map<uint32_t, std::unordered_set<uint32_t>>& groupInfo, 
+                      const std::vector<uint32_t>& queryGroupInfo,
+                      const std::string& groupFileDir);
+
 void loadGroupInfo(const std::string& groupFileDir, 
                     std::unordered_map<std::string, std::unordered_set<std::string>>& groupInfo);
+
 void loadQueryGroupInfo(const std::string& groupFileDir, 
-                        std::unordered_map<std::string, std::string>& queryGroupInfo);
+                        std::vector<uint32_t> & queryGroupInfo);
+
+                        
+
 void loadMetabuliResult(const std::string& filename, 
                         std::unordered_map<std::string, std::string>& queryIdMap, 
                         std::unordered_map<std::string, int>& metabuliResult);
+
 void getRepLabel(const std::unordered_map<std::string, int>& metabuliResult,
                  const std::unordered_map<std::string, std::unordered_set<std::string>>& groupInfo,
                  std::unordered_map<std::string, int>& repLabel);
+
 void applyRepLabel(const std::string& resultFileDir, 
                    const std::string& newResultFileDir, 
-                   const std::unordered_map<std::string, std::string>& queryIdMap,
-                   const std::unordered_map<std::string, std::string>& queryGroupInfo,
-                   const std::unordered_map<std::string, int>& repLabel);
+                   const std::vector<uint32_t>& queryGroupInfo,
+                   const std::unordered_map<uint32_t, int>& repLabel);
 
 extern int kmerQueryFileNumber;
 const size_t bufferSize = 1024 * 1024;
@@ -72,14 +85,17 @@ const size_t bufferSize = 1024 * 1024;
 // DisjointSet class
 class DisjointSet {
 public:
-    std::unordered_map<std::string, std::string> parent;
-    std::unordered_map<std::string, int> rank;
+    // std::unordered_map<std::string, std::string> parent;
+    // std::unordered_map<std::string, int> rank;
 
-    void makeSet(const std::string& item);
+    std::unordered_map<uint32_t, uint32_t> parent;
+    std::unordered_map<uint32_t, int> rank;
 
-    std::string find(const std::string& item);
+    void makeSet(uint32_t item);
 
-    void unionSets(const std::string& set1, const std::string& set2);
+    uint32_t find(uint32_t item);
+
+    void unionSets(uint32_t set1, uint32_t set2);
 };
 
 class Classifier {

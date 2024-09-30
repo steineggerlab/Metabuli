@@ -74,9 +74,7 @@ protected:
     bufferIdx = 0;
   }
 
-  static uint64_t getNextTargetKmer(uint64_t lookingTarget,
-                                    const uint16_t *diffIdxBuffer,
-                                    size_t &diffBufferIdx, size_t &totalPos);
+  
 
   static TargetKmerInfo getKmerInfo(size_t bufferSize, FILE *kmerInfoFp,
                                     TargetKmerInfo *infoBuffer,
@@ -108,9 +106,11 @@ public:
   
   bool matchKmers(QueryKmerBuffer *queryKmerBuffer,
                   Buffer<Match> *matchBuffer,
-                  std::unordered_map<uint64_t, std::vector<std::string>> &queryMatches,
-                  std::vector<Query> &queryList,
                   const string &db = string());
+
+  static uint64_t getNextTargetKmer(uint64_t lookingTarget,
+                                    const uint16_t *diffIdxBuffer,
+                                    size_t &diffBufferIdx, size_t &totalPos);
   
   void sortMatches(Buffer<Match> *matchBuffer);
 

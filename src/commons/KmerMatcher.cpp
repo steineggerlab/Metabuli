@@ -111,8 +111,6 @@ void KmerMatcher::loadTaxIdList(const LocalParameters & par) {
 
 bool KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
                              Buffer<Match> * matchBuffer,
-                             std::unordered_map<std::string, std::unordered_map<std::string, int>> &queryMatches,
-                             std::vector<Query> &queryList,
                              const string & db){
     // Set database files
     if (db.empty()) {
@@ -204,7 +202,7 @@ bool KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
     while (completedSplitCnt < threads) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(completedSplitCnt, splitCheckList, hasOverflow, \
-querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffIdx, targetInfoFileName, local_queryMatches, queryList)
+querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffIdx, targetInfoFileName, local_queryMatches)
         {
             // FILE
             FILE * diffIdxFp = fopen(targetDiffIdxFileName.c_str(), "rb");
@@ -306,8 +304,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                                                     taxId2speciesId[candidateKmerInfos[idx].sequenceID],
                                                     selectedDnaEncodings[k],
                                                     selectedHammings[k],
-                                                    selectedHammingSum[k],
-                                                    (bool) candidateKmerInfos[idx].redundancy};
+                                                    selectedHammingSum[k]};
                                 matchCnt++;
                             }
                             continue;
@@ -345,8 +342,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                                                  taxId2speciesId[candidateKmerInfos[idx].sequenceID],
                                                  selectedDnaEncodings[k],
                                                  selectedHammings[k],
-                                                 selectedHammingSum[k],
-                                                 (bool) candidateKmerInfos[idx].redundancy};
+                                                 selectedHammingSum[k]};
                             matchCnt++;
                         }
                         currentQuery = queryKmerList[j].ADkmer;
@@ -441,8 +437,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
                                              taxId2speciesId[candidateKmerInfos[idx].sequenceID],
                                              selectedDnaEncodings[k],
                                              selectedHammings[k],
-                                             selectedHammingSum[k],
-                                             (bool) candidateKmerInfos[idx].redundancy};
+                                             selectedHammingSum[k]};
                         matchCnt++;
                     }
                 } // End of one split
@@ -476,14 +471,14 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
         }
     } // end of while(completeSplitCnt < threadNum)
     
-    // new code
-    for (const auto& local_map : local_queryMatches) {
-        for (const auto& outer_pair : local_map) {
-            for (const auto& inner_pair : outer_pair.second) {
-                queryMatches[queryList[outer_pair.first].name][queryList[inner_pair.first].name] += inner_pair.second;
-            }
-        }
-    }
+    // // new code
+    // for (const auto& local_map : local_queryMatches) {
+    //     for (const auto& outer_pair : local_map) {
+    //         for (const auto& inner_pair : outer_pair.second) {
+    //             queryMatches[queryList[outer_pair.first].name][queryList[inner_pair.first].name] += inner_pair.second;
+    //         }
+    //     }
+    // }
 
     std::cout << "Time spent for the comparison: " << double(time(nullptr) - beforeSearch) << std::endl;
     free(splitCheckList);
