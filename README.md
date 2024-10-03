@@ -195,7 +195,7 @@ The proportion of reads that are assigned to each taxon.
 
 #### JobID_krona.html
 It is for an interactive taxonomy report (Krona). You can use any modern web browser to open `JobID_krona.html`.
-<p align="left"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/image.png" height="350" /></p>
+<p align="left"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/image.png" style="max-height: 350px; width: auto;" /></p>
 
 
 ### Resource requirements
