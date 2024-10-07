@@ -114,7 +114,7 @@ void writeDiffIdx(uint16_t *buffer, FILE *handleKmerTable, uint16_t *toWrite, si
 }
 
 // Save kmerQuery map into txt file
-void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& queryKmerFileDir, size_t processedReadCnt) {
+void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& queryKmerFileDir, size_t processedReadCnt, SeqIterator * seqIterator) {
     time_t beforeSaveFile = time(nullptr);
     size_t queryKmerNum = queryKmerBuffer->startIndexOfReserve;
     QueryKmer *queryKmerList = queryKmerBuffer->buffer;
@@ -138,6 +138,9 @@ void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& qu
     size_t write = 0;
 
     for(size_t i = 0; i < queryKmerNum ; i++) {
+        cout << kmerQueryFileNumber << " ";
+        seqIterator->printKmerInDNAsequence(queryKmerList[i].ADkmer);
+        cout << "\n";
         queryKmerList[i].info.sequenceID += processedReadCnt;
         fwrite(& queryKmerList[i].info, sizeof (QueryKmerInfo), 1, infoFile);
         // fwrite(& queryKmerList[i].info.sequenceID, sizeof (uint32_t), 1, infoFile); // If we want to save only sequenceID, use this line
@@ -640,6 +643,7 @@ Classifier::Classifier(LocalParameters & par) {
     }
     taxonomer = new Taxonomer(par, taxonomy);
     reporter = new Reporter(par, taxonomy);
+    seqIterator = new SeqIterator(par);
 }
 
 Classifier::~Classifier() {
@@ -649,6 +653,7 @@ Classifier::~Classifier() {
     delete kmerMatcher;
     delete taxonomer;
     delete reporter;
+    delete seqIterator;
 }
 
 void Classifier::startClassify(const LocalParameters &par) {
@@ -721,7 +726,7 @@ void Classifier::startClassify(const LocalParameters &par) {
                                              kseq2); // sync kseq1 and kseq2
             
             // saveQueryIdToFile(queryList, queryIdFileDir);
-            writeQueryKmerFile(&queryKmerBuffer, queryKmerFileDir, processedReadCnt);
+            writeQueryKmerFile(&queryKmerBuffer, queryKmerFileDir, processedReadCnt, seqIterator);
 
             // Print progress
             processedReadCnt += queryReadSplit[splitIdx].readCnt;
@@ -739,7 +744,7 @@ void Classifier::startClassify(const LocalParameters &par) {
         }
     }
     
-    checkBufferFiles(queryKmerFileDir);
+    // checkBufferFiles(queryKmerFileDir);
     return;
 
     processKmerQuery(queryKmerFileDir, groupFileDir, processedReadCnt);

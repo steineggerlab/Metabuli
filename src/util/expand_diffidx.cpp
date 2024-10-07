@@ -82,13 +82,16 @@ int expand_diffidx(int argc, const char **argv, const Command &command){
         }
         // Expand diff idx in buffer
         // size_t before = diffIdxBufferIdx;
-        while (loadedItems >= diffIdxBufferIdx + 7) {
+        while (loadedItems >= diffIdxBufferIdx) {
             // ((kmer) & MARKER)
             size_t before = diffIdxBufferIdx;
             currentTargetKmer = KmerMatcher::getNextTargetKmer(currentTargetKmer,
                                                                diffIdxBuffer,
                                                                diffIdxBufferIdx,
                                                                diffIdxPos);
+            
+            seqIterator->printKmerInDNAsequence(currentTargetKmer); cout << "\n";
+            
             size_t after = diffIdxBufferIdx;
             if (currentTargetKmerAA != (currentTargetKmer & MARKER)) {
                 // New amino acid -> process previous one

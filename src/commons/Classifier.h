@@ -41,7 +41,7 @@ using namespace std;
 void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t &localBufIdx);
 void getDiffIdx(const uint64_t &lastKmer, const uint64_t &entryToWrite, FILE *handleKmerTable, uint16_t *buffer, size_t &localBufIdx);
 void writeDiffIdx(uint16_t *buffer, FILE *handleKmerTable, uint16_t *toWrite, size_t size, size_t &localBufIdx);
-void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& queryKmerFileDir);
+void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& queryKmerFileDir, size_t processedReadCnt, SeqIterator * seqIterator);
 
 void processKmerQuery(const std::string& queryKmerFileDir, 
                       const std::string& groupFileDir,
@@ -111,6 +111,7 @@ protected:
     Taxonomer * taxonomer;
     Reporter * reporter;
     NcbiTaxonomy * taxonomy;
+    SeqIterator * seqIterator;
 
 public:
     void startClassify(const LocalParameters &par);
