@@ -4,8 +4,6 @@
 #include "common.h"
 #include <set>
 
-int kmerQueryFileNumber = 0;
-
 // new code
 void DisjointSet::makeSet(uint32_t item) {
         parent[item] = item;
@@ -37,7 +35,7 @@ void DisjointSet::unionSets(uint32_t set1, uint32_t set2) {
 }
 
 // void saveQueryIdToFile(const std::vector<Query>& queryList, const std::string& queryIdFileDir) {
-//     std::string queryIdFileName = queryIdFileDir + "queryid" + std::to_string(kmerQueryFileNumber);
+//     std::string queryIdFileName = queryIdFileDir + "queryid" + std::to_string(numOfSplits);
 //     std::ofstream outFile(queryIdFileName);
     
 //     if (!outFile.is_open()) {
@@ -55,7 +53,7 @@ void DisjointSet::unionSets(uint32_t set1, uint32_t set2) {
 
 // void loadQueryIdFromFile(const std::string& queryIdFileDir, 
 //                            std::unordered_map<std::string, std::string>& queryIdMap) {
-//     for (int i = 0; i < kmerQueryFileNumber; i++){
+//     for (int i = 0; i < numOfSplits; i++){
 //         std::string queryIdFileName = queryIdFileDir + "queryid" + std::to_string(i);
 //         std::ifstream inFile(queryIdFileName);
         
@@ -114,15 +112,21 @@ void writeDiffIdx(uint16_t *buffer, FILE *handleKmerTable, uint16_t *toWrite, si
 }
 
 // Save kmerQuery map into txt file
-void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& queryKmerFileDir, size_t processedReadCnt, SeqIterator * seqIterator) {
+void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& queryKmerFileDir, size_t& numOfSplits, size_t processedReadCnt, SeqIterator * seqIterator) {
     time_t beforeSaveFile = time(nullptr);
     size_t queryKmerNum = queryKmerBuffer->startIndexOfReserve;
     QueryKmer *queryKmerList = queryKmerBuffer->buffer;
+    for (size_t checkN = queryKmerNum - 1; checkN > 0; checkN--) {
+        if (queryKmerList[checkN].ADkmer != UINT64_MAX) {
+            queryKmerNum = checkN + 1;
+            break;
+        }
+    }
 
     std::string diffIdxFileName;
     std::string infoFileName;
-    diffIdxFileName = queryKmerFileDir + "queryKmerRelation" + std::to_string(kmerQueryFileNumber) + "_diffIdx";
-    infoFileName = queryKmerFileDir + "queryKmerRelation" + std::to_string(kmerQueryFileNumber) + "_info";
+    diffIdxFileName = queryKmerFileDir + "queryKmerRelation" + std::to_string(numOfSplits) + "_diffIdx";
+    infoFileName = queryKmerFileDir + "queryKmerRelation" + std::to_string(numOfSplits) + "_info";
 
     FILE * diffIdxFile = fopen(diffIdxFileName.c_str(), "wb");
     FILE * infoFile = fopen(infoFileName.c_str(), "wb");
@@ -130,7 +134,7 @@ void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& qu
         std::cout<<"Cannot open the file for writing target DB"<<endl;
         return;
     }
-    kmerQueryFileNumber++;
+    numOfSplits++;
 
     uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 10'000'000);
     size_t localBufIdx = 0;
@@ -138,9 +142,9 @@ void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& qu
     size_t write = 0;
 
     for(size_t i = 0; i < queryKmerNum ; i++) {
-        cout << kmerQueryFileNumber << " ";
-        seqIterator->printKmerInDNAsequence(queryKmerList[i].ADkmer);
-        cout << "\n";
+        // cout << numOfSplits << " ";
+        // seqIterator->printKmerInDNAsequence(queryKmerList[i].ADkmer);
+        // cout << "\n";
         queryKmerList[i].info.sequenceID += processedReadCnt;
         fwrite(& queryKmerList[i].info, sizeof (QueryKmerInfo), 1, infoFile);
         // fwrite(& queryKmerList[i].info.sequenceID, sizeof (uint32_t), 1, infoFile); // If we want to save only sequenceID, use this line
@@ -185,12 +189,12 @@ void processKmerQuery(const std::string& queryKmerFileDir,
     
 }
 
-void checkBufferFiles(const std::string& queryKmerFileDir){
+void checkBufferFiles(const std::string& queryKmerFileDir, const size_t numOfSplits){
     // Open _diffIdx and _info files
-    std::vector<std::ifstream> diffIdxFiles;
-    std::vector<std::ifstream> infoFiles;
+    struct MmapedData<uint16_t> *diffFileList = new struct MmapedData<uint16_t>[numOfSplits];
+    struct MmapedData<TargetKmerInfo> *infoFileList = new struct MmapedData<TargetKmerInfo>[numOfSplits];
 
-    for (int i = 0; i < kmerQueryFileNumber; ++i) {
+    for (int i = 0; i < numOfSplits; ++i) {
         std::string diffIdxFilename = queryKmerFileDir + "queryKmerRelation" + std::to_string(i) + "_diffIdx";
         std::string infoFilename = queryKmerFileDir + "queryKmerRelation" + std::to_string(i) + "_info";
 
@@ -242,7 +246,7 @@ void makeGraph(const std::string& queryKmerFileDir,
     std::vector<std::ifstream> diffIdxFiles;
     std::vector<std::ifstream> infoFiles;
 
-    for (int i = 0; i < kmerQueryFileNumber; ++i) {
+    for (int i = 0; i < numOfSplits; ++i) {
         std::string diffIdxFilename = queryKmerFileDir + "queryKmerRelation" + std::to_string(i) + "_diffIdx";
         std::string infoFilename = queryKmerFileDir + "queryKmerRelation" + std::to_string(i) + "_info";
 
@@ -579,9 +583,9 @@ void applyRepLabel(const std::string& resultFileDir,
         return;
     }
 
-    std::ofstream outFile(newResultFileDir);
+    std::ofstream outFile(newResultFileDir + "/1_classifications.tsv");
     if (!outFile.is_open()) {
-        std::cerr << "Error opening file: " << newResultFileDir << std::endl;
+        std::cerr << "Error opening file: " << newResultFileDir + "/1_classifications.tsv" << std::endl;
         return;
     }
 
@@ -666,6 +670,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     size_t processedReadCnt = 0;
     size_t tries = 0;
     size_t totalSeqCnt = 0;
+    size_t numOfSplits = 0;
 
     const std::string queryKmerFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20241005/new_mini_result/";
     const std::string groupFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20241005/new_mini_result/";
