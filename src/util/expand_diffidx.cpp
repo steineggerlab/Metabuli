@@ -89,9 +89,7 @@ int expand_diffidx(int argc, const char **argv, const Command &command){
                                                                diffIdxBuffer,
                                                                diffIdxBufferIdx,
                                                                diffIdxPos);
-            
             seqIterator->printKmerInDNAsequence(currentTargetKmer); cout << "\n";
-            
             size_t after = diffIdxBufferIdx;
             if (currentTargetKmerAA != (currentTargetKmer & MARKER)) {
                 // New amino acid -> process previous one
