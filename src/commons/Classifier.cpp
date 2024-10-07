@@ -182,6 +182,53 @@ void processKmerQuery(const std::string& queryKmerFileDir,
     
 }
 
+void checkBufferFiles(const std::string& queryKmerFileDir){
+    // Open _diffIdx and _info files
+    std::vector<std::ifstream> diffIdxFiles;
+    std::vector<std::ifstream> infoFiles;
+
+    for (int i = 0; i < kmerQueryFileNumber; ++i) {
+        std::string diffIdxFilename = queryKmerFileDir + "queryKmerRelation" + std::to_string(i) + "_diffIdx";
+        std::string infoFilename = queryKmerFileDir + "queryKmerRelation" + std::to_string(i) + "_info";
+
+        diffIdxFiles.emplace_back(diffIdxFilename, std::ios::binary);
+        infoFiles.emplace_back(infoFilename, std::ios::binary);
+
+        if (!diffIdxFiles.back().is_open() || !infoFiles.back().is_open()) {
+            std::cerr << "Error: Could not open files " << diffIdxFilename << " or " << infoFilename << std::endl;
+            diffIdxFiles.pop_back();
+            infoFiles.pop_back(); // Remove the file if it cannot be opened
+        }
+    }
+
+    uint16_t diffIdxBuffer[5];
+    QueryKmerInfo infoBuffer;
+    std::vector<uint64_t> lastKmers(diffIdxFiles.size(), 0);  // To track the last kmer from each file
+    std::vector<uint64_t> sequenceIDs(diffIdxFiles.size(), 0);  // To track the last sequence(query)ID from each file
+
+    // Store the current k-mers for each file
+    std::vector<uint64_t> currentKmers(diffIdxFiles.size(), std::numeric_limits<uint64_t>::max());
+
+    // Initial loading of the first k-mer from each file
+    for (size_t i = 0; i < diffIdxFiles.size(); ++i) {
+        std::cout << i << "th file start" << std::endl;
+        while (infoFiles[i].read(reinterpret_cast<char*>(&infoBuffer), sizeof(QueryKmerInfo))) {
+            int idx = 0;
+            uint64_t kmer = 0;
+            do {
+                diffIdxFiles[i].read(reinterpret_cast<char*>(&diffIdxBuffer[idx]), sizeof(uint16_t));
+                kmer |= (static_cast<uint64_t>(diffIdxBuffer[idx] & 0x7FFF) << (15 * idx));
+            } while (!(diffIdxBuffer[idx++] & 0x8000));  // Check end flag (the highest bit)
+
+                currentKmers[i] = lastKmers[i] + kmer;  // Update the k-mer for this file
+                lastKmers[i] = currentKmers[i];         // Update the lastKmer
+                sequenceIDs[i] = infoBuffer.sequenceID;
+
+            std::cout << "seqId: " << sequenceIDs[i] << ", currentkmer: " << currentKmers[i] << ", kmer diff: " << kmer << std::endl;
+        }
+    }
+}
+
 void makeGraph(const std::string& queryKmerFileDir, 
                std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation) {
 
@@ -224,16 +271,16 @@ void makeGraph(const std::string& queryKmerFileDir,
                 kmer |= (static_cast<uint64_t>(diffIdxBuffer[idx] & 0x7FFF) << (15 * idx));
             } while (!(diffIdxBuffer[idx++] & 0x8000));  // Check end flag (the highest bit)
 
-            currentKmers[i] = kmer;  // Set the first k-mer for this file
-            lastKmers[i] = kmer;     // Set the initial k-mer as lastKmer for diff calculation
+            currentKmers[i] = lastKmers[i] + kmer;  // Set the first k-mer for this file
+            lastKmers[i] = currentKmers[i];      ;     // Set the initial k-mer as lastKmer for diff calculation
             sequenceIDs[i] = infoBuffer.sequenceID;
         }
     }
 
-    std::vector<uint32_t> currentQueryIDs;
-    currentQueryIDs.reserve(1024);
-    std::unordered_set<uint32_t> observedQueryIDs;
-    observedQueryIDs.reserve(1024);
+    std::vector<uint32_t> currentQueryIds;
+    currentQueryIds.reserve(1024);
+    std::unordered_set<uint32_t> observedQueryIds;
+    observedQueryIds.reserve(1024);
     while (true) {
         // Find the smallest current k-mer across all files
         uint64_t currentKmer = *std::min_element(currentKmers.begin(), currentKmers.end());
@@ -243,18 +290,15 @@ void makeGraph(const std::string& queryKmerFileDir,
             break;
         }
 
-        // std::unordered_set<std::string> currentQueryIDs;
-        currentQueryIDs.clear();
-        observedQueryIDs.clear();
+        currentQueryIds.clear();
+        observedQueryIds.clear();
 
         // Process files with the current smallest k-mer
-        for (size_t i = 0; i < diffIdxFiles.size(); ++i) {
+        for (size_t i = 0; i < diffIdxFiles.size(); i++) {
             while (currentKmers[i] == currentKmer) {
-                // std::string queryID = std::to_string(i) + "_" + std::to_string(sequenceIDs[i]); // Extract the query ID
-                // currentQueryIDs.insert(sequenceIDs[i]);
-                if (observedQueryIDs.find(sequenceIDs[i]) == observedQueryIDs.end()) {
-                    observedQueryIDs.insert(sequenceIDs[i]);
-                    currentQueryIDs.push_back(sequenceIDs[i]);
+                if (observedQueryIds.find(sequenceIDs[i]) == observedQueryIds.end()) {
+                    observedQueryIds.insert(sequenceIDs[i]);
+                    currentQueryIds.push_back(sequenceIDs[i]);
                 }
                 
                 // Read the next k-mer from this file
@@ -276,23 +320,13 @@ void makeGraph(const std::string& queryKmerFileDir,
         }
 
         // Update the relation map with the collected query IDs
-        for (size_t i = 0; i < currentQueryIDs.size(); ++i) {
-            for (size_t j = i + 1; j < currentQueryIDs.size(); ++j) {
-                assert(currentQueryIDs[i] < currentQueryIDs[j]);
-                relation[currentQueryIDs[i]][currentQueryIDs[j]]++;
-                // if (currentQueryIDs[i] != currentQueryIDs[j]) {
-                    
-                // }
+        for (size_t i = 0; i < currentQueryIds.size(); ++i) {
+            for (size_t j = 0; j < currentQueryIds.size(); ++j) {
+                if (i != j){
+                    relation[currentQueryIds[i]][currentQueryIds[j]]++;
+                }
             }
         }
-
-        // for (const auto& currentQueryID : currentQueryIDs) {
-        //     for (const auto& otherQueryID : currentQueryIDs) {
-        //         if (currentQueryID != otherQueryID) {
-        //             relation[currentQueryID][otherQueryID]++;
-        //         }
-        //     }
-        // }
     }
 
     // Close all file streams
@@ -324,29 +358,29 @@ void makeGroups(const std::unordered_map<uint32_t, std::unordered_map<uint32_t, 
     const int THRESHOLD = 150; // Define threshold for grouping
     // const int THRESHOLD = 200; // Define threshold for grouping
     for (const auto currentQueryRelation : relation) {
-        // std::string currentQueryID = currentQueryRelation.first;
-        uint32_t currentQueryID = currentQueryRelation.first;
-        for (const auto& [otherQueryID, count] : currentQueryRelation.second) {
+        // std::string currentQueryId = currentQueryRelation.first;
+        uint32_t currentQueryId = currentQueryRelation.first;
+        for (const auto& [otherQueryId, count] : currentQueryRelation.second) {
             if (count >= THRESHOLD) {
-                if (ds.parent.find(currentQueryID) == ds.parent.end()) {
-                    ds.makeSet(currentQueryID);
+                if (ds.parent.find(currentQueryId) == ds.parent.end()) {
+                    ds.makeSet(currentQueryId);
                 }
-                if (ds.parent.find(otherQueryID) == ds.parent.end()) {
-                    ds.makeSet(otherQueryID);
+                if (ds.parent.find(otherQueryId) == ds.parent.end()) {
+                    ds.makeSet(otherQueryId);
                 }
-                ds.unionSets(currentQueryID, otherQueryID);
+                ds.unionSets(currentQueryId, otherQueryId);
             }
         }
     }
 
     // Collect nodes into groups
     for (const auto& p : ds.parent) {
-        // const std::string& currentQueryID = p.first;
-        uint32_t currentQueryID = p.first;
-        // std::string groupName = ds.find(currentQueryID);
-        uint32_t groupName = ds.find(currentQueryID);
-        groupInfo[groupName].insert(currentQueryID);
-        queryGroupInfo[currentQueryID] = groupName;
+        // const std::string& currentQueryId = p.first;
+        uint32_t currentQueryId = p.first;
+        // std::string groupId = ds.find(currentQueryId);
+        uint32_t groupId = ds.find(currentQueryId);
+        groupInfo[groupId].insert(currentQueryId);
+        queryGroupInfo[currentQueryId] = groupId;
     }
 
     std::cout << "Query group created successfully : " << groupInfo.size() << " groups" << std::endl;
@@ -368,10 +402,10 @@ void saveGroupsToFile(const std::unordered_map<uint32_t, std::unordered_set<uint
         return;
     }
 
-    for (const auto& [groupName, queryIDs] : groupInfo) {
-        outFile1 << groupName << " ";
-        for (const auto& queryID : queryIDs) {
-            outFile1 << queryID << " ";
+    for (const auto& [groupId, queryIds] : groupInfo) {
+        outFile1 << groupId << " ";
+        for (const auto& queryId : queryIds) {
+            outFile1 << queryId << " ";
         }
         outFile1 << std::endl;
     }
@@ -393,8 +427,8 @@ void saveGroupsToFile(const std::unordered_map<uint32_t, std::unordered_set<uint
         outFile2 << queryGroupInfo[i] << "\n";
     }
 
-    // for (const auto& [queryID, groupName] : queryGroupInfo) {
-    //     outFile2 << groupName << "," << queryID << "\n";
+    // for (const auto& [queryId, groupId] : queryGroupInfo) {
+    //     outFile2 << groupId << "," << queryId << "\n";
     // }
 
     outFile2.close();
@@ -417,8 +451,8 @@ void loadGroupInfo(const std::string& groupFileDir,
     std::unordered_set<uint32_t> queryIds;
     while (std::getline(inFile, line)) {
         std::stringstream ss(line);
-        uint32_t groupName;
-        ss >> groupName;  
+        uint32_t groupId;
+        ss >> groupId;  
         
         queryIds.clear();
         uint32_t queryId;
@@ -427,7 +461,7 @@ void loadGroupInfo(const std::string& groupFileDir,
             queryIds.insert(queryId);  
         }
 
-        groupInfo[groupName] = queryIds; 
+        groupInfo[groupId] = queryIds; 
     }
 
     inFile.close();
@@ -447,14 +481,11 @@ void loadQueryGroupInfo(const std::string& groupFileDir,
     uint32_t queryIdx = 0;
     while (std::getline(inFile, line)) {
         std::stringstream ss(line);
-        uint32_t queryId, groupName;
-        std::string queryIdStr, groupNameStr;
+        uint32_t groupId;
+        ss >> groupId;  
 
-        std::getline(ss, groupNameStr, ',');
-        std::getline(ss, queryIdStr);
-
-        // queryGroupInfo[queryId] = groupName;
-        queryGroupInfo[queryIdx] = static_cast<uint32_t>(std::stoul(groupNameStr));
+        // queryGroupInfo[queryId] = groupId;
+        queryGroupInfo[queryIdx] = groupId;
         queryIdx++;
     }
 
@@ -482,6 +513,7 @@ void loadMetabuliResult(const std::string& filename,
     }
 
     file.close();
+    std::cout << "Original Metabuli result loaded from " << filename << " successfully." << std::endl;
 }
 
 void getRepLabel(const std::string& groupRepFileDir,
@@ -504,7 +536,6 @@ void getRepLabel(const std::string& groupRepFileDir,
                 }
             }
         }
-
         int mostFrequentLabel = -1;
         int maxFrequency = 0;
         for (const auto& entry : labelFrequency) {
@@ -513,7 +544,6 @@ void getRepLabel(const std::string& groupRepFileDir,
                 mostFrequentLabel = entry.first;
             }
         }
-
         if (mostFrequentLabel != -1) {
             repLabel[groupId] = mostFrequentLabel;
         }
@@ -564,22 +594,12 @@ void applyRepLabel(const std::string& resultFileDir,
         }
 
         if (fields.size() > 2 && fields[0] == "0") {
-            // std::string queryName = fields[1];
             uint32_t groupId = queryGroupInfo[queryIdx];
             auto repLabelIt = repLabel.find(groupId);
             if (repLabelIt != repLabel.end()) {
                 fields[2] = std::to_string(repLabelIt->second);
                 fields[0] = "1";
             }
-            // auto queryGroupInfoIt = queryGroupInfo.find(queryIdx);
-            // if (queryGroupInfoIt != queryGroupInfo.end()) {
-            //     uint32_t groupId = queryGroupInfoIt->second;
-            //     auto repLabelIt = repLabel.find(groupId);
-            //     if (repLabelIt != repLabel.end()) {
-            //         fields[2] = std::to_string(repLabelIt->second);
-            //         fields[0] = "1";
-            //     }
-            // }    
         }
 
         for (size_t i = 0; i < fields.size(); ++i) {
@@ -642,12 +662,12 @@ void Classifier::startClassify(const LocalParameters &par) {
     size_t tries = 0;
     size_t totalSeqCnt = 0;
 
-    const std::string queryKmerFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/";
-    const std::string groupFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/";
-    const std::string queryIdFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/";
-    const std::string groupRepFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/";
-    const std::string resultFileDir = "/home/lunajang/workspace/metabuli_query_binning/classify_result/1_classifications.tsv";
-    const std::string newResultFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/1_classifications.tsv";
+    const std::string queryKmerFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20241005/new_mini_result/";
+    const std::string groupFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20241005/new_mini_result/";
+    const std::string queryIdFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20241005/new_mini_result/";
+    const std::string groupRepFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20241005/new_mini_result/";
+    const std::string resultFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20241005/original_small_result/1_classifications.tsv";
+    const std::string newResultFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20241005/new_mini_result/1_classifications.tsv";
 
 
     // Extract k-mers from query sequences and compare them to target k-mer DB
@@ -719,6 +739,9 @@ void Classifier::startClassify(const LocalParameters &par) {
         }
     }
     
+    checkBufferFiles(queryKmerFileDir);
+    return;
+
     processKmerQuery(queryKmerFileDir, groupFileDir, processedReadCnt);
 
     // std::unordered_map<std::string, std::string> queryIdMap;     // queryName, queryId
@@ -726,6 +749,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 
     std::unordered_map<uint32_t, std::unordered_set<uint32_t>> groupInfo;      // groupId, [queryIds]
     std::vector<uint32_t> queryGroupInfo;      // vector's index is queryId, value is groupId
+    queryGroupInfo.resize(processedReadCnt, 0);
     loadGroupInfo(groupFileDir, groupInfo);      // queryId, groupId
     loadQueryGroupInfo(groupFileDir, queryGroupInfo);
     
