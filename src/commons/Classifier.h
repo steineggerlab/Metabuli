@@ -48,7 +48,9 @@ void processKmerQuery(const std::string& queryKmerFileDir,
                       size_t processedReadCnt);
 
 void makeGraph(const std::string& queryKmerFileDir, 
-               std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation);
+               std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation,
+               const string & jobid,
+               SeqIterator * seqIterator);
                
 void makeGroups(const std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation, //std::unordered_map<std::string, std::unordered_map<std::string, int>>& relation,
                 std::unordered_map<uint32_t, std::unordered_set<uint32_t>>& groupInfo,
@@ -111,6 +113,7 @@ protected:
     Taxonomer * taxonomer;
     Reporter * reporter;
     NcbiTaxonomy * taxonomy;
+    SeqIterator * seqIterator;
 
 public:
     void startClassify(const LocalParameters &par);

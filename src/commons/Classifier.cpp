@@ -114,15 +114,23 @@ void writeDiffIdx(uint16_t *buffer, FILE *handleKmerTable, uint16_t *toWrite, si
 }
 
 // Save kmerQuery map into txt file
-void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& queryKmerFileDir, size_t processedReadCnt) {
+void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& queryKmerFileDir, size_t processedReadCnt, SeqIterator * seqIterator, const string & jobid) {
     time_t beforeSaveFile = time(nullptr);
     size_t queryKmerNum = queryKmerBuffer->startIndexOfReserve;
     QueryKmer *queryKmerList = queryKmerBuffer->buffer;
 
+    // Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
+    for (size_t checkN = queryKmerNum - 1; checkN > 0; checkN--) {
+        if (queryKmerList[checkN].ADkmer != UINT64_MAX) {
+            queryKmerNum = checkN + 1;
+            break;
+        }
+    }
+
     std::string diffIdxFileName;
     std::string infoFileName;
-    diffIdxFileName = queryKmerFileDir + "queryKmerRelation" + std::to_string(kmerQueryFileNumber) + "_diffIdx";
-    infoFileName = queryKmerFileDir + "queryKmerRelation" + std::to_string(kmerQueryFileNumber) + "_info";
+    diffIdxFileName = queryKmerFileDir + "/" + jobid + "_queryKmerRelation" + std::to_string(kmerQueryFileNumber) + "_diffIdx";
+    infoFileName = queryKmerFileDir + "/" + jobid + "_queryKmerRelation" + std::to_string(kmerQueryFileNumber) + "_info";
 
     FILE * diffIdxFile = fopen(diffIdxFileName.c_str(), "wb");
     FILE * infoFile = fopen(infoFileName.c_str(), "wb");
@@ -130,7 +138,7 @@ void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& qu
         std::cout<<"Cannot open the file for writing target DB"<<endl;
         return;
     }
-    kmerQueryFileNumber++;
+    
 
     uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 10'000'000);
     size_t localBufIdx = 0;
@@ -139,6 +147,8 @@ void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& qu
 
     for(size_t i = 0; i < queryKmerNum ; i++) {
         queryKmerList[i].info.sequenceID += processedReadCnt;
+        // cout << kmerQueryFileNumber << " ";
+        // seqIterator->printKmerInDNAsequence(queryKmerList[i].ADkmer); cout << "\n";
         fwrite(& queryKmerList[i].info, sizeof (QueryKmerInfo), 1, infoFile);
         // fwrite(& queryKmerList[i].info.sequenceID, sizeof (uint32_t), 1, infoFile); // If we want to save only sequenceID, use this line
         write++;
@@ -155,13 +165,17 @@ void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& qu
     fclose(diffIdxFile);
     fclose(infoFile);
 
+    kmerQueryFileNumber++;
+
     return;
 }
 
 // Process kmerQuery to calculate shared counts and make groups
 void processKmerQuery(const std::string& queryKmerFileDir, 
                       const std::string& groupFileDir,
-                      size_t processedReadCnt) {
+                      size_t processedReadCnt,
+                      const string & jobid,
+                      SeqIterator * seqIterator) {
     // Map to store the groups of X nodes
     std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> relation;
     // std::unordered_map<std::string, std::unordered_map<std::string, int>> relation;
@@ -172,7 +186,7 @@ void processKmerQuery(const std::string& queryKmerFileDir,
     // std::unordered_map<std::string, std::string> queryGroupInfo;
 
     // Create groups based on shared kmers and threshold
-    makeGraph(queryKmerFileDir, relation);
+    makeGraph(queryKmerFileDir, relation, jobid, seqIterator);
     makeGroups(relation, groupInfo, queryGroupInfo);
 
     // Save the final groups to a file
@@ -183,7 +197,9 @@ void processKmerQuery(const std::string& queryKmerFileDir,
 }
 
 void makeGraph(const std::string& queryKmerFileDir, 
-               std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation) {
+               std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation,
+               const string & jobid,
+               SeqIterator * seqIterator) {
 
     std::cout << "Creating graphs based on kmer-query relation..." << std::endl;
     time_t beforeSearch = time(nullptr);
@@ -193,8 +209,8 @@ void makeGraph(const std::string& queryKmerFileDir,
     std::vector<std::ifstream> infoFiles;
 
     for (int i = 0; i < kmerQueryFileNumber; ++i) {
-        std::string diffIdxFilename = queryKmerFileDir + "queryKmerRelation" + std::to_string(i) + "_diffIdx";
-        std::string infoFilename = queryKmerFileDir + "queryKmerRelation" + std::to_string(i) + "_info";
+        std::string diffIdxFilename = queryKmerFileDir + "/" + jobid + "_queryKmerRelation" + std::to_string(i) + "_diffIdx";
+        std::string infoFilename = queryKmerFileDir + "/" + jobid + "_queryKmerRelation" + std::to_string(i) + "_info";
 
         diffIdxFiles.emplace_back(diffIdxFilename, std::ios::binary);
         infoFiles.emplace_back(infoFilename, std::ios::binary);
@@ -217,15 +233,37 @@ void makeGraph(const std::string& queryKmerFileDir,
     // Initial loading of the first k-mer from each file
     for (size_t i = 0; i < diffIdxFiles.size(); ++i) {
         if (infoFiles[i].read(reinterpret_cast<char*>(&infoBuffer), sizeof(QueryKmerInfo))) {
+            uint16_t fragment;
+            uint16_t check = 32768; // 2^15
+            uint64_t diffIn64bit = 0;
             int idx = 0;
-            uint64_t kmer = 0;
-            do {
-                diffIdxFiles[i].read(reinterpret_cast<char*>(&diffIdxBuffer[idx]), sizeof(uint16_t));
-                kmer |= (static_cast<uint64_t>(diffIdxBuffer[idx] & 0x7FFF) << (15 * idx));
-            } while (!(diffIdxBuffer[idx++] & 0x8000));  // Check end flag (the highest bit)
+            diffIdxFiles[i].read(reinterpret_cast<char*>(&diffIdxBuffer[idx]), sizeof(uint16_t));
+            fragment = diffIdxBuffer[idx++];
 
-            currentKmers[i] = kmer;  // Set the first k-mer for this file
-            lastKmers[i] = kmer;     // Set the initial k-mer as lastKmer for diff calculation
+            // fragment = diffIdxBuffer[diffBufferIdx++];
+            // totalPos++;
+            while (!(fragment & check)) { // 27 %
+                diffIn64bit |= fragment;
+                diffIn64bit <<= 15u;
+                diffIdxFiles[i].read(reinterpret_cast<char*>(&diffIdxBuffer[idx]), sizeof(uint16_t));
+                fragment = diffIdxBuffer[idx++];
+                // totalPos++;
+            }
+            fragment &= ~check;      // not; 8.47 %
+            diffIn64bit |= fragment; // or : 23.6%
+
+            
+            // uint64_t kmer = 0;
+            // do {
+            //     diffIdxFiles[i].read(reinterpret_cast<char*>(&diffIdxBuffer[idx]), sizeof(uint16_t));
+            //     kmer |= (static_cast<uint64_t>(diffIdxBuffer[idx] & 0x7FFF) << (15 * idx));
+            // } while (!(diffIdxBuffer[idx++] & 0x8000));  // Check end flag (the highest bit)
+
+            // currentKmers[i] = kmer;  // Set the first k-mer for this file
+            // lastKmers[i] = kmer;     // Set the initial k-mer as lastKmer for diff calculation
+            currentKmers[i] = diffIn64bit;  // Set the first k-mer for this file
+            lastKmers[i] = diffIn64bit;     // Set the initial k-mer as lastKmer for diff calculation
+            cout << i << " "; seqIterator->printKmerInDNAsequence(diffIn64bit); cout << "\n";
             sequenceIDs[i] = infoBuffer.sequenceID;
         }
     }
@@ -267,6 +305,7 @@ void makeGraph(const std::string& queryKmerFileDir,
                     } while (!(diffIdxBuffer[idx++] & 0x8000));  // Check end flag (the highest bit)
 
                     currentKmers[i] = lastKmers[i] + kmer;  // Update the k-mer for this file
+                    cout << i << " "; seqIterator->printKmerInDNAsequence(currentKmers[i]); cout << "\n";
                     lastKmers[i] = currentKmers[i];         // Update the lastKmer
                     sequenceIDs[i] = infoBuffer.sequenceID;
                 } else {
@@ -620,6 +659,7 @@ Classifier::Classifier(LocalParameters & par) {
     }
     taxonomer = new Taxonomer(par, taxonomy);
     reporter = new Reporter(par, taxonomy);
+    seqIterator = new SeqIterator(par);
 }
 
 Classifier::~Classifier() {
@@ -629,6 +669,7 @@ Classifier::~Classifier() {
     delete kmerMatcher;
     delete taxonomer;
     delete reporter;
+    delete seqIterator;
 }
 
 void Classifier::startClassify(const LocalParameters &par) {
@@ -642,12 +683,24 @@ void Classifier::startClassify(const LocalParameters &par) {
     size_t tries = 0;
     size_t totalSeqCnt = 0;
 
-    const std::string queryKmerFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/";
-    const std::string groupFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/";
-    const std::string queryIdFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/";
-    const std::string groupRepFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/";
-    const std::string resultFileDir = "/home/lunajang/workspace/metabuli_query_binning/classify_result/1_classifications.tsv";
-    const std::string newResultFileDir = "/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/1_classifications.tsv";
+    string outDir;
+    string jobId;
+    if (par.seqMode == 2) {
+        outDir = par.filenames[3];
+        jobId = par.filenames[4];
+    } else {
+        outDir = par.filenames[2];
+        jobId = par.filenames[3];
+    }
+
+    
+
+    const std::string queryKmerFileDir = outDir;
+    const std::string groupFileDir = outDir; //"/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/";
+    const std::string queryIdFileDir = outDir; //"/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/";
+    const std::string groupRepFileDir = outDir; //"/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/";
+    const std::string resultFileDir = outDir; //"/home/lunajang/workspace/metabuli_query_binning/classify_result/1_classifications.tsv";
+    const std::string newResultFileDir = outDir; //"/home/lunajang/workspace/metabuli_query_binning/groups/dataset/20240926/1_classifications.tsv";
 
 
     // Extract k-mers from query sequences and compare them to target k-mer DB
@@ -701,7 +754,7 @@ void Classifier::startClassify(const LocalParameters &par) {
                                              kseq2); // sync kseq1 and kseq2
             
             // saveQueryIdToFile(queryList, queryIdFileDir);
-            writeQueryKmerFile(&queryKmerBuffer, queryKmerFileDir, processedReadCnt);
+            writeQueryKmerFile(&queryKmerBuffer, queryKmerFileDir, processedReadCnt, seqIterator, jobId);
 
             // Print progress
             processedReadCnt += queryReadSplit[splitIdx].readCnt;
@@ -719,7 +772,8 @@ void Classifier::startClassify(const LocalParameters &par) {
         }
     }
     
-    processKmerQuery(queryKmerFileDir, groupFileDir, processedReadCnt);
+    processKmerQuery(queryKmerFileDir, groupFileDir, processedReadCnt, jobId, seqIterator);
+
 
     // std::unordered_map<std::string, std::string> queryIdMap;     // queryName, queryId
     // loadQueryIdFromFile(queryIdFileDir, queryIdMap);
