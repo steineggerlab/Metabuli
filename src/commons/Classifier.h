@@ -49,16 +49,16 @@ void processKmerQuery(const std::string& queryKmerFileDir,
 
 void makeGraph(const std::string& queryKmerFileDir, 
                std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation,
-               const string & jobid);
+               size_t& numOfSplits,
+               const string & jobid,
+               SeqIterator * seqIterator,
+               vector<Query> & queryList);
                
 void saveGroupsToFile(const std::unordered_map<uint32_t, std::unordered_set<uint32_t>>& groupInfo, 
                       const std::vector<uint32_t>& queryGroupInfo,
                       const std::string& groupFileDir, 
-                      const string & jobid);
-
-void saveGroupsToFile(const std::unordered_map<uint32_t, std::unordered_set<uint32_t>>& groupInfo, 
-                      const std::vector<uint32_t>& queryGroupInfo,
-                      const std::string& groupFileDir);
+                      const string & jobid,
+                      vector<Query> & queryList);
 
 void loadGroupInfo(const std::string& groupFileDir, 
                     std::unordered_map<std::string, std::unordered_set<std::string>>& groupInfo);

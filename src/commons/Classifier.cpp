@@ -180,8 +180,6 @@ void makeGraph(const std::string& queryKmerFileDir,
         sequenceIDs[file] = lookingInfos[file].sequenceID;
 
         maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
-
-        cout << file << " "; seqIterator->printKmerInDNAsequence(lookingKmers[file]); cout << "\n";
     }
 
     std::vector<uint32_t> currentQueryIds;
@@ -199,7 +197,7 @@ void makeGraph(const std::string& queryKmerFileDir,
         // Process files with the current smallest k-mer
         for (size_t file = 0; file < numOfSplits; file++) {
             while (lookingKmers[file] == currentKmer) {
-                cout << file << " "; seqIterator->printKmerInDNAsequence(lookingKmers[file]); cout << "\n";
+                // cout << file << " "; seqIterator->printKmerInDNAsequence(lookingKmers[file]); cout << "\n";
                 if (std::find(currentQueryIds.begin(), currentQueryIds.end(), sequenceIDs[file]) == currentQueryIds.end()){
                     currentQueryIds.push_back(sequenceIDs[file]);
                 }
@@ -208,7 +206,7 @@ void makeGraph(const std::string& queryKmerFileDir,
                 infoFileIdx[file] ++;
                 sequenceIDs[file] = lookingInfos[file].sequenceID;
 
-                if( diffFileIdx[file] >= maxIdxOfEachFiles[file] ){
+                if( diffFileIdx[file] > maxIdxOfEachFiles[file] ){
                     lookingKmers[file] = UINT64_MAX;
                 }
             }
@@ -245,7 +243,7 @@ void makeGraph(const std::string& queryKmerFileDir,
 // Create groups based on shared counts and threshold
 void makeGroups(const std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation,
                 std::unordered_map<uint32_t, std::unordered_set<uint32_t>>& groupInfo,
-                std::vector<uint32_t> &queryGroupInfo) {
+                std::vector<int> & queryGroupInfo) {
     // Map to store the count of shared Y nodes between X nodes
     DisjointSet ds;
     std::string line;
@@ -287,7 +285,7 @@ void makeGroups(const std::unordered_map<uint32_t, std::unordered_map<uint32_t, 
 }
 
 void saveGroupsToFile(const std::unordered_map<uint32_t, std::unordered_set<uint32_t>>& groupInfo, 
-                      const std::vector<uint32_t>& queryGroupInfo,
+                      const std::vector<int>& queryGroupInfo,
                       const std::string& groupFileDir, 
                       const string & jobid) {
     
@@ -323,7 +321,6 @@ void saveGroupsToFile(const std::unordered_map<uint32_t, std::unordered_set<uint
     outFile2.close();
     std::cout << "Query group saved to " << queryGroupInfoFileName << " successfully." << std::endl;
 
-
     return;
 }
 
@@ -358,7 +355,7 @@ void loadGroupInfo(const std::string& groupFileDir,
 }
 
 void loadQueryGroupInfo(const std::string& groupFileDir, 
-                        std::vector<uint32_t> & queryGroupInfo, 
+                        std::vector<int> & queryGroupInfo, 
                         const string & jobid) {
     const std::string& queryGroupInfoFileName = groupFileDir + "/" + jobid + "_queryGroupMap";
     std::ifstream inFile(queryGroupInfoFileName);
@@ -384,9 +381,9 @@ void loadQueryGroupInfo(const std::string& groupFileDir,
 
 void loadMetabuliResult(const std::string& resultFileDir, 
                         std::unordered_map<uint32_t, int>& metabuliResult) {
-    std::ifstream inFile(resultFileDir + "/original_classifications.tsv");
+    std::ifstream inFile(resultFileDir + "/1_classifications_ori.tsv");
     if (!inFile.is_open()) {
-        std::cerr << "Error opening file: " << resultFileDir + "/original_classifications.tsv" << std::endl;
+        std::cerr << "Error opening file: " << resultFileDir + "/1_classifications_ori.tsv" << std::endl;
         return;
     }
 
@@ -402,7 +399,11 @@ void loadMetabuliResult(const std::string& resultFileDir,
     }
 
     inFile.close();
-    std::cout << "Original Metabuli result loaded from " << resultFileDir + "/original_classifications.tsv" << " successfully." << std::endl;
+    std::cout << "Original Metabuli result loaded from " << resultFileDir + "/1_classifications_ori.tsv" << " successfully." << std::endl;
+}
+
+void getMajorityLCA(){
+    WeightedTaxResult NcbiTaxonomy::weightedMajorityLCA
 }
 
 void getRepLabel(const std::string& groupRepFileDir,
@@ -433,6 +434,9 @@ void getRepLabel(const std::string& groupRepFileDir,
                 maxFrequency = entry.second;
                 mostFrequentLabel = entry.first;
             }
+            else if (entry.second == maxFrequency) {                
+                mostFrequentLabel = -1;
+            }
         }
         if (mostFrequentLabel != -1) {
             repLabel[groupId] = mostFrequentLabel;
@@ -457,19 +461,19 @@ void getRepLabel(const std::string& groupRepFileDir,
 
 void applyRepLabel(const std::string& resultFileDir, 
                    const std::string& newResultFileDir, 
-                   const std::vector<uint32_t>& queryGroupInfo,
+                   const std::vector<int>& queryGroupInfo,
                    const std::unordered_map<uint32_t, int>& repLabel, 
                    const string & jobid) {
     
-    std::ifstream inFile(resultFileDir + "/original_classifications.tsv");
+    std::ifstream inFile(resultFileDir + "/1_classifications_ori.tsv");
     if (!inFile.is_open()) {
-        std::cerr << "Error opening file: " << newResultFileDir + "/original_classifications.tsv" << std::endl;
+        std::cerr << "Error opening file: " << newResultFileDir + "/1_classifications_ori.tsv" << std::endl;
         return;
     }
 
-    std::ofstream outFile(newResultFileDir + "/" + jobid + "_1_classifications.tsv");
+    std::ofstream outFile(newResultFileDir + "/1_classifications.tsv");
     if (!outFile.is_open()) {
-        std::cerr << "Error opening file: " << newResultFileDir + "/" + jobid + "_1_classifications.tsv" << std::endl;
+        std::cerr << "Error opening file: " << newResultFileDir + "/1_classifications.tsv" << std::endl;
         return;
     }
 
@@ -639,8 +643,8 @@ void Classifier::startClassify(const LocalParameters &par) {
     makeGraph(outDir, relation, numOfSplits, jobId, seqIterator);
 
     std::unordered_map<uint32_t, std::unordered_set<uint32_t>> groupInfo;
-    vector<uint32_t> queryGroupInfo;
-    queryGroupInfo.resize(processedReadCnt, 0);
+    vector<int> queryGroupInfo;
+    queryGroupInfo.resize(processedReadCnt, -1);
     makeGroups(relation, groupInfo, queryGroupInfo);
     saveGroupsToFile(groupInfo, queryGroupInfo, outDir, jobId);
 
