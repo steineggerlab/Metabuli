@@ -243,7 +243,8 @@ void makeGraph(const std::string& queryKmerFileDir,
 // Create groups based on shared counts and threshold
 void makeGroups(const std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation,
                 std::unordered_map<uint32_t, std::unordered_set<uint32_t>>& groupInfo,
-                std::vector<int> & queryGroupInfo) {
+                std::vector<int> & queryGroupInfo,
+                const int groupKmerThreshold) {
     // Map to store the count of shared Y nodes between X nodes
     DisjointSet ds;
     std::string line;
@@ -251,10 +252,7 @@ void makeGroups(const std::unordered_map<uint32_t, std::unordered_map<uint32_t, 
     std::cout << "Creating groups based on graph..." << std::endl;
     time_t beforeSearch = time(nullptr);
     
-
-    // const int THRESHOLD = 50; // Define threshold for grouping
-    const int THRESHOLD = 150; // Define threshold for grouping
-    // const int THRESHOLD = 200; // Define threshold for grouping
+    const int THRESHOLD = groupKmerThreshold; // Define threshold for grouping
     for (const auto currentQueryRelation : relation) {
         uint32_t currentQueryId = currentQueryRelation.first;
         for (const auto& [otherQueryId, count] : currentQueryRelation.second) {
@@ -400,10 +398,6 @@ void loadMetabuliResult(const std::string& resultFileDir,
 
     inFile.close();
     std::cout << "Original Metabuli result loaded from " << resultFileDir + "/1_classifications_ori.tsv" << " successfully." << std::endl;
-}
-
-void getMajorityLCA(){
-    WeightedTaxResult NcbiTaxonomy::weightedMajorityLCA
 }
 
 void getRepLabel(const std::string& groupRepFileDir,
@@ -645,7 +639,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     std::unordered_map<uint32_t, std::unordered_set<uint32_t>> groupInfo;
     vector<int> queryGroupInfo;
     queryGroupInfo.resize(processedReadCnt, -1);
-    makeGroups(relation, groupInfo, queryGroupInfo);
+    makeGroups(relation, groupInfo, queryGroupInfo, par.groupKmerThreshold);
     saveGroupsToFile(groupInfo, queryGroupInfo, outDir, jobId);
 
     // loadGroupInfo(outDir, groupInfo, jobId);     

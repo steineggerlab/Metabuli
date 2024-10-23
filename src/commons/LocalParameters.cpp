@@ -159,6 +159,13 @@ LocalParameters::LocalParameters() :
                       typeid(float),
                       (void *) &tieRatio,
                       "^0(\\.[0-9]+)?|1(\\.0+)?$"),
+        GROUP_KMER_THR(GROUP_KMER_THR_ID,
+                    "--group-kmer-thr",
+                    "Min. num. of shared kmer for read grouping",
+                    "Min. num. of shared kmer for read grouping",
+                    typeid(int),
+                    (void *) &groupKmerThreshold,
+                    "^[0-9]+$"),
         LIBRARY_PATH(LIBRARY_PATH_ID,
                      "--library-path",
                      "Path to library where the FASTA files are stored",
@@ -317,6 +324,7 @@ LocalParameters::LocalParameters() :
     matchPerKmer = 0;
     minSSMatch = 0;
     tieRatio = 0;
+    groupKmerThreshold = 0;
 
     // Database creation
     tinfoPath = "";
@@ -383,6 +391,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MATCH_PER_KMER);
     classify.push_back(&ACCESSION_LEVEL);
     classify.push_back(&TIE_RATIO);
+    classify.push_back(&GROUP_KMER_THR);
     // classify.push_back(&MIN_SS_MATCH);
 
     // filter 
