@@ -141,9 +141,9 @@ void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer,
     return;
 }
 
-void makeGraph(const std::string& queryKmerFileDir, 
+void makeGraph(const std::string & queryKmerFileDir, 
                std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation,
-               size_t& numOfSplits,
+               size_t & numOfSplits,
                const string & jobid,
                SeqIterator * seqIterator) {
 
@@ -242,7 +242,7 @@ void makeGraph(const std::string& queryKmerFileDir,
 
 // Create groups based on shared counts and threshold
 void makeGroups(const std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation,
-                std::unordered_map<uint32_t, std::unordered_set<uint32_t>>& groupInfo,
+                std::unordered_map<uint32_t, std::unordered_set<uint32_t>> & groupInfo,
                 std::vector<int> & queryGroupInfo,
                 const int groupKmerThreshold) {
     // Map to store the count of shared Y nodes between X nodes
@@ -282,9 +282,9 @@ void makeGroups(const std::unordered_map<uint32_t, std::unordered_map<uint32_t, 
     return;
 }
 
-void saveGroupsToFile(const std::unordered_map<uint32_t, std::unordered_set<uint32_t>>& groupInfo, 
-                      const std::vector<int>& queryGroupInfo,
-                      const std::string& groupFileDir, 
+void saveGroupsToFile(const std::unordered_map<uint32_t, std::unordered_set<uint32_t>> & groupInfo, 
+                      const std::vector<int> & queryGroupInfo,
+                      const std::string & groupFileDir, 
                       const string & jobid) {
     
     // save group in txt file
@@ -322,8 +322,8 @@ void saveGroupsToFile(const std::unordered_map<uint32_t, std::unordered_set<uint
     return;
 }
 
-void loadGroupInfo(const std::string& groupFileDir, 
-                    std::unordered_map<uint32_t, std::unordered_set<uint32_t>>& groupInfo,
+void loadGroupInfo(const std::string & groupFileDir, 
+                    std::unordered_map<uint32_t, std::unordered_set<uint32_t>> & groupInfo,
                     const string & jobid) {
     const std::string& groupInfoFileName = groupFileDir + "/" + jobid + "_queryGroupMap";
     std::ifstream inFile(groupInfoFileName);
@@ -352,7 +352,7 @@ void loadGroupInfo(const std::string& groupFileDir,
     std::cout << "Group info loaded from " << groupInfoFileName << " successfully." << std::endl;
 }
 
-void loadQueryGroupInfo(const std::string& groupFileDir, 
+void loadQueryGroupInfo(const std::string & groupFileDir, 
                         std::vector<int> & queryGroupInfo, 
                         const string & jobid) {
     const std::string& queryGroupInfoFileName = groupFileDir + "/" + jobid + "_queryGroupMap";
@@ -377,8 +377,8 @@ void loadQueryGroupInfo(const std::string& groupFileDir,
     std::cout << "Query group info loaded from " << queryGroupInfoFileName << " successfully." << std::endl;
 }
 
-void loadMetabuliResult(const std::string& resultFileDir, 
-                        std::unordered_map<uint32_t, int>& metabuliResult) {
+void loadMetabuliResult(const std::string & resultFileDir, 
+                        vector<std::pair<int, float>> & metabuliResult) {
     std::ifstream inFile(resultFileDir + "/1_classifications_ori.tsv");
     if (!inFile.is_open()) {
         std::cerr << "Error opening file: " << resultFileDir + "/1_classifications_ori.tsv" << std::endl;
@@ -389,10 +389,11 @@ void loadMetabuliResult(const std::string& resultFileDir,
     uint32_t id = 0;
     while (std::getline(inFile, line)) {
         std::stringstream ss(line);
-        int label, query_label;
+        int label, query_label, read_length;
+        float score;
         std::string query_name; // query_name is not used.
-        ss >> label >> query_name >> query_label;
-        metabuliResult[id] = query_label;
+        ss >> label >> query_name >> query_label >> read_length >> score;
+        metabuliResult[id] = {query_label, score}; 
         id ++;
     }
 
@@ -400,40 +401,33 @@ void loadMetabuliResult(const std::string& resultFileDir,
     std::cout << "Original Metabuli result loaded from " << resultFileDir + "/1_classifications_ori.tsv" << " successfully." << std::endl;
 }
 
-void getRepLabel(const std::string& groupRepFileDir,
-                 const std::unordered_map<uint32_t, int>& metabuliResult,
-                 const std::unordered_map<uint32_t, std::unordered_set<uint32_t>>& groupInfo,
-                 std::unordered_map<uint32_t, int>& repLabel, 
-                 const string & jobid) {
-    
+void getRepLabel(const std::string & groupRepFileDir,
+                 vector<std::pair<int, float>> & metabuliResult,
+                 const std::unordered_map<uint32_t, std::unordered_set<uint32_t>> & groupInfo,
+                 std::unordered_map<uint32_t, int> & repLabel, 
+                 const string & jobid,
+                 NcbiTaxonomy * taxonomy) {                    
+    int voteMode = 1;
+    float majorityThr = 0.5;
+
     for (const auto& group : groupInfo) {
         uint32_t groupId = group.first;
         const std::unordered_set<uint32_t>& queryIds = group.second;
 
-        std::unordered_map<int, int> labelFrequency;
+        std::vector<WeightedTaxHit> setTaxa;
 
         for (const auto& queryId : queryIds) {
-            auto it = metabuliResult.find(queryId);
-            if (it != metabuliResult.end()) {
-                int label = it->second;
-                if (label != 0){
-                    labelFrequency[label]++;
-                }
+            int query_label = metabuliResult[queryId].first; 
+            float score = metabuliResult[queryId].second;
+            if (query_label != 0) {
+                setTaxa.emplace_back(query_label, score, voteMode);
             }
         }
-        int mostFrequentLabel = -1;
-        int maxFrequency = 0;
-        for (const auto& entry : labelFrequency) {
-            if (entry.second > maxFrequency) {
-                maxFrequency = entry.second;
-                mostFrequentLabel = entry.first;
-            }
-            else if (entry.second == maxFrequency) {                
-                mostFrequentLabel = -1;
-            }
-        }
-        if (mostFrequentLabel != -1) {
-            repLabel[groupId] = mostFrequentLabel;
+
+        WeightedTaxResult result = taxonomy->weightedMajorityLCA(setTaxa, majorityThr);
+
+        if (result.taxon != -1) {
+            repLabel[groupId] = result.taxon;
         }
     }
 
@@ -453,10 +447,10 @@ void getRepLabel(const std::string& groupRepFileDir,
     std::cout << "Query group representative label saved to " << groupRepFileName << " successfully." << std::endl;
 }
 
-void applyRepLabel(const std::string& resultFileDir, 
-                   const std::string& newResultFileDir, 
-                   const std::vector<int>& queryGroupInfo,
-                   const std::unordered_map<uint32_t, int>& repLabel, 
+void applyRepLabel(const std::string & resultFileDir, 
+                   const std::string & newResultFileDir, 
+                   const std::vector<int> & queryGroupInfo,
+                   const std::unordered_map<uint32_t, int> & repLabel, 
                    const string & jobid) {
     
     std::ifstream inFile(resultFileDir + "/1_classifications_ori.tsv");
@@ -645,11 +639,12 @@ void Classifier::startClassify(const LocalParameters &par) {
     // loadGroupInfo(outDir, groupInfo, jobId);     
     // loadQueryGroupInfo(outDir, queryGroupInfo, jobId);
     
-    std::unordered_map<uint32_t, int> metabuliResult;       
+    vector<std::pair<int, float>> metabuliResult;       
+    metabuliResult.resize(processedReadCnt, std::make_pair(-1, 0.0f));
     loadMetabuliResult(outDir, metabuliResult);
 
     std::unordered_map<uint32_t, int> repLabel; 
-    getRepLabel(outDir, metabuliResult, groupInfo, repLabel, jobId);
+    getRepLabel(outDir, metabuliResult, groupInfo, repLabel, jobId, taxonomy);
 
     applyRepLabel(outDir, outDir, queryGroupInfo, repLabel, jobId);
 

@@ -47,43 +47,43 @@ void processKmerQuery(const std::string& queryKmerFileDir,
                       const std::string& groupFileDir,
                       size_t processedReadCnt);
 
-void makeGraph(const std::string& queryKmerFileDir, 
+void makeGraph(const std::string & queryKmerFileDir, 
                std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation,
-               size_t& numOfSplits,
+               size_t & numOfSplits,
                const string & jobid,
-               SeqIterator * seqIterator,
-               vector<Query> & queryList);
+               SeqIterator * seqIterator);
                
 void makeGroups(const std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation,
-                std::unordered_map<uint32_t, std::unordered_set<uint32_t>>& groupInfo,
+                std::unordered_map<uint32_t, std::unordered_set<uint32_t>> & groupInfo,
                 std::vector<int> & queryGroupInfo,
                 const int groupKmerThreshold);
 
-void saveGroupsToFile(const std::unordered_map<uint32_t, std::unordered_set<uint32_t>>& groupInfo, 
-                      const std::vector<uint32_t>& queryGroupInfo,
-                      const std::string& groupFileDir, 
-                      const string & jobid,
-                      vector<Query> & queryList);
+void saveGroupsToFile(const std::unordered_map<uint32_t, std::unordered_set<uint32_t>> & groupInfo, 
+                      const std::vector<int> & queryGroupInfo,
+                      const std::string & groupFileDir, 
+                      const string & jobid);
 
 void loadGroupInfo(const std::string& groupFileDir, 
                     std::unordered_map<std::string, std::unordered_set<std::string>>& groupInfo);
 
-void loadQueryGroupInfo(const std::string& groupFileDir, 
+void loadQueryGroupInfo(const std::string & groupFileDir, 
                         std::vector<uint32_t> & queryGroupInfo);
 
                         
 
-void loadMetabuliResult(const std::string& filename, 
-                        std::unordered_map<std::string, std::string>& queryIdMap, 
-                        std::unordered_map<std::string, int>& metabuliResult);
+void loadMetabuliResult(const std::string & resultFileDir, 
+                        vector<std::pair<int, float>> & metabuliResult) ;
 
-void getRepLabel(const std::unordered_map<std::string, int>& metabuliResult,
-                 const std::unordered_map<std::string, std::unordered_set<std::string>>& groupInfo,
-                 std::unordered_map<std::string, int>& repLabel);
+void getRepLabel(const std::string & groupRepFileDir,
+                 vector<std::pair<int, float>> & metabuliResult,
+                 const std::unordered_map<uint32_t, std::unordered_set<uint32_t>> & groupInfo,
+                 std::unordered_map<uint32_t, int> & repLabel, 
+                 const string & jobid,
+                 NcbiTaxonomy * taxonomy);
 
-void applyRepLabel(const std::string& resultFileDir, 
-                   const std::string& newResultFileDir, 
-                   const std::vector<uint32_t>& queryGroupInfo,
+void applyRepLabel(const std::string & resultFileDir, 
+                   const std::string & newResultFileDir, 
+                   const std::vector<uint32_t> & queryGroupInfo,
                    const std::unordered_map<uint32_t, int>& repLabel);
 
 extern int kmerQueryFileNumber;
