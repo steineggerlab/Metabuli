@@ -79,6 +79,8 @@ void getRepLabel(const std::string & groupRepFileDir,
                  const std::unordered_map<uint32_t, std::unordered_set<uint32_t>> & groupInfo,
                  std::unordered_map<uint32_t, int> & repLabel, 
                  const string & jobid,
+                 int voteMode,
+                 float majorityThr,
                  NcbiTaxonomy * taxonomy);
 
 void applyRepLabel(const std::string & resultFileDir, 

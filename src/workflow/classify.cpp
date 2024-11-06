@@ -27,6 +27,8 @@ void setClassifyDefaults(LocalParameters & par){
     par.accessionLevel = 0;
     par.tieRatio = 0.95;
     par.groupKmerThreshold = 150;
+    par.voteMode = 0;
+    par.majorityThr = 0.5;
 }
 
 int classify(int argc, const char **argv, const Command& command)

@@ -166,6 +166,20 @@ LocalParameters::LocalParameters() :
                     typeid(int),
                     (void *) &groupKmerThreshold,
                     "^[0-9]+$"),
+        VOTE_MODE(VOTE_MODE_ID,
+                    "--vote-mode",
+                    "Vote mode of majority weighted LCA",
+                    "Vote mode of majority weighted LCA",
+                    typeid(int),
+                    (void *) &voteMode,
+                    "^(0|1|2)$"),
+        MAJORITY_THR(MAJORITY_THR_ID,
+                    "--majority-thr",
+                    "Threshold for majority weighted LCA",
+                    "Threshold for majority weighted LCA",
+                    typeid(float),
+                    (void *) &majorityThr,
+                    "^0(\\.[0-9]+)?|1(\\.0+)?$"),
         LIBRARY_PATH(LIBRARY_PATH_ID,
                      "--library-path",
                      "Path to library where the FASTA files are stored",
@@ -325,6 +339,8 @@ LocalParameters::LocalParameters() :
     minSSMatch = 0;
     tieRatio = 0;
     groupKmerThreshold = 0;
+    voteMode = 0;
+    majorityThr = 0;
 
     // Database creation
     tinfoPath = "";
@@ -392,6 +408,8 @@ LocalParameters::LocalParameters() :
     classify.push_back(&ACCESSION_LEVEL);
     classify.push_back(&TIE_RATIO);
     classify.push_back(&GROUP_KMER_THR);
+    classify.push_back(&VOTE_MODE);
+    classify.push_back(&MAJORITY_THR);
     // classify.push_back(&MIN_SS_MATCH);
 
     // filter 

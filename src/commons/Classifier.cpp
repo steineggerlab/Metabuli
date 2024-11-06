@@ -406,9 +406,9 @@ void getRepLabel(const std::string & groupRepFileDir,
                  const std::unordered_map<uint32_t, std::unordered_set<uint32_t>> & groupInfo,
                  std::unordered_map<uint32_t, int> & repLabel, 
                  const string & jobid,
-                 NcbiTaxonomy * taxonomy) {                    
-    int voteMode = 1;
-    float majorityThr = 0.5;
+                 int voteMode,
+                 float majorityThr,
+                 NcbiTaxonomy * taxonomy) {      
 
     for (const auto& group : groupInfo) {
         uint32_t groupId = group.first;
@@ -644,7 +644,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     loadMetabuliResult(outDir, metabuliResult);
 
     std::unordered_map<uint32_t, int> repLabel; 
-    getRepLabel(outDir, metabuliResult, groupInfo, repLabel, jobId, taxonomy);
+    getRepLabel(outDir, metabuliResult, groupInfo, repLabel, jobId, par.voteMode, par.majorityThr, taxonomy);
 
     applyRepLabel(outDir, outDir, queryGroupInfo, repLabel, jobId);
 
