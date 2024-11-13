@@ -18,6 +18,16 @@ struct KmerCnt {
     size_t kmerCnt;
     size_t totalCnt;
 };
+
+struct CDSinfo{
+    uint32_t protId; //4,294,967,295 counted from 0
+    int frame;
+    bool isComplement;
+    std::vector<std::pair<size_t, size_t>> loc;
+    CDSinfo() = default;
+    CDSinfo(uint32_t protId, int frame) : protId(protId), frame(frame) {}
+};
+
 struct SequenceBlock{
     SequenceBlock(size_t start, size_t end, size_t length, size_t seqLength = 0)
             : start(start), end(end), length(length), seqLength(seqLength) {}

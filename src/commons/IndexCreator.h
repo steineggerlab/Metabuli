@@ -37,7 +37,7 @@ struct TaxId2Fasta{
 using namespace std;
 
 class IndexCreator{
-private:
+protected:
     uint64_t MARKER;
     BaseMatrix *subMat;
 
@@ -64,6 +64,8 @@ private:
     string taxonomyBinaryFileName;
     string versionFileName;
     string paramterFileName;
+
+    std::unordered_map<string, vector<CDSinfo>> cdsInfoMap;
 
     struct FASTA {
         string path;
@@ -128,6 +130,10 @@ private:
                                 size_t &processedSplitCnt,
                                 const LocalParameters &par);
 
+    size_t fillTargetKmerBuffer2(TargetKmerBuffer &kmerBuffer,
+                                bool *checker,
+                                size_t &processedSplitCnt,
+                                const LocalParameters &par);
 
     void makeBlocksForParallelProcessing();
 
@@ -163,6 +169,9 @@ private:
         file.close();
         return cnt;
     }
+
+    void loadCdsInfo(const string & cdsInfoFileList);
+
 
 public:
     static void splitSequenceFile(vector<SequenceBlock> & seqSegments, MmapedData<char> seqFile);
