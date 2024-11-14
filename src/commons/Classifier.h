@@ -85,10 +85,11 @@ void getRepLabel(const std::string & groupRepFileDir,
 
 void applyRepLabel(const std::string & resultFileDir, 
                    const std::string & newResultFileDir, 
-                   const std::vector<uint32_t> & queryGroupInfo,
-                   const std::unordered_map<uint32_t, int>& repLabel);
+                   const std::vector<int> & queryGroupInfo,
+                   const std::unordered_map<uint32_t, int> & repLabel, 
+                   NcbiTaxonomy * taxonomy,
+                   const string & jobid);
 
-extern int kmerQueryFileNumber;
 const size_t bufferSize = 1024 * 1024;
 
 // DisjointSet class

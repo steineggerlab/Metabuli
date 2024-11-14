@@ -426,7 +426,7 @@ void getRepLabel(const std::string & groupRepFileDir,
 
         WeightedTaxResult result = taxonomy->weightedMajorityLCA(setTaxa, majorityThr);
 
-        if (result.taxon != -1) {
+        if (result.taxon != 0) {
             repLabel[groupId] = result.taxon;
         }
     }
@@ -451,6 +451,7 @@ void applyRepLabel(const std::string & resultFileDir,
                    const std::string & newResultFileDir, 
                    const std::vector<int> & queryGroupInfo,
                    const std::unordered_map<uint32_t, int> & repLabel, 
+                   NcbiTaxonomy * taxonomy,
                    const string & jobid) {
     
     std::ifstream inFile(resultFileDir + "/1_classifications_ori.tsv");
@@ -479,9 +480,10 @@ void applyRepLabel(const std::string & resultFileDir,
         if (fields.size() > 2 && fields[0] == "0") {
             uint32_t groupId = queryGroupInfo[queryIdx];
             auto repLabelIt = repLabel.find(groupId);
-            if (repLabelIt != repLabel.end()) {
+            if (repLabelIt != repLabel.end() && repLabelIt->second != 0) {
                 fields[2] = std::to_string(repLabelIt->second);
                 fields[0] = "1";
+                fields[5] = taxonomy->getString(taxonomy->taxonNode(repLabelIt->second)->rankIdx);
             }
         }
 
@@ -625,8 +627,7 @@ void Classifier::startClassify(const LocalParameters &par) {
         if (processedReadCnt == totalSeqCnt) {
             complete = true;
         }
-    }    
-
+    }   
     std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> relation;
     makeGraph(outDir, relation, numOfSplits, jobId, seqIterator);
 
@@ -646,6 +647,6 @@ void Classifier::startClassify(const LocalParameters &par) {
     std::unordered_map<uint32_t, int> repLabel; 
     getRepLabel(outDir, metabuliResult, groupInfo, repLabel, jobId, par.voteMode, par.majorityThr, taxonomy);
 
-    applyRepLabel(outDir, outDir, queryGroupInfo, repLabel, jobId);
+    applyRepLabel(outDir, outDir, queryGroupInfo, repLabel, taxonomy, jobId);
 
 }

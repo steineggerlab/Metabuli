@@ -113,7 +113,7 @@ public:
     float tieRatio;
     int groupKmerThreshold;
     int voteMode;
-    int majorityThr;
+    float majorityThr;
 
     // Database creation
     std::string tinfoPath;
