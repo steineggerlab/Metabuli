@@ -1,5 +1,6 @@
 set(workflow_source_files
         workflow/classify.cpp
+        workflow/groupGeneration.cpp
         workflow/updateDB.cpp
         workflow/add_to_library.cpp
         workflow/build.cpp

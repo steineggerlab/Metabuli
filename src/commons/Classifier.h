@@ -30,83 +30,8 @@
 #include "KmerExtractor.h"
 #include "Taxonomer.h"
 #include "Reporter.h"
-#include <cassert>
 #define BufferSize 16'777'216 //16 * 1024 * 1024 // 16 M
 using namespace std;
-
-// new code
-// void saveQueryIdToFile(const std::vector<Query>& queryIdMap, const std::string& queryIdFileDir);
-// void loadQueryIdFromFile(const std::string& queryIdFileDir, 
-//                            std::unordered_map<std::string, std::string>& queryIdMap);
-void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t &localBufIdx);
-void getDiffIdx(const uint64_t &lastKmer, const uint64_t &entryToWrite, FILE *handleKmerTable, uint16_t *buffer, size_t &localBufIdx);
-void writeDiffIdx(uint16_t *buffer, FILE *handleKmerTable, uint16_t *toWrite, size_t size, size_t &localBufIdx);
-void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const std::string& queryKmerFileDir, size_t processedReadCnt, SeqIterator * seqIterator);
-
-void processKmerQuery(const std::string& queryKmerFileDir, 
-                      const std::string& groupFileDir,
-                      size_t processedReadCnt);
-
-void makeGraph(const std::string & queryKmerFileDir, 
-               std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation,
-               size_t & numOfSplits,
-               const string & jobid,
-               SeqIterator * seqIterator);
-               
-void makeGroups(const std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation,
-                std::unordered_map<uint32_t, std::unordered_set<uint32_t>> & groupInfo,
-                std::vector<int> & queryGroupInfo,
-                const int groupKmerThreshold);
-
-void saveGroupsToFile(const std::unordered_map<uint32_t, std::unordered_set<uint32_t>> & groupInfo, 
-                      const std::vector<int> & queryGroupInfo,
-                      const std::string & groupFileDir, 
-                      const string & jobid);
-
-void loadGroupInfo(const std::string& groupFileDir, 
-                    std::unordered_map<std::string, std::unordered_set<std::string>>& groupInfo);
-
-void loadQueryGroupInfo(const std::string & groupFileDir, 
-                        std::vector<uint32_t> & queryGroupInfo);
-
-                        
-
-void loadMetabuliResult(const std::string & resultFileDir, 
-                        vector<std::pair<int, float>> & metabuliResult) ;
-
-void getRepLabel(const std::string & groupRepFileDir,
-                 vector<std::pair<int, float>> & metabuliResult,
-                 const std::unordered_map<uint32_t, std::unordered_set<uint32_t>> & groupInfo,
-                 std::unordered_map<uint32_t, int> & repLabel, 
-                 const string & jobid,
-                 int voteMode,
-                 float majorityThr,
-                 NcbiTaxonomy * taxonomy);
-
-void applyRepLabel(const std::string & resultFileDir, 
-                   const std::string & newResultFileDir, 
-                   const std::vector<int> & queryGroupInfo,
-                   const std::unordered_map<uint32_t, int> & repLabel, 
-                   NcbiTaxonomy * taxonomy,
-                   const string & jobid);
-
-const size_t bufferSize = 1024 * 1024;
-
-// DisjointSet class
-class DisjointSet {
-public:
-    // std::unordered_map<std::string, std::string> parent;
-    // std::unordered_map<std::string, int> rank;
-
-    std::unordered_map<uint32_t, uint32_t> parent;
-    std::unordered_map<uint32_t, int> rank;
-
-    void makeSet(uint32_t item);
-
-    uint32_t find(uint32_t item);
-
-    void unionSets(uint32_t set1, uint32_t set2);
-};
 
 class Classifier {
 protected:
@@ -118,17 +43,25 @@ protected:
     QueryIndexer * queryIndexer;
     KmerExtractor * kmerExtractor;
     KmerMatcher * kmerMatcher;
-    Taxonomer * taxonomer;
+    // Taxonomer * taxonomer;
     Reporter * reporter;
     NcbiTaxonomy * taxonomy;
-    SeqIterator * seqIterator;
+
+    unordered_map<TaxID, unsigned int> taxCounts;
 
 public:
     void startClassify(const LocalParameters &par);
 
+    void assignTaxonomy(const Match *matchList,
+                        size_t numOfMatches,
+                        std::vector<Query> & queryList,
+                        const LocalParameters &par);
+
     explicit Classifier(LocalParameters & par);
 
     virtual ~Classifier();
+
+    unordered_map<TaxID, unsigned int> & getTaxCounts() { return taxCounts; }
 
 };
 

@@ -2,506 +2,6 @@
 #include "FileUtil.h"
 #include "QueryIndexer.h"
 #include "common.h"
-#include <set>
-
-// new code
-void DisjointSet::makeSet(uint32_t item) {
-        parent[item] = item;
-        rank[item] = 0;
-    }
-
-uint32_t DisjointSet::find(uint32_t item) {
-    if (parent[item] != item) {
-        parent[item] = find(parent[item]);  // Path Compression
-    }
-    return parent[item];
-}
-
-void DisjointSet::unionSets(uint32_t set1, uint32_t set2) {
-    uint32_t root1 = find(set1);
-    uint32_t root2 = find(set2);
-
-    if (root1 != root2) {
-        // Union by Rank
-        if (rank[root1] > rank[root2]) {
-            parent[root2] = root1;
-        } else if (rank[root1] < rank[root2]) {
-            parent[root1] = root2;
-        } else {
-            parent[root2] = root1;
-            rank[root1]++;
-        }
-    }
-}
-// Flush remaining buffer content to file
-void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t &localBufIdx) {
-    fwrite(buffer, sizeof(uint16_t), localBufIdx, handleKmerTable);
-    localBufIdx = 0; // Reset buffer index
-}
-
-// Get the difference index and buffer the result
-void getDiffIdx(const uint64_t &lastKmer, const uint64_t &entryToWrite, FILE *handleKmerTable, uint16_t *buffer, size_t &localBufIdx) {
-    uint64_t kmerdiff = entryToWrite - lastKmer;
-    uint16_t tempBuffer[5];
-    int idx = 3;
-    tempBuffer[4] = SET_END_FLAG(GET_15_BITS(kmerdiff));
-    kmerdiff >>= 15U;
-    while (kmerdiff) {
-        uint16_t toWrite = GET_15_BITS(kmerdiff);
-        kmerdiff >>= 15U;
-        tempBuffer[idx] = toWrite;
-        idx--;
-    }
-    // Buffer the result
-    writeDiffIdx(buffer, handleKmerTable, tempBuffer + idx + 1, 4 - idx, localBufIdx);
-}
-
-// Write the diff index to the buffer and flush if full
-void writeDiffIdx(uint16_t *buffer, FILE *handleKmerTable, uint16_t *toWrite, size_t size, size_t &localBufIdx) {
-    if (localBufIdx + size >= bufferSize) {
-        flushKmerBuf(buffer, handleKmerTable, localBufIdx); // Flush if buffer is full
-    }
-    memcpy(buffer + localBufIdx, toWrite, sizeof(uint16_t) * size); // Add new data to buffer
-    localBufIdx += size; // Update buffer index
-}
-
-
-uint64_t getNextKmer(uint64_t lookingTarget, const struct MmapedData<uint16_t> & diffList, size_t & idx) {
-    uint16_t fragment = 0;
-    uint64_t diffIn64bit = 0;
-    uint16_t check = 32768; // 2^15
-
-    fragment = diffList.data[idx++];
-    while(!(fragment & check)) {
-        diffIn64bit |= fragment;
-        diffIn64bit <<= 15u;
-        fragment = diffList.data[idx++];
-    }
-
-    fragment &= ~check;
-    diffIn64bit |= fragment;
-
-    return diffIn64bit + lookingTarget;
-}
-
-void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, 
-                        const std::string& queryKmerFileDir, 
-                        size_t& numOfSplits, 
-                        size_t processedReadCnt, 
-                        SeqIterator * seqIterator, 
-                        const string & jobid) {
-    time_t beforeSaveFile = time(nullptr);
-    size_t queryKmerNum = queryKmerBuffer->startIndexOfReserve;
-    QueryKmer *queryKmerList = queryKmerBuffer->buffer;
-
-    for (size_t checkN = queryKmerNum - 1; checkN > 0; checkN--) {
-        if (queryKmerList[checkN].ADkmer != UINT64_MAX) {
-            queryKmerNum = checkN + 1;
-            break;
-        }
-    }
-
-    std::string diffIdxFileName;
-    std::string infoFileName;
-    diffIdxFileName = queryKmerFileDir + "/" + jobid + "_queryKmerRelation" + std::to_string(numOfSplits) + "_diffIdx";
-    infoFileName = queryKmerFileDir + "/" + jobid + "_queryKmerRelation" + std::to_string(numOfSplits) + "_info";
-
-    FILE * diffIdxFile = fopen(diffIdxFileName.c_str(), "wb");
-    FILE * infoFile = fopen(infoFileName.c_str(), "wb");
-    if (diffIdxFile == nullptr || infoFile == nullptr){
-        std::cout<<"Cannot open the file for writing target DB"<<endl;
-        return;
-    }
-    
-
-    uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 10'000'000);
-    size_t localBufIdx = 0;
-    uint64_t lastKmer = 0;
-    size_t write = 0;
-
-    for(size_t i = 0; i < queryKmerNum ; i++) {
-        queryKmerList[i].info.sequenceID += processedReadCnt;
-        fwrite(& queryKmerList[i].info, sizeof (QueryKmerInfo), 1, infoFile);
-        write++;
-        getDiffIdx(lastKmer, queryKmerList[i].ADkmer, diffIdxFile, diffIdxBuffer, localBufIdx);
-        lastKmer = queryKmerList[i].ADkmer;
-    }
-
-    std::cout<<"total k-mer count  : "<< queryKmerNum << endl;
-    std::cout<<"written k-mer count: "<< write <<endl;
-
-    flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
-    free(diffIdxBuffer);
-
-    fclose(diffIdxFile);
-    fclose(infoFile);
-
-    numOfSplits++;
-
-    return;
-}
-
-void makeGraph(const std::string & queryKmerFileDir, 
-               std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation,
-               size_t & numOfSplits,
-               const string & jobid,
-               SeqIterator * seqIterator) {
-
-    std::cout << "Creating graphs based on kmer-query relation..." << std::endl;
-    time_t beforeSearch = time(nullptr);
-
-    struct MmapedData<uint16_t> *diffFileList = new struct MmapedData<uint16_t>[numOfSplits];
-    struct MmapedData<QueryKmerInfo> *infoFileList = new struct MmapedData<QueryKmerInfo>[numOfSplits];
-    
-    uint64_t * lookingKmers = new uint64_t[numOfSplits];
-    auto * lookingInfos = new QueryKmerInfo[numOfSplits];
-    auto * diffFileIdx = new size_t[numOfSplits];
-    memset(diffFileIdx, 0, numOfSplits * sizeof(size_t));
-    auto * infoFileIdx = new size_t[numOfSplits];
-    memset(infoFileIdx, 0, numOfSplits * sizeof(size_t));
-    auto * maxIdxOfEachFiles = new size_t[numOfSplits];
-
-    std::vector<uint64_t> lastKmers(numOfSplits, 0);  // To track the last kmer from each file
-    std::vector<uint64_t> sequenceIDs(numOfSplits, 0);  // To track the last sequence(query)ID from each file
-
-    // Open _diffIdx and _info files
-    // Initial loading of the first k-mer from each file
-    for (int file = 0; file < numOfSplits; ++file) {
-        std::string diffIdxFilename = queryKmerFileDir + "/" + jobid + "_queryKmerRelation" + std::to_string(file) + "_diffIdx";
-        std::string infoFilename = queryKmerFileDir + "/" + jobid + "_queryKmerRelation" + std::to_string(file) + "_info";
-        diffFileList[file] = mmapData<uint16_t>((diffIdxFilename).c_str());
-        infoFileList[file] = mmapData<QueryKmerInfo>((infoFilename).c_str());
-        
-        lookingKmers[file] = getNextKmer(0, diffFileList[file], diffFileIdx[file]);
-        lookingInfos[file] = infoFileList[file].data[0];
-        infoFileIdx[file] ++;
-
-        lastKmers[file] = lookingKmers[file];
-        sequenceIDs[file] = lookingInfos[file].sequenceID;
-
-        maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
-    }
-
-    std::vector<uint32_t> currentQueryIds;
-    currentQueryIds.reserve(1024);
-    while (true) {
-        // Find the smallest current k-mer across all files
-        size_t currentKmer = *std::min_element(lookingKmers, lookingKmers + numOfSplits);
-        // If all k-mers are max, all files are processed
-        if (currentKmer == UINT64_MAX) {
-            break;
-        }
-
-        currentQueryIds.clear();
-
-        // Process files with the current smallest k-mer
-        for (size_t file = 0; file < numOfSplits; file++) {
-            while (lookingKmers[file] == currentKmer) {
-                // cout << file << " "; seqIterator->printKmerInDNAsequence(lookingKmers[file]); cout << "\n";
-                if (std::find(currentQueryIds.begin(), currentQueryIds.end(), sequenceIDs[file]) == currentQueryIds.end()){
-                    currentQueryIds.push_back(sequenceIDs[file]);
-                }
-                lookingKmers[file] = getNextKmer(lookingKmers[file], diffFileList[file], diffFileIdx[file]);
-                lookingInfos[file] = infoFileList[file].data[infoFileIdx[file]];
-                infoFileIdx[file] ++;
-                sequenceIDs[file] = lookingInfos[file].sequenceID;
-
-                if( diffFileIdx[file] > maxIdxOfEachFiles[file] ){
-                    lookingKmers[file] = UINT64_MAX;
-                }
-            }
-        }
-
-        // Update the relation map with the collected query IDs
-        for (size_t i = 0; i < currentQueryIds.size(); ++i) {
-            for (size_t j = 0; j < currentQueryIds.size(); ++j) {
-                if (i != j){
-                    relation[currentQueryIds[i]][currentQueryIds[j]]++;
-                }
-            }
-        }
-    }
-
-    // Close all file streams
-    for(size_t file = 0; file < numOfSplits; file++){
-        munmap(diffFileList[file].data, diffFileList[file].fileSize + 1);
-        munmap(infoFileList[file].data, infoFileList[file].fileSize + 1);
-    }
-    delete[] diffFileList;
-    delete[] infoFileList;
-    delete[] lookingInfos;
-    delete[] lookingKmers;
-    delete[] diffFileIdx;
-    delete[] infoFileIdx;
-    delete[] maxIdxOfEachFiles;
-
-    std::cout << "Relations generated from files successfully." << std::endl;
-    std::cout << "Relation size: " << relation.size() << std::endl;
-    std::cout << "Time spent: " << double(time(nullptr) - beforeSearch) << " seconds." << std::endl;
-}
-
-// Create groups based on shared counts and threshold
-void makeGroups(const std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> & relation,
-                std::unordered_map<uint32_t, std::unordered_set<uint32_t>> & groupInfo,
-                std::vector<int> & queryGroupInfo,
-                const int groupKmerThreshold) {
-    // Map to store the count of shared Y nodes between X nodes
-    DisjointSet ds;
-    std::string line;
-
-    std::cout << "Creating groups based on graph..." << std::endl;
-    time_t beforeSearch = time(nullptr);
-    
-    const int THRESHOLD = groupKmerThreshold; // Define threshold for grouping
-    for (const auto currentQueryRelation : relation) {
-        uint32_t currentQueryId = currentQueryRelation.first;
-        for (const auto& [otherQueryId, count] : currentQueryRelation.second) {
-            if (count >= THRESHOLD) {
-                if (ds.parent.find(currentQueryId) == ds.parent.end()) {
-                    ds.makeSet(currentQueryId);
-                }
-                if (ds.parent.find(otherQueryId) == ds.parent.end()) {
-                    ds.makeSet(otherQueryId);
-                }
-                ds.unionSets(currentQueryId, otherQueryId);
-            }
-        }
-    }
-
-    // Collect nodes into groups
-    for (const auto& p : ds.parent) {
-        uint32_t currentQueryId = p.first;
-        uint32_t groupId = ds.find(currentQueryId);
-        groupInfo[groupId].insert(currentQueryId);
-        queryGroupInfo[currentQueryId] = groupId;
-    }
-
-    std::cout << "Query group created successfully : " << groupInfo.size() << " groups" << std::endl;
-    std::cout << "Time spent for query groups: " << double(time(nullptr) - beforeSearch) << std::endl;
-
-    return;
-}
-
-void saveGroupsToFile(const std::unordered_map<uint32_t, std::unordered_set<uint32_t>> & groupInfo, 
-                      const std::vector<int> & queryGroupInfo,
-                      const std::string & groupFileDir, 
-                      const string & jobid) {
-    
-    // save group in txt file
-    const std::string& groupInfoFileName = groupFileDir + "/" + jobid + "_groups";
-    std::ofstream outFile1(groupInfoFileName);
-    if (!outFile1.is_open()) {
-        std::cerr << "Error opening file: " << groupInfoFileName << std::endl;
-        return;
-    }
-
-    for (const auto& [groupId, queryIds] : groupInfo) {
-        outFile1 << groupId << " ";
-        for (const auto& queryId : queryIds) {
-            outFile1 << queryId << " ";
-        }
-        outFile1 << std::endl;
-    }
-    outFile1.close();
-    std::cout << "Query group saved to " << groupInfoFileName << " successfully." << std::endl;
-    
-
-    const std::string& queryGroupInfoFileName = groupFileDir + "/" + jobid + "_queryGroupMap";
-    std::ofstream outFile2(queryGroupInfoFileName);
-    if (!outFile2.is_open()) {
-        std::cerr << "Error opening file: " << queryGroupInfoFileName << std::endl;
-        return;
-    }
-
-    for (size_t i = 0; i < queryGroupInfo.size(); ++i) {
-        outFile2 << queryGroupInfo[i] << "\n";
-    }
-    outFile2.close();
-    std::cout << "Query group saved to " << queryGroupInfoFileName << " successfully." << std::endl;
-
-    return;
-}
-
-void loadGroupInfo(const std::string & groupFileDir, 
-                    std::unordered_map<uint32_t, std::unordered_set<uint32_t>> & groupInfo,
-                    const string & jobid) {
-    const std::string& groupInfoFileName = groupFileDir + "/" + jobid + "_queryGroupMap";
-    std::ifstream inFile(groupInfoFileName);
-    if (!inFile.is_open()) {
-        std::cerr << "Error opening file: " << groupInfoFileName << std::endl;
-        return;
-    }
-
-    std::string line;
-    std::unordered_set<uint32_t> queryIds;
-    while (std::getline(inFile, line)) {
-        std::stringstream ss(line);
-        uint32_t groupId;
-        ss >> groupId;  
-        
-        queryIds.clear();
-        uint32_t queryId;
-        while (ss >> queryId) { 
-            queryIds.insert(queryId);  
-        }
-
-        groupInfo[groupId] = queryIds; 
-    }
-
-    inFile.close();
-    std::cout << "Group info loaded from " << groupInfoFileName << " successfully." << std::endl;
-}
-
-void loadQueryGroupInfo(const std::string & groupFileDir, 
-                        std::vector<int> & queryGroupInfo, 
-                        const string & jobid) {
-    const std::string& queryGroupInfoFileName = groupFileDir + "/" + jobid + "_queryGroupMap";
-    std::ifstream inFile(queryGroupInfoFileName);
-    if (!inFile.is_open()) {
-        std::cerr << "Error opening file: " << queryGroupInfoFileName << std::endl;
-        return;
-    }
-
-    std::string line;
-    uint32_t queryIdx = 0;
-    while (std::getline(inFile, line)) {
-        std::stringstream ss(line);
-        uint32_t groupId;
-        ss >> groupId;  
-
-        queryGroupInfo[queryIdx] = groupId;
-        queryIdx++;
-    }
-
-    inFile.close();
-    std::cout << "Query group info loaded from " << queryGroupInfoFileName << " successfully." << std::endl;
-}
-
-void loadMetabuliResult(const std::string & resultFileDir, 
-                        vector<std::pair<int, float>> & metabuliResult) {
-    std::ifstream inFile(resultFileDir + "/1_classifications_ori.tsv");
-    if (!inFile.is_open()) {
-        std::cerr << "Error opening file: " << resultFileDir + "/1_classifications_ori.tsv" << std::endl;
-        return;
-    }
-
-    std::string line;
-    uint32_t id = 0;
-    while (std::getline(inFile, line)) {
-        std::stringstream ss(line);
-        int label, query_label, read_length;
-        float score;
-        std::string query_name; // query_name is not used.
-        ss >> label >> query_name >> query_label >> read_length >> score;
-        metabuliResult[id] = {query_label, score}; 
-        id ++;
-    }
-
-    inFile.close();
-    std::cout << "Original Metabuli result loaded from " << resultFileDir + "/1_classifications_ori.tsv" << " successfully." << std::endl;
-}
-
-void getRepLabel(const std::string & groupRepFileDir,
-                 vector<std::pair<int, float>> & metabuliResult,
-                 const std::unordered_map<uint32_t, std::unordered_set<uint32_t>> & groupInfo,
-                 std::unordered_map<uint32_t, int> & repLabel, 
-                 const string & jobid,
-                 int voteMode,
-                 float majorityThr,
-                 NcbiTaxonomy * taxonomy) {      
-
-    for (const auto& group : groupInfo) {
-        uint32_t groupId = group.first;
-        const std::unordered_set<uint32_t>& queryIds = group.second;
-
-        std::vector<WeightedTaxHit> setTaxa;
-
-        for (const auto& queryId : queryIds) {
-            int query_label = metabuliResult[queryId].first; 
-            float score = metabuliResult[queryId].second;
-            if (query_label != 0) {
-                setTaxa.emplace_back(query_label, score, voteMode);
-            }
-        }
-
-        WeightedTaxResult result = taxonomy->weightedMajorityLCA(setTaxa, majorityThr);
-
-        if (result.taxon != 0) {
-            repLabel[groupId] = result.taxon;
-        }
-    }
-
-    const std::string& groupRepFileName = groupRepFileDir + "/" + jobid + "_groupRep";
-    std::ofstream outFile(groupRepFileName);
-    if (!outFile.is_open()) {
-        std::cerr << "Error opening file: " << groupRepFileName << std::endl;
-        return;
-    }
-
-    for (const auto& [groupId, groupRep] : repLabel) {
-        outFile << groupId << "\t" << groupRep << "\n";
-    }
-
-    outFile.close();
-
-    std::cout << "Query group representative label saved to " << groupRepFileName << " successfully." << std::endl;
-}
-
-void applyRepLabel(const std::string & resultFileDir, 
-                   const std::string & newResultFileDir, 
-                   const std::vector<int> & queryGroupInfo,
-                   const std::unordered_map<uint32_t, int> & repLabel, 
-                   NcbiTaxonomy * taxonomy,
-                   const string & jobid) {
-    
-    std::ifstream inFile(resultFileDir + "/1_classifications_ori.tsv");
-    if (!inFile.is_open()) {
-        std::cerr << "Error opening file: " << newResultFileDir + "/1_classifications_ori.tsv" << std::endl;
-        return;
-    }
-
-    std::ofstream outFile(newResultFileDir + "/1_classifications.tsv");
-    if (!outFile.is_open()) {
-        std::cerr << "Error opening file: " << newResultFileDir + "/1_classifications.tsv" << std::endl;
-        return;
-    }
-
-    std::string line;
-    uint32_t queryIdx = 0;
-    while (std::getline(inFile, line)) {
-        std::stringstream ss(line);
-        std::vector<std::string> fields;
-        std::string field;
-
-        while (std::getline(ss, field, '\t')) {
-            fields.push_back(field);
-        }
-
-        if (fields.size() > 2 && fields[0] == "0") {
-            uint32_t groupId = queryGroupInfo[queryIdx];
-            auto repLabelIt = repLabel.find(groupId);
-            if (repLabelIt != repLabel.end() && repLabelIt->second != 0) {
-                fields[2] = std::to_string(repLabelIt->second);
-                fields[0] = "1";
-                fields[5] = taxonomy->getString(taxonomy->taxonNode(repLabelIt->second)->rankIdx);
-            }
-        }
-
-        for (size_t i = 0; i < fields.size(); ++i) {
-            outFile << fields[i]; 
-            if (i < fields.size() - 1) {  
-                outFile << "\t";
-            }
-        }
-        outFile << std::endl;
-        queryIdx++;
-    }
-
-    inFile.close();
-    outFile.close();
-    
-    std::cout << "Result saved to " << newResultFileDir << " successfully." << std::endl;
-}
 
 Classifier::Classifier(LocalParameters & par) {
     // Load parameters
@@ -509,8 +9,8 @@ Classifier::Classifier(LocalParameters & par) {
     matchPerKmer = par.matchPerKmer;
     loadDbParameters(par);
 
-    std::cout << "DB name: " << par.dbName << endl;
-    std::cout << "DB creation date: " << par.dbDate << endl;
+    cout << "DB name: " << par.dbName << endl;
+    cout << "DB creation date: " << par.dbDate << endl;
     
     // Taxonomy
     taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
@@ -523,9 +23,8 @@ Classifier::Classifier(LocalParameters & par) {
     } else {
         kmerMatcher = new KmerMatcher(par, taxonomy);
     }
-    taxonomer = new Taxonomer(par, taxonomy);
+    // taxonomer = new Taxonomer(par, taxonomy);
     reporter = new Reporter(par, taxonomy);
-    seqIterator = new SeqIterator(par);
 }
 
 Classifier::~Classifier() {
@@ -533,13 +32,13 @@ Classifier::~Classifier() {
     delete queryIndexer;
     delete kmerExtractor;
     delete kmerMatcher;
-    delete taxonomer;
+    // delete taxonomer;
     delete reporter;
-    delete seqIterator;
 }
 
 void Classifier::startClassify(const LocalParameters &par) {
     QueryKmerBuffer queryKmerBuffer;
+    Buffer<Match> matchBuffer;
     vector<Query> queryList;
     size_t numOfTatalQueryKmerCnt = 0;
     reporter->openReadClassificationFile();
@@ -548,25 +47,14 @@ void Classifier::startClassify(const LocalParameters &par) {
     size_t processedReadCnt = 0;
     size_t tries = 0;
     size_t totalSeqCnt = 0;
-    size_t numOfSplits = 0;
-
-    string outDir;
-    string jobId;
-    if (par.seqMode == 2) {
-        outDir = par.filenames[3];
-        jobId = par.filenames[4];
-    } else {
-        outDir = par.filenames[2];
-        jobId = par.filenames[3];
-    }
-
+    
     // Extract k-mers from query sequences and compare them to target k-mer DB
     while (!complete) {
         tries++;
 
-        // new code
+        // Get splits for remaining sequences
         if (tries == 1) {
-                std::cout << "Indexing query file ...";
+                cout << "Indexing query file ...";
         }
         queryIndexer->setBytesPerKmer(matchPerKmer);
         queryIndexer->indexQueryFile(processedReadCnt);
@@ -574,9 +62,9 @@ void Classifier::startClassify(const LocalParameters &par) {
 
         if (tries == 1) {
             totalSeqCnt = queryIndexer->getReadNum_1();
-            std::cout << "Done" << endl;
-            std::cout << "Total number of sequences: " << queryIndexer->getReadNum_1() << endl;
-            std::cout << "Total read length: " << queryIndexer->getTotalReadLength() <<  "nt" << endl;
+            cout << "Done" << endl;
+            cout << "Total number of sequences: " << queryIndexer->getReadNum_1() << endl;
+            cout << "Total read length: " << queryIndexer->getTotalReadLength() <<  "nt" << endl;
         }
 
         // Set up kseq
@@ -591,7 +79,6 @@ void Classifier::startClassify(const LocalParameters &par) {
         }
 
         for (size_t splitIdx = 0; splitIdx < queryReadSplit.size(); splitIdx++) {
-            std::unordered_map<uint64_t, std::set<int>> kmerQuery;
             // Allocate memory for query list
             queryList.clear();
             queryList.resize(queryReadSplit[splitIdx].end - queryReadSplit[splitIdx].start);
@@ -599,8 +86,19 @@ void Classifier::startClassify(const LocalParameters &par) {
             // Allocate memory for query k-mer buffer
             queryKmerBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt);
 
+            // Allocate memory for match buffer
+            if (queryReadSplit.size() == 1) {
+                size_t remain = queryIndexer->getAvailableRam() 
+                                - (queryReadSplit[splitIdx].kmerCnt * sizeof(QueryKmer)) 
+                                - (queryIndexer->getReadNum_1() * 200); // TODO: check it later
+                matchBuffer.reallocateMemory(remain / sizeof(Match));
+            } else {
+                matchBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt * matchPerKmer);
+            }
+
             // Initialize query k-mer buffer and match buffer
             queryKmerBuffer.startIndexOfReserve = 0;
+            matchBuffer.startIndexOfReserve = 0;
 
             // Extract query k-mers
             kmerExtractor->extractQueryKmers(queryKmerBuffer,
@@ -609,17 +107,32 @@ void Classifier::startClassify(const LocalParameters &par) {
                                              par,
                                              kseq1,
                                              kseq2); // sync kseq1 and kseq2
-            
-            // saveQueryIdToFile
-            writeQueryKmerFile(&queryKmerBuffer, outDir, numOfSplits, processedReadCnt, seqIterator, jobId);
+            // Search matches between query and target k-mers
+            if (kmerMatcher->matchKmers(&queryKmerBuffer, &matchBuffer)) {
+                kmerMatcher->sortMatches(&matchBuffer);
+                
+                // Classify queries based on the matches.
+                assignTaxonomy(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
 
-            // Print progress
-            processedReadCnt += queryReadSplit[splitIdx].readCnt;
-            std::cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
+                // Write classification results
+                reporter->writeReadClassification(queryList);
 
-            numOfTatalQueryKmerCnt += queryKmerBuffer.startIndexOfReserve;
-        }
+                // Print progress
+                processedReadCnt += queryReadSplit[splitIdx].readCnt;
+                cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
 
+                numOfTatalQueryKmerCnt += queryKmerBuffer.startIndexOfReserve;
+            } else { // search was incomplete
+                // Increase matchPerKmer and try again 
+                matchPerKmer += 4;
+                // delete kseq1;
+                // delete kseq2;
+                cout << "--match-per-kmer was increased to " << matchPerKmer << " and searching again..." << endl;
+                // cout << "The search was incomplete. Increasing --match-per-kmer to " << matchPerKmer << " and trying again..." << endl;
+                break;
+            }
+         }
+         
         delete kseq1;
         if (par.seqMode == 2) {
             delete kseq2;
@@ -627,26 +140,60 @@ void Classifier::startClassify(const LocalParameters &par) {
         if (processedReadCnt == totalSeqCnt) {
             complete = true;
         }
-    }   
-    std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> relation;
-    makeGraph(outDir, relation, numOfSplits, jobId, seqIterator);
+    }
 
-    std::unordered_map<uint32_t, std::unordered_set<uint32_t>> groupInfo;
-    vector<int> queryGroupInfo;
-    queryGroupInfo.resize(processedReadCnt, -1);
-    makeGroups(relation, groupInfo, queryGroupInfo, par.groupKmerThreshold);
-    saveGroupsToFile(groupInfo, queryGroupInfo, outDir, jobId);
+    cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
+    cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
+    reporter->closeReadClassificationFile();
 
-    // loadGroupInfo(outDir, groupInfo, jobId);     
-    // loadQueryGroupInfo(outDir, queryGroupInfo, jobId);
+    // Write report files
+    reporter->writeReportFile(totalSeqCnt, taxCounts);
+
+    // Memory deallocation
+    free(matchBuffer.buffer);
+}
+
+void Classifier::assignTaxonomy(const Match *matchList,
+                               size_t numOfMatches,
+                               std::vector<Query> &queryList,
+                               const LocalParameters &par) {
+    time_t beforeAnalyze = time(nullptr);
+    cout << "Analyzing matches ..." << endl;
+
+    // Divide matches into blocks for multi threading
+    size_t seqNum = queryList.size();
+    MatchBlock *matchBlocks = new MatchBlock[seqNum];
+    size_t matchIdx = 0;
+    size_t blockIdx = 0;
+    uint32_t currentQuery;
+    while (matchIdx < numOfMatches) {
+        currentQuery = matchList[matchIdx].qInfo.sequenceID;
+        matchBlocks[blockIdx].id = currentQuery;
+        matchBlocks[blockIdx].start = matchIdx;
+        while ((currentQuery == matchList[matchIdx].qInfo.sequenceID) && (matchIdx < numOfMatches)) ++matchIdx;
+        matchBlocks[blockIdx].end = matchIdx - 1;
+        blockIdx++;
+    }
+    // Process each block
+#pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqNum, queryList, blockIdx, par)
+    {
+        Taxonomer taxonomer(par, taxonomy);
+#pragma omp for schedule(dynamic, 1)
+        for (size_t i = 0; i < blockIdx; ++i) {
+            taxonomer.chooseBestTaxon(matchBlocks[i].id,
+                            matchBlocks[i].start,
+                            matchBlocks[i].end,
+                            matchList,
+                            queryList,
+                            par);
+        }
+    }
+
+    for (size_t i = 0; i < seqNum; i++) {
+        ++taxCounts[queryList[i].classification];
+    }
     
-    vector<std::pair<int, float>> metabuliResult;       
-    metabuliResult.resize(processedReadCnt, std::make_pair(-1, 0.0f));
-    loadMetabuliResult(outDir, metabuliResult);
-
-    std::unordered_map<uint32_t, int> repLabel; 
-    getRepLabel(outDir, metabuliResult, groupInfo, repLabel, jobId, par.voteMode, par.majorityThr, taxonomy);
-
-    applyRepLabel(outDir, outDir, queryGroupInfo, repLabel, taxonomy, jobId);
+    delete[] matchBlocks;
+    cout << "Time spent for analyzing: " << double(time(nullptr) - beforeAnalyze) << endl;
 
 }

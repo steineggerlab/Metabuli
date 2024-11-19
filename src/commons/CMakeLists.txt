@@ -13,6 +13,8 @@ set(commons_source_files
         commons/printBinary.h
         commons/Classifier.cpp
         commons/Classifier.h
+		commons/GroupGenerator.cpp
+        commons/GroupGenerator.h
         commons/BitManipulateMacros.h
         commons/LocalParameters.cpp
         commons/LocalParameters.h

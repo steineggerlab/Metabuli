@@ -164,7 +164,7 @@ LocalParameters::LocalParameters() :
                     "Min. num. of shared kmer for read grouping",
                     "Min. num. of shared kmer for read grouping",
                     typeid(int),
-                    (void *) &groupKmerThreshold,
+                    (void *) &groupKmerThr,
                     "^[0-9]+$"),
         VOTE_MODE(VOTE_MODE_ID,
                     "--vote-mode",
@@ -338,9 +338,11 @@ LocalParameters::LocalParameters() :
     matchPerKmer = 0;
     minSSMatch = 0;
     tieRatio = 0;
-    groupKmerThreshold = 0;
+
+    // Group generation
+    groupKmerThr = 0;
     voteMode = 0;
-    majorityThr = 0;
+    majorityThr = 0.0;
 
     // Database creation
     tinfoPath = "";
@@ -407,10 +409,29 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MATCH_PER_KMER);
     classify.push_back(&ACCESSION_LEVEL);
     classify.push_back(&TIE_RATIO);
-    classify.push_back(&GROUP_KMER_THR);
-    classify.push_back(&VOTE_MODE);
-    classify.push_back(&MAJORITY_THR);
     // classify.push_back(&MIN_SS_MATCH);
+
+    //groupGeneration
+    groupGeneration.push_back(&PARAM_THREADS);
+    groupGeneration.push_back(&SEQ_MODE);
+    groupGeneration.push_back(&TAXONOMY_PATH);
+    groupGeneration.push_back(&RAM_USAGE);
+    groupGeneration.push_back(&MATCH_PER_KMER);
+    groupGeneration.push_back(&GROUP_KMER_THR);
+    groupGeneration.push_back(&VOTE_MODE);
+    groupGeneration.push_back(&MAJORITY_THR);
+
+    
+    groupGeneration.push_back(&MIN_SCORE);
+    groupGeneration.push_back(&MIN_COVERAGE);
+    groupGeneration.push_back(&MIN_CONS_CNT);
+    groupGeneration.push_back(&MIN_CONS_CNT_EUK);
+    groupGeneration.push_back(&MIN_SP_SCORE);
+    groupGeneration.push_back(&HAMMING_MARGIN);    
+    groupGeneration.push_back(&PARAM_MASK_RESIDUES);
+    groupGeneration.push_back(&PARAM_MASK_PROBABILTY);
+    groupGeneration.push_back(&ACCESSION_LEVEL);
+    groupGeneration.push_back(&TIE_RATIO);
 
     // filter 
     filter.push_back(&PARAM_THREADS);

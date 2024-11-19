@@ -1,12 +1,11 @@
-#include "Classifier.h"
+#include "GroupGenerator.h"
 #include "Parameters.h"
 #include "LocalParameters.h"
 #include "FileUtil.h"
 #include "common.h"
 
-void setClassifyDefaults(LocalParameters & par){
+void setGroupGenerationDefaults(LocalParameters & par){
     par.reducedAA = 0;
-    // par.spaceMask = "11111111";
     par.seqMode = 2;    
     par.minScore = 0;
     par.minCoverage = 0;
@@ -26,12 +25,16 @@ void setClassifyDefaults(LocalParameters & par){
     par.matchPerKmer = 4;
     par.accessionLevel = 0;
     par.tieRatio = 0.95;
+
+    par.groupKmerThr = 150;
+    par.voteMode = 0;
+    par.majorityThr = 0.5;
 }
 
-int classify(int argc, const char **argv, const Command& command)
+int groupGeneration(int argc, const char **argv, const Command& command)
 {
     LocalParameters & par = LocalParameters::getLocalInstance();
-    setClassifyDefaults(par);
+    setGroupGenerationDefaults(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
 
     if (par.seqMode == 2) {
@@ -63,8 +66,8 @@ int classify(int argc, const char **argv, const Command& command)
     omp_set_num_threads(par.threads);
 #endif
 
-    Classifier * classifier = new Classifier(par);
-    classifier->startClassify(par);
-    delete classifier;
+    GroupGenerator * groupGenerator = new GroupGenerator(par);
+    groupGenerator->startGroupGeneration(par);
+    delete groupGenerator;
     return 0;
 }

@@ -22,6 +22,7 @@ public:
     }
 
     std::vector<MMseqsParameter*> classify;
+    std::vector<MMseqsParameter*> groupGeneration;
     std::vector<MMseqsParameter*> filter;
     std::vector<MMseqsParameter*> exclusiontest_hiv;
     std::vector<MMseqsParameter*> seqHeader2TaxId;
@@ -58,6 +59,8 @@ public:
     PARAMETER(MATCH_PER_KMER)
     PARAMETER(MIN_SS_MATCH)
     PARAMETER(TIE_RATIO)
+
+    // Group generation
     PARAMETER(GROUP_KMER_THR)
     PARAMETER(VOTE_MODE)
     PARAMETER(MAJORITY_THR)
@@ -111,7 +114,7 @@ public:
     int matchPerKmer;
     int minSSMatch;
     float tieRatio;
-    int groupKmerThreshold;
+    int groupKmerThr;
     int voteMode;
     float majorityThr;
 
