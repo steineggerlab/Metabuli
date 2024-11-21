@@ -374,6 +374,7 @@ LocalParameters::LocalParameters() :
     build.push_back(&DB_NAME);
     build.push_back(&DB_DATE);
     build.push_back(&CDS_INFO);
+    build.push_back(&RAM_USAGE);
 
     //classify
     classify.push_back(&PARAM_THREADS);

@@ -45,7 +45,6 @@ protected:
     int threadNum;
     size_t bufferSize;
     int reducedAA;
-    // string spaceMask;
     int accessionLevel;
     int lowComplexityMasking;
     float lowComplexityMaskingThreshold;
@@ -109,9 +108,18 @@ protected:
 
     size_t numOfFlush=0;
 
-    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
+    void writeTargetFiles(TargetKmer * kmerBuffer,
+                          size_t & kmerNum,
+                          const LocalParameters & par,
+                          const size_t * uniqeKmerIdx,
+                          const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
-    void writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
+    void writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
+                                   size_t & kmerNum,
+                                   const LocalParameters & par,
+                                   const size_t * uniqeKmerIdx, 
+                                   size_t & uniqKmerCnt, 
+                                   const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
     void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
 
@@ -147,14 +155,20 @@ protected:
 
     void load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
 
-    static TaxID load_accession2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
+    static TaxID load_accession2taxid(const string & fastaList,
+                                      const string & mappingFile,
+                                      unordered_map<string, int> & assacc2taxid);
 
     TaxID getMaxTaxID();
 
     void editTaxonomyDumpFiles(const vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid);
 
-    void reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniqeKmerIdx, size_t & uniqKmerCnt,
+    void reduceRedundancy(TargetKmerBuffer & kmerBuffer,
+                          size_t * uniqeKmerIdx,
+                          size_t & uniqKmerCnt,
+                          vector<pair<size_t, size_t>> & uniqKmerIdxRanges,
                           const LocalParameters & par);
+
     size_t AminoAcidPart(size_t kmer) {
         return (kmer) & MARKER;
     }
@@ -191,8 +205,7 @@ public:
 
     string getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
                                   const string & seqFileName,
-                                  const unordered_map<string, TaxID> & acc2taxid,
-                                  unordered_map<string, TaxID> & foundAcc2taxid);
+                                  const unordered_map<string, TaxID> & acc2taxid);
 
     static void getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const char * seqFileName);
 

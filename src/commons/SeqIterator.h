@@ -72,7 +72,7 @@ public:
 
     void sixFrameTranslation(const char *seq, int seqLen, vector<int> *aaFrames);
 
-    bool translateBlock(const char *seq, PredictedBlock block, vector<int> & aaSeq);
+    bool translateBlock(const char *seq, PredictedBlock block, vector<int> & aaSeq, size_t length);
 
     void translate(const string & seq, vector<int> & aa, int frame = 0) {
         aa.clear();
