@@ -102,7 +102,7 @@ void IndexCreator::createIndex(const LocalParameters &par) {
         memset(kmerBuffer.buffer, 0, kmerBuffer.bufferSize * sizeof(TargetKmer));
 
         // Extract Target k-mers
-        fillTargetKmerBuffer2(kmerBuffer, splitChecker, processedSplitCnt, par);
+        fillTargetKmerBuffer(kmerBuffer, splitChecker, processedSplitCnt, par);
 
         // Sort the k-mers
         time_t start = time(nullptr);
@@ -480,7 +480,7 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer,
     numOfFlush++;
     size_t bufferSize = 1024 * 1024 * 32;
     uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * bufferSize); // 64MB
-    TargetKmerInfo *infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * bufferSize);
+    TaxID *infoBuffer = (TaxID *)malloc(sizeof(TaxID) * bufferSize);
     size_t localBufIdx = 0;
     size_t localInfoBufIdx = 0;
     uint64_t lastKmer = 0;
@@ -488,7 +488,7 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer,
 
     for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
         for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
-            writeInfo(&kmerBuffer[uniqKmerIdx[j]].info, infoFile, infoBuffer, bufferSize, localInfoBufIdx);
+            writeInfo(&kmerBuffer[uniqKmerIdx[j]].seqId, infoFile, infoBuffer, bufferSize, localInfoBufIdx);
             // fwrite(& kmerBuffer[uniqKmerIdx[j]].info, sizeof (TargetKmerInfo), 1, infoFile);
             write++;
             getDiffIdx(lastKmer, kmerBuffer[uniqKmerIdx[j]].ADkmer, diffIdxFile, diffIdxBuffer, bufferSize, localBufIdx);
@@ -571,7 +571,7 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
 
     size_t bufferSize = 1024 * 1024 * 32;
     uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * bufferSize); // 64MB
-    TargetKmerInfo *infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * bufferSize);
+    TaxID *infoBuffer = (TaxID *)malloc(sizeof(TaxID) * bufferSize);
     size_t localBufIdx = 0;
     size_t localInfoBufIdx = 0;
     uint64_t lastKmer = 0;
@@ -582,7 +582,7 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
     cout << "Writing k-mers to disk" << endl;
     for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
         for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
-            writeInfo(&kmerBuffer[uniqKmerIdx[j]].info, infoFile, infoBuffer, bufferSize, localInfoBufIdx);
+            writeInfo(&kmerBuffer[uniqKmerIdx[j]].seqId, infoFile, infoBuffer, bufferSize, localInfoBufIdx);
             // fwrite(& kmerBuffer[uniqKmerIdx[j]].info, sizeof (TargetKmerInfo), 1, infoFile);
             write++;
             getDiffIdx(lastKmer, kmerBuffer[uniqKmerIdx[j]].ADkmer, diffIdxFile, diffIdxBuffer, bufferSize, localBufIdx, totalDiffIdx);
@@ -659,7 +659,6 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
         TargetKmer * lookingKmer;
         size_t lookingIndex;
         int endFlag;
-        int hasSeenOtherStrains;
         vector<TaxID> taxIds;
         size_t * tempUniqKmerIdx = new size_t[16 * 1024 * 1024];
         size_t tempUniqKmerCnt = 0;
@@ -669,19 +668,12 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
             lookingIndex = splits[split].offset;
             endFlag = 0;
             for(size_t i = 1 + splits[split].offset; i < splits[split].end + 1 ; i++) {
-                hasSeenOtherStrains = 0;
                 taxIds.clear();
-                taxIds.push_back(taxIdList[lookingKmer->info.sequenceID]);
+                taxIds.push_back(taxIdList[lookingKmer->seqId]);
                 // Scan redundancy
                 while(lookingKmer->taxIdAtRank == kmerBuffer.buffer[i].taxIdAtRank &&
                       lookingKmer->ADkmer == kmerBuffer.buffer[i].ADkmer){
-                    taxIds.push_back(taxIdList[kmerBuffer.buffer[i].info.sequenceID]);
-                    if (par.accessionLevel) {
-                        hasSeenOtherStrains += (taxonomy->taxonNode(taxIdList[lookingKmer->info.sequenceID])->parentTaxId 
-                                                != taxonomy->taxonNode(taxIdList[kmerBuffer.buffer[i].info.sequenceID]) -> parentTaxId);
-                    } else {
-                        hasSeenOtherStrains += (taxIdList[lookingKmer->info.sequenceID] != taxIdList[kmerBuffer.buffer[i].info.sequenceID]);
-                    }
+                    taxIds.push_back(taxIdList[kmerBuffer.buffer[i].seqId]);
                     i++;
                     if(i == splits[split].end + 1){
                         endFlag = 1;
@@ -689,11 +681,10 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
                     }
                 }
                 if(taxIds.size() > 1){
-                    lookingKmer->info.sequenceID = taxonomy->LCA(taxIds)->taxId;
+                    lookingKmer->seqId = taxonomy->LCA(taxIds)->taxId;
                 } else {
-                    lookingKmer->info.sequenceID = taxIds[0];
+                    lookingKmer->seqId= taxIds[0];
                 }
-                lookingKmer->info.redundancy = (hasSeenOtherStrains > 0);
 
                 if (tempUniqKmerCnt >= 16 * 1024 * 1024) {
                     memcpy(uniqKmerIdx + splits[split].offset, tempUniqKmerIdx, tempUniqKmerCnt * sizeof(size_t));
@@ -712,7 +703,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
             //For the end part
             if(!((kmerBuffer.buffer[splits[split].end - 1].ADkmer == kmerBuffer.buffer[splits[split].end].ADkmer) &&
                  (kmerBuffer.buffer[splits[split].end - 1].taxIdAtRank == kmerBuffer.buffer[splits[split].end].taxIdAtRank))){
-                kmerBuffer.buffer[splits[split].end].info.sequenceID = taxIdList[kmerBuffer.buffer[splits[split].end].info.sequenceID];
+                kmerBuffer.buffer[splits[split].end].seqId = taxIdList[kmerBuffer.buffer[splits[split].end].seqId];
                 if (tempUniqKmerCnt >= 16 * 1024 * 1024) {
                     memcpy(uniqKmerIdx + splits[split].offset, tempUniqKmerIdx, tempUniqKmerCnt * sizeof(size_t));
                     splits[split].offset += tempUniqKmerCnt;
@@ -787,21 +778,20 @@ void IndexCreator::writeDiffIdx(uint16_t *buffer,
     localBufIdx += size;
 }
 
-void IndexCreator::writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t bufferSize, size_t & infoBufferIdx) {
+void IndexCreator::writeInfo(TaxID * entryToWrite, FILE * infoFile, TaxID * infoBuffer, size_t bufferSize, size_t & infoBufferIdx) {
     if (infoBufferIdx >= bufferSize) {
         flushInfoBuf(infoBuffer, infoFile, infoBufferIdx);
     }
-    memcpy(infoBuffer + infoBufferIdx, entryToWrite, sizeof(TargetKmerInfo));
+    memcpy(infoBuffer + infoBufferIdx, entryToWrite, sizeof(TaxID));
     infoBufferIdx++;
 }
-void IndexCreator::flushInfoBuf(TargetKmerInfo * buffer, FILE * infoFile, size_t & localBufIdx) {
-    fwrite(buffer, sizeof(TargetKmerInfo), localBufIdx, infoFile);
+
+void IndexCreator::flushInfoBuf(TaxID * buffer, FILE * infoFile, size_t & localBufIdx) {
+    fwrite(buffer, sizeof(TaxID), localBufIdx, infoFile);
     localBufIdx = 0;
 }
-int IndexCreator::getNumOfFlush()
-{
-    return numOfFlush;
-}
+
+int IndexCreator::getNumOfFlush() {return numOfFlush;}
 
 inline bool IndexCreator::compareForDiffIdx(const TargetKmer & a, const TargetKmer & b){
     if (a.ADkmer != b.ADkmer) {
@@ -940,195 +930,7 @@ void IndexCreator::load_assacc2taxid(const string & mappingFile, unordered_map<s
     map.close();
 }
 
-
 size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
-                                          bool *checker,
-                                          size_t &processedSplitCnt,
-                                          const LocalParameters &par) {
-    int hasOverflow = 0;
-
-#pragma omp parallel default(none), shared(kmerBuffer, checker, processedSplitCnt, hasOverflow, par, cout)
-    {
-        ProbabilityMatrix probMatrix(*subMat);
-        // ProdigalWrapper prodigal;
-        SeqIterator seqIterator(par);
-        size_t posToWrite;
-        size_t orfNum;
-        vector<PredictedBlock> extendedORFs;
-        priority_queue<uint64_t> standardList;
-        priority_queue<uint64_t> currentList;
-        size_t lengthOfTrainingSeq;
-        char *reverseCompliment;
-        vector<bool> strandness;
-        kseq_buffer_t buffer;
-        kseq_t *seq;
-        vector<uint64_t> intergenicKmers;
-        vector<int> aaSeq;
-#pragma omp for schedule(dynamic, 1)
-        for (size_t i = 0; i < fnaSplits.size(); i++) {
-            if (!checker[i] && !hasOverflow) {
-                checker[i] = true;
-                intergenicKmers.clear();
-                strandness.clear();
-                standardList = priority_queue<uint64_t>();
-
-                // Estimate the number of k-mers to be extracted from current split
-                size_t totalLength = 0;
-                for (size_t p = 0; p < fnaSplits[i].cnt; p++) {
-                    totalLength += fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].offset + p].length;
-                }
-                
-                size_t estimatedKmerCnt = (totalLength + totalLength / 10) / 3;
-
-                ProdigalWrapper * prodigal = new ProdigalWrapper();
-
-                // Process current split if buffer has enough space.
-                posToWrite = kmerBuffer.reserveMemory(estimatedKmerCnt);
-                if (posToWrite + estimatedKmerCnt < kmerBuffer.bufferSize) {
-                    // MMap FASTA file of current split
-                    struct MmapedData<char> fastaFile = mmapData<char>(fastaList[fnaSplits[i].file_idx].path.c_str());
-                    // Load sequence for training.
-                    buffer = {const_cast<char *>(&fastaFile.data[fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].training].start]),
-                              static_cast<size_t>(fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].training].length)};
-                    seq = kseq_init(&buffer);
-                    kseq_read(seq);
-                    lengthOfTrainingSeq = seq->seq.l;
-
-                    // Train prodigal
-                    prodigal->is_meta = 0;
-                    if (lengthOfTrainingSeq < 100'000) {
-                        prodigal->is_meta = 1;
-                        prodigal->trainMeta(seq->seq.s);
-                    } else {
-                        prodigal->trainASpecies(seq->seq.s);
-                    }
-
-                    // Generate intergenic 23-mer list. It is used to determine extension direction of intergenic sequences.
-                    prodigal->getPredictedGenes(seq->seq.s);
-                    seqIterator.generateIntergenicKmerList(prodigal->genes, prodigal->nodes,
-                                                           prodigal->getNumberOfPredictedGenes(),
-                                                           intergenicKmers, seq->seq.s);
-
-                    // Get min k-mer hash list for determining strandness
-                    seqIterator.getMinHashList(standardList, seq->seq.s);
-                    kseq_destroy(seq);
-
-                    // Extract k-mer from the sequences of current split
-                    for (size_t s_cnt = 0; s_cnt < fnaSplits[i].cnt; ++s_cnt) {
-                        buffer = {const_cast<char *>(&fastaFile.data[fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].offset + s_cnt].start]),
-                                  static_cast<size_t>(fastaList[fnaSplits[i].file_idx].sequences[fnaSplits[i].offset + s_cnt].length)};
-                        seq = kseq_init(&buffer);
-                        kseq_read(seq);
-
-                        cout << "Processing " << seq->name.s << "\t" << seq->seq.l << "\t" << posToWrite << endl;
-                        currentList = priority_queue<uint64_t>();
-                        seqIterator.getMinHashList(currentList, seq->seq.s);
-                        orfNum = 0;
-                        extendedORFs.clear();
-                        int tempCheck = 0;
-                        if (seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, // Forward
-                                                           strlen(seq->seq.s))) {
-                            // Get extended ORFs
-                            prodigal->getPredictedGenes(seq->seq.s);
-                            prodigal->removeCompletelyOverlappingGenes();
-                            prodigal->getExtendedORFs(prodigal->finalGenes, prodigal->nodes, extendedORFs,
-                                                             prodigal->fng, strlen(seq->seq.s),
-                                                        orfNum, intergenicKmers, seq->seq.s);
-                            // Get masked sequence
-                            char *maskedSeq = nullptr;
-                            if (par.maskMode) {
-                                maskedSeq = new char[seq->seq.l + 1];
-                                SeqIterator::maskLowComplexityRegions(seq->seq.s, maskedSeq, probMatrix, par.maskProb, subMat);
-                                maskedSeq[seq->seq.l] = '\0';
-                            } else {
-                                maskedSeq = seq->seq.s;
-                            }
-
-                            // Get k-mers from extended ORFs
-                            for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
-                                aaSeq.clear();
-                                seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt], aaSeq, seq->seq.l);
-                                tempCheck = seqIterator.fillBufferWithKmerFromBlock(
-                                        extendedORFs[orfCnt],
-                                        maskedSeq,
-                                        kmerBuffer,
-                                        posToWrite,
-                                        int(processedSeqCnt[fnaSplits[i].file_idx] + fnaSplits[i].offset + s_cnt),
-                                        fnaSplits[i].speciesID,
-                                        aaSeq);
-                                if (tempCheck == -1) {
-                                    cout << "ERROR: Buffer overflow " << seq->name.s << seq->seq.l << endl;
-                                }
-                            }
-                            if (par.maskMode) {
-                                delete[] maskedSeq;
-                            }
-                        } else { // Reverse complement
-                            reverseCompliment = seqIterator.reverseCompliment(seq->seq.s, seq->seq.l);
-                            
-                            // Get extended ORFs
-                            prodigal->getPredictedGenes(reverseCompliment);
-                            prodigal->removeCompletelyOverlappingGenes();
-                            prodigal->getExtendedORFs(prodigal->finalGenes, prodigal->nodes, extendedORFs,
-                                                             prodigal->fng, strlen(reverseCompliment),
-                                                        orfNum, intergenicKmers, reverseCompliment);
-
-                            // Get masked sequence
-                            char *maskedSeq = nullptr;
-                            if (par.maskMode) {
-                                maskedSeq = new char[seq->seq.l + 1];
-                                SeqIterator::maskLowComplexityRegions(reverseCompliment, maskedSeq, probMatrix, par.maskProb, subMat);
-                                maskedSeq[seq->seq.l] = '\0';
-                            } else {
-                                maskedSeq = reverseCompliment;
-                            }
-
-                            for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
-                                aaSeq.clear();
-                                seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt], aaSeq, seq->seq.l);
-                                tempCheck = seqIterator.fillBufferWithKmerFromBlock(
-                                        extendedORFs[orfCnt],
-                                        maskedSeq,
-                                        kmerBuffer,
-                                        posToWrite,
-                                        int(processedSeqCnt[fnaSplits[i].file_idx] + fnaSplits[i].offset + s_cnt),
-                                        fnaSplits[i].speciesID,
-                                        aaSeq);
-                                if (tempCheck == -1) {
-                                    cout << "ERROR: Buffer overflow " << seq->name.s << seq->seq.l << endl;
-                                }
-                            }
-                            free(reverseCompliment);
-                            if (par.maskMode) {
-                                delete[] maskedSeq;
-                            }
-                        }
-                        kseq_destroy(seq);
-                    }
-                    __sync_fetch_and_add(&processedSplitCnt, 1);
-#ifdef OPENMP
-                    cout << omp_get_thread_num() << " Processed " << i << "th splits (" << processedSplitCnt << ")" << endl;
-#endif
-                    munmap(fastaFile.data, fastaFile.fileSize + 1);
-                } else {
-                    // Withdraw the reservation if the buffer is full.
-                    // cout << "Buffer is full. Withdraw the reservation." << endl;
-                    checker[i] = false;
-                    __sync_fetch_and_add(&hasOverflow, 1);
-                    __sync_fetch_and_sub(&kmerBuffer.startIndexOfReserve, estimatedKmerCnt);
-                }
-                // cout << totalLength << " " << prodigal->fng << endl;
-                delete prodigal;
-                
-            }
-        }
-    }
-
-    cout << "Before return: " << kmerBuffer.startIndexOfReserve << endl;
-    return 0;
-}
-
-size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer &kmerBuffer,
                                           bool *checker,
                                           size_t &processedSplitCnt,
                                           const LocalParameters &par) {

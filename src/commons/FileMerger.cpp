@@ -70,26 +70,26 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
     uint16_t * diffBuffer = (uint16_t *)malloc(sizeof(uint16_t) * bufferSize);
     size_t diffBufferIdx = 0;
     size_t totalBufferIdx = 0;
-    TargetKmerInfo * infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * bufferSize);
+    TaxID * infoBuffer = (TaxID *)malloc(sizeof(TaxID) * bufferSize);
     size_t infoBufferIdx = 0;
     size_t totalInfoIdx = 0;
 
     // Prepare files to merge
     size_t numOfKmerBeforeMerge = 0;
     uint64_t * lookingKmers = new uint64_t[numOfSplits];
-    auto * lookingInfos = new TargetKmerInfo[numOfSplits];
+    auto * lookingInfos = new TaxID[numOfSplits];
     auto * diffFileIdx = new size_t[numOfSplits];
     memset(diffFileIdx, 0, numOfSplits * sizeof(size_t));
     auto * infoFileIdx = new size_t[numOfSplits];
     memset(infoFileIdx, 0, numOfSplits * sizeof(size_t));
     auto * maxIdxOfEachFiles = new size_t[numOfSplits];
     struct MmapedData<uint16_t> *diffFileList = new struct MmapedData<uint16_t>[numOfSplits];
-    struct MmapedData<TargetKmerInfo> *infoFileList = new struct MmapedData<TargetKmerInfo>[numOfSplits];
+    struct MmapedData<TaxID> *infoFileList = new struct MmapedData<TaxID>[numOfSplits];
     for (int file = 0; file < numOfSplits; file++) {
         diffFileList[file] = mmapData<uint16_t>((dbDir + "/" + to_string(file) + "_diffIdx").c_str());
-        infoFileList[file] = mmapData<TargetKmerInfo>((dbDir + "/" + to_string(file) + "_info").c_str());
+        infoFileList[file] = mmapData<TaxID>((dbDir + "/" + to_string(file) + "_info").c_str());
         maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
-        numOfKmerBeforeMerge += infoFileList[file].fileSize / sizeof(TargetKmerInfo);
+        numOfKmerBeforeMerge += infoFileList[file].fileSize / sizeof(TaxID);
     }
 
     // To make differential index splits
@@ -113,11 +113,10 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
         infoFileIdx[file] ++;
     }
 
-
     size_t idxOfMin = smallest(lookingKmers, lookingInfos, taxId2speciesId, numOfSplits);
     uint64_t lastWrittenKmer = 0;
     uint64_t entryKmer = lookingKmers[idxOfMin];
-    TargetKmerInfo entryInfo = lookingInfos[idxOfMin];
+    TaxID entryInfo = lookingInfos[idxOfMin];
 
     // Write first k-mer
     getDiffIdx(lastWrittenKmer, entryKmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx);
@@ -147,14 +146,14 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
 
         int hasSeenOtherStrains = 0;
         taxIds.clear();
-        taxIds.push_back(entryInfo.sequenceID); // Wrong
+        taxIds.push_back(entryInfo); // Wrong
         
         // Scan redundant k-mers
-        while(taxId2speciesId[entryInfo.sequenceID] == taxId2speciesId[lookingInfos[idxOfMin].sequenceID]){
+        while(taxId2speciesId[entryInfo] == taxId2speciesId[lookingInfos[idxOfMin]]){
             if(entryKmer != lookingKmers[idxOfMin]) break;
 
-            hasSeenOtherStrains += (entryInfo.sequenceID != lookingInfos[idxOfMin].sequenceID);
-            taxIds.push_back(lookingInfos[idxOfMin].sequenceID);
+            hasSeenOtherStrains += (entryInfo != lookingInfos[idxOfMin]);
+            taxIds.push_back(lookingInfos[idxOfMin]);
 
             lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
             lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
@@ -172,12 +171,11 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
         }
 
         if (taxIds.size() > 1) {
-            entryInfo.sequenceID = taxonomy->LCA(taxIds)->taxId;
+            entryInfo = taxonomy->LCA(taxIds)->taxId;
         } else {
-            entryInfo.sequenceID = taxIds[0];
+            entryInfo = taxIds[0];
         }
 
-        entryInfo.redundancy = (hasSeenOtherStrains > 0 || entryInfo.redundancy);
         getDiffIdx(lastWrittenKmer, entryKmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx);
         lastWrittenKmer = entryKmer;
         writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx);
@@ -257,10 +255,9 @@ uint64_t FileMerger::getNextKmer(uint64_t lookingTarget, const struct MmapedData
 }
 
 size_t FileMerger::smallest(const uint64_t lookingKmers[],
-                            const TargetKmerInfo lookingInfos[],
+                            const TaxID lookingInfos[],
                             const unordered_map<TaxID, TaxID> & taxId2speciesId,
-                            const size_t & fileCnt)
-{
+                            const size_t & fileCnt) {
     size_t idxOfMin = 0;
     uint64_t min = lookingKmers[0];
     int minTaxIdAtRank;
@@ -272,14 +269,13 @@ size_t FileMerger::smallest(const uint64_t lookingKmers[],
         //     cerr << "TaxID not found 1: " << lookingInfos[0].sequenceID << endl;
         //     exit(1);
         // }
-        minTaxIdAtRank = taxId2speciesId.at((int) lookingInfos[0].sequenceID);
+        minTaxIdAtRank = taxId2speciesId.at(lookingInfos[0]);
     }
-    for(size_t i = 1; i < fileCnt; i++)
-    {
+    for(size_t i = 1; i < fileCnt; i++) {
         if(lookingKmers[i] < min ||
-          (lookingKmers[i] == min && taxId2speciesId.at((int) lookingInfos[i].sequenceID) < minTaxIdAtRank)){
+          (lookingKmers[i] == min && taxId2speciesId.at(lookingInfos[i]) < minTaxIdAtRank)){
             min = lookingKmers[i];
-            minTaxIdAtRank = taxId2speciesId.at((int) lookingInfos[i].sequenceID);
+            minTaxIdAtRank = taxId2speciesId.at(lookingInfos[i]);
             idxOfMin = i;
         }
     }
@@ -314,16 +310,16 @@ void FileMerger::flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & 
     localBufIdx = 0;
 }
 
-void FileMerger::writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t & infoBufferIdx, size_t & totalInfoIdx)
+void FileMerger::writeInfo(TaxID * entryToWrite, FILE * infoFile, TaxID * infoBuffer, size_t & infoBufferIdx, size_t & totalInfoIdx)
 {
     if (infoBufferIdx >= bufferSize) {
         flushInfoBuf(infoBuffer, infoFile, infoBufferIdx);
     }
-    memcpy(infoBuffer + infoBufferIdx, entryToWrite, sizeof(TargetKmerInfo));
+    memcpy(infoBuffer + infoBufferIdx, entryToWrite, sizeof(TaxID));
     infoBufferIdx++;
     totalInfoIdx ++;
 }
-void FileMerger::flushInfoBuf(TargetKmerInfo * buffer, FILE * infoFile, size_t & localBufIdx ) {
-    fwrite(buffer, sizeof(TargetKmerInfo), localBufIdx, infoFile);
+void FileMerger::flushInfoBuf(TaxID * buffer, FILE * infoFile, size_t & localBufIdx ) {
+    fwrite(buffer, sizeof(TaxID), localBufIdx, infoFile);
     localBufIdx = 0;
 }

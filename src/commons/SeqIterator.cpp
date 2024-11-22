@@ -447,10 +447,10 @@ SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock &block, const char
             tempKmer += aaSeq[kmerCnt + i] * powers[j] * mask[i];
         }
         if (checkN == 1) {
-            kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0, false};
+            kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0};
         } else {
             addDNAInfo_TargetKmer(tempKmer, seq, block, kmerCnt);
-            kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, false};
+            kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID};
         }
         posToWrite++;
     }
@@ -493,10 +493,10 @@ int SeqIterator::fillBufferWithKmerFromBlock(const char *seq, TargetKmerBuffer &
             tempKmer += aaSeq[kmerCnt + i] * powers[j] * mask[i];
         }
         if (checkN == 1) {
-            kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0, false};
+            kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0};
         } else {
             addDNAInfo_TargetKmer(tempKmer, seq, kmerCnt);
-            kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, false};
+            kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID};
         }
         posToWrite++;
     }

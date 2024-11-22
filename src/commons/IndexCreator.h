@@ -138,12 +138,8 @@ protected:
 
 //    void maskLowComplexityRegions(char * seq, char * maskedSeq, ProbabilityMatrix & probMat,
 //                                  const LocalParameters & par);
-    size_t fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
-                                bool *checker,
-                                size_t &processedSplitCnt,
-                                const LocalParameters &par);
 
-    size_t fillTargetKmerBuffer2(TargetKmerBuffer &kmerBuffer,
+    size_t fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                 bool *checker,
                                 size_t &processedSplitCnt,
                                 const LocalParameters &par);
@@ -232,11 +228,11 @@ public:
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
                     uint16_t *kmerBuf, size_t bufferSize, size_t & localBufIdx, size_t & totalBufferIdx);
 
-    void writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t bufferSize, size_t & infoBufferIdx);
+    void writeInfo(TaxID * entryToWrite, FILE * infoFile, TaxID * infoBuffer, size_t bufferSize, size_t & infoBufferIdx);
 
     static void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
 
-    static void flushInfoBuf(TargetKmerInfo * buffer, FILE * infoFile, size_t & localBufIdx );
+    static void flushInfoBuf(TaxID * buffer, FILE * infoFile, size_t & localBufIdx );
 
     void makeAAoffsets(const LocalParameters & par);
 
