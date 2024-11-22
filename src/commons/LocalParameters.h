@@ -41,12 +41,14 @@ public:
     PARAMETER(ARCHAEA_TAX_ID)
     PARAMETER(EUKARYOTA_TAX_ID)
 
+    // DB and classify
+    PARAMETER(SKIP_REDUDANCY)
+
     // Classify
     PARAMETER(SEQ_MODE)
     PARAMETER(REDUCED_AA)
     PARAMETER(MIN_SCORE)
     PARAMETER(MIN_COVERAGE)
-    // PARAMETER(SPACED)
     PARAMETER(MIN_COVERED_POS)
     PARAMETER(HAMMING_MARGIN)
     PARAMETER(MIN_SP_SCORE)
@@ -95,6 +97,8 @@ public:
     int archaeaTaxId;
     int eukaryotaTaxId;
 
+    // DB and classify
+    int skipRedundancy;
 
     // Classify
     int seqMode;

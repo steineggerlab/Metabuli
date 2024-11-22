@@ -103,6 +103,10 @@ int loadDbParameters(LocalParameters &par) {
           par.dbName = tokens[1];
         } else if (tokens[0] == "Creation_date") {
           par.dbDate = tokens[1];
+        } else if (tokens[0] == "Skip_redundancy") {
+          if (tokens[1] == "1") {
+            par.skipRedundancy = 1;
+          }
         }
       }
       return 1;

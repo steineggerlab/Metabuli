@@ -5,6 +5,7 @@
 #include "FileUtil.h"
 
 void setDefaults_build(LocalParameters & par){
+    par.skipRedundancy = 1;
     par.reducedAA = 0;
     // par.spaceMask = "11111111";
     par.taxonomyPath = "" ;

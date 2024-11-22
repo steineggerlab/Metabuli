@@ -39,6 +39,13 @@ LocalParameters::LocalParameters() :
                          typeid(int),
                          (void *) &eukaryotaTaxId,
                          "^[0-9]+$"),
+        SKIP_REDUDANCY(SKIP_REDUDANCY_ID,
+                        "--skip-redundancy",
+                        "Skip redundancy info",
+                        "Skip redundancy info",
+                        typeid(int),
+                        (void *) &skipRedundancy,
+                        "^[0-9]+$"),
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
                  "Sequencing type",
@@ -375,6 +382,7 @@ LocalParameters::LocalParameters() :
     build.push_back(&DB_DATE);
     build.push_back(&CDS_INFO);
     build.push_back(&RAM_USAGE);
+    build.push_back(&SKIP_REDUDANCY);
 
     //classify
     classify.push_back(&PARAM_THREADS);
@@ -399,7 +407,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MATCH_PER_KMER);
     classify.push_back(&ACCESSION_LEVEL);
     classify.push_back(&TIE_RATIO);
-    // classify.push_back(&MIN_SS_MATCH);
+    classify.push_back(&SKIP_REDUDANCY);
 
     // extract
     extract.push_back(&TAXONOMY_PATH);

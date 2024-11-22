@@ -185,8 +185,12 @@ bool KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
     std::fill_n(splitCheckList, threads, false);
     time_t beforeSearch = time(nullptr);
     size_t totalOverFlowCnt = 0;
+    int redundancyStored = 0;
+    if (par.skipRedundancy == 0) {
+        redundancyStored = 1;
+    }
 #pragma omp parallel default(none), shared(splitCheckList, totalOverFlowCnt, \
-querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffIdx, targetInfoFileName)
+querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffIdx, redundancyStored, targetInfoFileName)
 {
     // FILE
     FILE * diffIdxFp = fopen(targetDiffIdxFileName.c_str(), "rb");
@@ -345,7 +349,7 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
             while (diffIdxPos != numOfDiffIdx &&
                    currentQueryAA == AMINO_ACID_PART(currentTargetKmer)) {
                 candidateTargetKmers.push_back(currentTargetKmer);
-                candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
+                candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx) >> redundancyStored);
                 if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
                     loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
                 }
@@ -650,11 +654,14 @@ bool KmerMatcher::matchKmers_skipDecoding(QueryKmerBuffer * queryKmerBuffer,
 
     // development
     size_t totalSkip = 0;
-
+    int redundancyStored = 0;
+    if (par.skipRedundancy == 0) {
+        redundancyStored = 1;
+    }
     while (completedSplitCnt < threads) {
         bool hasOverflow = false;
 #pragma omp parallel default(none), shared(completedSplitCnt, splitCheckList, hasOverflow, \
-querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffIdx, targetInfoFileName, \
+querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffIdx, redundancyStored, targetInfoFileName, \
 offsets, aaOffsetCnt, totalSkip)
         {
             // FILE
@@ -872,7 +879,7 @@ offsets, aaOffsetCnt, totalSkip)
                     while (diffIdxPos != numOfDiffIdx &&
                            currentQueryAA == AMINO_ACID_PART(currentTargetKmer)) {
                         candidateTargetKmers.push_back(currentTargetKmer);
-                        candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
+                        candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx) >> redundancyStored);
                         // Print the target k-mer
 //                        if (par.printLog == 1) {
 //                            cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t"
