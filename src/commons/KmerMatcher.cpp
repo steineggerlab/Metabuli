@@ -185,12 +185,10 @@ bool KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
     std::fill_n(splitCheckList, threads, false);
     time_t beforeSearch = time(nullptr);
     size_t totalOverFlowCnt = 0;
-    int redundancyStored = 0;
-    if (par.skipRedundancy == 0) {
-        redundancyStored = 1;
-    }
+    int redundancyStored = par.skipRedundancy == 0;
+    unsigned int mask = ~((static_cast<unsigned int>(par.skipRedundancy == 0) << 31));
 #pragma omp parallel default(none), shared(splitCheckList, totalOverFlowCnt, \
-querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffIdx, redundancyStored, targetInfoFileName)
+querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numOfDiffIdx, redundancyStored, targetInfoFileName)
 {
     // FILE
     FILE * diffIdxFp = fopen(targetDiffIdxFileName.c_str(), "rb");
@@ -349,7 +347,15 @@ querySplits, queryKmerList, matchBuffer, cout, targetDiffIdxFileName, numOfDiffI
             while (diffIdxPos != numOfDiffIdx &&
                    currentQueryAA == AMINO_ACID_PART(currentTargetKmer)) {
                 candidateTargetKmers.push_back(currentTargetKmer);
-                candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx) >> redundancyStored);
+                if (redundancyStored) {
+                    candidateKmerInfos.push_back(getKmerInfo<TaxID>(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx)& mask);
+                } else {
+                    candidateKmerInfos.push_back(getKmerInfo<TaxID>(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
+                }
+                // candidateKmerInfos.push_back(getKmerInfo<TaxID>(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx) & mask);
+                if (candidateKmerInfos.back() < 0) {
+                    cout << candidateKmerInfos.back() << endl;
+                }
                 if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
                     loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
                 }
@@ -879,7 +885,7 @@ offsets, aaOffsetCnt, totalSkip)
                     while (diffIdxPos != numOfDiffIdx &&
                            currentQueryAA == AMINO_ACID_PART(currentTargetKmer)) {
                         candidateTargetKmers.push_back(currentTargetKmer);
-                        candidateKmerInfos.push_back(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx) >> redundancyStored);
+                        candidateKmerInfos.push_back(static_cast<unsigned int>(getKmerInfo(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx)) >> redundancyStored);
                         // Print the target k-mer
 //                        if (par.printLog == 1) {
 //                            cout << queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t"
