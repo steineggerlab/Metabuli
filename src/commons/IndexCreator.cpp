@@ -14,9 +14,7 @@ extern const char *version;
 IndexCreator::IndexCreator(const LocalParameters & par) {
     // Parameters
     threadNum = par.threads;
-    bufferSize = par.bufferSize;
     reducedAA = par.reducedAA;
-    // spaceMask = par.spaceMask;
     accessionLevel = par.accessionLevel;
     lowComplexityMasking = par.maskMode;
     lowComplexityMaskingThreshold = par.maskProb;
@@ -46,7 +44,6 @@ IndexCreator::IndexCreator(const LocalParameters & par) {
         taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp",
                                     taxonomyDir + "/nodes.dmp",
                                     taxonomyDir + "/merged.dmp");
-        writeTaxonomyDB();
     }
 
     if (par.reducedAA == 1){
@@ -100,7 +97,7 @@ void IndexCreator::createIndex(const LocalParameters &par) {
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
 #endif
-    while(processedSplitCnt < numOfSplits){ // Check this condition
+    while(processedSplitCnt < numOfSplits) { // Check this condition
         // Initialize the k-mer buffer
         memset(kmerBuffer.buffer, 0, kmerBuffer.bufferSize * sizeof(TargetKmer));
 
@@ -118,9 +115,9 @@ void IndexCreator::createIndex(const LocalParameters &par) {
         uniqKmerIdxRanges.clear();
 
         // Reduce redundancy
-        reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt,uniqKmerIdxRanges, par);
+        reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt, uniqKmerIdxRanges, par);
         time_t reduction = time(nullptr);
-        cout<<"Time spent for reducing redundancy: "<<(double) (reduction - sort) << endl;
+        cout << "Time spent for reducing redundancy: " << (double) (reduction - sort) << endl;
         if(processedSplitCnt == numOfSplits && numOfFlush == 0){
             writeTargetFilesAndSplits(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par, uniqKmerIdx, uniqKmerCnt, uniqKmerIdxRanges);
         } else {
@@ -130,59 +127,60 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     }
     delete[] splitChecker;
     writeDbParameters();
+    writeTaxonomyDB();
 }
 
 void IndexCreator::updateIndex(const LocalParameters &par) {
-    // Read through FASTA files and make blocks of sequences to be processed by each thread
-    makeBlocksForParallelProcessing();
-    cout << "Made blocks for each thread" << endl;
+//     // Read through FASTA files and make blocks of sequences to be processed by each thread
+//     makeBlocksForParallelProcessing();
+//     cout << "Made blocks for each thread" << endl;
 
-    // Train Prodigal for each species
-    time_t prodigalStart = time(nullptr);
-    time_t prodigalEnd = time(nullptr);
-    cout << "Prodigal training time: " << prodigalEnd - prodigalStart << " seconds" << endl;
+//     // Train Prodigal for each species
+//     time_t prodigalStart = time(nullptr);
+//     time_t prodigalEnd = time(nullptr);
+//     cout << "Prodigal training time: " << prodigalEnd - prodigalStart << " seconds" << endl;
 
-    // Write taxonomy id list
-    string taxidListFileName = dbDir + "/taxID_list";
-    FILE * taxidListFile = fopen(taxidListFileName.c_str(), "w");
-    for (auto & taxid : taxIdList) {
-        fprintf(taxidListFile, "%d\n", taxid);
-    }
-    fclose(taxidListFile);
+//     // Write taxonomy id list
+//     string taxidListFileName = dbDir + "/taxID_list";
+//     FILE * taxidListFile = fopen(taxidListFileName.c_str(), "w");
+//     for (auto & taxid : taxIdList) {
+//         fprintf(taxidListFile, "%d\n", taxid);
+//     }
+//     fclose(taxidListFile);
 
-    // Process the splits until all are processed
-    size_t numOfSplits = fnaSplits.size();
-    bool * splitChecker = new bool[numOfSplits];
-    fill_n(splitChecker, numOfSplits, false);
-    size_t processedSplitCnt = 0;
-    TargetKmerBuffer kmerBuffer(par.bufferSize);
-    cout << "Kmer buffer size: " << kmerBuffer.bufferSize << endl;
-#ifdef OPENMP
-    omp_set_num_threads(par.threads);
-#endif
-    while(processedSplitCnt < numOfSplits){
-        fillTargetKmerBuffer2(kmerBuffer, splitChecker, processedSplitCnt, par);
-        time_t start = time(nullptr);
-        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
-                      IndexCreator::compareForDiffIdx);
-        time_t sort = time(nullptr);
-        cout << "Sort time: " << sort - start << endl;
+//     // Process the splits until all are processed
+//     size_t numOfSplits = fnaSplits.size();
+//     bool * splitChecker = new bool[numOfSplits];
+//     fill_n(splitChecker, numOfSplits, false);
+//     size_t processedSplitCnt = 0;
+//     TargetKmerBuffer kmerBuffer(par.bufferSize);
+//     cout << "Kmer buffer size: " << kmerBuffer.bufferSize << endl;
+// #ifdef OPENMP
+//     omp_set_num_threads(par.threads);
+// #endif
+//     while(processedSplitCnt < numOfSplits){
+//         fillTargetKmerBuffer2(kmerBuffer, splitChecker, processedSplitCnt, par);
+//         time_t start = time(nullptr);
+//         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
+//                       IndexCreator::compareForDiffIdx);
+//         time_t sort = time(nullptr);
+//         cout << "Sort time: " << sort - start << endl;
         
-        auto * uniqKmerIdx = new size_t[kmerBuffer.startIndexOfReserve + 1];
-        size_t uniqKmerCnt = 0;
-        vector<pair<size_t, size_t>> uniqKmerIdxRanges;
+//         auto * uniqKmerIdx = new size_t[kmerBuffer.startIndexOfReserve + 1];
+//         size_t uniqKmerCnt = 0;
+//         vector<pair<size_t, size_t>> uniqKmerIdxRanges;
 
-        reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt, uniqKmerIdxRanges, par);
-        time_t reduction = time(nullptr);
-        cout<<"Time spent for reducing redundancy: "<<(double) (reduction - sort) << endl;
-        if(processedSplitCnt == numOfSplits && numOfFlush == 0){
-            writeTargetFilesAndSplits(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par, uniqKmerIdx, uniqKmerCnt, uniqKmerIdxRanges);
-        } else {
-            writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par,uniqKmerIdx, uniqKmerIdxRanges);
-        }
-        delete[] uniqKmerIdx;
-    }
-    delete[] splitChecker;
+//         reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt, uniqKmerIdxRanges, par);
+//         time_t reduction = time(nullptr);
+//         cout<<"Time spent for reducing redundancy: "<<(double) (reduction - sort) << endl;
+//         if(processedSplitCnt == numOfSplits && numOfFlush == 0){
+//             writeTargetFilesAndSplits(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par, uniqKmerIdx, uniqKmerCnt, uniqKmerIdxRanges);
+//         } else {
+//             writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par,uniqKmerIdx, uniqKmerIdxRanges);
+//         }
+//         delete[] uniqKmerIdx;
+//     }
+//     delete[] splitChecker;
 }
 
 void IndexCreator::makeBlocksForParallelProcessing() {
@@ -202,7 +200,7 @@ void IndexCreator::makeBlocksForParallelProcessing() {
     string eachFile;
     string seqHeader;
     string accession_version;
-
+    string accession;
     for (int i = 0; i < fileNum; ++i) {
         // Get start and end position of each sequence in the file
         getline(fnaListFile, eachFile);
@@ -210,9 +208,8 @@ void IndexCreator::makeBlocksForParallelProcessing() {
         processedSeqCnt.push_back(taxIdList.size());
         seqHeader = getSeqSegmentsWithHead(fastaList[i].sequences, eachFile, acc2taxid);
         accession_version = seqHeader.substr(1, LocalUtil::getFirstWhiteSpacePos(seqHeader) - 1);
-        TaxID speciesTaxid = taxonomy->getTaxIdAtRank(searchAccession2TaxID(accession_version, acc2taxid), "species");
-
-        // Split current file into blocks for parallel processing
+        accession = accession_version.substr(0, accession_version.find('.'));
+        TaxID speciesTaxid = taxonomy->getTaxIdAtRank(acc2taxid.at(accession), "species");
         splitFastaForProdigalTraining(i, speciesTaxid);
         fastaList[i].speciesID = speciesTaxid;
     }
@@ -258,7 +255,8 @@ void IndexCreator::makeBlocksForParallelProcessing_accession_level() {
         processedSeqCnt.push_back(taxIdList.size());
         seqHeader = getSeqSegmentsWithHead(fastaList[i].sequences, eachFile, acc2taxid, newAcc2taxid);
         accession_version = seqHeader.substr(1, LocalUtil::getFirstWhiteSpacePos(seqHeader) - 1);
-        tempTaxIDList.push_back(searchAccession2TaxID(accession_version, acc2taxid));   
+        accession = accession_version.substr(0, accession_version.find('.'));
+        tempTaxIDList.push_back(acc2taxid.at(accession));   
     }
 
     // Edit taxonomy dump files
@@ -480,31 +478,29 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer,
         return;
     }
     numOfFlush++;
-    uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 1024 * 1024 * 32); // 64MB
+    size_t bufferSize = 1024 * 1024 * 32;
+    uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * bufferSize); // 64MB
+    TargetKmerInfo *infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * bufferSize);
     size_t localBufIdx = 0;
+    size_t localInfoBufIdx = 0;
     uint64_t lastKmer = 0;
     size_t write = 0;
 
     for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
         for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
-            fwrite(& kmerBuffer[uniqKmerIdx[j]].info, sizeof (TargetKmerInfo), 1, infoFile);
+            writeInfo(&kmerBuffer[uniqKmerIdx[j]].info, infoFile, infoBuffer, bufferSize, localInfoBufIdx);
+            // fwrite(& kmerBuffer[uniqKmerIdx[j]].info, sizeof (TargetKmerInfo), 1, infoFile);
             write++;
-            getDiffIdx(lastKmer, kmerBuffer[uniqKmerIdx[j]].ADkmer, diffIdxFile, diffIdxBuffer, localBufIdx);
+            getDiffIdx(lastKmer, kmerBuffer[uniqKmerIdx[j]].ADkmer, diffIdxFile, diffIdxBuffer, bufferSize, localBufIdx);
             lastKmer = kmerBuffer[uniqKmerIdx[j]].ADkmer;
         }
     }
-
-    // for(size_t i = 0; i < uniqKmerCnt ; i++) {
-    //     fwrite(& kmerBuffer[uniqeKmerIdx[i]].info, sizeof (TargetKmerInfo), 1, infoFile);
-    //     write++;
-    //     getDiffIdx(lastKmer, kmerBuffer[uniqeKmerIdx[i]].ADkmer, diffIdxFile, diffIdxBuffer, localBufIdx);
-    //     lastKmer = kmerBuffer[uniqeKmerIdx[i]].ADkmer;
-    // }
+    flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
+    flushInfoBuf(infoBuffer, infoFile, localInfoBufIdx);
 
     cout<<"total k-mer count  : "<< kmerNum << endl;
     cout<<"written k-mer count: "<< write << endl;
-
-    flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
+    free(infoBuffer);
     free(diffIdxBuffer);
     fclose(diffIdxFile);
     fclose(infoFile);
@@ -551,7 +547,6 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
                 if (AminoAcidPart(kmerBuffer[uniqKmerIdx[k]].ADkmer) 
                     != AminoAcidPart(kmerBuffer[uniqKmerIdx[k + 1]].ADkmer)) {
                     splitList[splitCnt].ADkmer = kmerBuffer[uniqKmerIdx[k + 1]].ADkmer;
-                    cout << "Split " << splitCnt << " at " << splitList[splitCnt].ADkmer << endl;
                     splitCnt++;
                     found = true;
                     break;
@@ -574,9 +569,11 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
     }
     numOfFlush++;
 
-
-    uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * 1024 * 1024 * 32); // 64MB
+    size_t bufferSize = 1024 * 1024 * 32;
+    uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * bufferSize); // 64MB
+    TargetKmerInfo *infoBuffer = (TargetKmerInfo *)malloc(sizeof(TargetKmerInfo) * bufferSize);
     size_t localBufIdx = 0;
+    size_t localInfoBufIdx = 0;
     uint64_t lastKmer = 0;
     size_t write = 0;
 
@@ -585,9 +582,10 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
     cout << "Writing k-mers to disk" << endl;
     for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
         for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
-            fwrite(& kmerBuffer[uniqKmerIdx[j]].info, sizeof (TargetKmerInfo), 1, infoFile);
+            writeInfo(&kmerBuffer[uniqKmerIdx[j]].info, infoFile, infoBuffer, bufferSize, localInfoBufIdx);
+            // fwrite(& kmerBuffer[uniqKmerIdx[j]].info, sizeof (TargetKmerInfo), 1, infoFile);
             write++;
-            getDiffIdx(lastKmer, kmerBuffer[uniqKmerIdx[j]].ADkmer, diffIdxFile, diffIdxBuffer, localBufIdx, totalDiffIdx);
+            getDiffIdx(lastKmer, kmerBuffer[uniqKmerIdx[j]].ADkmer, diffIdxFile, diffIdxBuffer, bufferSize, localBufIdx, totalDiffIdx);
             lastKmer = kmerBuffer[uniqKmerIdx[j]].ADkmer;
             if((splitIdx < splitCnt) && (lastKmer == splitList[splitIdx].ADkmer)){
                 splitList[splitIdx].diffIdxOffset = totalDiffIdx;
@@ -596,32 +594,20 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
             }
         }
     }
-    // for(size_t i = 0; i < uniqKmerCnt ; i++) {
-    //     fwrite(& kmerBuffer[uniqKmerIdx[i]].info, sizeof (TargetKmerInfo), 1, infoFile);
-    //     write++;
-    //     getDiffIdx(lastKmer, kmerBuffer[uniqKmerIdx[i]].ADkmer, diffIdxFile,
-    //                diffIdxBuffer, localBufIdx, totalDiffIdx);
-    //     lastKmer = kmerBuffer[uniqKmerIdx[i]].ADkmer;
-    //     if((splitIdx < splitCnt) && (lastKmer == splitList[splitIdx].ADkmer)){
-    //         splitList[splitIdx].diffIdxOffset = totalDiffIdx;
-    //         splitList[splitIdx].infoIdxOffset = write;
-    //         // cout << "Split " << splitIdx << " at " << splitList[splitIdx].infoIdxOffset << " " << 
-    //         // splitList[splitIdx].diffIdxOffset << " " << splitList[splitIdx].ADkmer << endl;
-    //         splitIdx ++;
-    //     }
-    // }
-
     cout<<"total k-mer count  : "<< kmerNum << endl;
     cout<<"written k-mer count: "<< write << endl;
 
     flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
+    flushInfoBuf(infoBuffer, infoFile, localInfoBufIdx);
     fwrite(splitList, sizeof(DiffIdxSplit), par.splitNum, diffIdxSplitFile);
 
     free(diffIdxBuffer);
+    free(infoBuffer);
     fclose(diffIdxSplitFile);
     fclose(diffIdxFile);
     fclose(infoFile);
     kmerNum = 0;
+    cout << "Finished writing k-mers to disk" << endl;
 }
 
 void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
@@ -664,13 +650,11 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
     splits.emplace_back(startIdx, kmerBuffer.startIndexOfReserve - 1);
     uniqKmerIdxRanges.emplace_back(pair<size_t, size_t>(startIdx, 0));
 
-    // size_t ** idxOfEachSplit = new size_t * [splits.size()];
     size_t * cntOfEachSplit = new size_t[splits.size()];
-    for(size_t i = 0; i < splits.size(); i++){
-        // idxOfEachSplit[i] = new size_t[splits[i].end - splits[i].offset + 2];
+    for(size_t i = 0; i < splits.size(); i++) {
         cntOfEachSplit[i] = 0;
     }
-#pragma omp parallel default(none), shared(kmerBuffer, cntOfEachSplit, splits, par, uniqueKmerCnt, uniqKmerIdx, uniqKmerIdxRanges)
+#pragma omp parallel default(none), shared(kmerBuffer, cntOfEachSplit, splits, par, cout, uniqueKmerCnt, uniqKmerIdx, uniqKmerIdxRanges)
     {
         TargetKmer * lookingKmer;
         size_t lookingIndex;
@@ -748,7 +732,12 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
     delete[] cntOfEachSplit;
 }
 
-void IndexCreator::getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx){
+void IndexCreator::getDiffIdx(const uint64_t & lastKmer,
+                              const uint64_t & entryToWrite, 
+                              FILE* handleKmerTable, 
+                              uint16_t *kmerBuf,
+                              size_t bufferSize, 
+                              size_t & localBufIdx){
     uint64_t kmerdiff = entryToWrite - lastKmer;
     uint16_t buffer[5];
     int idx = 3;
@@ -760,11 +749,11 @@ void IndexCreator::getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryT
         buffer[idx] = toWrite;
         idx--;
     }
-    writeDiffIdx(kmerBuf, handleKmerTable, (buffer + idx + 1), (4 - idx), localBufIdx);
+    writeDiffIdx(kmerBuf, bufferSize, handleKmerTable, (buffer + idx + 1), (4 - idx), localBufIdx);
 }
 
 void IndexCreator::getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
-                              uint16_t *kmerBuf, size_t & localBufIdx, size_t & totalBufferIdx){
+                              uint16_t *kmerBuf, size_t bufferSize, size_t & localBufIdx, size_t & totalBufferIdx){
     uint64_t kmerdiff = entryToWrite - lastKmer;
     uint16_t buffer[5];
     int idx = 3;
@@ -777,7 +766,7 @@ void IndexCreator::getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryT
         idx--;
     }
     totalBufferIdx += 4 - idx;
-    writeDiffIdx(kmerBuf, handleKmerTable, (buffer + idx + 1), (4 - idx), localBufIdx);
+    writeDiffIdx(kmerBuf, bufferSize, handleKmerTable, (buffer + idx + 1), (4 - idx), localBufIdx);
 }
 
 void IndexCreator::flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx ) {
@@ -785,23 +774,27 @@ void IndexCreator::flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t 
     localBufIdx = 0;
 }
 
-void IndexCreator::writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx ) {
-    if (localBufIdx + size >= bufferSize) {
+void IndexCreator::writeDiffIdx(uint16_t *buffer,
+                                size_t bufferMaxSize,
+                                FILE* handleKmerTable,
+                                uint16_t *toWrite,
+                                size_t size,
+                                size_t & localBufIdx ) {
+    if (localBufIdx + size >= bufferMaxSize) {
         flushKmerBuf(buffer, handleKmerTable, localBufIdx);
     }
     memcpy(buffer + localBufIdx, toWrite, sizeof(uint16_t) * size);
     localBufIdx += size;
 }
 
-void IndexCreator::writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t & infoBufferIdx)
-{
+void IndexCreator::writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t bufferSize, size_t & infoBufferIdx) {
     if (infoBufferIdx >= bufferSize) {
         flushInfoBuf(infoBuffer, infoFile, infoBufferIdx);
     }
     memcpy(infoBuffer + infoBufferIdx, entryToWrite, sizeof(TargetKmerInfo));
     infoBufferIdx++;
 }
-void IndexCreator::flushInfoBuf(TargetKmerInfo * buffer, FILE * infoFile, size_t & localBufIdx ) {
+void IndexCreator::flushInfoBuf(TargetKmerInfo * buffer, FILE * infoFile, size_t & localBufIdx) {
     fwrite(buffer, sizeof(TargetKmerInfo), localBufIdx, infoFile);
     localBufIdx = 0;
 }
@@ -815,18 +808,6 @@ inline bool IndexCreator::compareForDiffIdx(const TargetKmer & a, const TargetKm
         return a.ADkmer < b.ADkmer;
     }
     return a.taxIdAtRank < b.taxIdAtRank;
-}
-
-void IndexCreator::splitSequenceFile(vector<SequenceBlock> & seqSegments, MmapedData<char> seqFile) {
-    size_t start = 0;
-    size_t numOfChar = seqFile.fileSize / sizeof(char);
-    for(size_t i = 1; i < numOfChar; i++){
-        if(seqFile.data[i] == '>'){
-            seqSegments.emplace_back(start, i-2, i - start - 1);
-            start = i;
-        }
-    }
-    seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
 }
 
 string IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
@@ -940,32 +921,6 @@ string IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
     return firstLine;                            
 }
 
-// void IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const char * seqFileName) {
-//     struct stat stat1{};
-//     stat(seqFileName, &stat1);
-//     size_t numOfChar = stat1.st_size;
-
-//     ifstream seqFile;
-//     seqFile.open(seqFileName);
-//     string eachLine;
-//     size_t start = 0;
-//     size_t pos;
-//     if (seqFile.is_open()) {
-//         getline(seqFile, eachLine, '\n');
-//         while (getline(seqFile, eachLine, '\n')) {
-//             if (eachLine[0] == '>') {
-//                 pos = (size_t) seqFile.tellg();
-//                 seqSegments.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
-//                 start = pos - eachLine.length() - 1;
-//             }
-//         }
-//         seqSegments.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
-//     } else {
-//         cerr << "Cannot open the FASTA file." << endl;
-//     }
-//     seqFile.close();
-// }
-
 void IndexCreator::load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid){
     string key, value;
     ifstream map;
@@ -1009,7 +964,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
         kseq_t *seq;
         vector<uint64_t> intergenicKmers;
         vector<int> aaSeq;
-        bool trained = false;
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < fnaSplits.size(); i++) {
             if (!checker[i] && !hasOverflow) {
@@ -1027,7 +981,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                 size_t estimatedKmerCnt = (totalLength + totalLength / 10) / 3;
 
                 ProdigalWrapper * prodigal = new ProdigalWrapper();
-                trained = false;
 
                 // Process current split if buffer has enough space.
                 posToWrite = kmerBuffer.reserveMemory(estimatedKmerCnt);
@@ -1040,7 +993,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     seq = kseq_init(&buffer);
                     kseq_read(seq);
                     lengthOfTrainingSeq = seq->seq.l;
-                    // cout << "T: " << seq->name.s << " " << lengthOfTrainingSeq << " " << estimatedKmerCnt << endl;
 
                     // Train prodigal
                     prodigal->is_meta = 0;
@@ -1181,7 +1133,6 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer &kmerBuffer,
                                           size_t &processedSplitCnt,
                                           const LocalParameters &par) {
     int hasOverflow = 0;
-
 #pragma omp parallel default(none), shared(kmerBuffer, checker, processedSplitCnt, hasOverflow, par, cout)
     {
         ProbabilityMatrix probMatrix(*subMat);
@@ -1360,7 +1311,7 @@ size_t IndexCreator::fillTargetKmerBuffer2(TargetKmerBuffer &kmerBuffer,
 
                                 for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
                                     aaSeq.clear();
-                                    seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt], aaSeq, seq->seq.l); // HERE
+                                    seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt], aaSeq, seq->seq.l);
                                     tempCheck = seqIterator.fillBufferWithKmerFromBlock(
                                             extendedORFs[orfCnt],
                                             maskedSeq,
@@ -1428,6 +1379,7 @@ void IndexCreator::writeDbParameters() {
     fprintf(handle, "Accession_level\t%d\n", accessionLevel);
     fprintf(handle, "Mask_mode\t%d\n", lowComplexityMasking);
     fprintf(handle, "Mask_prob\t%f\n", lowComplexityMaskingThreshold);
+    fprintf(handle, "Skip_redundancy\t1\n");
     fclose(handle);
 }
 

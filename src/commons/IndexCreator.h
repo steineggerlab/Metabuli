@@ -121,7 +121,12 @@ protected:
                                    size_t & uniqKmerCnt, 
                                    const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
-    void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
+    void writeDiffIdx(uint16_t *buffer,
+                      size_t bufferSize,
+                      FILE* handleKmerTable,
+                      uint16_t *toWrite,
+                      size_t size,
+                      size_t & localBufIdx);
 
     void writeTaxonomyDB();
 
@@ -222,12 +227,12 @@ public:
     void updateIndex(const LocalParameters & par);
 
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
-                    uint16_t *kmerBuf, size_t & localBufIdx);
+                    uint16_t *kmerBuf, size_t bufferSize, size_t & localBufIdx);
 
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
-                    uint16_t *kmerBuf, size_t & localBufIdx, size_t & totalBufferIdx);
+                    uint16_t *kmerBuf, size_t bufferSize, size_t & localBufIdx, size_t & totalBufferIdx);
 
-    void writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t & infoBufferIdx);
+    void writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t bufferSize, size_t & infoBufferIdx);
 
     static void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
 
