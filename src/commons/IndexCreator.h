@@ -26,6 +26,51 @@
 #include <omp.h>
 #endif
 
+struct Accession {
+    Accession() = default;
+    Accession(const string & accession, uint32_t whichFasta, uint32_t order, uint32_t length) 
+        : accession(accession), whichFasta(whichFasta), order(order), length(length), speciesID(0), taxID(0) {}
+    string accession;
+    uint32_t whichFasta;
+    uint32_t order;
+    uint32_t length;
+    uint32_t speciesID;
+    TaxID taxID;
+
+    bool operator < (const Accession & a) const {
+        if (speciesID != a.speciesID)
+            return speciesID < a.speciesID;
+        
+        if (whichFasta != a.whichFasta)
+            return whichFasta < a.whichFasta;
+
+        if (order != a.order)
+            return order < a.order;
+    }
+
+    static bool compare(const Accession & a, const Accession & b) {
+        if (a.speciesID != b.speciesID)
+            return a.speciesID < b.speciesID;
+        
+        if (a.whichFasta != b.whichFasta)
+            return a.whichFasta < b.whichFasta;
+
+        if (a.order != b.order)
+            return a.order < b.order;
+    }
+};
+
+struct AccessionBatch {
+    uint32_t whichFasta;
+    TaxID speciesID;
+    uint32_t trainingSeqFasta;
+    uint32_t trainingSeqIdx;
+    vector<uint32_t> orders;
+    vector<TaxID> taxIDs;
+
+    AccessionBatch(uint32_t whichFasta, TaxID speciesID, uint32_t trainingSeqFasta, uint32_t trainingSeqIdx)
+        : whichFasta(whichFasta), speciesID(speciesID), trainingSeqFasta(trainingSeqFasta), trainingSeqIdx(trainingSeqIdx) {}
+};
 
 struct TaxId2Fasta{
     TaxID species;
@@ -42,6 +87,7 @@ protected:
     BaseMatrix *subMat;
 
     // Parameters
+    const LocalParameters & par;
     int threadNum;
     size_t bufferSize;
     int reducedAA;
@@ -65,6 +111,9 @@ protected:
     string paramterFileName;
 
     std::unordered_map<string, vector<CDSinfo>> cdsInfoMap;
+
+    // std::unordered_map<string, Accession> observedAccessions;
+    std::vector<AccessionBatch> accessionBatches;
 
     struct FASTA {
         string path;
@@ -133,16 +182,23 @@ protected:
     void writeDbParameters();
 
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
-    
-    static bool compareForDiffIdx2(const TargetKmer & a, const TargetKmer & b);
-
-//    void maskLowComplexityRegions(char * seq, char * maskedSeq, ProbabilityMatrix & probMat,
-//                                  const LocalParameters & par);
 
     size_t fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                 bool *checker,
                                 size_t &processedSplitCnt,
                                 const LocalParameters &par);
+
+    void indexReferenceSequences();
+
+    void getAccessionBatches(std::vector<Accession> & observedAccessionsVec);
+
+    void getObservedAccessions(const string & fnaListFileName,
+                               vector<Accession> & observedAccessionsVec,
+                               unordered_map<string, size_t> accession2index);
+
+    void getTaxonomyOfAccessions(vector<Accession> & observedAccessionsVec,
+                                 const unordered_map<string, size_t> & accession2index,
+                                 const string & acc2taxidFileName);
 
     void makeBlocksForParallelProcessing();
 
@@ -156,9 +212,9 @@ protected:
 
     void load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
 
-    static TaxID load_accession2taxid(const string & fastaList,
-                                      const string & mappingFile,
-                                      unordered_map<string, int> & assacc2taxid);
+    TaxID load_accession2taxid(const string & fastaList,
+                              const string & mappingFile,
+                              unordered_map<string, int> & assacc2taxid);
 
     TaxID getMaxTaxID();
 
@@ -212,7 +268,7 @@ public:
 
     IndexCreator(const LocalParameters & par);
 
-    IndexCreator() {taxonomy = nullptr;}
+    // IndexCreator() {taxonomy = nullptr;}
 
     ~IndexCreator();
     
