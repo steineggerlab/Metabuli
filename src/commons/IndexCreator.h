@@ -34,7 +34,7 @@ struct Accession {
     uint32_t whichFasta;
     uint32_t order;
     uint32_t length;
-    uint32_t speciesID;
+    TaxID speciesID;
     TaxID taxID;
 
     bool operator < (const Accession & a) const {
@@ -67,6 +67,14 @@ struct AccessionBatch {
     uint32_t trainingSeqIdx;
     vector<uint32_t> orders;
     vector<TaxID> taxIDs;
+    vector<uint32_t> lengths;
+
+    void print() {
+        cout << "whichFasta: " << whichFasta << " speciesID: " << speciesID << " trainingSeqFasta: " << trainingSeqFasta << " trainingSeqIdx: " << trainingSeqIdx << endl;
+        for (size_t i = 0; i < orders.size(); ++i) {
+            cout << "order: " << orders[i] << " taxID: " << taxIDs[i] << " length: " << lengths[i] << endl;
+        }
+    }
 
     AccessionBatch(uint32_t whichFasta, TaxID speciesID, uint32_t trainingSeqFasta, uint32_t trainingSeqIdx)
         : whichFasta(whichFasta), speciesID(speciesID), trainingSeqFasta(trainingSeqFasta), trainingSeqIdx(trainingSeqIdx) {}
@@ -114,6 +122,7 @@ protected:
 
     // std::unordered_map<string, Accession> observedAccessions;
     std::vector<AccessionBatch> accessionBatches;
+    std::unordered_set<TaxID> taxIdSet;
 
     struct FASTA {
         string path;
@@ -123,8 +132,9 @@ protected:
     };
 
     TaxID newTaxID;
+    vector<string> fastaPaths;
     vector<FASTA> fastaList;
-    vector<TaxID> taxIdList;
+    // vector<TaxID> taxIdList;
     vector<size_t> processedSeqCnt; // Index of this vector is the same as the index of fnaList
 
 
@@ -138,7 +148,7 @@ protected:
         FnaSplit(size_t training, size_t offset, size_t cnt, TaxID speciesID, int file_idx):
                 training(training), offset(offset), cnt(cnt), speciesID(speciesID), file_idx(file_idx) {}
     };
-    vector<FnaSplit> fnaSplits;
+    // vector<FnaSplit> fnaSplits;
 
     struct FastaSplit{
         FastaSplit(size_t training, uint32_t offset, uint32_t cnt, TaxID taxid):
@@ -194,7 +204,7 @@ protected:
 
     void getObservedAccessions(const string & fnaListFileName,
                                vector<Accession> & observedAccessionsVec,
-                               unordered_map<string, size_t> accession2index);
+                               unordered_map<string, size_t> & accession2index);
 
     void getTaxonomyOfAccessions(vector<Accession> & observedAccessionsVec,
                                  const unordered_map<string, size_t> & accession2index,

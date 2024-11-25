@@ -134,38 +134,35 @@ void FileMerger::mergeTargetFiles(const LocalParameters & par, int numOfSplits) 
         entryInfo = lookingInfos[idxOfMin];
 
         // update looking k-mers
-        lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
-        lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
-        infoFileIdx[idxOfMin] ++;
-        if( diffFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin] ){
+        if (diffFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin] ){
             lookingKmers[idxOfMin] = UINT64_MAX;
             numOfincompletedFiles--;
-            if(numOfincompletedFiles == 0) break;
+            if (numOfincompletedFiles == 0) break;
+        } else {
+            lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
+            lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
+            infoFileIdx[idxOfMin] ++;
         }
+
         idxOfMin = smallest(lookingKmers, lookingInfos, taxId2speciesId, numOfSplits);
 
-        int hasSeenOtherStrains = 0;
         taxIds.clear();
         taxIds.push_back(entryInfo); // Wrong
         
         // Scan redundant k-mers
-        while(taxId2speciesId[entryInfo] == taxId2speciesId[lookingInfos[idxOfMin]]){
-            if(entryKmer != lookingKmers[idxOfMin]) break;
-
-            hasSeenOtherStrains += (entryInfo != lookingInfos[idxOfMin]);
+        while(taxId2speciesId[entryInfo] == taxId2speciesId[lookingInfos[idxOfMin]] && entryKmer == lookingKmers[idxOfMin]){
             taxIds.push_back(lookingInfos[idxOfMin]);
-
-            lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
-            lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
-            infoFileIdx[idxOfMin] ++;
-
-            if(diffFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin] ){
+            if (diffFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin]) {
                 lookingKmers[idxOfMin] = UINT64_MAX;
                 numOfincompletedFiles--;
-                if(numOfincompletedFiles == 0){
+                if (numOfincompletedFiles == 0) {
                     endFlag = 1;
                     break;
                 }
+            } else {
+                lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
+                lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
+                infoFileIdx[idxOfMin] ++;
             }
             idxOfMin = smallest(lookingKmers, lookingInfos, taxId2speciesId, numOfSplits);
         }
