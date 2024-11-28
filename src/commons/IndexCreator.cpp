@@ -279,59 +279,6 @@ void IndexCreator::updateIndex(const LocalParameters &par) {
 //     fclose(acc2taxidFile);
 // }
 
-// void IndexCreator::splitFastaForProdigalTraining(int file_idx, TaxID speciesID) {
-//     uint32_t offset = 0;
-//     uint32_t cnt = 0;
-//     size_t maxLength = 0;
-//     size_t seqForTraining = 0;
-//     vector<FnaSplit> tempSplits;
-//     size_t seqIdx = 0;
-//     size_t currLength = 0;
-//     size_t lengthSum = 0;
-//     bool stored = false;
-//     while(seqIdx < fastaList[file_idx].sequences.size()){
-//         stored = false;
-        
-//         // Skip
-//         if(speciesID == 0) { seqIdx++; continue;}
-
-//         // Length
-//         currLength = fastaList[file_idx].sequences[seqIdx].length;
-//         if (currLength > maxLength){
-//             maxLength = currLength;
-//             seqForTraining = seqIdx;
-//         }
-//         lengthSum += currLength;
-        
-//         cnt ++;
-//         // Check the size of current split
-//         if(lengthSum > 100'000'000 || cnt > 300 || (cnt > 100 && lengthSum > 50'000'000)){
-//             tempSplits.emplace_back(0, offset, cnt, speciesID, file_idx);
-//             offset += cnt;
-//             lengthSum = 0;
-//             cnt = 0;
-//             stored = true;
-//         }
-//         // if(lengthSum > 100'000'000 || cnt > 300 || (cnt > 100 && lengthSum > 50'000'000)){
-//         //     tempSplits.emplace_back(0, offset, cnt - 1, speciesID, file_idx);
-//         //     offset += cnt - 1;
-//         //     lengthSum = 0;
-//         //     cnt = 1;
-//         //     stored = true;
-//         // }
-//         seqIdx ++;
-//     }
-//     if(!stored){
-//         tempSplits.emplace_back(0, offset, cnt, speciesID, file_idx);
-//     }
-//     // Update the training sequence
-//     for(auto & x : tempSplits){
-//         x.training = seqForTraining;
-//         fnaSplits.push_back(x);
-//     }
-//     fastaList[file_idx].trainingSeqIdx = seqForTraining;
-// }
-
 void IndexCreator::indexReferenceSequences() {
     vector<Accession> observedAccessionsVec;
     unordered_map<string, size_t> accession2index;
@@ -377,9 +324,9 @@ void IndexCreator::getObservedAccessions(const string & fnaListFileName,
                 char* pos = strchr(e.name.s, '.'); 
                 if (pos != nullptr) {
                     *pos = '\0';
-                    localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l);
+                    localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l + e.name.l + e.comment.l);
                 } else {
-                    localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l);
+                    localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l + e.name.l + e.comment.l);
                 }
                 order++; 
             }
@@ -852,7 +799,8 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
         }
     }
 
-    cout << "startIdx: " << startIdx << endl;
+    cout << "Starting Idx: " << startIdx << endl;
+    cout << "Ending Idx: " << kmerBuffer.startIndexOfReserve << endl;
 
     // Make splits
     vector<Split> splits;
@@ -1196,7 +1144,9 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     while (kseq->ReadEntry()) {
                         if (seqCnt == accessionBatches[batchIdx].orders[idx]) {
                             const KSeqWrapper::KSeqEntry & e = kseq->entry;
-                            cout << "Processing " << e.name.s << "\t" << e.sequence.l << "\t" << posToWrite << endl;
+        //                             #pragma omp critical
+        // {
+        //                     cout << "Processing " << e.name.s << "\t" << e.sequence.l << "\t" << accessionBatches[batchIdx].speciesID << "\t" << accessionBatches[batchIdx].taxIDs[idx] << "\n";}
 
                             // Mask low complexity regions
                             char *maskedSeq = nullptr;
@@ -1251,7 +1201,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                             } else {
                                 // USE PRODIGAL
                                 if (!trained) {
-                                    KSeqWrapper* training_seq = KSeqFactory(fastaPaths[accessionBatches[batchIdx].trainingSeqFasta].c_str()); //////////
+                                    KSeqWrapper* training_seq = KSeqFactory(fastaPaths[accessionBatches[batchIdx].trainingSeqFasta].c_str()); 
                                     size_t seqCnt = 0;
                                     while (training_seq->ReadEntry()) {
                                         if (seqCnt == accessionBatches[batchIdx].trainingSeqIdx) {
@@ -1259,6 +1209,11 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                         }
                                         seqCnt++;
                                     }
+                                    #pragma omp critical
+                                    {
+                                        cout << "Training " << accessionBatches[batchIdx].speciesID << "\t" << training_seq->entry.name.s << "\t" << training_seq->entry.sequence.l << endl;
+                                    }
+                                    // cout << "Training " << training_seq->entry.name.s << "\t" << training_seq->entry.sequence.l << endl;
                                     lengthOfTrainingSeq = training_seq->entry.sequence.l;
                                     prodigal->is_meta = 0;
                                     if (lengthOfTrainingSeq < 100'000) {
@@ -1357,9 +1312,9 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     }
                     delete kseq;
                     __sync_fetch_and_add(&processedBatchCnt, 1);
-#ifdef OPENMP
-                    cout << omp_get_thread_num() << " processed " << batchIdx << "th splits (" << processedBatchCnt << ")" << endl;
-#endif
+// #ifdef OPENMP
+//                     cout << omp_get_thread_num() << " processed " << batchIdx << "th splits (" << processedBatchCnt << ")" << endl;
+// #endif
                 } else {
                     checker[batchIdx] = false;
                     __sync_fetch_and_add(&hasOverflow, 1);
