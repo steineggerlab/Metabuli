@@ -8,6 +8,8 @@
 #include "Reporter.h"
 #include "Util.h"
 #include "sys/mman.h"
+#include <fcntl.h>
+
 
 void process_mem_usage(double &vm_usage, double &resident_set) {
   vm_usage = 0.0;
@@ -151,4 +153,130 @@ int searchAccession2TaxID(const std::string &name,
   }
 
   return 0;
+}
+
+void getObservedAccessionList(const string & fnaListFileName,
+                              vector<string> & fastaList,
+                              unordered_map<string, TaxID> & acc2taxid) {
+  ifstream fileListFile(fnaListFileName);
+  if (fileListFile.is_open()) {
+    for (string eachLine; getline(fileListFile, eachLine);) {
+      fastaList.push_back(eachLine);
+    }
+  } else {
+    cout << "Cannot open file for file list" << endl;
+  } 
+
+  // Iterate through the fasta files to get observed accessions
+  size_t accCnt = 0;
+  size_t copyCount = 0;
+  #pragma omp parallel default(none), shared(fastaList, cout, accCnt, copyCount, acc2taxid)
+  {
+    unordered_map<string, TaxID> localAcc2taxid;
+    localAcc2taxid.reserve(4096 * 4);
+        
+    #pragma omp for schedule(dynamic, 1)
+    for (size_t i = 0; i < fastaList.size(); ++i) {
+        KSeqWrapper* kseq = KSeqFactory(fastaList[i].c_str());
+        while (kseq->ReadEntry()) {
+            const KSeqWrapper::KSeqEntry & e = kseq->entry;
+            // Get the accession ID without version
+            char* pos = strchr(e.name.s, '.'); 
+            if (pos != nullptr) {
+                *pos = '\0';
+                localAcc2taxid[e.name.s] = 0;
+            } else {
+                localAcc2taxid[e.name.s] = 0;
+            }
+        }
+        delete kseq;
+    } 
+    __sync_fetch_and_add(&accCnt, localAcc2taxid.size()); 
+    #pragma omp barrier
+    
+    #pragma omp critical
+    {
+        if (acc2taxid.size() < accCnt) {
+            acc2taxid.reserve(accCnt);
+        }
+    }  
+    #pragma omp critical
+    {
+        for (const auto & acc : localAcc2taxid) {
+            acc2taxid.insert(acc);
+        }
+    }                     
+  }
+}
+
+void getTaxonomyOfAccessions(unordered_map<string, TaxID> & acc2taxid,
+                             const string & acc2taxidFileName) {
+  cerr << "Load mapping from accession ID to taxonomy ID ... " << flush;
+
+  // Open the file
+  int fd = open(acc2taxidFileName.c_str(), O_RDONLY);
+  if (fd < 0) {
+      cerr << "Cannot open file for mapping from accession to tax ID" << endl;
+      return;
+  }
+
+  // Get the size of the file
+  struct stat sb;
+  if (fstat(fd, &sb) == -1) {
+      cerr << "Cannot get the size of the file for mapping from accession to tax ID" << endl;
+      close(fd);
+      return;
+  }
+
+  size_t fileSize = sb.st_size;
+
+  // Map the file to memory
+  char* fileData = static_cast<char*>(mmap(nullptr, fileSize, PROT_READ, MAP_PRIVATE, fd, 0));
+  if (fileData == MAP_FAILED) {
+      cerr << "mmap failed" << endl;
+      close(fd);
+      return;
+  }
+  close(fd);  // Close the file descriptor as it is no longer needed after mmap.
+
+  // Parse the file
+  char* current = fileData;
+  char* end = fileData + fileSize;
+
+  // Skip the header line
+  while (current < end && *current != '\n') {
+      ++current;
+  }
+  ++current;  // Move past the newline
+
+    char accession[16384];
+    int taxID;
+
+    while (current < end) {
+        // Read a line
+        char* lineStart = current;
+        while (current < end && *current != '\n') {
+            ++current;
+        }
+        std::string line(lineStart, current - lineStart);
+
+        // Parse the line
+        if (sscanf(line.c_str(), "%s\t%*s\t%d\t%*d", accession, &taxID) == 2) {
+          // Get the accession ID without version
+          char* pos = strchr(accession, '.');
+          if (pos != nullptr) {
+            *pos = '\0';
+          }
+          auto it = acc2taxid.find(accession);
+          if (it != acc2taxid.end()) {
+            acc2taxid[accession] = taxID;
+          }
+        }
+        ++current;  // Move to the next line
+    }
+
+    // Unmap the file
+    if (munmap(fileData, fileSize) == -1) {
+        cerr << "munmap failed" << endl;
+    }                                        
 }
