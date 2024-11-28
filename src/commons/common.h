@@ -137,11 +137,11 @@ size_t loadBuffer(FILE *fp, T *buffer, size_t &bufferIdx, size_t number) {
     return fread(buffer, sizeof(T), number, fp);
 }
 
-void getObservedAccessionList(const string & fnaListFileName,
-                              vector<string> & fastaList,
-                              unordered_map<string, TaxID> & acc2taxid);
+void getObservedAccessionList(const std::string & fnaListFileName,
+                              std::vector<std::string> & fastaList,
+                              std::unordered_map<std::string, TaxID> & acc2taxid);
 
-void getTaxonomyOfAccessions(unordered_map<string, TaxID> & acc2taxid,
-                             const string & acc2taxidFileName);
+void getTaxonomyOfAccessions(std::unordered_map<std::string, TaxID> & acc2taxid,
+                             const std::string & acc2taxidFileName);
 
 #endif //ADCLASSIFIER2_COMMON_H

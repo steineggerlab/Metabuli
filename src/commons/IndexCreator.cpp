@@ -39,12 +39,9 @@ IndexCreator::IndexCreator(const LocalParameters & par) : par(par) {
     versionFileName = dbDir + "/db.version";
     paramterFileName = dbDir + "/db.parameters";
 
-    if (!par.accessionLevel){
-        // taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
-        taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp",
-                                    taxonomyDir + "/nodes.dmp",
-                                    taxonomyDir + "/merged.dmp");
-    }
+    taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp",
+                                taxonomyDir + "/nodes.dmp",
+                                taxonomyDir + "/merged.dmp");    
 
     if (par.reducedAA == 1){
         MARKER = 0Xffffffff;
@@ -126,99 +123,9 @@ void IndexCreator::createIndex(const LocalParameters &par) {
 }
 
 void IndexCreator::updateIndex(const LocalParameters &par) {
-//     // Read through FASTA files and make blocks of sequences to be processed by each thread
-//     makeBlocksForParallelProcessing();
-//     cout << "Made blocks for each thread" << endl;
 
-//     // Train Prodigal for each species
-//     time_t prodigalStart = time(nullptr);
-//     time_t prodigalEnd = time(nullptr);
-//     cout << "Prodigal training time: " << prodigalEnd - prodigalStart << " seconds" << endl;
-
-//     // Write taxonomy id list
-//     string taxidListFileName = dbDir + "/taxID_list";
-//     FILE * taxidListFile = fopen(taxidListFileName.c_str(), "w");
-//     for (auto & taxid : taxIdList) {
-//         fprintf(taxidListFile, "%d\n", taxid);
-//     }
-//     fclose(taxidListFile);
-
-//     // Process the splits until all are processed
-//     size_t numOfSplits = fnaSplits.size();
-//     bool * splitChecker = new bool[numOfSplits];
-//     fill_n(splitChecker, numOfSplits, false);
-//     size_t processedSplitCnt = 0;
-//     TargetKmerBuffer kmerBuffer(par.bufferSize);
-//     cout << "Kmer buffer size: " << kmerBuffer.bufferSize << endl;
-// #ifdef OPENMP
-//     omp_set_num_threads(par.threads);
-// #endif
-//     while(processedSplitCnt < numOfSplits){
-//         fillTargetKmerBuffer2(kmerBuffer, splitChecker, processedSplitCnt, par);
-//         time_t start = time(nullptr);
-//         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
-//                       IndexCreator::compareForDiffIdx);
-//         time_t sort = time(nullptr);
-//         cout << "Sort time: " << sort - start << endl;
-        
-//         auto * uniqKmerIdx = new size_t[kmerBuffer.startIndexOfReserve + 1];
-//         size_t uniqKmerCnt = 0;
-//         vector<pair<size_t, size_t>> uniqKmerIdxRanges;
-
-//         reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt, uniqKmerIdxRanges, par);
-//         time_t reduction = time(nullptr);
-//         cout<<"Time spent for reducing redundancy: "<<(double) (reduction - sort) << endl;
-//         if(processedSplitCnt == numOfSplits && numOfFlush == 0){
-//             writeTargetFilesAndSplits(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par, uniqKmerIdx, uniqKmerCnt, uniqKmerIdxRanges);
-//         } else {
-//             writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par,uniqKmerIdx, uniqKmerIdxRanges);
-//         }
-//         delete[] uniqKmerIdx;
-//     }
-//     delete[] splitChecker;
 }
 
-// void IndexCreator::makeBlocksForParallelProcessing() {
-//     unordered_map<string, TaxID> acc2taxid;
-//     load_accession2taxid(fnaListFileName, acc2taxidFileName, acc2taxid);
-
-//     // Make blocks of sequences that can be processed in parallel
-//     int fileNum = getNumberOfLines(fnaListFileName);
-//     fastaList.resize(fileNum);
-
-//     ifstream fnaListFile;
-//     fnaListFile.open(fnaListFileName);
-//     if (!fnaListFile.is_open()) {
-//         Debug(Debug::ERROR) << "Cannot open file for file list" << "\n";
-//         EXIT(EXIT_FAILURE);
-//     }
-//     string eachFile;
-//     string seqHeader;
-//     string accession_version;
-//     string accession;
-//     for (int i = 0; i < fileNum; ++i) {
-//         // Get start and end position of each sequence in the file
-//         getline(fnaListFile, eachFile);
-//         fastaList[i].path = eachFile;
-//         processedSeqCnt.push_back(taxIdList.size());
-//         seqHeader = getSeqSegmentsWithHead(fastaList[i].sequences, eachFile, acc2taxid);
-//         accession_version = seqHeader.substr(1, LocalUtil::getFirstWhiteSpacePos(seqHeader) - 1);
-//         accession = accession_version.substr(0, accession_version.find('.'));
-//         TaxID speciesTaxid = taxonomy->getTaxIdAtRank(acc2taxid.at(accession), "species");
-//         splitFastaForProdigalTraining(i, speciesTaxid);
-//         fastaList[i].speciesID = speciesTaxid;
-//     }
-//     fnaListFile.close();
-
-//     // Write accession to taxid map to file
-//     string acc2taxidFileName2 = dbDir + "/acc2taxid.map";
-//     FILE * acc2taxidFile = fopen(acc2taxidFileName2.c_str(), "w");
-//     for (auto it = acc2taxid.begin(); it != acc2taxid.end(); ++it) {
-//         fprintf(acc2taxidFile, "%s\t%d\n", it->first.c_str(), it->second);
-//     }
-//     fclose(acc2taxidFile);
-
-// }
 
 // void IndexCreator::makeBlocksForParallelProcessing_accession_level() {
 //     unordered_map<string, TaxID> acc2taxid;
@@ -285,13 +192,13 @@ void IndexCreator::indexReferenceSequences() {
     getObservedAccessions(par.filenames[1], observedAccessionsVec, accession2index);
     cout << "Number of observed accessions: " << observedAccessionsVec.size() << endl;
     getTaxonomyOfAccessions(observedAccessionsVec, accession2index, par.filenames[2]);
-    cout << "Number of observed taxids: " << taxIdSet.size() << endl;
+    // cout << "Number of observed taxids: " << taxIdSet.size() << endl;
     getAccessionBatches(observedAccessionsVec);
     cout << "Number of accession batches: " << accessionBatches.size() << endl;
-    for (size_t i = 0; i < accessionBatches.size(); ++i) {
-        cout << "Batch " << i << endl;
-        accessionBatches[i].print();
-    }
+    // for (size_t i = 0; i < accessionBatches.size(); ++i) {
+    //     cout << "Batch " << i << endl;
+    //     accessionBatches[i].print();
+    // }
 }
 
 void IndexCreator::getObservedAccessions(const string & fnaListFileName,
@@ -358,8 +265,7 @@ void IndexCreator::getObservedAccessions(const string & fnaListFileName,
 void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccessionsVec,
                                            const unordered_map<string, size_t> & accession2index,
                                            const string & acc2taxidFileName) {
-    TaxID maxTaxID = 0;
-    cerr << "Load mapping from accession ID to taxonomy ID ... " << flush;
+    vector<pair<string, pair<TaxID, TaxID>>> acc2accId;                                       
 
     // Open the file
     int fd = open(acc2taxidFileName.c_str(), O_RDONLY);
@@ -398,8 +304,7 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
     ++current;  // Move past the newline
 
     char accession[16384];
-    int taxID;
-
+    TaxID taxID, newTaxID = 0, maxTaxID = 0;
     while (current < end) {
         // Read a line
         char* lineStart = current;
@@ -417,166 +322,56 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
             }
             auto it = accession2index.find(accession);
             if (it != accession2index.end()) {
+                maxTaxID = std::max(maxTaxID, taxID);
                 // TODO: Accession level taxonomy
-                taxIdSet.insert(taxID);
-                observedAccessionsVec[it->second].taxID = taxID;
-                observedAccessionsVec[it->second].speciesID = taxonomy->getTaxIdAtRank(taxID, "species");
+                if (par.accessionLevel == 1) {
+                    acc2accId.emplace_back(accession, make_pair(taxID, newTaxID));
+                    taxIdSet.insert(newTaxID);
+                    observedAccessionsVec[it->second].taxID = newTaxID;
+                    observedAccessionsVec[it->second].speciesID = taxonomy->getTaxIdAtRank(taxID, "species");
+                    newTaxID++;
+                } else {
+                    taxIdSet.insert(taxID);
+                    observedAccessionsVec[it->second].taxID = taxID;
+                    observedAccessionsVec[it->second].speciesID = taxonomy->getTaxIdAtRank(taxID, "species");
+                }
             }
-            maxTaxID = std::max(maxTaxID, taxID);
         }
         ++current;  // Move to the next line
     }
-
     // Unmap the file
     if (munmap(fileData, fileSize) == -1) {
         cerr << "munmap failed" << endl;
-    }                                        
-}
+    }                 
 
-
-// TaxID IndexCreator::load_accession2taxid(const string & fastaList,
-//                                          const string & mappingFileName, 
-//                                          unordered_map<string, int> & acc2taxid) {
-//     // Load file names
-//     ifstream fileListFile(fastaList);
-//     vector<string> fileNames;
-//     if (fileListFile.is_open()) {
-//         for (string eachLine; getline(fileListFile, eachLine);) {
-//             fileNames.push_back(eachLine);
-//         }
-//     } else {
-//         cout << "Cannot open file for file list" << endl;
-//     }                  
-
-//     // Iterate through the fasta files to get observed accessions
-//     size_t accCnt = 0;
-//     size_t copyCount = 0;
-//     std::vector<Accession> observedAccessionsVec;
-//     unordered_map<string, size_t> accession2index;    
-//     #pragma omp parallel default(none), shared(fileNames, observedAccessionsVec, accession2index, accCnt, acc2taxid, copyCount)
-//     {
-//         unordered_map<string, int> localAcc2taxid;
-//         vector<Accession> localObservedAccessionsVec;
-//         localObservedAccessionsVec.reserve(4096 * 4);
+    if (par.accessionLevel == 1) {
+        maxTaxID = std::max(getMaxTaxID() + 1, maxTaxID + 1);
+        for (size_t i = 0; i < acc2accId.size(); ++i) {
+            acc2accId[i].second.second += maxTaxID;
+        }
+        for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {
+            observedAccessionsVec[i].taxID += maxTaxID;
+        }
+        std::unordered_set<TaxID> updatedTaxIdSet;
+        updatedTaxIdSet.reserve(taxIdSet.size());
+        for (const auto& taxId : taxIdSet) {
+            updatedTaxIdSet.insert(taxId + maxTaxID);
+        }
+        taxIdSet = std::move(updatedTaxIdSet);
         
-//         #pragma omp for schedule(dynamic, 1)
-//         for (size_t i = 0; i < fileNames.size(); ++i) {
-//             KSeqWrapper* kseq = KSeqFactory(fileNames[i].c_str());
-//             uint32_t order = 0;
-//             while (kseq->ReadEntry()) {
-//                 const KSeqWrapper::KSeqEntry & e = kseq->entry;
-//                 // Get the accession ID without version
-//                 char* pos = strchr(e.name.s, '.'); 
-//                 if (pos != nullptr) {
-//                     *pos = '\0';
-//                     localAcc2taxid[e.name.s] = 0;
-//                     localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l);
-//                 } else {
-//                     localAcc2taxid[e.name.s] = 0;
-//                     localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l);
-//                 }
-//                 order++; 
-//             }
-//             delete kseq;
-//         }
-//         #pragma omp barrier
-//         __sync_fetch_and_add(&accCnt, localObservedAccessionsVec.size()); 
-//         if (observedAccessionsVec.size() < accCnt) {
-//             observedAccessionsVec.resize(accCnt);
-//         }
-//         #pragma omp critical
-//         {
-//             for (const auto& entry : localAcc2taxid) {
-//                 acc2taxid[entry.first] = entry.second;
-//             }
-//             size_t start = copyCount;
-//             for (size_t j = start ; j < start + localObservedAccessionsVec.size(); ++j) {
-//                 observedAccessionsVec[j] = localObservedAccessionsVec[j - start];
-//                 accession2index[observedAccessionsVec[j].accession] = j;
-//             }
-//             __sync_fetch_and_add(&copyCount, localObservedAccessionsVec.size());            
-//         }                     
-//     }
-                   
-    
-//     TaxID maxTaxID = 0;
-//     cerr << "Load mapping from accession ID to taxonomy ID ... " << flush;
 
-//     // Open the file
-//     int fd = open(mappingFileName.c_str(), O_RDONLY);
-//     if (fd < 0) {
-//         cerr << "Cannot open file for mapping from accession to tax ID" << endl;
-//         return 0;
-//     }
-
-//     // Get the size of the file
-//     struct stat sb;
-//     if (fstat(fd, &sb) == -1) {
-//         cerr << "Cannot get the size of the file for mapping from accession to tax ID" << endl;
-//         close(fd);
-//         return 0;
-//     }
-
-//     size_t fileSize = sb.st_size;
-
-//     // Map the file to memory
-//     char* fileData = static_cast<char*>(mmap(nullptr, fileSize, PROT_READ, MAP_PRIVATE, fd, 0));
-//     if (fileData == MAP_FAILED) {
-//         cerr << "mmap failed" << endl;
-//         close(fd);
-//         return 0;
-//     }
-//     close(fd);  // Close the file descriptor as it is no longer needed after mmap.
-
-//     // Parse the file
-//     char* current = fileData;
-//     char* end = fileData + fileSize;
-
-//     // Skip the header line
-//     while (current < end && *current != '\n') {
-//         ++current;
-//     }
-//     ++current;  // Move past the newline
-
-//     char accession[16384];
-//     int taxID;
-
-//     while (current < end) {
-//         // Read a line
-//         char* lineStart = current;
-//         while (current < end && *current != '\n') {
-//             ++current;
-//         }
-//         std::string line(lineStart, current - lineStart);
-
-//         // Parse the line
-//         if (sscanf(line.c_str(), "%s\t%*s\t%d\t%*d", accession, &taxID) == 2) {
-//             // Get the accession ID without version
-//             char* pos = strchr(accession, '.');
-//             if (pos != nullptr) {
-//                 *pos = '\0';
-//             }
-//             if (acc2taxid.find(accession) != acc2taxid.end()) {
-//                 acc2taxid[accession] = taxID;
-//                 observedAccessionsVec[accession2index[accession]].taxID = taxID;
-//                 observedAccessionsVec[accession2index[accession]].speciesID = taxonomy->getTaxIdAtRank(taxID, "species");
-//             }
-//             if (taxID > maxTaxID) {
-//                 maxTaxID = taxID;
-//             }
-//         }
-//         ++current;  // Move to the next line
-//     }
-
-//     // Unmap the file
-//     if (munmap(fileData, fileSize) == -1) {
-//         cerr << "munmap failed" << endl;
-//     }
-
-
-//     getAccessionBatches(observedAccessionsVec);
-//     return maxTaxID;
-// }
+        editTaxonomyDumpFiles(acc2accId);
+        delete taxonomy;
+        cout << "Accession level database is being created (--accession-level 1)" << endl;
+        cout << "New taxonomic file containing accessions as children of taxa were created as follows:" << endl;
+        cout << taxonomyDir + "/names.dmp.new" << endl;
+        cout << taxonomyDir + "/nodes.dmp.new" << endl;
+        cout << "Loading new taxonomy files" << endl;
+        taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp.new",
+                                    taxonomyDir + "/nodes.dmp.new",
+                                    taxonomyDir + "/merged.dmp");
+    }                       
+}
 
 void IndexCreator::getAccessionBatches(std::vector<Accession> & observedAccessionsVec) {
     size_t accCnt = observedAccessionsVec.size();
@@ -1144,9 +939,13 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     while (kseq->ReadEntry()) {
                         if (seqCnt == accessionBatches[batchIdx].orders[idx]) {
                             const KSeqWrapper::KSeqEntry & e = kseq->entry;
-        //                             #pragma omp critical
-        // {
-        //                     cout << "Processing " << e.name.s << "\t" << e.sequence.l << "\t" << accessionBatches[batchIdx].speciesID << "\t" << accessionBatches[batchIdx].taxIDs[idx] << "\n";}
+                            // #pragma omp critical
+                            // {
+                            //     cout << "Processing " << e.name.s << "\t" 
+                            //          << e.sequence.l << "\t" 
+                            //          << accessionBatches[batchIdx].speciesID << "\t" 
+                            //          << accessionBatches[batchIdx].taxIDs[idx] << "\n";
+                            // }
 
                             // Mask low complexity regions
                             char *maskedSeq = nullptr;
@@ -1209,11 +1008,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                         }
                                         seqCnt++;
                                     }
-                                    #pragma omp critical
-                                    {
-                                        cout << "Training " << accessionBatches[batchIdx].speciesID << "\t" << training_seq->entry.name.s << "\t" << training_seq->entry.sequence.l << endl;
-                                    }
-                                    // cout << "Training " << training_seq->entry.name.s << "\t" << training_seq->entry.sequence.l << endl;
+                                    // #pragma omp critical
+                                    // {
+                                    //     cout << "Training " << accessionBatches[batchIdx].speciesID << "\t" << training_seq->entry.name.s << "\t" << training_seq->entry.sequence.l << endl;
+                                    // }
                                     lengthOfTrainingSeq = training_seq->entry.sequence.l;
                                     prodigal->is_meta = 0;
                                     if (lengthOfTrainingSeq < 100'000) {
@@ -1312,9 +1110,10 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     }
                     delete kseq;
                     __sync_fetch_and_add(&processedBatchCnt, 1);
-// #ifdef OPENMP
-//                     cout << omp_get_thread_num() << " processed " << batchIdx << "th splits (" << processedBatchCnt << ")" << endl;
-// #endif
+                    #pragma omp critical
+                    {
+                        cout << processedBatchCnt << "batches processed out of " << accessionBatches.size() << endl;
+                    }
                 } else {
                     checker[batchIdx] = false;
                     __sync_fetch_and_add(&hasOverflow, 1);

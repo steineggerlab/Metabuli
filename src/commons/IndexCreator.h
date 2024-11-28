@@ -80,13 +80,6 @@ struct AccessionBatch {
         : whichFasta(whichFasta), speciesID(speciesID), trainingSeqFasta(trainingSeqFasta), trainingSeqIdx(trainingSeqIdx) {}
 };
 
-struct TaxId2Fasta{
-    TaxID species;
-    TaxID taxid;
-    string fasta;
-    TaxId2Fasta(TaxID sp, TaxID ssp, string fasta): species(sp), taxid(ssp), fasta(std::move(fasta)) {}
-};
-
 using namespace std;
 
 class IndexCreator{
@@ -124,41 +117,8 @@ protected:
     std::vector<AccessionBatch> accessionBatches;
     std::unordered_set<TaxID> taxIdSet;
 
-    struct FASTA {
-        string path;
-        TaxID speciesID;
-        size_t trainingSeqIdx;
-        vector<SequenceBlock> sequences;
-    };
-
     TaxID newTaxID;
     vector<string> fastaPaths;
-    vector<FASTA> fastaList;
-    // vector<TaxID> taxIdList;
-    vector<size_t> processedSeqCnt; // Index of this vector is the same as the index of fnaList
-
-
-    struct FnaSplit{
-        // species, file_idx, training, offset, cnt
-        size_t training;
-        size_t offset;
-        size_t cnt;
-        TaxID speciesID;
-        int file_idx;
-        FnaSplit(size_t training, size_t offset, size_t cnt, TaxID speciesID, int file_idx):
-                training(training), offset(offset), cnt(cnt), speciesID(speciesID), file_idx(file_idx) {}
-    };
-    // vector<FnaSplit> fnaSplits;
-
-    struct FastaSplit{
-        FastaSplit(size_t training, uint32_t offset, uint32_t cnt, TaxID taxid):
-            training(training), offset(offset), cnt(cnt), taxid(taxid) {}
-        size_t training;
-        uint32_t offset;
-        uint32_t cnt;
-        TaxID taxid;
-    };
-
    struct Split{
        Split(size_t offset, size_t end) : offset(offset), end(end) {}
        size_t offset;
