@@ -19,12 +19,11 @@ private:
     string dbDir;
     uint64_t MARKER;
     int splitNum;
-    size_t bufferSize;
 
-    void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx, size_t & totalBufIdx);
-    void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx , size_t & totalBufIdx);
-    void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx );
-    void writeInfo(TaxID * entryToWrite, FILE * infoFile, TaxID * infoBuffer, size_t & infoBufferIdx, size_t & totalInfoIdx);
+    void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable, uint16_t *kmerBuf, size_t & localBufIdx, size_t & totalBufIdx, size_t bufferSize);
+    void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx , size_t & totalBufIdx, size_t bufferSize);
+    void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
+    void writeInfo(TaxID * entryToWrite, FILE * infoFile, TaxID * infoBuffer, size_t & infoBufferIdx, size_t & totalInfoIdx, size_t bufferSize);
     void flushInfoBuf(TaxID * buffer, FILE * infoFile, size_t & localBufIdx);
     size_t AminoAcidPart(size_t kmer) {
         return (kmer) & MARKER;

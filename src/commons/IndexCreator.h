@@ -84,20 +84,12 @@ using namespace std;
 
 class IndexCreator{
 protected:
+    // Parameters
+    const LocalParameters & par;
+
     uint64_t MARKER;
     BaseMatrix *subMat;
 
-    // Parameters
-    const LocalParameters & par;
-    int threadNum;
-    size_t bufferSize;
-    int reducedAA;
-    int accessionLevel;
-    int lowComplexityMasking;
-    float lowComplexityMaskingThreshold;
-    string dbName;
-    string dbDate;
-    
     // Inputs
     NcbiTaxonomy * taxonomy;
     string dbDir;
@@ -112,20 +104,15 @@ protected:
     string paramterFileName;
 
     std::unordered_map<string, vector<CDSinfo>> cdsInfoMap;
-
-    // std::unordered_map<string, Accession> observedAccessions;
     std::vector<AccessionBatch> accessionBatches;
     std::unordered_set<TaxID> taxIdSet;
-
-    TaxID newTaxID;
     vector<string> fastaPaths;
-   struct Split{
-       Split(size_t offset, size_t end) : offset(offset), end(end) {}
-       size_t offset;
-       size_t end;
-   };
-
     size_t numOfFlush=0;
+    struct Split{
+        Split(size_t offset, size_t end) : offset(offset), end(end) {}
+        size_t offset;
+        size_t end;
+    };
 
     void writeTargetFiles(TargetKmer * kmerBuffer,
                           size_t & kmerNum,
@@ -170,21 +157,11 @@ protected:
                                  const unordered_map<string, size_t> & accession2index,
                                  const string & acc2taxidFileName);
 
-    void makeBlocksForParallelProcessing();
-
-    void makeBlocksForParallelProcessing_accession_level();
-
-    void splitFastaForProdigalTraining(int file_idx, TaxID speciesID);
-
     void unzipAndList(const string & folder, const string & fastaList_fname){
         system(("./../../util/unzip_and_list.sh " + folder + " " + fastaList_fname).c_str());
     }
 
     void load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
-
-    TaxID load_accession2taxid(const string & fastaList,
-                              const string & mappingFile,
-                              unordered_map<string, int> & assacc2taxid);
 
     TaxID getMaxTaxID();
 
@@ -213,10 +190,16 @@ protected:
 
     void loadCdsInfo(const string & cdsInfoFileList);
 
+    size_t calculateBufferSize(size_t maxRam) {
+        float c = 0.7;
+        if (maxRam <= 32) {
+            c = 0.6;
+        } 
+        return static_cast<size_t>(maxRam * 1024.0 * 1024.0 * 1024.0 * c / 
+                                  (sizeof(TargetKmer) + sizeof(size_t)));
+    }
 
 public:
-    static void splitSequenceFile(vector<SequenceBlock> & seqSegments, MmapedData<char> seqFile);
-
     static void printIndexSplitList(DiffIdxSplit * splitList) {
         for (int i = 0; i < 4096; i++) {
             cout << splitList[i].infoIdxOffset << " " << 
@@ -238,8 +221,6 @@ public:
 
     IndexCreator(const LocalParameters & par);
 
-    // IndexCreator() {taxonomy = nullptr;}
-
     ~IndexCreator();
     
     int getNumOfFlush();
@@ -259,8 +240,5 @@ public:
     static void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
 
     static void flushInfoBuf(TaxID * buffer, FILE * infoFile, size_t & localBufIdx );
-
-    void makeAAoffsets(const LocalParameters & par);
-
 };
 #endif //ADKMER4_INDEXCREATOR_H

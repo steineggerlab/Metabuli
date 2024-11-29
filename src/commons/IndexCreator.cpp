@@ -12,16 +12,6 @@
 extern const char *version;
 
 IndexCreator::IndexCreator(const LocalParameters & par) : par(par) {
-   // Parameters
-    threadNum = par.threads;
-    reducedAA = par.reducedAA;
-    accessionLevel = par.accessionLevel;
-    lowComplexityMasking = par.maskMode;
-    lowComplexityMaskingThreshold = par.maskProb;
-    dbName = par.dbName;
-    dbDate = par.dbDate;
-    
-
     // Input files
     dbDir = par.filenames[0];
     if (par.taxonomyPath.empty()) {
@@ -83,14 +73,13 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     bool * batchChecker = new bool[batchNum];
     fill_n(batchChecker, batchNum, false);
     size_t processedBatchCnt = 0;
-    TargetKmerBuffer kmerBuffer(par.bufferSize);
+    TargetKmerBuffer kmerBuffer(calculateBufferSize(par.ramUsage));
     vector<pair<size_t, size_t>> uniqKmerIdxRanges;
     cout << "Kmer buffer size: " << kmerBuffer.bufferSize << endl;
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
 #endif
-    while(processedBatchCnt < batchNum) { // Check this condition
-        // Initialize the k-mer buffer
+    while(processedBatchCnt < batchNum) {
         memset(kmerBuffer.buffer, 0, kmerBuffer.bufferSize * sizeof(TargetKmer));
 
         // Extract Target k-mers
@@ -126,79 +115,14 @@ void IndexCreator::updateIndex(const LocalParameters &par) {
 
 }
 
-
-// void IndexCreator::makeBlocksForParallelProcessing_accession_level() {
-//     unordered_map<string, TaxID> acc2taxid;
-//     TaxID maxTaxID = load_accession2taxid(fnaListFileName, acc2taxidFileName, acc2taxid);
-//     newTaxID = std::max(getMaxTaxID() + 1, maxTaxID + 1);
-    
-//     vector<pair<string,pair<TaxID, TaxID>>> newAcc2taxid; // accession.version -> (parent, newTaxID)
-
-//     // Make blocks of sequences that can be processed in parallel
-//     int fileNum = getNumberOfLines(fnaListFileName);
-//     fastaList.resize(fileNum);
-
-//     ifstream fnaListFile;
-//     fnaListFile.open(fnaListFileName);
-//     if (!fnaListFile.is_open()) {
-//         Debug(Debug::ERROR) << "Cannot open file for file list" << "\n";
-//         EXIT(EXIT_FAILURE);
-//     }
-//     string eachFile;
-//     string seqHeader;
-//     string accession_version;
-//     string accession;
-//     vector<TaxID> tempTaxIDList;
-
-//     for (int i = 0; i < fileNum; ++i) {
-//         // Get start and end position of each sequence in the file
-//         getline(fnaListFile, eachFile);
-//         fastaList[i].path = eachFile;
-//         processedSeqCnt.push_back(taxIdList.size());
-//         seqHeader = getSeqSegmentsWithHead(fastaList[i].sequences, eachFile, acc2taxid, newAcc2taxid);
-//         accession_version = seqHeader.substr(1, LocalUtil::getFirstWhiteSpacePos(seqHeader) - 1);
-//         accession = accession_version.substr(0, accession_version.find('.'));
-//         tempTaxIDList.push_back(acc2taxid.at(accession));   
-//     }
-
-//     // Edit taxonomy dump files
-//     editTaxonomyDumpFiles(newAcc2taxid);
-
-//     // Load taxonomy
-//     taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp.new",
-//                                 taxonomyDir + "/nodes.dmp.new",
-//                                 taxonomyDir + "/merged.dmp");
-
-
-//     for (int i = 0; i < fileNum; ++i) {
-//         TaxID speciesTaxid = taxonomy->getTaxIdAtRank(tempTaxIDList[i], "species");
-//         splitFastaForProdigalTraining(i, speciesTaxid);
-//         fastaList[i].speciesID = speciesTaxid;
-//     }
-//     fnaListFile.close();
-
-//     // Write accession to taxid map to file
-//     string acc2taxidFileName2 = dbDir + "/acc2taxid.map";
-//     FILE * acc2taxidFile = fopen(acc2taxidFileName2.c_str(), "w");
-//     for (auto it : newAcc2taxid) {
-//         fprintf(acc2taxidFile, "%s\t%d\t%d\n", it.first.c_str(), it.second.first, it.second.second);
-//     }
-//     fclose(acc2taxidFile);
-// }
-
 void IndexCreator::indexReferenceSequences() {
     vector<Accession> observedAccessionsVec;
     unordered_map<string, size_t> accession2index;
     getObservedAccessions(par.filenames[1], observedAccessionsVec, accession2index);
     cout << "Number of observed accessions: " << observedAccessionsVec.size() << endl;
     getTaxonomyOfAccessions(observedAccessionsVec, accession2index, par.filenames[2]);
-    // cout << "Number of observed taxids: " << taxIdSet.size() << endl;
     getAccessionBatches(observedAccessionsVec);
     cout << "Number of accession batches: " << accessionBatches.size() << endl;
-    // for (size_t i = 0; i < accessionBatches.size(); ++i) {
-    //     cout << "Batch " << i << endl;
-    //     accessionBatches[i].print();
-    // }
 }
 
 void IndexCreator::getObservedAccessions(const string & fnaListFileName,
@@ -442,7 +366,7 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer,
     numOfFlush++;
     size_t bufferSize = 1024 * 1024 * 32;
     uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * bufferSize); // 64MB
-    TaxID *infoBuffer = (TaxID *)malloc(sizeof(TaxID) * bufferSize);
+    TaxID *infoBuffer = (TaxID *)malloc(sizeof(TaxID) * bufferSize); // 128MB
     size_t localBufIdx = 0;
     size_t localInfoBufIdx = 0;
     uint64_t lastKmer = 0;
@@ -451,7 +375,6 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer,
     for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
         for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
             writeInfo(&kmerBuffer[uniqKmerIdx[j]].seqId, infoFile, infoBuffer, bufferSize, localInfoBufIdx);
-            // fwrite(& kmerBuffer[uniqKmerIdx[j]].info, sizeof (TargetKmerInfo), 1, infoFile);
             write++;
             getDiffIdx(lastKmer, kmerBuffer[uniqKmerIdx[j]].ADkmer, diffIdxFile, diffIdxBuffer, bufferSize, localBufIdx);
             lastKmer = kmerBuffer[uniqKmerIdx[j]].ADkmer;
@@ -545,7 +468,6 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
     for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
         for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
             writeInfo(&kmerBuffer[uniqKmerIdx[j]].seqId, infoFile, infoBuffer, bufferSize, localInfoBufIdx);
-            // fwrite(& kmerBuffer[uniqKmerIdx[j]].info, sizeof (TargetKmerInfo), 1, infoFile);
             write++;
             getDiffIdx(lastKmer, kmerBuffer[uniqKmerIdx[j]].ADkmer, diffIdxFile, diffIdxBuffer, bufferSize, localBufIdx, totalDiffIdx);
             lastKmer = kmerBuffer[uniqKmerIdx[j]].ADkmer;
@@ -594,8 +516,8 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
         }
     }
 
-    cout << "Starting Idx: " << startIdx << endl;
-    cout << "Ending Idx: " << kmerBuffer.startIndexOfReserve << endl;
+    // cout << "Starting Idx: " << startIdx << endl;
+    // cout << "Ending Idx: " << kmerBuffer.startIndexOfReserve << endl;
 
     // Make splits
     vector<Split> splits;
@@ -759,117 +681,6 @@ inline bool IndexCreator::compareForDiffIdx(const TargetKmer & a, const TargetKm
     return a.taxIdAtRank < b.taxIdAtRank;
 }
 
-// string IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
-//                                             const string & seqFileName,
-//                                             const unordered_map<string, TaxID> & acc2taxid,
-//                                             vector<pair<string,pair<TaxID, TaxID>>> & newAcc2taxid) {
-//     struct stat stat1{};
-//     stat(seqFileName.c_str(), &stat1);
-//     size_t numOfChar = stat1.st_size;
-//     string firstLine;
-//     ifstream seqFile;
-//     seqFile.open(seqFileName);
-//     string eachLine;
-//     size_t start = 0;
-//     size_t pos;
-//     vector<SequenceBlock> seqSegmentsTmp;
-//     string accession;
-//     string accession_version;
-//     int taxid;
-
-//     if (seqFile.is_open()) {
-//         getline(seqFile, firstLine, '\n');
-//         accession_version = firstLine.substr(1, LocalUtil::getFirstWhiteSpacePos(firstLine) - 1);
-//         accession = accession_version.substr(0, accession_version.find('.'));
-//         taxid = acc2taxid.at(accession);
-//         if (taxid == 0) {
-//             cerr << "Cannot find accession: " << accession_version << endl;
-//             cerr << "Please run 'add-to-library' first." << endl;
-//             exit(1);
-//         }
-//         newAcc2taxid.emplace_back(accession_version, make_pair(taxid, newTaxID));
-//         taxIdList.push_back(newTaxID++);
-
-//         while (getline(seqFile, eachLine, '\n')) {
-//             if (eachLine[0] == '>') {
-//                 accession_version = eachLine.substr(1, LocalUtil::getFirstWhiteSpacePos(eachLine) - 1);
-//                 accession = accession_version.substr(0, accession_version.find('.'));
-//                 taxid = acc2taxid.at(accession);
-//                 if (taxid == 0) {
-//                     cerr << "Cannot find accession: " << accession_version << endl;
-//                     cerr << "Please run 'add-to-library' first." << endl;
-//                     exit(1);
-//                 }
-//                 newAcc2taxid.emplace_back(accession_version, make_pair(taxid, newTaxID));
-//                 taxIdList.push_back(newTaxID++);
-//                 pos = (size_t) seqFile.tellg();
-//                 seqSegmentsTmp.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
-//                 start = pos - eachLine.length() - 1;
-//             }
-//         }
-//         seqSegmentsTmp.emplace_back(start, numOfChar - 2, numOfChar - start - 1);
-//     } else {
-//         cerr << "Unable to open file: " << seqFileName << endl;
-//     }
-//     seqFile.close();
-//     seqSegments = std::move(seqSegmentsTmp);
-//     return firstLine;
-// }
-
-// string IndexCreator::getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
-//                                             const string & seqFileName,
-//                                             const unordered_map<string, TaxID> & acc2taxid) {
-//     struct stat stat1{};
-//     stat(seqFileName.c_str(), &stat1);
-//     size_t numOfChar = stat1.st_size;
-//     ifstream seqFile;
-//     seqFile.open(seqFileName);
-//     string firstLine, eachLine;
-//     size_t start = 0;
-//     size_t pos;
-//     vector<SequenceBlock> seqSegmentsTmp;
-//     vector<string> headers;
-//     size_t seqCnt = taxIdList.size();
-//     string accession_version, accession;
-//     int taxid;
-
-//     if (seqFile.is_open()) {
-//         getline(seqFile, firstLine, '\n');
-//         accession_version = firstLine.substr(1, LocalUtil::getFirstWhiteSpacePos(firstLine) - 1);
-//         accession = accession_version.substr(0, accession_version.find('.'));
-//         taxid = acc2taxid.at(accession);
-//         if (taxid == 0) {
-//             cerr << "Cannot find accession: " << accession_version << endl;
-//             cerr << "Please run 'add-to-library' first." << endl;
-//             exit(1);
-//         }
-//         taxIdList.push_back(taxid);
-
-//         while (getline(seqFile, eachLine, '\n')) {
-//             if (eachLine[0] == '>') {
-//                 accession_version = eachLine.substr(1, LocalUtil::getFirstWhiteSpacePos(eachLine) - 1);
-//                 accession = accession_version.substr(0, accession_version.find('.'));
-//                 taxid = acc2taxid.at(accession);
-//                 if (taxid == 0) {
-//                     cerr << "Cannot find accession: " << accession_version << endl;
-//                     cerr << "Please run 'add-to-library' first." << endl;
-//                     exit(1);
-//                 }
-//                 taxIdList.push_back(taxid);
-//                 pos = (size_t) seqFile.tellg();
-//                 seqSegmentsTmp.emplace_back(start, pos - eachLine.length() - 3,pos - eachLine.length() - start - 2);
-//                 start = pos - eachLine.length() - 1;
-//             }
-//         }
-//         seqSegmentsTmp.emplace_back(start, numOfChar - 2, numOfChar - start - 1, seqCnt);
-//     } else {
-//         cerr << "Unable to open file: " << seqFileName << endl;
-//     }
-//     seqFile.close();
-//     seqSegments = std::move(seqSegmentsTmp);
-//     return firstLine;                            
-// }
-
 void IndexCreator::load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid){
     string key, value;
     ifstream map;
@@ -906,7 +717,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
         priority_queue<uint64_t> currentList;
         size_t lengthOfTrainingSeq;
         char *reverseCompliment;
-        vector<bool> strandness;
         vector<uint64_t> intergenicKmers;
         vector<int> aaSeq;
         vector<string> cds;
@@ -917,7 +727,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
             if (!checker[batchIdx] && !hasOverflow) {
                 checker[batchIdx] = true;
                 intergenicKmers.clear();
-                strandness.clear();
                 standardList = priority_queue<uint64_t>();
 
                 // Estimate the number of k-mers to be extracted from current split
@@ -1112,7 +921,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     __sync_fetch_and_add(&processedBatchCnt, 1);
                     #pragma omp critical
                     {
-                        cout << processedBatchCnt << "batches processed out of " << accessionBatches.size() << endl;
+                        cout << processedBatchCnt << " batches processed out of " << accessionBatches.size() << endl;
                     }
                 } else {
                     checker[batchIdx] = false;
@@ -1146,14 +955,14 @@ void IndexCreator::writeDbParameters() {
         Debug(Debug::ERROR) << "Could not open " << paramterFileName << " for writing\n";
         EXIT(EXIT_FAILURE);
     }
-    fprintf(handle, "DB_name\t%s\n", dbName.c_str());
-    fprintf(handle, "Creation_date\t%s\n", dbDate.c_str());
+    fprintf(handle, "DB_name\t%s\n", par.dbName.c_str());
+    fprintf(handle, "Creation_date\t%s\n", par.dbDate.c_str());
     fprintf(handle, "Metabuli commit used to create the DB\t%s\n", version);
-    fprintf(handle, "Reduced_alphabet\t%d\n", reducedAA);
+    fprintf(handle, "Reduced_alphabet\t%d\n", par.reducedAA);
     // fprintf(handle, "Spaced_kmer_mask\t%s\n", spaceMask.c_str());
-    fprintf(handle, "Accession_level\t%d\n", accessionLevel);
-    fprintf(handle, "Mask_mode\t%d\n", lowComplexityMasking);
-    fprintf(handle, "Mask_prob\t%f\n", lowComplexityMaskingThreshold);
+    fprintf(handle, "Accession_level\t%d\n", par.accessionLevel);
+    fprintf(handle, "Mask_mode\t%d\n", par.maskMode);
+    fprintf(handle, "Mask_prob\t%f\n", par.maskProb);
     fprintf(handle, "Skip_redundancy\t1\n");
     fclose(handle);
 }

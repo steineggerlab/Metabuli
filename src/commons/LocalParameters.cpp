@@ -376,7 +376,6 @@ LocalParameters::LocalParameters() :
     build.push_back(&SPLIT_NUM);
     build.push_back(&PARAM_MASK_PROBABILTY);
     build.push_back(&PARAM_MASK_RESIDUES);
-    build.push_back(&BUFFER_SIZE);
     build.push_back(&ACCESSION_LEVEL);
     build.push_back(&DB_NAME);
     build.push_back(&DB_DATE);
