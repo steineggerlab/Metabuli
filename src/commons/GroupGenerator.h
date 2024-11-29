@@ -63,6 +63,8 @@ public:
 };
 
 class KmerFileHandler {
+protected:
+
 public:
     KmerFileHandler() {}
     static void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t &localBufIdx);
@@ -72,7 +74,20 @@ public:
     static void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const string& queryKmerFileDir, size_t& numOfSplits, size_t processedReadCnt, const string & jobid);
     
     static size_t bufferSize;
+
+    template <typename T>
+    static size_t  loadBuffer(FILE *fp, T *buffer, size_t size) {
+        return fread(buffer, sizeof(T), size, fp);
+    }
+
+    size_t  fillKmerInfoBuffer(size_t bufferSize,
+                            FILE *kmerInfoFp,
+                            TargetKmerInfo *infoBuffer) {
+        return loadBuffer(kmerInfoFp, infoBuffer, bufferSize);
+    }
 };
+
+
 
 class GroupGenerator {
 protected:
@@ -88,6 +103,9 @@ protected:
     NcbiTaxonomy *taxonomy;
     KmerFileHandler *kmerFileHandler;
     SeqIterator *seqIterator;
+    
+    unordered_map<TaxID, TaxID> taxId2speciesId;
+    unordered_map<TaxID, TaxID> taxId2genusId;
 
 public:
     GroupGenerator(LocalParameters & par);
@@ -125,8 +143,11 @@ public:
                        const unordered_map<uint32_t, int> &repLabel, 
                        const string &jobId);
 
+    void tempFunction();
+
+    void loadTaxIdList(const LocalParameters & par);
+
     ~GroupGenerator();
 };
-
 
 #endif // GROUP_GENERATOR_H
