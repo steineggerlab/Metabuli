@@ -40,6 +40,7 @@ ProdigalWrapper::ProdigalWrapper() {
     input_file = NULL; output_file = NULL;
     max_slen = 0;
     output = 0; closed = 1; do_mask = 0; force_nonsd = 0;
+    is_first_meta = 1;
 
     tinf.st_wt = 4.35;
     tinf.trans_table = 11;
@@ -138,9 +139,12 @@ void ProdigalWrapper::trainMeta(char *genome) {
     memset(&tinf, 0, sizeof(struct _training));
     tinf.st_wt = 4.35;
     tinf.trans_table = 11;
-   
-    initialize_metagenomic_bins(meta);
-
+    
+    if (is_first_meta == 1) {
+        initialize_metagenomic_bins(meta);
+        is_first_meta = 0;
+    }
+    
     slen = getNextSeq(genome, 1);
 
     rcom_seq(seq, rseq, useq, slen);

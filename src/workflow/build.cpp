@@ -49,8 +49,13 @@ int build(int argc, const char **argv, const Command &command){
     cout << "Merge reference DB files ... " << endl;
     int numOfSplits = idxCre.getNumOfFlush();
     FileMerger merger(par);
-    merger.mergeTargetFiles(par, numOfSplits);
+    for (int i = 0; i < numOfSplits; i++) {
+        merger.addFilesToMerge(par.filenames[0] + "/" + to_string(i) + "_diffIdx",
+                               par.filenames[0] + "/" + to_string(i) + "_info");
+    }
+    merger.updateTaxId2SpeciesTaxId(par.filenames[0] + "/taxID_list");
+    merger.setMergedFileNames(par.filenames[0] + "/diffIdx", par.filenames[0] + "/info", par.filenames[0] + "/split");  
+    merger.mergeTargetFiles();
     cerr << "Index creation completed." << endl;
-
     return 0;
 }

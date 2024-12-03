@@ -194,10 +194,19 @@ protected:
         float c = 0.7;
         if (maxRam <= 32) {
             c = 0.6;
-        } 
-        return static_cast<size_t>(maxRam * 1024.0 * 1024.0 * 1024.0 * c / 
+        } else if (maxRam < 16) {
+            c = 0.5;
+        }
+        if ((maxRam * 1024.0 * 1024.0 * 1024.0 * c - (par.threads * 50.0 * 1024.0 * 1024.0)) <= 0.0) {
+            cerr << "Not enough memory to create index" << endl;
+            cerr << "Please increase the RAM usage or decrease the number of threads" << endl;
+            exit(EXIT_FAILURE);
+        }
+        return static_cast<size_t>((maxRam * 1024.0 * 1024.0 * 1024.0 * c - (par.threads * 50.0 * 1024.0 * 1024.0))/ 
                                   (sizeof(TargetKmer) + sizeof(size_t)));
     }
+
+    void loadMergedTaxIds(const std::string &mergedFile, unordered_map<TaxID, TaxID> & old2new);
 
 public:
     static void printIndexSplitList(DiffIdxSplit * splitList) {
@@ -208,17 +217,6 @@ public:
         }
     }
 
-    string getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
-                                  const string & seqFileName,
-                                  const unordered_map<string, TaxID> & acc2taxid,
-                                  vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid);
-
-    string getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
-                                  const string & seqFileName,
-                                  const unordered_map<string, TaxID> & acc2taxid);
-
-    static void getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const char * seqFileName);
-
     IndexCreator(const LocalParameters & par);
 
     ~IndexCreator();
@@ -227,8 +225,6 @@ public:
 
     void createIndex(const LocalParameters & par);
 
-    void updateIndex(const LocalParameters & par);
-
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
                     uint16_t *kmerBuf, size_t bufferSize, size_t & localBufIdx);
 
@@ -236,6 +232,8 @@ public:
                     uint16_t *kmerBuf, size_t bufferSize, size_t & localBufIdx, size_t & totalBufferIdx);
 
     void writeInfo(TaxID * entryToWrite, FILE * infoFile, TaxID * infoBuffer, size_t bufferSize, size_t & infoBufferIdx);
+
+    unordered_set<TaxID> getTaxIdSet() { return taxIdSet; }
 
     static void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
 

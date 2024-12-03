@@ -29,11 +29,13 @@ public:
     std::vector<MMseqsParameter*> grade;
     std::vector<MMseqsParameter*> addToLibrary;
     std::vector<MMseqsParameter*> build;
+    std::vector<MMseqsParameter*> updateDB;
     std::vector<MMseqsParameter*> applyThreshold;
     std::vector<MMseqsParameter*> binning2report;
     std::vector<MMseqsParameter*> filterByGenus;
     std::vector<MMseqsParameter*> databaseReport;
     std::vector<MMseqsParameter*> mapping2taxon;
+    std::vector<MMseqsParameter*> printInfo;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
@@ -42,7 +44,7 @@ public:
     PARAMETER(EUKARYOTA_TAX_ID)
 
     // DB and classify
-    PARAMETER(SKIP_REDUDANCY)
+    PARAMETER(SKIP_REDUNDANCY)
 
     // Classify
     PARAMETER(SEQ_MODE)
@@ -90,6 +92,10 @@ public:
     // Filter
     PARAMETER(PRINT_MODE)
     PARAMETER(CONTAM_LIST)
+
+    // printInfo
+    PARAMETER(INFO_BEGIN);
+    PARAMETER(INFO_END);
 
     // Superkingdom taxonomy id
     int virusTaxId;
@@ -149,6 +155,10 @@ public:
     // Filter
     int printMode;
     std::string contamList;
+
+    // printInfo
+    int infoBegin;
+    int infoEnd;
 
     void printParameters(const std::string &module, int argc,
                          const char* pargv[],

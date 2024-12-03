@@ -111,10 +111,6 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     writeTaxonomyDB();
 }
 
-void IndexCreator::updateIndex(const LocalParameters &par) {
-
-}
-
 void IndexCreator::indexReferenceSequences() {
     vector<Accession> observedAccessionsVec;
     unordered_map<string, size_t> accession2index;
@@ -189,7 +185,10 @@ void IndexCreator::getObservedAccessions(const string & fnaListFileName,
 void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccessionsVec,
                                            const unordered_map<string, size_t> & accession2index,
                                            const string & acc2taxidFileName) {
-    vector<pair<string, pair<TaxID, TaxID>>> acc2accId;                                       
+    unordered_map<TaxID, TaxID> old2merged;
+    loadMergedTaxIds(taxonomyDir + "/merged.dmp", old2merged);
+
+    vector<pair<string, pair<TaxID, TaxID>>> acc2accId;   
 
     // Open the file
     int fd = open(acc2taxidFileName.c_str(), O_RDONLY);
@@ -246,6 +245,9 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
             }
             auto it = accession2index.find(accession);
             if (it != accession2index.end()) {
+                if (old2merged.count(taxID) > 0) {
+                    taxID = old2merged[taxID];
+                }
                 maxTaxID = std::max(maxTaxID, taxID);
                 // TODO: Accession level taxonomy
                 if (par.accessionLevel == 1) {
@@ -708,7 +710,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
 #pragma omp parallel default(none), shared(kmerBuffer, checker, processedBatchCnt, hasOverflow, par, cout)
     {
         ProbabilityMatrix probMatrix(*subMat);
-        // ProdigalWrapper prodigal;
+        // ProdigalWrapper * prodigal = new ProdigalWrapper();
         SeqIterator seqIterator(par);
         size_t posToWrite;
         size_t orfNum;
@@ -931,6 +933,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                 delete prodigal;   
             }
         }
+        // delete prodigal;
     }
 
     cout << "Before return: " << kmerBuffer.startIndexOfReserve << endl;
@@ -1193,5 +1196,25 @@ void IndexCreator::loadCdsInfo(const string & cdsInfoFileList) {
     } else {
         Debug(Debug::ERROR) << "Cannot open file " << cdsInfoFileList << "\n";
         EXIT(EXIT_FAILURE);
+    }
+}
+
+void IndexCreator::loadMergedTaxIds(const std::string &mergedFile, unordered_map<TaxID, TaxID> & old2new) {
+    std::ifstream ss(mergedFile);
+    if (ss.fail()) {
+        cerr << "File " << mergedFile << " not found!\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    std::string line;
+    while (std::getline(ss, line)) {
+        std::vector<std::string> result = splitByDelimiter(line, "\t|\t", 2);
+        if (result.size() != 2) {
+            Debug(Debug::ERROR) << "Invalid name entry!\n";
+            EXIT(EXIT_FAILURE);
+        }
+        TaxID oldId = (TaxID) atoi(result[0].c_str());
+        TaxID newId = (TaxID) atoi(result[1].c_str());
+        old2new[oldId] = newId;
     }
 }

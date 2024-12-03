@@ -10,4 +10,5 @@ set(util_source_files
         util/gradeByCladeSize.cpp
         util/expand_diffidx.cpp
         util/makeAAoffset.cpp
+        util/printinfo.cpp
         PARENT_SCOPE)
