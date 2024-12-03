@@ -80,6 +80,7 @@ int updateDB(int argc, const char **argv, const Command &command){
                                newDbDir + "/" + to_string(i) + "_info");
     }
     merger.addFilesToMerge(oldDbDir + "/diffIdx", oldDbDir + "/info");
+    merger.setRemoveRedundancyInfo(haveRedundancyInfo(oldDbDir));
     merger.updateTaxId2SpeciesTaxId(newDbDir + "/taxID_list");
     merger.setMergedFileNames(newDbDir + "/diffIdx", newDbDir + "/info", newDbDir + "/split");
     merger.mergeTargetFiles();

@@ -70,8 +70,7 @@ NcbiTaxonomy *loadTaxonomy(const std::string &dbDir,
                           dbDir + "/taxonomy/merged.dmp");
 }
 
-int loadDbParameters(LocalParameters &par) {
-  std::string dbDir = par.filenames[1 + (par.seqMode == 2)];
+int loadDbParameters(LocalParameters &par, const std::string & dbDir) {
   if (fileExist(dbDir + "/db.parameters")) {
     // open db.parameters
     std::ifstream dbParametersFile;
@@ -115,6 +114,27 @@ int loadDbParameters(LocalParameters &par) {
     }
   }
   return 0;
+}
+
+bool haveRedundancyInfo(const std::string & dbDir) {
+  bool res = true;
+  if (fileExist(dbDir + "/db.parameters")) {
+    // open db.parameters
+    std::ifstream dbParametersFile;
+    dbParametersFile.open(dbDir + "/db.parameters");
+    std::string eachLine;
+    if (dbParametersFile.is_open()) {
+      while (getline(dbParametersFile, eachLine)) {
+        std::vector<std::string> tokens = Util::split(eachLine, "\t");
+        if (tokens[0] == "Skip_redundancy" && tokens[1] == "1") {
+          return false;
+        }
+      }
+    }
+  } else {
+    res = true;
+  }
+  return res;
 }
 
 int searchAccession2TaxID(const std::string &name,

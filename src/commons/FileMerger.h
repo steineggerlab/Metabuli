@@ -20,6 +20,7 @@ private:
     string dbDir;
     uint64_t MARKER;
     int splitNum;
+    bool removeRedundancyInfo;
 
     string mergedDiffFileName;
     string mergedInfoFileName;
@@ -43,6 +44,7 @@ public:
     void addFilesToMerge(string diffIdxFileName, string infoFileName);
     void updateTaxId2SpeciesTaxId(const string & taxIdListFileName);
     void setMergedFileNames(string diffFileName, string infoFileName, string splitFileName);
+    void setRemoveRedundancyInfo(bool removeRedundancyInfo) { this->removeRedundancyInfo = removeRedundancyInfo; }
     
     void printTaxIdList(const string & taxIdListFileName);
 

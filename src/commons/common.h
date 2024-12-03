@@ -120,7 +120,7 @@ void process_mem_usage(double& vm_usage, double& resident_set);
 
 NcbiTaxonomy * loadTaxonomy(const std::string & dbDir, const std::string & taxonomyDir = "");
 
-int loadDbParameters(LocalParameters & par);
+int loadDbParameters(LocalParameters & par, const std::string & dbDir);
 
 int searchAccession2TaxID(const std::string & name, const std::unordered_map<std::string, int> & acc2taxid);
 
@@ -143,5 +143,7 @@ void getObservedAccessionList(const std::string & fnaListFileName,
 
 void getTaxonomyOfAccessions(std::unordered_map<std::string, TaxID> & acc2taxid,
                              const std::string & acc2taxidFileName);
+                                
+bool haveRedundancyInfo(const std::string & dbDir);
 
 #endif //ADCLASSIFIER2_COMMON_H
