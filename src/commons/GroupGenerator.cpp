@@ -13,7 +13,7 @@ void GroupGenerator::loadTaxIdList(const LocalParameters & par) {
             FILE *taxIdFile;
             cout << dbDir + "/" + contam + "/taxID_list" << endl;
             if ((taxIdFile = fopen((dbDir + "/" + contam + "/taxID_list").c_str(), "r")) == NULL) {
-                std::cout << "Cannot open the taxID list file." << std::endl;
+                cout << "Cannot open the taxID list file." << endl;
                 return;
             }
             char taxID[100];
@@ -50,7 +50,7 @@ void GroupGenerator::loadTaxIdList(const LocalParameters & par) {
     } else {
         FILE *taxIdFile;
         if ((taxIdFile = fopen((dbDir + "/taxID_list").c_str(), "r")) == NULL) {
-            std::cout << "Cannot open the taxID list file." << std::endl;
+            cout << "Cannot open the taxID list file." << endl;
             return;
         }
         char taxID[100];
@@ -87,18 +87,16 @@ void GroupGenerator::loadTaxIdList(const LocalParameters & par) {
     cout << "Done" << endl;
 }
 
-// std::vector<TargetKmerInfo> candidateKmerInfos
+// vector<TargetKmerInfo> candidateKmerInfos
 // taxId2speciesId[candidateKmerInfos[idx].sequenceID]
 // candidateKmerInfos[idx].sequenceID
 
 void GroupGenerator::tempFunction() {
-    
-    unordered_map<TaxID, int> num_species_in_genus;
-    unordered_map<TaxID, int> num_subspecies_in_species;
-    unordered_map<string, int> num_node_per_rank;
-    
+    unordered_map<TaxID, vector<TaxID>> species_in_genus;
+    unordered_map<TaxID, vector<TaxID>> subspecies_in_species;
+    unordered_map<string, vector<TaxID>> nodes_per_rank;
+
     // FILE
-    
     string targetInfoFileName = dbDir + "/info";
     FILE * kmerInfoFp = fopen(targetInfoFileName.c_str(), "rb");
     size_t numOfInfoIdx = FileUtil::getFileSize(targetInfoFileName) / sizeof(TargetKmerInfo);
@@ -110,45 +108,43 @@ void GroupGenerator::tempFunction() {
     TargetKmerInfo * kmerInfoBuffer = (TargetKmerInfo *) malloc(sizeof(TargetKmerInfo) * (kmerFileHandler->bufferSize + 1)); // 64 Mb
     size_t kmerInfoBufferIdx = 0;
 
-
     while (infoIdx < numOfInfoIdx) {
         size_t tempBufferSize = kmerFileHandler->fillKmerInfoBuffer(kmerFileHandler->bufferSize, kmerInfoFp, kmerInfoBuffer);
-        for (int idx=0; idx < tempBufferSize ; idx++){
-            TaxID targetId = kmerInfoBuffer[idx].sequenceID;      
-            // TaxID speciesTaxId = taxId2speciesId[kmerInfoBuffer[idx].sequenceID]; 
-            if (std::string(taxonomy->getString(targetId)) == "subspecies") {
+        for (int idx = 0; idx < tempBufferSize; idx++) {
+            TaxID targetId = kmerInfoBuffer[idx].sequenceID;
+
+            if (string(taxonomy->getString(targetId)) == "subspecies") {
                 TaxID speciesTaxId = taxonomy->getTaxIdAtRank(targetId, "species");
-                num_subspecies_in_species[speciesTaxId] += 1;
+                subspecies_in_species[speciesTaxId].push_back(targetId);
             }
-            if (std::string(taxonomy->getString(targetId)) == "species") {
+            if (string(taxonomy->getString(targetId)) == "species") {
                 TaxID genusTaxId = taxonomy->getTaxIdAtRank(targetId, "genus");
-                num_species_in_genus[genusTaxId] += 1;
+                species_in_genus[genusTaxId].push_back(targetId);
             }
             string targetRank = taxonomy->getString(targetId);
-            num_node_per_rank[targetRank] += 1;
+            nodes_per_rank[targetRank].push_back(targetId);
         }
         infoIdx += tempBufferSize;
     }
 
-    for (const auto &entry : num_subspecies_in_species) {
-        std::cout << "Species TaxID: " << entry.first 
-                  << " - Number of Subspecies: " << entry.second << std::endl;
-    }
+    // 중복 제거 및 출력
+    auto remove_duplicates_and_print = [](const auto &map, const string &label) {
+        for (const auto &entry : map) {
+            auto vec = entry.second;
+            sort(vec.begin(), vec.end());
+            vec.erase(unique(vec.begin(), vec.end()), vec.end());
+            cout << label << " TaxID: " << entry.first 
+                 << " - Unique Count: " << vec.size() << endl;
+        }
+    };
 
-    for (const auto &entry : num_species_in_genus) {
-        std::cout << "Genus TaxID: " << entry.first 
-                  << " - Number of Species: " << entry.second << std::endl;
-    }
-
-    for (const auto &entry : num_node_per_rank) {
-        std::cout << "Rank: " << entry.first 
-                  << " - Number of Nodes: " << entry.second << std::endl;
-    }
+    remove_duplicates_and_print(subspecies_in_species, "Species");
+    remove_duplicates_and_print(species_in_genus, "Genus");
+    remove_duplicates_and_print(nodes_per_rank, "Rank");
 
     fclose(kmerInfoFp);   
     free(kmerInfoBuffer); 
     return;
-
 }
 
 GroupGenerator::GroupGenerator(LocalParameters & par) {
