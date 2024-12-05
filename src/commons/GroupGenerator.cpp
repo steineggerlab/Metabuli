@@ -5,96 +5,8 @@
 #include "Kmer.h"
 
 
-void GroupGenerator::loadTaxIdList(const LocalParameters & par) {
-    cout << "Loading the list for taxonomy IDs ... ";
-    if (par.contamList != "") {
-        vector<string> contams = Util::split(par.contamList, ",");
-        for (auto &contam : contams) {
-            FILE *taxIdFile;
-            cout << dbDir + "/" + contam + "/taxID_list" << endl;
-            if ((taxIdFile = fopen((dbDir + "/" + contam + "/taxID_list").c_str(), "r")) == NULL) {
-                cout << "Cannot open the taxID list file." << endl;
-                return;
-            }
-            char taxID[100];
-            while (feof(taxIdFile) == 0) {
-                fscanf(taxIdFile, "%s", taxID);
-                TaxID taxId = atol(taxID);
-                TaxonNode const *taxon = taxonomy->taxonNode(taxId);
-                if (taxId == taxon->taxId) {
-                    TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
-                    TaxID genusTaxID = taxonomy->getTaxIdAtRank(taxId, "genus");
-                    while (taxon->taxId != speciesTaxID) {
-                        taxId2speciesId[taxon->taxId] = speciesTaxID;
-                        taxId2genusId[taxon->taxId] = genusTaxID;
-                        taxon = taxonomy->taxonNode(taxon->parentTaxId);
-                    }
-                    taxId2speciesId[speciesTaxID] = speciesTaxID;
-                    taxId2genusId[speciesTaxID] = genusTaxID;
-                } else {
-                    TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
-                    TaxID genusTaxID = taxonomy->getTaxIdAtRank(taxId, "genus");
-                    while (taxon->taxId != speciesTaxID) {
-                        taxId2speciesId[taxon->taxId] = speciesTaxID;
-                        taxId2genusId[taxon->taxId] = genusTaxID;
-                        taxon = taxonomy->taxonNode(taxon->parentTaxId);
-                    }
-                    taxId2speciesId[speciesTaxID] = speciesTaxID;
-                    taxId2genusId[speciesTaxID] = genusTaxID;
-                    taxId2speciesId[taxId] = speciesTaxID;
-                    taxId2genusId[taxId] = genusTaxID;
-                }
-            }
-            fclose(taxIdFile);
-        }
-    } else {
-        FILE *taxIdFile;
-        if ((taxIdFile = fopen((dbDir + "/taxID_list").c_str(), "r")) == NULL) {
-            cout << "Cannot open the taxID list file." << endl;
-            return;
-        }
-        char taxID[100];
-        while (feof(taxIdFile) == 0) {
-            fscanf(taxIdFile, "%s", taxID);
-            TaxID taxId = atol(taxID);
-            TaxonNode const *taxon = taxonomy->taxonNode(taxId);
-            if (taxId == taxon->taxId) {
-                TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
-                TaxID genusTaxID = taxonomy->getTaxIdAtRank(taxId, "genus");
-                while (taxon->taxId != speciesTaxID) {
-                  taxId2speciesId[taxon->taxId] = speciesTaxID;
-                  taxId2genusId[taxon->taxId] = genusTaxID;
-                  taxon = taxonomy->taxonNode(taxon->parentTaxId);
-                }
-                taxId2speciesId[speciesTaxID] = speciesTaxID;
-                taxId2genusId[speciesTaxID] = genusTaxID;
-            } else {
-                TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
-                TaxID genusTaxID = taxonomy->getTaxIdAtRank(taxId, "genus");
-                while (taxon->taxId != speciesTaxID) {
-                  taxId2speciesId[taxon->taxId] = speciesTaxID;
-                  taxId2genusId[taxon->taxId] = genusTaxID;
-                  taxon = taxonomy->taxonNode(taxon->parentTaxId);
-                }
-                taxId2speciesId[speciesTaxID] = speciesTaxID;
-                taxId2genusId[speciesTaxID] = genusTaxID;
-                taxId2speciesId[taxId] = speciesTaxID;
-                taxId2genusId[taxId] = genusTaxID;
-            }
-        }
-        fclose(taxIdFile);
-    }
-    cout << "Done" << endl;
-}
-
-// vector<TargetKmerInfo> candidateKmerInfos
-// taxId2speciesId[candidateKmerInfos[idx].sequenceID]
-// candidateKmerInfos[idx].sequenceID
-
 void GroupGenerator::tempFunction() {
-    unordered_map<TaxID, vector<TaxID>> species_in_genus;
-    unordered_map<TaxID, vector<TaxID>> subspecies_in_species;
-    unordered_map<string, vector<TaxID>> nodes_per_rank;
+    unordered_map<TaxID, unordered_set<TaxID>> subspecies_in_genus;
 
     // FILE
     string targetInfoFileName = dbDir + "/info";
@@ -112,35 +24,20 @@ void GroupGenerator::tempFunction() {
         size_t tempBufferSize = kmerFileHandler->fillKmerInfoBuffer(kmerFileHandler->bufferSize, kmerInfoFp, kmerInfoBuffer);
         for (int idx = 0; idx < tempBufferSize; idx++) {
             TaxID targetId = kmerInfoBuffer[idx].sequenceID;
-
-            if (string(taxonomy->getString(targetId)) == "subspecies") {
-                TaxID speciesTaxId = taxonomy->getTaxIdAtRank(targetId, "species");
-                subspecies_in_species[speciesTaxId].push_back(targetId);
-            }
-            if (string(taxonomy->getString(targetId)) == "species") {
+            
+            if (string(taxonomy->getString(taxonomy->taxonNode(targetId)->rankIdx)) == "subspecies")  {
                 TaxID genusTaxId = taxonomy->getTaxIdAtRank(targetId, "genus");
-                species_in_genus[genusTaxId].push_back(targetId);
+                subspecies_in_genus[genusTaxId].insert(targetId);
             }
-            string targetRank = taxonomy->getString(targetId);
-            nodes_per_rank[targetRank].push_back(targetId);
         }
         infoIdx += tempBufferSize;
     }
 
-    // 중복 제거 및 출력
-    auto remove_duplicates_and_print = [](const auto &map, const string &label) {
-        for (const auto &entry : map) {
-            auto vec = entry.second;
-            sort(vec.begin(), vec.end());
-            vec.erase(unique(vec.begin(), vec.end()), vec.end());
-            cout << label << " TaxID: " << entry.first 
-                 << " - Unique Count: " << vec.size() << endl;
-        }
-    };
-
-    remove_duplicates_and_print(subspecies_in_species, "Species");
-    remove_duplicates_and_print(species_in_genus, "Genus");
-    remove_duplicates_and_print(nodes_per_rank, "Rank");
+    for (const auto &entry : subspecies_in_genus) {
+        auto vec = entry.second;
+        cout << "Genus TaxID: " << entry.first 
+                << " - Unique Count: " << vec.size() << endl;
+    }
 
     fclose(kmerInfoFp);   
     free(kmerInfoBuffer); 

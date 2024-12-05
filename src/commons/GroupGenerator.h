@@ -145,8 +145,6 @@ public:
 
     void tempFunction();
 
-    void loadTaxIdList(const LocalParameters & par);
-
     ~GroupGenerator();
 };
 
