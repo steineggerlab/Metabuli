@@ -86,6 +86,7 @@ class IndexCreator{
 protected:
     // Parameters
     const LocalParameters & par;
+    bool isUpdating;
 
     uint64_t MARKER;
     BaseMatrix *subMat;
@@ -145,9 +146,9 @@ protected:
                                 size_t &processedSplitCnt,
                                 const LocalParameters &par);
 
-    void indexReferenceSequences();
+    void indexReferenceSequences(size_t bufferSize);
 
-    void getAccessionBatches(std::vector<Accession> & observedAccessionsVec);
+    void getAccessionBatches(std::vector<Accession> & observedAccessionsVec, size_t bufferSize);
 
     void getObservedAccessions(const string & fnaListFileName,
                                vector<Accession> & observedAccessionsVec,
@@ -222,6 +223,8 @@ public:
     ~IndexCreator();
     
     int getNumOfFlush();
+
+    void setIsUpdating(bool isUpdating) { this->isUpdating = isUpdating; }
 
     void createIndex(const LocalParameters & par);
 

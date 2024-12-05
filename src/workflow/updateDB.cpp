@@ -49,8 +49,8 @@ int updateDB(int argc, const char **argv, const Command &command){
 
     // Create index
     IndexCreator idxCre(par);
+    idxCre.setIsUpdating(true);
     idxCre.createIndex(par);
-
     unordered_set<TaxID> taxIdSet = idxCre.getTaxIdSet();
     FILE * oldTaxIdListFile;
     if((oldTaxIdListFile = fopen((oldDbDir + "/taxID_list").c_str(),"r")) == NULL){

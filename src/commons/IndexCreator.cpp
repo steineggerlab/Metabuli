@@ -41,7 +41,7 @@ IndexCreator::IndexCreator(const LocalParameters & par) : par(par) {
         MARKER = ~ MARKER;
     }
 
-    // For masking low complexity regions
+    isUpdating = false;
     subMat = new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0);
 }
 
@@ -52,8 +52,9 @@ IndexCreator::~IndexCreator() {
 }
 
 void IndexCreator::createIndex(const LocalParameters &par) {
+    TargetKmerBuffer kmerBuffer(calculateBufferSize(par.ramUsage));
     // Index library reference sequences
-    indexReferenceSequences();
+    indexReferenceSequences(kmerBuffer.bufferSize);
     
     if (!par.cdsInfo.empty()) {
         loadCdsInfo(par.cdsInfo);   
@@ -73,7 +74,7 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     bool * batchChecker = new bool[batchNum];
     fill_n(batchChecker, batchNum, false);
     size_t processedBatchCnt = 0;
-    TargetKmerBuffer kmerBuffer(calculateBufferSize(par.ramUsage));
+    
     vector<pair<size_t, size_t>> uniqKmerIdxRanges;
     cout << "Kmer buffer size: " << kmerBuffer.bufferSize << endl;
 #ifdef OPENMP
@@ -99,7 +100,7 @@ void IndexCreator::createIndex(const LocalParameters &par) {
         reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt, uniqKmerIdxRanges, par);
         time_t reduction = time(nullptr);
         cout << "Time spent for reducing redundancy: " << (double) (reduction - sort) << endl;
-        if(processedBatchCnt == batchNum && numOfFlush == 0){
+        if(processedBatchCnt == batchNum && numOfFlush == 0 && !isUpdating) {
             writeTargetFilesAndSplits(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par, uniqKmerIdx, uniqKmerCnt, uniqKmerIdxRanges);
         } else {
             writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par, uniqKmerIdx, uniqKmerIdxRanges);
@@ -111,13 +112,13 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     writeTaxonomyDB();
 }
 
-void IndexCreator::indexReferenceSequences() {
+void IndexCreator::indexReferenceSequences(size_t bufferSize) {
     vector<Accession> observedAccessionsVec;
     unordered_map<string, size_t> accession2index;
     getObservedAccessions(par.filenames[1], observedAccessionsVec, accession2index);
     cout << "Number of observed accessions: " << observedAccessionsVec.size() << endl;
     getTaxonomyOfAccessions(observedAccessionsVec, accession2index, par.filenames[2]);
-    getAccessionBatches(observedAccessionsVec);
+    getAccessionBatches(observedAccessionsVec, bufferSize);
     cout << "Number of accession batches: " << accessionBatches.size() << endl;
 }
 
@@ -299,7 +300,7 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
     }                       
 }
 
-void IndexCreator::getAccessionBatches(std::vector<Accession> & observedAccessionsVec) {
+void IndexCreator::getAccessionBatches(std::vector<Accession> & observedAccessionsVec, size_t bufferSize) {
     size_t accCnt = observedAccessionsVec.size();
     SORT_PARALLEL(observedAccessionsVec.begin(), observedAccessionsVec.end(), Accession::compare);
     vector<uint32_t> orders;
@@ -314,6 +315,7 @@ void IndexCreator::getAccessionBatches(std::vector<Accession> & observedAccessio
         size_t firstBatchOfSpecies = accessionBatches.size();
         while (i < accCnt && currentSpeciesID == observedAccessionsVec[i].speciesID) {    
             uint32_t lengthSum = 0;
+            size_t kmerCntSum = 0;
             orders.clear();
             lengths.clear();
             taxIDs.clear();
@@ -326,11 +328,12 @@ void IndexCreator::getAccessionBatches(std::vector<Accession> & observedAccessio
                     trainingSeq = observedAccessionsVec[i].order;
                 }
                 lengthSum += observedAccessionsVec[i].length;
+                kmerCntSum += (size_t) observedAccessionsVec[i].length * 0.4;
                 orders.push_back(observedAccessionsVec[i].order);
                 lengths.push_back(observedAccessionsVec[i].length);
                 taxIDs.push_back(observedAccessionsVec[i].taxID);
                 i++;
-                if (lengthSum > 100'000'000 || orders.size() > 300 || (orders.size() > 100 && lengthSum > 50'000'000)) {
+                if (kmerCntSum > bufferSize || lengthSum > 100'000'000 || orders.size() > 300 || (orders.size() > 100 && lengthSum > 50'000'000)) {
                     break;
                 }
             }
