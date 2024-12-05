@@ -150,58 +150,57 @@ void FileMerger::mergeTargetFiles() {
 
     size_t idxOfMin = smallest(lookingKmers, lookingInfos, numOfSplits);
     uint64_t lastWrittenKmer = 0;
-    uint64_t entryKmer;
-    TaxID entryInfo;
+    uint64_t entryKmer = lookingKmers[idxOfMin];
+    TaxID entryInfo = lookingInfos[idxOfMin];
+
+    // Write first k-mer
+    getDiffIdx(lastWrittenKmer, entryKmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx, bufferSize);
+    lastWrittenKmer = entryKmer;
+    writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx, bufferSize);
+    writtenKmerCnt++;
     int splitCheck = 0;
+    int endFlag = 0;
+
     size_t numOfincompletedFiles = numOfSplits;
     vector<TaxID> taxIds;
-    int endPoint = 0;
     while(true){
         // update entry k-mer
         entryKmer = lookingKmers[idxOfMin];
         entryInfo = lookingInfos[idxOfMin];
 
         // update looking k-mers
-        if (diffFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin] ){
+        lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
+        lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
+        infoFileIdx[idxOfMin] ++;
+        if( diffFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin] ){
             lookingKmers[idxOfMin] = UINT64_MAX;
             numOfincompletedFiles--;
-            if (numOfincompletedFiles == 0) {
-                endPoint = 1;
-                break;
-            }
-        } else {
-            lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
-            if (removeRedundancyInfo && idxOfMin == lastFileIdx) {
-                lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]] & mask;
-            } else {
-                lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
-            }
-            infoFileIdx[idxOfMin] ++;
+            if(numOfincompletedFiles == 0) break;
         }
-
         idxOfMin = smallest(lookingKmers, lookingInfos, numOfSplits);
 
+        int hasSeenOtherStrains = 0;
         taxIds.clear();
         taxIds.push_back(entryInfo);
         
         // Scan redundant k-mers
-        while(taxId2speciesId[entryInfo] == taxId2speciesId[lookingInfos[idxOfMin]] && entryKmer == lookingKmers[idxOfMin]){
+        while(taxId2speciesId[entryInfo] == taxId2speciesId[lookingInfos[idxOfMin]]){
+            if(entryKmer != lookingKmers[idxOfMin]) break;
+
+            hasSeenOtherStrains += (entryInfo != lookingInfos[idxOfMin]);
             taxIds.push_back(lookingInfos[idxOfMin]);
-            if (diffFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin]) {
+
+            lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
+            lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
+            infoFileIdx[idxOfMin] ++;
+
+            if(diffFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin] ){
                 lookingKmers[idxOfMin] = UINT64_MAX;
                 numOfincompletedFiles--;
-                if (numOfincompletedFiles == 0) {
-                    endPoint = 2;
+                if(numOfincompletedFiles == 0){
+                    endFlag = 1;
                     break;
                 }
-            } else {
-                lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
-                if (removeRedundancyInfo && idxOfMin == lastFileIdx) {
-                    lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]] & mask;
-                } else {
-                    lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
-                }
-                infoFileIdx[idxOfMin] ++;
             }
             idxOfMin = smallest(lookingKmers, lookingInfos, numOfSplits);
         }
@@ -219,7 +218,7 @@ void FileMerger::mergeTargetFiles() {
 
         if(AminoAcidPart(lastWrittenKmer) != AAofTempSplitOffset && splitCheck == 1){
             splitList[splitListIdx++] = {lastWrittenKmer, totalBufferIdx, totalInfoIdx};
-            cout << splitListIdx << "\t" << lastWrittenKmer << "\t" << totalBufferIdx << "\t" << totalInfoIdx <<endl;
+            cout<<splitListIdx<< "\t" <<lastWrittenKmer<<"\t"<<totalBufferIdx<<"\t"<<totalInfoIdx<<endl;
             splitCheck = 0;
         }
 
@@ -229,14 +228,98 @@ void FileMerger::mergeTargetFiles() {
             offsetListIdx++;
         }
 
-        if(endPoint == 2) break;
+        if(endFlag == 1) break;
     }
 
-    if (endPoint == 1) {
-        getDiffIdx(lastWrittenKmer, entryKmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx, bufferSize);
-        writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx, bufferSize);
-        writtenKmerCnt++;
-    }
+    // size_t idxOfMin = smallest(lookingKmers, lookingInfos, numOfSplits);
+    // uint64_t lastWrittenKmer = 0;
+    // uint64_t entryKmer;
+    // TaxID entryInfo;
+    // int splitCheck = 0;
+    // size_t numOfincompletedFiles = numOfSplits;
+    // vector<TaxID> taxIds;
+    // int endPoint = 0;
+    // while(true){
+    //     // update entry k-mer
+    //     entryKmer = lookingKmers[idxOfMin];
+    //     entryInfo = lookingInfos[idxOfMin];
+
+    //     // update looking k-mers
+    //     if (diffFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin] ){
+    //         lookingKmers[idxOfMin] = UINT64_MAX;
+    //         numOfincompletedFiles--;
+    //         if (numOfincompletedFiles == 0) {
+    //             endPoint = 1;
+    //             break;
+    //         }
+    //     } else {
+    //         lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
+    //         if (removeRedundancyInfo && idxOfMin == lastFileIdx) {
+    //             lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]] & mask;
+    //         } else {
+    //             lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
+    //         }
+    //         infoFileIdx[idxOfMin] ++;
+    //     }
+
+    //     idxOfMin = smallest(lookingKmers, lookingInfos, numOfSplits);
+
+    //     taxIds.clear();
+    //     taxIds.push_back(entryInfo);
+        
+    //     // Scan redundant k-mers
+    //     while(taxId2speciesId[entryInfo] == taxId2speciesId[lookingInfos[idxOfMin]] && entryKmer == lookingKmers[idxOfMin]){
+    //         taxIds.push_back(lookingInfos[idxOfMin]);
+    //         if (diffFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin]) {
+    //             lookingKmers[idxOfMin] = UINT64_MAX;
+    //             numOfincompletedFiles--;
+    //             if (numOfincompletedFiles == 0) {
+    //                 endPoint = 2;
+    //                 break;
+    //             }
+    //         } else {
+    //             lookingKmers[idxOfMin] = getNextKmer(entryKmer, diffFileList[idxOfMin], diffFileIdx[idxOfMin]);
+    //             if (removeRedundancyInfo && idxOfMin == lastFileIdx) {
+    //                 lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]] & mask;
+    //             } else {
+    //                 lookingInfos[idxOfMin] = infoFileList[idxOfMin].data[infoFileIdx[idxOfMin]];
+    //             }
+    //             infoFileIdx[idxOfMin] ++;
+    //         }
+    //         idxOfMin = smallest(lookingKmers, lookingInfos, numOfSplits);
+    //     }
+
+    //     if (taxIds.size() > 1) {
+    //         entryInfo = taxonomy->LCA(taxIds)->taxId;
+    //     } else {
+    //         entryInfo = taxIds[0];
+    //     }
+
+    //     getDiffIdx(lastWrittenKmer, entryKmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx, bufferSize);
+    //     lastWrittenKmer = entryKmer;
+    //     writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx, bufferSize);
+    //     writtenKmerCnt++;
+
+    //     if(AminoAcidPart(lastWrittenKmer) != AAofTempSplitOffset && splitCheck == 1){
+    //         splitList[splitListIdx++] = {lastWrittenKmer, totalBufferIdx, totalInfoIdx};
+    //         cout << splitListIdx << "\t" << lastWrittenKmer << "\t" << totalBufferIdx << "\t" << totalInfoIdx <<endl;
+    //         splitCheck = 0;
+    //     }
+
+    //     if(writtenKmerCnt == offsetList[offsetListIdx]){
+    //         AAofTempSplitOffset = AminoAcidPart(lastWrittenKmer);
+    //         splitCheck = 1;
+    //         offsetListIdx++;
+    //     }
+
+    //     if(endPoint == 2) break;
+    // }
+
+    // if (endPoint == 1) {
+    //     getDiffIdx(lastWrittenKmer, entryKmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx, bufferSize);
+    //     writeInfo(&entryInfo, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx, bufferSize);
+    //     writtenKmerCnt++;
+    // }
 
     IndexCreator::flushInfoBuf(infoBuffer, mergedInfoFile, infoBufferIdx);
     IndexCreator::flushKmerBuf(diffBuffer, mergedDiffFile, diffBufferIdx);
