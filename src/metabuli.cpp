@@ -145,7 +145,17 @@ std::vector<Command> commands = {
                     "<i:mapping file> <i: taxonomy directory> ",
                     CITATION_SPACEPHARER,
                     {{"mapping file", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-                     {"taxonomy directory", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}}
+                     {"taxonomy directory", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
+         {"query2reference", query2reference, &localPar.query2reference, COMMAND_EXPERT,
+                    "It inspects how the queried genomes are represented by the reference DB",
+                nullptr,
+                    "Jaebeom Kim <jbeom0731@gmail.com>",
+                    "<i:query accessions> <i: reference accession> <i: accession2taxid> <i: taxonomy directory> ",
+                    CITATION_SPACEPHARER,
+                    {{"query accessions", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                     {"reference accession", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                     {"accession2taxid", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                     {"taxonomy directory", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}}
 
 };
 std::vector<KmerThreshold> externalThreshold = {};

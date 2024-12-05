@@ -494,6 +494,8 @@ LocalParameters::LocalParameters() :
     // printInfo
     printInfo.push_back(&INFO_BEGIN);
     printInfo.push_back(&INFO_END);
+
+    query2reference.push_back(&TEST_RANK);
 }
 
 void LocalParameters::printParameters(const std::string &module, int argc, const char* pargv[],

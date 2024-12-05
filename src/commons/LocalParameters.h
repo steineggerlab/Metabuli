@@ -36,6 +36,7 @@ public:
     std::vector<MMseqsParameter*> databaseReport;
     std::vector<MMseqsParameter*> mapping2taxon;
     std::vector<MMseqsParameter*> printInfo;
+    std::vector<MMseqsParameter*> query2reference;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
@@ -94,8 +95,8 @@ public:
     PARAMETER(CONTAM_LIST)
 
     // printInfo
-    PARAMETER(INFO_BEGIN);
-    PARAMETER(INFO_END);
+    PARAMETER(INFO_BEGIN)
+    PARAMETER(INFO_END)
 
     // Superkingdom taxonomy id
     int virusTaxId;
