@@ -37,6 +37,7 @@ public:
     std::vector<MMseqsParameter*> mapping2taxon;
     std::vector<MMseqsParameter*> printInfo;
     std::vector<MMseqsParameter*> query2reference;
+    std::vector<MMseqsParameter*> expand_diffidx;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
@@ -98,6 +99,10 @@ public:
     PARAMETER(INFO_BEGIN)
     PARAMETER(INFO_END)
 
+    // expand_diffidx
+    PARAMETER(KMER_BEGIN)
+    PARAMETER(KMER_END)
+
     // Superkingdom taxonomy id
     int virusTaxId;
     int bacteriaTaxId;
@@ -158,8 +163,10 @@ public:
     std::string contamList;
 
     // printInfo
-    int infoBegin;
-    int infoEnd;
+    size_t infoBegin;
+    size_t infoEnd;
+    size_t kmerBegin;
+    size_t kmerEnd;
 
     void printParameters(const std::string &module, int argc,
                          const char* pargv[],

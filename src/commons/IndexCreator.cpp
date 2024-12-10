@@ -286,7 +286,6 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
         }
         taxIdSet = std::move(updatedTaxIdSet);
         
-
         editTaxonomyDumpFiles(acc2accId);
         delete taxonomy;
         cout << "Accession level database is being created (--accession-level 1)" << endl;

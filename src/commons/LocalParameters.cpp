@@ -317,15 +317,29 @@ LocalParameters::LocalParameters() :
                 "--info-begin",
                 "Begin of the info to print",
                 "Begin of the info to print",
-                typeid(int),
+                typeid(size_t),
                 (void *) &infoBegin,
                 "^[0-9]+$"), 
         INFO_END(INFO_END_ID,
                 "--info-end",
                 "End of the info to print",
                 "End of the info to print",
-                typeid(int),
+                typeid(size_t),
                 (void *) &infoEnd,
+                "^[0-9]+$"),
+        KMER_BEGIN(KMER_BEGIN_ID,
+                "--kmer-begin",
+                "First k-mer to print",
+                "First k-mer to print",
+                typeid(size_t),
+                (void *) &kmerBegin,
+                "^[0-9]+$"),
+        KMER_END(KMER_END_ID,
+                "--kmer-end",
+                "Last k-mer to print",
+                "Last k-mer to print",
+                typeid(size_t),
+                (void *) &kmerEnd,
                 "^[0-9]+$")
   {
     // Initialize the parameters
@@ -494,6 +508,10 @@ LocalParameters::LocalParameters() :
     // printInfo
     printInfo.push_back(&INFO_BEGIN);
     printInfo.push_back(&INFO_END);
+
+    // expand_diffidx
+    expand_diffidx.push_back(&KMER_BEGIN);
+    expand_diffidx.push_back(&KMER_END);
 
     query2reference.push_back(&TEST_RANK);
 }

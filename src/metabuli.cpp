@@ -60,7 +60,7 @@ std::vector<Command> commands = {
                 "<diffIdx>",
                 CITATION_SPACEPHARER,
                 {{"Differential index", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty}}},
-        {"expand_diffidx", expand_diffidx, &localPar.build, COMMAND_EXPERT,
+        {"expand_diffidx", expand_diffidx, &localPar.expand_diffidx, COMMAND_EXPERT,
                 "expand differential index",
                nullptr,
                 "Jaebeom Kim <jbeom0731@gmail.com>",

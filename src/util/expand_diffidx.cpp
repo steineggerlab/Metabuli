@@ -50,6 +50,9 @@ int expand_diffidx(int argc, const char **argv, const Command &command){
     // List
     vector<uint64_t> aminoAcids;
     vector<uint32_t> diffIdxCnts;
+    size_t startIdx = par.kmerBegin;
+    size_t endIdx = par.kmerEnd;
+    size_t idx = 0;
 
     while (!complete) {
         if (isFirst) {
@@ -57,7 +60,7 @@ int expand_diffidx(int argc, const char **argv, const Command &command){
             isFirst = false;
         } else {
             loadedItems = loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, bufferSize, ((int)(bufferSize - diffIdxBufferIdx)) * -1 );
-            cout << "Loaded items: " << loadedItems << "\n";
+            // cout << "Loaded items: " << loadedItems << "\n";
         }
 
         if (loadedItems != bufferSize) {
@@ -71,7 +74,10 @@ int expand_diffidx(int argc, const char **argv, const Command &command){
                                                                diffIdxBuffer,
                                                                diffIdxBufferIdx,
                                                                diffIdxPos);
-            seqIterator->printKmerInDNAsequence(currentTargetKmer); cout << "\n";  
+            if (idx >= startIdx && idx < endIdx) {
+                seqIterator->printKmerInDNAsequence(currentTargetKmer); cout << "\n";  
+            }
+            idx ++;
         }
         if (diffIdxPos == numOfDiffIdx) {
             break;
