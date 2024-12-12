@@ -219,7 +219,7 @@ void FileMerger::mergeTargetFiles() {
 
         if(AminoAcidPart(lastWrittenKmer) != AAofTempSplitOffset && splitCheck == 1){
             splitList[splitListIdx++] = {lastWrittenKmer, totalBufferIdx, totalInfoIdx};
-            cout << splitListIdx << "\t" << lastWrittenKmer << "\t" << totalBufferIdx << "\t" << totalInfoIdx <<endl;
+            // cout << splitListIdx << "\t" << lastWrittenKmer << "\t" << totalBufferIdx << "\t" << totalInfoIdx <<endl;
             splitCheck = 0;
         }
 
@@ -241,9 +241,9 @@ void FileMerger::mergeTargetFiles() {
     IndexCreator::flushInfoBuf(infoBuffer, mergedInfoFile, infoBufferIdx);
     IndexCreator::flushKmerBuf(diffBuffer, mergedDiffFile, diffBufferIdx);
     fwrite(splitList, sizeof(DiffIdxSplit), splitNum, diffIdxSplitFile);
-    for(int i = 0; i < splitNum; i++){
-        cout<<splitList[i].ADkmer<< " "<<splitList[i].diffIdxOffset<< " "<<splitList[i].infoIdxOffset<<endl;
-    }
+    // for(int i = 0; i < splitNum; i++) {
+    //     cout<<splitList[i].ADkmer<< " "<<splitList[i].diffIdxOffset<< " "<<splitList[i].infoIdxOffset<<endl;
+    // }
     free(diffBuffer);
     free(infoBuffer);
     fclose(mergedDiffFile);
