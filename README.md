@@ -246,7 +246,7 @@ The steps for building a database with NCBI or GTDB taxonomy are described below
   * Download `taxdump` files from [here](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/).
  
 #### 2. Add your sequences to Metabuli library
-* If a custom sequence is to be included, edit `accession2taxid` and `taxdump` files properly as follows.
+* If you want to include a custom sequence, edit `accession2taxid` and `taxdump` files properly as follows.
     * `accession2taxid`
       * For a sequence whose header is `>custom`, add `custom[tab]custom[tab]taxid[tab]anynumber`.
       * As above, version number is not necessary.
@@ -256,9 +256,9 @@ The steps for building a database with NCBI or GTDB taxonomy are described below
       * Edit `nodes.dmp` and `names.dmp` if you introduced a new `taxid` in `accession2taxid`.
 ```
 metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR>
-- FASTA list: A file containing absolute paths of each FASTA file.
-- accession2taxid: A path to NCBI-style accession2taxid.
-- DBDIR: Sequences will be stored in 'DBDIR/library'.
+- FASTA list : A file containing absolute paths of each FASTA file.
+- accession2taxid : A path to NCBI-style accession2taxid.
+- DBDIR : Sequences will be stored in 'DBDIR/library'.
 
 * Option
   --taxonomy-path: Directory of taxdump files. (DBDIR/taxonomy by default)
@@ -281,8 +281,9 @@ metabuli build <DBDIR> <LIB_FILES> <accession2taxid> [options]
   
   * Options
    --threads : The number of threads used (all by default)
-   --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
-   --accession-level : Set 1 to use accession level taxonomy (0 by default).
+   --max-ram : The maximum RAM usage. (128 GiB by default)
+   --taxonomy-path : Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
+   --accession-level : Set 1 to creat a DB for accession level classification (0 by default).
 ```
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
 
@@ -340,6 +341,38 @@ metabuli build <DBDIR> <LIB_FILES> <accession2taxid> [options]
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
 
 ---
+
+## Update database 
+You can add new sequences to an existing database. The taxonomy information you provide here must be compatible with the existing database.
+
+```
+# 1. Add new sequences to the library
+
+metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR>
+- FASTA list : A file of absolute paths to FASTA files.
+- accession2taxid : A path to NCBI-style accession2taxid.
+- DBDIR : Sequences will be stored in 'DBDIR/library'.
+
+  * Option
+    --taxonomy-path: Directory of taxonomy dump files. (DBDIR/taxonomy by default)
+
+# 2. Get the list of absoulte paths of files in your library
+find <DBDIR>/library -type f -name '*.fna' > library-files.txt
+
+# 3. Add new sequences to the existing database
+metabuli <new DB directory> <FASTA list> <accesssion2taxid> <old DB directory>
+- FASTA list: A file containing absolute paths of the FASTA files in DBDIR/library (library-files.txt)
+- accession2taxid : A path to NCBI-style accession2taxid.
+
+  * Options
+   --threads : The number of threads used (all by default)
+   --max-ram : The maximum RAM usage. (128 GiB by default)
+   --taxonomy-path : Directory of taxonomy dump files. (DBDIR/taxonomy by default)
+   --accession-level : Set 1 to creat a DB for accession level classification (0 by default).
+
+```
+
+
 
 ## Example
 > The example here was detecting SARS-CoV-2 variant-specific reads, but has changed since the pre-built DB no longer contains the variant genomes.
