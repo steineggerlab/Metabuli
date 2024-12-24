@@ -39,6 +39,13 @@ LocalParameters::LocalParameters() :
                          typeid(int),
                          (void *) &eukaryotaTaxId,
                          "^[0-9]+$"),
+        SKIP_REDUNDANCY(SKIP_REDUNDANCY_ID,
+                        "--skip-redundancy",
+                        "Not storing k-mer's redundancy. Keep it as 1.",
+                        "Not storing k-mer's redundancy. Keep it as 1.",
+                        typeid(int),
+                        (void *) &skipRedundancy,
+                        "[0-1]"),
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
                  "Sequencing type",
@@ -222,6 +229,13 @@ LocalParameters::LocalParameters() :
                 typeid(std::string),
                 (void *) &dbDate,
                 "^.*$"),
+        CDS_INFO(CDS_INFO_ID,
+                 "--cds-info",
+                 "List of CDS files",
+                 "List of CDS files",
+                 typeid(std::string),
+                 (void *) &cdsInfo,
+                 "^.*$"),        
         TEST_RANK(TEST_RANK_ID,
                   "--test-rank",
                   ".",
@@ -298,10 +312,38 @@ LocalParameters::LocalParameters() :
                    "List of taxids to be filtered",
                      typeid(std::string),
                         (void *) &contamList,
-                        "^.*$") 
+                        "^.*$"),
+        INFO_BEGIN(INFO_BEGIN_ID,
+                "--info-begin",
+                "Begin of the info to print",
+                "Begin of the info to print",
+                typeid(size_t),
+                (void *) &infoBegin,
+                "^[0-9]+$"), 
+        INFO_END(INFO_END_ID,
+                "--info-end",
+                "End of the info to print",
+                "End of the info to print",
+                typeid(size_t),
+                (void *) &infoEnd,
+                "^[0-9]+$"),
+        KMER_BEGIN(KMER_BEGIN_ID,
+                "--kmer-begin",
+                "First k-mer to print",
+                "First k-mer to print",
+                typeid(size_t),
+                (void *) &kmerBegin,
+                "^[0-9]+$"),
+        KMER_END(KMER_END_ID,
+                "--kmer-end",
+                "Last k-mer to print",
+                "Last k-mer to print",
+                typeid(size_t),
+                (void *) &kmerEnd,
+                "^[0-9]+$")
   {
     // Initialize the parameters
-        // Superkingdom taxonomy id
+    // Superkingdom taxonomy id
     virusTaxId = 10239;
     bacteriaTaxId = 2;
     archaeaTaxId = 2157;
@@ -357,32 +399,41 @@ LocalParameters::LocalParameters() :
     // build
     build.push_back(&PARAM_THREADS);
     build.push_back(&REDUCED_AA);
-    // build.push_back(&SPACED);
     build.push_back(&TAXONOMY_PATH);
     build.push_back(&SPLIT_NUM);
     build.push_back(&PARAM_MASK_PROBABILTY);
     build.push_back(&PARAM_MASK_RESIDUES);
-    build.push_back(&BUFFER_SIZE);
     build.push_back(&ACCESSION_LEVEL);
     build.push_back(&DB_NAME);
     build.push_back(&DB_DATE);
+    build.push_back(&CDS_INFO);
+    build.push_back(&RAM_USAGE);
+    build.push_back(&SKIP_REDUNDANCY);
+
+
+    // updateDB
+    updateDB.push_back(&PARAM_THREADS);
+    updateDB.push_back(&REDUCED_AA);
+    updateDB.push_back(&TAXONOMY_PATH);
+    updateDB.push_back(&SPLIT_NUM);
+    updateDB.push_back(&PARAM_MASK_PROBABILTY);
+    updateDB.push_back(&PARAM_MASK_RESIDUES);
+    updateDB.push_back(&ACCESSION_LEVEL);
+    updateDB.push_back(&DB_NAME);
+    updateDB.push_back(&DB_DATE);
+    updateDB.push_back(&CDS_INFO);
+    updateDB.push_back(&RAM_USAGE);
+    updateDB.push_back(&SKIP_REDUNDANCY);
 
     //classify
     classify.push_back(&PARAM_THREADS);
     classify.push_back(&SEQ_MODE);
-//     classify.push_back(&VIRUS_TAX_ID);
-//     classify.push_back(&REDUCED_AA);
     classify.push_back(&MIN_SCORE);
     classify.push_back(&MIN_COVERAGE);
     classify.push_back(&MIN_CONS_CNT);
     classify.push_back(&MIN_CONS_CNT_EUK);
     classify.push_back(&MIN_SP_SCORE);
-//     classify.push_back(&SPACED);
     classify.push_back(&HAMMING_MARGIN);
-//     classify.push_back(&PARAM_V);
-//     classify.push_back(&MIN_COVERED_POS);
-//     classify.push_back(&PRINT_LOG);
-//     classify.push_back(&MAX_GAP);
     classify.push_back(&TAXONOMY_PATH);
     classify.push_back(&PARAM_MASK_RESIDUES);
     classify.push_back(&PARAM_MASK_PROBABILTY);
@@ -390,7 +441,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MATCH_PER_KMER);
     classify.push_back(&ACCESSION_LEVEL);
     classify.push_back(&TIE_RATIO);
-    // classify.push_back(&MIN_SS_MATCH);
+    classify.push_back(&SKIP_REDUNDANCY);
 
     // extract
     extract.push_back(&TAXONOMY_PATH);
@@ -404,7 +455,6 @@ LocalParameters::LocalParameters() :
     filter.push_back(&REDUCED_AA);
     filter.push_back(&MIN_SCORE);
     filter.push_back(&MIN_COVERAGE);
-    // filter.push_back(&SPACED);
     filter.push_back(&HAMMING_MARGIN);
     filter.push_back(&MIN_SP_SCORE);
     filter.push_back(&PARAM_V);
@@ -454,6 +504,16 @@ LocalParameters::LocalParameters() :
 
     // db report
     databaseReport.push_back(&TAXONOMY_PATH);
+
+    // printInfo
+    printInfo.push_back(&INFO_BEGIN);
+    printInfo.push_back(&INFO_END);
+
+    // expand_diffidx
+    expand_diffidx.push_back(&KMER_BEGIN);
+    expand_diffidx.push_back(&KMER_END);
+
+    query2reference.push_back(&TEST_RANK);
 }
 
 void LocalParameters::printParameters(const std::string &module, int argc, const char* pargv[],

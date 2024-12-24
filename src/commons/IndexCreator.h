@@ -26,32 +26,71 @@
 #include <omp.h>
 #endif
 
+struct Accession {
+    Accession() = default;
+    Accession(const string & accession, uint32_t whichFasta, uint32_t order, uint32_t length) 
+        : accession(accession), whichFasta(whichFasta), order(order), length(length), speciesID(0), taxID(0) {}
+    string accession;
+    uint32_t whichFasta;
+    uint32_t order;
+    uint32_t length;
+    TaxID speciesID;
+    TaxID taxID;
 
-struct TaxId2Fasta{
-    TaxID species;
-    TaxID taxid;
-    string fasta;
-    TaxId2Fasta(TaxID sp, TaxID ssp, string fasta): species(sp), taxid(ssp), fasta(std::move(fasta)) {}
+    bool operator < (const Accession & a) const {
+        if (speciesID != a.speciesID)
+            return speciesID < a.speciesID;
+        
+        if (whichFasta != a.whichFasta)
+            return whichFasta < a.whichFasta;
+
+        if (order != a.order)
+            return order < a.order;
+    }
+
+    static bool compare(const Accession & a, const Accession & b) {
+        if (a.speciesID != b.speciesID)
+            return a.speciesID < b.speciesID;
+        
+        if (a.whichFasta != b.whichFasta)
+            return a.whichFasta < b.whichFasta;
+
+        if (a.order != b.order)
+            return a.order < b.order;
+    }
+};
+
+struct AccessionBatch {
+    uint32_t whichFasta;
+    TaxID speciesID;
+    uint32_t trainingSeqFasta;
+    uint32_t trainingSeqIdx;
+    vector<uint32_t> orders;
+    vector<TaxID> taxIDs;
+    vector<uint32_t> lengths;
+
+    void print() {
+        cout << "whichFasta: " << whichFasta << " speciesID: " << speciesID << " trainingSeqFasta: " << trainingSeqFasta << " trainingSeqIdx: " << trainingSeqIdx << endl;
+        for (size_t i = 0; i < orders.size(); ++i) {
+            cout << "order: " << orders[i] << " taxID: " << taxIDs[i] << " length: " << lengths[i] << endl;
+        }
+    }
+
+    AccessionBatch(uint32_t whichFasta, TaxID speciesID, uint32_t trainingSeqFasta, uint32_t trainingSeqIdx)
+        : whichFasta(whichFasta), speciesID(speciesID), trainingSeqFasta(trainingSeqFasta), trainingSeqIdx(trainingSeqIdx) {}
 };
 
 using namespace std;
 
 class IndexCreator{
-private:
+protected:
+    // Parameters
+    const LocalParameters & par;
+    bool isUpdating;
+
     uint64_t MARKER;
     BaseMatrix *subMat;
 
-    // Parameters
-    int threadNum;
-    size_t bufferSize;
-    int reducedAA;
-    // string spaceMask;
-    int accessionLevel;
-    int lowComplexityMasking;
-    float lowComplexityMaskingThreshold;
-    string dbName;
-    string dbDate;
-    
     // Inputs
     NcbiTaxonomy * taxonomy;
     string dbDir;
@@ -65,75 +104,59 @@ private:
     string versionFileName;
     string paramterFileName;
 
-    struct FASTA {
-        string path;
-        TaxID speciesID;
-        size_t trainingSeqIdx;
-        vector<SequenceBlock> sequences;
-    };
-
-    TaxID newTaxID;
-    vector<FASTA> fastaList;
-    vector<TaxID> taxIdList;
-    vector<size_t> processedSeqCnt; // Index of this vector is the same as the index of fnaList
-
-
-    struct FnaSplit{
-        // species, file_idx, training, offset, cnt
-        size_t training;
-        size_t offset;
-        size_t cnt;
-        TaxID speciesID;
-        int file_idx;
-        FnaSplit(size_t training, size_t offset, size_t cnt, TaxID speciesID, int file_idx):
-                training(training), offset(offset), cnt(cnt), speciesID(speciesID), file_idx(file_idx) {}
-    };
-    vector<FnaSplit> fnaSplits;
-
-    struct FastaSplit{
-        FastaSplit(size_t training, uint32_t offset, uint32_t cnt, TaxID taxid):
-            training(training), offset(offset), cnt(cnt), taxid(taxid) {}
-        size_t training;
-        uint32_t offset;
-        uint32_t cnt;
-        TaxID taxid;
-    };
-
-   struct Split{
-       Split(size_t offset, size_t end) : offset(offset), end(end) {}
-       size_t offset;
-       size_t end;
-   };
-
+    std::unordered_map<string, vector<CDSinfo>> cdsInfoMap;
+    std::vector<AccessionBatch> accessionBatches;
+    std::unordered_set<TaxID> taxIdSet;
+    vector<string> fastaPaths;
     size_t numOfFlush=0;
+    struct Split{
+        Split(size_t offset, size_t end) : offset(offset), end(end) {}
+        size_t offset;
+        size_t end;
+    };
 
-    void writeTargetFiles(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
+    void writeTargetFiles(TargetKmer * kmerBuffer,
+                          size_t & kmerNum,
+                          const LocalParameters & par,
+                          const size_t * uniqeKmerIdx,
+                          const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
-    void writeTargetFilesAndSplits(TargetKmer * kmerBuffer, size_t & kmerNum, const LocalParameters & par, const size_t * uniqeKmerIdx, size_t & uniqKmerCnt);
+    void writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
+                                   size_t & kmerNum,
+                                   const LocalParameters & par,
+                                   const size_t * uniqeKmerIdx, 
+                                   size_t & uniqKmerCnt, 
+                                   const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
-    void writeDiffIdx(uint16_t *buffer, FILE* handleKmerTable, uint16_t *toWrite, size_t size, size_t & localBufIdx );
+    void writeDiffIdx(uint16_t *buffer,
+                      size_t bufferSize,
+                      FILE* handleKmerTable,
+                      uint16_t *toWrite,
+                      size_t size,
+                      size_t & localBufIdx);
 
     void writeTaxonomyDB();
 
     void writeDbParameters();
 
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
-    
-    static bool compareForDiffIdx2(const TargetKmer & a, const TargetKmer & b);
 
-//    void maskLowComplexityRegions(char * seq, char * maskedSeq, ProbabilityMatrix & probMat,
-//                                  const LocalParameters & par);
     size_t fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                 bool *checker,
                                 size_t &processedSplitCnt,
                                 const LocalParameters &par);
 
+    void indexReferenceSequences(size_t bufferSize);
 
-    void makeBlocksForParallelProcessing();
+    void getAccessionBatches(std::vector<Accession> & observedAccessionsVec, size_t bufferSize);
 
-    void makeBlocksForParallelProcessing_accession_level();
+    void getObservedAccessions(const string & fnaListFileName,
+                               vector<Accession> & observedAccessionsVec,
+                               unordered_map<string, size_t> & accession2index);
 
-    void splitFastaForProdigalTraining(int file_idx, TaxID speciesID);
+    void getTaxonomyOfAccessions(vector<Accession> & observedAccessionsVec,
+                                 const unordered_map<string, size_t> & accession2index,
+                                 const string & acc2taxidFileName);
 
     void unzipAndList(const string & folder, const string & fastaList_fname){
         system(("./../../util/unzip_and_list.sh " + folder + " " + fastaList_fname).c_str());
@@ -141,14 +164,16 @@ private:
 
     void load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
 
-    static TaxID load_accession2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid);
-
     TaxID getMaxTaxID();
 
     void editTaxonomyDumpFiles(const vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid);
 
-    void reduceRedundancy(TargetKmerBuffer & kmerBuffer, size_t * uniqeKmerIdx, size_t & uniqKmerCnt,
+    void reduceRedundancy(TargetKmerBuffer & kmerBuffer,
+                          size_t * uniqeKmerIdx,
+                          size_t & uniqKmerCnt,
+                          vector<pair<size_t, size_t>> & uniqKmerIdxRanges,
                           const LocalParameters & par);
+
     size_t AminoAcidPart(size_t kmer) {
         return (kmer) & MARKER;
     }
@@ -164,9 +189,27 @@ private:
         return cnt;
     }
 
-public:
-    static void splitSequenceFile(vector<SequenceBlock> & seqSegments, MmapedData<char> seqFile);
+    void loadCdsInfo(const string & cdsInfoFileList);
 
+    size_t calculateBufferSize(size_t maxRam) {
+        float c = 0.7;
+        if (maxRam <= 32) {
+            c = 0.6;
+        } else if (maxRam < 16) {
+            c = 0.5;
+        }
+        if ((maxRam * 1024.0 * 1024.0 * 1024.0 * c - (par.threads * 50.0 * 1024.0 * 1024.0)) <= 0.0) {
+            cerr << "Not enough memory to create index" << endl;
+            cerr << "Please increase the RAM usage or decrease the number of threads" << endl;
+            exit(EXIT_FAILURE);
+        }
+        return static_cast<size_t>((maxRam * 1024.0 * 1024.0 * 1024.0 * c - (par.threads * 50.0 * 1024.0 * 1024.0))/ 
+                                  (sizeof(TargetKmer) + sizeof(size_t)));
+    }
+
+    void loadMergedTaxIds(const std::string &mergedFile, unordered_map<TaxID, TaxID> & old2new);
+
+public:
     static void printIndexSplitList(DiffIdxSplit * splitList) {
         for (int i = 0; i < 4096; i++) {
             cout << splitList[i].infoIdxOffset << " " << 
@@ -175,43 +218,28 @@ public:
         }
     }
 
-    string getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
-                                  const string & seqFileName,
-                                  const unordered_map<string, TaxID> & acc2taxid,
-                                  vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid);
-
-    string getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments,
-                                  const string & seqFileName,
-                                  const unordered_map<string, TaxID> & acc2taxid,
-                                  unordered_map<string, TaxID> & foundAcc2taxid);
-
-    static void getSeqSegmentsWithHead(vector<SequenceBlock> & seqSegments, const char * seqFileName);
-
     IndexCreator(const LocalParameters & par);
-
-    IndexCreator() {taxonomy = nullptr;}
 
     ~IndexCreator();
     
     int getNumOfFlush();
 
+    void setIsUpdating(bool isUpdating) { this->isUpdating = isUpdating; }
+
     void createIndex(const LocalParameters & par);
 
-    void updateIndex(const LocalParameters & par);
+    void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
+                    uint16_t *kmerBuf, size_t bufferSize, size_t & localBufIdx);
 
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
-                    uint16_t *kmerBuf, size_t & localBufIdx);
+                    uint16_t *kmerBuf, size_t bufferSize, size_t & localBufIdx, size_t & totalBufferIdx);
 
-    void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
-                    uint16_t *kmerBuf, size_t & localBufIdx, size_t & totalBufferIdx);
+    void writeInfo(TaxID * entryToWrite, FILE * infoFile, TaxID * infoBuffer, size_t bufferSize, size_t & infoBufferIdx);
 
-    void writeInfo(TargetKmerInfo * entryToWrite, FILE * infoFile, TargetKmerInfo * infoBuffer, size_t & infoBufferIdx);
+    unordered_set<TaxID> getTaxIdSet() { return taxIdSet; }
 
     static void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
 
-    static void flushInfoBuf(TargetKmerInfo * buffer, FILE * infoFile, size_t & localBufIdx );
-
-    void makeAAoffsets(const LocalParameters & par);
-
+    static void flushInfoBuf(TaxID * buffer, FILE * infoFile, size_t & localBufIdx );
 };
 #endif //ADKMER4_INDEXCREATOR_H

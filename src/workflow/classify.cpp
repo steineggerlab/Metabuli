@@ -5,6 +5,7 @@
 #include "common.h"
 
 void setClassifyDefaults(LocalParameters & par){
+    par.skipRedundancy = 0;
     par.reducedAA = 0;
     // par.spaceMask = "11111111";
     par.seqMode = 2;    

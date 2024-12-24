@@ -29,11 +29,15 @@ public:
     std::vector<MMseqsParameter*> grade;
     std::vector<MMseqsParameter*> addToLibrary;
     std::vector<MMseqsParameter*> build;
+    std::vector<MMseqsParameter*> updateDB;
     std::vector<MMseqsParameter*> applyThreshold;
     std::vector<MMseqsParameter*> binning2report;
     std::vector<MMseqsParameter*> filterByGenus;
     std::vector<MMseqsParameter*> databaseReport;
     std::vector<MMseqsParameter*> mapping2taxon;
+    std::vector<MMseqsParameter*> printInfo;
+    std::vector<MMseqsParameter*> query2reference;
+    std::vector<MMseqsParameter*> expand_diffidx;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
@@ -41,12 +45,14 @@ public:
     PARAMETER(ARCHAEA_TAX_ID)
     PARAMETER(EUKARYOTA_TAX_ID)
 
+    // DB and classify
+    PARAMETER(SKIP_REDUNDANCY)
+
     // Classify
     PARAMETER(SEQ_MODE)
     PARAMETER(REDUCED_AA)
     PARAMETER(MIN_SCORE)
     PARAMETER(MIN_COVERAGE)
-    // PARAMETER(SPACED)
     PARAMETER(MIN_COVERED_POS)
     PARAMETER(HAMMING_MARGIN)
     PARAMETER(MIN_SP_SCORE)
@@ -72,6 +78,7 @@ public:
     PARAMETER(ACCESSION_LEVEL)
     PARAMETER(DB_NAME)
     PARAMETER(DB_DATE)
+    PARAMETER(CDS_INFO)
 
     // Test parameters
     PARAMETER(TEST_RANK)
@@ -88,12 +95,22 @@ public:
     PARAMETER(PRINT_MODE)
     PARAMETER(CONTAM_LIST)
 
+    // printInfo
+    PARAMETER(INFO_BEGIN)
+    PARAMETER(INFO_END)
+
+    // expand_diffidx
+    PARAMETER(KMER_BEGIN)
+    PARAMETER(KMER_END)
+
     // Superkingdom taxonomy id
     int virusTaxId;
     int bacteriaTaxId;
     int archaeaTaxId;
     int eukaryotaTaxId;
 
+    // DB and classify
+    int skipRedundancy;
 
     // Classify
     int seqMode;
@@ -125,6 +142,7 @@ public:
     int splitNum;
     size_t bufferSize;
     int accessionLevel;
+    std::string cdsInfo;
 
     // Test parameters
     std::string testRank;
@@ -143,6 +161,12 @@ public:
     // Filter
     int printMode;
     std::string contamList;
+
+    // printInfo
+    size_t infoBegin;
+    size_t infoEnd;
+    size_t kmerBegin;
+    size_t kmerEnd;
 
     void printParameters(const std::string &module, int argc,
                          const char* pargv[],

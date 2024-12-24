@@ -51,6 +51,7 @@ private:
 public:
     int fng, ng;
     int is_meta;
+    int is_first_meta;
     int nn, max_phase;
     double max_score;
     struct _node *nodes;

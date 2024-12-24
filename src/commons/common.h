@@ -5,6 +5,9 @@
 #include "LocalParameters.h"
 #include "NcbiTaxonomy.h"
 #include <iostream>
+#include <unordered_set>
+#include "FileUtil.h"
+
 
 #define likely(x) __builtin_expect((x),1)
 #define unlikely(x) __builtin_expect((x),0)
@@ -18,6 +21,16 @@ struct KmerCnt {
     size_t kmerCnt;
     size_t totalCnt;
 };
+
+struct CDSinfo{
+    uint32_t protId; //4,294,967,295 counted from 0
+    int frame;
+    bool isComplement;
+    std::vector<std::pair<size_t, size_t>> loc;
+    CDSinfo() = default;
+    CDSinfo(uint32_t protId, int frame) : protId(protId), frame(frame) {}
+};
+
 struct SequenceBlock{
     SequenceBlock(size_t start, size_t end, size_t length, size_t seqLength = 0)
             : start(start), end(end), length(length), seqLength(seqLength) {}
@@ -107,7 +120,7 @@ void process_mem_usage(double& vm_usage, double& resident_set);
 
 NcbiTaxonomy * loadTaxonomy(const std::string & dbDir, const std::string & taxonomyDir = "");
 
-int loadDbParameters(LocalParameters & par);
+int loadDbParameters(LocalParameters & par, const std::string & dbDir);
 
 int searchAccession2TaxID(const std::string & name, const std::unordered_map<std::string, int> & acc2taxid);
 
@@ -123,5 +136,14 @@ size_t loadBuffer(FILE *fp, T *buffer, size_t &bufferIdx, size_t number) {
     bufferIdx = 0;
     return fread(buffer, sizeof(T), number, fp);
 }
+
+void getObservedAccessionList(const std::string & fnaListFileName,
+                              std::vector<std::string> & fastaList,
+                              std::unordered_map<std::string, TaxID> & acc2taxid);
+
+void getTaxonomyOfAccessions(std::unordered_map<std::string, TaxID> & acc2taxid,
+                             const std::string & acc2taxidFileName);
+                                
+bool haveRedundancyInfo(const std::string & dbDir);
 
 #endif //ADCLASSIFIER2_COMMON_H

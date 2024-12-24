@@ -328,7 +328,6 @@ TaxonScore Taxonomer::getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpec
                 i ++;
             }
             if (i - start >= minConsCnt) {
-                // remainConsecutiveMatches(matchList, start, i, matchPaths, currentSpecies);
                 getMatchPaths(matchList, start, i, matchPaths, currentSpecies);
             }
         }

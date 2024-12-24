@@ -5,13 +5,14 @@
 #include "FileUtil.h"
 
 void setDefaults_build(LocalParameters & par){
+    par.skipRedundancy = 1;
     par.reducedAA = 0;
+    par.ramUsage = 128;
     // par.spaceMask = "11111111";
     par.taxonomyPath = "" ;
     par.splitNum = 4096;
     par.maskProb = 0.9;
     par.maskMode = 1;
-    par.bufferSize = 10'000'000'000;
     par.accessionLevel = 0;
     // Get current date
     time_t now = time(0);
@@ -48,8 +49,13 @@ int build(int argc, const char **argv, const Command &command){
     cout << "Merge reference DB files ... " << endl;
     int numOfSplits = idxCre.getNumOfFlush();
     FileMerger merger(par);
-    merger.mergeTargetFiles(par, numOfSplits);
+    for (int i = 0; i < numOfSplits; i++) {
+        merger.addFilesToMerge(par.filenames[0] + "/" + to_string(i) + "_diffIdx",
+                               par.filenames[0] + "/" + to_string(i) + "_info");
+    }
+    merger.updateTaxId2SpeciesTaxId(par.filenames[0] + "/taxID_list");
+    merger.setMergedFileNames(par.filenames[0] + "/diffIdx", par.filenames[0] + "/info", par.filenames[0] + "/split");  
+    merger.mergeTargetFiles();
     cerr << "Index creation completed." << endl;
-
     return 0;
 }

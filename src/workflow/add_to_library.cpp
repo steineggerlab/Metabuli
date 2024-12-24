@@ -28,81 +28,37 @@ int addToLibrary(int argc, const char **argv, const Command &command){
     if (par.taxonomyPath == "DBDIR/taxonomy/") par.taxonomyPath = dbDir + "/taxonomy/";
     if (par.libraryPath == "DBDIR/library/") par.libraryPath = dbDir + "/library/";
 
- 
-
-    // If the library directory does not exist, create it
     if (!FileUtil::directoryExists(par.libraryPath.c_str())) {
         FileUtil::makeDir(par.libraryPath.c_str());
     }
-
     
-    // Load taxonomy
     NcbiTaxonomy * taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
 
-    // Load file names
-    ifstream fileListFile;
-    fileListFile.open(fileList);
-    string eachLine;
+    unordered_map<string, TaxID> accession2taxid;
     vector<string> fileNames;
-    if (fileListFile.is_open()) {
-        while (getline(fileListFile, eachLine)) {
-            fileNames.push_back(eachLine);
-        }
-    } else {
-        cerr << "Cannot open file for file list" << endl;
-    }
+    getObservedAccessionList(fileList, fileNames, accession2taxid);
+    getTaxonomyOfAccessions(accession2taxid, mappingFileName);
 
     if(!par.assembly) {
-
-        // Load mapping file
-        cout << "Load mapping from accession ID to taxonomy ID" << endl;
-        unordered_map<string, int> acc2taxid;
-        string eachItem;
-        if (FILE *mappingFile = fopen(mappingFileName.c_str(), "r")) {
-            char accession[2048];
-            char accession_version[2048];
-            int taxID;
-            fscanf(mappingFile, "%*s\t%*s\t%*s\t%*s");
-            while (fscanf(mappingFile, "%s\t%s\t%d\t%*d", accession, accession_version, &taxID) == 3) {
-                acc2taxid[string(accession_version)] = taxID;
-                acc2taxid[string(accession)] = taxID;
-            }
-        } else {
-            cerr << "Cannot open file for mapping from accession to tax ID" << endl;
-        }
-        cout << "done" << endl;
-
-
-        // Process each file
         vector<string> unmapped;
         for (size_t i = 0; i < fileNames.size(); ++i) {
             KSeqWrapper* kseq = KSeqFactory(fileNames[i].c_str());
             while (kseq->ReadEntry()) {
                 const KSeqWrapper::KSeqEntry & e = kseq->entry;
+                char* pos = strchr(e.name.s, '.'); 
+                if (pos != nullptr) {
+                    *pos = '\0';
+                }
 
-                int taxID = searchAccession2TaxID(e.name.s, acc2taxid);
-                if (taxID == 0) {
+                TaxID taxId = accession2taxid[e.name.s];
+                if (taxId == 0) {
                     cout << "During processing " << fileNames[i] << ", accession " << e.name.s <<
                          " is not found in the mapping file. It is skipped." << endl;
                     unmapped.push_back(e.name.s);
                     continue;
                 }
-                // string accession = string(e.name.s);
-                // size_t pos = accession.find('.');
-                // if (pos != string::npos) { accession = accession.substr(0, pos); }
 
-                // // Skip if accession is not in the mapping file
-                // if (acc2taxid.find(accession) == acc2taxid.end()) {
-                //     cout << "During processing " << fileNames[i] << ", accession " << accession <<
-                //          " is not found in the mapping file. It is skipped." << endl;
-                //     unmapped.push_back(accession);
-                //     continue;
-                // }
-
-                // Get species taxID
-                int speciesTaxID = taxonomy->getTaxIdAtRank(taxID, "species");
-
-                // Skip if species taxID is not found
+                int speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
                 if (speciesTaxID == 0) {
                     cout << "During processing " << fileNames[i] << ", accession " << e.name.s <<
                          " is not matched to any species. It is skipped." << endl;
@@ -132,7 +88,6 @@ int addToLibrary(int argc, const char **argv, const Command &command){
         cout << "Load mapping from assembly accession to taxonomy ID" << endl;
         unordered_map<string, int> assembly2taxid;
         unordered_map<string, int > acc2taxid;
-        string eachItem;
         if (FILE *mappingFile = fopen(mappingFileName.c_str(), "r")) {
             char buffer[512];
             int taxID;

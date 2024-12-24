@@ -391,10 +391,10 @@ SeqIterator::addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev,
     }
 }
 
-bool SeqIterator::translateBlock(const char *seq, PredictedBlock block, vector<int> & aaSeq) {
+bool SeqIterator::translateBlock(const char *seq, PredictedBlock block, vector<int> & aaSeq, size_t length) {
     aaSeq.clear();
-    if(aaSeq.capacity() < strlen(seq) / 3 + 1) {
-        aaSeq.reserve(strlen(seq) / 3 + 1);
+    if(aaSeq.capacity() < length / 3 + 1) {
+        aaSeq.reserve(length / 3 + 1);
     }
     if (block.strand == 1) {
         for (int i = block.start; i + 2 <= block.end; i = i + 3) {
@@ -447,10 +447,10 @@ SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock &block, const char
             tempKmer += aaSeq[kmerCnt + i] * powers[j] * mask[i];
         }
         if (checkN == 1) {
-            kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0, false};
+            kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0};
         } else {
             addDNAInfo_TargetKmer(tempKmer, seq, block, kmerCnt);
-            kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID, false};
+            kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID};
         }
         posToWrite++;
     }
@@ -473,6 +473,43 @@ SeqIterator::addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const Predic
             kmer |= (nuc2num[nuc2int(iRCT[atcg[seq[start - i*3]]])][nuc2int(iRCT[atcg[seq[start - i*3 - 1]]])][
                     nuc2int(iRCT[atcg[seq[start - i*3 - 2]]])] * mask[i]) << (j * bitsForCodon);
         }
+    }
+}
+
+// It extracts kmers from amino acid sequence with DNA information and fill the kmerBuffer with them.
+int SeqIterator::fillBufferWithKmerFromBlock(const char *seq, TargetKmerBuffer &kmerBuffer,
+                                         size_t &posToWrite, int seqID, int taxIdAtRank, const vector<int> & aaSeq, int frame) {
+    uint64_t tempKmer = 0;
+    int len = (int) aaSeq.size();
+    int checkN;
+    for (int kmerCnt = 0; kmerCnt < len - kmerLength - spaceNum_int + 1; kmerCnt++) {
+        tempKmer = 0;
+        checkN = 0;
+        for (uint32_t i = 0, j = 0; i < kmerLength + spaceNum; i++, j += mask[i]) {
+            if (-1 == aaSeq[kmerCnt + i]) {
+                checkN = 1;
+                break;
+            }
+            tempKmer += aaSeq[kmerCnt + i] * powers[j] * mask[i];
+        }
+        if (checkN == 1) {
+            kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0};
+        } else {
+            addDNAInfo_TargetKmer(tempKmer, seq, kmerCnt);
+            kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID};
+        }
+        posToWrite++;
+    }
+    return 0;
+}
+
+// It adds DNA information to kmers referring the original DNA sequence.
+void SeqIterator::addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const int &kmerCnt, int frame) {
+    kmer <<= bitsFor8Codons;
+    int start = kmerCnt * 3;
+    for (int i = 0, j = 0; i < kmerLength + spaceNum_int; i ++, j += mask_int[i]) {
+            kmer |= (nuc2num[nuc2int(atcg[seq[start + i*3]])][nuc2int(atcg[seq[start + i*3 + 1]])][
+                    nuc2int(atcg[seq[start + i*3 + 2]])] * mask[i]) << (j * bitsForCodon);
     }
 }
 
@@ -599,7 +636,85 @@ void SeqIterator::maskLowComplexityRegions(const char *seq, char *maskedSeq, Pro
     }
 }
 
+string SeqIterator::reverseComplement(string &read) const {
+    int len = read.length();
+    string out;
+    for (int i = 0; i < len; i++) {
+        out.push_back(iRCT[read[i]]);
+    }
+    reverse(out.begin(), out.end());
+    return out;
+}
 
+
+void SeqIterator::devideToCdsAndNonCds(const char *maskedSeq,
+                                       size_t seqLen,
+                                       const vector<CDSinfo> &cdsInfo, 
+                                       vector<string> &cds,
+                                       vector<string> &nonCds) {
+    string tmpMasked;
+    for (size_t i = 0; i < cdsInfo.size(); i++) {
+        size_t locNum = cdsInfo[i].loc.size();
+        int currStartCodonPos = 0;
+        int extend = 0;
+        for (size_t j = 0; j < locNum; j++) {
+            // Extend 21 bases to both sides for k-mer from CDS boudaries
+            size_t begin = cdsInfo[i].loc[j].first - 1;
+            size_t end = cdsInfo[i].loc[j].second - 1;
+            if (j == 0) {
+                int k = 0;
+                while (k < 7 && begin >= 3) {
+                    begin -= 3;
+                    currStartCodonPos += 3;
+                    extend += 3;
+                    k++;
+                }
+            }
+            if (j == locNum - 1) {
+                int k = 0;
+                while (k < 7 && end + 3 < seqLen) {
+                    end += 3;
+                    extend += 3;
+                    k++;
+                }
+            }    
+            // cout << seqLen << " begin: " << begin << " end: " << end << endl;
+            tmpMasked += string(maskedSeq + begin, end - begin + 1);    
+        }
+        // Reverse complement if needed
+        if (cdsInfo[i].isComplement) {
+            cds.emplace_back(reverseComplement(tmpMasked));
+        } else {
+            cds.emplace_back(tmpMasked);
+        }
+        tmpMasked.clear();
+    }
+
+    // Get non-CDS that are not in the CDS list
+    bool * checker = new bool[seqLen];
+    memset(checker, true, seqLen * sizeof(bool));
+    for (size_t i = 0; i < cdsInfo.size(); i++) {
+        for (size_t j = 0; j < cdsInfo[i].loc.size(); j++) {
+            for (size_t k = cdsInfo[i].loc[j].first - 1; k < cdsInfo[i].loc[j].second; k++) {
+                checker[k] = false;
+            }
+        }
+    }
+
+    size_t len;
+    size_t i = 0;
+    while (i < seqLen) {
+        len = 0;
+        while (i < seqLen && checker[i]) {
+            i++;
+            len++;
+        }
+        if (len > 32) {
+            nonCds.emplace_back(string(maskedSeq + i - len, len));
+        }
+        i ++;
+    }
+}
 
 void SeqIterator::printKmerInDNAsequence(uint64_t kmer) {
     if (bitsForCodon == 4) {

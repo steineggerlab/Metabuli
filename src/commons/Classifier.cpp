@@ -7,7 +7,7 @@ Classifier::Classifier(LocalParameters & par) {
     // Load parameters
     dbDir = par.filenames[1 + (par.seqMode == 2)];
     matchPerKmer = par.matchPerKmer;
-    loadDbParameters(par);
+    loadDbParameters(par, par.filenames[1 + (par.seqMode == 2)]);
 
     cout << "DB name: " << par.dbName << endl;
     cout << "DB creation date: " << par.dbDate << endl;
