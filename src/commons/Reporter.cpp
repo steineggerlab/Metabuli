@@ -141,6 +141,12 @@ void Reporter::printSpecifiedReads(const vector<size_t> & readIdxs,
     KSeqWrapper* tempKseq = KSeqFactory(readFileName.c_str());
     tempKseq->ReadEntry();
     bool isFasta = tempKseq->entry.qual.l == 0;
+
+    if (isFasta && par.extractMode == 2) {
+        Debug(Debug::ERROR) << "Cannot convert FASTA to FASTQ\n";
+        EXIT(EXIT_FAILURE);
+    }
+
     delete tempKseq;
 
     KSeqWrapper* kseq = KSeqFactory(readFileName.c_str());
@@ -157,7 +163,13 @@ void Reporter::printSpecifiedReads(const vector<size_t> & readIdxs,
     if (isFasta) {
         while (kseq->ReadEntry()) {
             if (readCnt == readIdxs[idx]) {
-                fprintf(outFile, ">%s\n%s\n", kseq->entry.name.s, kseq->entry.sequence.s);
+                fprintf(outFile, ">%s", kseq->entry.name.s);
+                if (kseq->entry.comment.l > 0) {
+                    fprintf(outFile, " %s\n", kseq->entry.comment.s);
+                } else {
+                    fprintf(outFile, "\n");
+                }
+                fprintf(outFile, "%s\n", kseq->entry.sequence.s);
                 idx++;
                 if (idx == readIdxs.size()) {
                     break;
@@ -166,29 +178,49 @@ void Reporter::printSpecifiedReads(const vector<size_t> & readIdxs,
             readCnt++;
         }
     } else {
-        while (kseq->ReadEntry()) {
-            if (readCnt == readIdxs[idx]) {
-                fprintf(outFile, "@%s", kseq->entry.name.s);
-                if (kseq->entry.comment.l > 0) {
-                    fprintf(outFile, " %s\n", kseq->entry.comment.s);
-                } else {
-                    fprintf(outFile, "\n");
+        if (par.extractMode == 1) {
+            // Print in FASTA format
+            while (kseq->ReadEntry()) {
+                if (readCnt == readIdxs[idx]) {
+                    fprintf(outFile, ">%s", kseq->entry.name.s);
+                    if (kseq->entry.comment.l > 0) {
+                        fprintf(outFile, " %s\n", kseq->entry.comment.s);
+                    } else {
+                        fprintf(outFile, "\n");
+                    }
+                    fprintf(outFile, "%s\n", kseq->entry.sequence.s);
+                    idx++;
+                    if (idx == readIdxs.size()) {
+                        break;
+                    }
                 }
-                fprintf(outFile, "%s\n", kseq->entry.sequence.s);
-                fprintf(outFile, "+%s", kseq->entry.name.s);
-                if (kseq->entry.comment.l > 0) {
-                    fprintf(outFile, " %s\n", kseq->entry.comment.s);
-                } else {
-                    fprintf(outFile, "\n");
-                }
-                fprintf(outFile, "%s\n", kseq->entry.qual.s);
-
-                idx++;
-                if (idx == readIdxs.size()) {
-                    break;
-                }
+                readCnt++;
             }
-            readCnt++;
+        } else {
+            while (kseq->ReadEntry()) {
+                if (readCnt == readIdxs[idx]) {
+                    fprintf(outFile, "@%s", kseq->entry.name.s);
+                    if (kseq->entry.comment.l > 0) {
+                        fprintf(outFile, " %s\n", kseq->entry.comment.s);
+                    } else {
+                        fprintf(outFile, "\n");
+                    }
+                    fprintf(outFile, "%s\n", kseq->entry.sequence.s);
+                    fprintf(outFile, "+%s", kseq->entry.name.s);
+                    if (kseq->entry.comment.l > 0) {
+                        fprintf(outFile, " %s\n", kseq->entry.comment.s);
+                    } else {
+                        fprintf(outFile, "\n");
+                    }
+                    fprintf(outFile, "%s\n", kseq->entry.qual.s);
+    
+                    idx++;
+                    if (idx == readIdxs.size()) {
+                        break;
+                    }
+                }
+                readCnt++;
+            }
         }
     }
     delete kseq;
