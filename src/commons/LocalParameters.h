@@ -65,6 +65,7 @@ public:
     PARAMETER(MATCH_PER_KMER)
     PARAMETER(MIN_SS_MATCH)
     PARAMETER(TIE_RATIO)
+    PARAMETER(PRINT_LINEAGE)
 
     // extract
     PARAMETER(TARGET_TAX_ID)
@@ -129,6 +130,7 @@ public:
     int matchPerKmer;
     int minSSMatch;
     float tieRatio;
+    int printLineage;
 
     // Extract
     int targetTaxId;
