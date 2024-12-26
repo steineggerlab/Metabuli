@@ -160,12 +160,19 @@ LocalParameters::LocalParameters() :
                     (void *) &minSSMatch,
                     "^[0-9]+$"),
         TIE_RATIO(TIE_RATIO_ID,
-                      "--tie-ratio",
-                      "Best * --tie-ratio is considered as a tie",
-                      "Best * --tie-ratio is considered as a tie",
-                      typeid(float),
-                      (void *) &tieRatio,
-                      "^0(\\.[0-9]+)?|1(\\.0+)?$"),
+                  "--tie-ratio",
+                  "Best * --tie-ratio is considered as a tie",
+                  "Best * --tie-ratio is considered as a tie",
+                  typeid(float),
+                  (void *) &tieRatio,
+                  "^0(\\.[0-9]+)?|1(\\.0+)?$"),
+        PRINT_LINEAGE(PRINT_LINEAGE_ID,
+                      "--lineage",
+                      "Print lineage information",
+                      "Print lineage information",
+                      typeid(int),
+                      (void *) &printLineage,
+                      "[0-1]"),
         TARGET_TAX_ID(TARGET_TAX_ID_ID,
                "--tax-id",
                "Tax. ID of clade to be extracted",
@@ -173,6 +180,13 @@ LocalParameters::LocalParameters() :
                typeid(int),
                (void *) &targetTaxId,
                "^[0-9]+$"),
+        EXTRACT_MODE(EXTRACT_MODE_ID,
+                     "--extract-format",
+                     "0: original format, 1: FASTA, 2: FASTQ",
+                     "0: original format, 1: FASTA, 2: FASTQ",
+                     typeid(int),
+                     (void *) &extractMode,
+                     "[0-2]"),
         LIBRARY_PATH(LIBRARY_PATH_ID,
                      "--library-path",
                      "Path to library where the FASTA files are stored",
@@ -442,11 +456,13 @@ LocalParameters::LocalParameters() :
     classify.push_back(&ACCESSION_LEVEL);
     classify.push_back(&TIE_RATIO);
     classify.push_back(&SKIP_REDUNDANCY);
+    classify.push_back(&PRINT_LINEAGE);
 
     // extract
     extract.push_back(&TAXONOMY_PATH);
     extract.push_back(&SEQ_MODE);
     extract.push_back(&TARGET_TAX_ID);
+    extract.push_back(&EXTRACT_MODE);
 
     // filter 
     filter.push_back(&PARAM_THREADS);

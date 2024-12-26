@@ -118,6 +118,7 @@ void IndexCreator::indexReferenceSequences(size_t bufferSize) {
     getObservedAccessions(par.filenames[1], observedAccessionsVec, accession2index);
     cout << "Number of observed accessions: " << observedAccessionsVec.size() << endl;
     getTaxonomyOfAccessions(observedAccessionsVec, accession2index, par.filenames[2]);
+    cout << "Taxonomy of accessions is obtained" << endl;
     getAccessionBatches(observedAccessionsVec, bufferSize);
     cout << "Number of accession batches: " << accessionBatches.size() << endl;
 }
@@ -178,7 +179,6 @@ void IndexCreator::getObservedAccessions(const string & fnaListFileName,
                 accession2index[observedAccessionsVec[j].accession] = j;
             }
             copyCount += localObservedAccessionsVec.size();
-            // __sync_fetch_and_add(&copyCount, localObservedAccessionsVec.size());            
         }                     
     }
 }
@@ -296,7 +296,22 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
         taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp.new",
                                     taxonomyDir + "/nodes.dmp.new",
                                     taxonomyDir + "/merged.dmp");
-    }                       
+        // Write accession to taxid map to file
+        string acc2taxidFileName = dbDir + "/acc2taxid.map";
+        FILE * acc2taxidFile = fopen(acc2taxidFileName.c_str(), "w");
+        for (auto & acc2taxid: acc2accId) {
+            fprintf(acc2taxidFile, "%s\t%d\t%d\n", acc2taxid.first.c_str(), acc2taxid.second.first, acc2taxid.second.second);
+        }
+        fclose(acc2taxidFile);
+    } else {
+        // Write accession to taxid map to file
+        string acc2taxidFileName = dbDir + "/acc2taxid.map";
+        FILE * acc2taxidFile = fopen(acc2taxidFileName.c_str(), "w");
+        for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {
+            fprintf(acc2taxidFile, "%s\t%d\n", observedAccessionsVec[i].accession.c_str(), observedAccessionsVec[i].taxID);
+        }
+        fclose(acc2taxidFile);
+    }                      
 }
 
 void IndexCreator::getAccessionBatches(std::vector<Accession> & observedAccessionsVec, size_t bufferSize) {
@@ -308,6 +323,7 @@ void IndexCreator::getAccessionBatches(std::vector<Accession> & observedAccessio
     for (size_t i = 0; i < accCnt;) {
         TaxID currentSpeciesID = observedAccessionsVec[i].speciesID;
         if (currentSpeciesID == 0) {
+            i++;
             continue;
         }
         uint32_t maxLength = 0, trainingFasta = 0, trainingSeq = 0;

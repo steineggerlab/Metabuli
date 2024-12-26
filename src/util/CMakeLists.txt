@@ -12,4 +12,5 @@ set(util_source_files
         util/makeAAoffset.cpp
         util/printinfo.cpp
         util/query2reference.cpp
+        util/ictv-challenge-format.cpp
         PARENT_SCOPE)

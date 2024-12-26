@@ -364,6 +364,14 @@ char NcbiTaxonomy::findShortRank(const std::string& rank) {
     return '-';
 }
 
+std::string NcbiTaxonomy::findShortRank2(const std::string& rank) {
+    std::map<std::string, std::string>::const_iterator it;
+    if ((it = ExtendedShortRanks.find(rank)) != ExtendedShortRanks.end()) {
+        return it->second;
+    }
+    return "-";
+}
+
 std::string NcbiTaxonomy::taxLineage(TaxonNode const *node, bool infoAsName) {
     std::vector<TaxonNode const *> taxLineageVec;
     std::string taxLineage;
@@ -376,6 +384,31 @@ std::string NcbiTaxonomy::taxLineage(TaxonNode const *node, bool infoAsName) {
     for (int i = taxLineageVec.size() - 1; i >= 0; --i) {
         if (infoAsName) {
             taxLineage += findShortRank(getString(taxLineageVec[i]->rankIdx));
+            taxLineage += '_';
+            taxLineage += getString(taxLineageVec[i]->nameIdx);
+        } else {
+            taxLineage += SSTR(taxLineageVec[i]->taxId);
+        }
+
+        if (i > 0) {
+            taxLineage += ";";
+        }
+    }
+    return taxLineage;
+}
+
+std::string NcbiTaxonomy::taxLineage2(TaxonNode const *node, bool infoAsName) {
+    std::vector<TaxonNode const *> taxLineageVec;
+    std::string taxLineage;
+    taxLineage.reserve(4096);
+    do {
+        taxLineageVec.push_back(node);
+        node = taxonNode(node->parentTaxId);
+    } while (node->parentTaxId != node->taxId);
+
+    for (int i = taxLineageVec.size() - 1; i >= 0; --i) {
+        if (infoAsName) {
+            taxLineage += findShortRank2(getString(taxLineageVec[i]->rankIdx));
             taxLineage += '_';
             taxLineage += getString(taxLineageVec[i]->nameIdx);
         } else {

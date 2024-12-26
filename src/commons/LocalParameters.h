@@ -65,9 +65,11 @@ public:
     PARAMETER(MATCH_PER_KMER)
     PARAMETER(MIN_SS_MATCH)
     PARAMETER(TIE_RATIO)
+    PARAMETER(PRINT_LINEAGE)
 
     // extract
     PARAMETER(TARGET_TAX_ID)
+    PARAMETER(EXTRACT_MODE)
 
     // DB build parameters
     PARAMETER(LIBRARY_PATH)
@@ -129,9 +131,11 @@ public:
     int matchPerKmer;
     int minSSMatch;
     float tieRatio;
+    int printLineage;
 
     // Extract
     int targetTaxId;
+    int extractMode;
 
     // Database creation
     std::string tinfoPath;

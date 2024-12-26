@@ -7,6 +7,7 @@ void setExtractDefaults(LocalParameters & par){
     par.taxonomyPath = "" ;
     par.seqMode = 2;
     par.targetTaxId = 0;
+    par.extractMode = 0;
 }
 
 int extract(int argc, const char **argv, const Command& command)

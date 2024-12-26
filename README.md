@@ -33,6 +33,14 @@ Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic 
 
 
 ---
+### Update in v1.0.9
+- DB creation process improved
+  - `updateDB` module to add new sequences to an existing database.
+  - Users can provide CDS information to skip Prodigal's gene prediction.
+  - `--max-ram` parameter added to `build` module.
+  - Compatibility with taxdump files generated using [taxonkit](https://bioinf.shenwei.me/taxonkit/).
+  - Please check release note for details.
+  
 ### Update in v1.0.8
 - Added `extract` module to extract reads classified into a certain taxon.
 
@@ -55,6 +63,18 @@ Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic 
 - Record version info. in `db.parameter`
 
 ---
+
+## Table of Contents
+- [Installation](#installation)
+  - [Precompiled binaries](#precompiled-binaries)
+  - [Compile from source code](#compile-from-source-code)
+- [Pre-built databases](#pre-built-databases)
+- [Classification](#classification)
+- [Extract](#extract)
+- [Custom database](#custom-database)
+- [Update database](#update-database)
+- [Example](#example)
+  
 ## Installation
 ### Precompiled binaries
 ```
