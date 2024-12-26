@@ -160,12 +160,19 @@ LocalParameters::LocalParameters() :
                     (void *) &minSSMatch,
                     "^[0-9]+$"),
         TIE_RATIO(TIE_RATIO_ID,
-                      "--tie-ratio",
-                      "Best * --tie-ratio is considered as a tie",
-                      "Best * --tie-ratio is considered as a tie",
-                      typeid(float),
-                      (void *) &tieRatio,
-                      "^0(\\.[0-9]+)?|1(\\.0+)?$"),
+                  "--tie-ratio",
+                  "Best * --tie-ratio is considered as a tie",
+                  "Best * --tie-ratio is considered as a tie",
+                  typeid(float),
+                  (void *) &tieRatio,
+                  "^0(\\.[0-9]+)?|1(\\.0+)?$"),
+        PRINT_LINEAGE(PRINT_LINEAGE_ID,
+                      "--lineage",
+                      "Print lineage information",
+                      "Print lineage information",
+                      typeid(int),
+                      (void *) &printLineage,
+                      "[0-1]"),
         TARGET_TAX_ID(TARGET_TAX_ID_ID,
                "--tax-id",
                "Tax. ID of clade to be extracted",
@@ -442,6 +449,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&ACCESSION_LEVEL);
     classify.push_back(&TIE_RATIO);
     classify.push_back(&SKIP_REDUNDANCY);
+    classify.push_back(&PRINT_LINEAGE);
 
     // extract
     extract.push_back(&TAXONOMY_PATH);

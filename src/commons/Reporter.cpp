@@ -1,7 +1,7 @@
 #include "Reporter.h"
 #include "taxonomyreport.cpp"
 
-Reporter::Reporter(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxonomy(taxonomy) {
+Reporter::Reporter(const LocalParameters &par, NcbiTaxonomy *taxonomy) : par(par), taxonomy(taxonomy) {
     if (par.targetTaxId != 0) {return;}
     if (par.contamList == "") { // classify module
         if (par.seqMode == 2) {
@@ -34,6 +34,9 @@ void Reporter::writeReadClassification(const vector<Query> & queryList, bool cla
         // for (size_t j = 0; j < queryList[i].pathScores.size(); j++) {
         //     readClassificationFile << queryList[i].pathScores[j] << " ";
         // }
+        if (par.printLineage) {
+            readClassificationFile << taxonomy->taxLineage2(taxonomy->taxonNode(queryList[i].classification)) << "\t";
+        }
         for (auto it = queryList[i].taxCnt.begin(); it != queryList[i].taxCnt.end(); ++it) {
             readClassificationFile << it->first << ":" << it->second << " ";
         }

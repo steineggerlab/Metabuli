@@ -83,7 +83,8 @@ static const std::map<std::string, int> NcbiRanks = {{ "forma", 1 },
                                                      { "subkingdom", 26 },
                                                      { "kingdom", 27 },
                                                      { "superkingdom", 28 },
-                                                     {"no rank", 29}};
+                                                     { "no rank", 29},
+                                                     { "realm", 30}};
 
 static const std::map<std::string, char> NcbiShortRanks = {{ "species", 's' },
                                                            { "genus", 'g' },
@@ -94,6 +95,23 @@ static const std::map<std::string, char> NcbiShortRanks = {{ "species", 's' },
                                                            { "kingdom", 'k' },
                                                            { "superkingdom", 'd' }};
 
+static const std::map<std::string, std::string> ExtendedShortRanks = 
+                                                {{"subspecies", "ss" },
+                                                 { "species", "s" },
+                                                 { "subgenus", "sg" },
+                                                 { "genus", "g" },
+                                                 { "subfamily", "sf" },
+                                                 { "family", "f" },
+                                                 { "suborder", "so" },
+                                                 { "order", "o" },
+                                                 { "subclass", "sc" },
+                                                 { "class", "c" },
+                                                 { "subphylum", "sp" },
+                                                 { "phylum", "p" },
+                                                 { "subkingdom", "sk" },
+                                                 { "kingdom", "k" },
+                                                 { "superkingdom", "d" },
+                                                 { "realm", "r" }};
 class NcbiTaxonomy {
 public:
     static NcbiTaxonomy* openTaxonomy(const std::string &database);
@@ -128,6 +146,8 @@ public:
     size_t maxNodes;
 
     // Added by jaebeom
+    static std::string findShortRank2(const std::string& rank);
+    std::string taxLineage2(TaxonNode const *node, bool infoAsName = true);
     bool IsAncestor2(TaxID ancestor, TaxID child);
     TaxID getTaxIdAtRank(int taxId, const std::string & rank);
     void createTaxIdListAtRank(std::vector<int> & taxIdList, std::vector<int> & taxIdListAtRank,

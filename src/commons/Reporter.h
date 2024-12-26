@@ -12,6 +12,7 @@ using namespace std;
 
 class Reporter {
 private:
+    const LocalParameters & par;
     string outDir;
     string jobId;
     NcbiTaxonomy * taxonomy;
