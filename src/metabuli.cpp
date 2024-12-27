@@ -127,7 +127,7 @@ std::vector<Command> commands = {
                     CITATION_SPACEPHARER,
                     {{"List of absolute paths of files to be added. One path per line.", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                      {"NCBI style accession2taxid file. It should be consistent to tax dump files.", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-                     {"DB directory", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}},
+                     {"DB directory", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
         {"binning2report", binning2report, &localPar.binning2report, COMMAND_FORMAT_CONVERSION,
                 "It generates Kraken style report file from binning results",
                 nullptr,
@@ -146,7 +146,7 @@ std::vector<Command> commands = {
                     CITATION_SPACEPHARER,
                     {{"mapping file", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                      {"taxonomy directory", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
-         {"query2reference", query2reference, &localPar.query2reference, COMMAND_EXPERT,
+        {"query2reference", query2reference, &localPar.query2reference, COMMAND_EXPERT,
                     "It inspects how the queried genomes are represented by the reference DB",
                 nullptr,
                     "Jaebeom Kim <jbeom0731@gmail.com>",
@@ -155,9 +155,17 @@ std::vector<Command> commands = {
                     {{"query accessions", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                      {"reference accession", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                      {"accession2taxid", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-                     {"taxonomy directory", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}}
+                     {"taxonomy directory", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}},
+        {"ictv-format", ictvFormat, &localPar.build, COMMAND_EXPERT,
+                "Converts read-by-read classification result file to ICTV challenge format",
+                nullptr,
+                "Jaebeom Kim <jbeom0731@gmail.com>",
+                "<result file>",
+                CITATION_SPACEPHARER,
+                {{"result file", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}}
 
 };
+
 std::vector<KmerThreshold> externalThreshold = {};
 
 std::vector<DatabaseDownload> externalDownloads = {
