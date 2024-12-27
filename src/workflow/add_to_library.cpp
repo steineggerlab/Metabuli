@@ -53,7 +53,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
                 TaxID taxId = accession2taxid[e.name.s];
                 if (taxId == 0) {
                     cout << "During processing " << fileNames[i] << ", accession " << e.name.s <<
-                         " is not found in the mapping file. It is skipped." << endl;
+                         " is not found in the mapping file. It is skipped.\n";
                     unmapped.push_back(e.name.s);
                     continue;
                 }
@@ -61,7 +61,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
                 int speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
                 if (speciesTaxID == 0) {
                     cout << "During processing " << fileNames[i] << ", accession " << e.name.s <<
-                         " is not matched to any species. It is skipped." << endl;
+                         " is not matched to any species. It is skipped.\n";
                     unmapped.push_back(e.name.s);
                     continue;
                 }
@@ -116,7 +116,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             // Skip if current assembly accession is not in the mapping file
             if (assembly2taxid.find(assemblyID) == assembly2taxid.end()) {
                 cout << "During processing " << fileNames[i] << ", accession " << assemblyID <<
-                     " is not found in the mapping file. It is skipped." << endl;
+                     " is not found in the mapping file. It is skipped.\n";
                 unmapped.push_back(assemblyID);
                 continue;
             }
@@ -125,7 +125,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
             int speciesTaxID = taxonomy->getTaxIdAtRank(assembly2taxid[assemblyID], "species");
             if (speciesTaxID == 0) {
                 cout << "During processing " << fileNames[i] << ", accession " << assemblyID <<
-                     " is not matched to any species. It is skipped." << endl;
+                     " is not matched to any species. It is skipped.\n";
                 continue;
             }
 

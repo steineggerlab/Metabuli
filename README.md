@@ -257,8 +257,15 @@ To build a custom database, you need three things:
 1. **FASTA files** : Each sequence of your FASTA files must be separated by '>accession.version' like '>CP001849.1'. The accession doesn't have to follow the NCBI format, but it must be unique and included in the accession2taxid file. 
 2. **accession2taxid** : Mapping from accession to taxonomy ID. The sequences whose accessions are not listed here will be skipped.
 3. **NCBI-style taxonomy dump** : 'names.dmp' , 'nodes.dmp', and 'merged.dmp' are required. The sequences whose taxonomy IDs are not included here will be skipped.
-
+   
 The steps for building a database with NCBI or GTDB taxonomy are described below.
+
+### User-provided CDS information (optional)
+The `--cds-info` option in the `build` command can be used to provide a list of absolute paths to CDS files. For the accessions included in files, the provided CDS information will be used, and Prodigal's gene prediction will be skipped. Currently, only GenBank or RefSeq CDS files like below are supported.
+```
+Example:
+GCA_000839185.1_ViralProj14174_cds_from_genomic.fna.gz 
+```
 
 ### Building a DB with NCBI taxonomy
 #### 1. Prepare taxonomy and accession2taxid
