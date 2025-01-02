@@ -81,9 +81,7 @@ GroupGenerator::~GroupGenerator() {
     delete kmerFileHandler;
 }
 
-void GroupGenerator::startGroupGeneration(const LocalParameters &par) {    
-    tempFunction();
-    return;
+void GroupGenerator::startGroupGeneration(const LocalParameters &par) {  
 
     QueryKmerBuffer queryKmerBuffer;
     vector<Query> queryList;
@@ -177,6 +175,7 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
         }
     }   
 
+    
     unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> relation;
     makeGraph(outDir, relation, numOfSplits, jobId);
 
@@ -184,7 +183,8 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     vector<int> queryGroupInfo;
     queryGroupInfo.resize(processedReadCnt, -1);
     makeGroups(relation, groupInfo, queryGroupInfo, groupKmerThr);
-    // saveGroupsToFile(groupInfo, queryGroupInfo, outDir, jobId);
+    
+    saveGroupsToFile(groupInfo, queryGroupInfo, outDir, jobId);
     
     vector<pair<int, float>> metabuliResult;       
     metabuliResult.resize(processedReadCnt, make_pair(-1, 0.0f));
@@ -196,6 +196,45 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     applyRepLabel(outDir, outDir, queryGroupInfo, repLabel, jobId);
     
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
+}
+
+void GroupGenerator::makeGroupsFromBinning(const string &binningFileDir, 
+                                           unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
+                                           vector<int> &queryGroupInfo) {
+    // Map to store the count of shared Y nodes between X nodes
+    DisjointSet ds;
+    string line;
+
+    cout << "Creating groups based on graph..." << endl;
+    time_t beforeSearch = time(nullptr);
+    
+    for (const auto& currentQueryRelation : relation) {
+        uint32_t currentQueryId = currentQueryRelation.first;
+        for (const auto& [otherQueryId, count] : currentQueryRelation.second) {
+            if (count >= groupKmerThr) {
+                if (ds.parent.find(currentQueryId) == ds.parent.end()) {
+                    ds.makeSet(currentQueryId);
+                }
+                if (ds.parent.find(otherQueryId) == ds.parent.end()) {
+                    ds.makeSet(otherQueryId);
+                }
+                ds.unionSets(currentQueryId, otherQueryId);
+            }
+        }
+    }
+
+    // Collect nodes into groups
+    for (const auto& p : ds.parent) {
+        uint32_t currentQueryId = p.first;
+        uint32_t groupId = ds.find(currentQueryId);
+        groupInfo[groupId].insert(currentQueryId);
+        queryGroupInfo[currentQueryId] = groupId;
+    }
+
+    cout << "Query group created successfully : " << groupInfo.size() << " groups" << endl;
+    cout << "Time spent for query groups: " << double(time(nullptr) - beforeSearch) << endl;
+
+    return;
 }
 
 void GroupGenerator::makeGraph(const string &queryKmerFileDir, 
@@ -453,9 +492,9 @@ void GroupGenerator::applyRepLabel(const string &resultFileDir,
         return;
     }
 
-    ofstream outFile(newResultFileDir + "/" + jobId + "_group_classifications.tsv");
+    ofstream outFile(newResultFileDir + "/" + jobId + "_updated_classifications.tsv");
     if (!outFile.is_open()) {
-        cerr << "Error opening file: " << newResultFileDir + "/" + jobId + "_group_classifications.tsv" << endl;
+        cerr << "Error opening file: " << newResultFileDir + "/" + jobId + "_updated_classifications.tsv" << endl;
         return;
     }
 
