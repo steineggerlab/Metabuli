@@ -8,6 +8,7 @@
 #include <limits>
 #include <map>
 #include "MMseqsMPI.h"
+#include <cstdint>
 
 #ifndef EXIT
 #define EXIT(exitCode) do { int __status = (exitCode); std::cerr.flush(); std::cout.flush(); exit(__status); } while(0)
