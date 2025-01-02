@@ -7,6 +7,7 @@
 #include <iostream>
 #include <unordered_set>
 #include "FileUtil.h"
+#include <cstdint>
 
 
 #define likely(x) __builtin_expect((x),1)

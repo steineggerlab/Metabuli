@@ -7,6 +7,7 @@
 #include "common.h"
 #include "report.h"
 #include "FileUtil.h"
+#include <cstdint>
 
 using namespace std;
 

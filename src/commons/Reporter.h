@@ -7,7 +7,7 @@
 #include "NcbiTaxonomy.h"
 #include "LocalParameters.h"
 #include "KSeqWrapper.h"
-
+#include <cstdint>
 using namespace std;
 
 class Reporter {

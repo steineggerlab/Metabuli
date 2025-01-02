@@ -3,6 +3,7 @@
 #include <iostream>
 #include <Kmer.h>
 #include "Util.h"
+#include <cstdint>
 
 
 class QueryKmerBuffer{

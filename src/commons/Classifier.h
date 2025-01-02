@@ -30,6 +30,7 @@
 #include "KmerExtractor.h"
 #include "Taxonomer.h"
 #include "Reporter.h"
+#include <cstdint>
 #define BufferSize 16'777'216 //16 * 1024 * 1024 // 16 M
 using namespace std;
 

@@ -6,6 +6,7 @@
 #include "common.h"
 #include <unordered_map>
 #include <atomic>
+#include <cstdint>
 
 class KmerExtractor {
 private:

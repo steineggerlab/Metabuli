@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <unistd.h>
+#include <cstdint>
 
 #define BufferSize 16'777'216 // 16 * 1024 * 1024 // 16 M
 

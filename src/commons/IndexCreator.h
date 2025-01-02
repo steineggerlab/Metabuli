@@ -20,6 +20,7 @@
 #include "SubstitutionMatrix.h"
 #include "tantan.h"
 #include "LocalUtil.h"
+#include <cstdint>
 
 
 #ifdef OPENMP

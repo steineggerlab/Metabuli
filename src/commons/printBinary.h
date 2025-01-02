@@ -5,6 +5,7 @@
 #ifndef ADKMER_DEBUG_H
 #define ADKMER_DEBUG_H
 #include <iostream>
+#include <cstdint>
 
 using namespace std;
 

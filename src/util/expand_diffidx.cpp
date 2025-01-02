@@ -6,6 +6,7 @@
 #include "KmerMatcher.h"
 #include "common.h"
 #include "SeqIterator.h"
+#include <cstdint>
 
 using namespace std;
 

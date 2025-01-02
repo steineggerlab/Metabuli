@@ -8,7 +8,7 @@
 #include "NcbiTaxonomy.h"
 #include "printBinary.h"
 #include "common.h"
-
+#include <cstdint>
 
 
 using namespace std;

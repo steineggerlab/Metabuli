@@ -5,6 +5,7 @@
 #include <vector>
 #include "report.h"
 #include "FileUtil.h"
+#include <cstdint>
 
 using namespace std;
 
