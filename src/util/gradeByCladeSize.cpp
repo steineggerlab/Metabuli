@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <regex>
+#include <cstdint>
 
 using namespace std;
 

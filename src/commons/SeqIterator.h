@@ -20,6 +20,7 @@
 #include "NucleotideMatrix.h"
 #include "SubstitutionMatrix.h"
 #include "tantan.h"
+#include <cstdint>
 
 #ifdef OPENMP
 #include <omp.h>

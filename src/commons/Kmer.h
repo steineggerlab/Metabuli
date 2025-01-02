@@ -2,6 +2,7 @@
 #define ADKMER3_KMER_H
 #include <iostream>
 #include "NcbiTaxonomy.h"
+#include <cstdint>
 
 struct QueryKmerInfo {
     explicit QueryKmerInfo(uint32_t seqID = 0, uint32_t pos = 0, uint8_t frame = 0 ) : pos(pos), sequenceID(seqID), frame(frame) {}

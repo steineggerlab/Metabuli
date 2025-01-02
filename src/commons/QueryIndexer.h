@@ -9,6 +9,7 @@
 #include "Debug.h"
 #include "common.h"
 #include <unordered_map>
+#include <cstdint>
 
 struct QuerySplit {
     size_t start;

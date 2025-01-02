@@ -7,6 +7,7 @@
 #include "KmerExtractor.h"
 #include "Taxonomer.h"
 #include "Reporter.h"
+#include <cstdint>
 
 class QueryFilter {
 private:

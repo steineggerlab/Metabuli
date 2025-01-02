@@ -5,6 +5,7 @@
 #include <iostream>
 #include "IndexCreator.h"
 #include "report.h"
+#include <cstdint>
 
 using namespace std;
 

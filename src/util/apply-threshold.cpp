@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "report.h"
+#include <cstdint>
 
 using namespace std;
 

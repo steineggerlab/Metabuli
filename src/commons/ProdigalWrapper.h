@@ -20,6 +20,7 @@
 #include <vector>
 #include "xxhash.h"
 #include "SeqIterator.h"
+#include <cstdint>
 
 #define MIN_SINGLE_GENOME 20000
 #define IDEAL_SINGLE_GENOME 100000
