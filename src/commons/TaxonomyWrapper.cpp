@@ -48,7 +48,9 @@ std::pair<int, std::string> TaxonomyWrapper::parseName(const std::string &line) 
 }
 
 TaxonomyWrapper::~TaxonomyWrapper() {
-    delete[] internal2orgTaxId;
+    if (!externalData && useInternalTaxID) {
+        delete[] internal2orgTaxId;
+    }
 }
 
 TaxonomyWrapper::TaxonomyWrapper(TaxonNode* taxonNodes,
@@ -73,11 +75,19 @@ TaxonomyWrapper::TaxonomyWrapper(const std::string &namesFile, const std::string
     if (useInternalTaxID) {
         loadNodes(tmpNodes, nodesFile, original2internalTaxId, Dm, internal2orgTaxIdTmp, internalTaxIDCnt);
         loadMerged(mergedFile, original2internalTaxId, Dm, internal2orgTaxIdTmp, internalTaxIDCnt);
+        maxTaxID = internalTaxIDCnt - 1;
         D = new int[maxTaxID + 1];
         std::fill_n(D, maxTaxID + 1, -1);
         for (std::map<TaxID, int>::iterator it = Dm.begin(); it != Dm.end(); ++it) {
             assert(it->first <= maxTaxID);
             D[it->first] = it->second;
+        }   
+        // Loop over taxonNodes and check all parents exist
+        for (std::vector<TaxonNode>::iterator it = tmpNodes.begin(); it != tmpNodes.end(); ++it) {
+            if (!nodeExists(it->parentTaxId)) {
+                Debug(Debug::ERROR) << "Inconsistent nodes.dmp taxonomy file! Cannot find parent taxon with ID " << it->parentTaxId << "!\n";
+                EXIT(EXIT_FAILURE);
+            }
         }
         internal2orgTaxId = new int[maxTaxID + 1];
         std::copy(internal2orgTaxIdTmp.begin(), internal2orgTaxIdTmp.end(), internal2orgTaxId);
@@ -167,14 +177,6 @@ size_t TaxonomyWrapper::loadNodes(std::vector<TaxonNode> &tmpNodes,
         tmpNodes.emplace_back(currentNodeId, internalTaxId, internalParentTaxId, rankIdx, (size_t)-1);
         Dm.emplace(internalTaxId, currentNodeId);
         ++currentNodeId;
-    }
-    maxTaxID = internalTaxIdCnt - 1;
-    // Loop over taxonNodes and check all parents exist
-    for (std::vector<TaxonNode>::iterator it = tmpNodes.begin(); it != tmpNodes.end(); ++it) {
-        if (!nodeExists(it->parentTaxId)) {
-            Debug(Debug::ERROR) << "Inconsistent nodes.dmp taxonomy file! Cannot find parent taxon with ID " << it->parentTaxId << "!\n";
-            EXIT(EXIT_FAILURE);
-        }
     }
 
     Debug(Debug::INFO) << " Done, got " << tmpNodes.size() << " nodes\n";
@@ -283,6 +285,7 @@ std::pair<char*, size_t> TaxonomyWrapper::serialize(const TaxonomyWrapper& t) {
     size_t matrixSize = matrixDim * matrixK * sizeof(int);
     size_t blockSize = StringBlock<unsigned int>::memorySize(*t.block);
     size_t memSize = sizeof(int) // SERIALIZATION_VERSION
+        + sizeof(size_t) // internalTaxIdUsed
         + sizeof(size_t) // maxNodes
         + sizeof(int) // maxTaxID
         + t.maxNodes * sizeof(TaxonNode) // taxonNodes
@@ -430,7 +433,6 @@ TaxID TaxonomyWrapper::getTaxIdAtRank(int taxId, const std::string & rank) {
     if(taxId == 0 || !nodeExists(taxId) || taxId == 1) return 0;
     int rankIndex = findRankIndex(rank);
     const TaxonNode * curNode = taxonNode(taxId, true);
-//    std::cout << taxId << "\t" << curNode->rankIdx << std::endl;
     int cnt = 0;
     while ((NcbiTaxonomy::findRankIndex(getString(curNode->rankIdx)) < rankIndex ||
             findRankIndex(getString(curNode->rankIdx)) == 29) && cnt < 30)  {
@@ -451,8 +453,7 @@ void TaxonomyWrapper::createTaxIdListAtRank(std::vector<int> &taxIdList, std::ve
                                          const std::string &rank) {
     size_t sizeOfList = taxIdList.size();
     taxIdListAtRank.resize(sizeOfList);
-//    std::cout << "size of list: " << sizeOfList << std::endl;
-#pragma omp parallel default(none), shared(taxIdList, rank, sizeOfList, taxIdListAtRank, std::cout)
+#pragma omp parallel default(none), shared(taxIdList, rank, sizeOfList, taxIdListAtRank)
     {
 #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < sizeOfList; i++) {

@@ -55,11 +55,12 @@ public:
             if (taxonNodes[i].nameIdx == 0) {
                 continue;
             }
-            if (block->getString(taxonNodes[i].nameIdx) == "Eukaryota") {
+            if (strcmp(block->getString(taxonNodes[i].nameIdx), "Eukaryota") == 0) {
                 eukaryotaTaxID = taxonNodes[i].taxId;
                 return;
             }
         }
+        eukaryotaTaxID = 0;
     }
 
     TaxID getInternalTaxID(TaxID originalTaxID) {
