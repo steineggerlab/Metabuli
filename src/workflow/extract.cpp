@@ -43,6 +43,8 @@ int extract(int argc, const char **argv, const Command& command)
     TaxonomyWrapper *taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
     Reporter reporter(par, taxonomy);
 
+    targetTaxID = taxonomy->getInternalTaxID(targetTaxID);
+
     vector<size_t> readIdxs;
     
     cout << "Extracting reads classified to taxon " << targetTaxID << " ... " << flush;

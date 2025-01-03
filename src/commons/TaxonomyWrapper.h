@@ -21,7 +21,7 @@ static const std::map<std::string, std::string> ExtendedShortRanks =
                                                  { "kingdom", "k" },
                                                  { "superkingdom", "d" },
                                                  { "realm", "r" }};
-                                                 
+
 class TaxonomyWrapper : public NcbiTaxonomy {
 public:
     TaxonomyWrapper(const std::string &namesFile, const std::string &nodesFile, const std::string &mergedFile, bool useInternalTaxID);
@@ -68,6 +68,12 @@ public:
         }
     }
 
+    void getExternal2internalTaxID(std::unordered_map<TaxID, TaxID> &external2internalTaxID) {
+        for (int i = 0; i <= maxTaxID; i++) {
+            external2internalTaxID[internal2orgTaxId[i]] = i;
+        }
+    }
+
     TaxID getSmallestUnusedExternalTaxID(std::unordered_set<TaxID> &usedExternalTaxIDs) {
         TaxID res = 0;
         while (usedExternalTaxIDs.find(res) != usedExternalTaxIDs.end()) {
@@ -75,6 +81,10 @@ public:
         }
         usedExternalTaxIDs.insert(res);
         return res;
+    }
+
+    bool hasInternalTaxID() {
+        return useInternalTaxID;
     }
 
     // Added by jaebeom

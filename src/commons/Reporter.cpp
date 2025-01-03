@@ -145,21 +145,31 @@ void Reporter::getReadsClassifiedToClade(TaxID cladeId,
         perror("Failed to open read-by-read classification file");
         return;
     }
-
     char line[4096];
     size_t idx = 0;
-    // int classification;
-
-    while (fgets(line, sizeof(line), results)) {
-        int taxId;
-        if (sscanf(line, "%*s %*s %d", &taxId) == 1) {
-            if (taxonomy->IsAncestor(cladeId, taxId)) {
-                readIdxs.push_back(idx);
+    if (taxonomy->hasInternalTaxID()) {
+        unordered_map<TaxID, TaxID> extern2intern;
+        taxonomy->getExternal2internalTaxID(extern2intern);
+        while (fgets(line, sizeof(line), results)) {
+            int taxId;
+            if (sscanf(line, "%*s %*s %d", &taxId) == 1) {            
+                if (taxonomy->IsAncestor(cladeId, extern2intern[taxId])) {
+                    readIdxs.push_back(idx);
+                }
             }
+            idx++;
         }
-        idx++;
+    } else {
+        while (fgets(line, sizeof(line), results)) {
+            int taxId;
+            if (sscanf(line, "%*s %*s %d", &taxId) == 1) {            
+                if (taxonomy->IsAncestor(cladeId, taxId)) {
+                    readIdxs.push_back(idx);
+                }
+            }
+            idx++;
+        }
     }
-
     fclose(results);
 }
 
