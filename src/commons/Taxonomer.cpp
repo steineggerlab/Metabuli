@@ -28,7 +28,7 @@ Taxonomer::Taxonomer(const LocalParameters &par, TaxonomyWrapper *taxonomy) : ta
     minSSMatch = par.minSSMatch;
     minConsCnt = (size_t) par.minConsCnt;
     minConsCntEuk = (size_t) par.minConsCntEuk;
-    eukaryotaTaxId = par.eukaryotaTaxId;
+    eukaryotaTaxId = taxonomy->getEukaryotaTaxID();
     tieRatio = par.tieRatio;
 
     if (par.seqMode == 1 || par.seqMode == 2) {

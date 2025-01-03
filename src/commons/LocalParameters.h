@@ -43,7 +43,6 @@ public:
     PARAMETER(VIRUS_TAX_ID)
     PARAMETER(BACTERIA_TAX_ID)
     PARAMETER(ARCHAEA_TAX_ID)
-    PARAMETER(EUKARYOTA_TAX_ID)
 
     // DB and classify
     PARAMETER(SKIP_REDUNDANCY)
@@ -109,7 +108,6 @@ public:
     int virusTaxId;
     int bacteriaTaxId;
     int archaeaTaxId;
-    int eukaryotaTaxId;
 
     // DB and classify
     int skipRedundancy;

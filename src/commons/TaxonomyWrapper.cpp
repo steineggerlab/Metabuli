@@ -51,6 +51,17 @@ TaxonomyWrapper::~TaxonomyWrapper() {
     delete[] internal2orgTaxId;
 }
 
+TaxonomyWrapper::TaxonomyWrapper(TaxonNode* taxonNodes,
+                                 size_t maxNodes,
+                                 int maxTaxID,
+                                 int *D, int *E, int *L, int *H, int **M, 
+                                 StringBlock<unsigned int> *block, 
+                                 int *internal2orgTaxId, 
+                                 bool useInternalTaxID)
+        : NcbiTaxonomy(taxonNodes, maxNodes, maxTaxID, D, E, L, H, M, block), internal2orgTaxId(internal2orgTaxId), useInternalTaxID(useInternalTaxID) {
+    setEukaryoteTaxID();
+}
+
 TaxonomyWrapper::TaxonomyWrapper(const std::string &namesFile, const std::string &nodesFile, const std::string &mergedFile, bool useInternalTaxID) : useInternalTaxID(useInternalTaxID) {
     block = new StringBlock<unsigned int>();
     std::vector<TaxonNode> tmpNodes;

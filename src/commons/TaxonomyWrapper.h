@@ -50,6 +50,18 @@ public:
         return eukaryotaTaxID;
     }
 
+    void setEukaryoteTaxID() {
+        for (size_t i = 0; i < maxNodes; i++) {
+            if (taxonNodes[i].nameIdx == 0) {
+                continue;
+            }
+            if (block->getString(taxonNodes[i].nameIdx) == "Eukaryota") {
+                eukaryotaTaxID = taxonNodes[i].taxId;
+                return;
+            }
+        }
+    }
+
     TaxID getInternalTaxID(TaxID originalTaxID) {
         if (!useInternalTaxID) {
             return originalTaxID;
@@ -119,8 +131,7 @@ protected:
 
     void loadNames(std::vector<TaxonNode> &tmpNodes, const std::string &namesFile, const std::unordered_map<TaxID, TaxID> & original2internalTaxId);
 
-    TaxonomyWrapper(TaxonNode* taxonNodes, size_t maxNodes, int maxTaxID, int *D, int *E, int *L, int *H, int **M, StringBlock<unsigned int> *block, int *internal2orgTaxId, bool useInternalTaxID)
-        : NcbiTaxonomy(taxonNodes, maxNodes, maxTaxID, D, E, L, H, M, block), internal2orgTaxId(internal2orgTaxId), useInternalTaxID(useInternalTaxID) {};
+    TaxonomyWrapper(TaxonNode* taxonNodes, size_t maxNodes, int maxTaxID, int *D, int *E, int *L, int *H, int **M, StringBlock<unsigned int> *block, int *internal2orgTaxId, bool useInternalTaxID);
         
 
 };

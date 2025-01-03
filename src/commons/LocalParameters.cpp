@@ -32,13 +32,6 @@ LocalParameters::LocalParameters() :
                        typeid(int),
                        (void *) &archaeaTaxId,
                        "^[0-9]+$"),
-        EUKARYOTA_TAX_ID(EUKARYOTA_TAX_ID_ID,
-                         "--eukaryota-taxid",
-                         "Taxonomy ID of eukaryota taxon",
-                         "NCBI: 2759 [Default]\nCUSTOM: Check names.dmp file ",
-                         typeid(int),
-                         (void *) &eukaryotaTaxId,
-                         "^[0-9]+$"),
         SKIP_REDUNDANCY(SKIP_REDUNDANCY_ID,
                         "--skip-redundancy",
                         "Not storing k-mer's redundancy. Keep it as 1.",
@@ -361,7 +354,6 @@ LocalParameters::LocalParameters() :
     virusTaxId = 10239;
     bacteriaTaxId = 2;
     archaeaTaxId = 2157;
-    eukaryotaTaxId = 2759;
 
 
     // Classify
