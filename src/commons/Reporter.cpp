@@ -88,7 +88,7 @@ void Reporter::writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int
     if (krona) {
         FILE *kronaFile = fopen((outDir + "/" + jobId + "_krona.html").c_str(), "w");
         fwrite(krona_prelude_html, krona_prelude_html_len, sizeof(char), kronaFile);
-        fprintf(kronaFile, "<node name=\"all\"><magnitude><val>%zu</val></magnitude>", numOfQuery);
+        fprintf(kronaFile, "<node name=\"all\"><magnitude><val>%zu</val></magnitude>", (size_t) numOfQuery);
         kronaReport(kronaFile, *taxonomy, cladeCounts, numOfQuery);
         fprintf(kronaFile, "</node></krona></div></body></html>");
         fclose(kronaFile);

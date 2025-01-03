@@ -40,7 +40,7 @@ struct Score2{
 
 
 char compareTaxonAtRank(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTaxonomy, CountOfGroup & count,
-                             const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
+                             const string & rank);
 
 void setGradeByCladeSizeDefault(LocalParameters & par){
     par.readIdCol = 1;
@@ -223,15 +223,15 @@ ncbiTaxonomy, par, cout, cerr)
                 }
 
                 if (cladeCnt < 3) { // 1, 2
-                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[0], par.testRank, par);
+                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[0], par.testRank);
                 } else if (cladeCnt < 5) {
-                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[1], par.testRank, par);
+                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[1], par.testRank);
                 } else if (cladeCnt < 9) {
-                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[2], par.testRank, par);
+                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[2], par.testRank);
                 } else if (cladeCnt < 17) {
-                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[3], par.testRank, par);
+                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[3], par.testRank);
                 } else {
-                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[4], par.testRank, par);
+                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[4], par.testRank);
                 }
             }
             readClassification.close();
@@ -273,7 +273,7 @@ ncbiTaxonomy, par, cout, cerr)
 }
 
 char compareTaxonAtRank(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTaxonomy, CountOfGroup & count,
-                             const string & rank, const LocalParameters & par, size_t idx, const string& readId) {
+                             const string & rank) {
     // Do not count if the rank of target is higher than current rank
     TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);

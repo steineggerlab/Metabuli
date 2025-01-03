@@ -478,7 +478,7 @@ SeqIterator::addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const Predic
 
 // It extracts kmers from amino acid sequence with DNA information and fill the kmerBuffer with them.
 int SeqIterator::fillBufferWithKmerFromBlock(const char *seq, TargetKmerBuffer &kmerBuffer,
-                                         size_t &posToWrite, int seqID, int taxIdAtRank, const vector<int> & aaSeq, int frame) {
+                                         size_t &posToWrite, int seqID, int taxIdAtRank, const vector<int> & aaSeq) {
     uint64_t tempKmer = 0;
     int len = (int) aaSeq.size();
     int checkN;

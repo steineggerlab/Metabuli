@@ -120,13 +120,11 @@ protected:
 
     void writeTargetFiles(TargetKmer * kmerBuffer,
                           size_t & kmerNum,
-                          const LocalParameters & par,
                           const size_t * uniqeKmerIdx,
                           const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
     void writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
                                    size_t & kmerNum,
-                                   const LocalParameters & par,
                                    const size_t * uniqeKmerIdx, 
                                    size_t & uniqKmerCnt, 
                                    const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);

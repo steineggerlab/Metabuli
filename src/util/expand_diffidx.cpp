@@ -32,10 +32,7 @@ int expand_diffidx(int argc, const char **argv, const Command &command){
 
     bool complete = false;
     uint64_t currentTargetKmer = 0;
-    uint64_t currentTargetKmerAA = 0;
-    uint64_t currentAACnt = 0;
     uint64_t AAkmerCnt = 0;
-    uint64_t currentAAOffset = 0;
     size_t max = 0;
     size_t max2 = 0;
 

@@ -102,9 +102,9 @@ void IndexCreator::createIndex(const LocalParameters &par) {
         time_t reduction = time(nullptr);
         cout << "Time spent for reducing redundancy: " << (double) (reduction - sort) << endl;
         if(processedBatchCnt == batchNum && numOfFlush == 0 && !isUpdating) {
-            writeTargetFilesAndSplits(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par, uniqKmerIdx, uniqKmerCnt, uniqKmerIdxRanges);
+            writeTargetFilesAndSplits(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, uniqKmerIdx, uniqKmerCnt, uniqKmerIdxRanges);
         } else {
-            writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, par, uniqKmerIdx, uniqKmerIdxRanges);
+            writeTargetFiles(kmerBuffer.buffer, kmerBuffer.startIndexOfReserve, uniqKmerIdx, uniqKmerIdxRanges);
         }
         delete[] uniqKmerIdx;
     }
@@ -366,7 +366,6 @@ void IndexCreator::getAccessionBatches(std::vector<Accession> & observedAccessio
 // This function sort the TargetKmerBuffer, do redundancy reducing task, write the differential index of them
 void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer, 
                                     size_t & kmerNum,
-                                    const LocalParameters & par,
                                     const size_t * uniqKmerIdx,
                                     const vector<pair<size_t, size_t>> & uniqKmerIdxRanges) {
     string diffIdxFileName;
@@ -411,7 +410,6 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer,
 
 void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
                                              size_t & kmerNum,
-                                             const LocalParameters & par,
                                              const size_t * uniqKmerIdx,
                                              size_t & uniqKmerCnt,
                                              const vector<pair<size_t, size_t>> & uniqKmerIdxRanges){
