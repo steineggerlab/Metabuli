@@ -341,6 +341,8 @@ TaxonomyWrapper* TaxonomyWrapper::unserialize(char* mem) {
     size_t internalTaxIdUsed = *((size_t*)p);
     if (internalTaxIdUsed == 1) {
         p += sizeof(size_t);
+    } else {
+        internalTaxIdUsed = 0;
     }
     size_t maxNodes = *((size_t*)p);
     p += sizeof(size_t);
