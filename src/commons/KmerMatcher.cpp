@@ -7,7 +7,7 @@
 #include <vector>
 
 KmerMatcher::KmerMatcher(const LocalParameters & par,
-                         NcbiTaxonomy * taxonomy) : par(par) {                        
+                         TaxonomyWrapper * taxonomy) : par(par) {                        
     // Parameters
     threads = par.threads;
     dbDir = par.filenames[1 + (par.seqMode == 2)];

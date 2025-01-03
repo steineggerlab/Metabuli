@@ -32,7 +32,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
         FileUtil::makeDir(par.libraryPath.c_str());
     }
     
-    NcbiTaxonomy * taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
+    TaxonomyWrapper * taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
 
     unordered_map<string, TaxID> accession2taxid;
     vector<string> fileNames;

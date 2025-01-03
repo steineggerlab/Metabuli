@@ -21,6 +21,7 @@
 #include "tantan.h"
 #include "LocalUtil.h"
 #include <cstdint>
+#include "TaxonomyWrapper.h"
 
 
 #ifdef OPENMP
@@ -93,7 +94,8 @@ protected:
     BaseMatrix *subMat;
 
     // Inputs
-    NcbiTaxonomy * taxonomy;
+    TaxonomyWrapper * taxonomy;
+    // NcbiTaxonomy * taxonomy;
     string dbDir;
     string fnaListFileName;
     string taxonomyDir;

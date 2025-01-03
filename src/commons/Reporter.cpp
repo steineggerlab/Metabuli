@@ -1,7 +1,7 @@
 #include "Reporter.h"
 #include "taxonomyreport.cpp"
 
-Reporter::Reporter(const LocalParameters &par, NcbiTaxonomy *taxonomy) : par(par), taxonomy(taxonomy) {
+Reporter::Reporter(const LocalParameters &par, TaxonomyWrapper *taxonomy) : par(par), taxonomy(taxonomy) {
     if (par.targetTaxId != 0) {return;}
     if (par.contamList == "") { // classify module
         if (par.seqMode == 2) {
@@ -27,7 +27,7 @@ void Reporter::writeReadClassification(const vector<Query> & queryList, bool cla
             continue;
         }
         readClassificationFile << queryList[i].isClassified << "\t" << queryList[i].name << "\t"
-                               << queryList[i].classification << "\t"
+                               << taxonomy->getOriginalTaxID(queryList[i].classification) << "\t"
                                << queryList[i].queryLength + queryList[i].queryLength2 << "\t"
                                << queryList[i].score << "\t"
                                << taxonomy->getString(taxonomy->taxonNode(queryList[i].classification)->rankIdx) << "\t";
@@ -38,7 +38,7 @@ void Reporter::writeReadClassification(const vector<Query> & queryList, bool cla
             readClassificationFile << taxonomy->taxLineage2(taxonomy->taxonNode(queryList[i].classification)) << "\t";
         }
         for (auto it = queryList[i].taxCnt.begin(); it != queryList[i].taxCnt.end(); ++it) {
-            readClassificationFile << it->first << ":" << it->second << " ";
+            readClassificationFile << taxonomy->getOriginalTaxID(it->first) << ":" << it->second << " ";
         }
         readClassificationFile << "\n";
     }
@@ -46,6 +46,35 @@ void Reporter::writeReadClassification(const vector<Query> & queryList, bool cla
 
 void Reporter::closeReadClassificationFile() {
     readClassificationFile.close();
+}
+
+void Reporter::kronaReport(FILE *FP, const TaxonomyWrapper &taxDB, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts, unsigned long totalReads, TaxID taxID, int depth) {
+    std::unordered_map<TaxID, TaxonCounts>::const_iterator it = cladeCounts.find(taxID);
+    unsigned int cladeCount = it == cladeCounts.end() ? 0 : it->second.cladeCount;
+    if (taxID == 0) {
+        if (cladeCount > 0) {
+            fprintf(FP, "<node name=\"unclassified\"><magnitude><val>%d</val></magnitude></node>", cladeCount);
+        }
+        kronaReport(FP, taxDB, cladeCounts, totalReads, 1);
+    } else {
+        if (cladeCount == 0) {
+            return;
+        }
+        const TaxonNode *taxon = taxDB.taxonNode(taxID);
+        std::string escapedName = escapeAttribute(taxDB.getString(taxon->nameIdx));
+        fprintf(FP, "<node name=\"%s\"><magnitude><val>%d</val></magnitude>", escapedName.c_str(), cladeCount);
+        std::vector<TaxID> children = it->second.children;
+        SORT_SERIAL(children.begin(), children.end(), [&](int a, int b) { return cladeCountVal(cladeCounts, a) > cladeCountVal(cladeCounts, b); });
+        for (size_t i = 0; i < children.size(); ++i) {
+            TaxID childTaxId = children[i];
+            if (cladeCounts.count(childTaxId)) {
+                kronaReport(FP, taxDB, cladeCounts, totalReads, childTaxId, depth + 1);
+            } else {
+                break;
+            }
+        }
+        fprintf(FP, "</node>");
+    }
 }
 
 void Reporter::writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt, bool krona) {
@@ -85,7 +114,7 @@ void Reporter::writeReport(FILE *FP, const std::unordered_map<TaxID, TaxonCounts
         const TaxonNode *taxon = taxonomy->taxonNode(taxID);
         fprintf(FP, "%.4f\t%i\t%i\t%s\t%i\t%s%s\n",
                 100 * cladeCount / double(totalReads), cladeCount, taxCount,
-                taxonomy->getString(taxon->rankIdx), taxID, std::string(2 * depth, ' ').c_str(), taxonomy->getString(taxon->nameIdx));
+                taxonomy->getString(taxon->rankIdx), taxonomy->getOriginalTaxID(taxID), std::string(2 * depth, ' ').c_str(), taxonomy->getString(taxon->nameIdx));
         std::vector<TaxID> children = it->second.children;
         SORT_SERIAL(children.begin(), children.end(), [&](int a, int b) { return cladeCountVal(cladeCounts, a) > cladeCountVal(cladeCounts, b); });
         for (size_t i = 0; i < children.size(); ++i) {

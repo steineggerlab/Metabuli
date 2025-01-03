@@ -24,7 +24,7 @@ private:
     KmerMatcher * kmerMatcher;
     Taxonomer * taxonomer;
     Reporter * reporter;
-    NcbiTaxonomy * taxonomy;
+    TaxonomyWrapper * taxonomy;
 
     // Kseq
     KSeqWrapper* filter_kseq1;

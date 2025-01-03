@@ -29,9 +29,10 @@ IndexCreator::IndexCreator(const LocalParameters & par) : par(par) {
     versionFileName = dbDir + "/db.version";
     paramterFileName = dbDir + "/db.parameters";
 
-    taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp",
-                                taxonomyDir + "/nodes.dmp",
-                                taxonomyDir + "/merged.dmp");    
+    taxonomy = new TaxonomyWrapper(taxonomyDir + "/names.dmp",
+                                   taxonomyDir + "/nodes.dmp",
+                                   taxonomyDir + "/merged.dmp",
+                                   true);    
 
     if (par.reducedAA == 1){
         MARKER = 0Xffffffff;
@@ -65,7 +66,7 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     // Write taxonomy id list
     FILE * taxidListFile = fopen(taxidListFileName.c_str(), "w");
     for (auto & taxid: taxIdSet) {
-        fprintf(taxidListFile, "%d\n", taxid);
+        fprintf(taxidListFile, "%d\n", taxonomy->getInternalTaxID(taxid));
     }
     fclose(taxidListFile);
 
@@ -228,7 +229,11 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
     ++current;  // Move past the newline
 
     char accession[16384];
-    TaxID taxID, newTaxID = 0, maxTaxID = 0;
+    TaxID taxID;
+    std::unordered_set<TaxID> usedExternalTaxIDs;
+    taxonomy->getUsedExternalTaxIDs(usedExternalTaxIDs);
+
+    // First, label the accessions with external taxIDs
     while (current < end) {
         // Read a line
         char* lineStart = current;
@@ -249,43 +254,25 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
                 if (old2merged.count(taxID) > 0) {
                     taxID = old2merged[taxID];
                 }
-                maxTaxID = std::max(maxTaxID, taxID);
-                // TODO: Accession level taxonomy
                 if (par.accessionLevel == 1) {
-                    acc2accId.emplace_back(accession, make_pair(taxID, newTaxID));
-                    taxIdSet.insert(newTaxID);
-                    observedAccessionsVec[it->second].taxID = newTaxID;
-                    observedAccessionsVec[it->second].speciesID = taxonomy->getTaxIdAtRank(taxID, "species");
-                    newTaxID++;
+                    TaxID accTaxId = taxonomy->getSmallestUnusedExternalTaxID(usedExternalTaxIDs);
+                    acc2accId.emplace_back(accession, make_pair(taxID, accTaxId));
+                    taxIdSet.insert(accTaxId);
+                    observedAccessionsVec[it->second].taxID = accTaxId;
                 } else {
                     taxIdSet.insert(taxID);
                     observedAccessionsVec[it->second].taxID = taxID;
-                    observedAccessionsVec[it->second].speciesID = taxonomy->getTaxIdAtRank(taxID, "species");
                 }
             }
         }
         ++current;  // Move to the next line
     }
-    // Unmap the file
     if (munmap(fileData, fileSize) == -1) {
         cerr << "munmap failed" << endl;
     }                 
 
     if (par.accessionLevel == 1) {
-        maxTaxID = std::max(getMaxTaxID() + 1, maxTaxID + 1);
-        for (size_t i = 0; i < acc2accId.size(); ++i) {
-            acc2accId[i].second.second += maxTaxID;
-        }
-        for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {
-            observedAccessionsVec[i].taxID += maxTaxID;
-        }
-        std::unordered_set<TaxID> updatedTaxIdSet;
-        updatedTaxIdSet.reserve(taxIdSet.size());
-        for (const auto& taxId : taxIdSet) {
-            updatedTaxIdSet.insert(taxId + maxTaxID);
-        }
-        taxIdSet = std::move(updatedTaxIdSet);
-        
+        // Get accession-level taxonomy
         editTaxonomyDumpFiles(acc2accId);
         delete taxonomy;
         cout << "Accession level database is being created (--accession-level 1)" << endl;
@@ -293,9 +280,19 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
         cout << taxonomyDir + "/names.dmp.new" << endl;
         cout << taxonomyDir + "/nodes.dmp.new" << endl;
         cout << "Loading new taxonomy files" << endl;
-        taxonomy = new NcbiTaxonomy(taxonomyDir + "/names.dmp.new",
-                                    taxonomyDir + "/nodes.dmp.new",
-                                    taxonomyDir + "/merged.dmp");
+        taxonomy = new TaxonomyWrapper(taxonomyDir + "/names.dmp.new",
+                                       taxonomyDir + "/nodes.dmp.new",
+                                       taxonomyDir + "/merged.dmp",
+                                       true);
+    }
+
+    // Second, convert external taxIDs to internal taxIDs
+    for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {
+        observedAccessionsVec[i].taxID = taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID);
+        observedAccessionsVec[i].speciesID = taxonomy->getTaxIdAtRank(observedAccessionsVec[i].taxID, "species");
+    }
+    
+    if (par.accessionLevel == 1) {
         // Write accession to taxid map to file
         string acc2taxidFileName = dbDir + "/acc2taxid.map";
         FILE * acc2taxidFile = fopen(acc2taxidFileName.c_str(), "w");
@@ -308,7 +305,7 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
         string acc2taxidFileName = dbDir + "/acc2taxid.map";
         FILE * acc2taxidFile = fopen(acc2taxidFileName.c_str(), "w");
         for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {
-            fprintf(acc2taxidFile, "%s\t%d\n", observedAccessionsVec[i].accession.c_str(), observedAccessionsVec[i].taxID);
+            fprintf(acc2taxidFile, "%s\t%d\n", observedAccessionsVec[i].accession.c_str(), taxonomy->getOriginalTaxID(observedAccessionsVec[i].taxID));
         }
         fclose(acc2taxidFile);
     }                      
@@ -959,7 +956,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
 }
 
 void IndexCreator::writeTaxonomyDB() {
-    std::pair<char *, size_t> serialized = NcbiTaxonomy::serialize(*taxonomy);
+    std::pair<char *, size_t> serialized = TaxonomyWrapper::serialize(*taxonomy);
     FILE *handle = fopen(taxonomyBinaryFileName.c_str(), "w");
     if (handle == NULL) {
         Debug(Debug::ERROR) << "Could not open " << taxonomyBinaryFileName << " for writing\n";

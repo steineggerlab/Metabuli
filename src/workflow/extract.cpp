@@ -40,7 +40,7 @@ int extract(int argc, const char **argv, const Command& command)
     TaxID targetTaxID = par.targetTaxId;
     
     cout << "Loading taxonomy ... " << endl;
-    NcbiTaxonomy *taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
+    TaxonomyWrapper *taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
     Reporter reporter(par, taxonomy);
 
     vector<size_t> readIdxs;

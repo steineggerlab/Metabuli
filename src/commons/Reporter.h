@@ -4,7 +4,7 @@
 #include "iostream"
 #include "fstream"
 #include <unordered_map>
-#include "NcbiTaxonomy.h"
+#include "TaxonomyWrapper.h"
 #include "LocalParameters.h"
 #include "KSeqWrapper.h"
 #include <cstdint>
@@ -15,7 +15,7 @@ private:
     const LocalParameters & par;
     string outDir;
     string jobId;
-    NcbiTaxonomy * taxonomy;
+    TaxonomyWrapper * taxonomy;
 
     // Output
     string reportFileName;
@@ -23,11 +23,12 @@ private:
     ofstream readClassificationFile;
 
 public:
-    Reporter(const LocalParameters &par, NcbiTaxonomy *taxonomy);
+    Reporter(const LocalParameters &par, TaxonomyWrapper *taxonomy);
     // Write report
     void writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt, bool krona = true);
     void writeReport(FILE *FP, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts,
                      unsigned long totalReads, TaxID taxID = 0, int depth = 0);
+    void kronaReport(FILE *FP, const TaxonomyWrapper &taxDB, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts, unsigned long totalReads, TaxID taxID = 0, int depth = 0);
 
     // Read by read classification results
     void openReadClassificationFile();

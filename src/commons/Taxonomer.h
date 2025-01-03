@@ -1,6 +1,6 @@
 #ifndef METABULI_TAXONOMER_H
 #define METABULI_TAXONOMER_H
-#include "NcbiTaxonomy.h"
+#include "TaxonomyWrapper.h"
 #include "LocalParameters.h"
 #include "Match.h"
 #include "common.h"
@@ -69,7 +69,7 @@ struct MatchBlock {
 
 class Taxonomer {
 private:
-    NcbiTaxonomy * taxonomy;
+    TaxonomyWrapper * taxonomy;
 
     // spaced k-mer
     int unmaskedPos[9];
@@ -137,7 +137,7 @@ private:
 
 
 public:
-    Taxonomer(const LocalParameters & par, NcbiTaxonomy * taxonomy);
+    Taxonomer(const LocalParameters & par, TaxonomyWrapper * taxonomy);
     ~Taxonomer();
 
     void assignTaxonomy(const Match *matchList,

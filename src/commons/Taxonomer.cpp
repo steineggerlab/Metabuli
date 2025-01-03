@@ -9,7 +9,7 @@
 #include <unordered_map>
 
 
-Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxonomy(taxonomy) {
+Taxonomer::Taxonomer(const LocalParameters &par, TaxonomyWrapper *taxonomy) : taxonomy(taxonomy) {
     // Parameters
     string spaceMask = "11111111";
     auto mask = new uint32_t[spaceMask.length()];

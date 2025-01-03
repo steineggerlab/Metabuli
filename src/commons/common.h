@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <utility>
 #include "LocalParameters.h"
-#include "NcbiTaxonomy.h"
+#include "TaxonomyWrapper.h"
 #include <iostream>
 #include <unordered_set>
 #include "FileUtil.h"
@@ -119,7 +119,7 @@ inline bool fileExist(const std::string& name) {
 
 void process_mem_usage(double& vm_usage, double& resident_set);
 
-NcbiTaxonomy * loadTaxonomy(const std::string & dbDir, const std::string & taxonomyDir = "");
+TaxonomyWrapper * loadTaxonomy(const std::string & dbDir, const std::string & taxonomyDir = "");
 
 int loadDbParameters(LocalParameters & par, const std::string & dbDir);
 

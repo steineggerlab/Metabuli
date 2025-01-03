@@ -6,7 +6,7 @@
 #include "LocalParameters.h"
 #include "Match.h"
 #include "Mmap.h"
-#include "NcbiTaxonomy.h"
+#include "TaxonomyWrapper.h"
 #include "common.h"
 #include "unordered_map"
 #include <string>
@@ -30,7 +30,7 @@ using namespace std;
 class KmerMatcher {
 protected:
   const LocalParameters &par;
-  NcbiTaxonomy *taxonomy;
+  TaxonomyWrapper *taxonomy;
   size_t threads;
   std::string dbDir;
   //   string targetDiffIdxFileName, targetInfoFileName, diffIdxSplitFileName;
@@ -167,7 +167,7 @@ static void loadBuffer2(int fd, T *buffer, size_t &bufferIdx, size_t size, off_t
   }
 
 public:
-  KmerMatcher(const LocalParameters &par, NcbiTaxonomy *taxonomy);
+  KmerMatcher(const LocalParameters &par, TaxonomyWrapper *taxonomy);
 
   virtual ~KmerMatcher();
   

@@ -114,7 +114,7 @@ void FileMerger::mergeTargetFiles() {
     size_t * maxIdxOfEachFiles = new size_t[numOfSplits];
     struct MmapedData<uint16_t> *diffFileList = new struct MmapedData<uint16_t>[numOfSplits];
     struct MmapedData<TaxID> *infoFileList = new struct MmapedData<TaxID>[numOfSplits];
-    for (int file = 0; file < numOfSplits; file++) {
+    for (size_t file = 0; file < numOfSplits; file++) {
         diffFileList[file] = mmapData<uint16_t>(diffIdxFileNames[file].c_str());
         infoFileList[file] = mmapData<TaxID>(infoFileNames[file].c_str());
         maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
@@ -126,7 +126,7 @@ void FileMerger::mergeTargetFiles() {
     size_t sizeOfSplit = numOfKmerBeforeMerge / (splitNum - 1);
     size_t offsetList[splitNum + 1];
     int offsetListIdx = 1;
-    for(size_t os = 0; os < splitNum; os++){
+    for(int os = 0; os < splitNum; os++){
         offsetList[os] = os * sizeOfSplit;
         // cout << os * sizeOfSplit << endl;
     }

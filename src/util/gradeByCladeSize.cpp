@@ -39,7 +39,7 @@ struct Score2{
 
 
 
-char compareTaxonAtRank(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountOfGroup & count,
+char compareTaxonAtRank(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTaxonomy, CountOfGroup & count,
                              const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
 
 void setGradeByCladeSizeDefault(LocalParameters & par){
@@ -78,7 +78,7 @@ int gradeByCladeSize(int argc, const char **argv, const Command &command) {
     string names = taxonomy + "/names.dmp";
     string nodes = taxonomy + "/nodes.dmp";
     string merged = taxonomy + "/merged.dmp";
-    NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
+    TaxonomyWrapper ncbiTaxonomy(names, nodes, merged, false);
     cout << "Taxonomy loaded" << endl;
 
     // Load the mapping file (answer sheet) (accession to taxID)
@@ -272,7 +272,7 @@ ncbiTaxonomy, par, cout, cerr)
     return 0;
 }
 
-char compareTaxonAtRank(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountOfGroup & count,
+char compareTaxonAtRank(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTaxonomy, CountOfGroup & count,
                              const string & rank, const LocalParameters & par, size_t idx, const string& readId) {
     // Do not count if the rank of target is higher than current rank
     TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);

@@ -22,9 +22,10 @@ int filterByGenus(int argc, const char **argv, const Command &command) {
     string taxonomy = par.filenames[2];
 
     // Load taxonomy
-    NcbiTaxonomy ncbiTaxonomy(taxonomy + "/names.dmp",
+    TaxonomyWrapper ncbiTaxonomy(taxonomy + "/names.dmp",
                               taxonomy + "/nodes.dmp",
-                              taxonomy + "/merged.dmp");
+                              taxonomy + "/merged.dmp",
+                              false);
 
     // Load genus list
     vector<int> genusList;
