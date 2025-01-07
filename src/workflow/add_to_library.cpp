@@ -37,7 +37,7 @@ int addToLibrary(int argc, const char **argv, const Command &command){
     unordered_map<string, TaxID> accession2taxid;
     vector<string> fileNames;
     getObservedAccessionList(fileList, fileNames, accession2taxid);
-    getTaxonomyOfAccessions(accession2taxid, mappingFileName);
+    fillAcc2TaxIdMap(accession2taxid, mappingFileName);
 
     if(!par.assembly) {
         vector<string> unmapped;

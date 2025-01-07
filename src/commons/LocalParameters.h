@@ -80,6 +80,10 @@ public:
     PARAMETER(DB_NAME)
     PARAMETER(DB_DATE)
     PARAMETER(CDS_INFO)
+    PARAMETER(MAKE_LIBRARY)
+
+    // DB updated parameters
+    PARAMETER(NEW_TAXA)
 
     // Test parameters
     PARAMETER(TEST_RANK)
@@ -145,6 +149,10 @@ public:
     size_t bufferSize;
     int accessionLevel;
     std::string cdsInfo;
+    int makeLibrary;
+
+    // DB updated parameters
+    std::string newTaxa;
 
     // Test parameters
     std::string testRank;

@@ -1,7 +1,7 @@
 #include "FileMerger.h"
 #include "common.h"
 
-FileMerger::FileMerger(const LocalParameters & par) : par(par) {
+FileMerger::FileMerger(const LocalParameters & par, TaxonomyWrapper * taxonomy) : par(par) {
     // Load parameters
     removeRedundancyInfo = false;
     dbDir = par.filenames[0];
@@ -13,11 +13,19 @@ FileMerger::FileMerger(const LocalParameters & par) : par(par) {
         MARKER = 16777215;
         MARKER = ~ MARKER;
     }
-    taxonomy = loadTaxonomy(dbDir, "");
+    if (taxonomy != nullptr) {
+        this->taxonomy = taxonomy;
+        externTaxonomy = true;
+    } else {       
+        taxonomy = loadTaxonomy(dbDir, "");
+        externTaxonomy = false;
+    }
 }
 
 FileMerger::~FileMerger() {
-    delete taxonomy;
+    if (!externTaxonomy) {
+        delete taxonomy;
+    }
 }
 
 void FileMerger::addFilesToMerge(string diffIdxFileName, string infoFileName) {

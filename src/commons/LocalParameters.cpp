@@ -242,7 +242,21 @@ LocalParameters::LocalParameters() :
                  "List of CDS files",
                  typeid(std::string),
                  (void *) &cdsInfo,
-                 "^.*$"),        
+                 "^.*$"),
+        MAKE_LIBRARY(MAKE_LIBRARY_ID,
+                     "--make-library",
+                     "Make library",
+                     "Make library",
+                     typeid(int),
+                     (void *) &makeLibrary,
+                     "[0-1]"),
+        NEW_TAXA(NEW_TAXA_ID,
+                "--new-taxa",
+                "TSV file of new taxa to be added",
+                "TSV file of new taxa to be added",
+                typeid(std::string),
+                (void *) &newTaxa,
+                "^.*$"),
         TEST_RANK(TEST_RANK_ID,
                   "--test-rank",
                   ".",
@@ -415,12 +429,11 @@ LocalParameters::LocalParameters() :
     build.push_back(&CDS_INFO);
     build.push_back(&RAM_USAGE);
     build.push_back(&SKIP_REDUNDANCY);
+    build.push_back(&MAKE_LIBRARY);
 
 
     // updateDB
     updateDB.push_back(&PARAM_THREADS);
-    updateDB.push_back(&REDUCED_AA);
-    updateDB.push_back(&TAXONOMY_PATH);
     updateDB.push_back(&SPLIT_NUM);
     updateDB.push_back(&PARAM_MASK_PROBABILTY);
     updateDB.push_back(&PARAM_MASK_RESIDUES);
@@ -429,7 +442,8 @@ LocalParameters::LocalParameters() :
     updateDB.push_back(&DB_DATE);
     updateDB.push_back(&CDS_INFO);
     updateDB.push_back(&RAM_USAGE);
-    updateDB.push_back(&SKIP_REDUNDANCY);
+    updateDB.push_back(&NEW_TAXA);
+    updateDB.push_back(&MAKE_LIBRARY);
 
     //classify
     classify.push_back(&PARAM_THREADS);

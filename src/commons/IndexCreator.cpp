@@ -11,7 +11,7 @@
 
 extern const char *version;
 
-IndexCreator::IndexCreator(const LocalParameters & par) : par(par) {
+IndexCreator::IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy) : par(par) {
     // Input files
     dbDir = par.filenames[0];
     if (par.taxonomyPath.empty()) {
@@ -29,10 +29,16 @@ IndexCreator::IndexCreator(const LocalParameters & par) : par(par) {
     versionFileName = dbDir + "/db.version";
     paramterFileName = dbDir + "/db.parameters";
 
-    taxonomy = new TaxonomyWrapper(taxonomyDir + "/names.dmp",
-                                   taxonomyDir + "/nodes.dmp",
-                                   taxonomyDir + "/merged.dmp",
-                                   true);    
+    if (taxonomy != nullptr) {
+        this->taxonomy = taxonomy;
+        externTaxonomy = true;
+    } else {
+        this->taxonomy = new TaxonomyWrapper(taxonomyDir + "/names.dmp",
+                                             taxonomyDir + "/nodes.dmp",
+                                             taxonomyDir + "/merged.dmp",
+                                             true); // useInternalTaxID
+        externTaxonomy = false;
+    } 
 
     if (par.reducedAA == 1){
         MARKER = 0Xffffffff;
@@ -48,8 +54,10 @@ IndexCreator::IndexCreator(const LocalParameters & par) : par(par) {
 
 
 IndexCreator::~IndexCreator() {
-    delete taxonomy;
-    delete subMat;
+    if (!externTaxonomy) {
+        delete taxonomy;
+    }
+delete subMat;
 }
 
 void IndexCreator::createIndex(const LocalParameters &par) {
@@ -113,12 +121,110 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     writeTaxonomyDB();
 }
 
+
+string IndexCreator::addToLibrary(const std::string & dbDir,
+                                  const std::string & fnaListFileName,
+                                  const std::string & acc2taxIdFileName) {
+    // Make library directory
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    string timeStr = to_string(1900 + ltm->tm_year) + "-" + to_string(1 + ltm->tm_mon) + "-" + to_string(ltm->tm_mday) + "-" + to_string(ltm->tm_hour) + "-" + to_string(ltm->tm_min);
+    string libraryDir = dbDir + "/" + timeStr;
+    if (!FileUtil::directoryExists(libraryDir.c_str())) {
+        FileUtil::makeDir(libraryDir.c_str());
+    }
+
+    unordered_map<std::string, TaxID> accession2taxid;
+    vector<std::string> fileNames;
+    vector<string> libraryFiles;
+    unordered_set<TaxID> observedSpecies;
+    getObservedAccessionList(fnaListFileName, fileNames, accession2taxid);
+    fillAcc2TaxIdMap(accession2taxid, acc2taxIdFileName);
+
+    unordered_map<TaxID, TaxID> original2internalTaxId;
+    if (taxonomy->hasInternalTaxID()) {
+      taxonomy->getOriginal2InternalTaxId(original2internalTaxId);
+    } 
+    
+    vector<std::string> unmapped;
+    std::string accession;
+    for (size_t i = 0; i < fileNames.size(); ++i) {
+      KSeqWrapper* kseq = KSeqFactory(fileNames[i].c_str());
+      while (kseq->ReadEntry()) {
+        const KSeqWrapper::KSeqEntry & e = kseq->entry;
+        accession = string(e.name.s);
+        size_t pos = accession.find('.');
+        if (pos != std::string::npos) {
+          accession = accession.substr(0, pos);
+        }
+        TaxID taxId = accession2taxid[accession];
+        if (taxId == 0) {
+          std::cout << "During processing " << fileNames[i] << ", accession " << e.name.s <<
+               " is not found in the mapping file. It is skipped.\n";
+          unmapped.push_back(e.name.s);
+          continue;
+        }
+        if (taxonomy->hasInternalTaxID()) {
+          if (original2internalTaxId.find(taxId) == original2internalTaxId.end()) {
+            std::cout << "During processing " << fileNames[i] << ", accession " << e.name.s <<
+            ", " << taxId << " is not included in the taxonomy. It is skipped.\n";
+            unmapped.push_back(e.name.s);
+            continue;
+          }
+          taxId = original2internalTaxId[taxId];
+        }
+        int speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
+        if (speciesTaxID == 0) {
+          cout << "During processing " << fileNames[i] << ", accession " << e.name.s <<
+               " is not matched to any species. It is skipped.\n";
+          unmapped.push_back(e.name.s);
+          continue;
+        }
+        if (taxonomy->hasInternalTaxID()) {
+            speciesTaxID = taxonomy->getOriginalTaxID(speciesTaxID);
+        }
+        string speciesFileName = libraryDir + "/" + to_string(speciesTaxID) + ".fna";
+        if (observedSpecies.find(speciesTaxID) == observedSpecies.end()) {
+            observedSpecies.insert(speciesTaxID);
+            libraryFiles.push_back(speciesFileName);
+        }
+        FILE *file = fopen(speciesFileName.c_str(), "a");
+        fprintf(file, ">%s %s\n", e.name.s, e.comment.s);
+        fprintf(file, "%s\n", e.sequence.s);
+        fclose(file);
+      }
+      delete kseq;
+    }
+
+    // Write unmapped accession to file
+    FILE *file = fopen((libraryDir + "/unmapped.txt").c_str(), "w");
+    for (const auto & i : unmapped) {
+        fprintf(file, "%s\n", i.c_str());
+    }
+    fclose(file);
+    cout << "Unmapped accessions are written to " << libraryDir + "/unmapped.txt" << endl;
+
+    // Write the list of absolute paths of library files
+    string libraryListFileName = libraryDir + "/library.list";
+    FILE *libraryListFile = fopen(libraryListFileName.c_str(), "w");
+    for (size_t i = 0; i < libraryFiles.size(); ++i) {
+        fprintf(libraryListFile, "%s\n", libraryFiles[i].c_str());
+    }
+    fclose(libraryListFile);
+    return libraryListFileName;
+}
+
+
 void IndexCreator::indexReferenceSequences(size_t bufferSize) {
     vector<Accession> observedAccessionsVec;
     unordered_map<string, size_t> accession2index;
-    getObservedAccessions(par.filenames[1], observedAccessionsVec, accession2index);
+    if (par.makeLibrary) {
+        getObservedAccessions(addToLibrary(dbDir, fnaListFileName, acc2taxidFileName), observedAccessionsVec, accession2index);
+    } else {
+        getObservedAccessions(fnaListFileName, observedAccessionsVec, accession2index);
+    }
     cout << "Number of observed accessions: " << observedAccessionsVec.size() << endl;
-    getTaxonomyOfAccessions(observedAccessionsVec, accession2index, par.filenames[2]);
+    getTaxonomyOfAccessions(observedAccessionsVec, accession2index, acc2taxidFileName);
     cout << "Taxonomy of accessions is obtained" << endl;
     getAccessionBatches(observedAccessionsVec, bufferSize);
     cout << "Number of accession batches: " << accessionBatches.size() << endl;
@@ -188,11 +294,10 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
                                            const unordered_map<string, size_t> & accession2index,
                                            const string & acc2taxidFileName) {
     unordered_map<TaxID, TaxID> old2merged;
-    loadMergedTaxIds(taxonomyDir + "/merged.dmp", old2merged);
-
+    if (!externTaxonomy) {
+        loadMergedTaxIds(taxonomyDir + "/merged.dmp", old2merged);
+    } 
     vector<pair<string, pair<TaxID, TaxID>>> acc2accId;   
-
-    // Open the file
     int fd = open(acc2taxidFileName.c_str(), O_RDONLY);
     if (fd < 0) {
         cerr << "Cannot open file for mapping from accession to tax ID" << endl;
@@ -251,8 +356,16 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
             }
             auto it = accession2index.find(accession);
             if (it != accession2index.end()) {
-                if (old2merged.count(taxID) > 0) {
-                    taxID = old2merged[taxID];
+                if (externTaxonomy) { // It happens only with updateDB module.
+                    if (taxonomy->hasInternalTaxID()) {
+                        taxID = taxonomy->getOriginalTaxID(taxonomy->taxonNode(taxonomy->getInternalTaxID(taxID))->taxId);
+                    } else {
+                        taxID = taxonomy->taxonNode(taxID)->taxId;
+                    }
+                } else {
+                    if (old2merged.count(taxID) > 0) {
+                        taxID = old2merged[taxID];
+                    }
                 }
                 if (par.accessionLevel == 1) {
                     TaxID accTaxId = taxonomy->getSmallestUnusedExternalTaxID(usedExternalTaxIDs);
@@ -288,8 +401,15 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
 
     // Second, convert external taxIDs to internal taxIDs
     for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {
+        cout << observedAccessionsVec[i].accession << " " << 
+        observedAccessionsVec[i].taxID << " " << 
+        taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID) << " " <<
+        taxonomy->getTaxIdAtRank(taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID), "species") << " " <<
+        taxonomy->getOriginalTaxID(taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID)) << endl;
+   
         observedAccessionsVec[i].taxID = taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID);
         observedAccessionsVec[i].speciesID = taxonomy->getTaxIdAtRank(observedAccessionsVec[i].taxID, "species");
+        
     }
     
     if (par.accessionLevel == 1) {

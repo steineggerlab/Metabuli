@@ -5,6 +5,7 @@
 #include "FileUtil.h"
 
 void setDefaults_updateDB(LocalParameters & par){
+    par.makeLibrary = 1;
     par.skipRedundancy = 1;
     par.reducedAA = 0;
     par.ramUsage = 128;
@@ -29,26 +30,37 @@ int updateDB(int argc, const char **argv, const Command &command){
     LocalParameters &par = LocalParameters::getLocalInstance();
     setDefaults_updateDB(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
-
-    // If dbDirectory does not exist, create it
-    if (!FileUtil::directoryExists(par.filenames[0].c_str())) {
-        FileUtil::makeDir(par.filenames[0].c_str());
-    }
-
-    // Check if the taxonomy path exists
-    if (par.taxonomyPath.empty()) {
-        cerr << "Taxonomy path is not set." << endl;
-        return 1;
-    }
-    if (!FileUtil::directoryExists(par.taxonomyPath.c_str())) {
-        cerr << "Taxonomy path does not exist: " << par.taxonomyPath << endl;
-        return 1;
-    }
     string newDbDir = par.filenames[0];
     string oldDbDir = par.filenames[3];
 
+    // If dbDirectory does not exist, create it
+    if (!FileUtil::directoryExists(newDbDir.c_str())) {
+        FileUtil::makeDir(newDbDir.c_str());
+    }
+    
+    // Load older DB parameters
+    loadDbParameters(par, oldDbDir);
+
+    // Load older taxonomy DB
+    TaxonomyWrapper * taxonomy = loadTaxonomy(oldDbDir);
+
+    // Make a new taxonomy DB if new taxa are added
+    if (!par.newTaxa.empty()) {
+        taxonomy->checkNewTaxa(par.newTaxa);
+        TaxonomyWrapper * newTaxonomy = taxonomy->addNewTaxa(par.newTaxa);
+        delete taxonomy;
+        taxonomy = newTaxonomy;
+    }
+
+    // // Add to library
+    // time_t now = time(0);
+    // tm *ltm = localtime(&now);
+    // string timeStr = to_string(1900 + ltm->tm_year) + "-" + to_string(1 + ltm->tm_mon) + "-" + to_string(ltm->tm_mday) + "-" + to_string(ltm->tm_hour) + "-" + to_string(ltm->tm_min);
+    // string libraryDir = newDbDir + "/" + timeStr;
+    // addToLibrary(taxonomy, libraryDir, par.filenames[1], par.filenames[2]);
+
     // Create index
-    IndexCreator idxCre(par);
+    IndexCreator idxCre(par, taxonomy);
     idxCre.setIsUpdating(true);
     idxCre.createIndex(par);
     unordered_set<TaxID> taxIdSet = idxCre.getTaxIdSet();
@@ -84,6 +96,7 @@ int updateDB(int argc, const char **argv, const Command &command){
     merger.updateTaxId2SpeciesTaxId(newDbDir + "/taxID_list");
     merger.setMergedFileNames(newDbDir + "/diffIdx", newDbDir + "/info", newDbDir + "/split");
     merger.mergeTargetFiles();
+    delete taxonomy;
     cerr << "Index creation completed." << endl;
     return 0;
 }

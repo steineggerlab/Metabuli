@@ -72,9 +72,9 @@ struct AccessionBatch {
     vector<uint32_t> lengths;
 
     void print() {
-        cout << "whichFasta: " << whichFasta << " speciesID: " << speciesID << " trainingSeqFasta: " << trainingSeqFasta << " trainingSeqIdx: " << trainingSeqIdx << endl;
+        std::cout << "whichFasta: " << whichFasta << " speciesID: " << speciesID << " trainingSeqFasta: " << trainingSeqFasta << " trainingSeqIdx: " << trainingSeqIdx << endl;
         for (size_t i = 0; i < orders.size(); ++i) {
-            cout << "order: " << orders[i] << " taxID: " << taxIDs[i] << " length: " << lengths[i] << endl;
+            std::cout << "order: " << orders[i] << " taxID: " << taxIDs[i] << " length: " << lengths[i] << endl;
         }
     }
 
@@ -95,6 +95,7 @@ protected:
 
     // Inputs
     TaxonomyWrapper * taxonomy;
+    bool externTaxonomy;
     // NcbiTaxonomy * taxonomy;
     string dbDir;
     string fnaListFileName;
@@ -210,16 +211,20 @@ protected:
 
     void loadMergedTaxIds(const std::string &mergedFile, unordered_map<TaxID, TaxID> & old2new);
 
+    string addToLibrary(const std::string & dbDir,
+                        const std::string & fileList,
+                        const std::string & acc2taxIdFileName);
+
 public:
     static void printIndexSplitList(DiffIdxSplit * splitList) {
         for (int i = 0; i < 4096; i++) {
-            cout << splitList[i].infoIdxOffset << " " << 
+            std::cout << splitList[i].infoIdxOffset << " " << 
                     splitList[i].diffIdxOffset << " " << 
-                    splitList[i].ADkmer << endl;
+                    splitList[i].ADkmer << std::endl;
         }
     }
 
-    IndexCreator(const LocalParameters & par);
+    IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy = nullptr);
 
     ~IndexCreator();
     

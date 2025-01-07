@@ -30,6 +30,19 @@ public:
         }
     }
 
+    StringBlock(const StringBlock& other) {
+        byteCapacity = other.byteCapacity;
+        entryCapacity = other.entryCapacity;
+        entryCount = other.entryCount;
+        externalData = false; // The new instance will manage its own memory
+
+        data = (char*)malloc(byteCapacity * sizeof(char));
+        memcpy(data, other.data, byteCapacity * sizeof(char));
+
+        offsets = (T*)malloc(entryCapacity * sizeof(T));
+        memcpy(offsets, other.offsets, entryCapacity * sizeof(T));
+    }
+
     const char* getString(T idx) const {
         if (idx >= entryCount) {
             return NULL;

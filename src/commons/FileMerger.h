@@ -17,6 +17,7 @@ class FileMerger {
 private:
     const LocalParameters & par;
     TaxonomyWrapper * taxonomy;
+    bool externTaxonomy;
     string dbDir;
     uint64_t MARKER;
     int splitNum;
@@ -39,7 +40,7 @@ private:
     }
 
 public:
-    FileMerger(const LocalParameters & par);
+    FileMerger(const LocalParameters & par, TaxonomyWrapper * taxonomy = nullptr);
     // Setters
     void addFilesToMerge(string diffIdxFileName, string infoFileName);
     void updateTaxId2SpeciesTaxId(const string & taxIdListFileName);

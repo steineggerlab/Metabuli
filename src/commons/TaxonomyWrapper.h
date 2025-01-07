@@ -24,9 +24,15 @@ static const std::map<std::string, std::string> ExtendedShortRanks =
 
 class TaxonomyWrapper : public NcbiTaxonomy {
 public:
-    TaxonomyWrapper(const std::string &namesFile, const std::string &nodesFile, const std::string &mergedFile, bool useInternalTaxID);
-    
+    TaxonomyWrapper(const std::string &namesFile,
+                    const std::string &nodesFile,
+                    const std::string &mergedFile,
+                    bool useInternalTaxID);
+   
+    TaxonomyWrapper() {};
     ~TaxonomyWrapper();
+
+    TaxonomyWrapper* getEditableCopy(const TaxonomyWrapper &t, int extraNodeCapacity = 0, TaxID newMaxTaxID = 0);
 
     static std::pair<char*, size_t> serialize(const TaxonomyWrapper& t);
     static TaxonomyWrapper* unserialize(char* data);
@@ -72,6 +78,7 @@ public:
                 return i;
             }
         }
+        // Not found
         return -1;
     }
 
@@ -112,6 +119,15 @@ public:
         mmapSize = size;
     }
 
+    TaxonomyWrapper* addNewTaxa(const std::string & newTaxaFile);
+    void checkNewTaxa(const std::string & newTaxaFile);
+
+    void getOriginal2InternalTaxId(std::unordered_map<TaxID, TaxID> & original2internalTaxId) {
+        for (int i = 0; i <= maxTaxID; i++) {
+            original2internalTaxId[internal2orgTaxId[i]] = i;
+        }
+    }
+
 
 protected:
     TaxID eukaryotaTaxID;
@@ -131,6 +147,12 @@ protected:
                       int & internalTaxIdCnt);
 
     void loadNames(std::vector<TaxonNode> &tmpNodes, const std::string &namesFile, const std::unordered_map<TaxID, TaxID> & original2internalTaxId);
+
+    void initTaxonomy();
+    void deleteMatrix(int** M) {
+        delete[] M[0];
+        delete[] M;
+    }
 
     TaxonomyWrapper(TaxonNode* taxonNodes, size_t maxNodes, int maxTaxID, int *D, int *E, int *L, int *H, int **M, StringBlock<unsigned int> *block, int *internal2orgTaxId, bool useInternalTaxID);
         

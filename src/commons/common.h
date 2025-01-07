@@ -142,9 +142,14 @@ void getObservedAccessionList(const std::string & fnaListFileName,
                               std::vector<std::string> & fastaList,
                               std::unordered_map<std::string, TaxID> & acc2taxid);
 
-void getTaxonomyOfAccessions(std::unordered_map<std::string, TaxID> & acc2taxid,
-                             const std::string & acc2taxidFileName);
+void fillAcc2TaxIdMap(std::unordered_map<std::string, TaxID> & acc2taxid,
+                      const std::string & acc2taxidFileName);
                                 
 bool haveRedundancyInfo(const std::string & dbDir);
+
+int addToLibrary(TaxonomyWrapper * taxonomy,
+                 const std::string & dbDir,
+                 const std::string & fileList,
+                 const std::string & acc2taxIdFileName);
 
 #endif //ADCLASSIFIER2_COMMON_H
