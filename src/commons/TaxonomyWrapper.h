@@ -128,6 +128,12 @@ public:
         }
     }
 
+    bool nodeExists(TaxID taxonId) const {
+        if (this->useInternalTaxID) {
+            return taxonId <= maxTaxID;
+        } 
+        return taxonId <= maxTaxID && D[taxonId] != -1;
+    }
 
 protected:
     TaxID eukaryotaTaxID;

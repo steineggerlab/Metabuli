@@ -71,12 +71,12 @@ TaxonomyWrapper::TaxonomyWrapper(const std::string &namesFile, const std::string
     std::unordered_map<TaxID, TaxID> original2internalTaxId;
     std::map<TaxID, int> Dm; // temporary map internal TaxID -> internal ID;
     std::vector<TaxID> internal2orgTaxIdTmp;
-    int internalTaxIDCnt = 1;
+    int internalTaxIDCnt = 0;
 
     if (useInternalTaxID) {
         loadNodes(tmpNodes, nodesFile, original2internalTaxId, Dm, internal2orgTaxIdTmp, internalTaxIDCnt);
         loadMerged(mergedFile, original2internalTaxId, Dm, internal2orgTaxIdTmp, internalTaxIDCnt);
-        maxTaxID = internalTaxIDCnt - 1;
+        // maxTaxID = internalTaxIDCnt - 1;
         D = new int[maxTaxID + 1];
         std::fill_n(D, maxTaxID + 1, -1);
         for (std::map<TaxID, int>::iterator it = Dm.begin(); it != Dm.end(); ++it) {
@@ -152,7 +152,6 @@ size_t TaxonomyWrapper::loadNodes(std::vector<TaxonNode> &tmpNodes,
     }
     
     internal2orgTaxIdTmp.push_back(0);
-    maxTaxID = 0;
     int currentNodeId = 0;
     std::string line;
     while (std::getline(ss, line)) {
@@ -162,16 +161,16 @@ size_t TaxonomyWrapper::loadNodes(std::vector<TaxonNode> &tmpNodes,
         TaxID internalTaxId;
         TaxID internalParentTaxId;
         if (original2internalTaxId.find(orgTaxId) == original2internalTaxId.end()) {
-            internalTaxId = internalTaxIdCnt;
-            original2internalTaxId[orgTaxId] = internalTaxIdCnt++;
+            internalTaxId = ++internalTaxIdCnt;
+            original2internalTaxId[orgTaxId] = internalTaxId;
             internal2orgTaxIdTmp.push_back(orgTaxId);
         } else {
             internalTaxId = original2internalTaxId[orgTaxId];
         }
 
         if (original2internalTaxId.find(orgParentTaxId) == original2internalTaxId.end()) {
-            internalParentTaxId = internalTaxIdCnt;
-            original2internalTaxId[orgParentTaxId] = internalTaxIdCnt++;
+            internalParentTaxId = ++internalTaxIdCnt;
+            original2internalTaxId[orgParentTaxId] = internalParentTaxId;
             internal2orgTaxIdTmp.push_back(orgParentTaxId);
         } else {
             internalParentTaxId = original2internalTaxId[orgParentTaxId];
@@ -182,6 +181,7 @@ size_t TaxonomyWrapper::loadNodes(std::vector<TaxonNode> &tmpNodes,
         Dm.emplace(internalTaxId, currentNodeId);
         ++currentNodeId;
     }
+    maxTaxID = internalTaxIdCnt;
 
     Debug(Debug::INFO) << " Done, got " << tmpNodes.size() << " nodes\n";
     return tmpNodes.size();
@@ -215,16 +215,16 @@ size_t TaxonomyWrapper::loadMerged(const std::string &mergedFile,
 
         if (original2internalTaxId.find(oldId) == original2internalTaxId.end()) {
             internal2orgTaxIdTmp.push_back(oldId);
-            original2internalTaxId[oldId] = internalTaxIdCnt;
-            oldId = internalTaxIdCnt ++;
+            original2internalTaxId[oldId] = ++internalTaxIdCnt;
+            oldId = internalTaxIdCnt;
         } else {
             oldId = original2internalTaxId[oldId];
         }
 
         if (original2internalTaxId.find(mergedId) == original2internalTaxId.end()) {
             internal2orgTaxIdTmp.push_back(mergedId);
-            original2internalTaxId[mergedId] = internalTaxIdCnt;
-            mergedId = internalTaxIdCnt ++;
+            original2internalTaxId[mergedId] = ++internalTaxIdCnt;
+            mergedId = internalTaxIdCnt;
         } else {
             mergedId = original2internalTaxId[mergedId];
         }
@@ -234,10 +234,8 @@ size_t TaxonomyWrapper::loadMerged(const std::string &mergedFile,
             // D[oldId] = D[mergedId];
             ++count;
         }
+        maxTaxID = internalTaxIdCnt;
     }
-
-    
-
     Debug(Debug::INFO) << " Done, added " << count << " merged nodes.\n";
     return count;
 }
