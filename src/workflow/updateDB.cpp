@@ -52,6 +52,8 @@ int updateDB(int argc, const char **argv, const Command &command){
         taxonomy = newTaxonomy;
     }
 
+    taxonomy->writeTaxonomyDB(newDbDir + "/taxonomyDB");
+
     // // Add to library
     // time_t now = time(0);
     // tm *ltm = localtime(&now);
@@ -85,7 +87,7 @@ int updateDB(int argc, const char **argv, const Command &command){
     // Merge index files
     cout << "Merge new and old DB files ... " << endl;
     int numOfSplits = idxCre.getNumOfFlush();
-    FileMerger merger(par);
+    FileMerger merger(par, taxonomy);
    
     for (int i = 0; i < numOfSplits; i++) {
         merger.addFilesToMerge(newDbDir + "/" + to_string(i) + "_diffIdx",

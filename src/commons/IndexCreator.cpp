@@ -106,6 +106,7 @@ void IndexCreator::createIndex(const LocalParameters &par) {
         uniqKmerIdxRanges.clear();
 
         // Reduce redundancy
+        cout << "uniqKmerIdx array size: " << kmerBuffer.startIndexOfReserve + 1 << endl;
         reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt, uniqKmerIdxRanges, par);
         time_t reduction = time(nullptr);
         cout << "Time spent for reducing redundancy: " << (double) (reduction - sort) << endl;
@@ -117,8 +118,9 @@ void IndexCreator::createIndex(const LocalParameters &par) {
         delete[] uniqKmerIdx;
     }
     delete[] batchChecker;
-    writeDbParameters();
-    writeTaxonomyDB();
+    if (!isUpdating) {
+        writeDbParameters();
+    }
 }
 
 
@@ -400,16 +402,9 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
     }
 
     // Second, convert external taxIDs to internal taxIDs
-    for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {
-        cout << observedAccessionsVec[i].accession << " " << 
-        observedAccessionsVec[i].taxID << " " << 
-        taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID) << " " <<
-        taxonomy->getTaxIdAtRank(taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID), "species") << " " <<
-        taxonomy->getOriginalTaxID(taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID)) << endl;
-   
+    for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {    
         observedAccessionsVec[i].taxID = taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID);
-        observedAccessionsVec[i].speciesID = taxonomy->getTaxIdAtRank(observedAccessionsVec[i].taxID, "species");
-        
+        observedAccessionsVec[i].speciesID = taxonomy->getTaxIdAtRank(observedAccessionsVec[i].taxID, "species");    
     }
     
     if (par.accessionLevel == 1) {
@@ -651,9 +646,6 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
         }
     }
 
-    // cout << "Starting Idx: " << startIdx << endl;
-    // cout << "Ending Idx: " << kmerBuffer.startIndexOfReserve << endl;
-
     // Make splits
     vector<Split> splits;
     size_t splitWidth = (kmerBuffer.startIndexOfReserve - startIdx) / par.threads;
@@ -682,7 +674,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
         vector<TaxID> taxIds;
         size_t * tempUniqKmerIdx = new size_t[16 * 1024 * 1024];
         size_t tempUniqKmerCnt = 0;
-#pragma omp for schedule(dynamic, 1)
+#pragma omp for schedule(static, 1)
         for(size_t split = 0; split < splits.size(); split ++) {
             lookingKmer = & kmerBuffer.buffer[splits[split].offset];
             lookingIndex = splits[split].offset;
@@ -1071,18 +1063,6 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
 
     cout << "Before return: " << kmerBuffer.startIndexOfReserve << endl;
     return 0;
-}
-
-void IndexCreator::writeTaxonomyDB() {
-    std::pair<char *, size_t> serialized = TaxonomyWrapper::serialize(*taxonomy);
-    FILE *handle = fopen(taxonomyBinaryFileName.c_str(), "w");
-    if (handle == NULL) {
-        Debug(Debug::ERROR) << "Could not open " << taxonomyBinaryFileName << " for writing\n";
-        EXIT(EXIT_FAILURE);
-    }
-    fwrite(serialized.first, serialized.second, sizeof(char), handle);
-    fclose(handle);
-    free(serialized.first);
 }
 
 void IndexCreator::writeDbParameters() {

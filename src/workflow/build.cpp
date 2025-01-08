@@ -27,36 +27,46 @@ void setDefaults_build(LocalParameters & par){
 }
 
 int build(int argc, const char **argv, const Command &command){
-    // Load parameters
     LocalParameters &par = LocalParameters::getLocalInstance();
     setDefaults_build(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
-  
-    // If dbDirectory does not exist, create it
-    if (!FileUtil::directoryExists(par.filenames[0].c_str())) {
-        FileUtil::makeDir(par.filenames[0].c_str());
+    const string & dbDir = par.filenames[0];
+    if (!FileUtil::directoryExists(dbDir.c_str())) {
+        FileUtil::makeDir(dbDir.c_str());
+    }
+    
+    string taxonomyDir;
+    if (par.taxonomyPath.empty()) {
+        taxonomyDir = dbDir + "/taxonomy/";
+    } else {
+        taxonomyDir = par.taxonomyPath + "/";
     }
 
-    // Create index
-    IndexCreator idxCre(par);
+    TaxonomyWrapper * taxonomy =  new TaxonomyWrapper(taxonomyDir + "/names.dmp",
+                                                      taxonomyDir + "/nodes.dmp",
+                                                      taxonomyDir + "/merged.dmp",
+                                                      true);
+
+    IndexCreator idxCre(par, taxonomy);
     idxCre.createIndex(par);
+    taxonomy->writeTaxonomyDB(dbDir + "/taxonomyDB");
 
     if(idxCre.getNumOfFlush() == 1) {
         cerr << "Index creation completed." << endl;
         return 0;
     }
 
-    // Merge index files
     cout << "Merge reference DB files ... " << endl;
     int numOfSplits = idxCre.getNumOfFlush();
-    FileMerger merger(par);
+    FileMerger merger(par, taxonomy);
     for (int i = 0; i < numOfSplits; i++) {
-        merger.addFilesToMerge(par.filenames[0] + "/" + to_string(i) + "_diffIdx",
-                               par.filenames[0] + "/" + to_string(i) + "_info");
+        merger.addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
+                               dbDir + "/" + to_string(i) + "_info");
     }
-    merger.updateTaxId2SpeciesTaxId(par.filenames[0] + "/taxID_list");
-    merger.setMergedFileNames(par.filenames[0] + "/diffIdx", par.filenames[0] + "/info", par.filenames[0] + "/split");  
+    merger.updateTaxId2SpeciesTaxId(dbDir + "/taxID_list");
+    merger.setMergedFileNames(dbDir + "/diffIdx", dbDir + "/info", dbDir + "/split");  
     merger.mergeTargetFiles();
+    delete taxonomy;
     cerr << "Index creation completed." << endl;
     return 0;
 }

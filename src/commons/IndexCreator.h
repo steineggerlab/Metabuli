@@ -117,6 +117,10 @@ protected:
         Split(size_t offset, size_t end) : offset(offset), end(end) {}
         size_t offset;
         size_t end;
+
+        void print() {
+            std::cout << "offset: " << offset << " end: " << end << std::endl;
+        }
     };
 
     void writeTargetFiles(TargetKmer * kmerBuffer,
@@ -136,8 +140,6 @@ protected:
                       uint16_t *toWrite,
                       size_t size,
                       size_t & localBufIdx);
-
-    void writeTaxonomyDB();
 
     void writeDbParameters();
 
