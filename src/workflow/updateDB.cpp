@@ -38,9 +38,6 @@ int updateDB(int argc, const char **argv, const Command &command){
         FileUtil::makeDir(newDbDir.c_str());
     }
     
-    // Load older DB parameters
-    loadDbParameters(par, oldDbDir);
-
     // Load older taxonomy DB
     TaxonomyWrapper * taxonomy = loadTaxonomy(oldDbDir);
 

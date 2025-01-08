@@ -102,9 +102,7 @@ void IndexCreator::createIndex(const LocalParameters &par) {
         delete[] uniqKmerIdx;
     }
     delete[] batchChecker;
-    if (!isUpdating) {
-        writeDbParameters();
-    }
+    writeDbParameters();
 }
 
 
