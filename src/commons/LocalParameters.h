@@ -38,6 +38,7 @@ public:
     std::vector<MMseqsParameter*> printInfo;
     std::vector<MMseqsParameter*> query2reference;
     std::vector<MMseqsParameter*> expand_diffidx;
+    std::vector<MMseqsParameter*> taxdump;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)

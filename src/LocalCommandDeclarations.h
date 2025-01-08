@@ -21,5 +21,6 @@ extern int extract(int argc, const char **argv, const Command& command);
 extern int printInfo(int argc, const char **argv, const Command& command);
 extern int query2reference(int argc, const char **argv, const Command& command);
 extern int ictvFormat(int argc, const char **argv, const Command& command);
+extern int taxdump(int argc, const char **argv, const Command& command);
 
 #endif //ADCLASSIFIER2_LOCALCOMMANDDECLARATIONS_H

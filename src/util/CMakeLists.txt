@@ -13,4 +13,5 @@ set(util_source_files
         util/printinfo.cpp
         util/query2reference.cpp
         util/ictv-challenge-format.cpp
+        util/taxdump.cpp
         PARENT_SCOPE)

@@ -41,18 +41,19 @@ public:
 
     std::vector<std::string> splitByDelimiter(const std::string &s, const std::string &delimiter, int maxCol);
     std::pair<int, std::string> parseName(const std::string &line);
-    TaxID getOriginalTaxID(TaxID internalTaxID) {
+
+    TaxID getOriginalTaxID(TaxID internalTaxID) const {
         if (!useInternalTaxID) {
             return internalTaxID;
         }
         return internal2orgTaxId[internalTaxID]; 
     }
 
-    TaxID getMaxTaxID() {
+    TaxID getMaxTaxID() const {
         return maxTaxID;
     }
 
-    TaxID getEukaryotaTaxID() {
+    TaxID getEukaryotaTaxID() const {
         return eukaryotaTaxID;
     }
 
@@ -107,11 +108,10 @@ public:
         return useInternalTaxID;
     }
 
-    // Added by jaebeom
     static std::string findShortRank2(const std::string& rank);
     std::string taxLineage2(TaxonNode const *node, bool infoAsName = true);
     bool IsAncestor2(TaxID ancestor, TaxID child);
-    TaxID getTaxIdAtRank(int taxId, const std::string & rank);
+    TaxID getTaxIdAtRank(int taxId, const std::string & rank) const;
     void createTaxIdListAtRank(std::vector<int> & taxIdList, std::vector<int> & taxIdListAtRank,
                                const std::string & rank);
     void setMmapData(char* data, size_t size) {
@@ -134,6 +134,12 @@ public:
         } 
         return taxonId <= maxTaxID && D[taxonId] != -1;
     }
+
+    void writeTaxonomyDB(const std::string & fileName);
+
+    void writeNodesDmp(const std::string & fileName) const;
+    void writeNamesDmp(const std::string & fileName) const;
+    void writeMergedDmp(const std::string & fileName) const;
 
 protected:
     TaxID eukaryotaTaxID;

@@ -65,7 +65,9 @@ TaxonomyWrapper::TaxonomyWrapper(TaxonNode* taxonNodes,
     setEukaryoteTaxID();
 }
 
-TaxonomyWrapper::TaxonomyWrapper(const std::string &namesFile, const std::string &nodesFile, const std::string &mergedFile, bool useInternalTaxID) : useInternalTaxID(useInternalTaxID) {
+TaxonomyWrapper::TaxonomyWrapper(const std::string &namesFile, const std::string &nodesFile, const std::string &mergedFile, bool useInternalTaxID) 
+        : useInternalTaxID(useInternalTaxID) {
+    externalData = false;
     block = new StringBlock<unsigned int>();
     std::vector<TaxonNode> tmpNodes;
     std::unordered_map<TaxID, TaxID> original2internalTaxId;
@@ -102,7 +104,7 @@ TaxonomyWrapper::TaxonomyWrapper(const std::string &namesFile, const std::string
     taxonNodes = new TaxonNode[maxNodes];
     std::copy(tmpNodes.begin(), tmpNodes.end(), taxonNodes);
 
-    
+    initTaxonomy();
 }
 
 void TaxonomyWrapper::initTaxonomy() {
@@ -433,7 +435,7 @@ bool TaxonomyWrapper::IsAncestor2(TaxID ancestor, TaxID child) {
     return lcaHelper(nodeId(child), nodeId(ancestor)) == nodeId(ancestor);
 }
 
-TaxID TaxonomyWrapper::getTaxIdAtRank(int taxId, const std::string & rank) {
+TaxID TaxonomyWrapper::getTaxIdAtRank(int taxId, const std::string & rank) const {
     if(taxId == 0 || !nodeExists(taxId) || taxId == 1) return 0;
     int rankIndex = findRankIndex(rank);
     const TaxonNode * curNode = taxonNode(taxId, true);
@@ -605,39 +607,99 @@ TaxonomyWrapper* TaxonomyWrapper::addNewTaxa(const std::string & newTaxaFile) {
     return newT;
 }
 
-    // if (useInternalTaxID) {
-    //     // int* newD = new int[maxTaxID + 1];
-    //     // std::memcpy(newD, D, (oldMaxTaxID + 1) * sizeof(int));
-    //     // for (std::map<TaxID, int>::iterator it = Dm.begin(); it != Dm.end(); ++it) {
-    //     //     assert(it->first <= maxTaxID);
-    //     //     newD[it->first] = it->second;
-    //     // }
-    //     // if (!externalData) { delete[] D;}
-    //     // D = newD;
-        
-    //     // int* newInternal2OrgTaxId = new int[maxTaxID + 1];
-    //     // std::memcpy(newInternal2OrgTaxId, internal2orgTaxId, (oldMaxTaxID + 1) * sizeof(int));
-    //     // for (size_t i = 0; i < internal2orgTaxIdTmp.size(); i++) {
-    //     //     newInternal2OrgTaxId[oldMaxTaxID + 1 + i] = internal2orgTaxIdTmp[i];
-    //     // }
-    //     // if (!externalData) { delete[] internal2orgTaxId;}
-    //     // internal2orgTaxId = newInternal2OrgTaxId;
-    // } else {
-    //     if (maxTaxID > oldMaxTaxID) {
-    //         int* newD = new int[maxTaxID + 1];
-    //         std::memcpy(newD, D, (oldMaxTaxID + 1) * sizeof(int));
-    //         if (!externalData) delete[] D;
-    //         D = newD;
-    //     }
-    //     for (std::map<TaxID, int>::iterator it = Dm.begin(); it != Dm.end(); ++it) {
-    //         D[it->first] = it->second;
-    //     } 
-    // }
-    // TaxonNode* newTaxonNodes = new TaxonNode[maxNodes + tmpNodes.size()];
-    // std::copy(taxonNodes, taxonNodes + maxNodes, newTaxonNodes);
-    // if (!externalData) delete[] taxonNodes;
-    // taxonNodes = newTaxonNodes;
-    // for (size_t i = 0; i < tmpNodes.size(); i++) {
-    //     taxonNodes[maxNodes + i] = tmpNodes[i];
-    // }
-    // maxNodes += tmpNodes.size();
+void TaxonomyWrapper::writeTaxonomyDB(const std::string & fileName) {
+    std::pair<char *, size_t> serialized = TaxonomyWrapper::serialize(*this);
+    FILE *handle = fopen(fileName.c_str(), "w");
+    if (handle == NULL) {
+        Debug(Debug::ERROR) << "Could not open " << fileName << " for writing\n";
+        EXIT(EXIT_FAILURE);
+    }
+    fwrite(serialized.first, serialized.second, sizeof(char), handle);
+    fclose(handle);
+    free(serialized.first);
+}
+
+void TaxonomyWrapper::writeNodesDmp(const std::string &filePath) const {
+    std::ofstream file(filePath);
+    if (!file.is_open()) {
+        Debug(Debug::ERROR) << "Failed to open file for writing: " << filePath << "\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    if (useInternalTaxID) {
+        for (size_t i = 0; i < maxNodes; ++i) {
+            const TaxonNode &node = taxonNodes[i];
+            file << getOriginalTaxID(node.taxId) << "\t|\t"
+                 << getOriginalTaxID(node.parentTaxId) << "\t|\t"
+                 << getString(node.rankIdx) << "\t|\n";
+        }
+    } else {
+        for (size_t i = 0; i < maxNodes; ++i) {
+            const TaxonNode &node = taxonNodes[i];
+            file << node.taxId << "\t|\t"
+                 << node.parentTaxId << "\t|\t"
+                 << getString(node.rankIdx) << "\t|\n";
+        }
+    }
+
+    file.close();
+    Debug(Debug::INFO) << "nodes.dmp written to " << filePath << "\n";
+}
+
+void TaxonomyWrapper::writeNamesDmp(const std::string &filePath) const {
+    std::ofstream file(filePath);
+    if (!file.is_open()) {
+        Debug(Debug::ERROR) << "Failed to open file for writing: " << filePath << "\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    if (useInternalTaxID) {
+        for (size_t i = 0; i < maxNodes; ++i) {
+            const TaxonNode &node = taxonNodes[i];
+            if (node.nameIdx != (size_t)-1) {
+                file << getOriginalTaxID(node.taxId) << "\t|\t"
+                     << getString(node.nameIdx) << "\t|\t" << "\t|\t"
+                     << "scientific name\t|\n";
+            }
+        }
+    } else {
+        for (size_t i = 0; i < maxNodes; ++i) {
+            const TaxonNode &node = taxonNodes[i];
+            if (node.nameIdx != (size_t)-1) {
+                file << node.taxId << "\t|\t"
+                     << getString(node.nameIdx) << "\t|\t" << "\t|\t"
+                     << "scientific name\t|\n";
+            }
+        }
+    }
+
+    file.close();
+    Debug(Debug::INFO) << "names.dmp written to " << filePath << "\n";
+}
+
+void TaxonomyWrapper::writeMergedDmp(const std::string &filePath) const {
+    std::ofstream file(filePath);
+    if (!file.is_open()) {
+        Debug(Debug::ERROR) << "Failed to open file for writing: " << filePath << "\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    if (useInternalTaxID) {
+        for (TaxID oldId = 1; oldId <= maxTaxID; ++oldId) {
+            if (D[oldId] != -1 && oldId != taxonNodes[D[oldId]].taxId) {
+                file << getOriginalTaxID(oldId) << "\t|\t" 
+                     << getOriginalTaxID(taxonNodes[D[oldId]].taxId) << "\t|\n";
+            }
+        }
+    } else {
+        for (TaxID oldId = 1; oldId <= maxTaxID; ++oldId) {
+            if (D[oldId] != -1 && oldId != taxonNodes[D[oldId]].taxId) {
+                file << oldId << "\t|\t" 
+                     << taxonNodes[D[oldId]].taxId << "\t|\n";
+            }
+        }
+    }
+
+    file.close();
+    Debug(Debug::INFO) << "merged.dmp written to " << filePath << "\n";
+}
