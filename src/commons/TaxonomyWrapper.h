@@ -3,6 +3,7 @@
 
 #include "NcbiTaxonomy.h"
 #include <unordered_set>
+#include <iostream>
 
 static const std::map<std::string, std::string> ExtendedShortRanks = 
                                                 {{"subspecies", "ss" },
@@ -22,6 +23,16 @@ static const std::map<std::string, std::string> ExtendedShortRanks =
                                                  { "superkingdom", "d" },
                                                  { "realm", "r" }};
 
+struct NewTaxon {
+    TaxID taxId;
+    TaxID parentTaxId;
+    std::string rank;
+    std::string name;
+    
+    NewTaxon(TaxID taxId, TaxID parentTaxId, const std::string & rank, const std::string & name)
+        : taxId(taxId), parentTaxId(parentTaxId), rank(rank), name(name) {}    
+};
+
 class TaxonomyWrapper : public NcbiTaxonomy {
 public:
     TaxonomyWrapper(const std::string &namesFile,
@@ -39,7 +50,7 @@ public:
 
     int **makeMatrix(size_t maxNodes); 
 
-    std::vector<std::string> splitByDelimiter(const std::string &s, const std::string &delimiter, int maxCol);
+    static std::vector<std::string> splitByDelimiter(const std::string &s, const std::string &delimiter, int maxCol) ;
     std::pair<int, std::string> parseName(const std::string &line);
 
     TaxID getOriginalTaxID(TaxID internalTaxID) const {
@@ -119,14 +130,18 @@ public:
         mmapSize = size;
     }
 
-    TaxonomyWrapper* addNewTaxa(const std::string & newTaxaFile);
+    static void getListOfTaxa(const std::string &newTaxaFile, std::vector<NewTaxon> &newTaxa);
+
+    TaxonomyWrapper* addNewTaxa(const std::vector<NewTaxon> & newTaxaList);
     void checkNewTaxa(const std::string & newTaxaFile);
 
-    void getOriginal2InternalTaxId(std::unordered_map<TaxID, TaxID> & original2internalTaxId) {
+    void getOriginal2InternalTaxId(std::unordered_map<TaxID, TaxID> & original2internalTaxId) const {
         for (int i = 0; i <= maxTaxID; i++) {
             original2internalTaxId[internal2orgTaxId[i]] = i;
         }
     }
+
+    void getMergedNodeMap(std::unordered_map<TaxID, TaxID> & old2merged, bool needOriginal) const;
 
     bool nodeExists(TaxID taxonId) const {
         if (this->useInternalTaxID) {

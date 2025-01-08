@@ -49,9 +49,13 @@ int build(int argc, const char **argv, const Command &command){
 
     IndexCreator idxCre(par, taxonomy);
     idxCre.createIndex(par);
+    if (par.accessionLevel == 1) {
+        taxonomy = idxCre.getTaxonomy();
+    }
     taxonomy->writeTaxonomyDB(dbDir + "/taxonomyDB");
-
+    
     if(idxCre.getNumOfFlush() == 1) {
+        delete taxonomy;
         cerr << "Index creation completed." << endl;
         return 0;
     }

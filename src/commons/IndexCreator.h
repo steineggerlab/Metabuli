@@ -226,11 +226,15 @@ public:
         }
     }
 
-    IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy = nullptr);
+    IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy);
 
     ~IndexCreator();
     
     int getNumOfFlush();
+
+    TaxonomyWrapper* getTaxonomy() const {
+        return taxonomy;
+    }
 
     void setIsUpdating(bool isUpdating) { this->isUpdating = isUpdating; }
 

@@ -527,38 +527,39 @@ void TaxonomyWrapper::checkNewTaxa(const std::string & newTaxaFile) {
 
 TaxonomyWrapper* TaxonomyWrapper::getEditableCopy(const TaxonomyWrapper &t, int newMaxNodes, TaxID newMaxTaxID) {
     TaxonomyWrapper * newT = new TaxonomyWrapper();
+    newT->eukaryotaTaxID = t.eukaryotaTaxID;
+    newT->externalData = false;
     newT->maxNodes = newMaxNodes;
     newT->maxTaxID = newMaxTaxID;
+    newT->useInternalTaxID = t.useInternalTaxID;
     newT->D = new int[newT->maxTaxID + 1];
     std::memcpy(newT->D, t.D, (t.maxTaxID + 1) * sizeof(int));
     if (t.useInternalTaxID) {
         newT->internal2orgTaxId = new int[newT->maxTaxID + 1];
         std::memcpy(newT->internal2orgTaxId, t.internal2orgTaxId, (t.maxTaxID + 1) * sizeof(int));
-    } 
+    }
     newT->taxonNodes = new TaxonNode[newT->maxNodes];
     std::copy(t.taxonNodes, t.taxonNodes + t.maxNodes, newT->taxonNodes);
-    newT->block = t.block;
+    newT->block = new StringBlock<unsigned int>(*t.block);
     return newT;
 }
 
-TaxonomyWrapper* TaxonomyWrapper::addNewTaxa(const std::string & newTaxaFile) {    
+TaxonomyWrapper* TaxonomyWrapper::addNewTaxa(const std::vector<NewTaxon> & newTaxa) {    
     std::unordered_map<TaxID, TaxID> original2internalTaxId;
     if (useInternalTaxID) getOriginal2InternalTaxId(original2internalTaxId);
 
-    // Load new taxa file
     std::vector<TaxonNode> tmpNodes;
     std::map<TaxID, int> Dm; // new internal TaxID -> node ID;
     std::vector<TaxID> internal2orgTaxIdTmp;
-    std::ifstream newTaxa(newTaxaFile);
     std::string line;
     TaxID newMaxTaxID = maxTaxID;
     int currentNodeId = maxNodes;
-    while (getline(newTaxa, line)) {
-        std::vector<std::string> result = splitByDelimiter(line, "\t", 4);
-        TaxID taxId = (TaxID) strtol(result[0].c_str(), NULL, 10);
-        TaxID parentTaxId = (TaxID) strtol(result[1].c_str(), NULL, 10);
-        const std::string & rank = result[2];
-        const std::string & name = result[3];
+    
+    for (size_t i = 0; i < newTaxa.size(); i++) {
+        TaxID taxId = newTaxa[i].taxId;
+        TaxID parentTaxId = newTaxa[i].parentTaxId;
+        // const std::string & rank = newTaxa[i].rank;
+        const std::string & name = newTaxa[i].name;
         if (useInternalTaxID) {
             original2internalTaxId[taxId] = ++newMaxTaxID;
             internal2orgTaxIdTmp.push_back(taxId);
@@ -582,15 +583,24 @@ TaxonomyWrapper* TaxonomyWrapper::addNewTaxa(const std::string & newTaxaFile) {
                 eukaryotaTaxID = taxId;
             }
         }
-        size_t rankIdx = block->append(rank.c_str(), rank.size());
-        tmpNodes.emplace_back(currentNodeId, taxId, parentTaxId, rankIdx, (size_t)-1);
+        // size_t rankIdx = block->append(rank.c_str(), rank.size());
+        // size_t nameIdx = block->append(name.c_str(), name.size());
+        tmpNodes.emplace_back(currentNodeId, taxId, parentTaxId, (size_t)-1 , (size_t)-1);
         Dm.emplace(taxId, currentNodeId);
-        tmpNodes[currentNodeId].nameIdx = block->append(name.c_str(), name.size());
         ++currentNodeId;
     }
 
-    // Merge new nodes  
     TaxonomyWrapper * newT = getEditableCopy(*this, currentNodeId, newMaxTaxID);
+
+    for (size_t i = 0; i < newTaxa.size(); i++) {
+        size_t rankIdx = newT->block->append(newTaxa[i].rank.c_str(), newTaxa[i].rank.size());
+        size_t nameIdx = newT->block->append(newTaxa[i].name.c_str(), newTaxa[i].name.size());
+        tmpNodes[i].rankIdx = rankIdx;
+        tmpNodes[i].nameIdx = nameIdx;    
+    } 
+
+    // Merge new nodes  
+    
     for (std::map<TaxID, int>::iterator it = Dm.begin(); it != Dm.end(); ++it) {
         newT->D[it->first] = it->second;
     }
@@ -602,7 +612,6 @@ TaxonomyWrapper* TaxonomyWrapper::addNewTaxa(const std::string & newTaxaFile) {
     for (size_t i = 0; i < tmpNodes.size(); i++) {
         newT->taxonNodes[i + this->maxNodes] = tmpNodes[i];
     }
-
     newT->initTaxonomy();
     return newT;
 }
@@ -703,3 +712,77 @@ void TaxonomyWrapper::writeMergedDmp(const std::string &filePath) const {
     file.close();
     Debug(Debug::INFO) << "merged.dmp written to " << filePath << "\n";
 }
+
+void TaxonomyWrapper::getMergedNodeMap(std::unordered_map<TaxID, TaxID> & old2merged, bool needOriginal) const {
+    if (needOriginal) {
+        for (TaxID oldId = 1; oldId <= maxTaxID; ++oldId) {
+            if (D[oldId] != -1 && oldId != taxonNodes[D[oldId]].taxId) {
+                old2merged[getOriginalTaxID(oldId)] = getOriginalTaxID(taxonNodes[D[oldId]].taxId);
+            }
+        }
+    } else {
+        for (TaxID oldId = 1; oldId <= maxTaxID; ++oldId) {
+            if (D[oldId] != -1 && oldId != taxonNodes[D[oldId]].taxId) {
+                old2merged[oldId] = taxonNodes[D[oldId]].taxId;
+            }
+        }
+    }
+}
+    // if (useInternalTaxID) {
+        
+    // } else {
+    //     for (TaxID oldId = 1; oldId <= maxTaxID; ++oldId) {
+    //         if (D[oldId] != -1 && oldId != taxonNodes[D[oldId]].taxId) {
+    //             old2merged[oldId] = taxonNodes[D[oldId]].taxId;
+    //         }
+    //     }
+    // }
+
+
+void TaxonomyWrapper::getListOfTaxa(const std::string &newTaxaFile, std::vector<NewTaxon> &newTaxaList) {
+    std::ifstream newTaxa(newTaxaFile);
+    if (newTaxa.fail()) {
+        Debug(Debug::ERROR) << "File " << newTaxaFile << " not found!\n";
+        EXIT(EXIT_FAILURE);
+    }
+    std::string line;
+    while (getline(newTaxa, line)) {
+        std::vector<std::string> result = splitByDelimiter(line, "\t", 4);
+        TaxID taxId = (TaxID) strtol(result[0].c_str(), NULL, 10);
+        TaxID parentTaxId = (TaxID) strtol(result[1].c_str(), NULL, 10);
+        newTaxaList.emplace_back(taxId, parentTaxId, result[2], result[3]);
+        const std::string & rank = result[2];
+        const std::string & name = result[3];
+    }
+    newTaxa.close();
+}
+//         if (useInternalTaxID) {
+//             original2internalTaxId[taxId] = ++newMaxTaxID;
+//             internal2orgTaxIdTmp.push_back(taxId);
+//             taxId = newMaxTaxID;
+//             // Parent
+//             if (original2internalTaxId.find(parentTaxId) == original2internalTaxId.end()) {
+//                 original2internalTaxId[parentTaxId] = ++newMaxTaxID;
+//                 internal2orgTaxIdTmp.push_back(parentTaxId);
+//                 parentTaxId = newMaxTaxID ++;               
+//             } else {
+//                 parentTaxId = original2internalTaxId[parentTaxId];
+//             }
+//             if (name == "Eukaryota") {
+//                 eukaryotaTaxID = taxId;
+//             }
+//         } else {
+//             if (taxId > newMaxTaxID) {
+//                 newMaxTaxID = taxId;
+//             }
+//             if (name == "Eukaryota") {
+//                 eukaryotaTaxID = taxId;
+//             }
+//         }
+//         size_t rankIdx = block->append(rank.c_str(), rank.size());
+//         tmpNodes.emplace_back(currentNodeId, taxId, parentTaxId, rankIdx, (size_t)-1);
+//         Dm.emplace(taxId, currentNodeId);
+//         tmpNodes[currentNodeId].nameIdx = block->append(name.c_str(), name.size());
+//         ++currentNodeId;
+//     }
+// }

@@ -11,8 +11,7 @@
 
 extern const char *version;
 
-IndexCreator::IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy) : par(par) {
-    // Input files
+IndexCreator::IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy) : par(par), taxonomy(taxonomy) {
     dbDir = par.filenames[0];
     if (par.taxonomyPath.empty()) {
         taxonomyDir = dbDir + "/taxonomy/";
@@ -23,22 +22,10 @@ IndexCreator::IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxono
     fnaListFileName = par.filenames[1];
     acc2taxidFileName = par.filenames[2];
 
-    // Output files
     taxidListFileName = dbDir + "/taxID_list";
     taxonomyBinaryFileName = dbDir + "/taxonomyDB";
     versionFileName = dbDir + "/db.version";
     paramterFileName = dbDir + "/db.parameters";
-
-    if (taxonomy != nullptr) {
-        this->taxonomy = taxonomy;
-        externTaxonomy = true;
-    } else {
-        this->taxonomy = new TaxonomyWrapper(taxonomyDir + "/names.dmp",
-                                             taxonomyDir + "/nodes.dmp",
-                                             taxonomyDir + "/merged.dmp",
-                                             true); // useInternalTaxID
-        externTaxonomy = false;
-    } 
 
     if (par.reducedAA == 1){
         MARKER = 0Xffffffff;
@@ -54,10 +41,7 @@ IndexCreator::IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxono
 
 
 IndexCreator::~IndexCreator() {
-    if (!externTaxonomy) {
-        delete taxonomy;
-    }
-delete subMat;
+    delete subMat;
 }
 
 void IndexCreator::createIndex(const LocalParameters &par) {
@@ -296,9 +280,8 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
                                            const unordered_map<string, size_t> & accession2index,
                                            const string & acc2taxidFileName) {
     unordered_map<TaxID, TaxID> old2merged;
-    if (!externTaxonomy) {
-        loadMergedTaxIds(taxonomyDir + "/merged.dmp", old2merged);
-    } 
+    taxonomy->getMergedNodeMap(old2merged, true);
+    
     vector<pair<string, pair<TaxID, TaxID>>> acc2accId;   
     int fd = open(acc2taxidFileName.c_str(), O_RDONLY);
     if (fd < 0) {
@@ -338,7 +321,10 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
     char accession[16384];
     TaxID taxID;
     std::unordered_set<TaxID> usedExternalTaxIDs;
-    taxonomy->getUsedExternalTaxIDs(usedExternalTaxIDs);
+    std::vector<NewTaxon> newTaxons;
+    if (par.accessionLevel == 1) {
+        taxonomy->getUsedExternalTaxIDs(usedExternalTaxIDs);
+    }
 
     // First, label the accessions with external taxIDs
     while (current < end) {
@@ -358,22 +344,15 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
             }
             auto it = accession2index.find(accession);
             if (it != accession2index.end()) {
-                if (externTaxonomy) { // It happens only with updateDB module.
-                    if (taxonomy->hasInternalTaxID()) {
-                        taxID = taxonomy->getOriginalTaxID(taxonomy->taxonNode(taxonomy->getInternalTaxID(taxID))->taxId);
-                    } else {
-                        taxID = taxonomy->taxonNode(taxID)->taxId;
-                    }
-                } else {
-                    if (old2merged.count(taxID) > 0) {
-                        taxID = old2merged[taxID];
-                    }
+                if (old2merged.count(taxID) > 0) {
+                    taxID = old2merged[taxID];
                 }
                 if (par.accessionLevel == 1) {
                     TaxID accTaxId = taxonomy->getSmallestUnusedExternalTaxID(usedExternalTaxIDs);
                     acc2accId.emplace_back(accession, make_pair(taxID, accTaxId));
                     taxIdSet.insert(accTaxId);
                     observedAccessionsVec[it->second].taxID = accTaxId;
+                    newTaxons.emplace_back(accTaxId, taxID, "", accession);
                 } else {
                     taxIdSet.insert(taxID);
                     observedAccessionsVec[it->second].taxID = taxID;
@@ -382,24 +361,16 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
         }
         ++current;  // Move to the next line
     }
+
     if (munmap(fileData, fileSize) == -1) {
         cerr << "munmap failed" << endl;
     }                 
 
     if (par.accessionLevel == 1) {
-        // Get accession-level taxonomy
-        editTaxonomyDumpFiles(acc2accId);
+        TaxonomyWrapper * newTaxonomy = taxonomy->addNewTaxa(newTaxons);
         delete taxonomy;
-        cout << "Accession level database is being created (--accession-level 1)" << endl;
-        cout << "New taxonomic file containing accessions as children of taxa were created as follows:" << endl;
-        cout << taxonomyDir + "/names.dmp.new" << endl;
-        cout << taxonomyDir + "/nodes.dmp.new" << endl;
-        cout << "Loading new taxonomy files" << endl;
-        taxonomy = new TaxonomyWrapper(taxonomyDir + "/names.dmp.new",
-                                       taxonomyDir + "/nodes.dmp.new",
-                                       taxonomyDir + "/merged.dmp",
-                                       true);
-    }
+        taxonomy = newTaxonomy;
+}
 
     // Second, convert external taxIDs to internal taxIDs
     for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {    

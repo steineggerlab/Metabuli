@@ -47,12 +47,14 @@ int updateDB(int argc, const char **argv, const Command &command){
     // Make a new taxonomy DB if new taxa are added
     if (!par.newTaxa.empty()) {
         taxonomy->checkNewTaxa(par.newTaxa);
-        TaxonomyWrapper * newTaxonomy = taxonomy->addNewTaxa(par.newTaxa);
+        std::vector<NewTaxon> newTaxaList;
+        TaxonomyWrapper::getListOfTaxa(par.newTaxa, newTaxaList);
+        TaxonomyWrapper * newTaxonomy = taxonomy->addNewTaxa(newTaxaList);
         delete taxonomy;
         taxonomy = newTaxonomy;
     }
 
-    taxonomy->writeTaxonomyDB(newDbDir + "/taxonomyDB");
+    
 
     // // Add to library
     // time_t now = time(0);
@@ -65,6 +67,10 @@ int updateDB(int argc, const char **argv, const Command &command){
     IndexCreator idxCre(par, taxonomy);
     idxCre.setIsUpdating(true);
     idxCre.createIndex(par);
+    if (par.accessionLevel == 1) {
+        taxonomy = idxCre.getTaxonomy();
+    }
+    taxonomy->writeTaxonomyDB(newDbDir + "/taxonomyDB");
     unordered_set<TaxID> taxIdSet = idxCre.getTaxIdSet();
     FILE * oldTaxIdListFile;
     if((oldTaxIdListFile = fopen((oldDbDir + "/taxID_list").c_str(),"r")) == NULL){
