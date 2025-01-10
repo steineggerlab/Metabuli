@@ -40,6 +40,7 @@ int updateDB(int argc, const char **argv, const Command &command){
     
     // Load older taxonomy DB
     TaxonomyWrapper * taxonomy = loadTaxonomy(oldDbDir);
+    FileUtil::copyFile(oldDbDir + "/acc2taxid.map", newDbDir + "/acc2taxid.map");
 
     // Make a new taxonomy DB if new taxa are added
     if (!par.newTaxa.empty()) {
@@ -51,15 +52,6 @@ int updateDB(int argc, const char **argv, const Command &command){
         taxonomy = newTaxonomy;
     }
 
-    
-
-    // // Add to library
-    // time_t now = time(0);
-    // tm *ltm = localtime(&now);
-    // string timeStr = to_string(1900 + ltm->tm_year) + "-" + to_string(1 + ltm->tm_mon) + "-" + to_string(ltm->tm_mday) + "-" + to_string(ltm->tm_hour) + "-" + to_string(ltm->tm_min);
-    // string libraryDir = newDbDir + "/" + timeStr;
-    // addToLibrary(taxonomy, libraryDir, par.filenames[1], par.filenames[2]);
-
     // Create index
     IndexCreator idxCre(par, taxonomy);
     idxCre.setIsUpdating(true);
@@ -67,7 +59,13 @@ int updateDB(int argc, const char **argv, const Command &command){
     if (par.accessionLevel == 1) {
         taxonomy = idxCre.getTaxonomy();
     }
-    taxonomy->writeTaxonomyDB(newDbDir + "/taxonomyDB");
+
+    if (taxonomy->IsExternalData()) {
+        FileUtil::copyFile(oldDbDir + "/taxonomyDB", newDbDir + "/taxonomyDB");
+    } else {
+        taxonomy->writeTaxonomyDB(newDbDir + "/taxonomyDB");
+    }
+    
     unordered_set<TaxID> taxIdSet = idxCre.getTaxIdSet();
     FILE * oldTaxIdListFile;
     if((oldTaxIdListFile = fopen((oldDbDir + "/taxID_list").c_str(),"r")) == NULL){
@@ -91,7 +89,6 @@ int updateDB(int argc, const char **argv, const Command &command){
     cout << "Merge new and old DB files ... " << endl;
     int numOfSplits = idxCre.getNumOfFlush();
     FileMerger merger(par, taxonomy);
-   
     for (int i = 0; i < numOfSplits; i++) {
         merger.addFilesToMerge(newDbDir + "/" + to_string(i) + "_diffIdx",
                                newDbDir + "/" + to_string(i) + "_info");

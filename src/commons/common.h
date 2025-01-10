@@ -147,9 +147,4 @@ void fillAcc2TaxIdMap(std::unordered_map<std::string, TaxID> & acc2taxid,
                                 
 bool haveRedundancyInfo(const std::string & dbDir);
 
-int addToLibrary(TaxonomyWrapper * taxonomy,
-                 const std::string & dbDir,
-                 const std::string & fileList,
-                 const std::string & acc2taxIdFileName);
-
 #endif //ADCLASSIFIER2_COMMON_H

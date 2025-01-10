@@ -58,7 +58,7 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     // Write taxonomy id list
     FILE * taxidListFile = fopen(taxidListFileName.c_str(), "w");
     for (auto & taxid: taxIdSet) {
-        fprintf(taxidListFile, "%d\n", taxonomy->getInternalTaxID(taxid));
+        fprintf(taxidListFile, "%d\n", taxid);
     }
     fclose(taxidListFile);
 
@@ -214,6 +214,78 @@ void IndexCreator::indexReferenceSequences(size_t bufferSize) {
     cout << "Number of accession batches: " << accessionBatches.size() << endl;
 }
 
+// void IndexCreator::getObservedAccessions(const string &fnaListFileName,
+//                                          vector<Accession> &observedAccessionsVec,
+//                                          unordered_map<string, size_t> &accession2index) {
+//     ifstream fileListFile(fnaListFileName);
+//     if (fileListFile.is_open()) {
+//         for (string eachLine; getline(fileListFile, eachLine);) {
+//             fastaPaths.push_back(eachLine);
+//         }
+//     } else {
+//         cout << "Cannot open file for file list" << endl;
+//         return;
+//     }
+
+//     size_t totalAccessions = 0;
+//     vector<vector<Accession>> threadAccessions; // Thread-local storage for accessions
+//     vector<size_t> threadSizes; // Thread-local storage for sizes
+
+//     #pragma omp parallel default(none), shared(threadAccessions, threadSizes, fastaPaths, totalAccessions)
+//     {
+//         int threadId = omp_get_thread_num();
+//         #pragma omp single
+//         {
+//             threadAccessions.resize(omp_get_num_threads());
+//             threadSizes.resize(omp_get_num_threads(), 0);
+//         }
+
+//         vector<Accession> &localObservedAccessionsVec = threadAccessions[threadId];
+//         localObservedAccessionsVec.reserve(4096 * 4);
+
+//         #pragma omp for schedule(static, 1)
+//         for (size_t i = 0; i < fastaPaths.size(); ++i) {
+//             KSeqWrapper *kseq = KSeqFactory(fastaPaths[i].c_str());
+//             uint32_t order = 0;
+//             while (kseq->ReadEntry()) {
+//                 const KSeqWrapper::KSeqEntry &e = kseq->entry;
+//                 char *pos = strchr(e.name.s, '.');
+//                 if (pos != nullptr) {
+//                     *pos = '\0';
+//                 }
+//                 localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l + e.name.l + e.comment.l);
+//                 order++;
+//             }
+//             delete kseq;
+//         }
+
+//         threadSizes[threadId] = localObservedAccessionsVec.size();
+
+//         #pragma omp atomic
+//         totalAccessions += threadSizes[threadId];
+//     }
+
+//     observedAccessionsVec.resize(totalAccessions);
+
+//     // Combine results into `observedAccessionsVec`
+//     size_t offset = 0;
+//     for (size_t i = 0; i < threadAccessions.size(); ++i) {
+//         const auto &localVec = threadAccessions[i];
+//         for (size_t j = 0; j < localVec.size(); ++j) {
+//            observedAccessionsVec[offset + j] = localVec[j];
+//         }
+//         // std::copy(localVec.begin(), localVec.end(), observedAccessionsVec.begin() + offset);
+//         offset += threadSizes[i];
+//     }
+
+//     // Populate `accession2index`
+//     #pragma omp parallel for default(none), shared(observedAccessionsVec, accession2index)
+//     for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {
+//         #pragma omp critical
+//         accession2index[observedAccessionsVec[i].accession] = i;
+//     }
+// }
+
 void IndexCreator::getObservedAccessions(const string & fnaListFileName,
                                          vector<Accession> & observedAccessionsVec,
                                          unordered_map<string, size_t> & accession2index) {
@@ -234,7 +306,7 @@ void IndexCreator::getObservedAccessions(const string & fnaListFileName,
         vector<Accession> localObservedAccessionsVec;
         localObservedAccessionsVec.reserve(4096 * 4);
         
-        #pragma omp for schedule(dynamic, 1)
+        #pragma omp for schedule(static, 1)
         for (size_t i = 0; i < fastaPaths.size(); ++i) {
             KSeqWrapper* kseq = KSeqFactory(fastaPaths[i].c_str());
             uint32_t order = 0;
@@ -348,11 +420,9 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
                 if (par.accessionLevel == 1) {
                     TaxID accTaxId = taxonomy->getSmallestUnusedExternalTaxID(usedExternalTaxIDs);
                     acc2accId.emplace_back(accession, make_pair(taxID, accTaxId));
-                    taxIdSet.insert(accTaxId);
                     observedAccessionsVec[it->second].taxID = accTaxId;
                     newTaxons.emplace_back(accTaxId, taxID, "", accession);
                 } else {
-                    taxIdSet.insert(taxID);
                     observedAccessionsVec[it->second].taxID = taxID;
                 }
             }
@@ -368,31 +438,32 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
         TaxonomyWrapper * newTaxonomy = taxonomy->addNewTaxa(newTaxons);
         delete taxonomy;
         taxonomy = newTaxonomy;
-}
+    }
 
     // Second, convert external taxIDs to internal taxIDs
     for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {    
         observedAccessionsVec[i].taxID = taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID);
         observedAccessionsVec[i].speciesID = taxonomy->getTaxIdAtRank(observedAccessionsVec[i].taxID, "species");    
+        taxIdSet.insert(observedAccessionsVec[i].taxID);
     }
     
+    string mappingFileName = dbDir + "/acc2taxid.map";
+    FILE * acc2taxidFile = nullptr;
+    if (isUpdating) {
+        acc2taxidFile = fopen(mappingFileName.c_str(), "a");
+    } else {
+        acc2taxidFile = fopen(mappingFileName.c_str(), "w");
+    }
     if (par.accessionLevel == 1) {
-        // Write accession to taxid map to file
-        string acc2taxidFileName = dbDir + "/acc2taxid.map";
-        FILE * acc2taxidFile = fopen(acc2taxidFileName.c_str(), "w");
         for (auto & acc2taxid: acc2accId) {
             fprintf(acc2taxidFile, "%s\t%d\t%d\n", acc2taxid.first.c_str(), acc2taxid.second.first, acc2taxid.second.second);
         }
-        fclose(acc2taxidFile);
     } else {
-        // Write accession to taxid map to file
-        string acc2taxidFileName = dbDir + "/acc2taxid.map";
-        FILE * acc2taxidFile = fopen(acc2taxidFileName.c_str(), "w");
         for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {
             fprintf(acc2taxidFile, "%s\t%d\n", observedAccessionsVec[i].accession.c_str(), taxonomy->getOriginalTaxID(observedAccessionsVec[i].taxID));
-        }
-        fclose(acc2taxidFile);
-    }                      
+        }        
+    }   
+    fclose(acc2taxidFile);                   
 }
 
 void IndexCreator::getAccessionBatches(std::vector<Accession> & observedAccessionsVec, size_t bufferSize) {

@@ -270,126 +270,34 @@ void fillAcc2TaxIdMap(unordered_map<string, TaxID> & acc2taxid,
   }
   ++current;  // Move past the newline
 
-    char accession[16384];
-    int taxID;
+  char accession[16384];
+  int taxID;
 
-    while (current < end) {
-        // Read a line
-        char* lineStart = current;
-        while (current < end && *current != '\n') {
-            ++current;
-        }
-        std::string line(lineStart, current - lineStart);
-
-        // Parse the line
-        if (sscanf(line.c_str(), "%s\t%*s\t%d\t%*d", accession, &taxID) == 2) {
-          // Get the accession ID without version
-          char* pos = strchr(accession, '.');
-          if (pos != nullptr) {
-            *pos = '\0';
-          }
-          auto it = acc2taxid.find(accession);
-          if (it != acc2taxid.end()) {
-            acc2taxid[accession] = taxID;
-          }
-        }
-        ++current;  // Move to the next line
-    }
-
-    // Unmap the file
-    if (munmap(fileData, fileSize) == -1) {
-        cerr << "munmap failed" << endl;
-    }                                        
-
-    cerr << "Done" << endl;
-}
-
-int addToLibrary(TaxonomyWrapper * taxonomy,
-                 const string & libraryDir,
-                 const string & fileList,
-                 const string & acc2taxIdFileName) {
-    if (!FileUtil::directoryExists(libraryDir.c_str())) {
-        FileUtil::makeDir(libraryDir.c_str());
-    }
-    // const string fileList = par.filenames[0];
-    // const string mappingFileName = par.filenames[1];
-    // const string dbDir = par.filenames[2];
-    // if (par.libraryPath == "DBDIR/library/") par.libraryPath = dbDir + "/library/";
-
-    // if (!FileUtil::directoryExists(par.libraryPath.c_str())) {
-    //     FileUtil::makeDir(par.libraryPath.c_str());
-    // }
-    
-    // TaxonomyWrapper * taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
-
-    // Get time string yyyy-mm-dd-hh-mm
-    // time_t now = time(0);
-    // tm *ltm = localtime(&now);
-    // string timeStr = to_string(1900 + ltm->tm_year) + "-" + to_string(1 + ltm->tm_mon) + "-" + to_string(ltm->tm_mday) + "-" + to_string(ltm->tm_hour) + "-" + to_string(ltm->tm_min);
-    // string libraryPath = dbDir + 
-
-    std::unordered_map<TaxID, TaxID> original2internalTaxId;
-    unordered_map<std::string, TaxID> accession2taxid;
-    vector<std::string> fileNames;
-    getObservedAccessionList(fileList, fileNames, accession2taxid);
-    fillAcc2TaxIdMap(accession2taxid, acc2taxIdFileName);
-
-    if (taxonomy->hasInternalTaxID()) {
-      taxonomy->getOriginal2InternalTaxId(original2internalTaxId);
-    } 
-    
-    vector<std::string> unmapped;
-    std::string accession;
-    for (size_t i = 0; i < fileNames.size(); ++i) {
-      KSeqWrapper* kseq = KSeqFactory(fileNames[i].c_str());
-      while (kseq->ReadEntry()) {
-        const KSeqWrapper::KSeqEntry & e = kseq->entry;
-        accession = string(e.name.s);
-        size_t pos = accession.find('.');
-        if (pos != std::string::npos) {
-          accession = accession.substr(0, pos);
-        }
-        TaxID taxId = accession2taxid[accession];
-        if (taxId == 0) {
-          std::cout << "During processing " << fileNames[i] << ", accession " << e.name.s <<
-               " is not found in the mapping file. It is skipped.\n";
-          unmapped.push_back(e.name.s);
-          continue;
-        }
-        if (taxonomy->hasInternalTaxID()) {
-          if (original2internalTaxId.find(taxId) == original2internalTaxId.end()) {
-            std::cout << "During processing " << fileNames[i] << ", accession " << e.name.s <<
-            ", " << taxId << " is not included in the taxonomy. It is skipped.\n";
-            unmapped.push_back(e.name.s);
-            continue;
-          }
-          taxId = original2internalTaxId[taxId];
-        }
-        int speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
-        if (speciesTaxID == 0) {
-          cout << "During processing " << fileNames[i] << ", accession " << e.name.s <<
-               " is not matched to any species. It is skipped.\n";
-          unmapped.push_back(e.name.s);
-          continue;
-        }
-        // Write each sequence to file with species taxID as file name
-        if (taxonomy->hasInternalTaxID()) {
-          speciesTaxID = taxonomy->getOriginalTaxID(speciesTaxID);
-        }
-        FILE *file = fopen((libraryDir + "/" + to_string(speciesTaxID) + ".fna").c_str(), "a");
-        fprintf(file, ">%s %s\n", e.name.s, e.comment.s);
-        fprintf(file, "%s\n", e.sequence.s);
-        fclose(file);
+  while (current < end) {
+      // Read a line
+      char* lineStart = current;
+      while (current < end && *current != '\n') {
+          ++current;
       }
-      delete kseq;
-    }
+      std::string line(lineStart, current - lineStart);
+      // Parse the line
+      if (sscanf(line.c_str(), "%s\t%*s\t%d\t%*d", accession, &taxID) == 2) {
+        // Get the accession ID without version
+        char* pos = strchr(accession, '.');
+        if (pos != nullptr) {
+          *pos = '\0';
+        }
+        auto it = acc2taxid.find(accession);
+        if (it != acc2taxid.end()) {
+          acc2taxid[accession] = taxID;
+        }
+      }
+      ++current;  // Move to the next line
+  }
 
-    // Write unmapped accession to file
-    FILE *file = fopen((libraryDir + "/unmapped.txt").c_str(), "w");
-    for (const auto & i : unmapped) {
-        fprintf(file, "%s\n", i.c_str());
-    }
-    fclose(file);
-    cout << "Unmapped accessions are written to " << libraryDir + "/unmapped.txt" << endl;
-    return 0;
+  // Unmap the file
+  if (munmap(fileData, fileSize) == -1) {
+      cerr << "munmap failed" << endl;
+  }                                        
+  cerr << "Done" << endl;
 }

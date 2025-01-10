@@ -78,7 +78,6 @@ TaxonomyWrapper::TaxonomyWrapper(const std::string &namesFile, const std::string
     if (useInternalTaxID) {
         loadNodes(tmpNodes, nodesFile, original2internalTaxId, Dm, internal2orgTaxIdTmp, internalTaxIDCnt);
         loadMerged(mergedFile, original2internalTaxId, Dm, internal2orgTaxIdTmp, internalTaxIDCnt);
-        // maxTaxID = internalTaxIDCnt - 1;
         D = new int[maxTaxID + 1];
         std::fill_n(D, maxTaxID + 1, -1);
         for (std::map<TaxID, int>::iterator it = Dm.begin(); it != Dm.end(); ++it) {
@@ -92,6 +91,8 @@ TaxonomyWrapper::TaxonomyWrapper(const std::string &namesFile, const std::string
                 EXIT(EXIT_FAILURE);
             }
         }
+        // internal2orgTaxIdTmp.size() must be maxTaxID + 1
+        assert(internal2orgTaxIdTmp.size() == maxTaxID + 1); 
         internal2orgTaxId = new int[maxTaxID + 1];
         std::copy(internal2orgTaxIdTmp.begin(), internal2orgTaxIdTmp.end(), internal2orgTaxId);
     } else {
@@ -103,6 +104,10 @@ TaxonomyWrapper::TaxonomyWrapper(const std::string &namesFile, const std::string
     maxNodes = tmpNodes.size();
     taxonNodes = new TaxonNode[maxNodes];
     std::copy(tmpNodes.begin(), tmpNodes.end(), taxonNodes);
+
+    // for (size_t i = 0; i < maxNodes; ++i) {
+    //     taxonNodes[i].print();
+    // }
 
     initTaxonomy();
 }
@@ -282,14 +287,12 @@ void TaxonomyWrapper::loadNames(std::vector<TaxonNode> &tmpNodes, const std::str
 
 
 std::pair<char*, size_t> TaxonomyWrapper::serialize(const TaxonomyWrapper& t) {
-    size_t internalTaxIdUsed = 1;
     t.block->compact();
     size_t matrixDim = (t.maxNodes * 2);
     size_t matrixK = (int)(MathUtil::flog2(matrixDim)) + 1;
     size_t matrixSize = matrixDim * matrixK * sizeof(int);
     size_t blockSize = StringBlock<unsigned int>::memorySize(*t.block);
     size_t memSize = sizeof(int) // SERIALIZATION_VERSION
-        + sizeof(size_t) // internalTaxIdUsed
         + sizeof(size_t) // maxNodes
         + sizeof(int) // maxTaxID
         + t.maxNodes * sizeof(TaxonNode) // taxonNodes
@@ -299,26 +302,49 @@ std::pair<char*, size_t> TaxonomyWrapper::serialize(const TaxonomyWrapper& t) {
         + matrixSize // M
         + blockSize // block
         + (t.maxTaxID + 1) * sizeof(int); // internal2orgTaxId  
+    
+    if (t.useInternalTaxID) {
+        memSize += sizeof(size_t); // internalTaxIdUsed
+    }
 
     char* mem = (char*) malloc(memSize);
+
+    if (!mem) {
+        Debug(Debug::ERROR) << "Failed to allocate memory for serialization\n";
+        EXIT(EXIT_FAILURE);
+    }
+
     char* p = mem;
+
+    // 1. version int
     memcpy(p, &t.SERIALIZATION_VERSION, sizeof(int));
     p += sizeof(int);
 
-    // Store if internal taxID is used
-    memcpy(p, &internalTaxIdUsed, sizeof(size_t));
-    p += sizeof(size_t);
+    // 2. internalTaxIdUsed size_t
+    if (t.useInternalTaxID) {
+        size_t internalTaxIdUsed = 1;
+        memcpy(p, &internalTaxIdUsed, sizeof(size_t));
+        p += sizeof(size_t);
+    }
 
+    // 3. maxNodes size_t
     memcpy(p, &t.maxNodes, sizeof(size_t));
     p += sizeof(size_t);
+
+    // 4. maxTaxID int
     memcpy(p, &t.maxTaxID, sizeof(int));
     p += sizeof(int);
+    
     memcpy(p, t.taxonNodes, t.maxNodes * sizeof(TaxonNode));
     p += t.maxNodes * sizeof(TaxonNode);
     memcpy(p, t.D, (t.maxTaxID + 1) * sizeof(int));
     p += (t.maxTaxID + 1) * sizeof(int);
-    memcpy(p, t.internal2orgTaxId, (t.maxTaxID + 1) * sizeof(int));
-    p += (t.maxTaxID + 1) * sizeof(int);
+
+    if (t.useInternalTaxID) {
+        memcpy(p, t.internal2orgTaxId, (t.maxTaxID + 1) * sizeof(int));
+        p += (t.maxTaxID + 1) * sizeof(int);
+    }
+
     memcpy(p, t.E, (t.maxNodes * 2) * sizeof(int));
     p += (t.maxNodes * 2) * sizeof(int);
     memcpy(p, t.L, (t.maxNodes * 2) * sizeof(int));
@@ -336,28 +362,43 @@ std::pair<char*, size_t> TaxonomyWrapper::serialize(const TaxonomyWrapper& t) {
 
 TaxonomyWrapper* TaxonomyWrapper::unserialize(char* mem) {
     const char* p = mem;
+    // 1. version int
     int version = *((int*)p);
+    // std::cout << "version: " << version << std::endl;
     p += sizeof(int);
     if (version != NcbiTaxonomy::SERIALIZATION_VERSION) {
         return NULL;
     }
-    // Check if internal taxID is used
+
+    // 2. internalTaxIdUsed size_t
     size_t internalTaxIdUsed = *((size_t*)p);
+    bool useInternalTaxID = false;
+    // std::cout << "internalTaxIdUsed: " << internalTaxIdUsed << std::endl;
     if (internalTaxIdUsed == 1) {
         p += sizeof(size_t);
+        useInternalTaxID = true;
     } else {
-        internalTaxIdUsed = 0;
+        useInternalTaxID = false;
     }
+
+    // 3. maxNodes size_t
     size_t maxNodes = *((size_t*)p);
+    // std::cout << "maxNodes: " << maxNodes << std::endl;
     p += sizeof(size_t);
+
+    // 4. maxTaxID int
     int maxTaxID = *((int*)p);
+    // std::cout << "maxTaxID: " << maxTaxID << std::endl;
     p += sizeof(int);
+
+
     TaxonNode* taxonNodes = (TaxonNode*)p;
     p += maxNodes * sizeof(TaxonNode);
+
     int* D = (int*)p;
     p += (maxTaxID + 1) * sizeof(int);
     int* internal2orgTaxId = (int*)p;
-    if (internalTaxIdUsed == 1) {
+    if (useInternalTaxID) {
         p += (maxTaxID + 1) * sizeof(int);
     }
     int* E = (int*)p;
@@ -376,7 +417,7 @@ TaxonomyWrapper* TaxonomyWrapper::unserialize(char* mem) {
     }
     p += matrixSize;
     StringBlock<unsigned int>* block = StringBlock<unsigned int>::unserialize(p);
-    return new TaxonomyWrapper(taxonNodes, maxNodes, maxTaxID, D, E, L, H, M, block, internal2orgTaxId, internalTaxIdUsed);
+    return new TaxonomyWrapper(taxonNodes, maxNodes, maxTaxID, D, E, L, H, M, block, internal2orgTaxId, useInternalTaxID);
 }
 
 std::string TaxonomyWrapper::findShortRank2(const std::string& rank) {
@@ -583,8 +624,6 @@ TaxonomyWrapper* TaxonomyWrapper::addNewTaxa(const std::vector<NewTaxon> & newTa
                 eukaryotaTaxID = taxId;
             }
         }
-        // size_t rankIdx = block->append(rank.c_str(), rank.size());
-        // size_t nameIdx = block->append(name.c_str(), name.size());
         tmpNodes.emplace_back(currentNodeId, taxId, parentTaxId, (size_t)-1 , (size_t)-1);
         Dm.emplace(taxId, currentNodeId);
         ++currentNodeId;
@@ -617,6 +656,7 @@ TaxonomyWrapper* TaxonomyWrapper::addNewTaxa(const std::vector<NewTaxon> & newTa
 }
 
 void TaxonomyWrapper::writeTaxonomyDB(const std::string & fileName) {
+    std::cout << "Writing taxonomy to " << fileName << std::endl;
     std::pair<char *, size_t> serialized = TaxonomyWrapper::serialize(*this);
     FILE *handle = fopen(fileName.c_str(), "w");
     if (handle == NULL) {

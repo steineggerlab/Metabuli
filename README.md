@@ -72,6 +72,8 @@ Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic 
 - [Classification](#classification)
 - [Extract](#extract)
 - [Custom database](#custom-database)
+  - [NCBI taxonomy based database](#ncbi-taxonomy-based-database)
+  - [GTDB based database](#gtdb-based-database)
 - [Update database](#update-database)
 - [Example](#example)
   
@@ -258,52 +260,26 @@ To build a custom database, you need three things:
 2. **accession2taxid** : Mapping from accession to taxonomy ID. The sequences whose accessions are not listed here will be skipped.
 3. **NCBI-style taxonomy dump** : 'names.dmp' , 'nodes.dmp', and 'merged.dmp' are required. The sequences whose taxonomy IDs are not included here will be skipped.
    
-The steps for building a database with NCBI or GTDB taxonomy are described below.
+The procedure to build a database with NCBI or GTDB taxonomy are described below.
 
 ### User-provided CDS information (optional)
-The `--cds-info` option in the `build` command can be used to provide a list of absolute paths to CDS files. For the accessions included in files, the provided CDS information will be used, and Prodigal's gene prediction will be skipped. Currently, only GenBank or RefSeq CDS files like below are supported.
+The `--cds-info` option in the `build` and `updateDB` command can be used to provide a list of absolute paths to CDS files. For the accessions included in the files, the provided CDS information will be used, and Prodigal's gene prediction will be skipped. Currently, only GenBank or RefSeq CDS files like below are supported.
 ```
 Example:
 GCA_000839185.1_ViralProj14174_cds_from_genomic.fna.gz 
 ```
 
-### Building a DB with NCBI taxonomy
+### NCBI taxonomy based database
 #### 1. Prepare taxonomy and accession2taxid
   * Download `accession2taxid` from [here](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/).
   * Download `taxdump` files from [here](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/).
- 
-#### 2. Add your sequences to Metabuli library
-* If you want to include a custom sequence, edit `accession2taxid` and `taxdump` files properly as follows.
-    * `accession2taxid`
-      * For a sequence whose header is `>custom`, add `custom[tab]custom[tab]taxid[tab]anynumber`.
-      * As above, version number is not necessary.
-      * `taxid` must be included in the `nodes.dmp` and `names.dmp`.
-      * Put any number for the last column. It is not used in Metabuli.
-    * `taxdump`
-      * Edit `nodes.dmp` and `names.dmp` if you introduced a new `taxid` in `accession2taxid`.
-```
-metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR>
-- FASTA list : A file containing absolute paths of each FASTA file.
-- accession2taxid : A path to NCBI-style accession2taxid.
-- DBDIR : Sequences will be stored in 'DBDIR/library'.
-
-* Option
-  --taxonomy-path: Directory of taxdump files. (DBDIR/taxonomy by default)
-
-* NOTE: When resume is needed, remove the files in DBDIR/library and run the command again.
-```
-It groups your sequences into separate files according to their species.
-Accessions that are not included in the `<accession2taxid>` will be skipped and listed in `unmapped.txt`.
-
-#### 3. Build
+  
+#### 2. Build
 
 ```
-# Get the list of absoulte paths of files in your library
-find <DBDIR>/library -type f -name '*.fna' > library-files.txt
-
-metabuli build <DBDIR> <LIB_FILES> <accession2taxid> [options]
-- DBDIR: The same DBDIR from the previous step. 
-- LIB_FILES: A file containing absolute paths of the FASTA files in DBDIR/library (library-files.txt)
+metabuli build <DBDIR> <FASTA_LIST> <accession2taxid> [options]
+- DBDIR: directory where the database will be generated.
+- FASTA_LIST: A file containing absolute paths to FASTA files.
 - accession2taxid : A path to NCBI-style accession2taxid.
   
   * Options
@@ -311,95 +287,74 @@ metabuli build <DBDIR> <LIB_FILES> <accession2taxid> [options]
    --max-ram : The maximum RAM usage. (128 GiB by default)
    --taxonomy-path : Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
    --accession-level : Set 1 to creat a DB for accession level classification (0 by default).
+   --cds-info : List of absolute paths to CDS files.
+   --make-library : Make species library for faster execution (1 by default).
 ```
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
 
-### Building a DB with GTDB taxonomy
-#### 1. Prepare GTDB taxonomy and accession2taxid
-*Requirements*: 
-You need assembly FASTA files whose file name (or path) includes the assembly accession.
+### GTDB based database
+>*Requirements*: 
+You need assembly FASTA files whose file name (or path) includes the assembly accession like `GCF_028750015.1`.
 If you downloaded assemblies using `ncbi-genome-download`, you probably don't have to care about it.
 The regular expression of assembly accessions is (GC[AF]_[0-9].[0-9])
-
-```
-# 1. 
-# 1-1. Move to the 'util' directory
-cd METABULI_DIR/util
-
-# 1-2. Run prepare_gtdb_taxonomy.sh
-./prepare_gtdb_taxonomy.sh <DBDIR>
-  - DBDIR : Result files are stored in 'DBDIR/taxonomy'. 
-
-** Please clone Metabuli's repository to use this script.
-** It is not provided in the precompiled binaries or bioconda package.
-```
-In `DBDIR/taxonomy`, it will generate taxonomy `dmp` files and `assacc_to_taxid.tsv` with other files.
-
-```
-# 2. 
-metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR> --assembly true
-  - FASTA list : A file containing absolute paths of each assembly file.
-    Each path must include a corresponding assembly accession. 
-  - accession2taxid : 'assacc_to_taxid.tsv' from the previous step
-  - DBDIR : The same DBDIR from the previous step.
-
-** When resume is needed, remove the files in DBDIR/library and run the command again.
-```
-This will add your FASTA files to DBDIR/library according to their species taxonomy ID and generate 'my.accession2taxid'
-
+#### 1. Download GTDB taxdump files [here](https://github.com/shenwei356/gtdb-taxdump/releases).
 #### 2. Build
-```
-# Get the list of absoulte paths of files in your library
-find <DBDIR>/library -type f -name '*.fna' > library-files.txt
 
-metabuli build <DBDIR> <LIB_FILES> <accession2taxid> [options]
-- DBDIR: The same DBDIR from the previous step. 
-- <LIB_FILES>: A file containing absolute paths of the FASTA files in DBDIR/library (library-files.txt)
-- accession2taxid : A path to NCBI-style accession2taxid.
+```
+GTDB_TAXDUMP: the directory where you downloaded the GTDB taxdump files.
+FASTA_LIST: A file containing absolute paths of each assembly file.
+DBDIR: The directory where the database will be generated.
+
+# 1. Prepare accession2taxid and taxdump files for Metabuli
+metabuli editNames <GTDB_TAXDUMP/names.dmp> <GTDB_TAXDUMP/taxid.map>
+metabuli accession2taxid <FASTA_LIST> <GTDB_TAXDUMP/taxid.map>
+
+# 2. Build a database
+metabuli build <DBDIR> <FASTA_LIST> <GTDB_TAXDUMP/taxid.accession2taxid> --taxonomy-path GTDB_TAXDUMP [options]
   
-  * Options
-   --threads : The number of CPU-cores used (all by default)
-   --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
-   --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids.
-   --spacing-mask : Binary mask for spaced metamer. The same mask must be used for DB creation and classification. 
-                    A mask should contain at least eight '1's, and '0' means skip.
-   --accession-level : Set 1 to use accession level taxonomy (0 by default).
+  * Options are already described above. 
 ```
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
 
 ---
 
 ## Update database 
-You can add new sequences to an existing database. The taxonomy information you provide here must be compatible with the existing database.
+You can add new sequences to an existing database.
+The taxonomy of the previous database will be used.
+You can add new taxa if the previous taxonomy does not include them (see "Add new taxa" below). 
+Two files you need:
+1. **FASTA files** : Each sequence must be separated by '>accession'.
+2. **accession2taxid** : Mapping from accession to taxonomy ID. The sequences whose accessions are not listed here will be skipped.
 
 ```
-# 1. Add new sequences to the library
+metabuli updateDB <new DB directory> <FASTA list> <accession2taxid> <old DB directory> [options]
+  - FASTA list: A file of paths to the FASTA file to be added.
+  - accession2taxid : A path to NCBI-style accession2taxid.
 
-metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR>
-- FASTA list : A file of absolute paths to FASTA files.
-- accession2taxid : A path to NCBI-style accession2taxid.
-- DBDIR : Sequences will be stored in 'DBDIR/library'.
-
-  * Option
-    --taxonomy-path: Directory of taxonomy dump files. (DBDIR/taxonomy by default)
-
-# 2. Get the list of absoulte paths of files in your library
-find <DBDIR>/library -type f -name '*.fna' > library-files.txt
-
-# 3. Add new sequences to the existing database
-metabuli <new DB directory> <FASTA list> <accesssion2taxid> <old DB directory>
-- FASTA list: A file containing absolute paths of the FASTA files in DBDIR/library (library-files.txt)
-- accession2taxid : A path to NCBI-style accession2taxid.
-
-  * Options
-   --threads : The number of threads used (all by default)
-   --max-ram : The maximum RAM usage. (128 GiB by default)
-   --taxonomy-path : Directory of taxonomy dump files. (DBDIR/taxonomy by default)
-   --accession-level : Set 1 to creat a DB for accession level classification (0 by default).
-
+* Options
+  --threads : The number of threads used (all by default)
+  --max-ram : The maximum RAM usage. (128 GiB by default)
+  --accession-level : Set 1 to creat a DB for accession level classification (0 by default).
+  --make-library : Make species library for faster execution (1 by default).
+  --new-taxa : List of new taxa to be added.
 ```
 
+### Add new taxa (optional)
 
+#### 1. Check if you need to add new taxa
+Check nodes.dmp, names.dmp, and merged.dmp files used in the previous DB creation.
+You can retrieve them from `taxonomyDB` file in the previous DB directory.
+```
+metabuli taxdump <old DB directory/taxonomyDB>
+```
+
+#### 2. Prepare a list of new taxa
+This list will be given to the `updateDB` command via the `--new-taxa` option.
+The format is TSV as follows:
+```
+taxID parentID rank name
+```
+The added taxon must be linked to an existing taxon in the taxonomy tree.
 
 ## Example
 > The example here was detecting SARS-CoV-2 variant-specific reads, but has changed since the pre-built DB no longer contains the variant genomes.

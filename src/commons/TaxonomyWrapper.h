@@ -45,13 +45,13 @@ public:
 
     TaxonomyWrapper* getEditableCopy(const TaxonomyWrapper &t, int extraNodeCapacity = 0, TaxID newMaxTaxID = 0);
 
-    static std::pair<char*, size_t> serialize(const TaxonomyWrapper& t);
+    std::pair<char*, size_t> serialize(const TaxonomyWrapper& t);
     static TaxonomyWrapper* unserialize(char* data);
 
     int **makeMatrix(size_t maxNodes); 
 
     static std::vector<std::string> splitByDelimiter(const std::string &s, const std::string &delimiter, int maxCol) ;
-    std::pair<int, std::string> parseName(const std::string &line);
+    static std::pair<int, std::string> parseName(const std::string &line);
 
     TaxID getOriginalTaxID(TaxID internalTaxID) const {
         if (!useInternalTaxID) {
@@ -95,8 +95,16 @@ public:
     }
 
     void getUsedExternalTaxIDs(std::unordered_set<TaxID> &usedExternalTaxIDs) {
-        for (int i = 0; i <= maxTaxID; i++) {
-            usedExternalTaxIDs.insert(internal2orgTaxId[i]);
+        if (useInternalTaxID) {
+            for (int i = 0; i <= maxTaxID; i++) {
+                usedExternalTaxIDs.insert(internal2orgTaxId[i]);
+            }
+        } else {
+            for (int i = 1; i <= maxTaxID; i++) {
+                if (D[i] != -1) {
+                    usedExternalTaxIDs.insert(i);
+                }
+            }
         }
     }
 
@@ -107,7 +115,7 @@ public:
     }
 
     TaxID getSmallestUnusedExternalTaxID(std::unordered_set<TaxID> &usedExternalTaxIDs) {
-        TaxID res = 0;
+        TaxID res = 1;
         while (usedExternalTaxIDs.find(res) != usedExternalTaxIDs.end()) {
             res++;
         }
@@ -155,6 +163,10 @@ public:
     void writeNodesDmp(const std::string & fileName) const;
     void writeNamesDmp(const std::string & fileName) const;
     void writeMergedDmp(const std::string & fileName) const;
+
+    bool IsExternalData() {
+        return externalData;
+    }
 
 protected:
     TaxID eukaryotaTaxID;

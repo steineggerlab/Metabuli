@@ -14,4 +14,6 @@ set(util_source_files
         util/query2reference.cpp
         util/ictv-challenge-format.cpp
         util/taxdump.cpp
+        util/accession2taxid.cpp
+        util/editNames.cpp
         PARENT_SCOPE)

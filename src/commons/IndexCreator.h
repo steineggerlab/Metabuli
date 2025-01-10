@@ -23,10 +23,10 @@
 #include <cstdint>
 #include "TaxonomyWrapper.h"
 
-
-#ifdef OPENMP
 #include <omp.h>
-#endif
+// #ifdef OPENMP
+// #include <omp.h>
+// #endif
 
 struct Accession {
     Accession() = default;
@@ -38,6 +38,10 @@ struct Accession {
     uint32_t length;
     TaxID speciesID;
     TaxID taxID;
+
+    void print() {
+        std::cout << accession << " " << whichFasta << " " << order << " " << length << " " << speciesID << " " << taxID << std::endl;
+    }
 
     bool operator < (const Accession & a) const {
         if (speciesID != a.speciesID)
@@ -59,6 +63,8 @@ struct Accession {
 
         if (a.order != b.order)
             return a.order < b.order;
+            
+        return false;
     }
 };
 

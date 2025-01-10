@@ -39,6 +39,8 @@ public:
     std::vector<MMseqsParameter*> query2reference;
     std::vector<MMseqsParameter*> expand_diffidx;
     std::vector<MMseqsParameter*> taxdump;
+    std::vector<MMseqsParameter*> accession2taxid;
+    std::vector<MMseqsParameter*> editNames;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
@@ -82,6 +84,7 @@ public:
     PARAMETER(DB_DATE)
     PARAMETER(CDS_INFO)
     PARAMETER(MAKE_LIBRARY)
+    PARAMETER(ASSACC2TAXID)
 
     // DB updated parameters
     PARAMETER(NEW_TAXA)
@@ -151,6 +154,7 @@ public:
     int accessionLevel;
     std::string cdsInfo;
     int makeLibrary;
+    std::string assAcc2taxid;
 
     // DB updated parameters
     std::string newTaxa;
