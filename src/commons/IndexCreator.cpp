@@ -214,77 +214,6 @@ void IndexCreator::indexReferenceSequences(size_t bufferSize) {
     cout << "Number of accession batches: " << accessionBatches.size() << endl;
 }
 
-// void IndexCreator::getObservedAccessions(const string &fnaListFileName,
-//                                          vector<Accession> &observedAccessionsVec,
-//                                          unordered_map<string, size_t> &accession2index) {
-//     ifstream fileListFile(fnaListFileName);
-//     if (fileListFile.is_open()) {
-//         for (string eachLine; getline(fileListFile, eachLine);) {
-//             fastaPaths.push_back(eachLine);
-//         }
-//     } else {
-//         cout << "Cannot open file for file list" << endl;
-//         return;
-//     }
-
-//     size_t totalAccessions = 0;
-//     vector<vector<Accession>> threadAccessions; // Thread-local storage for accessions
-//     vector<size_t> threadSizes; // Thread-local storage for sizes
-
-//     #pragma omp parallel default(none), shared(threadAccessions, threadSizes, fastaPaths, totalAccessions)
-//     {
-//         int threadId = omp_get_thread_num();
-//         #pragma omp single
-//         {
-//             threadAccessions.resize(omp_get_num_threads());
-//             threadSizes.resize(omp_get_num_threads(), 0);
-//         }
-
-//         vector<Accession> &localObservedAccessionsVec = threadAccessions[threadId];
-//         localObservedAccessionsVec.reserve(4096 * 4);
-
-//         #pragma omp for schedule(static, 1)
-//         for (size_t i = 0; i < fastaPaths.size(); ++i) {
-//             KSeqWrapper *kseq = KSeqFactory(fastaPaths[i].c_str());
-//             uint32_t order = 0;
-//             while (kseq->ReadEntry()) {
-//                 const KSeqWrapper::KSeqEntry &e = kseq->entry;
-//                 char *pos = strchr(e.name.s, '.');
-//                 if (pos != nullptr) {
-//                     *pos = '\0';
-//                 }
-//                 localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l + e.name.l + e.comment.l);
-//                 order++;
-//             }
-//             delete kseq;
-//         }
-
-//         threadSizes[threadId] = localObservedAccessionsVec.size();
-
-//         #pragma omp atomic
-//         totalAccessions += threadSizes[threadId];
-//     }
-
-//     observedAccessionsVec.resize(totalAccessions);
-
-//     // Combine results into `observedAccessionsVec`
-//     size_t offset = 0;
-//     for (size_t i = 0; i < threadAccessions.size(); ++i) {
-//         const auto &localVec = threadAccessions[i];
-//         for (size_t j = 0; j < localVec.size(); ++j) {
-//            observedAccessionsVec[offset + j] = localVec[j];
-//         }
-//         // std::copy(localVec.begin(), localVec.end(), observedAccessionsVec.begin() + offset);
-//         offset += threadSizes[i];
-//     }
-
-//     // Populate `accession2index`
-//     #pragma omp parallel for default(none), shared(observedAccessionsVec, accession2index)
-//     for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {
-//         #pragma omp critical
-//         accession2index[observedAccessionsVec[i].accession] = i;
-//     }
-// }
 
 void IndexCreator::getObservedAccessions(const string & fnaListFileName,
                                          vector<Accession> & observedAccessionsVec,
@@ -316,9 +245,9 @@ void IndexCreator::getObservedAccessions(const string & fnaListFileName,
                 char* pos = strchr(e.name.s, '.'); 
                 if (pos != nullptr) {
                     *pos = '\0';
-                    localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l + e.name.l + e.comment.l);
+                    localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l);
                 } else {
-                    localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l + e.name.l + e.comment.l);
+                    localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l);
                 }
                 order++; 
             }
