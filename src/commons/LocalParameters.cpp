@@ -250,13 +250,6 @@ LocalParameters::LocalParameters() :
                      typeid(int),
                      (void *) &makeLibrary,
                      "[0-1]"),
-        ASSACC2TAXID(ASSACC2TAXID_ID,
-                     "--assacc2taxid",
-                     "Assembly accession to taxid mapping file",
-                     "Assembly accession to taxid mapping file",
-                     typeid(std::string),
-                     (void *) &assAcc2taxid,
-                     "^.*$"),
         NEW_TAXA(NEW_TAXA_ID,
                 "--new-taxa",
                 "TSV file of new taxa to be added",
@@ -436,7 +429,7 @@ LocalParameters::LocalParameters() :
     build.push_back(&RAM_USAGE);
     build.push_back(&SKIP_REDUNDANCY);
     build.push_back(&MAKE_LIBRARY);
-    build.push_back(&ASSACC2TAXID);
+
 
 
 
@@ -452,7 +445,6 @@ LocalParameters::LocalParameters() :
     updateDB.push_back(&RAM_USAGE);
     updateDB.push_back(&NEW_TAXA);
     updateDB.push_back(&MAKE_LIBRARY);
-    updateDB.push_back(&ASSACC2TAXID);
 
     //classify
     classify.push_back(&PARAM_THREADS);
