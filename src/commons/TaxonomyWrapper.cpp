@@ -597,7 +597,7 @@ TaxonomyWrapper* TaxonomyWrapper::addNewTaxa(const std::vector<NewTaxon> & newTa
     int currentNodeId = maxNodes;
     
     for (size_t i = 0; i < newTaxa.size(); i++) {
-        newTaxa[i].print();
+        // newTaxa[i].print();
         TaxID taxId = newTaxa[i].taxId;
         TaxID parentTaxId = newTaxa[i].parentTaxId;
         const std::string & name = newTaxa[i].name;
@@ -773,16 +773,6 @@ void TaxonomyWrapper::getMergedNodeMap(std::unordered_map<TaxID, TaxID> & old2me
         }
     }
 }
-    // if (useInternalTaxID) {
-        
-    // } else {
-    //     for (TaxID oldId = 1; oldId <= maxTaxID; ++oldId) {
-    //         if (D[oldId] != -1 && oldId != taxonNodes[D[oldId]].taxId) {
-    //             old2merged[oldId] = taxonNodes[D[oldId]].taxId;
-    //         }
-    //     }
-    // }
-
 
 void TaxonomyWrapper::getListOfTaxa(const std::string &newTaxaFile, std::vector<NewTaxon> &newTaxaList) {
     std::ifstream newTaxa(newTaxaFile);
@@ -801,33 +791,3 @@ void TaxonomyWrapper::getListOfTaxa(const std::string &newTaxaFile, std::vector<
     }
     newTaxa.close();
 }
-//         if (useInternalTaxID) {
-//             original2internalTaxId[taxId] = ++newMaxTaxID;
-//             internal2orgTaxIdTmp.push_back(taxId);
-//             taxId = newMaxTaxID;
-//             // Parent
-//             if (original2internalTaxId.find(parentTaxId) == original2internalTaxId.end()) {
-//                 original2internalTaxId[parentTaxId] = ++newMaxTaxID;
-//                 internal2orgTaxIdTmp.push_back(parentTaxId);
-//                 parentTaxId = newMaxTaxID ++;               
-//             } else {
-//                 parentTaxId = original2internalTaxId[parentTaxId];
-//             }
-//             if (name == "Eukaryota") {
-//                 eukaryotaTaxID = taxId;
-//             }
-//         } else {
-//             if (taxId > newMaxTaxID) {
-//                 newMaxTaxID = taxId;
-//             }
-//             if (name == "Eukaryota") {
-//                 eukaryotaTaxID = taxId;
-//             }
-//         }
-//         size_t rankIdx = block->append(rank.c_str(), rank.size());
-//         tmpNodes.emplace_back(currentNodeId, taxId, parentTaxId, rankIdx, (size_t)-1);
-//         Dm.emplace(taxId, currentNodeId);
-//         tmpNodes[currentNodeId].nameIdx = block->append(name.c_str(), name.size());
-//         ++currentNodeId;
-//     }
-// }

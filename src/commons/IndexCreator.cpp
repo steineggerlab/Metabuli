@@ -349,7 +349,7 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
                     TaxID accTaxId = taxonomy->getSmallestUnusedExternalTaxID(usedExternalTaxIDs);
                     acc2accId.emplace_back(accession, make_pair(taxID, accTaxId));
                     observedAccessionsVec[it->second].taxID = accTaxId;
-                    newTaxons.emplace_back(accTaxId, taxID, "", accession);
+                    newTaxons.emplace_back(accTaxId, taxID, "accession", accession);
                 } else {
                     observedAccessionsVec[it->second].taxID = taxID;
                 }

@@ -59,6 +59,12 @@ void FileMerger::updateTaxId2SpeciesTaxId(const string & taxIdListFileName) {
             taxId2speciesId[taxId] = speciesTaxID;
         }
     }
+    // Print taxId2speciesId
+    // cout << "TaxID to speciesID" << endl;
+    // for (auto & taxid: taxId2speciesId) {
+    //     cout << "IN " << taxid.first << " " << taxid.second << endl;
+    //     cout << "OR " << taxonomy->getOriginalTaxID(taxid.first) << " " << taxonomy->getOriginalTaxID(taxid.second) << endl;
+    // }
     fclose(taxIdFile);
 }
 
