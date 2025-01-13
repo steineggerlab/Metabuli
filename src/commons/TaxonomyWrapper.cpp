@@ -597,19 +597,24 @@ TaxonomyWrapper* TaxonomyWrapper::addNewTaxa(const std::vector<NewTaxon> & newTa
     int currentNodeId = maxNodes;
     
     for (size_t i = 0; i < newTaxa.size(); i++) {
+        newTaxa[i].print();
         TaxID taxId = newTaxa[i].taxId;
         TaxID parentTaxId = newTaxa[i].parentTaxId;
-        // const std::string & rank = newTaxa[i].rank;
         const std::string & name = newTaxa[i].name;
         if (useInternalTaxID) {
-            original2internalTaxId[taxId] = ++newMaxTaxID;
-            internal2orgTaxIdTmp.push_back(taxId);
-            taxId = newMaxTaxID;
+            // Child
+            if (original2internalTaxId.find(taxId) == original2internalTaxId.end()) {
+                original2internalTaxId[taxId] = ++newMaxTaxID;
+                internal2orgTaxIdTmp.push_back(taxId);
+                taxId = newMaxTaxID;
+            } else {
+                taxId = original2internalTaxId[taxId];
+            }
             // Parent
             if (original2internalTaxId.find(parentTaxId) == original2internalTaxId.end()) {
                 original2internalTaxId[parentTaxId] = ++newMaxTaxID;
                 internal2orgTaxIdTmp.push_back(parentTaxId);
-                parentTaxId = newMaxTaxID ++;               
+                parentTaxId = newMaxTaxID;               
             } else {
                 parentTaxId = original2internalTaxId[parentTaxId];
             }

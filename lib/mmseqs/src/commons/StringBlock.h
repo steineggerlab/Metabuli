@@ -43,7 +43,7 @@ public:
         memcpy(data, other.data, byteCapacity * sizeof(char));
 
         offsets = (T*)malloc(entryCapacity * sizeof(T));
-        memcpy(offsets, other.offsets, other.entryCount * sizeof(T));
+        memcpy(offsets, other.offsets, other.entryCapacity * sizeof(T));
     }
 
     const char* getString(T idx) const {

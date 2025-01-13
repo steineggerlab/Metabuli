@@ -31,6 +31,10 @@ struct NewTaxon {
     
     NewTaxon(TaxID taxId, TaxID parentTaxId, const std::string & rank, const std::string & name)
         : taxId(taxId), parentTaxId(parentTaxId), rank(rank), name(name) {}    
+    
+    void print() const {
+        std::cout << taxId << "\t" << parentTaxId << "\t" << rank << "\t" << name << std::endl;
+    }
 };
 
 class TaxonomyWrapper : public NcbiTaxonomy {

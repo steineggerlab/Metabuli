@@ -18,7 +18,6 @@ IndexCreator::IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxono
     } else {
         taxonomyDir = par.taxonomyPath + "/";
     }
-    cout << "Taxonomy path: " << par.taxonomyPath << endl;
     fnaListFileName = par.filenames[1];
     acc2taxidFileName = par.filenames[2];
 
