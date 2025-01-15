@@ -84,6 +84,7 @@ public:
     PARAMETER(DB_DATE)
     PARAMETER(CDS_INFO)
     PARAMETER(MAKE_LIBRARY)
+    PARAMETER(GTDB)
 
     // DB updated parameters
     PARAMETER(NEW_TAXA)
@@ -154,6 +155,7 @@ public:
     std::string cdsInfo;
     int makeLibrary;
     std::string assAcc2taxid;
+    int gtdb;
 
     // DB updated parameters
     std::string newTaxa;

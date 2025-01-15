@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include "TaxonomyWrapper.h"
+#include "editNames.h"
 
 using namespace std;
 
@@ -24,12 +25,14 @@ int editNames(int argc, const char **argv, const Command &command) {
         return 0;
     }
 
+    return editNames(namesDmp, taxidMap);
+}
+
+int editNames(const std::string & namesDmp, const std::string & taxidMap) {
     unordered_map<string, string> number2assacc;
     unordered_map<string, int> number2taxid;
 
-
-    // Read taxid map
-    cout << "Read taxid map" << endl;
+    cout << "Edit taxonkit-generated names.dmp" << endl;
     ifstream file(taxidMap);
     if (file.is_open()) {
         string line;
@@ -47,9 +50,6 @@ int editNames(int argc, const char **argv, const Command &command) {
         cerr << "Cannot open file for taxid map" << endl;
     }
     file.close();
-
-    // Read names.dmp
-    cout << "Read names.dmp" << endl;
     
     std::ifstream ss(namesDmp);
     if (ss.fail()) {
@@ -78,8 +78,6 @@ int editNames(int argc, const char **argv, const Command &command) {
     }
     ss.close();
 
-    // Write names.dmp
-    cout << "Write names.dmp" << endl;
     string namesDmpNew = namesDmp;
     // namesDmpNew.insert(namesDmpNew.find_last_of('.'), "_new");
     FILE *handle = fopen(namesDmpNew.c_str(), "w");

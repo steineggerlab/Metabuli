@@ -1,5 +1,6 @@
 include_directories(commons)
 include_directories(workflow)
+include_directories(util)
 include_directories(../lib/prodigal)
 
 add_subdirectory(commons)

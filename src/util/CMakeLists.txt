@@ -15,5 +15,7 @@ set(util_source_files
         util/ictv-challenge-format.cpp
         util/taxdump.cpp
         util/accession2taxid.cpp
+        util/accession2taxid.h
         util/editNames.cpp
+        util/editNames.h
         PARENT_SCOPE)

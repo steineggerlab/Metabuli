@@ -3,8 +3,11 @@
 #include "LocalParameters.h"
 #include <Command.h>
 #include "FileUtil.h"
+#include "accession2taxid.h"
+#include "editNames.h"
 
 void setDefaults_build(LocalParameters & par){
+    par.gtdb = 0;
     par.makeLibrary = 1;
     par.skipRedundancy = 1;
     par.reducedAA = 0;
@@ -40,6 +43,12 @@ int build(int argc, const char **argv, const Command &command){
         taxonomyDir = dbDir + "/taxonomy/";
     } else {
         taxonomyDir = par.taxonomyPath + "/";
+    }
+
+    if (par.gtdb == 1) {
+        editNames(taxonomyDir + "/names.dmp", par.filenames[2]);
+        accession2taxid(par.filenames[1], par.filenames[2]);
+        par.filenames[2] = par.filenames[2].substr(0, par.filenames[2].find_last_of('.')) + ".accession2taxid";
     }
 
     TaxonomyWrapper * taxonomy =  new TaxonomyWrapper(taxonomyDir + "/names.dmp",

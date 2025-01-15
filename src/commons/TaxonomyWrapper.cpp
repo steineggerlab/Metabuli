@@ -524,7 +524,13 @@ void TaxonomyWrapper::checkNewTaxa(const std::string & newTaxaFile) {
     if (newTaxa.is_open()) {
         std::string line;
         while (getline(newTaxa, line)) {
-            std::vector<std::string> result = splitByDelimiter(line, "\t", 4);
+            std::vector<std::string> result = splitByDelimiter(line, "\t", 5);
+            if (result.size() != 4) {
+                Debug(Debug::ERROR) << "During parsing " << newTaxaFile << ", the line\n";
+                Debug(Debug::ERROR) << line << "\n";
+                Debug(Debug::ERROR) << "is not in the correct format.\n";
+                EXIT(EXIT_FAILURE);
+            }
             TaxID taxId = (TaxID) strtol(result[0].c_str(), NULL, 10);
             TaxID parentTaxId = (TaxID) strtol(result[1].c_str(), NULL, 10);
             std::string & name = result[3];
@@ -785,9 +791,8 @@ void TaxonomyWrapper::getListOfTaxa(const std::string &newTaxaFile, std::vector<
         std::vector<std::string> result = splitByDelimiter(line, "\t", 4);
         TaxID taxId = (TaxID) strtol(result[0].c_str(), NULL, 10);
         TaxID parentTaxId = (TaxID) strtol(result[1].c_str(), NULL, 10);
+        std::transform(result[2].begin(), result[2].end(), result[2].begin(), ::tolower); // rank to lower case
         newTaxaList.emplace_back(taxId, parentTaxId, result[2], result[3]);
-        const std::string & rank = result[2];
-        const std::string & name = result[3];
     }
     newTaxa.close();
 }

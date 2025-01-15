@@ -5,8 +5,11 @@
 #include <regex>
 #include "KSeqWrapper.h"   
 #include <omp.h> 
+#include "accession2taxid.h"
 
 using namespace std;
+
+
 
 int accession2taxid(int argc, const char **argv, const Command &command) {
     LocalParameters &par = LocalParameters::getLocalInstance();
@@ -24,6 +27,10 @@ int accession2taxid(int argc, const char **argv, const Command &command) {
         return 0;
     }
 
+    return accession2taxid(assemblyList, assacc2taxidFile);
+}
+
+int accession2taxid(const std::string & assemblyList, const std::string & assacc2taxidFile) {
 
     cout << "Load assembly accession to taxid mapping" << endl;
     FILE *handle = fopen(assacc2taxidFile.c_str(), "r");
@@ -133,7 +140,6 @@ int accession2taxid(int argc, const char **argv, const Command &command) {
         fprintf(handle, "%s\n", unmapped[i].c_str());
     }
     fclose(handle);
-
 
     return 0;
 }

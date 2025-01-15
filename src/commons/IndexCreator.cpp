@@ -45,7 +45,6 @@ IndexCreator::~IndexCreator() {
 
 void IndexCreator::createIndex(const LocalParameters &par) {
     TargetKmerBuffer kmerBuffer(calculateBufferSize(par.ramUsage));
-    // Index library reference sequences
     indexReferenceSequences(kmerBuffer.bufferSize);
     
     if (!par.cdsInfo.empty()) {
@@ -423,7 +422,7 @@ void IndexCreator::getAccessionBatches(std::vector<Accession> & observedAccessio
                     trainingSeq = observedAccessionsVec[i].order;
                 }
                 lengthSum += observedAccessionsVec[i].length;
-                kmerCntSum += (size_t) observedAccessionsVec[i].length * 0.4;
+                kmerCntSum += static_cast<size_t>(observedAccessionsVec[i].length * 0.4);
                 orders.push_back(observedAccessionsVec[i].order);
                 lengths.push_back(observedAccessionsVec[i].length);
                 taxIDs.push_back(observedAccessionsVec[i].taxID);
