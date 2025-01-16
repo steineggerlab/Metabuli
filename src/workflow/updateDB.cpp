@@ -100,7 +100,6 @@ int updateDB(int argc, const char **argv, const Command &command){
     merger.addFilesToMerge(oldDbDir + "/diffIdx", oldDbDir + "/info");
     merger.setRemoveRedundancyInfo(haveRedundancyInfo(oldDbDir));
     merger.updateTaxId2SpeciesTaxId(newDbDir + "/taxID_list");
-    Debug(Debug::INFO) << "...";
     merger.setMergedFileNames(newDbDir + "/diffIdx", newDbDir + "/info", newDbDir + "/split");
     merger.mergeTargetFiles();
     delete taxonomy;
