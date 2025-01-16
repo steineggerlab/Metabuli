@@ -434,7 +434,6 @@ LocalParameters::LocalParameters() :
     build.push_back(&DB_DATE);
     build.push_back(&CDS_INFO);
     build.push_back(&RAM_USAGE);
-    build.push_back(&SKIP_REDUNDANCY);
     build.push_back(&MAKE_LIBRARY);
     build.push_back(&GTDB);
 

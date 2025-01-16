@@ -141,7 +141,8 @@ void FileMerger::mergeTargetFiles() {
 
     // get the first k-mer to write
     size_t lastFileIdx = numOfSplits - 1;
-    unsigned int mask = ~((static_cast<unsigned int>(par.skipRedundancy == 0) << 31));
+    cout << "numOfSplits: " << numOfSplits << endl;
+    unsigned int mask = ~((static_cast<unsigned int>(removeRedundancyInfo) << 31));
     for(size_t file = 0; file < numOfSplits; file++){
         lookingKmers[file] = getNextKmer(0, diffFileList[file], diffFileIdx[file]);
         if (removeRedundancyInfo && file == lastFileIdx) {
@@ -309,14 +310,19 @@ size_t FileMerger::smallest(const uint64_t * lookingKmers,
     if (min == UINT64_MAX) {
         minTaxIdAtRank = INT_MAX;
     } else {
-        // if (taxId2speciesId.find((int) lookingInfos[0].sequenceID) == taxId2speciesId.end()) {
+        // if (taxId2speciesId.find((int) lookingInfos[0]) == taxId2speciesId.end()) {
         //     cerr << lookingKmers[0] << endl;
-        //     cerr << "TaxID not found 1: " << lookingInfos[0].sequenceID << endl;
+        //     cerr << "TaxID not found 1: " << lookingInfos[0] << endl;
         //     exit(1);
         // }
         minTaxIdAtRank = taxId2speciesId.at(lookingInfos[0]);
     }
     for(size_t i = 1; i < fileCnt; i++) {
+        // if (taxId2speciesId.find((int) lookingInfos[i]) == taxId2speciesId.end()) {
+        //     cerr << lookingKmers[i] << endl;
+        //     cerr << "TaxID not found 2: " << lookingInfos[i] << endl;
+        //     exit(1);
+        // }
         if(lookingKmers[i] < min ||
           (lookingKmers[i] == min && taxId2speciesId.at(lookingInfos[i]) < minTaxIdAtRank)){
             min = lookingKmers[i];

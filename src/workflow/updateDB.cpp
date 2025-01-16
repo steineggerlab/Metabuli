@@ -6,7 +6,7 @@
 
 void setDefaults_updateDB(LocalParameters & par){
     par.makeLibrary = 1;
-    par.skipRedundancy = 1;
+    // par.skipRedundancy = 1;
     par.reducedAA = 0;
     par.ramUsage = 128;
     par.taxonomyPath = "" ;
@@ -39,17 +39,21 @@ int updateDB(int argc, const char **argv, const Command &command){
     }
     
     // Load older taxonomy DB
+    Debug(Debug::INFO) << "Loading taxonomy DB from " << oldDbDir << " ... ";
     TaxonomyWrapper * taxonomy = loadTaxonomy(oldDbDir);
+    Debug(Debug::INFO) << "done.\n";
     FileUtil::copyFile(oldDbDir + "/acc2taxid.map", newDbDir + "/acc2taxid.map");
 
     // Make a new taxonomy DB if new taxa are added
     if (!par.newTaxa.empty()) {
+        Debug(Debug::INFO) << "Adding new taxa to the taxonomy DB ... ";
         taxonomy->checkNewTaxa(par.newTaxa);
         std::vector<NewTaxon> newTaxaList;
         TaxonomyWrapper::getListOfTaxa(par.newTaxa, newTaxaList);
         TaxonomyWrapper * newTaxonomy = taxonomy->addNewTaxa(newTaxaList);
         delete taxonomy;
         taxonomy = newTaxonomy;
+        Debug(Debug::INFO) << "done.\n";
     }
 
     // Create index
@@ -86,7 +90,7 @@ int updateDB(int argc, const char **argv, const Command &command){
     }
 
     // Merge index files
-    cout << "Merge new and old DB files ... " << endl;
+    Debug(Debug::INFO) << "Merge new and old DB files ";
     int numOfSplits = idxCre.getNumOfFlush();
     FileMerger merger(par, taxonomy);
     for (int i = 0; i < numOfSplits; i++) {
@@ -96,6 +100,7 @@ int updateDB(int argc, const char **argv, const Command &command){
     merger.addFilesToMerge(oldDbDir + "/diffIdx", oldDbDir + "/info");
     merger.setRemoveRedundancyInfo(haveRedundancyInfo(oldDbDir));
     merger.updateTaxId2SpeciesTaxId(newDbDir + "/taxID_list");
+    Debug(Debug::INFO) << "...";
     merger.setMergedFileNames(newDbDir + "/diffIdx", newDbDir + "/info", newDbDir + "/split");
     merger.mergeTargetFiles();
     delete taxonomy;

@@ -9,7 +9,6 @@
 void setDefaults_build(LocalParameters & par){
     par.gtdb = 0;
     par.makeLibrary = 1;
-    par.skipRedundancy = 1;
     par.reducedAA = 0;
     par.ramUsage = 128;
     // par.spaceMask = "11111111";
