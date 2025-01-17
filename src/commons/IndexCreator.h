@@ -21,11 +21,12 @@
 #include "tantan.h"
 #include "LocalUtil.h"
 #include <cstdint>
+#include "TaxonomyWrapper.h"
 
-
-#ifdef OPENMP
 #include <omp.h>
-#endif
+// #ifdef OPENMP
+// #include <omp.h>
+// #endif
 
 struct Accession {
     Accession() = default;
@@ -37,6 +38,10 @@ struct Accession {
     uint32_t length;
     TaxID speciesID;
     TaxID taxID;
+
+    void print() {
+        std::cout << accession << " " << whichFasta << " " << order << " " << length << " " << speciesID << " " << taxID << std::endl;
+    }
 
     bool operator < (const Accession & a) const {
         if (speciesID != a.speciesID)
@@ -58,6 +63,8 @@ struct Accession {
 
         if (a.order != b.order)
             return a.order < b.order;
+            
+        return false;
     }
 };
 
@@ -71,9 +78,9 @@ struct AccessionBatch {
     vector<uint32_t> lengths;
 
     void print() {
-        cout << "whichFasta: " << whichFasta << " speciesID: " << speciesID << " trainingSeqFasta: " << trainingSeqFasta << " trainingSeqIdx: " << trainingSeqIdx << endl;
+        std::cout << "whichFasta: " << whichFasta << " speciesID: " << speciesID << " trainingSeqFasta: " << trainingSeqFasta << " trainingSeqIdx: " << trainingSeqIdx << endl;
         for (size_t i = 0; i < orders.size(); ++i) {
-            cout << "order: " << orders[i] << " taxID: " << taxIDs[i] << " length: " << lengths[i] << endl;
+            std::cout << "order: " << orders[i] << " taxID: " << taxIDs[i] << " length: " << lengths[i] << endl;
         }
     }
 
@@ -93,7 +100,9 @@ protected:
     BaseMatrix *subMat;
 
     // Inputs
-    NcbiTaxonomy * taxonomy;
+    TaxonomyWrapper * taxonomy;
+    bool externTaxonomy;
+    // NcbiTaxonomy * taxonomy;
     string dbDir;
     string fnaListFileName;
     string taxonomyDir;
@@ -114,17 +123,19 @@ protected:
         Split(size_t offset, size_t end) : offset(offset), end(end) {}
         size_t offset;
         size_t end;
+
+        void print() {
+            std::cout << "offset: " << offset << " end: " << end << std::endl;
+        }
     };
 
     void writeTargetFiles(TargetKmer * kmerBuffer,
                           size_t & kmerNum,
-                          const LocalParameters & par,
                           const size_t * uniqeKmerIdx,
                           const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
     void writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
                                    size_t & kmerNum,
-                                   const LocalParameters & par,
                                    const size_t * uniqeKmerIdx, 
                                    size_t & uniqKmerCnt, 
                                    const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
@@ -135,8 +146,6 @@ protected:
                       uint16_t *toWrite,
                       size_t size,
                       size_t & localBufIdx);
-
-    void writeTaxonomyDB();
 
     void writeDbParameters();
 
@@ -210,20 +219,28 @@ protected:
 
     void loadMergedTaxIds(const std::string &mergedFile, unordered_map<TaxID, TaxID> & old2new);
 
+    string addToLibrary(const std::string & dbDir,
+                        const std::string & fileList,
+                        const std::string & acc2taxIdFileName);
+
 public:
     static void printIndexSplitList(DiffIdxSplit * splitList) {
         for (int i = 0; i < 4096; i++) {
-            cout << splitList[i].infoIdxOffset << " " << 
+            std::cout << splitList[i].infoIdxOffset << " " << 
                     splitList[i].diffIdxOffset << " " << 
-                    splitList[i].ADkmer << endl;
+                    splitList[i].ADkmer << std::endl;
         }
     }
 
-    IndexCreator(const LocalParameters & par);
+    IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy);
 
     ~IndexCreator();
     
     int getNumOfFlush();
+
+    TaxonomyWrapper* getTaxonomy() const {
+        return taxonomy;
+    }
 
     void setIsUpdating(bool isUpdating) { this->isUpdating = isUpdating; }
 

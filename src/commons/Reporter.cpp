@@ -1,7 +1,7 @@
 #include "Reporter.h"
 #include "taxonomyreport.cpp"
 
-Reporter::Reporter(const LocalParameters &par, NcbiTaxonomy *taxonomy) : par(par), taxonomy(taxonomy) {
+Reporter::Reporter(const LocalParameters &par, TaxonomyWrapper *taxonomy) : par(par), taxonomy(taxonomy) {
     if (par.targetTaxId != 0) {return;}
     if (par.contamList == "") { // classify module
         if (par.seqMode == 2) {
@@ -27,7 +27,7 @@ void Reporter::writeReadClassification(const vector<Query> & queryList, bool cla
             continue;
         }
         readClassificationFile << queryList[i].isClassified << "\t" << queryList[i].name << "\t"
-                               << queryList[i].classification << "\t"
+                               << taxonomy->getOriginalTaxID(queryList[i].classification) << "\t"
                                << queryList[i].queryLength + queryList[i].queryLength2 << "\t"
                                << queryList[i].score << "\t"
                                << taxonomy->getString(taxonomy->taxonNode(queryList[i].classification)->rankIdx) << "\t";
@@ -38,7 +38,7 @@ void Reporter::writeReadClassification(const vector<Query> & queryList, bool cla
             readClassificationFile << taxonomy->taxLineage2(taxonomy->taxonNode(queryList[i].classification)) << "\t";
         }
         for (auto it = queryList[i].taxCnt.begin(); it != queryList[i].taxCnt.end(); ++it) {
-            readClassificationFile << it->first << ":" << it->second << " ";
+            readClassificationFile << taxonomy->getOriginalTaxID(it->first) << ":" << it->second << " ";
         }
         readClassificationFile << "\n";
     }
@@ -46,6 +46,35 @@ void Reporter::writeReadClassification(const vector<Query> & queryList, bool cla
 
 void Reporter::closeReadClassificationFile() {
     readClassificationFile.close();
+}
+
+void Reporter::kronaReport(FILE *FP, const TaxonomyWrapper &taxDB, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts, unsigned long totalReads, TaxID taxID, int depth) {
+    std::unordered_map<TaxID, TaxonCounts>::const_iterator it = cladeCounts.find(taxID);
+    unsigned int cladeCount = it == cladeCounts.end() ? 0 : it->second.cladeCount;
+    if (taxID == 0) {
+        if (cladeCount > 0) {
+            fprintf(FP, "<node name=\"unclassified\"><magnitude><val>%d</val></magnitude></node>", cladeCount);
+        }
+        kronaReport(FP, taxDB, cladeCounts, totalReads, 1);
+    } else {
+        if (cladeCount == 0) {
+            return;
+        }
+        const TaxonNode *taxon = taxDB.taxonNode(taxID);
+        std::string escapedName = escapeAttribute(taxDB.getString(taxon->nameIdx));
+        fprintf(FP, "<node name=\"%s\"><magnitude><val>%d</val></magnitude>", escapedName.c_str(), cladeCount);
+        std::vector<TaxID> children = it->second.children;
+        SORT_SERIAL(children.begin(), children.end(), [&](int a, int b) { return cladeCountVal(cladeCounts, a) > cladeCountVal(cladeCounts, b); });
+        for (size_t i = 0; i < children.size(); ++i) {
+            TaxID childTaxId = children[i];
+            if (cladeCounts.count(childTaxId)) {
+                kronaReport(FP, taxDB, cladeCounts, totalReads, childTaxId, depth + 1);
+            } else {
+                break;
+            }
+        }
+        fprintf(FP, "</node>");
+    }
 }
 
 void Reporter::writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt, bool krona) {
@@ -59,7 +88,7 @@ void Reporter::writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int
     if (krona) {
         FILE *kronaFile = fopen((outDir + "/" + jobId + "_krona.html").c_str(), "w");
         fwrite(krona_prelude_html, krona_prelude_html_len, sizeof(char), kronaFile);
-        fprintf(kronaFile, "<node name=\"all\"><magnitude><val>%zu</val></magnitude>", numOfQuery);
+        fprintf(kronaFile, "<node name=\"all\"><magnitude><val>%zu</val></magnitude>", (size_t) numOfQuery);
         kronaReport(kronaFile, *taxonomy, cladeCounts, numOfQuery);
         fprintf(kronaFile, "</node></krona></div></body></html>");
         fclose(kronaFile);
@@ -85,7 +114,7 @@ void Reporter::writeReport(FILE *FP, const std::unordered_map<TaxID, TaxonCounts
         const TaxonNode *taxon = taxonomy->taxonNode(taxID);
         fprintf(FP, "%.4f\t%i\t%i\t%s\t%i\t%s%s\n",
                 100 * cladeCount / double(totalReads), cladeCount, taxCount,
-                taxonomy->getString(taxon->rankIdx), taxID, std::string(2 * depth, ' ').c_str(), taxonomy->getString(taxon->nameIdx));
+                taxonomy->getString(taxon->rankIdx), taxonomy->getOriginalTaxID(taxID), std::string(2 * depth, ' ').c_str(), taxonomy->getString(taxon->nameIdx));
         std::vector<TaxID> children = it->second.children;
         SORT_SERIAL(children.begin(), children.end(), [&](int a, int b) { return cladeCountVal(cladeCounts, a) > cladeCountVal(cladeCounts, b); });
         for (size_t i = 0; i < children.size(); ++i) {
@@ -116,21 +145,31 @@ void Reporter::getReadsClassifiedToClade(TaxID cladeId,
         perror("Failed to open read-by-read classification file");
         return;
     }
-
     char line[4096];
     size_t idx = 0;
-    // int classification;
-
-    while (fgets(line, sizeof(line), results)) {
-        int taxId;
-        if (sscanf(line, "%*s %*s %d", &taxId) == 1) {
-            if (taxonomy->IsAncestor(cladeId, taxId)) {
-                readIdxs.push_back(idx);
+    if (taxonomy->hasInternalTaxID()) {
+        unordered_map<TaxID, TaxID> extern2intern;
+        taxonomy->getExternal2internalTaxID(extern2intern);
+        while (fgets(line, sizeof(line), results)) {
+            int taxId;
+            if (sscanf(line, "%*s %*s %d", &taxId) == 1) {            
+                if (taxonomy->IsAncestor(cladeId, extern2intern[taxId])) {
+                    readIdxs.push_back(idx);
+                }
             }
+            idx++;
         }
-        idx++;
+    } else {
+        while (fgets(line, sizeof(line), results)) {
+            int taxId;
+            if (sscanf(line, "%*s %*s %d", &taxId) == 1) {            
+                if (taxonomy->IsAncestor(cladeId, taxId)) {
+                    readIdxs.push_back(idx);
+                }
+            }
+            idx++;
+        }
     }
-
     fclose(results);
 }
 

@@ -5,7 +5,8 @@
 #include "FileUtil.h"
 
 void setDefaults_updateDB(LocalParameters & par){
-    par.skipRedundancy = 1;
+    par.makeLibrary = 1;
+    // par.skipRedundancy = 1;
     par.reducedAA = 0;
     par.ramUsage = 128;
     par.taxonomyPath = "" ;
@@ -29,28 +30,46 @@ int updateDB(int argc, const char **argv, const Command &command){
     LocalParameters &par = LocalParameters::getLocalInstance();
     setDefaults_updateDB(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
-
-    // If dbDirectory does not exist, create it
-    if (!FileUtil::directoryExists(par.filenames[0].c_str())) {
-        FileUtil::makeDir(par.filenames[0].c_str());
-    }
-
-    // Check if the taxonomy path exists
-    if (par.taxonomyPath.empty()) {
-        cerr << "Taxonomy path is not set." << endl;
-        return 1;
-    }
-    if (!FileUtil::directoryExists(par.taxonomyPath.c_str())) {
-        cerr << "Taxonomy path does not exist: " << par.taxonomyPath << endl;
-        return 1;
-    }
     string newDbDir = par.filenames[0];
     string oldDbDir = par.filenames[3];
 
+    // If dbDirectory does not exist, create it
+    if (!FileUtil::directoryExists(newDbDir.c_str())) {
+        FileUtil::makeDir(newDbDir.c_str());
+    }
+    
+    // Load older taxonomy DB
+    Debug(Debug::INFO) << "Loading taxonomy DB from " << oldDbDir << " ... ";
+    TaxonomyWrapper * taxonomy = loadTaxonomy(oldDbDir);
+    Debug(Debug::INFO) << "done.\n";
+    FileUtil::copyFile(oldDbDir + "/acc2taxid.map", newDbDir + "/acc2taxid.map");
+
+    // Make a new taxonomy DB if new taxa are added
+    if (!par.newTaxa.empty()) {
+        Debug(Debug::INFO) << "Adding new taxa to the taxonomy DB ... ";
+        taxonomy->checkNewTaxa(par.newTaxa);
+        std::vector<NewTaxon> newTaxaList;
+        TaxonomyWrapper::getListOfTaxa(par.newTaxa, newTaxaList);
+        TaxonomyWrapper * newTaxonomy = taxonomy->addNewTaxa(newTaxaList);
+        delete taxonomy;
+        taxonomy = newTaxonomy;
+        Debug(Debug::INFO) << "done.\n";
+    }
+
     // Create index
-    IndexCreator idxCre(par);
+    IndexCreator idxCre(par, taxonomy);
     idxCre.setIsUpdating(true);
     idxCre.createIndex(par);
+    if (par.accessionLevel == 1) {
+        taxonomy = idxCre.getTaxonomy();
+    }
+
+    if (taxonomy->IsExternalData()) {
+        FileUtil::copyFile(oldDbDir + "/taxonomyDB", newDbDir + "/taxonomyDB");
+    } else {
+        taxonomy->writeTaxonomyDB(newDbDir + "/taxonomyDB");
+    }
+    
     unordered_set<TaxID> taxIdSet = idxCre.getTaxIdSet();
     FILE * oldTaxIdListFile;
     if((oldTaxIdListFile = fopen((oldDbDir + "/taxID_list").c_str(),"r")) == NULL){
@@ -71,10 +90,9 @@ int updateDB(int argc, const char **argv, const Command &command){
     }
 
     // Merge index files
-    cout << "Merge new and old DB files ... " << endl;
+    Debug(Debug::INFO) << "Merge new and old DB files ";
     int numOfSplits = idxCre.getNumOfFlush();
-    FileMerger merger(par);
-   
+    FileMerger merger(par, taxonomy);
     for (int i = 0; i < numOfSplits; i++) {
         merger.addFilesToMerge(newDbDir + "/" + to_string(i) + "_diffIdx",
                                newDbDir + "/" + to_string(i) + "_info");
@@ -84,6 +102,7 @@ int updateDB(int argc, const char **argv, const Command &command){
     merger.updateTaxId2SpeciesTaxId(newDbDir + "/taxID_list");
     merger.setMergedFileNames(newDbDir + "/diffIdx", newDbDir + "/info", newDbDir + "/split");
     merger.mergeTargetFiles();
+    delete taxonomy;
     cerr << "Index creation completed." << endl;
     return 0;
 }

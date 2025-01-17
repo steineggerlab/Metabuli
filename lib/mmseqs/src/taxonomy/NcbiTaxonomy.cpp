@@ -364,14 +364,6 @@ char NcbiTaxonomy::findShortRank(const std::string& rank) {
     return '-';
 }
 
-std::string NcbiTaxonomy::findShortRank2(const std::string& rank) {
-    std::map<std::string, std::string>::const_iterator it;
-    if ((it = ExtendedShortRanks.find(rank)) != ExtendedShortRanks.end()) {
-        return it->second;
-    }
-    return "-";
-}
-
 std::string NcbiTaxonomy::taxLineage(TaxonNode const *node, bool infoAsName) {
     std::vector<TaxonNode const *> taxLineageVec;
     std::string taxLineage;
@@ -384,31 +376,6 @@ std::string NcbiTaxonomy::taxLineage(TaxonNode const *node, bool infoAsName) {
     for (int i = taxLineageVec.size() - 1; i >= 0; --i) {
         if (infoAsName) {
             taxLineage += findShortRank(getString(taxLineageVec[i]->rankIdx));
-            taxLineage += '_';
-            taxLineage += getString(taxLineageVec[i]->nameIdx);
-        } else {
-            taxLineage += SSTR(taxLineageVec[i]->taxId);
-        }
-
-        if (i > 0) {
-            taxLineage += ";";
-        }
-    }
-    return taxLineage;
-}
-
-std::string NcbiTaxonomy::taxLineage2(TaxonNode const *node, bool infoAsName) {
-    std::vector<TaxonNode const *> taxLineageVec;
-    std::string taxLineage;
-    taxLineage.reserve(4096);
-    do {
-        taxLineageVec.push_back(node);
-        node = taxonNode(node->parentTaxId);
-    } while (node->parentTaxId != node->taxId);
-
-    for (int i = taxLineageVec.size() - 1; i >= 0; --i) {
-        if (infoAsName) {
-            taxLineage += findShortRank2(getString(taxLineageVec[i]->rankIdx));
             taxLineage += '_';
             taxLineage += getString(taxLineageVec[i]->nameIdx);
         } else {
@@ -809,62 +776,4 @@ NcbiTaxonomy* NcbiTaxonomy::unserialize(char* mem) {
     p += matrixSize;
     StringBlock<unsigned int>* block = StringBlock<unsigned int>::unserialize(p);
     return new NcbiTaxonomy(taxonNodes, maxNodes, maxTaxID, D, E, L, H, M, block);
-}
-
-// Added by jaebeom
-bool NcbiTaxonomy::IsAncestor2(TaxID ancestor, TaxID child) {
-    if (ancestor == child) {
-        return false;
-    }
-
-    if (ancestor == 0 || child == 0) {
-        return false;
-    }
-
-    if (!nodeExists(child)) {
-        Debug(Debug::WARNING) << "No node for taxID " << child << ".\n";
-        return false;
-    }
-
-    if (!nodeExists(ancestor)) {
-        Debug(Debug::WARNING) << "No node for taxID " << ancestor << ".\n";
-        return false;
-    }
-
-    return lcaHelper(nodeId(child), nodeId(ancestor)) == nodeId(ancestor);
-}
-
-TaxID NcbiTaxonomy::getTaxIdAtRank(int taxId, const std::string & rank) {
-    if(taxId == 0 || !nodeExists(taxId) || taxId == 1) return 0;
-    int rankIndex = findRankIndex(rank);
-    const TaxonNode * curNode = taxonNode(taxId, true);
-//    std::cout << taxId << "\t" << curNode->rankIdx << std::endl;
-    int cnt = 0;
-    while ((NcbiTaxonomy::findRankIndex(getString(curNode->rankIdx)) < rankIndex ||
-            findRankIndex(getString(curNode->rankIdx)) == 29) && cnt < 30)  {
-        curNode = taxonNode(curNode->parentTaxId, true);
-        cnt ++;
-    }
-//    while ((curNode->rankIdx < (size_t)rankIndex || curNode->rankIdx == 29) && cnt < 30)  {
-//        curNode = taxonNode(curNode->parentTaxId, true);
-//        cnt ++;
-//    }
-    if (cnt == 30) {
-        return taxId;
-    }
-    return curNode->taxId;
-}
-
-void NcbiTaxonomy::createTaxIdListAtRank(std::vector<int> &taxIdList, std::vector<int> &taxIdListAtRank,
-                                         const std::string &rank) {
-    size_t sizeOfList = taxIdList.size();
-    taxIdListAtRank.resize(sizeOfList);
-//    std::cout << "size of list: " << sizeOfList << std::endl;
-#pragma omp parallel default(none), shared(taxIdList, rank, sizeOfList, taxIdListAtRank, std::cout)
-    {
-#pragma omp for schedule(dynamic, 1)
-        for (size_t i = 0; i < sizeOfList; i++) {
-            taxIdListAtRank[i] = getTaxIdAtRank(taxIdList[i], rank);
-        }
-    }
 }

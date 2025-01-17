@@ -17,7 +17,6 @@ void setFilterDefaults(LocalParameters & par) {
     par.taxonomyPath = "" ;
     par.minConsCnt = 4;
     par.minConsCntEuk = 9;
-    par.eukaryotaTaxId = 2759;
     par.maskMode = 0;
     par.maskProb = 0.9;
     par.matchPerKmer = 4;

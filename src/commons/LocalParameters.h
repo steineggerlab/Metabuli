@@ -38,12 +38,14 @@ public:
     std::vector<MMseqsParameter*> printInfo;
     std::vector<MMseqsParameter*> query2reference;
     std::vector<MMseqsParameter*> expand_diffidx;
+    std::vector<MMseqsParameter*> taxdump;
+    std::vector<MMseqsParameter*> accession2taxid;
+    std::vector<MMseqsParameter*> editNames;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
     PARAMETER(BACTERIA_TAX_ID)
     PARAMETER(ARCHAEA_TAX_ID)
-    PARAMETER(EUKARYOTA_TAX_ID)
 
     // DB and classify
     PARAMETER(SKIP_REDUNDANCY)
@@ -81,6 +83,11 @@ public:
     PARAMETER(DB_NAME)
     PARAMETER(DB_DATE)
     PARAMETER(CDS_INFO)
+    PARAMETER(MAKE_LIBRARY)
+    PARAMETER(GTDB)
+
+    // DB updated parameters
+    PARAMETER(NEW_TAXA)
 
     // Test parameters
     PARAMETER(TEST_RANK)
@@ -109,7 +116,6 @@ public:
     int virusTaxId;
     int bacteriaTaxId;
     int archaeaTaxId;
-    int eukaryotaTaxId;
 
     // DB and classify
     int skipRedundancy;
@@ -147,6 +153,12 @@ public:
     size_t bufferSize;
     int accessionLevel;
     std::string cdsInfo;
+    int makeLibrary;
+    std::string assAcc2taxid;
+    int gtdb;
+
+    // DB updated parameters
+    std::string newTaxa;
 
     // Test parameters
     std::string testRank;

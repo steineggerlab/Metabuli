@@ -1,7 +1,7 @@
 #include "FileMerger.h"
 #include "common.h"
 
-FileMerger::FileMerger(const LocalParameters & par) : par(par) {
+FileMerger::FileMerger(const LocalParameters & par, const TaxonomyWrapper * taxonomy) : par(par), taxonomy(taxonomy) {
     // Load parameters
     removeRedundancyInfo = false;
     dbDir = par.filenames[0];
@@ -13,11 +13,9 @@ FileMerger::FileMerger(const LocalParameters & par) : par(par) {
         MARKER = 16777215;
         MARKER = ~ MARKER;
     }
-    taxonomy = loadTaxonomy(dbDir, "");
 }
 
 FileMerger::~FileMerger() {
-    delete taxonomy;
 }
 
 void FileMerger::addFilesToMerge(string diffIdxFileName, string infoFileName) {
@@ -61,6 +59,12 @@ void FileMerger::updateTaxId2SpeciesTaxId(const string & taxIdListFileName) {
             taxId2speciesId[taxId] = speciesTaxID;
         }
     }
+    // Print taxId2speciesId
+    // cout << "TaxID to speciesID" << endl;
+    // for (auto & taxid: taxId2speciesId) {
+    //     cout << "IN " << taxid.first << " " << taxid.second << endl;
+    //     cout << "OR " << taxonomy->getOriginalTaxID(taxid.first) << " " << taxonomy->getOriginalTaxID(taxid.second) << endl;
+    // }
     fclose(taxIdFile);
 }
 
@@ -114,7 +118,7 @@ void FileMerger::mergeTargetFiles() {
     size_t * maxIdxOfEachFiles = new size_t[numOfSplits];
     struct MmapedData<uint16_t> *diffFileList = new struct MmapedData<uint16_t>[numOfSplits];
     struct MmapedData<TaxID> *infoFileList = new struct MmapedData<TaxID>[numOfSplits];
-    for (int file = 0; file < numOfSplits; file++) {
+    for (size_t file = 0; file < numOfSplits; file++) {
         diffFileList[file] = mmapData<uint16_t>(diffIdxFileNames[file].c_str());
         infoFileList[file] = mmapData<TaxID>(infoFileNames[file].c_str());
         maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
@@ -126,7 +130,7 @@ void FileMerger::mergeTargetFiles() {
     size_t sizeOfSplit = numOfKmerBeforeMerge / (splitNum - 1);
     size_t offsetList[splitNum + 1];
     int offsetListIdx = 1;
-    for(size_t os = 0; os < splitNum; os++){
+    for(int os = 0; os < splitNum; os++){
         offsetList[os] = os * sizeOfSplit;
         // cout << os * sizeOfSplit << endl;
     }
@@ -137,7 +141,8 @@ void FileMerger::mergeTargetFiles() {
 
     // get the first k-mer to write
     size_t lastFileIdx = numOfSplits - 1;
-    unsigned int mask = ~((static_cast<unsigned int>(par.skipRedundancy == 0) << 31));
+    cout << "numOfSplits: " << numOfSplits << endl;
+    unsigned int mask = ~((static_cast<unsigned int>(removeRedundancyInfo) << 31));
     for(size_t file = 0; file < numOfSplits; file++){
         lookingKmers[file] = getNextKmer(0, diffFileList[file], diffFileIdx[file]);
         if (removeRedundancyInfo && file == lastFileIdx) {
@@ -305,14 +310,19 @@ size_t FileMerger::smallest(const uint64_t * lookingKmers,
     if (min == UINT64_MAX) {
         minTaxIdAtRank = INT_MAX;
     } else {
-        // if (taxId2speciesId.find((int) lookingInfos[0].sequenceID) == taxId2speciesId.end()) {
+        // if (taxId2speciesId.find((int) lookingInfos[0]) == taxId2speciesId.end()) {
         //     cerr << lookingKmers[0] << endl;
-        //     cerr << "TaxID not found 1: " << lookingInfos[0].sequenceID << endl;
+        //     cerr << "TaxID not found 1: " << lookingInfos[0] << endl;
         //     exit(1);
         // }
         minTaxIdAtRank = taxId2speciesId.at(lookingInfos[0]);
     }
     for(size_t i = 1; i < fileCnt; i++) {
+        // if (taxId2speciesId.find((int) lookingInfos[i]) == taxId2speciesId.end()) {
+        //     cerr << lookingKmers[i] << endl;
+        //     cerr << "TaxID not found 2: " << lookingInfos[i] << endl;
+        //     exit(1);
+        // }
         if(lookingKmers[i] < min ||
           (lookingKmers[i] == min && taxId2speciesId.at(lookingInfos[i]) < minTaxIdAtRank)){
             min = lookingKmers[i];

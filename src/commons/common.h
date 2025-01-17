@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <utility>
 #include "LocalParameters.h"
-#include "NcbiTaxonomy.h"
+#include "TaxonomyWrapper.h"
 #include <iostream>
 #include <unordered_set>
 #include "FileUtil.h"
@@ -119,7 +119,7 @@ inline bool fileExist(const std::string& name) {
 
 void process_mem_usage(double& vm_usage, double& resident_set);
 
-NcbiTaxonomy * loadTaxonomy(const std::string & dbDir, const std::string & taxonomyDir = "");
+TaxonomyWrapper * loadTaxonomy(const std::string & dbDir, const std::string & taxonomyDir = "");
 
 int loadDbParameters(LocalParameters & par, const std::string & dbDir);
 
@@ -142,8 +142,8 @@ void getObservedAccessionList(const std::string & fnaListFileName,
                               std::vector<std::string> & fastaList,
                               std::unordered_map<std::string, TaxID> & acc2taxid);
 
-void getTaxonomyOfAccessions(std::unordered_map<std::string, TaxID> & acc2taxid,
-                             const std::string & acc2taxidFileName);
+void fillAcc2TaxIdMap(std::unordered_map<std::string, TaxID> & acc2taxid,
+                      const std::string & acc2taxidFileName);
                                 
 bool haveRedundancyInfo(const std::string & dbDir);
 

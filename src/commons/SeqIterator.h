@@ -105,8 +105,7 @@ public:
                                     size_t &posToWrite,
                                     int seqID,
                                     int taxIdAtRank,
-                                    const vector<int> & aaSeq,
-                                    int frame = 0);
+                                    const vector<int> & aaSeq);
 
     void addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const int &kmerCnt, int frame = 0);
 

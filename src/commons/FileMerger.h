@@ -5,7 +5,7 @@
 #include "Kmer.h"
 #include <iostream>
 #include "IndexCreator.h"
-#include "NcbiTaxonomy.h"
+#include "TaxonomyWrapper.h"
 #include "printBinary.h"
 #include "common.h"
 #include <cstdint>
@@ -16,7 +16,7 @@ using namespace std;
 class FileMerger {
 private:
     const LocalParameters & par;
-    NcbiTaxonomy * taxonomy;
+    const TaxonomyWrapper * taxonomy;
     string dbDir;
     uint64_t MARKER;
     int splitNum;
@@ -39,7 +39,7 @@ private:
     }
 
 public:
-    FileMerger(const LocalParameters & par);
+    FileMerger(const LocalParameters & par, const TaxonomyWrapper * taxonomy);
     // Setters
     void addFilesToMerge(string diffIdxFileName, string infoFileName);
     void updateTaxId2SpeciesTaxId(const string & taxIdListFileName);

@@ -39,14 +39,14 @@ struct Score2{
 
 
 
-char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
-                             const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
+char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTaxonomy, CountAtRank & count,
+                             const string & rank);
 
-char compareTaxonAtRank_CAMI_euk(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
-                                 const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
+char compareTaxonAtRank_CAMI_euk(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTaxonomy, CountAtRank & count,
+                                 const string & rank);
 
-char compareTaxon_overclassification(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
-                                     const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
+char compareTaxon_overclassification(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTaxonomy, CountAtRank & count,
+                                     const string & rank);
 
 char compareTaxon_hivExclusion(TaxID shot, TaxID target, CountAtRank & count);
 
@@ -92,7 +92,7 @@ int grade(int argc, const char **argv, const Command &command) {
     string names = taxonomy + "/names.dmp";
     string nodes = taxonomy + "/nodes.dmp";
     string merged = taxonomy + "/merged.dmp";
-    NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
+    TaxonomyWrapper ncbiTaxonomy(names, nodes, merged, false);
     cout << "Taxonomy loaded" << endl;
 
     // Load mapping file names
@@ -282,15 +282,15 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
                 for (const string &rank: ranks) {
                     if (par.testType == "over") {
                         p = compareTaxon_overclassification(classList[j], rightAnswers[j], ncbiTaxonomy,
-                                                            results[i].countsAtRanks[rank], rank, par);
+                                                            results[i].countsAtRanks[rank], rank);
                     } else if(par.testType == "hiv-ex"){
                         p = compareTaxon_hivExclusion(classList[j], 11676, results[i].countsAtRanks[rank]);
                     } else if (par.testType == "cami-euk"){
                         p = compareTaxonAtRank_CAMI_euk(classList[j], rightAnswers[j], ncbiTaxonomy,
-                                                        results[i].countsAtRanks[rank], rank, par);
+                                                        results[i].countsAtRanks[rank], rank);
                     } else {
                         p = compareTaxonAtRank_CAMI(classList[j], rightAnswers[j], ncbiTaxonomy,
-                                                         results[i].countsAtRanks[rank], rank, par);
+                                                         results[i].countsAtRanks[rank], rank);
                     }
                     if (!printColumnsIdx.empty()) {
                         if (p == 'O') rank2TpIdx[rank].push_back(j);
@@ -377,8 +377,8 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
     return 0;
 }
 
-char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
-                             const string & rank, const LocalParameters & par, size_t idx, const string& readId) {
+char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTaxonomy, CountAtRank & count,
+                             const string & rank) {
     // Do not count if the rank of target is higher than current rank
     TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
@@ -413,8 +413,8 @@ char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxono
     }
 }
 
-char compareTaxonAtRank_CAMI_euk(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
-                             const string & rank, const LocalParameters & par, size_t idx, const string& readId) {
+char compareTaxonAtRank_CAMI_euk(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTaxonomy, CountAtRank & count,
+                             const string & rank) {
     // Do not count if the rank of target is higher than current rank
     TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
@@ -454,8 +454,8 @@ char compareTaxonAtRank_CAMI_euk(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTa
     }
 }
 
-char compareTaxon_overclassification(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountAtRank & count,
-                                     const string & rank, const LocalParameters & par, size_t idx, const string& readId){
+char compareTaxon_overclassification(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTaxonomy, CountAtRank & count,
+                                     const string & rank){
     // Do not count if the rank of target is higher than current rank
 //    TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(target);

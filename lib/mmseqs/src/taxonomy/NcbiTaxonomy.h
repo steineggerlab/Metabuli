@@ -95,27 +95,11 @@ static const std::map<std::string, char> NcbiShortRanks = {{ "species", 's' },
                                                            { "kingdom", 'k' },
                                                            { "superkingdom", 'd' }};
 
-static const std::map<std::string, std::string> ExtendedShortRanks = 
-                                                {{"subspecies", "ss" },
-                                                 { "species", "s" },
-                                                 { "subgenus", "sg" },
-                                                 { "genus", "g" },
-                                                 { "subfamily", "sf" },
-                                                 { "family", "f" },
-                                                 { "suborder", "so" },
-                                                 { "order", "o" },
-                                                 { "subclass", "sc" },
-                                                 { "class", "c" },
-                                                 { "subphylum", "sp" },
-                                                 { "phylum", "p" },
-                                                 { "subkingdom", "sk" },
-                                                 { "kingdom", "k" },
-                                                 { "superkingdom", "d" },
-                                                 { "realm", "r" }};
 class NcbiTaxonomy {
 public:
     static NcbiTaxonomy* openTaxonomy(const std::string &database);
     NcbiTaxonomy(const std::string &namesFile,  const std::string &nodesFile, const std::string &mergedFile);
+    NcbiTaxonomy() {};
     ~NcbiTaxonomy();
 
     TaxonNode const * LCA(const std::vector<TaxID>& taxa) const;
@@ -145,19 +129,7 @@ public:
     TaxonNode* taxonNodes;
     size_t maxNodes;
 
-    // Added by jaebeom
-    static std::string findShortRank2(const std::string& rank);
-    std::string taxLineage2(TaxonNode const *node, bool infoAsName = true);
-    bool IsAncestor2(TaxID ancestor, TaxID child);
-    TaxID getTaxIdAtRank(int taxId, const std::string & rank);
-    void createTaxIdListAtRank(std::vector<int> & taxIdList, std::vector<int> & taxIdListAtRank,
-                               const std::string & rank);
-    void setMmapData(char* data, size_t size) {
-        mmapData = data;
-        mmapSize = size;
-    }
-
-private:
+protected:
     size_t loadNodes(std::vector<TaxonNode> &tmpNodes, const std::string &nodesFile);
     size_t loadMerged(const std::string &mergedFile);
     void loadNames(std::vector<TaxonNode> &tmpNodes, const std::string &namesFile);

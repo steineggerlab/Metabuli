@@ -7,7 +7,7 @@
 #include <vector>
 
 KmerMatcher::KmerMatcher(const LocalParameters & par,
-                         NcbiTaxonomy * taxonomy) : par(par) {                        
+                         TaxonomyWrapper * taxonomy) : par(par) {                        
     // Parameters
     threads = par.threads;
     dbDir = par.filenames[1 + (par.seqMode == 2)];
@@ -256,7 +256,6 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
         
         currentQuery = UINT64_MAX;
         currentQueryAA = UINT64_MAX;
-        size_t lastMovedQueryIdx = 0;
         for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
             // Reuse the comparison data if queries are exactly identical
             if (currentQuery == queryKmerList[j].ADkmer
@@ -272,7 +271,6 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                         break;
                     } 
                     moveMatches(matchBuffer->buffer + posToWrite, matches, matchCnt);
-                    lastMovedQueryIdx = j;
                 }
                 for (size_t k = 0; k < selectedMatchCnt; k++) {
                     idx = selectedMatches[k];
@@ -303,7 +301,6 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                         break;
                     } 
                     moveMatches(matchBuffer->buffer + posToWrite, matches, matchCnt);
-                    lastMovedQueryIdx = j;
                 }
                 for (size_t k = 0; k < selectedMatchCnt; k++) {
                     idx = selectedMatches[k];
@@ -386,7 +383,6 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                     break;
                 } 
                 moveMatches(matchBuffer->buffer + posToWrite, matches, matchCnt);
-                lastMovedQueryIdx = j;
             }
 
             for (size_t k = 0; k < selectedMatchCnt; k++) {
@@ -762,8 +758,6 @@ offsets, aaOffsetCnt, totalSkip)
             
                 currentQuery = UINT64_MAX;
                 currentQueryAA = UINT64_MAX;
-
-                size_t lastMovedQueryIdx = 0;
                 for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
                     // Reuse the comparison data if queries are exactly identical
                     if (currentQuery == queryKmerList[j].ADkmer
@@ -778,7 +772,6 @@ offsets, aaOffsetCnt, totalSkip)
                                 break;
                             } 
                             moveMatches(matchBuffer->buffer + posToWrite, matches, matchCnt);
-                            lastMovedQueryIdx = j;
                         }
                         for (size_t k = 0; k < selectedMatchCnt; k++) {
                             idx = selectedMatches[k];
@@ -809,7 +802,6 @@ offsets, aaOffsetCnt, totalSkip)
                                 break;
                             } 
                             moveMatches(matchBuffer->buffer + posToWrite, matches, matchCnt);
-                            lastMovedQueryIdx = j;
                         }
                         for (size_t k = 0; k < selectedMatchCnt; k++) {
                             idx = selectedMatches[k];
@@ -935,7 +927,6 @@ offsets, aaOffsetCnt, totalSkip)
                             break;
                         } 
                         moveMatches(matchBuffer->buffer + posToWrite, matches, matchCnt);
-                        lastMovedQueryIdx = j;
                     }
 
                     for (size_t k = 0; k < selectedMatchCnt; k++) {

@@ -45,7 +45,7 @@ int query2reference(int argc, const char **argv, const Command &command) {
     loadAccession2taxid(accession2taxid, accession2taxidMap);
 
     // Load taxonomy
-    NcbiTaxonomy ncbiTaxonomy(taxonomyPath + "/names.dmp", taxonomyPath + "/nodes.dmp", taxonomyPath + "/merged.dmp");
+    TaxonomyWrapper ncbiTaxonomy(taxonomyPath + "/names.dmp", taxonomyPath + "/nodes.dmp", taxonomyPath + "/merged.dmp", false);
 
     // Load query accession list
     ifstream queryAccessionListFile;

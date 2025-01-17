@@ -38,9 +38,10 @@ int applyThreshold(int argc, const char **argv, const Command &command) {
     string taxonomy = par.filenames[3];
 
     // Load taxonomy
-    NcbiTaxonomy ncbiTaxonomy(taxonomy + "/names.dmp",
+    TaxonomyWrapper ncbiTaxonomy(taxonomy + "/names.dmp",
                               taxonomy + "/nodes.dmp",
-                              taxonomy + "/merged.dmp");
+                              taxonomy + "/merged.dmp",
+                              false);
 
     vector<Query> newResults;
     unordered_map<TaxID, unsigned int> taxonCounts;

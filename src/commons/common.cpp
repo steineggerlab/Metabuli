@@ -1,6 +1,6 @@
 #include "common.h"
 #include "FileUtil.h"
-#include "NcbiTaxonomy.h"
+#include "TaxonomyWrapper.h"
 #include <fstream>
 #include <iostream>
 #include <unistd.h>
@@ -34,8 +34,8 @@ void process_mem_usage(double &vm_usage, double &resident_set) {
 }
 
 // Mostly copied from lib/mmseqs/src/taxonomy/NcbiTaxonomy.cpp
-NcbiTaxonomy *loadTaxonomy(const std::string &dbDir,
-                           const std::string &taxonomyDir) {
+TaxonomyWrapper *loadTaxonomy(const std::string &dbDir,
+                              const std::string &taxonomyDir) {
   std::string binFile = dbDir + "/taxonomyDB";
   if (fileExist(binFile)) {
     FILE *handle = fopen(binFile.c_str(), "r");
@@ -52,7 +52,7 @@ NcbiTaxonomy *loadTaxonomy(const std::string &dbDir,
       EXIT(EXIT_FAILURE);
     }
     fclose(handle);
-    NcbiTaxonomy *t = NcbiTaxonomy::unserialize(data);
+    TaxonomyWrapper *t = TaxonomyWrapper::unserialize(data);
     if (t != NULL) {
       t->setMmapData(data, sb.st_size);
       return t;
@@ -61,13 +61,15 @@ NcbiTaxonomy *loadTaxonomy(const std::string &dbDir,
                                "with createtaxdb.\n";
     }
   } else if (taxonomyDir != "") {
-    return new NcbiTaxonomy(taxonomyDir + "/names.dmp",
-                            taxonomyDir + "/nodes.dmp",
-                            taxonomyDir + "/merged.dmp");
+    return new TaxonomyWrapper(taxonomyDir + "/names.dmp",
+                               taxonomyDir + "/nodes.dmp",
+                               taxonomyDir + "/merged.dmp",
+                               false);
   }
-  return new NcbiTaxonomy(dbDir + "/taxonomy/names.dmp",
-                          dbDir + "/taxonomy/nodes.dmp",
-                          dbDir + "/taxonomy/merged.dmp");
+  return new TaxonomyWrapper(dbDir + "/taxonomy/names.dmp",
+                             dbDir + "/taxonomy/nodes.dmp",
+                             dbDir + "/taxonomy/merged.dmp",
+                             false);
 }
 
 int loadDbParameters(LocalParameters &par, const std::string & dbDir) {
@@ -189,8 +191,7 @@ void getObservedAccessionList(const string & fnaListFileName,
 
   // Iterate through the fasta files to get observed accessions
   size_t accCnt = 0;
-  size_t copyCount = 0;
-  #pragma omp parallel default(none), shared(fastaList, cout, accCnt, copyCount, acc2taxid)
+  #pragma omp parallel default(none), shared(fastaList, cout, accCnt, acc2taxid)
   {
     unordered_map<string, TaxID> localAcc2taxid;
     localAcc2taxid.reserve(4096 * 4);
@@ -229,8 +230,8 @@ void getObservedAccessionList(const string & fnaListFileName,
   }
 }
 
-void getTaxonomyOfAccessions(unordered_map<string, TaxID> & acc2taxid,
-                             const string & acc2taxidFileName) {
+void fillAcc2TaxIdMap(unordered_map<string, TaxID> & acc2taxid,
+                      const string & acc2taxidFileName) {
   cerr << "Load mapping from accession ID to taxonomy ID ... " << flush;
 
   // Open the file
@@ -269,34 +270,34 @@ void getTaxonomyOfAccessions(unordered_map<string, TaxID> & acc2taxid,
   }
   ++current;  // Move past the newline
 
-    char accession[16384];
-    int taxID;
+  char accession[16384];
+  int taxID;
 
-    while (current < end) {
-        // Read a line
-        char* lineStart = current;
-        while (current < end && *current != '\n') {
-            ++current;
+  while (current < end) {
+      // Read a line
+      char* lineStart = current;
+      while (current < end && *current != '\n') {
+          ++current;
+      }
+      std::string line(lineStart, current - lineStart);
+      // Parse the line
+      if (sscanf(line.c_str(), "%s\t%*s\t%d\t%*d", accession, &taxID) == 2) {
+        // Get the accession ID without version
+        char* pos = strchr(accession, '.');
+        if (pos != nullptr) {
+          *pos = '\0';
         }
-        std::string line(lineStart, current - lineStart);
-
-        // Parse the line
-        if (sscanf(line.c_str(), "%s\t%*s\t%d\t%*d", accession, &taxID) == 2) {
-          // Get the accession ID without version
-          char* pos = strchr(accession, '.');
-          if (pos != nullptr) {
-            *pos = '\0';
-          }
-          auto it = acc2taxid.find(accession);
-          if (it != acc2taxid.end()) {
-            acc2taxid[accession] = taxID;
-          }
+        auto it = acc2taxid.find(accession);
+        if (it != acc2taxid.end()) {
+          acc2taxid[accession] = taxID;
         }
-        ++current;  // Move to the next line
-    }
+      }
+      ++current;  // Move to the next line
+  }
 
-    // Unmap the file
-    if (munmap(fileData, fileSize) == -1) {
-        cerr << "munmap failed" << endl;
-    }                                        
+  // Unmap the file
+  if (munmap(fileData, fileSize) == -1) {
+      cerr << "munmap failed" << endl;
+  }                                        
+  cerr << "Done" << endl;
 }

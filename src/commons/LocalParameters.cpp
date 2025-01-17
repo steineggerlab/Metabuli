@@ -32,17 +32,10 @@ LocalParameters::LocalParameters() :
                        typeid(int),
                        (void *) &archaeaTaxId,
                        "^[0-9]+$"),
-        EUKARYOTA_TAX_ID(EUKARYOTA_TAX_ID_ID,
-                         "--eukaryota-taxid",
-                         "Taxonomy ID of eukaryota taxon",
-                         "NCBI: 2759 [Default]\nCUSTOM: Check names.dmp file ",
-                         typeid(int),
-                         (void *) &eukaryotaTaxId,
-                         "^[0-9]+$"),
         SKIP_REDUNDANCY(SKIP_REDUNDANCY_ID,
                         "--skip-redundancy",
-                        "Not storing k-mer's redundancy. Keep it as 1.",
-                        "Not storing k-mer's redundancy. Keep it as 1.",
+                        "Not storing k-mer's redundancy.",
+                        "Not storing k-mer's redundancy.",
                         typeid(int),
                         (void *) &skipRedundancy,
                         "[0-1]"),
@@ -249,7 +242,28 @@ LocalParameters::LocalParameters() :
                  "List of CDS files",
                  typeid(std::string),
                  (void *) &cdsInfo,
-                 "^.*$"),        
+                 "^.*$"),
+        MAKE_LIBRARY(MAKE_LIBRARY_ID,
+                     "--make-library",
+                     "Make library",
+                     "Make library",
+                     typeid(int),
+                     (void *) &makeLibrary,
+                     "[0-1]"),
+        GTDB(GTDB_ID,
+                "--gtdb",
+                "GTDB-based database creation",
+                "GTDB-based database creation",
+                typeid(int),
+                (void *) &gtdb,
+                "[0-1]"),
+        NEW_TAXA(NEW_TAXA_ID,
+                "--new-taxa",
+                "TSV file of new taxa to be added",
+                "TSV file of new taxa to be added",
+                typeid(std::string),
+                (void *) &newTaxa,
+                "^.*$"),
         TEST_RANK(TEST_RANK_ID,
                   "--test-rank",
                   ".",
@@ -361,7 +375,6 @@ LocalParameters::LocalParameters() :
     virusTaxId = 10239;
     bacteriaTaxId = 2;
     archaeaTaxId = 2157;
-    eukaryotaTaxId = 2759;
 
 
     // Classify
@@ -412,7 +425,6 @@ LocalParameters::LocalParameters() :
 
     // build
     build.push_back(&PARAM_THREADS);
-    build.push_back(&REDUCED_AA);
     build.push_back(&TAXONOMY_PATH);
     build.push_back(&SPLIT_NUM);
     build.push_back(&PARAM_MASK_PROBABILTY);
@@ -422,13 +434,11 @@ LocalParameters::LocalParameters() :
     build.push_back(&DB_DATE);
     build.push_back(&CDS_INFO);
     build.push_back(&RAM_USAGE);
-    build.push_back(&SKIP_REDUNDANCY);
-
+    build.push_back(&MAKE_LIBRARY);
+    build.push_back(&GTDB);
 
     // updateDB
     updateDB.push_back(&PARAM_THREADS);
-    updateDB.push_back(&REDUCED_AA);
-    updateDB.push_back(&TAXONOMY_PATH);
     updateDB.push_back(&SPLIT_NUM);
     updateDB.push_back(&PARAM_MASK_PROBABILTY);
     updateDB.push_back(&PARAM_MASK_RESIDUES);
@@ -437,7 +447,8 @@ LocalParameters::LocalParameters() :
     updateDB.push_back(&DB_DATE);
     updateDB.push_back(&CDS_INFO);
     updateDB.push_back(&RAM_USAGE);
-    updateDB.push_back(&SKIP_REDUNDANCY);
+    updateDB.push_back(&NEW_TAXA);
+    updateDB.push_back(&MAKE_LIBRARY);
 
     //classify
     classify.push_back(&PARAM_THREADS);

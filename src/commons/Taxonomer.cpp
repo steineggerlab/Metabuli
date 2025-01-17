@@ -9,7 +9,7 @@
 #include <unordered_map>
 
 
-Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxonomy(taxonomy) {
+Taxonomer::Taxonomer(const LocalParameters &par, TaxonomyWrapper *taxonomy) : taxonomy(taxonomy) {
     // Parameters
     string spaceMask = "11111111";
     auto mask = new uint32_t[spaceMask.length()];
@@ -28,7 +28,7 @@ Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxon
     minSSMatch = par.minSSMatch;
     minConsCnt = (size_t) par.minConsCnt;
     minConsCntEuk = (size_t) par.minConsCntEuk;
-    eukaryotaTaxId = par.eukaryotaTaxId;
+    eukaryotaTaxId = taxonomy->getEukaryotaTaxID();
     tieRatio = par.tieRatio;
 
     if (par.seqMode == 1 || par.seqMode == 2) {
