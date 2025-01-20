@@ -28,6 +28,8 @@ struct NewTaxon {
     TaxID parentTaxId;
     std::string rank;
     std::string name;
+
+    NewTaxon() {}
     
     NewTaxon(TaxID taxId, TaxID parentTaxId, const std::string & rank, const std::string & name)
         : taxId(taxId), parentTaxId(parentTaxId), rank(rank), name(name) {}    

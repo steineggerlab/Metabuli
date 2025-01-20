@@ -74,7 +74,6 @@ int extract(int argc, const char **argv, const Command& command)
     cout << "done." << endl;
 
     string queryFileName = par.filenames[0];
-    size_t lastDotPos = queryFileName.find_last_of('.');
     string baseName, extension;
 
     extractBaseNameAndExtension(queryFileName, baseName, extension);
