@@ -18,4 +18,6 @@ set(util_source_files
         util/accession2taxid.h
         util/editNames.cpp
         util/editNames.h
+        util/createnewtaxalist.cpp
+        util/createnewtaxalist.h
         PARENT_SCOPE)
