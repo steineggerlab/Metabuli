@@ -79,17 +79,16 @@ int extract(int argc, const char **argv, const Command& command)
 
     extractBaseNameAndExtension(queryFileName, baseName, extension);
     string outFileName = baseName + "_" + to_string(targetTaxID) + extension;
-    cout << "Writing extracted reads to " << outFileName << " ... " << flush;
     reporter.printSpecifiedReads(readIdxs, queryFileName, outFileName);
-    cout << "done." << endl;
-
+    cout << "Extracted file  : " << outFileName << endl;
+    
     if (par.seqMode == 2) {
+        cout << "Processing the second file ... " << endl;
         queryFileName = par.filenames[1];
         extractBaseNameAndExtension(queryFileName, baseName, extension);
         outFileName = baseName + "_" + to_string(targetTaxID) + extension;
-        cout << "Writing extracted reads to " << outFileName << " ... " << flush;
         reporter.printSpecifiedReads(readIdxs, queryFileName, outFileName);
-        cout << "done." << endl;
+        cout << "Extracted file 2: " << outFileName << endl;
     }
 
     delete taxonomy;
