@@ -506,7 +506,7 @@ void TaxonomyWrapper::createTaxIdListAtRank(std::vector<int> &taxIdList, std::ve
 }
 
 
-void TaxonomyWrapper::checkNewTaxa(const std::string & newTaxaFile) {
+void TaxonomyWrapper::checkNewTaxa(const std::string & newTaxaFile) const {
     std::ifstream newTaxa(newTaxaFile);
     std::unordered_set<TaxID> newTaxIDs;
 
@@ -568,26 +568,26 @@ void TaxonomyWrapper::checkNewTaxa(const std::string & newTaxaFile) {
     newTaxa.close();
 }
 
-TaxonomyWrapper* TaxonomyWrapper::getEditableCopy(const TaxonomyWrapper &t, int newMaxNodes, TaxID newMaxTaxID) {
+TaxonomyWrapper* TaxonomyWrapper::getEditableCopy(const TaxonomyWrapper * t, int newMaxNodes, TaxID newMaxTaxID) const  {
     TaxonomyWrapper * newT = new TaxonomyWrapper();
-    newT->eukaryotaTaxID = t.eukaryotaTaxID;
+    newT->eukaryotaTaxID = t->eukaryotaTaxID;
     newT->externalData = false;
     newT->maxNodes = newMaxNodes;
     newT->maxTaxID = newMaxTaxID;
-    newT->useInternalTaxID = t.useInternalTaxID;
+    newT->useInternalTaxID = t->useInternalTaxID;
     newT->D = new int[newT->maxTaxID + 1];
-    std::memcpy(newT->D, t.D, (t.maxTaxID + 1) * sizeof(int));
-    if (t.useInternalTaxID) {
+    std::memcpy(newT->D, t->D, (t->maxTaxID + 1) * sizeof(int));
+    if (t->useInternalTaxID) {
         newT->internal2orgTaxId = new int[newT->maxTaxID + 1];
-        std::memcpy(newT->internal2orgTaxId, t.internal2orgTaxId, (t.maxTaxID + 1) * sizeof(int));
+        std::memcpy(newT->internal2orgTaxId, t->internal2orgTaxId, (t->maxTaxID + 1) * sizeof(int));
     }
     newT->taxonNodes = new TaxonNode[newT->maxNodes];
-    std::copy(t.taxonNodes, t.taxonNodes + t.maxNodes, newT->taxonNodes);
-    newT->block = new StringBlock<unsigned int>(*t.block);
+    std::copy(t->taxonNodes, t->taxonNodes + t->maxNodes, newT->taxonNodes);
+    newT->block = new StringBlock<unsigned int>(t->block);
     return newT;
 }
 
-TaxonomyWrapper* TaxonomyWrapper::addNewTaxa(const std::vector<NewTaxon> & newTaxa) {    
+TaxonomyWrapper* TaxonomyWrapper::addNewTaxa(const std::vector<NewTaxon> & newTaxa) const {    
     std::unordered_map<TaxID, TaxID> original2internalTaxId;
     if (useInternalTaxID) getOriginal2InternalTaxId(original2internalTaxId);
 
@@ -597,9 +597,9 @@ TaxonomyWrapper* TaxonomyWrapper::addNewTaxa(const std::vector<NewTaxon> & newTa
     std::string line;
     TaxID newMaxTaxID = maxTaxID;
     int currentNodeId = maxNodes;
-    
+    TaxID eukaryotaTaxID = 0;
+    std::cout << "maxNodes: " << maxNodes << std::endl;
     for (size_t i = 0; i < newTaxa.size(); i++) {
-        // newTaxa[i].print();
         TaxID taxId = newTaxa[i].taxId;
         TaxID parentTaxId = newTaxa[i].parentTaxId;
         const std::string & name = newTaxa[i].name;
@@ -636,7 +636,8 @@ TaxonomyWrapper* TaxonomyWrapper::addNewTaxa(const std::vector<NewTaxon> & newTa
         ++currentNodeId;
     }
 
-    TaxonomyWrapper * newT = getEditableCopy(*this, currentNodeId, newMaxTaxID);
+    TaxonomyWrapper * newT = getEditableCopy(this, currentNodeId, newMaxTaxID);
+    newT->eukaryotaTaxID = eukaryotaTaxID;
 
     for (size_t i = 0; i < newTaxa.size(); i++) {
         size_t rankIdx = newT->block->append(newTaxa[i].rank.c_str(), newTaxa[i].rank.size());
@@ -646,7 +647,6 @@ TaxonomyWrapper* TaxonomyWrapper::addNewTaxa(const std::vector<NewTaxon> & newTa
     } 
 
     // Merge new nodes  
-    
     for (std::map<TaxID, int>::iterator it = Dm.begin(); it != Dm.end(); ++it) {
         newT->D[it->first] = it->second;
     }

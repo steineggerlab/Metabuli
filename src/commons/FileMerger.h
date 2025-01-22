@@ -51,6 +51,7 @@ public:
     ~FileMerger();
     // void mergeTargetFiles(const LocalParameters & par, int numOfSplits);
     void mergeTargetFiles(); 
+    void printFilesToMerge();
     //    void updateTargetDatabase(vector<char *> diffIdxFileNames, vector<char *> infoFileNames, vector<int> & taxListAtRank, vector<int> & taxIdList, const int & seqIdOffset);
     size_t smallest(const uint64_t *lookingKmer,
                     const TaxID *lookingInfos,

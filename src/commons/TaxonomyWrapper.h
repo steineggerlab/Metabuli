@@ -4,6 +4,7 @@
 #include "NcbiTaxonomy.h"
 #include <unordered_set>
 #include <iostream>
+#include <fstream>
 
 static const std::map<std::string, std::string> ExtendedShortRanks = 
                                                 {{"subspecies", "ss" },
@@ -28,6 +29,8 @@ struct NewTaxon {
     TaxID parentTaxId;
     std::string rank;
     std::string name;
+
+    NewTaxon() {}
     
     NewTaxon(TaxID taxId, TaxID parentTaxId, const std::string & rank, const std::string & name)
         : taxId(taxId), parentTaxId(parentTaxId), rank(rank), name(name) {}    
@@ -47,7 +50,7 @@ public:
     TaxonomyWrapper() {};
     ~TaxonomyWrapper();
 
-    TaxonomyWrapper* getEditableCopy(const TaxonomyWrapper &t, int extraNodeCapacity = 0, TaxID newMaxTaxID = 0);
+    TaxonomyWrapper* getEditableCopy(const TaxonomyWrapper * t, int extraNodeCapacity = 0, TaxID newMaxTaxID = 0) const;
 
     std::pair<char*, size_t> serialize(const TaxonomyWrapper& t);
     static TaxonomyWrapper* unserialize(char* data);
@@ -85,7 +88,7 @@ public:
         eukaryotaTaxID = 0;
     }
 
-    TaxID getInternalTaxID(TaxID originalTaxID) {
+    TaxID getInternalTaxID(TaxID originalTaxID) const {
         if (!useInternalTaxID) {
             return originalTaxID;
         }
@@ -144,8 +147,9 @@ public:
 
     static void getListOfTaxa(const std::string &newTaxaFile, std::vector<NewTaxon> &newTaxa);
 
-    TaxonomyWrapper* addNewTaxa(const std::vector<NewTaxon> & newTaxaList);
-    void checkNewTaxa(const std::string & newTaxaFile);
+    TaxonomyWrapper* addNewTaxa(const std::vector<NewTaxon> & newTaxaList) const ;
+
+    void checkNewTaxa(const std::string & newTaxaFile) const;
 
     void getOriginal2InternalTaxId(std::unordered_map<TaxID, TaxID> & original2internalTaxId) const {
         for (int i = 0; i <= maxTaxID; i++) {
@@ -168,8 +172,16 @@ public:
     void writeNamesDmp(const std::string & fileName) const;
     void writeMergedDmp(const std::string & fileName) const;
 
+
     bool IsExternalData() {
         return externalData;
+    }
+
+    void printAllNodes(std::ofstream &file) const {
+        for (size_t i = 0; i < maxNodes; i++) {
+            const TaxonNode &node = taxonNodes[i];
+            file << node.taxId << "\t" << node.parentTaxId << "\t" << node.rankIdx << "\t" << node.nameIdx <<  "\t" << getString(node.rankIdx) << "\t" << getString(node.nameIdx) << "\n";
+        }
     }
 
 protected:

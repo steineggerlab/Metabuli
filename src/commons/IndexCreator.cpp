@@ -73,8 +73,6 @@ void IndexCreator::createIndex(const LocalParameters &par) {
 #endif
     while(processedBatchCnt < batchNum) {
         memset(kmerBuffer.buffer, 0, kmerBuffer.bufferSize * sizeof(TargetKmer));
-
-        // Extract Target k-mers
         fillTargetKmerBuffer(kmerBuffer, batchChecker, processedBatchCnt, par);
 
         // Sort the k-mers
@@ -83,12 +81,11 @@ void IndexCreator::createIndex(const LocalParameters &par) {
                       IndexCreator::compareForDiffIdx);
         time_t sort = time(nullptr);
         cout << "Sort time: " << sort - start << endl;
+
+        // Reduce redundancy
         auto * uniqKmerIdx = new size_t[kmerBuffer.startIndexOfReserve + 1];
         size_t uniqKmerCnt = 0;
         uniqKmerIdxRanges.clear();
-
-        // Reduce redundancy
-        cout << "uniqKmerIdx array size: " << kmerBuffer.startIndexOfReserve + 1 << endl;
         reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt, uniqKmerIdxRanges, par);
         time_t reduction = time(nullptr);
         cout << "Time spent for reducing redundancy: " << (double) (reduction - sort) << endl;
@@ -179,13 +176,16 @@ string IndexCreator::addToLibrary(const std::string & dbDir,
     }
 
     // Write unmapped accession to file
-    FILE *file = fopen((libraryDir + "/unmapped.txt").c_str(), "w");
-    for (const auto & i : unmapped) {
-        fprintf(file, "%s\n", i.c_str());
-    }
-    fclose(file);
-    cout << "Unmapped accessions are written to " << libraryDir + "/unmapped.txt" << endl;
-
+    if (unmapped.empty()) {
+        cout << "All accessions are mapped to taxonomy" << endl;
+    } else {
+        FILE *file = fopen((libraryDir + "/unmapped.txt").c_str(), "w");
+        for (const auto & i : unmapped) {
+            fprintf(file, "%s\n", i.c_str());
+        }
+        fclose(file);
+        cout << "Unmapped accessions are written to " << libraryDir + "/unmapped.txt" << endl;
+    }  
     // Write the list of absolute paths of library files
     string libraryListFileName = libraryDir + "/library.list";
     FILE *libraryListFile = fopen(libraryListFileName.c_str(), "w");
@@ -232,6 +232,7 @@ void IndexCreator::getObservedAccessions(const string & fnaListFileName,
     {
         vector<Accession> localObservedAccessionsVec;
         localObservedAccessionsVec.reserve(4096 * 4);
+        unordered_set<string> duplicateCheck;
         
         #pragma omp for schedule(static, 1)
         for (size_t i = 0; i < fastaPaths.size(); ++i) {
@@ -243,10 +244,13 @@ void IndexCreator::getObservedAccessions(const string & fnaListFileName,
                 char* pos = strchr(e.name.s, '.'); 
                 if (pos != nullptr) {
                     *pos = '\0';
-                    localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l);
-                } else {
-                    localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l);
                 }
+                if (duplicateCheck.find(e.name.s) != duplicateCheck.end()) {
+                    continue;
+                } else {
+                    duplicateCheck.insert(e.name.s);
+                } 
+                localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l);
                 order++; 
             }
             delete kseq;
@@ -347,6 +351,9 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
                 if (par.accessionLevel == 1) {
                     TaxID accTaxId = taxonomy->getSmallestUnusedExternalTaxID(usedExternalTaxIDs);
                     acc2accId.emplace_back(accession, make_pair(taxID, accTaxId));
+                    if (accTaxId == 0) {
+                        cerr << "accTaxId is 0 for accession " << accession << " " << taxID << endl;
+                    }
                     observedAccessionsVec[it->second].taxID = accTaxId;
                     newTaxons.emplace_back(accTaxId, taxID, "accession", accession);
                 } else {
@@ -369,8 +376,12 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
 
     // Second, convert external taxIDs to internal taxIDs
     for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {    
+        if (taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID) == 0) {
+            cerr << "TaxID is 0 for accession " << observedAccessionsVec[i].accession << " " << observedAccessionsVec[i].taxID << endl;
+        }
         observedAccessionsVec[i].taxID = taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID);
         observedAccessionsVec[i].speciesID = taxonomy->getTaxIdAtRank(observedAccessionsVec[i].taxID, "species");    
+
         taxIdSet.insert(observedAccessionsVec[i].taxID);
     }
     
@@ -1156,126 +1167,111 @@ TaxID IndexCreator::getMaxTaxID() {
     return maxTaxID;
 }
 
+
 void IndexCreator::loadCdsInfo(const string & cdsInfoFileList) {
     uint32_t prtId = 1;
     ifstream cdsInfoList(cdsInfoFileList);
-    if (cdsInfoList.is_open()) {
-        string cdsInfoFile;
-        while (getline(cdsInfoList, cdsInfoFile)) { // Read each CDS info file
-            ifstream cdsInfo(cdsInfoFile);
-            if (cdsInfo.is_open()) {
-                string line;
-                while (getline(cdsInfo, line)) { // Read each line of the CDS info file
-                    if (line[0] == '>') { // Check if the line starts with ">"
-                        // Get the accession number between the '|' and '.'.
-                        size_t start = line.find('|') + 1;
-                        size_t end = line.find('.', start);
-                        string accession = line.substr(start, end - start + 2);
-                        // cout << "Accession: " << accession << endl;
-                        int frame = 1;
-                        while (true) {
-                            start = line.find('[', end) + 1;
-                            end = line.find(']', start);
-                            if (start == string::npos) { break;}
-                            size_t equalPos = line.find('=', start);
-                            string feature = line.substr(start, equalPos - start);
-                            string value = line.substr(equalPos + 1, end - equalPos - 1);
-                            if (feature == "pseudo") {
-                                break;
-                            } else if (feature == "protein" && value == "hypothetical protein") {
-                                break;
-                            } else if (feature == "frame") {
-                                frame = stoi(value);
-                            } else if (feature == "protein_id") {
-                                // cout << "Protein ID: " << value << "\t" << frame << endl;
-                                cdsInfoMap[accession].emplace_back(CDSinfo(prtId++, frame));
-                            } else if (feature == "location") {
-                                // cout << "Location: " << value << endl;
-                                // Check if the location is complement
-                                size_t complementPos = value.find('c');
-                                bool isComplement = (complementPos != string::npos);
-                                if (isComplement) {
-                                    cdsInfoMap[accession].back().isComplement = true;
-                                    value = value.substr(complementPos + 11, value.size() - complementPos - 12);
-                                } else {
-                                    cdsInfoMap[accession].back().isComplement = false;
-                                }
+    if (!cdsInfoList.is_open()) {
+        Debug(Debug::ERROR) << "Could not open " << cdsInfoFileList << " for reading\n";
+        EXIT(EXIT_FAILURE);
+    }
 
-                                // Check if spliced
-                                size_t joinPos = value.find('j');
-                                if (joinPos != string::npos) {
-                                    value = value.substr(joinPos + 5, value.size() - joinPos - 6);
-                                }
-                                
-                                // Load the locations
-                                size_t commaPos = value.find(',');
-                                size_t dotPos;
-                                string locationBegin, locationEnd;
-                                while (commaPos != string::npos) {
-                                    dotPos = value.find('.');
-                                    if (dotPos > commaPos) {
-                                        // AAA,BBB..CCC
-                                        locationBegin = value.substr(0, commaPos);
-                                        locationEnd = value.substr(0, commaPos);
-                                    } else {
-                                        // AAA..BBB,CCC..DDD
-                                        locationBegin = value.substr(0, dotPos);
-                                        locationEnd = value.substr(dotPos + 2, commaPos - dotPos - 2);
-                                    }
-                                    // Check < and > signs
-                                    if (locationBegin[0] == '<') {
-                                        locationBegin = locationBegin.substr(1, locationBegin.size() - 1);
-                                    }
-                                    if (locationEnd[0] == '>') {
-                                        locationEnd = locationEnd.substr(1, locationEnd.size() - 1);
-                                    }
+    string cdsInfoFile;
+    while (getline(cdsInfoList, cdsInfoFile)) {
+        if (!FileUtil::fileExists(cdsInfoFile.c_str())) {
+            Debug(Debug::ERROR) << "Could not open " << cdsInfoFile << " for reading\n";
+            EXIT(EXIT_FAILURE);
+        }
+        KSeqWrapper* kseq = KSeqFactory(cdsInfoFileList.c_str());
+        while (kseq->ReadEntry()) {
+            const KSeqWrapper::KSeqEntry & e = kseq->entry;
+            string ename = e.name.s;
+            size_t start = ename.find('|') + 1;
+            size_t end = ename.find('.', start);
+            string accession = ename.substr(start, end - start + 2);
+            int frame = 1;
+            string comment = e.comment.s;
+            while (true) {
+                start = comment.find('[', end) + 1;
+                end = comment.find(']', start);
+                if (start == string::npos) { break;}
+                size_t equalPos = comment.find('=', start);
+                string feature = comment.substr(start, equalPos - start);
+                string value = comment.substr(equalPos + 1, end - equalPos - 1);
+                if (feature == "pseudo") {
+                    break;
+                } else if (feature == "protein" && value == "hypothetical protein") {
+                    break;
+                } else if (feature == "frame") {
+                    frame = stoi(value);
+                } else if (feature == "protein_id") {
+                    cdsInfoMap[accession].emplace_back(CDSinfo(prtId++, frame));
+                } else if (feature == "location") {
+                    size_t complementPos = value.find('c');
+                    bool isComplement = (complementPos != string::npos);
+                    if (isComplement) {
+                        cdsInfoMap[accession].back().isComplement = true;
+                        value = value.substr(complementPos + 11, value.size() - complementPos - 12);
+                    } else {
+                        cdsInfoMap[accession].back().isComplement = false;
+                    }
+                    size_t joinPos = value.find('j');
+                    if (joinPos != string::npos) {
+                        value = value.substr(joinPos + 5, value.size() - joinPos - 6);
+                    }                
+                    size_t commaPos = value.find(',');
+                    size_t dotPos;
+                    string locationBegin, locationEnd;
+                    while (commaPos != string::npos) {
+                        dotPos = value.find('.');
+                        if (dotPos > commaPos) {
+                            locationBegin = value.substr(0, commaPos);
+                            locationEnd = value.substr(0, commaPos);
+                        } else {
+                            locationBegin = value.substr(0, dotPos);
+                            locationEnd = value.substr(dotPos + 2, commaPos - dotPos - 2);
+                        }
+                        if (locationBegin[0] == '<') {
+                            locationBegin = locationBegin.substr(1, locationBegin.size() - 1);
+                        }
+                        if (locationEnd[0] == '>') {
+                            locationEnd = locationEnd.substr(1, locationEnd.size() - 1);
+                        }
+                        cdsInfoMap[accession].back().loc.emplace_back(stoi(locationBegin), stoi(locationEnd));
+                        value = value.substr(commaPos + 1, value.size() - commaPos - 1);
+                        commaPos = value.find(',');
+                    }
+                    dotPos = value.find('.');
+                    if (dotPos == string::npos) {
+                        locationBegin = value;
+                        locationEnd = value;
+                    } else {
+                        locationBegin = value.substr(0, dotPos);
+                        locationEnd = value.substr(dotPos + 2, commaPos - dotPos - 2);
+                    }
+                    // cout << value << endl;
+                    // cout << locationBegin << endl;
+                    // cout << locationEnd << endl;
+                    if (locationBegin[0] == '<') {
+                        locationBegin = locationBegin.substr(1, locationBegin.size() - 1);
+                    }
+                    if (locationEnd[0] == '>') {
+                        locationEnd = locationEnd.substr(1, locationEnd.size() - 1);
+                    }
+                    cdsInfoMap[accession].back().loc.emplace_back(stoi(locationBegin), stoi(locationEnd));
 
-                                    cdsInfoMap[accession].back().loc.emplace_back(stoi(locationBegin), stoi(locationEnd));
-                                    value = value.substr(commaPos + 1, value.size() - commaPos - 1);
-                                    commaPos = value.find(',');
-                                }
-                                dotPos = value.find('.');
-                                if (dotPos == string::npos) {
-                                    locationBegin = value;
-                                    locationEnd = value;
-                                } else {
-                                    locationBegin = value.substr(0, dotPos);
-                                    locationEnd = value.substr(dotPos + 2, commaPos - dotPos - 2);
-                                }
-                                cout << value << endl;
-                                cout << locationBegin << endl;
-                                cout << locationEnd << endl;
-                                
-                                // Check < and > signs
-                                if (locationBegin[0] == '<') {
-                                    locationBegin = locationBegin.substr(1, locationBegin.size() - 1);
-                                }
-                                if (locationEnd[0] == '>') {
-                                    locationEnd = locationEnd.substr(1, locationEnd.size() - 1);
-                                }
-                                cdsInfoMap[accession].back().loc.emplace_back(stoi(locationBegin), stoi(locationEnd));
-
-                                // Frame correction
-                                if (frame != 1) {
-                                    if (!isComplement) {
-                                        cdsInfoMap[accession].back().loc[0].first += frame - 1;
-                                    } else {
-                                        cdsInfoMap[accession].back().loc.back().second -= frame - 1;
-                                    }
-                                }
-                                break;
-                            } 
+                    if (frame != 1) {
+                        if (!isComplement) {
+                            cdsInfoMap[accession].back().loc[0].first += frame - 1;
+                        } else {
+                            cdsInfoMap[accession].back().loc.back().second -= frame - 1;
                         }
                     }
+                    break;
                 }
-            } else {
-                Debug(Debug::ERROR) << "Cannot open file " << cdsInfoFile << "\n";
-                EXIT(EXIT_FAILURE);
             }
         }
-    } else {
-        Debug(Debug::ERROR) << "Cannot open file " << cdsInfoFileList << "\n";
-        EXIT(EXIT_FAILURE);
+        delete kseq;
     }
 }
 

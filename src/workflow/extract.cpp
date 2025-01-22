@@ -10,6 +10,29 @@ void setExtractDefaults(LocalParameters & par){
     par.extractMode = 0;
 }
 
+void extractBaseNameAndExtension(const string &queryFileName, string &baseName, string &extension) {
+    size_t lastDotPos = queryFileName.find_last_of('.');
+    if (lastDotPos == string::npos) {
+        // No extension
+        baseName = queryFileName;
+        extension = "";
+    } else if (queryFileName.substr(lastDotPos) == ".gz") {
+        // Compressed file
+        size_t secondLastDotPos = queryFileName.substr(0, lastDotPos).find_last_of('.');
+        if (secondLastDotPos == string::npos) {
+            baseName = queryFileName.substr(0, lastDotPos);
+            extension = "";
+        } else {
+            baseName = queryFileName.substr(0, secondLastDotPos);
+            extension = queryFileName.substr(secondLastDotPos, lastDotPos - secondLastDotPos);
+        }
+    } else {
+        // Regular file with an extension
+        baseName = queryFileName.substr(0, lastDotPos);
+        extension = queryFileName.substr(lastDotPos);
+    }
+}
+
 int extract(int argc, const char **argv, const Command& command)
 {
     LocalParameters & par = LocalParameters::getLocalInstance();
@@ -39,7 +62,6 @@ int extract(int argc, const char **argv, const Command& command)
     string dbDir = par.filenames[2 + (par.seqMode == 2)];
     TaxID targetTaxID = par.targetTaxId;
     
-    cout << "Loading taxonomy ... " << endl;
     TaxonomyWrapper *taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
     Reporter reporter(par, taxonomy);
 
@@ -52,43 +74,21 @@ int extract(int argc, const char **argv, const Command& command)
     cout << "done." << endl;
 
     string queryFileName = par.filenames[0];
-    size_t lastDotPos = queryFileName.find_last_of('.');
-    string baseName = "";
-    string extension = "";
+    string baseName, extension;
 
-    if (queryFileName.substr(lastDotPos) == ".gz") {
-        lastDotPos = queryFileName.substr(0, lastDotPos).find_last_of('.');
-        baseName = queryFileName.substr(0, lastDotPos);
-        extension = queryFileName.substr(lastDotPos);
-        // Remove the last ".gz" from the extension
-        extension = extension.substr(0, extension.length() - 3);        
-    } else {
-        baseName = queryFileName.substr(0, lastDotPos);
-        extension = queryFileName.substr(lastDotPos);
-    }
-    string outFileName = baseName + "_" + to_string(targetTaxID) + extension;
-
-    cout << "Writing extracted reads to " << outFileName << " ... " << flush;
+    extractBaseNameAndExtension(queryFileName, baseName, extension);
+    cout << "Base name       : " << baseName << endl;
+    string outFileName = baseName + "_" + to_string(targetTaxID);
     reporter.printSpecifiedReads(readIdxs, queryFileName, outFileName);
-    cout << "done." << endl;
-
+    cout << "Extracted file  : " << outFileName << endl;
+    
     if (par.seqMode == 2) {
+        cout << "Processing the second file ... " << endl;
         queryFileName = par.filenames[1];
-        lastDotPos = queryFileName.find_last_of('.');
-
-        if (queryFileName.substr(lastDotPos) == ".gz") {
-            lastDotPos = queryFileName.substr(0, lastDotPos).find_last_of('.');
-            baseName = queryFileName.substr(0, lastDotPos);
-            extension = queryFileName.substr(lastDotPos);
-            extension = extension.substr(0, extension.length() - 3);        
-        } else {
-            baseName = queryFileName.substr(0, lastDotPos);
-            extension = queryFileName.substr(lastDotPos);
-        }
-        outFileName = baseName + "_" + to_string(targetTaxID) + extension;
-        cout << "Writing extracted reads to " << outFileName << " ... " << flush;
+        extractBaseNameAndExtension(queryFileName, baseName, extension);
+        outFileName = baseName + "_" + to_string(targetTaxID);
         reporter.printSpecifiedReads(readIdxs, queryFileName, outFileName);
-        cout << "done." << endl;
+        cout << "Extracted file 2: " << outFileName << endl;
     }
 
     delete taxonomy;

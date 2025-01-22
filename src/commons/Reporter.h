@@ -44,7 +44,7 @@ public:
 
     void printSpecifiedReads(const vector<size_t> & readIdxs,
                              const string & readFileName,
-                             const string & outFileName); 
+                             string & outFileName); 
 
     // Setter
     void setReportFileName(const string &reportFileName) {
