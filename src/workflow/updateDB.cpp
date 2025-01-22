@@ -46,17 +46,17 @@ int updateDB(int argc, const char **argv, const Command &command){
 
     // Make a new taxonomy DB if new taxa are added
     if (!par.newTaxa.empty()) {
-        Debug(Debug::INFO) << "Adding new taxa to the taxonomy DB ... ";
+        Debug(Debug::INFO) << "Adding new taxa to the taxonomy DB.\n";
         taxonomy->checkNewTaxa(par.newTaxa);
         std::vector<NewTaxon> newTaxaList;
         TaxonomyWrapper::getListOfTaxa(par.newTaxa, newTaxaList);
         TaxonomyWrapper * newTaxonomy = taxonomy->addNewTaxa(newTaxaList);
         delete taxonomy;
         taxonomy = newTaxonomy;
-        Debug(Debug::INFO) << "done.\n";
+        taxonomy->writeNamesDmp(newDbDir + "/newnodes.dmp");
+        Debug(Debug::INFO) << "New taxonomy generated.\n";
     }
 
-    // Create index
     IndexCreator idxCre(par, taxonomy);
     idxCre.setIsUpdating(true);
     idxCre.createIndex(par);
@@ -90,7 +90,7 @@ int updateDB(int argc, const char **argv, const Command &command){
     }
 
     // Merge index files
-    Debug(Debug::INFO) << "Merge new and old DB files ";
+    cout << "Merge new and old DB files " << endl;;
     int numOfSplits = idxCre.getNumOfFlush();
     FileMerger merger(par, taxonomy);
     for (int i = 0; i < numOfSplits; i++) {
@@ -98,9 +98,12 @@ int updateDB(int argc, const char **argv, const Command &command){
                                newDbDir + "/" + to_string(i) + "_info");
     }
     merger.addFilesToMerge(oldDbDir + "/diffIdx", oldDbDir + "/info");
+    merger.setMergedFileNames(newDbDir + "/diffIdx", newDbDir + "/info", newDbDir + "/split");
+    merger.printFilesToMerge();
     merger.setRemoveRedundancyInfo(haveRedundancyInfo(oldDbDir));
     merger.updateTaxId2SpeciesTaxId(newDbDir + "/taxID_list");
-    merger.setMergedFileNames(newDbDir + "/diffIdx", newDbDir + "/info", newDbDir + "/split");
+    Debug(Debug::INFO) << "Species-level taxonomy IDs are prepared.\n";
+    
     merger.mergeTargetFiles();
     delete taxonomy;
     cerr << "Index creation completed." << endl;

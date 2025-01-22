@@ -243,7 +243,7 @@ TaxID Taxonomer::lowerRankClassification(const unordered_map<TaxID, unsigned int
         // Remove leaf nodes
         for (auto it = cladeCnt.begin(); it != cladeCnt.end(); it++) {
             TaxonNode const * taxon = taxonomy->taxonNode(it->first);
-            if (strcmp(taxonomy->getString(taxon->rankIdx), "") == 0) {
+            if (strcmp(taxonomy->getString(taxon->rankIdx), "") == 0 || strcmp(taxonomy->getString(taxon->rankIdx), "accession") == 0) {
                 // Remove current node from its parent's children list
                 cladeCnt[taxon->parentTaxId].children.erase(find(cladeCnt[taxon->parentTaxId].children.begin(),
                                                                  cladeCnt[taxon->parentTaxId].children.end(),
