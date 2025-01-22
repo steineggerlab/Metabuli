@@ -24,8 +24,7 @@ void getObservedAccessions(const std::string & fnaListFileName,
 
     // Iterate through the fasta files to get observed accessions
     size_t accCnt = 0;
-    size_t copyCount = 0;
-    #pragma omp parallel default(none), shared(cout, observedAccessionsVec, accCnt, copyCount)
+    #pragma omp parallel default(none), shared(cout, fastaPaths, observedAccessions, accCnt)
     {
         std::unordered_set<std::string> localObservedAccessions;
         localObservedAccessions.reserve(4096 * 4);
@@ -127,7 +126,7 @@ void getTaxonomyOfAccessions(std::unordered_map<std::string, TaxID>  & observedA
 }
 
 
-int creatnewtaxalist(int argc, const char **argv, const Command &command) {
+int createnewtaxalist(int argc, const char **argv, const Command &command) {
     LocalParameters &par = LocalParameters::getLocalInstance();
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
     const std::string & oldDbDir = par.filenames[0];
@@ -155,7 +154,7 @@ int creatnewtaxalist(int argc, const char **argv, const Command &command) {
     getTaxonomyOfAccessions(newAccessions, newTaxonomy, accession2taxidFileName);
 
     std::vector<NewTaxon> newTaxaList;
-    creatnewtaxalist(oldTaxonomy, newTaxonomy, newNodesFileName, newNamesFileName, accession2taxidFileName, newTaxaList, newAccessions);
+    createnewtaxalist(oldTaxonomy, newTaxonomy, newNodesFileName, newNamesFileName, accession2taxidFileName, newTaxaList, newAccessions);
 
     std::string newTaxaFileName = newFilePrefix + ".newtaxalist";
     std::ofstream newTaxaFile(newTaxaFileName);
@@ -184,13 +183,13 @@ int creatnewtaxalist(int argc, const char **argv, const Command &command) {
     return 1;
 }
 
-int creatnewtaxalist(TaxonomyWrapper * oldTaxonomy,
-                     TaxonomyWrapper * newTaxonomy,
-                     const std::string & newNodesFileName,
-                     const std::string & newNamesFileName, 
-                     const std::string & accession2taxidFileName, 
-                     std::vector<NewTaxon> & newTaxaList,
-                     std::unordered_map<std::string, TaxID> & newAccessions) {
+int createnewtaxalist(TaxonomyWrapper * oldTaxonomy,
+                      TaxonomyWrapper * newTaxonomy,
+                      const std::string & newNodesFileName,
+                      const std::string & newNamesFileName, 
+                      const std::string & accession2taxidFileName, 
+                      std::vector<NewTaxon> & newTaxaList,
+                      std::unordered_map<std::string, TaxID> & newAccessions) {
     std::unordered_set<TaxID> usedExternalTaxIDs;
     oldTaxonomy->getUsedExternalTaxIDs(usedExternalTaxIDs);
     std::unordered_map<TaxID, NewTaxon> newTaxaMap;
@@ -198,6 +197,7 @@ int creatnewtaxalist(TaxonomyWrapper * oldTaxonomy,
 
     // Get taxon nodes along the lineage of the new accessions
     for (const auto & it : newAccessions) {
+        cout << it.first << " " << it.second << endl;
         TaxonNode const* node = newTaxonomy->taxonNode(it.second);
         while (true) {
             if (node->taxId == 1) {

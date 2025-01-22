@@ -30,7 +30,6 @@ void FileMerger::setMergedFileNames(string diffFileName, string infoFileName, st
 }
 
 void FileMerger::updateTaxId2SpeciesTaxId(const string & taxIdListFileName) {
-    // Load taxonomy ids
     FILE * taxIdFile;
     if((taxIdFile = fopen(taxIdListFileName.c_str(),"r")) == NULL){
         cout << "Cannot open the taxID list file: " << taxIdListFileName << endl;
@@ -141,7 +140,6 @@ void FileMerger::mergeTargetFiles() {
 
     // get the first k-mer to write
     size_t lastFileIdx = numOfSplits - 1;
-    cout << "numOfSplits: " << numOfSplits << endl;
     unsigned int mask = ~((static_cast<unsigned int>(removeRedundancyInfo) << 31));
     for(size_t file = 0; file < numOfSplits; file++){
         lookingKmers[file] = getNextKmer(0, diffFileList[file], diffFileIdx[file]);
@@ -373,4 +371,14 @@ void FileMerger::writeInfo(TaxID * entryToWrite, FILE * infoFile, TaxID * infoBu
 void FileMerger::flushInfoBuf(TaxID * buffer, FILE * infoFile, size_t & localBufIdx ) {
     fwrite(buffer, sizeof(TaxID), localBufIdx, infoFile);
     localBufIdx = 0;
+}
+
+void FileMerger::printFilesToMerge() {
+    cout << "Files to merge :" << endl;
+    for (size_t i = 0; i < diffIdxFileNames.size(); i++) {
+        cout << diffIdxFileNames[i] << " " << infoFileNames[i] << endl;
+    }
+    // cout << "Merged files :" << endl;
+    // cout << mergedDiffFileName << endl;
+    // cout << mergedInfoFileName << endl;
 }

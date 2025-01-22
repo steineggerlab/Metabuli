@@ -4,7 +4,7 @@
 #include <string>
 #include "TaxonomyWrapper.h"
 
-int creatnewtaxalist(TaxonomyWrapper * oldTaxonomy,
+int createnewtaxalist(TaxonomyWrapper * oldTaxonomy,
                      TaxonomyWrapper * newTaxonomy,
                      const std::string & newNodesFileName,
                      const std::string & newNamesFileName, 

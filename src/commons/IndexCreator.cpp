@@ -73,8 +73,6 @@ void IndexCreator::createIndex(const LocalParameters &par) {
 #endif
     while(processedBatchCnt < batchNum) {
         memset(kmerBuffer.buffer, 0, kmerBuffer.bufferSize * sizeof(TargetKmer));
-
-        // Extract Target k-mers
         fillTargetKmerBuffer(kmerBuffer, batchChecker, processedBatchCnt, par);
 
         // Sort the k-mers
@@ -83,12 +81,11 @@ void IndexCreator::createIndex(const LocalParameters &par) {
                       IndexCreator::compareForDiffIdx);
         time_t sort = time(nullptr);
         cout << "Sort time: " << sort - start << endl;
+
+        // Reduce redundancy
         auto * uniqKmerIdx = new size_t[kmerBuffer.startIndexOfReserve + 1];
         size_t uniqKmerCnt = 0;
         uniqKmerIdxRanges.clear();
-
-        // Reduce redundancy
-        // cout << "uniqKmerIdx array size: " << kmerBuffer.startIndexOfReserve + 1 << endl;
         reduceRedundancy(kmerBuffer, uniqKmerIdx, uniqKmerCnt, uniqKmerIdxRanges, par);
         time_t reduction = time(nullptr);
         cout << "Time spent for reducing redundancy: " << (double) (reduction - sort) << endl;
@@ -235,6 +232,7 @@ void IndexCreator::getObservedAccessions(const string & fnaListFileName,
     {
         vector<Accession> localObservedAccessionsVec;
         localObservedAccessionsVec.reserve(4096 * 4);
+        unordered_set<string> duplicateCheck;
         
         #pragma omp for schedule(static, 1)
         for (size_t i = 0; i < fastaPaths.size(); ++i) {
@@ -246,10 +244,13 @@ void IndexCreator::getObservedAccessions(const string & fnaListFileName,
                 char* pos = strchr(e.name.s, '.'); 
                 if (pos != nullptr) {
                     *pos = '\0';
-                    localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l);
-                } else {
-                    localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l);
                 }
+                if (duplicateCheck.find(e.name.s) != duplicateCheck.end()) {
+                    continue;
+                } else {
+                    duplicateCheck.insert(e.name.s);
+                } 
+                localObservedAccessionsVec.emplace_back(string(e.name.s), i, order, e.sequence.l);
                 order++; 
             }
             delete kseq;
@@ -350,6 +351,9 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
                 if (par.accessionLevel == 1) {
                     TaxID accTaxId = taxonomy->getSmallestUnusedExternalTaxID(usedExternalTaxIDs);
                     acc2accId.emplace_back(accession, make_pair(taxID, accTaxId));
+                    if (accTaxId == 0) {
+                        cerr << "accTaxId is 0 for accession " << accession << " " << taxID << endl;
+                    }
                     observedAccessionsVec[it->second].taxID = accTaxId;
                     newTaxons.emplace_back(accTaxId, taxID, "accession", accession);
                 } else {
@@ -372,8 +376,12 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
 
     // Second, convert external taxIDs to internal taxIDs
     for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {    
+        if (taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID) == 0) {
+            cerr << "TaxID is 0 for accession " << observedAccessionsVec[i].accession << " " << observedAccessionsVec[i].taxID << endl;
+        }
         observedAccessionsVec[i].taxID = taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID);
         observedAccessionsVec[i].speciesID = taxonomy->getTaxIdAtRank(observedAccessionsVec[i].taxID, "species");    
+
         taxIdSet.insert(observedAccessionsVec[i].taxID);
     }
     
