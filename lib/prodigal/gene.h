@@ -21,7 +21,7 @@
 #ifndef _GENE_H
 #define _GENE_H
 
-#include <stdio.h>
+#include <cstdio>
 #include "training.h"
 #include "node.h"
 #include "dprog.h"

@@ -21,10 +21,10 @@
 #ifndef _SEQ_H
 #define _SEQ_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
 #include "bitmap.h"
 #include "training.h"
 #include "fptr.h"
