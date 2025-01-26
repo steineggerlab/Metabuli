@@ -21,8 +21,8 @@
 #ifndef _NODE_H
 #define _NODE_H
 
-#include <stdio.h>
-#include <math.h>
+#include <cstdio>
+#include <cmath>
 #include "prodigalsequence.h"
 #include "training.h"
 

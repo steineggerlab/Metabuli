@@ -21,9 +21,9 @@
 #ifndef _TRAIN_H
 #define _TRAIN_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 
 struct _training {
