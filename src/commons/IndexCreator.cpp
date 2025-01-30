@@ -208,6 +208,7 @@ void IndexCreator::indexReferenceSequences(size_t bufferSize) {
     cout << "Number of observed accessions: " << observedAccessionsVec.size() << endl;
     getTaxonomyOfAccessions(observedAccessionsVec, accession2index, acc2taxidFileName);
     cout << "Taxonomy of accessions is obtained" << endl;
+    vector<Accession> accessionsWithTaxonomy;
     getAccessionBatches(observedAccessionsVec, bufferSize);
     cout << "Number of accession batches: " << accessionBatches.size() << endl;
 }
@@ -375,9 +376,12 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
     }
 
     // Second, convert external taxIDs to internal taxIDs
+    vector<std::string> unmappedAccessions;
     for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {    
-        if (taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID) == 0) {
-            cerr << "TaxID is 0 for accession " << observedAccessionsVec[i].accession << " " << observedAccessionsVec[i].taxID << endl;
+        if (taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID) == 0 || observedAccessionsVec[i].taxID == 0) {
+            // cerr << "TaxID is 0 for accession " << observedAccessionsVec[i].accession << " " << observedAccessionsVec[i].taxID << endl;
+            unmappedAccessions.push_back(observedAccessionsVec[i].accession);
+            continue;
         }
         observedAccessionsVec[i].taxID = taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID);
         observedAccessionsVec[i].speciesID = taxonomy->getTaxIdAtRank(observedAccessionsVec[i].taxID, "species");    
@@ -398,9 +402,24 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
         }
     } else {
         for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {
+            if (observedAccessionsVec[i].taxID == 0) {
+                continue;
+            }
             fprintf(acc2taxidFile, "%s\t%d\n", observedAccessionsVec[i].accession.c_str(), taxonomy->getOriginalTaxID(observedAccessionsVec[i].taxID));
         }        
     }   
+
+    if (unmappedAccessions.empty()) {
+        cout << "All accessions are mapped to taxonomy" << endl;
+    } else {
+        FILE *file = fopen((dbDir + "/unmapped.txt").c_str(), "w");
+        for (const auto & i : unmappedAccessions) {
+            fprintf(file, "%s\n", i.c_str());
+        }
+        fclose(file);
+        cout << "Unmapped accessions are written to " << dbDir + "/unmapped.txt" << endl;
+    }
+
     fclose(acc2taxidFile);                   
 }
 
@@ -411,11 +430,11 @@ void IndexCreator::getAccessionBatches(std::vector<Accession> & observedAccessio
     vector<TaxID> taxIDs;
     vector<uint32_t> lengths;
     for (size_t i = 0; i < accCnt;) {
-        TaxID currentSpeciesID = observedAccessionsVec[i].speciesID;
-        if (currentSpeciesID == 0) {
+        if (observedAccessionsVec[i].speciesID == 0 || observedAccessionsVec[i].taxID == 0) {
             i++;
             continue;
         }
+        TaxID currentSpeciesID = observedAccessionsVec[i].speciesID;
         uint32_t maxLength = 0, trainingFasta = 0, trainingSeq = 0;
         size_t firstBatchOfSpecies = accessionBatches.size();
         while (i < accCnt && currentSpeciesID == observedAccessionsVec[i].speciesID) {    
