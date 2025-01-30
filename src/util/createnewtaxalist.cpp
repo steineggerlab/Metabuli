@@ -11,7 +11,7 @@
 #include "IndexCreator.h"
 
 void getObservedAccessions(const std::string & fnaListFileName,
-                           std::unordered_map<std::string, TaxID> & observedAccessions) {
+                           std::map<std::string, TaxID> & observedAccessions) {
     ifstream fileListFile(fnaListFileName);
     std::vector<std::string> fastaPaths;
     if (fileListFile.is_open()) {
@@ -45,12 +45,12 @@ void getObservedAccessions(const std::string & fnaListFileName,
         __sync_fetch_and_add(&accCnt, localObservedAccessions.size()); 
         #pragma omp barrier
        
-        #pragma omp critical
-        {
-            if (observedAccessions.size() < accCnt) {
-                observedAccessions.reserve(accCnt);
-            }
-        }   
+        // #pragma omp critical
+        // {
+        //     if (observedAccessions.size() < accCnt) {
+        //         observedAccessions.reserve(accCnt);
+        //     }
+        // }   
 
         #pragma omp critical
         {
@@ -61,7 +61,7 @@ void getObservedAccessions(const std::string & fnaListFileName,
     }                        
 }
 
-void getTaxonomyOfAccessions(std::unordered_map<std::string, TaxID>  & observedAccessions,
+void getTaxonomyOfAccessions(std::map<std::string, TaxID>  & observedAccessions,
                              TaxonomyWrapper * & taxonomy,
                              const string & acc2taxidFileName) {
     unordered_map<TaxID, TaxID> old2merged;
@@ -133,7 +133,7 @@ int createnewtaxalist(int argc, const char **argv, const Command &command) {
     const std::string & fastaList = par.filenames[1];
     const std::string & newTaxonomyDir = par.filenames[2];
     const std::string & accession2taxidFileName = par.filenames[3];
-    const std::string & newFilePrefix = par.filenames[4];
+    const std::string & outdir = par.filenames[4];
 
     const std::string & newNodesFileName = newTaxonomyDir + "/nodes.dmp";
     const std::string & newNamesFileName = newTaxonomyDir + "/names.dmp";
@@ -146,17 +146,22 @@ int createnewtaxalist(int argc, const char **argv, const Command &command) {
         return 0;
     }
 
+    if (!FileUtil::directoryExists(outdir.c_str())) {
+        FileUtil::makeDir(outdir.c_str());
+    }
+
     TaxonomyWrapper * oldTaxonomy = loadTaxonomy(oldDbDir);
     TaxonomyWrapper * newTaxonomy = new TaxonomyWrapper(newNamesFileName, newNodesFileName, newMergedFileName, false);
     
-    std::unordered_map<std::string, TaxID> newAccessions;
+    std::map<std::string, TaxID> newAccessions;
     getObservedAccessions(fastaList, newAccessions);
     getTaxonomyOfAccessions(newAccessions, newTaxonomy, accession2taxidFileName);
 
     std::vector<NewTaxon> newTaxaList;
-    createnewtaxalist(oldTaxonomy, newTaxonomy, newNodesFileName, newNamesFileName, accession2taxidFileName, newTaxaList, newAccessions);
+    std::vector<string> unmappedAccessions;
+    createnewtaxalist(oldTaxonomy, newTaxonomy, newNodesFileName, newNamesFileName, accession2taxidFileName, newTaxaList, newAccessions, unmappedAccessions);
 
-    std::string newTaxaFileName = newFilePrefix + ".newtaxalist";
+    std::string newTaxaFileName = outdir + "/newtaxa.tsv";
     std::ofstream newTaxaFile(newTaxaFileName);
     if (newTaxaFile.is_open()) {
         for (const auto & it : newTaxaList) {
@@ -167,17 +172,36 @@ int createnewtaxalist(int argc, const char **argv, const Command &command) {
         cout << "Cannot open file for new taxa list" << endl;
     }
 
-    std::string newAccessionsFileName = newFilePrefix + ".accession2taxid";
+    std::string newAccessionsFileName = outdir + "/newtaxa.accession2taxid";
     std::ofstream newAccessionsFile(newAccessionsFileName);
     if (newAccessionsFile.is_open()) {
         newAccessionsFile << "accession\taccession.version\ttaxid\tgi\n";
         for (const auto & it : newAccessions) {
+            if (it.second == 0) {
+                continue;
+            }
             newAccessionsFile << it.first << "\t" << it.first << "\t" << it.second << "\t" << "0\n";
         }
         newAccessionsFile.close();
     } else {
         cout << "Cannot open file for new accessions" << endl;
     }
+
+    std::string unmappedAccessionsFileName = outdir + "/unmapped_accessions.txt";
+    std::ofstream unmappedAccessionsFile(unmappedAccessionsFileName);
+    if (unmappedAccessionsFile.is_open()) {
+        for (const auto & it : unmappedAccessions) {
+            unmappedAccessionsFile << it << "\n";
+        }
+        unmappedAccessionsFile.close();
+    } else {
+        cout << "Cannot open file for unmapped accessions" << endl;
+    }
+
+    std::cout << "New taxa list for --nex-taxa option of updateDB: " << newTaxaFileName << std::endl;
+    std::cout << "Corresponding accession2taxid: " << newAccessionsFileName << std::endl;
+    std::cout << "Unmapped accessions during creat a new taxa list: " << unmappedAccessionsFileName << std::endl;
+
     delete oldTaxonomy;
     delete newTaxonomy;
     return 1;
@@ -189,17 +213,27 @@ int createnewtaxalist(TaxonomyWrapper * oldTaxonomy,
                       const std::string & newNamesFileName, 
                       const std::string & accession2taxidFileName, 
                       std::vector<NewTaxon> & newTaxaList,
-                      std::unordered_map<std::string, TaxID> & newAccessions) {
+                      std::map<std::string, TaxID> & newAccessions,
+                      std::vector<std::string> & unmappedAccessions) {
     std::unordered_set<TaxID> usedExternalTaxIDs;
     oldTaxonomy->getUsedExternalTaxIDs(usedExternalTaxIDs);
-    std::unordered_map<TaxID, NewTaxon> newTaxaMap;
+    std::map<TaxID, NewTaxon> newTaxaMap;
     std::unordered_map<TaxID, TaxID> changedTaxIDs;
 
+    std::unordered_map<std::string, TaxID> usedName2externalTaxid;
+    oldTaxonomy->getName2taxid(usedName2externalTaxid);
     // Get taxon nodes along the lineage of the new accessions
     for (const auto & it : newAccessions) {
-        cout << it.first << " " << it.second << endl;
+        if (it.second == 0) {
+            unmappedAccessions.push_back(it.first);
+            continue;
+        }
         TaxonNode const* node = newTaxonomy->taxonNode(it.second);
         while (true) {
+            if (usedName2externalTaxid.find(newTaxonomy->getString(node->nameIdx)) != usedName2externalTaxid.end()) {
+                changedTaxIDs[node->taxId] = usedName2externalTaxid[newTaxonomy->getString(node->nameIdx)];
+                break;
+            }
             if (node->taxId == 1) {
                 break;
             }
