@@ -598,7 +598,6 @@ TaxonomyWrapper* TaxonomyWrapper::addNewTaxa(const std::vector<NewTaxon> & newTa
     TaxID newMaxTaxID = maxTaxID;
     int currentNodeId = maxNodes;
     TaxID eukaryotaTaxID = 0;
-    std::cout << "maxNodes: " << maxNodes << std::endl;
     for (size_t i = 0; i < newTaxa.size(); i++) {
         TaxID taxId = newTaxa[i].taxId;
         TaxID parentTaxId = newTaxa[i].parentTaxId;

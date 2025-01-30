@@ -53,7 +53,7 @@ int updateDB(int argc, const char **argv, const Command &command){
         TaxonomyWrapper * newTaxonomy = taxonomy->addNewTaxa(newTaxaList);
         delete taxonomy;
         taxonomy = newTaxonomy;
-        taxonomy->writeNamesDmp(newDbDir + "/newnodes.dmp");
+        // taxonomy->writeNamesDmp(newDbDir + "/newnodes.dmp");
         Debug(Debug::INFO) << "New taxonomy generated.\n";
     }
 
