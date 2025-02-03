@@ -38,8 +38,8 @@ int classify(int argc, const char **argv, const Command& command)
     if (par.seqMode == 2) {
         // Check if the second argument is a directory
         if (FileUtil::directoryExists(par.filenames[1].c_str())) {
-            cerr << "Error: " << par.filenames[1] << " is a directory. Please specify a query file name." << endl;
-            cerr << "       For '--seq-mode 2', please provide two query files." << endl;
+            cout << "Error: " << par.filenames[1] << " is a directory. Please specify a query file name." << endl;
+            cout << "       For '--seq-mode 2', please provide two query files." << endl;
             exit(1);
         }
 
@@ -50,8 +50,8 @@ int classify(int argc, const char **argv, const Command& command)
         // Check if the second argument is file
         if (FileUtil::fileExists(par.filenames[1].c_str()) 
             && !FileUtil::directoryExists(par.filenames[1].c_str())) {
-            cerr << "Error: " << par.filenames[1] << " is a file. Please specify a database directory." << endl;
-            cerr << "       For '--seq-mode 1' and '--seq-mode 3', please provide one query file." << endl;
+            cout << "Error: " << par.filenames[1] << " is a file. Please specify a database directory." << endl;
+            cout << "       For '--seq-mode 1' and '--seq-mode 3', please provide one query file." << endl;
             exit(1);
         }
 

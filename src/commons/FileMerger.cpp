@@ -309,16 +309,16 @@ size_t FileMerger::smallest(const uint64_t * lookingKmers,
         minTaxIdAtRank = INT_MAX;
     } else {
         // if (taxId2speciesId.find((int) lookingInfos[0]) == taxId2speciesId.end()) {
-        //     cerr << lookingKmers[0] << endl;
-        //     cerr << "TaxID not found 1: " << lookingInfos[0] << endl;
+        //     cout << lookingKmers[0] << endl;
+        //     cout << "TaxID not found 1: " << lookingInfos[0] << endl;
         //     exit(1);
         // }
         minTaxIdAtRank = taxId2speciesId.at(lookingInfos[0]);
     }
     for(size_t i = 1; i < fileCnt; i++) {
         // if (taxId2speciesId.find((int) lookingInfos[i]) == taxId2speciesId.end()) {
-        //     cerr << lookingKmers[i] << endl;
-        //     cerr << "TaxID not found 2: " << lookingInfos[i] << endl;
+        //     cout << lookingKmers[i] << endl;
+        //     cout << "TaxID not found 2: " << lookingInfos[i] << endl;
         //     exit(1);
         // }
         if(lookingKmers[i] < min ||
