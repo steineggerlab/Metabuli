@@ -35,6 +35,7 @@ Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic 
 ---
 ### Update in v1.1.0
 - Fix errors in v1.0.9
+- Custom DB creation became easier
 - Improve `updateDB` command
   
 ### Update in v1.0.9
