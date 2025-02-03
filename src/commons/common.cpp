@@ -82,22 +82,13 @@ int loadDbParameters(LocalParameters &par, const std::string & dbDir) {
       while (getline(dbParametersFile, eachLine)) {
         std::vector<std::string> tokens = Util::split(eachLine, "\t");
         if (tokens[0] == "Reduced_alphabet") {
-          // if (stoi(tokens[1]) != par.reducedAA){
-          //   if (par.reducedAA == 0){ // DB with reduced AA
-          //     cerr << "Warning: Current DB is built with reduced 15 amino acid alphabets." << endl;
-          //     cerr << "         --reduce-aa option will be ignored " << endl;
-          //   } else {
-          //     cerr << "Warning: Current DB is built with 20 amino acid alphabets." << endl;
-          //     cerr << "         --reduce-aa option will be ignored " << endl;
-          //   }
-          // }
           par.reducedAA = stoi(tokens[1]);
         } else if (tokens[0] == "Spaced_kmer_mask") {
           // par.spaceMask = tokens[1];
         } else if (tokens[0] == "Accession_level") {
           if (tokens[1] == "0" && par.accessionLevel == 1){
             par.accessionLevel = 0;
-            cerr << "Warning: Current DB doesn't support accession-level classification." << endl;
+            cout << "Warning: Current DB doesn't support accession-level classification." << endl;
           }
           if (tokens[1] == "1" && par.accessionLevel == 0){
             par.accessionLevel = 2;
@@ -232,19 +223,19 @@ void getObservedAccessionList(const string & fnaListFileName,
 
 void fillAcc2TaxIdMap(unordered_map<string, TaxID> & acc2taxid,
                       const string & acc2taxidFileName) {
-  cerr << "Load mapping from accession ID to taxonomy ID ... " << flush;
+  cout << "Load mapping from accession ID to taxonomy ID ... " << flush;
 
   // Open the file
   int fd = open(acc2taxidFileName.c_str(), O_RDONLY);
   if (fd < 0) {
-      cerr << "Cannot open file for mapping from accession to tax ID" << endl;
+      cout << "Cannot open file for mapping from accession to tax ID" << endl;
       return;
   }
 
   // Get the size of the file
   struct stat sb;
   if (fstat(fd, &sb) == -1) {
-      cerr << "Cannot get the size of the file for mapping from accession to tax ID" << endl;
+      cout << "Cannot get the size of the file for mapping from accession to tax ID" << endl;
       close(fd);
       return;
   }
@@ -254,7 +245,7 @@ void fillAcc2TaxIdMap(unordered_map<string, TaxID> & acc2taxid,
   // Map the file to memory
   char* fileData = static_cast<char*>(mmap(nullptr, fileSize, PROT_READ, MAP_PRIVATE, fd, 0));
   if (fileData == MAP_FAILED) {
-      cerr << "mmap failed" << endl;
+      cout << "mmap failed" << endl;
       close(fd);
       return;
   }
@@ -297,7 +288,7 @@ void fillAcc2TaxIdMap(unordered_map<string, TaxID> & acc2taxid,
 
   // Unmap the file
   if (munmap(fileData, fileSize) == -1) {
-      cerr << "munmap failed" << endl;
+      cout << "munmap failed" << endl;
   }                                        
-  cerr << "Done" << endl;
+  cout << "Done" << endl;
 }

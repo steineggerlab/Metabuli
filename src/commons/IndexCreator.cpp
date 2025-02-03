@@ -287,14 +287,14 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
     vector<pair<string, pair<TaxID, TaxID>>> acc2accId;   
     int fd = open(acc2taxidFileName.c_str(), O_RDONLY);
     if (fd < 0) {
-        cerr << "Cannot open file for mapping from accession to tax ID" << endl;
+        cout << "Cannot open file for mapping from accession to tax ID" << endl;
         return;
     }
 
     // Get the size of the file
     struct stat sb;
     if (fstat(fd, &sb) == -1) {
-        cerr << "Cannot get the size of the file for mapping from accession to tax ID" << endl;
+        cout << "Cannot get the size of the file for mapping from accession to tax ID" << endl;
         close(fd);
         return;
     }
@@ -304,7 +304,7 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
     // Map the file to memory
     char* fileData = static_cast<char*>(mmap(nullptr, fileSize, PROT_READ, MAP_PRIVATE, fd, 0));
     if (fileData == MAP_FAILED) {
-        cerr << "mmap failed" << endl;
+        cout << "mmap failed" << endl;
         close(fd);
         return;
     }
@@ -353,7 +353,7 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
                     TaxID accTaxId = taxonomy->getSmallestUnusedExternalTaxID(usedExternalTaxIDs);
                     acc2accId.emplace_back(accession, make_pair(taxID, accTaxId));
                     if (accTaxId == 0) {
-                        cerr << "accTaxId is 0 for accession " << accession << " " << taxID << endl;
+                        cout << "accTaxId is 0 for accession " << accession << " " << taxID << endl;
                     }
                     observedAccessionsVec[it->second].taxID = accTaxId;
                     newTaxons.emplace_back(accTaxId, taxID, "accession", accession);
@@ -366,7 +366,7 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
     }
 
     if (munmap(fileData, fileSize) == -1) {
-        cerr << "munmap failed" << endl;
+        cout << "munmap failed" << endl;
     }                 
 
     if (par.accessionLevel == 1) {
@@ -379,7 +379,7 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
     vector<std::string> unmappedAccessions;
     for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {    
         if (taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID) == 0 || observedAccessionsVec[i].taxID == 0) {
-            // cerr << "TaxID is 0 for accession " << observedAccessionsVec[i].accession << " " << observedAccessionsVec[i].taxID << endl;
+            // cout << "TaxID is 0 for accession " << observedAccessionsVec[i].accession << " " << observedAccessionsVec[i].taxID << endl;
             unmappedAccessions.push_back(observedAccessionsVec[i].accession);
             continue;
         }
@@ -819,7 +819,7 @@ void IndexCreator::load_assacc2taxid(const string & mappingFile, unordered_map<s
             }
         }
     } else{
-        cerr<<"Cannot open file for mappig from assemlby accession to tax ID"<<endl;
+        cout<<"Cannot open file for mappig from assemlby accession to tax ID"<<endl;
     }
     map.close();
 }
@@ -1297,7 +1297,7 @@ void IndexCreator::loadCdsInfo(const string & cdsInfoFileList) {
 void IndexCreator::loadMergedTaxIds(const std::string &mergedFile, unordered_map<TaxID, TaxID> & old2new) {
     std::ifstream ss(mergedFile);
     if (ss.fail()) {
-        cerr << "File " << mergedFile << " not found!\n";
+        cout << "File " << mergedFile << " not found!\n";
         EXIT(EXIT_FAILURE);
     }
 

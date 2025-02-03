@@ -106,6 +106,6 @@ int updateDB(int argc, const char **argv, const Command &command){
     
     merger.mergeTargetFiles();
     delete taxonomy;
-    cerr << "Index creation completed." << endl;
+    cout << "Index creation completed." << endl;
     return 0;
 }

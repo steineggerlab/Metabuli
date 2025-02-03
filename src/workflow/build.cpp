@@ -64,7 +64,7 @@ int build(int argc, const char **argv, const Command &command){
     
     if(idxCre.getNumOfFlush() == 1) {
         delete taxonomy;
-        cerr << "Index creation completed." << endl;
+        cout << "Index creation completed." << endl;
         return 0;
     }
 
@@ -79,6 +79,6 @@ int build(int argc, const char **argv, const Command &command){
     merger.setMergedFileNames(dbDir + "/diffIdx", dbDir + "/info", dbDir + "/split");  
     merger.mergeTargetFiles();
     delete taxonomy;
-    cerr << "Index creation completed." << endl;
+    cout << "Index creation completed." << endl;
     return 0;
 }
