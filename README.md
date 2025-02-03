@@ -33,6 +33,10 @@ Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic 
 
 
 ---
+### Update in v1.1.0
+- Fix errors in v1.0.9
+- Improve `updateDB` command
+  
 ### Update in v1.0.9
 - DB creation process improved
   - `updateDB` module to add new sequences to an existing database.
@@ -52,15 +56,6 @@ Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic 
   - Test details are in release note.
 - Fixed a bug in score calculation that could affect classification results.
 
-### Update in v1.0.6
-- Windows OS is supported.
-> Metabuli v1.0.6 is too slow on Windows OS. Please use v1.0.7 or later.
-
-### Update in v1.0.4
-- Fixed a minor reproducibility issue.
-- Fixed a performance-harming bug occurring with sequences containing lowercased bases.
-- Auto adjustment of `--match-per-kmer` parameter. Issue #20 solved.
-- Record version info. in `db.parameter`
 
 ---
 
@@ -97,7 +92,6 @@ wget https://mmseqs.com/metabuli/metabuli-osx-universal.tar.gz; tar xvzf metabul
 Metabuli also works on Linux ARM64 and Windows systems. Please check [https://mmseqs.com/metabuli](https://mmseqs.com/metabuli) for static builds for other architectures.
 
 ### Compile from source code
-To compile Metabuli from source code use the following commands:
 ```
 git clone https://github.com/steineggerlab/Metabuli.git
 cd Metabuli
@@ -210,9 +204,7 @@ The proportion of reads that are assigned to each taxon.
 2.47    5677    4115    170517  species               s__Bacillus amyloliquefaciens
 0.38    883     883     170531  subspecies                      RS_GCF_001705195.1
 0.16    360     360     170523  subspecies                      RS_GCF_003868675.1
-0.11    248     248     170525  subspecies                      RS_GCF_002209305.1
-0.02    42      42      170529  subspecies                      RS_GCF_002173635.1
-0.01    24      24      170539  subspecies                      RS_GCF_000204275.1
+
 ```
 
 #### JobID_krona.html
@@ -237,7 +229,6 @@ metabuli extract <i:FASTA/Q> <i:read-by-read classification> <i:DBDIR> --tax-id 
 - DBDIR : The same DBDIR used in the `classify` step.
 - TAX_ID : The taxonomy ID of the taxon at any rank (e.g., species, genus) from which you want to extract the reads.
 
-
 # Paired-end
 metabuli extract read_1.fna read_2.fna JobID_classifications.tsv dbdir --tax-id TAX_ID
 
@@ -255,12 +246,12 @@ metabuli extract --seq-mode 3 read.fna JobID_classifications.tsv dbdir --tax-id 
 ---
 
 ## Custom database
-To build a custom database, you need three things:
-1. **FASTA files** : Each sequence of your FASTA files must be separated by '>accession.version' like '>CP001849.1'. The accession doesn't have to follow the NCBI format, but it must be unique and included in the accession2taxid file. 
-2. **accession2taxid** : Mapping from accession to taxonomy ID. The sequences whose accessions are not listed here will be skipped.
-3. **NCBI-style taxonomy dump** : 'names.dmp' , 'nodes.dmp', and 'merged.dmp' are required. The sequences whose taxonomy IDs are not included here will be skipped.
+Three things you need:
+1. **FASTA files** : Each sequence must have a unique `>accession.version` or `>accesion` header (e.g., `>CP001849.1` or `>CP001849`).
+2. **NCBI-style accession2taxid** : Sequences with accessions absent here are skipped, and versions are ignored.
+3. **NCBI-style taxonomy dump** : `names.dmp`, `nodes.dmp`, and `merged.dmp`. Sequences with tax. IDs absent here are skipped.
    
-* If you want to include **custom sequences**, edit `accession2taxid` and `taxdump` files properly as follows.
+* For **custom sequences**, edit `accession2taxid` and `taxdump` files as follows.
     * `accession2taxid`
       * For a sequence whose header is `>custom`, add `custom[tab]custom[tab]taxid[tab]anynumber`.
       * As above, version number is not necessary.
@@ -272,10 +263,11 @@ To build a custom database, you need three things:
 The procedure to build a database with NCBI or GTDB taxonomy are described below.
 
 ### User-provided CDS information (optional)
-The `--cds-info` option in the `build` and `updateDB` command can be used to provide a list of absolute paths to CDS files. For the accessions included in the files, the provided CDS information will be used, and Prodigal's gene prediction will be skipped. Currently, only uncompressed GenBank or RefSeq CDS files like below are supported.
+The `--cds-info` option in the `build` and `updateDB` command is for providing a list of absolute paths to CDS files. For the accessions included in the files, the provided CDS information will be used, and Prodigal's gene prediction will be skipped. Currently, only GenBank or RefSeq CDS files like below are supported.
 ```
 Example:
 GCA_000839185.1_ViralProj14174_cds_from_genomic.fna
+GCA_000839185.1_ViralProj14174_cds_from_genomic.fna.gz
 ```
 
 ### NCBI taxonomy based database
@@ -286,7 +278,7 @@ GCA_000839185.1_ViralProj14174_cds_from_genomic.fna
 #### 2. Build
 
 ```
-metabuli build <DBDIR> <FASTA_LIST> <accession2taxid> [options]
+metabuli build <DBDIR> <FASTA_LIST> <accession2taxid> --taxonomy-path <TAXDUMP> [options]
 - DBDIR: directory where the database will be generated.
 - FASTA_LIST: A file containing absolute paths to FASTA files.
 - accession2taxid : A path to NCBI-style accession2taxid.
@@ -299,14 +291,13 @@ metabuli build <DBDIR> <FASTA_LIST> <accession2taxid> [options]
    --cds-info : List of absolute paths to CDS files.
    --make-library : Make species library for faster execution (1 by default).
 ```
-This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
+This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete `*_diffIdx` and `*_info` files and `DATE-TIME` folder (e.g., `2025-1-24-10-32`) if generated.
 
 ### GTDB based database
 >*Requirements*: 
-You need assembly FASTA files whose file name (or path) includes the assembly accession like `GCF_028750015.1`.
+You need assembly FASTA files whose file name (or path) includes the assembly accession like `GCF_028750015.1` (regex, `GC[AF]_[0-9].[0-9]`).
 If you downloaded assemblies using `ncbi-genome-download`, you probably don't have to care about it.
-The regular expression of assembly accessions is (GC[AF]_[0-9].[0-9])
-#### 1. Download GTDB taxdump files [here](https://github.com/shenwei356/gtdb-taxdump/releases).
+#### 1. Download taxonkit-generated GTDB taxdump files [here](https://github.com/shenwei356/gtdb-taxdump/releases).
 #### 2. Build
 
 ```
@@ -314,21 +305,21 @@ GTDB_TAXDUMP: the directory where you downloaded the GTDB taxdump files.
 FASTA_LIST: A file containing absolute paths of each assembly file.
 DBDIR: The directory where the database will be generated.
 
-metabuli build <DBDIR> <FASTA_LIST> <GTDB_TAXDUMP/taxid.map> --taxonomy-path GTDB_TAXDUMP --gtdb 1
+metabuli build <DBDIR> <FASTA_LIST> <GTDB_TAXDUMP/taxid.map> --taxonomy-path <GTDB_TAXDUMP> --gtdb 1 [options]
   
-  * Options are already described above. 
+  * Options described above. 
 ```
-This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
+This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete `*_diffIdx` and `*_info` files and `DATE-TIME` folder (e.g., `2025-1-24-10-32`) if generated.
 
 ---
 
 ## Update database 
-You can add new sequences to an existing database.
-The taxonomy of the previous database will be used.
+You can add new sequences to an existing database, of which taxonomy will be used.
 You can add new taxa if the previous taxonomy does not include them (see "Add sequences of new taxa" below). 
+
 Two files you need:
-1. **List of FASTA files** : A list of paths to sequence files to be added. Sequences must be separated by '>SequenceName'.
-2. **accession2taxid** : NCBI-style mapping from accession to taxonomy ID. The sequences whose accessions are not listed here will be skipped. You can put any number in the GI column, and version number is not necessary.
+1. **List of new FASTA files** : Each sequence must have a unique `>accession.version` or `>accesion` header.
+2. **NCBI-style accession2taxid** : Sequences with accessions absent here are skipped. Put any number in the GI column. Version number is ignored.
    ```
    accession  accession.version  taxID  gi 
    SequenceA  SequenceA.1 960611  0
@@ -337,7 +328,7 @@ Two files you need:
    ```
 
 ```
-metabuli updateDB <new DB directory> <FASTA list> <accession2taxid> <old DB directory> [options]
+metabuli updateDB <NEW DBDIR> <FASTA_LIST> <accession2taxid> <OLD DBDIR> [options]
   - FASTA list: A file of paths to the FASTA file to be added.
   - accession2taxid : A path to NCBI-style accession2taxid.
 
@@ -353,20 +344,19 @@ metabuli updateDB <new DB directory> <FASTA list> <accession2taxid> <old DB dire
 You can use `--new-taxa` option to add new taxa to the taxonomy tree.
 
 #### 1. Check if you need to add new taxa
-Check nodes.dmp, names.dmp, and merged.dmp files used in the previous DB creation.
+Check `nodes.dmp`, `names.dmp`, and `merged.dmp` files used in the previous DB creation.
 You can retrieve them from `taxonomyDB` file in the previous DB directory.
 ```
-metabuli taxdump <old DB directory/taxonomyDB>
+metabuli taxdump <OLD DBDIR/taxonomyDB>
 ```
 
 #### 2. Create a list of new taxa
-If you have **accession2taxid** and **taxonomy dump** files corresponding to the new sequences, you can use the `createnewtaxalist` command to create an input file for `--new-taxa` option. If not, you have to prepare the list manually (see below).
-> Caution: If you use `createnewtaxalist` to add new bacteria taxa using NCBI taxonomy to a GTDB-based database, the resulting taxonomy can be wrong. It is because the same species have different names in GTDB and NCBI.
+If you have **accession2taxid** and **taxonomy dump** files of the new sequences, you can use `createnewtaxalist` to create an input for `--new-taxa` option. If not, you have to prepare the input manually (see below).
 ```
-metabuli createnewtaxalist <i: old database> <i: FASTA list> <i: new taxonomy dump> <i: accession2taxid> <o: output dir>
+metabuli createnewtaxalist <OLD DBDIR> <FASTA_LIST> <new taxonomy dump> <accession2taxid> <OUTDIR>
 ```
-It generates `newtaxa.tsv` for `--new-taxa` option and `newtaxa.accession2taxid` file for the new sequences.
-Note that the taxonomy IDs of the new taxa don't follow the taxonomy you provided. They are changed for compatibility with the previous taxonomy.
+It generates `newtaxa.tsv` for `--new-taxa` option and `newtaxa.accession2taxid`.
+>Note: The tax. IDs of the new taxa can be changed to be compatible with the previous taxonomy.
 
 ##### Example
 Suppose you want to add some eukaryotic sequences to the pre-built GTDB database.
@@ -383,7 +373,7 @@ The format is TSV as follows:
 ```
 taxID parentID rank name
 ```
-The added taxon must be linked to an existing taxon in the taxonomy tree.
+The added taxon must be linked to an existing taxon in the taxonomy tree of the previous database.
 
 ##### Example
 Suppose you want to add Saccharomyces cerevisiae sequences to the pre-built GTDB database. 
@@ -398,16 +388,13 @@ After inspecting taxonomy dump files generated by `taxdump`, you will find that 
 10000010	10000009	order	Saccharomycetales
 10000009	10000008	class	Saccharomycetes
 10000008	10000007	phylum	Ascomycota
-10000007	10000000	kingdom	Fungi // 10000000 is Eukaroyte taxID
+10000007	10000000	kingdom	Fungi // 10000000 is Eukaroyte taxID of the pre-built DB.
 
 # accession2taxid
 accession accession.version taxid gi
 newseq1 newseq1 10000013  0
 newseq2 newseq2 10000013  0
 ```
-
-#### 3. Automatically create a list of new taxa
-
 
 ## Example
 > The example here was detecting SARS-CoV-2 variant-specific reads, but has changed since the pre-built DB no longer contains the variant genomes.
