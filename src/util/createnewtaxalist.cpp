@@ -204,7 +204,7 @@ int createnewtaxalist(int argc, const char **argv, const Command &command) {
 
     delete oldTaxonomy;
     delete newTaxonomy;
-    return 1;
+    return 0;
 }
 
 int createnewtaxalist(TaxonomyWrapper * oldTaxonomy,
