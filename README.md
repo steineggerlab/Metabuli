@@ -340,6 +340,8 @@ metabuli updateDB <NEW DBDIR> <FASTA_LIST> <accession2taxid> <OLD DBDIR> [option
 ```
 
 ### Add sequences of new taxa
+> NOTE: Mixing taxonomies within the same domain is not recommended. For example, adding prokaryotes to a GTDB database using NCBI taxonomy will cause issues, but adding eukaryotes or viruses with NCBI taxonomy is fine since GTDB does not cover them.
+ 
 You can use `--new-taxa` option to add new taxa to the taxonomy tree.
 
 #### 1. Check if you need to add new taxa
