@@ -234,20 +234,17 @@ inline Metamer KmerMatcher::getNextTargetKmer(const Metamer & lookingTarget,
                                               const uint16_t *diffIdxBuffer,
                                               size_t &diffBufferIdx,
                                               size_t &totalPos) {
-  uint16_t fragment;
-  uint16_t check = 32768; // 2^15
   bitset<96> diffIn96bit;
-  // uint64_t diffIn64bit = 0;
-  fragment = diffIdxBuffer[diffBufferIdx++];
+  uint16_t fragment = diffIdxBuffer[diffBufferIdx++];
   totalPos++;
-  while (!(fragment & check)) { // 27 %
+  while (!(fragment & 0x8000)) { // 27 %
     diffIn96bit |= fragment;
     diffIn96bit <<= 15u;
     fragment = diffIdxBuffer[diffBufferIdx++];
     totalPos++;
   }
-  fragment &= ~check;      // not; 8.47 %
-  diffIn96bit |= fragment; // or : 23.6%
+  diffIn96bit |= (fragment & 0x7FFF);
+  // cout << "diffIn96bit: " << diffIn96bit << endl;
   return lookingTarget.add(diffIn96bit);
 }
 

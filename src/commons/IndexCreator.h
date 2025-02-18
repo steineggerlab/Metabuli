@@ -151,6 +151,8 @@ protected:
 
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
 
+    static bool compareMetamer(const Metamer & a, const Metamer & b);
+
     size_t fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                 bool *checker,
                                 size_t &processedSplitCnt,

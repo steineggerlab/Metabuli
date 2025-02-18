@@ -559,7 +559,6 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
     }
 
     FILE * diffIdxFile = fopen(diffIdxFileName.c_str(), "wb");
-    // FILE * infoFile = fopen(infoFileName.c_str(), "wb");
     if (diffIdxFile == nullptr) {
         cout<<"Cannot open the file for writing target DB"<<endl;
         return;
@@ -574,16 +573,40 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
     size_t totalDiffIdx = 0;
     size_t write = 0;
 
+    vector<Metamer> identicalMetamers;
+    uint64_t currentMetamer;
+
     cout << "Writing k-mers to disk" << endl;
     for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
-        for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
-            write++;
-            getDeltaIdx(prevMetamer, kmerBuffer[uniqKmerIdx[j]].metamer, diffIdxFile, deltaIdxBuffer, bufferSize, localBufIdx, totalDiffIdx);
-            prevMetamer = kmerBuffer[uniqKmerIdx[j]].metamer;
-            if((splitIdx < splitCnt) && (prevMetamer.metamer == offsetList[splitIdx].metamer.metamer)){
-                offsetList[splitIdx].offset = totalDiffIdx;
-                splitIdx ++;
+        size_t j = uniqKmerIdxRanges[i].first;
+        while (j < uniqKmerIdxRanges[i].second) {
+        // for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
+            // write++;
+            identicalMetamers.clear();
+            currentMetamer = kmerBuffer[uniqKmerIdx[j]].metamer.metamer;
+            while (j < uniqKmerIdxRanges[i].second && 
+                   currentMetamer == kmerBuffer[uniqKmerIdx[j]].metamer.metamer) {
+                identicalMetamers.push_back(kmerBuffer[uniqKmerIdx[j]].metamer);
+                j++;
             }
+            // Sort the identicalMetamers using compareMetamer
+            sort(identicalMetamers.begin(), identicalMetamers.end(), compareMetamer);
+            for (size_t k = 0; k < identicalMetamers.size(); k++) {
+                write++;
+                getDeltaIdx(prevMetamer, identicalMetamers[k], diffIdxFile, deltaIdxBuffer, bufferSize, localBufIdx, totalDiffIdx);
+                prevMetamer = identicalMetamers[k];
+                if ((splitIdx < splitCnt) && (prevMetamer.metamer == offsetList[splitIdx].metamer.metamer)) {
+                    offsetList[splitIdx].offset = totalDiffIdx;
+                    splitIdx ++;
+                }
+            }
+
+            // getDeltaIdx(prevMetamer, kmerBuffer[uniqKmerIdx[j]].metamer, diffIdxFile, deltaIdxBuffer, bufferSize, localBufIdx, totalDiffIdx);
+            // prevMetamer = kmerBuffer[uniqKmerIdx[j]].metamer;
+            // if ((splitIdx < splitCnt) && (prevMetamer.metamer == offsetList[splitIdx].metamer.metamer)) {
+            //     offsetList[splitIdx].offset = totalDiffIdx;
+            //     splitIdx ++;
+            // }
         }
     }
     cout<<"total k-mer count  : "<< kmerNum << endl;
@@ -733,7 +756,9 @@ void IndexCreator::getDeltaIdx(const Metamer & previousMetamer,
                                size_t bufferSize,
                                size_t & localBufIdx,
                                size_t & totalBufferIdx) {
-    bitset<96> diff = Metamer::substract2(currentMetamer, previousMetamer);                               
+    bitset<96> diff = Metamer::substract(currentMetamer, previousMetamer);
+    // cout << previousMetamer.metamer << " " << currentMetamer.metamer << " " << previousMetamer.id << " " << currentMetamer.id << endl;
+    // cout << diff << endl;                               
     uint16_t buffer[7];
     int idx = 5;
     buffer[6] = SET_END_FLAG(static_cast<uint16_t>((diff & bitset<96>(0x7FFF)).to_ulong()));
@@ -754,7 +779,7 @@ void IndexCreator::getDeltaIdx(const Metamer & previousMetamer,
                                uint16_t * deltaIndexBuffer,
                                size_t bufferSize,
                                size_t & localBufIdx) {
-    bitset<96> diff = Metamer::substract2(currentMetamer, previousMetamer);                               
+    bitset<96> diff = Metamer::substract(currentMetamer, previousMetamer);                               
     // uint64_t kmerdiff = entryToWrite - lastKmer;
     uint16_t buffer[7];
     // uint16_t buffer[5];
@@ -831,6 +856,14 @@ inline bool IndexCreator::compareForDiffIdx(const TargetKmer & a, const TargetKm
     }
 
     return a.metamer.id < b.metamer.id;
+}
+
+inline bool IndexCreator::compareMetamer(const Metamer & a, const Metamer & b) {
+    if (a.metamer != b.metamer) {
+        return a.metamer < b.metamer;
+    }
+
+    return a.id < b.id;
 }
 
 void IndexCreator::load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid){

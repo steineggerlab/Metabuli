@@ -110,6 +110,7 @@ void Classifier::startClassify(const LocalParameters &par) {
             
             // Search matches between query and target k-mers
             if (kmerMatcher->matchMetamers(&queryKmerBuffer, &matchBuffer)) {
+                cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
                 kmerMatcher->sortMatches(&matchBuffer);
                 
                 // Classify queries based on the matches.
