@@ -50,6 +50,9 @@ public:
 
     // DB and classify
     PARAMETER(SKIP_REDUNDANCY)
+    PARAMETER(SYNCMER)
+    PARAMETER(SMER_LEN)
+
 
     // Classify
     PARAMETER(SEQ_MODE)
@@ -69,6 +72,7 @@ public:
     PARAMETER(MIN_SS_MATCH)
     PARAMETER(TIE_RATIO)
     PARAMETER(PRINT_LINEAGE)
+    PARAMETER(MAX_SHIFT)
 
     // extract
     PARAMETER(TARGET_TAX_ID)
@@ -120,6 +124,8 @@ public:
 
     // DB and classify
     int skipRedundancy;
+    int syncmer;
+    int smerLen;
 
     // Classify
     int seqMode;
@@ -139,6 +145,7 @@ public:
     int minSSMatch;
     float tieRatio;
     int printLineage;
+    int maxShift;
 
     // Extract
     int targetTaxId;

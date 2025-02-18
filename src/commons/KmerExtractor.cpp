@@ -1,7 +1,7 @@
 #include "KmerExtractor.h"
 #include <unordered_map>
 
-KmerExtractor::KmerExtractor(const LocalParameters &par) {
+KmerExtractor::KmerExtractor(const LocalParameters &par) : par(par) {
     seqIterator = new SeqIterator(par);
     spaceNum = 0;
     maskMode = par.maskMode;
@@ -292,13 +292,23 @@ void KmerExtractor::processSequence(size_t count,
         if (isReverse) {
             posToWrite = kmerBuffer.reserveMemory(queryList[queryIdx].kmerCnt2);
             seqIterator->sixFrameTranslation(seq, (int) reads[i].length(), aaFrames);
-            seqIterator->fillQueryKmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
+            if (par.syncmer) {
+                seqIterator->fillQuerySyncmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
                                             (uint32_t) queryIdx, aaFrames, queryList[queryIdx].queryLength+3);
+            } else {
+                seqIterator->fillQueryKmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
+                                            (uint32_t) queryIdx, aaFrames, queryList[queryIdx].queryLength+3);
+            }   
         } else {
             posToWrite = kmerBuffer.reserveMemory(queryList[queryIdx].kmerCnt);
             seqIterator->sixFrameTranslation(seq, (int) reads[i].length(), aaFrames);
-            seqIterator->fillQueryKmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
+            if (par.syncmer) {
+                seqIterator->fillQuerySyncmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
                                             (uint32_t) queryIdx, aaFrames);
+            } else {
+                seqIterator->fillQueryKmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
+                                            (uint32_t) queryIdx, aaFrames);
+            }                                
         }
     }
 }

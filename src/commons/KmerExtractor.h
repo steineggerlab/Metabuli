@@ -10,6 +10,7 @@
 
 class KmerExtractor {
 private:
+    const LocalParameters &par;
     SeqIterator * seqIterator;
     // Parameters
     int spaceNum;

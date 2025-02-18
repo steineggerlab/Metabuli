@@ -9,7 +9,7 @@
 #include <unordered_map>
 
 
-Taxonomer::Taxonomer(const LocalParameters &par, TaxonomyWrapper *taxonomy) : taxonomy(taxonomy) {
+Taxonomer::Taxonomer(const LocalParameters &par, TaxonomyWrapper *taxonomy) : taxonomy(taxonomy), par(par) {
     // Parameters
     string spaceMask = "11111111";
     auto mask = new uint32_t[spaceMask.length()];
@@ -328,15 +328,17 @@ TaxonScore Taxonomer::getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpec
                 i ++;
             }
             if (i - start >= minConsCnt) {
-                getMatchPaths(matchList, start, i, matchPaths, currentSpecies);
+                getMatchPaths2(matchList, start, i, matchPaths, currentSpecies);
             }
         }
         size_t pathSize = matchPaths.size();
         // Combine MatchPaths
-        // cout << "Current species: " << currentSpecies << endl;
-        // for (size_t kk = previousPathSize; kk < matchPaths.size(); kk++) {
-        //     matchPaths[kk].printMatchPath();
-        // }
+        if (par.printLog) {
+            cout << "Current species: " << taxonomy->getOriginalTaxID(currentSpecies) << endl;
+            for (size_t kk = previousPathSize; kk < matchPaths.size(); kk++) {
+                matchPaths[kk].printMatchPath();
+            }
+        }
         if (pathSize > previousPathSize) {
             speciesList.push_back(currentSpecies);
             speciesPathIdx.push_back(previousPathSize);
@@ -575,7 +577,7 @@ void Taxonomer::getMatchPaths(const Match * matchList,
 
             // Check if current position and next position are consecutive
             if (currPos + 3 == nextPos) {
-                // Compare curPosMatches and nextPosMatches.
+                // Compare curPosMatches and nextPosMatches.cd 
                 for (size_t nextIdx = nextPosMatchStart; nextIdx < nextPosMatchEnd; nextIdx++) {
                     uint8_t lastEndHamming = (matchList[nextIdx].rightEndHamming >> 14);
                     float scoreIncrement = (lastEndHamming == 0) ? 3.0f : 2.0f - 0.5f * lastEndHamming;
@@ -619,6 +621,177 @@ void Taxonomer::getMatchPaths(const Match * matchList,
             currPos = nextPos;    
         }
     }
+}
+
+void Taxonomer::getMatchPaths2(const Match * matchList,
+                              size_t start,
+                              size_t end,
+                              vector<MatchPath> & filteredMatchPaths,
+                              TaxID speciesId) {
+    size_t i = start;
+    size_t currPos = matchList[start].qInfo.pos;
+    uint64_t frame = matchList[start].qInfo.frame;
+    int MIN_DEPTH = (int) minConsCnt - 1;
+
+    // if (taxonomy->IsAncestor(eukaryotaTaxId, speciesId)) {
+    //     MIN_DEPTH = (int) minConsCntEuk - 1;
+    // }
+    
+    connectedToNext.resize(end - start + 1);
+    fill(connectedToNext.begin(), connectedToNext.end(), false);
+    localMatchPaths.clear();
+    localMatchPaths.resize(end - start + 1);
+
+    if (frame < 3) { // Forward frame
+        size_t curPosMatchStart = i;        
+        while (i < end && matchList[i].qInfo.pos == currPos) {
+            localMatchPaths[i - start] = MatchPath(matchList + i);
+            ++ i;
+        }
+        size_t curPosMatchEnd = i; // exclusive
+
+        while (i < end) {
+            uint32_t nextPos = matchList[i].qInfo.pos;
+            size_t nextPosMatchStart = i;
+            while (i < end  && nextPos == matchList[i].qInfo.pos) {
+                localMatchPaths[i - start] = MatchPath(matchList + i);
+                ++ i;
+            }
+            size_t nextPosMatchEnd = i; // exclusive
+
+            // Check if current position and next position are consecutive
+            int shift = (nextPos - currPos) / 3;
+            if (shift > 0 && shift <= par.maxShift) {
+                // Compare curPosMatches and nextPosMatches.
+                for (size_t nextIdx = nextPosMatchStart; nextIdx < nextPosMatchEnd; nextIdx++) {
+                    // uint8_t lastEndHamming = (matchList[nextIdx].rightEndHamming >> 14);
+                    // float scoreIncrement = (lastEndHamming == 0) ? 3.0f : 2.0f - 0.5f * lastEndHamming;
+                    float scoreIncrement = calScoreIncrement(matchList[nextIdx].rightEndHamming, shift);
+                    const MatchPath * bestPath = nullptr;
+                    float bestScore = 0;
+                    for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++curIdx) {
+                        if (isConsecutive(matchList + curIdx, matchList + nextIdx, shift)) {
+                            connectedToNext[curIdx - start] = true;
+                            if (localMatchPaths[curIdx - start].score > bestScore) {
+                                bestPath = &localMatchPaths[curIdx - start];
+                                bestScore = localMatchPaths[curIdx - start].score;
+                            }
+                        }
+                    }
+                    if (bestPath != nullptr) {
+                        localMatchPaths[nextIdx - start].start = bestPath->start;                        
+                        localMatchPaths[nextIdx - start].score = bestPath->score + scoreIncrement;
+                        localMatchPaths[nextIdx - start].hammingDist = bestPath->hammingDist + calHammingDistIncrement(matchList[nextIdx].rightEndHamming, shift);
+                        localMatchPaths[nextIdx - start].depth = bestPath->depth + shift;
+                        localMatchPaths[nextIdx - start].startMatch = bestPath->startMatch;
+                    }
+                }
+            } 
+            for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++curIdx) {
+                if (!connectedToNext[curIdx - start] && localMatchPaths[curIdx - start].depth > MIN_DEPTH) {
+                    filteredMatchPaths.push_back(localMatchPaths[curIdx - start]);
+                    // cout << localMatchPaths[curIdx - start].score << endl;
+                }
+            }
+            if (i == end) {
+                for (size_t nextIdx = nextPosMatchStart; nextIdx < nextPosMatchEnd; ++nextIdx) {
+                    if (localMatchPaths[nextIdx - start].depth > MIN_DEPTH) {
+                        filteredMatchPaths.push_back(localMatchPaths[nextIdx - start]);
+                    }
+                    // cout << localMatchPaths[nextIdx - start].score << endl;
+                }
+            }
+            // Update curPosMatches and nextPosMatches
+            curPosMatchStart = nextPosMatchStart;
+            curPosMatchEnd = nextPosMatchEnd;
+            currPos = nextPos;    
+        }
+    } else {
+        size_t curPosMatchStart = i;        
+        while (i < end && matchList[i].qInfo.pos == currPos) {
+            localMatchPaths[i - start] = MatchPath(matchList + i);
+            ++ i;
+        }
+        size_t curPosMatchEnd = i; // exclusive
+
+        while (i < end) {
+            uint32_t nextPos = matchList[i].qInfo.pos;
+            size_t nextPosMatchStart = i;
+            while (i < end  && nextPos == matchList[i].qInfo.pos) {
+                localMatchPaths[i - start] = MatchPath(matchList + i);
+                ++ i;
+            }
+            size_t nextPosMatchEnd = i; // exclusive
+
+            // Check if current position and next position are consecutive
+            int shift = (nextPos - currPos) / 3;
+            if (shift > 0 && shift <= par.maxShift) {
+                // Compare curPosMatches and nextPosMatches.
+                for (size_t nextIdx = nextPosMatchStart; nextIdx < nextPosMatchEnd; nextIdx++) {
+                    // uint8_t lastEndHamming = (matchList[nextIdx].rightEndHamming >> 14);
+                    // float scoreIncrement = (lastEndHamming == 0) ? 3.0f : 2.0f - 0.5f * lastEndHamming;
+                    float scoreIncrement = calScoreIncrement(matchList[nextIdx].rightEndHamming, shift);
+                    const MatchPath * bestPath = nullptr;
+                    float bestScore = 0;
+                    for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++curIdx) {
+                        if (isConsecutive(matchList + nextIdx, matchList + curIdx, shift)) {
+                            connectedToNext[curIdx - start] = true;
+                            if (localMatchPaths[curIdx - start].score > bestScore) {
+                                bestPath = &localMatchPaths[curIdx - start];
+                                bestScore = localMatchPaths[curIdx - start].score;
+                            }
+                        }
+                    }
+                    if (bestPath != nullptr) {
+                        localMatchPaths[nextIdx - start].start = bestPath->start;                        
+                        localMatchPaths[nextIdx - start].score = bestPath->score + scoreIncrement;
+                        localMatchPaths[nextIdx - start].hammingDist = bestPath->hammingDist + calHammingDistIncrement(matchList[nextIdx].rightEndHamming, shift);
+                        localMatchPaths[nextIdx - start].depth = bestPath->depth + shift;
+                        localMatchPaths[nextIdx - start].startMatch = bestPath->startMatch;
+                    }
+                }
+            } 
+            for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++curIdx) {
+                if (!connectedToNext[curIdx - start] && localMatchPaths[curIdx - start].depth > MIN_DEPTH) {
+                    filteredMatchPaths.push_back(localMatchPaths[curIdx - start]);
+                    // cout << localMatchPaths[curIdx - start].score << endl;
+                }
+            }
+            if (i == end) {
+                for (size_t nextIdx = nextPosMatchStart; nextIdx < nextPosMatchEnd; ++nextIdx) {
+                    if (localMatchPaths[nextIdx - start].depth > MIN_DEPTH) {
+                        filteredMatchPaths.push_back(localMatchPaths[nextIdx - start]);
+                    }
+                    // cout << localMatchPaths[nextIdx - start].score << endl;
+                }
+            }
+            // Update curPosMatches and nextPosMatches
+            curPosMatchStart = nextPosMatchStart;
+            curPosMatchEnd = nextPosMatchEnd;
+            currPos = nextPos;    
+        }
+    }
+}
+
+float Taxonomer::calScoreIncrement(uint16_t hammings, int shift) {
+    float scoreIncrement = 0;
+    for (int i = 0; i < shift; i++) {
+        uint8_t hamming = (hammings >> (14 - i * 2)) & 0b11;
+        if (hamming == 0) {
+            scoreIncrement += 3.0f;
+        } else {
+            scoreIncrement += 2.0f - 0.5f * hamming;
+        }
+    }
+    return scoreIncrement;
+}
+
+int Taxonomer::calHammingDistIncrement(uint16_t hammings, int shift) {
+    int hammingDistIncrement = 0;
+    for (int i = 0; i < shift; i++) {
+        hammingDistIncrement += (hammings >> (14 - i * 2)) & 0b11;
+    }
+    return hammingDistIncrement;
 }
 
 void Taxonomer::remainConsecutiveMatches(const Match * matchList,
@@ -825,6 +998,14 @@ bool Taxonomer::isConsecutive(const Match * match1, const Match * match2) {
     // match1 87654321 -> 08765432
     // match2 98765432 -> 08765432
     return (match1->dnaEncoding >> 3) == (match2->dnaEncoding & 0x1FFFFF);
+}
+
+bool Taxonomer::isConsecutive(const Match * match1, const Match * match2, int shift) {
+    // match1 ---76543210 -> ---**765432
+    // match2 ---98765432 -> ---**765432
+    // uint32_t dnaEncoding1 = match1->dnaEncoding >> (3 * shift);
+    // uint32_t dnaEncoding2 = match2->dnaEncoding & ((1U << (24 - 3 * shift)) - 1);
+    return (match1->dnaEncoding >> (3 * shift)) == (match2->dnaEncoding & ((1U << (24 - 3 * shift)) - 1));
 }
 
 // bool Taxonomer::isConsecutive_diffFrame(const Match * match1, const Match * match2) {

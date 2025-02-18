@@ -69,6 +69,7 @@ struct MatchBlock {
 
 class Taxonomer {
 private:
+    const LocalParameters & par;
     TaxonomyWrapper * taxonomy;
 
     // spaced k-mer
@@ -135,6 +136,9 @@ private:
 
     void ensureArraySize(size_t newSize);
 
+    float calScoreIncrement(uint16_t hammings, int shift);
+    int calHammingDistIncrement(uint16_t hammings, int shift);
+
 
 public:
     Taxonomer(const LocalParameters & par, TaxonomyWrapper * taxonomy);
@@ -163,6 +167,12 @@ public:
                        size_t end,
                        vector<MatchPath> & matchPaths,
                        TaxID speciesId);                                    
+    
+    void getMatchPaths2(const Match * matchList,
+                       size_t start,
+                       size_t end,
+                       vector<MatchPath> & matchPaths,
+                       TaxID speciesId);  
 
     float combineMatchPaths(vector<MatchPath> & matchPaths,
                             size_t matchPathStart,
@@ -180,6 +190,9 @@ public:
                                 int queryLength);
 
     static bool isConsecutive(const Match * match1, const Match * match2);
+
+    static bool isConsecutive(const Match * match1, const Match * match2, int shift);
+
 
     // static bool isConsecutive_diffFrame(const Match * match1, const Match * match2);
 

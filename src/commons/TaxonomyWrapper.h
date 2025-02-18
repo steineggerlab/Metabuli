@@ -193,6 +193,15 @@ public:
         }
     }
 
+    void getName2InternalTaxid(std::unordered_map<std::string, TaxID> & name2taxid) {
+        for (size_t i = 0; i < maxNodes; i++) {
+            const TaxonNode &node = taxonNodes[i];
+            if (node.nameIdx != (size_t)-1) {
+                name2taxid[getString(node.nameIdx)] = node.taxId;
+            }
+        }
+    }
+
 protected:
     TaxID eukaryotaTaxID;
     int *internal2orgTaxId; 

@@ -46,6 +46,7 @@ private:
     int spaceNum_int;
     int bitsForCodon;
     int bitsFor8Codons;
+    int smerLen;
 
     void addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev, uint32_t kmerCnt, uint32_t frame,
                               int readLength);
@@ -65,6 +66,9 @@ public:
                               vector<string> &nonCds);
     
     void fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite,
+                             uint32_t seqID, vector<int> *aaFrames, uint32_t offset = 0);
+
+    void fillQuerySyncmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite,
                              uint32_t seqID, vector<int> *aaFrames, uint32_t offset = 0);
 
     string reverseCompliment(string &read) const;
