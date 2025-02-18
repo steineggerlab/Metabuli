@@ -108,7 +108,7 @@ void KmerMatcher::loadTaxIdList(const LocalParameters & par) {
 }
 
 
-bool KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
+bool KmerMatcher::matchKmers(Buffer<QueryKmer> * queryKmerBuffer,
                              Buffer<Match> * matchBuffer,
                              const string & db){
     std::cout << "Comparing query and reference metamers..." << std::endl;
@@ -555,7 +555,7 @@ bool KmerMatcher::compareMatches(const Match& a, const Match& b) {
     return a.dnaEncoding < b.dnaEncoding;
 }
 
-bool KmerMatcher::matchKmers_skipDecoding(QueryKmerBuffer * queryKmerBuffer,
+bool KmerMatcher::matchKmers_skipDecoding(Buffer<QueryKmer> * queryKmerBuffer,
                                           Buffer<Match> * matchBuffer,
                                           const string & db){
     // Set database files

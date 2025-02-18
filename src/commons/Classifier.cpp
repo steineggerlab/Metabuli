@@ -37,7 +37,7 @@ Classifier::~Classifier() {
 }
 
 void Classifier::startClassify(const LocalParameters &par) {
-    QueryKmerBuffer queryKmerBuffer;
+    Buffer<QueryKmer> queryKmerBuffer;
     Buffer<Match> matchBuffer;
     vector<Query> queryList;
     size_t numOfTatalQueryKmerCnt = 0;

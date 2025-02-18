@@ -7,7 +7,6 @@
 #include "printBinary.h"
 #include "common.h"
 #include "Mmap.h"
-#include "KmerBuffer.h"
 #include <algorithm>
 #include "kseq.h"
 #include "KSeqBufferReader.h"
@@ -65,7 +64,7 @@ public:
                               vector<string> &cds,
                               vector<string> &nonCds);
     
-    void fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite,
+    void fillQueryKmerBuffer(const char *seq, int seqLen, Buffer<QueryKmer> &kmerBuffer, size_t &posToWrite,
                              uint32_t seqID, vector<int> *aaFrames, uint32_t offset = 0);
 
     void fillQuerySyncmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite,
@@ -110,7 +109,7 @@ public:
     //                                 const vector<int> & aaSeq);
 
     int fillBufferWithKmerFromBlock(const char *seq,
-                                    TargetKmerBuffer &kmerBuffer,
+                                    Buffer<TargetKmer> &kmerBuffer,
                                     size_t &posToWrite,
                                     int seqID,
                                     int taxIdAtRank,
@@ -120,7 +119,7 @@ public:
                                     int blockEnd = 0);
     
     int fillBufferWithSyncmer(const char *seq,
-                              TargetKmerBuffer &kmerBuffer,
+                              Buffer<TargetKmer> &kmerBuffer,
                               size_t &posToWrite,
                               int seqID,
                               int taxIdAtRank,
