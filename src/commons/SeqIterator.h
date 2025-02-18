@@ -67,7 +67,7 @@ public:
     void fillQueryKmerBuffer(const char *seq, int seqLen, Buffer<QueryKmer> &kmerBuffer, size_t &posToWrite,
                              uint32_t seqID, vector<int> *aaFrames, uint32_t offset = 0);
 
-    void fillQuerySyncmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite,
+    void fillQuerySyncmerBuffer(const char *seq, int seqLen, Buffer<QueryKmer> &kmerBuffer, size_t &posToWrite,
                              uint32_t seqID, vector<int> *aaFrames, uint32_t offset = 0);
 
     string reverseCompliment(string &read) const;

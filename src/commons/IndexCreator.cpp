@@ -572,10 +572,12 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
     Metamer prevMetamer;
     size_t splitIdx = 1;
     size_t totalDiffIdx = 0;
+    size_t write = 0;
 
     cout << "Writing k-mers to disk" << endl;
     for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
         for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
+            write++;
             getDeltaIdx(prevMetamer, kmerBuffer[uniqKmerIdx[j]].metamer, diffIdxFile, deltaIdxBuffer, bufferSize, localBufIdx, totalDiffIdx);
             prevMetamer = kmerBuffer[uniqKmerIdx[j]].metamer;
             if((splitIdx < splitCnt) && (prevMetamer.metamer == offsetList[splitIdx].metamer.metamer)){
@@ -1124,6 +1126,7 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                     #pragma omp critical
                     {
                         cout << processedBatchCnt << " batches processed out of " << accessionBatches.size() << endl;
+                        cout << fastaPaths[accessionBatches[batchIdx].whichFasta] << " processed\n";
                     }
                 } else {
                     checker[batchIdx] = false;
