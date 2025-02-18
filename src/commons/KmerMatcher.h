@@ -2,7 +2,6 @@
 #define METABULI_KMERMATCHER_H
 #include "BitManipulateMacros.h"
 #include "FileUtil.h"
-#include "KmerBuffer.h"
 #include "LocalParameters.h"
 #include "Match.h"
 #include "Mmap.h"
@@ -171,7 +170,7 @@ public:
 
   virtual ~KmerMatcher();
   
-  bool matchKmers(QueryKmerBuffer *queryKmerBuffer,
+  bool matchKmers(Buffer<QueryKmer> *queryKmerBuffer,
                   Buffer<Match> *matchBuffer,
                   const string &db = string());
 
@@ -180,7 +179,7 @@ public:
   //                 const string &db = string());
   
 
-  bool matchKmers_skipDecoding(QueryKmerBuffer *queryKmerBuffer,
+  bool matchKmers_skipDecoding(Buffer<QueryKmer> *queryKmerBuffer,
                                Buffer<Match> *matchBuffer,
                                const string &db = string());
 

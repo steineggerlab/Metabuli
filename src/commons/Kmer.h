@@ -3,6 +3,7 @@
 #include <iostream>
 #include "NcbiTaxonomy.h"
 #include <cstdint>
+#include <bitset>
 
 struct QueryKmerInfo {
     explicit QueryKmerInfo(uint32_t seqID = 0, uint32_t pos = 0, uint8_t frame = 0 ) : pos(pos), sequenceID(seqID), frame(frame) {}
@@ -18,14 +19,16 @@ typedef struct QueryKmer {
     QueryKmerInfo info; // 8 byte
 } QueryKmer; // 16 byte
 
-struct TargetKmer{
-    TargetKmer(): seqId(0), taxIdAtRank(0), ADkmer(0) {};
-    TargetKmer(uint64_t ADkmer, TaxID taxIdAtRank, int seqId)
-        : seqId(seqId), taxIdAtRank(taxIdAtRank), ADkmer(ADkmer) {}
-    TaxID seqId; // 4 byte
-    TaxID taxIdAtRank; // 4 byte
-    uint64_t ADkmer; // 8 byte
-};
+
+
+// struct TargetKmer{
+//     TargetKmer(): seqId(0), taxIdAtRank(0), ADkmer(0) {};
+//     TargetKmer(uint64_t ADkmer, TaxID taxIdAtRank, int seqId)
+//         : seqId(seqId), taxIdAtRank(taxIdAtRank), ADkmer(ADkmer) {}
+//     TaxID seqId; // 4 byte
+//     TaxID taxIdAtRank; // 4 byte
+//     uint64_t ADkmer; // 8 byte
+// };
 
 struct DiffIdxSplit{
     DiffIdxSplit(uint64_t ADkmer, size_t diffIdxOffset, size_t infoIdxOffset) : ADkmer(ADkmer), diffIdxOffset(diffIdxOffset), infoIdxOffset(infoIdxOffset) { }
@@ -37,5 +40,79 @@ struct DiffIdxSplit{
     size_t infoIdxOffset;
 };
 
+struct Metamer {
+    Metamer() : metamer(0), id(0) {}
+    Metamer(uint64_t metamer, uint32_t id) : metamer(metamer), id(id) {}
+    uint64_t metamer;
+    uint32_t id; // it is mapped to taxonomy ID and protein ID
+
+    Metamer substract(const Metamer & other) const { // self is equal or greater than other
+        if (metamer < other.metamer) {
+            std::cerr << "Metamer: substract: metamer is smaller than other.metamer" << std::endl;
+        } else if (metamer == other.metamer) {
+            return Metamer(0, id - other.id);
+        } else { // metamer > other.metamer
+            if (id > other.id) {
+                return Metamer(metamer - other.metamer, id - other.id);
+            } else {
+                return Metamer((metamer - 1) - other.metamer, UINT32_MAX - other.id + id + 1);
+            }
+        }
+        return Metamer(0, 0);
+    }
+
+    static std::bitset<96> substract(const Metamer & metamer1, const Metamer & metamer2) {
+        // metamer 1 is the same or greater than metamer2
+        if (metamer1.metamer == metamer2.metamer) {
+            return std::bitset<96>(metamer1.id - metamer2.id);
+        }
+        if (metamer1.id >= metamer2.id) {
+            std::bitset<96> result;
+            result = metamer1.metamer - metamer2.metamer;
+            result <<= 32;
+            result |= (metamer1.id - metamer2.id);
+            return result;
+        }
+        std::bitset<96> result;
+        uint64_t diff = metamer1.metamer - metamer2.metamer - 1;
+        result = diff;
+        result <<= 32;
+        result |= (UINT32_MAX - metamer2.id + metamer1.id + 1);
+        return result;    
+    }
+
+    Metamer add(const std::bitset<96> & diff) const {
+        uint64_t idSum = this->id + (diff & std::bitset<96>(0xFFFFFFFF)).to_ullong();
+        uint64_t metamerSum = this->metamer + (diff >> 32).to_ullong() + (idSum >> 32);
+        idSum &= 0xFFFFFFFF;
+        return Metamer(metamerSum, idSum);
+    }
+
+    bool operator < (const Metamer & other) const {
+        if (metamer != other.metamer) {
+            return metamer < other.metamer;
+        }
+        return id < other.id;
+    }
+
+    bool operator == (const Metamer & other) const {
+        return metamer == other.metamer && id == other.id;
+    }
+};
+
+struct DeltaIdxOffset{
+    DeltaIdxOffset(Metamer metamer, size_t offset) : metamer(metamer), offset(offset) { }
+    DeltaIdxOffset() {};
+    Metamer metamer;
+    size_t offset;
+};
+
+struct TargetKmer{
+    TargetKmer(): metamer(),spTaxId(0) {};
+    TargetKmer(uint64_t metamer, TaxID taxIdAtRank, int seqId)
+        : metamer(metamer, seqId), spTaxId(taxIdAtRank) {}
+    Metamer metamer; // 12 byte
+    TaxID spTaxId; // 4 byte
+};
 
 #endif //ADKMER3_KMER_H

@@ -315,7 +315,7 @@ void SeqIterator::sixFrameTranslation(const char *seq, int len, vector<int> *aaF
 void SeqIterator::fillQueryKmerBuffer(
     const char *seq,
     int seqLen, 
-    QueryKmerBuffer &kmerBuffer, 
+    Buffer<QueryKmer> &kmerBuffer, 
     size_t &posToWrite, 
     uint32_t seqID, 
     vector<int> *aaFrames,
@@ -428,73 +428,9 @@ char *SeqIterator::reverseCompliment(char *read, size_t length) const {
     return revCom;
 }
 
-
-// // It extracts kmers from amino acid sequence with DNA information and fill the kmerBuffer with them.
-// int
-// SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock &block, const char *seq, TargetKmerBuffer &kmerBuffer,
-//                                          size_t &posToWrite, int seqID, int taxIdAtRank, const vector<int> & aaSeq) {
-//     uint64_t tempKmer = 0;
-//     int len = (int) aaSeq.size();
-//     int checkN;
-//     for (int kmerCnt = 0; kmerCnt < len - kmerLength - spaceNum_int + 1; kmerCnt++) {
-//         tempKmer = 0;
-//         checkN = 0;
-//         for (uint32_t i = 0, j = 0; i < kmerLength + spaceNum; i++, j += mask[i]) {
-//             if (-1 == aaSeq[kmerCnt + i]) {
-//                 checkN = 1;
-//                 break;
-//             }
-//             tempKmer += aaSeq[kmerCnt + i] * powers[j] * mask[i];
-//         }
-//         if (checkN == 1) {
-//             kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0};
-//         } else {
-//             addDNAInfo_TargetKmer(tempKmer, seq, kmerCnt, block.strand, block.start, block.end);
-//             kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID};
-//         }
-//         posToWrite++;
-//     }
-//     return 0;
-// }
-
-
-
 // It extracts kmers from amino acid sequence with DNA information and fill the kmerBuffer with them.
 int SeqIterator::fillBufferWithKmerFromBlock(const char *seq,
-                                             TargetKmerBuffer &kmerBuffer,
-                                             size_t &posToWrite, 
-                                             int seqID, 
-                                             int taxIdAtRank, 
-                                             const vector<int> & aaSeq,
-                                             int blockStrand,
-                                             int blockStart,
-                                             int blockEnd) {
-    uint64_t tempKmer = 0;
-    int len = (int) aaSeq.size();
-    int checkN;
-    for (int kmerCnt = 0; kmerCnt < len - kmerLength - spaceNum_int + 1; kmerCnt++) {
-        tempKmer = 0;
-        checkN = 0;
-        for (uint32_t i = 0, j = 0; i < kmerLength + spaceNum; i++, j += mask[i]) {
-            if (-1 == aaSeq[kmerCnt + i]) {
-                checkN = 1;
-                break;
-            }
-            tempKmer += aaSeq[kmerCnt + i] * powers[j] * mask[i];
-        }
-        if (checkN == 1) {
-            kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0};
-        } else {
-            addDNAInfo_TargetKmer(tempKmer, seq, kmerCnt, blockStrand, blockStart, blockEnd);
-            kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID};
-        }
-        posToWrite++;
-    }
-    return 0;
-}
-
-int SeqIterator::fillBufferWithKmerFromBlock(const char *seq,
-                                             TargetKmerBuffer &kmerBuffer,
+                                             Buffer<TargetKmer> &kmerBuffer,
                                              size_t &posToWrite, 
                                              int seqID, 
                                              int taxIdAtRank, 
@@ -527,14 +463,14 @@ int SeqIterator::fillBufferWithKmerFromBlock(const char *seq,
 }
 
 int SeqIterator::fillBufferWithSyncmer(const char *seq,
-                                       TargetKmerBuffer &kmerBuffer,
+                                       Buffer<TargetKmer> &kmerBuffer,
                                        size_t &posToWrite,
                                        int seqID,
                                        int taxIdAtRank,
                                        const vector<int> & aaSeq,
-                                       int blockStrand = 0,
-                                       int blockStart = 0,
-                                       int blockEnd = 0) {
+                                       int blockStrand,
+                                       int blockStart,
+                                       int blockEnd) {
     uint64_t tempKmer = 0;
     int len = (int) aaSeq.size();
     int checkN;

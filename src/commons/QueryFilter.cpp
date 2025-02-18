@@ -125,7 +125,7 @@ void QueryFilter::filterReads(LocalParameters & par) {
 
     isFiltered = new bool[queryIndexer->getReadNum_1()];
     memset(isFiltered, 0, sizeof(bool) * queryIndexer->getReadNum_1());
-    QueryKmerBuffer kmerBuffer;
+    Buffer<QueryKmer> kmerBuffer;
     Buffer<Match> matchBuffer;
     vector<Query> queryList;
 
