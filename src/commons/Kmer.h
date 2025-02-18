@@ -81,10 +81,31 @@ struct Metamer {
         return result;    
     }
 
+    static std::bitset<96> substract2(const Metamer & metamer1, const Metamer & metamer2) {
+        // metamer 1 is the same or greater than metamer2
+        if (metamer1.metamer == metamer2.metamer) {
+            return std::bitset<96>(metamer1.id - metamer2.id);
+        }
+        if (metamer1.id >= metamer2.id) {
+            std::bitset<96> result;
+            result = metamer1.metamer - metamer2.metamer;
+            result <<= 30;
+            result |= (metamer1.id - metamer2.id);
+            return result;
+        }
+        std::bitset<96> result;
+        uint64_t diff = metamer1.metamer - metamer2.metamer - 1;
+        result = diff;
+        result <<= 30;
+        result |= (((1U << 30) - 1) - metamer2.id + metamer1.id + 1);
+        return result;    
+    }
+
+
     Metamer add(const std::bitset<96> & diff) const {
-        uint64_t idSum = this->id + (diff & std::bitset<96>(0xFFFFFFFF)).to_ullong();
-        uint64_t metamerSum = this->metamer + (diff >> 32).to_ullong() + (idSum >> 32);
-        idSum &= 0xFFFFFFFF;
+        uint64_t idSum = this->id + (diff & std::bitset<96>(0x3FFFFFFF)).to_ullong();
+        uint64_t metamerSum = this->metamer + (diff >> 30).to_ullong() + (idSum >> 30);
+        idSum &= 0x3FFFFFFF;
         return Metamer(metamerSum, idSum);
     }
 

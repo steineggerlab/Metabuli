@@ -62,6 +62,17 @@ protected:
                                // search begins.
   };
 
+  struct QueryKmerSplit2 {
+    QueryKmerSplit2(size_t start, size_t end, size_t length,
+                   const DeltaIdxOffset &deltaIdxOffset)
+        : start(start), end(end), length(length), deltaIdxOffset(deltaIdxOffset) {}
+    size_t start; // start idx in query k-mer list
+    size_t end;   // end idx in query k-mer list
+    size_t length;
+    DeltaIdxOffset deltaIdxOffset; // index in target k-mer list from where the
+                               // search begins.
+  };
+
   inline size_t AminoAcidPart(size_t kmer) const { return (kmer)&MARKER; }
 
 
@@ -174,6 +185,10 @@ public:
                   Buffer<Match> *matchBuffer,
                   const string &db = string());
 
+  bool matchMetamers(Buffer<QueryKmer> *queryKmerBuffer,
+                     Buffer<Match> *matchBuffer,
+                     const string &db = string());
+
   // bool matchKmers2(QueryKmerBuffer *queryKmerBuffer,
   //                 Buffer<Match> *matchBuffer,
   //                 const string &db = string());
@@ -188,6 +203,10 @@ public:
   static uint64_t getNextTargetKmer(uint64_t lookingTarget,
                                     const uint16_t *diffIdxBuffer,
                                     size_t &diffBufferIdx, size_t &totalPos);
+
+  static Metamer getNextTargetKmer(const Metamer & lookingTarget,
+                                   const uint16_t *diffIdxBuffer,
+                                   size_t &diffBufferIdx, size_t &totalPos);
 
 
   // Getters
@@ -209,6 +228,27 @@ inline uint64_t KmerMatcher::getNextTargetKmer(uint64_t lookingTarget,
   }
   diffIn64bit |= (fragment & 0x7FFF);
   return diffIn64bit + lookingTarget;
+}
+
+inline Metamer KmerMatcher::getNextTargetKmer(const Metamer & lookingTarget,
+                                              const uint16_t *diffIdxBuffer,
+                                              size_t &diffBufferIdx,
+                                              size_t &totalPos) {
+  uint16_t fragment;
+  uint16_t check = 32768; // 2^15
+  bitset<96> diffIn96bit;
+  // uint64_t diffIn64bit = 0;
+  fragment = diffIdxBuffer[diffBufferIdx++];
+  totalPos++;
+  while (!(fragment & check)) { // 27 %
+    diffIn96bit |= fragment;
+    diffIn96bit <<= 15u;
+    fragment = diffIdxBuffer[diffBufferIdx++];
+    totalPos++;
+  }
+  fragment &= ~check;      // not; 8.47 %
+  diffIn96bit |= fragment; // or : 23.6%
+  return lookingTarget.add(diffIn96bit);
 }
 
 inline uint8_t KmerMatcher::getHammingDistanceSum(uint64_t kmer1,

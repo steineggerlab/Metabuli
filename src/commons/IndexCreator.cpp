@@ -543,14 +543,14 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
             for (size_t k = uniqKmerIdxRanges[j].first + start - counter; k + 1 < uniqKmerIdxRanges[j].second; k++) {
                 if (AminoAcidPart(kmerBuffer[uniqKmerIdx[k]].metamer.metamer) 
                     != AminoAcidPart(kmerBuffer[uniqKmerIdx[k + 1]].metamer.metamer)) {
-                    offsetList[splitCnt].metamer.metamer = kmerBuffer[uniqKmerIdx[k + 1]].metamer.metamer;
+                    offsetList[splitCnt].metamer = kmerBuffer[uniqKmerIdx[k + 1]].metamer;
                     splitCnt++;
                     found = true;
                     break;
                 }
             }
             if (!found) {
-                offsetList[splitCnt].metamer.metamer = kmerBuffer[uniqKmerIdx[uniqKmerIdxRanges[j+1].first]].metamer.metamer;
+                offsetList[splitCnt].metamer = kmerBuffer[uniqKmerIdx[uniqKmerIdxRanges[j+1].first]].metamer;
                 cout << "Split " << splitCnt << " at " << offsetList[splitCnt].metamer.metamer << endl;
                 splitCnt++;
             }
@@ -733,7 +733,7 @@ void IndexCreator::getDeltaIdx(const Metamer & previousMetamer,
                                size_t bufferSize,
                                size_t & localBufIdx,
                                size_t & totalBufferIdx) {
-    bitset<96> diff = Metamer::substract(currentMetamer, previousMetamer);                               
+    bitset<96> diff = Metamer::substract2(currentMetamer, previousMetamer);                               
     uint16_t buffer[7];
     int idx = 5;
     buffer[6] = SET_END_FLAG(static_cast<uint16_t>((diff & bitset<96>(0x7FFF)).to_ulong()));
@@ -754,7 +754,7 @@ void IndexCreator::getDeltaIdx(const Metamer & previousMetamer,
                                uint16_t * deltaIndexBuffer,
                                size_t bufferSize,
                                size_t & localBufIdx) {
-    bitset<96> diff = Metamer::substract(currentMetamer, previousMetamer);                               
+    bitset<96> diff = Metamer::substract2(currentMetamer, previousMetamer);                               
     // uint64_t kmerdiff = entryToWrite - lastKmer;
     uint16_t buffer[7];
     // uint16_t buffer[5];
