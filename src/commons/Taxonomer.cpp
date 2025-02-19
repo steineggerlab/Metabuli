@@ -125,8 +125,7 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
                                 size_t end,
                                 const Match *matchList,
                                 vector<Query> & queryList,
-                                const LocalParameters &par) {
-    // cout << "Current query: " << currentQuery << endl;
+                                const LocalParameters &par) {    
     // for (size_t i = offset; i < end+1; i ++) {
     //     matchList[i].printMatch();
     // }
@@ -180,12 +179,10 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
       queryList[currentQuery].hammingDist = speciesScore.hammingDist;
       return;
     }
-
     // Lower rank classification
     TaxID result = lowerRankClassification(taxCnt,
                                            speciesScore.taxId,
                                            queryList[currentQuery].queryLength + queryList[currentQuery].queryLength2);
-    
     // TaxID result = speciesScore.taxId;
 
     // Store classification results
@@ -334,7 +331,7 @@ TaxonScore Taxonomer::getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpec
         size_t pathSize = matchPaths.size();
         // Combine MatchPaths
         if (par.printLog) {
-            cout << "Current species: " << taxonomy->getOriginalTaxID(currentSpecies) << endl;
+            cout << "Current species: " << taxonomy->getOriginalTaxID(currentSpecies) << " " << currentSpecies << endl;
             for (size_t kk = previousPathSize; kk < matchPaths.size(); kk++) {
                 matchPaths[kk].printMatchPath();
             }

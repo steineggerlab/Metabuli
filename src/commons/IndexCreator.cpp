@@ -580,8 +580,6 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
     for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
         size_t j = uniqKmerIdxRanges[i].first;
         while (j < uniqKmerIdxRanges[i].second) {
-        // for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
-            // write++;
             identicalMetamers.clear();
             currentMetamer = kmerBuffer[uniqKmerIdx[j]].metamer.metamer;
             while (j < uniqKmerIdxRanges[i].second && 
@@ -596,17 +594,11 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
                 getDeltaIdx(prevMetamer, identicalMetamers[k], diffIdxFile, deltaIdxBuffer, bufferSize, localBufIdx, totalDiffIdx);
                 prevMetamer = identicalMetamers[k];
                 if ((splitIdx < splitCnt) && (prevMetamer.metamer == offsetList[splitIdx].metamer.metamer)) {
+                    offsetList[splitIdx].metamer = prevMetamer;
                     offsetList[splitIdx].offset = totalDiffIdx;
                     splitIdx ++;
                 }
             }
-
-            // getDeltaIdx(prevMetamer, kmerBuffer[uniqKmerIdx[j]].metamer, diffIdxFile, deltaIdxBuffer, bufferSize, localBufIdx, totalDiffIdx);
-            // prevMetamer = kmerBuffer[uniqKmerIdx[j]].metamer;
-            // if ((splitIdx < splitCnt) && (prevMetamer.metamer == offsetList[splitIdx].metamer.metamer)) {
-            //     offsetList[splitIdx].offset = totalDiffIdx;
-            //     splitIdx ++;
-            // }
         }
     }
     cout<<"total k-mer count  : "<< kmerNum << endl;

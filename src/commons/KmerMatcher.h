@@ -244,7 +244,6 @@ inline Metamer KmerMatcher::getNextTargetKmer(const Metamer & lookingTarget,
     totalPos++;
   }
   diffIn96bit |= (fragment & 0x7FFF);
-  // cout << "diffIn96bit: " << diffIn96bit << endl;
   return lookingTarget.add(diffIn96bit);
 }
 
