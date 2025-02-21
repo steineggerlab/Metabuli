@@ -74,12 +74,11 @@ int build(int argc, const char **argv, const Command &command){
     int numOfSplits = idxCre.getNumOfFlush();
     FileMerger merger(par, taxonomy);
     for (int i = 0; i < numOfSplits; i++) {
-        merger.addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
-                               dbDir + "/" + to_string(i) + "_info");
+        merger.addFilesToMerge(dbDir + "/" + to_string(i) + "_deltaIdx.mtbl", "");
     }
     merger.updateTaxId2SpeciesTaxId(dbDir + "/taxID_list");
-    merger.setMergedFileNames(dbDir + "/diffIdx", dbDir + "/info", dbDir + "/split");  
-    merger.mergeTargetFiles();
+    merger.setMergedFileNames(dbDir + "/deltaIdx.mtbl", "", dbDir + "/deltaIdxSplits.mtbl");  
+    merger.mergeDeltaIdxFiles();
     delete taxonomy;
     cout << "Index creation completed." << endl;
     return 0;
