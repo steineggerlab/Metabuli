@@ -25,5 +25,6 @@ extern int taxdump(int argc, const char **argv, const Command& command);
 extern int accession2taxid(int argc, const char **argv, const Command& command);
 extern int editNames(int argc, const char **argv, const Command& command);
 extern int createnewtaxalist(int argc, const char **argv, const Command& command);
+extern int printDeltaIdx(int argc, const char **argv, const Command& command); 
 
 #endif //ADCLASSIFIER2_LOCALCOMMANDDECLARATIONS_H
