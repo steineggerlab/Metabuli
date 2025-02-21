@@ -494,15 +494,28 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer,
     Metamer prevMetamer;
     size_t write = 0;
 
+    vector<Metamer> identicalMetamers;
+    uint64_t currentMetamer;
     for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
-        for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
-            write++;
-            getDeltaIdx(prevMetamer, kmerBuffer[uniqKmerIdx[j]].metamer, diffIdxFile, deltaIdxBuffer, bufferSize, localBufIdx);
-            prevMetamer= kmerBuffer[uniqKmerIdx[j]].metamer;
+        size_t j = uniqKmerIdxRanges[i].first;
+        while (j < uniqKmerIdxRanges[i].second) {
+            identicalMetamers.clear();
+            currentMetamer = kmerBuffer[uniqKmerIdx[j]].metamer.metamer;
+            while (j < uniqKmerIdxRanges[i].second && 
+                   currentMetamer == kmerBuffer[uniqKmerIdx[j]].metamer.metamer) {
+                identicalMetamers.push_back(kmerBuffer[uniqKmerIdx[j]].metamer);
+                j++;
+            }
+            // Sort the identicalMetamers using compareMetamer
+            sort(identicalMetamers.begin(), identicalMetamers.end(), compareMetamer);
+            for (size_t k = 0; k < identicalMetamers.size(); k++) {
+                write++;
+                getDeltaIdx(prevMetamer, identicalMetamers[k], diffIdxFile, deltaIdxBuffer, bufferSize, localBufIdx);
+                prevMetamer = identicalMetamers[k];
+            }
         }
     }
-    flushKmerBuf(deltaIdxBuffer, diffIdxFile, localBufIdx);
-    
+    flushKmerBuf(deltaIdxBuffer, diffIdxFile, localBufIdx);    
     cout<<"total k-mer count  : "<< kmerNum << endl;
     cout<<"written k-mer count: "<< write << endl;
     free(deltaIdxBuffer);
@@ -772,12 +785,9 @@ void IndexCreator::getDeltaIdx(const Metamer & previousMetamer,
                                size_t bufferSize,
                                size_t & localBufIdx) {
     bitset<96> diff = Metamer::substract(currentMetamer, previousMetamer);                               
-    // uint64_t kmerdiff = entryToWrite - lastKmer;
     uint16_t buffer[7];
-    // uint16_t buffer[5];
     int idx = 5;
     buffer[6] = SET_END_FLAG(static_cast<uint16_t>((diff & bitset<96>(0x7FFF)).to_ulong()));
-    // buffer[6] = SET_END_FLAG(GET_15_BITS(kmerdiff));
     diff >>= 15U;
     while (diff.any()) {
         uint16_t toWrite = GET_15_BITS(static_cast<uint16_t>((diff & bitset<96>(0x7FFF)).to_ulong()));
@@ -1151,7 +1161,7 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                     #pragma omp critical
                     {
                         cout << processedBatchCnt << " batches processed out of " << accessionBatches.size() << endl;
-                        cout << fastaPaths[accessionBatches[batchIdx].whichFasta] << " processed\n";
+                        // cout << fastaPaths[accessionBatches[batchIdx].whichFasta] << " processed\n";
                     }
                 } else {
                     checker[batchIdx] = false;

@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include <iostream>
 #include <fstream>
-
+#include "Util.h"
 static const std::map<std::string, std::string> ExtendedShortRanks = 
                                                 {{"subspecies", "ss" },
                                                  { "species", "s" },
@@ -63,6 +63,10 @@ public:
     TaxID getOriginalTaxID(TaxID internalTaxID) const {
         if (!useInternalTaxID) {
             return internalTaxID;
+        }
+        if (internalTaxID > maxTaxID) {
+            std::cout << internalTaxID << " isn't used." << std::endl;
+            EXIT(EXIT_FAILURE);
         }
         return internal2orgTaxId[internalTaxID]; 
     }

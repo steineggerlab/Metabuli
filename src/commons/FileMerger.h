@@ -9,6 +9,7 @@
 #include "printBinary.h"
 #include "common.h"
 #include <cstdint>
+#include "KmerMatcher.h"
 
 
 using namespace std;
@@ -51,10 +52,14 @@ public:
     ~FileMerger();
     // void mergeTargetFiles(const LocalParameters & par, int numOfSplits);
     void mergeTargetFiles(); 
+    void mergeDeltaIdxFiles();
     void printFilesToMerge();
     //    void updateTargetDatabase(vector<char *> diffIdxFileNames, vector<char *> infoFileNames, vector<int> & taxListAtRank, vector<int> & taxIdList, const int & seqIdOffset);
     size_t smallest(const uint64_t *lookingKmer,
                     const TaxID *lookingInfos,
+                    size_t fileCnt);
+    
+    size_t smallest(const Metamer * lookingKmers,
                     size_t fileCnt);
     static uint64_t getNextKmer(uint64_t currentValue, const struct MmapedData<uint16_t> & diffList, size_t &idx);
 };

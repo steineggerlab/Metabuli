@@ -140,7 +140,7 @@ protected:
                                    size_t & uniqKmerCnt, 
                                    const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
-    void writeDiffIdx(uint16_t *buffer,
+    static void writeDiffIdx(uint16_t *buffer,
                       size_t bufferSize,
                       FILE* handleKmerTable,
                       uint16_t *toWrite,
@@ -150,8 +150,6 @@ protected:
     void writeDbParameters();
 
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
-
-    static bool compareMetamer(const Metamer & a, const Metamer & b);
 
     size_t fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                 bool *checker,
@@ -254,7 +252,7 @@ public:
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
                     uint16_t *kmerBuf, size_t bufferSize, size_t & localBufIdx, size_t & totalBufferIdx);
 
-    void getDeltaIdx(const Metamer & previousMetamer,
+    static void getDeltaIdx(const Metamer & previousMetamer,
                      const Metamer & currentMetamer,
                      FILE* handleKmerTable,
                      uint16_t * deltaIndexBuffer,
@@ -262,7 +260,7 @@ public:
                      size_t & localBufIdx,
                      size_t & totalBufferIdx);
 
-    void getDeltaIdx(const Metamer & previousMetamer,
+    static void getDeltaIdx(const Metamer & previousMetamer,
                      const Metamer & currentMetamer,
                      FILE* handleKmerTable,
                      uint16_t * deltaIndexBuffer,
@@ -276,5 +274,7 @@ public:
     static void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
 
     static void flushInfoBuf(TaxID * buffer, FILE * infoFile, size_t & localBufIdx );
+
+    static bool compareMetamer(const Metamer & a, const Metamer & b);
 };
 #endif //ADKMER4_INDEXCREATOR_H
