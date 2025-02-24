@@ -199,8 +199,10 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
 }
 
 void GroupGenerator::makeGroupsFromBinning(const string &binningFileDir, 
+                                           unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> &relation,
                                            unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
-                                           vector<int> &queryGroupInfo) {
+                                           vector<int> &queryGroupInfo, 
+                                           int groupKmerThr) {
     // Map to store the count of shared Y nodes between X nodes
     DisjointSet ds;
     string line;

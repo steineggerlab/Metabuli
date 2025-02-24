@@ -76,7 +76,7 @@ std::vector<Command> commands = {
         {"grouping", groupGeneration, &localPar.groupGeneration, COMMAND_MAIN,
                 "Assigning group representative taxonomy label to unclassified query reads",
                 nullptr,
-                "Jaebeom Kim <jbeom0731@gmail.com>",
+                "Luna Sung-eun Jang",
                 "<i:query file(s)> <i:database directory> <o:output directory> <job ID> ",
                 CITATION_SPACEPHARER,
                 {{"FASTA", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA | DbType::VARIADIC, &DbValidator::flatfile},

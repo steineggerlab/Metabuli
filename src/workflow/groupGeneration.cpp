@@ -64,8 +64,7 @@ int groupGeneration(int argc, const char **argv, const Command& command)
 
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
-#endif
-
+#endif    
     GroupGenerator * groupGenerator = new GroupGenerator(par);
     groupGenerator->startGroupGeneration(par);
     delete groupGenerator;

@@ -142,6 +142,12 @@ public:
                        const vector<int> &queryGroupInfo, 
                        const unordered_map<uint32_t, int> &repLabel, 
                        const string &jobId);
+    
+    void makeGroupsFromBinning(const string &binningFileDir, 
+                               unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> &relation,
+                               unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
+                               vector<int> &queryGroupInfo, 
+                               int groupKmerThr);
 
     void tempFunction();
 
