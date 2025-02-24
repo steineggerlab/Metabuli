@@ -1,30 +1,76 @@
-[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/metabuli/README.html)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/metabuli/README.html) 
+![Platform](https://img.shields.io/badge/platform-Mac%20%7C%20Windows%20%7C%20Linux-brightgreen)
 # Metabuli
-Metabuli is metagenomic classifier that jointly analyze both DNA and amino acid (AA) sequences.
-DNA-based classifiers can make specific classifications, exploiting point mutations to distinguish close taxa.
-AA-based classifiers have higher sensitivity in detecting homology between query and reference sequences, leverageing higher conservation of AA sequences.
-Metabuli combines the information of both sequence types using a novel k-mer structure, _metamer_, to enable both specific and sensitive characterization of metagenomic samples.
-In addition, it can classify reads against a database of any size as long as it fits in the hard disk. 
+***Metabuli*** classifies metagenomic reads by comparing them to reference genomes. You can use Metabuli to profile the taxonomic composition of your samples or to detect specific (pathogenic) species. 
 
-For more details of Metabuli, please see
+***Sensitive and Specific.*** Metabuli uses a novel k-mer structure, called *metamer*, to analyze both amino acid (AA) and DNA sequences. It leverages AA conservation for sensitive homology detection and DNA mutations for specific differentiation between closely related taxa.
+
+***A laptop is enough.*** Metabuli operates within user-specified RAM limits, allowing it to search any database that fits in storage. A PC with 8 GiB of RAM is sufficient for most analyses.
+
+***A few clicks are enough.*** Metabuli App is now available [here](https://github.com/steineggerlab/Metabuli-App). With just a few clicks, you can run Metabuli and browse the results with Sankey and Krona plots on your PC.
+
+***Short reads, long reads, and contigs.*** Metabuli can classify all types of sequences.
+
+
+---
+
+  
+For more details, please see
 [Nature Methods](https://www.nature.com/articles/s41592-024-02273-y), 
 [PDF](https://www.nature.com/articles/s41592-024-02273-y.epdf?sharing_token=je_2D5Su0-xVOSjuKSAXF9RgN0jAjWel9jnR3ZoTv0M7gE7NDF_xi_3sW8QdRiwfSJNwqaXItSoeCvr7cvcoQxKLt0oROgWc6urmki9tP80cXEuHPN0D7b4y9y3i8Yv7sZw8MxxhAj7W6p9eZE2zaK3eozdOkXvwADVfso9cXIM%3D), 
 [bioRxiv](https://www.biorxiv.org/content/10.1101/2023.05.31.543018v2), or [ISMB 2023 talk](https://www.youtube.com/watch?v=vz2fuRcVwyk).
 
 Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic classification via joint analysis of amino acid and DNA. Nature Methods (2024).](https://doi.org/10.1038/s41592-024-02273-y)
 
-<p align="center"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/marv_metabuli_small.png" height="350" /></p>
+---
+### 🖥️  [Metabuli App](https://github.com/steineggerlab/Metabuli-App) for Windows, MacOS, and Linux are now available!
+> Run taxonomic profiling in just a few clicks and explore results with Sankey and Krona plots.
 
-## Update in v1.0.6
-- Windows OS is supported.
-> We found Metabuli is too slow with Windows OS. Currently making it faster.
+> Download the app for your OS [here](https://github.com/steineggerlab/Metabuli-App/releases)—no separate Metabuli installation needed.
+<p align="center"><img src="https://raw.githubusercontent.com/jaebeom-kim/Metabuli/master/.github/metabuli.jpg" style="max-height: 500px; width: auto;" /></p>
 
-## Update in v1.0.4
-- Fixed a minor reproducibility issue.
-- Fixed a performance-harming bug occurring with sequences containing lowercased bases.
-- Auto adjustment of `--match-per-kmer` parameter. Issue #20 solved.
-- Record version info. in `db.parameter`
 
+---
+### Update in v1.1.0
+- Fix errors in v1.0.9
+- Custom DB creation became easier
+- Improve `updateDB` command
+  
+### Update in v1.0.9
+- DB creation process improved
+  - `updateDB` module to add new sequences to an existing database.
+  - Users can provide CDS information to skip Prodigal's gene prediction.
+  - `--max-ram` parameter added to `build` module.
+  - Compatibility with taxdump files generated using [taxonkit](https://bioinf.shenwei.me/taxonkit/).
+  - Please check release note for details.
+  
+### Update in v1.0.8
+- Added `extract` module to extract reads classified into a certain taxon.
+
+### Update in v1.0.7
+- **Metabuli became faster 🚀**
+  - Windows: *8.3* times faster
+  - MacOS: *1.7* times faster
+  - Linux: *1.3* times faster
+  - Test details are in release note.
+- Fixed a bug in score calculation that could affect classification results.
+
+
+---
+
+## Table of Contents
+- [Installation](#installation)
+  - [Precompiled binaries](#precompiled-binaries)
+  - [Compile from source code](#compile-from-source-code)
+- [Pre-built databases](#pre-built-databases)
+- [Classification](#classification)
+- [Extract](#extract)
+- [Custom database](#custom-database)
+  - [NCBI taxonomy based database](#ncbi-taxonomy-based-database)
+  - [GTDB based database](#gtdb-based-database)
+- [Update database](#update-database)
+- [Example](#example)
+  
 ## Installation
 ### Precompiled binaries
 ```
@@ -40,11 +86,11 @@ wget https://mmseqs.com/metabuli/metabuli-linux-sse2.tar.gz; tar xvzf metabuli-l
 
 # MacOS (Universal, works on Apple Silicon and Intel Macs)
 wget https://mmseqs.com/metabuli/metabuli-osx-universal.tar.gz; tar xvzf metabuli-osx-universal.tar.gz; export PATH=$(pwd)/metabuli/bin/:$PATH
+
 ```
-Metabuli also works on Linux ARM64 systems. Please check [https://mmseqs.com/metabuli](https://mmseqs.com/metabuli) for static builds for other architectures.
+Metabuli also works on Linux ARM64 and Windows systems. Please check [https://mmseqs.com/metabuli](https://mmseqs.com/metabuli) for static builds for other architectures.
 
 ### Compile from source code
-To compile Metabuli from source code use the following commands:
 ```
 git clone https://github.com/steineggerlab/Metabuli.git
 cd Metabuli
@@ -53,6 +99,8 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j 16
 ```
 The built binary can be found in `./build/src`.
+
+---
 
 ## Pre-built databases
 You can download [pre-built databases](https://metabuli.steineggerlab.workers.dev/) using `databases` workflow.
@@ -66,8 +114,7 @@ Usage:
 metabuli databases DB_NAME OUTDIR tmp
 
 # NOTE
-- A human genome (T2T-CHM13v2.0) is included in all databases except RefSeq_release.
-- A human genome (GRCh38.p14) is included in RefSeq_release.  
+- A human genome (T2T-CHM13v2.0) is included in all databases below.
 
 1. RefSeq Virus (8.1 GiB)
 - NCBI RefSeq release 223 virus genomes
@@ -84,17 +131,18 @@ metabuli databases RefSeq OUTDIR tmp
 - Database will be in OUT_DIR/gtdb 
 metabuli databases GTDB OUTDIR tmp
 
-4. RefSeq Releases 217 (480.5 GiB) (OLD)
-- Viral and prokaryotic genomes of RefSeq release 217 and human genome (GRCh38.p14)
+4. RefSeq Releases 224 (619 GiB)
+- Viral and prokaryotic genomes of RefSeq release 224.
 metabuli databases RefSeq_release OUTDIR tmp
 ```
 Downloaded files are stored in `OUTDIR/DB_NAME` directory, which can be provided for `classify` module as `DBDIR`.
 
+---
 
 ## Classification
 ```
-metabuli classify <i:FASTA> <i:DBDIR> <o:OUTDIR> <Job ID> [options]
-- INPUT : FASTA or FASTQ file of reads you want to classify. 
+metabuli classify <i:FASTA/Q> <i:DBDIR> <o:OUTDIR> <Job ID> [options]
+- INPUT : FASTA/Q file of reads you want to classify. (gzip supported)
 - DBDIR : The directory of reference DB. 
 - OUTDIR : The directory where the result files will be generated.
 - Job ID: It will be the prefix of result files.  
@@ -123,7 +171,9 @@ metabuli classify --seq-mode 3 read.fna dbdir outdir jobid
   - PacBio Sequel II reads: `--min-score 0.005`
   - ONT reads: `--min-score 0.008`
 
-This will generate two result files: `JobID_classifications.tsv`, `JobID_report.tsv`, and `JobID_krona.html`.
+This will generate three result files: `JobID_classifications.tsv`, `JobID_report.tsv`, and `JobID_krona.html`.
+> Sankey diagram is available in the [GUI app](https://github.com/steineggerlab/Metabuli-App).
+
 #### JobID_classifications.tsv
 1. Classified or not
 2. Read ID
@@ -134,7 +184,6 @@ This will generate two result files: `JobID_classifications.tsv`, `JobID_report.
 7. List of "taxID : k-mer match count"
 
 ```
-#Example
 1 read_1  2688  294     0.627551 subspecies  2688:65
 1 read_2  2688  294     0.816327 subspecies  2688:78
 0 read_3  0     294     0        no rank
@@ -143,7 +192,6 @@ This will generate two result files: `JobID_classifications.tsv`, `JobID_report.
 #### JobID_report.tsv
 The proportion of reads that are assigned to each taxon.
 ```
-#Example
 33.73   77571   77571   0       no rank unclassified
 66.27   152429  132     1       no rank root
 64.05   147319  2021    8034    superkingdom      d__Bacteria
@@ -155,34 +203,54 @@ The proportion of reads that are assigned to each taxon.
 2.47    5677    4115    170517  species               s__Bacillus amyloliquefaciens
 0.38    883     883     170531  subspecies                      RS_GCF_001705195.1
 0.16    360     360     170523  subspecies                      RS_GCF_003868675.1
-0.11    248     248     170525  subspecies                      RS_GCF_002209305.1
-0.02    42      42      170529  subspecies                      RS_GCF_002173635.1
-0.01    24      24      170539  subspecies                      RS_GCF_000204275.1
+
 ```
 
 #### JobID_krona.html
 It is for an interactive taxonomy report (Krona). You can use any modern web browser to open `JobID_krona.html`.
-<p align="left"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/image.png" height="350" /></p>
+<p align="left"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/image.png" style="max-height: 350px; width: auto;" /></p>
 
-#### Resource requirements
+
+### Resource requirements
 Metabuli can classify reads against a database of any size as long as the database is fits in the hard disk, regardless of the machine's RAM size.
-We tested it with a MacBook Air (2020, M1, 8 GiB), where we classified about 1.5 M paired-end 150 bp reads (~5 GiB in size) against a database built with ~23K prokaryotic genomes (~69 GiB in size)
+We tested it with a MacBook Air (2020, M1, 8 GiB), where we classified about 15 M paired-end 150 bp reads (~5 GiB in size) against a database built with ~23K prokaryotic genomes (~69 GiB in size).
+
+---
+## Extract 
+After running the `classify` command, you can extract reads that are classified under a specific taxon.
+This requires the FASTA/Q files used in the `classify` step and the `JobID_classifications.tsv` file, which is generated as one of the output files.
+
+```
+metabuli extract <i:FASTA/Q> <i:read-by-read classification> <i:DBDIR> --tax-id TAX_ID
+
+- FASTA/Q : The FASTA/Q file(s) used during the `classify` step.
+- read-by-read classification : The JobID_classifications.tsv file generated by the `classify` step.
+- DBDIR : The same DBDIR used in the `classify` step.
+- TAX_ID : The taxonomy ID of the taxon at any rank (e.g., species, genus) from which you want to extract the reads.
+
+# Paired-end
+metabuli extract read_1.fna read_2.fna JobID_classifications.tsv dbdir --tax-id TAX_ID
+
+# Single-end
+metabuli extract --seq-mode 1 read.fna JobID_classifications.tsv dbdir --tax-id TAX_ID
+
+# Long-read 
+metabuli extract --seq-mode 3 read.fna JobID_classifications.tsv dbdir --tax-id TAX_ID
+
+```
+#### Output
+- For paired-end samples: `read_1_TAX_ID.fna` and `read_2_TAX_ID.fna`
+- For single-end or long-read samples: `read_TAX_ID.fna`
+  
+---
 
 ## Custom database
-To build a custom database, you need three things:
-1. **FASTA files** : Each sequence of your FASTA files must be separated by '>accession.version' like '>CP001849.1'. The accession doesn't have to follow the NCBI format, but it must be unique and included in the accession2taxid file. 
-2. **accession2taxid** : Mapping from accession to taxonomy ID. The sequences whose accessions are not listed here will be skipped.
-3. **NCBI-style taxonomy dump** : 'names.dmp' , 'nodes.dmp', and 'merged.dmp' are required. The sequences whose taxonomy IDs are not included here will be skipped.
-
-The steps for building a database with NCBI or GTDB taxonomy are described below.
-
-### Building a DB with NCBI taxonomy
-#### 1. Prepare taxonomy and accession2taxid
-  * Download `accession2taxid` from [here](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/).
-  * Download `taxdump` files from [here](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/).
- 
-#### 2. Add your sequences to Metabuli library
-* If a custom sequence is to be included, edit `accession2taxid` and `taxdump` files properly as follows.
+Three things you need:
+1. **FASTA files** : Each sequence must have a unique `>accession.version` or `>accesion` header (e.g., `>CP001849.1` or `>CP001849`).
+2. **NCBI-style accession2taxid** : Sequences with accessions absent here are skipped, and versions are ignored.
+3. **NCBI-style taxonomy dump** : `names.dmp`, `nodes.dmp`, and `merged.dmp`. Sequences with tax. IDs absent here are skipped.
+   
+* For **custom sequences**, edit `accession2taxid` and `taxdump` files as follows.
     * `accession2taxid`
       * For a sequence whose header is `>custom`, add `custom[tab]custom[tab]taxid[tab]anynumber`.
       * As above, version number is not necessary.
@@ -190,91 +258,144 @@ The steps for building a database with NCBI or GTDB taxonomy are described below
       * Put any number for the last column. It is not used in Metabuli.
     * `taxdump`
       * Edit `nodes.dmp` and `names.dmp` if you introduced a new `taxid` in `accession2taxid`.
+
+The procedure to build a database with NCBI or GTDB taxonomy are described below.
+
+### User-provided CDS information (optional)
+The `--cds-info` option in the `build` and `updateDB` command is for providing a list of absolute paths to CDS files. For the accessions included in the files, the provided CDS information will be used, and Prodigal's gene prediction will be skipped. Currently, only GenBank or RefSeq CDS files like below are supported.
 ```
-metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR>
-- FASTA list: A file containing absolute paths of each FASTA file.
-- accession2taxid: A path to NCBI-style accession2taxid.
-- DBDIR: Sequences will be stored in 'DBDIR/library'.
-
-* Option
-  --taxonomy-path: Directory of taxdump files. (DBDIR/taxonomy by default)
-
-* NOTE: When resume is needed, remove the files in DBDIR/library and run the command again.
+Example:
+GCA_000839185.1_ViralProj14174_cds_from_genomic.fna
+GCA_000839185.1_ViralProj14174_cds_from_genomic.fna.gz
 ```
-It groups your sequences into separate files according to their species.
-Accessions that are not included in the `<accession2taxid>` will be skipped and listed in `unmapped.txt`.
 
-#### 3. Build
+### NCBI taxonomy based database
+#### 1. Prepare taxonomy and accession2taxid
+  * Download `accession2taxid` from [here](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/).
+  * Download `taxdump` files from [here](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/).
+  
+#### 2. Build
 
 ```
-# Get the list of absoulte paths of files in your library
-find <DBDIR>/library -type f -name '*.fna' > library-files.txt
-
-metabuli build <DBDIR> <LIB_FILES> <accession2taxid> [options]
-- DBDIR: The same DBDIR from the previous step. 
-- LIB_FILES: A file containing absolute paths of the FASTA files in DBDIR/library (library-files.txt)
+metabuli build <DBDIR> <FASTA_LIST> <accession2taxid> --taxonomy-path <TAXDUMP> [options]
+- DBDIR: directory where the database will be generated.
+- FASTA_LIST: A file containing absolute paths to FASTA files.
 - accession2taxid : A path to NCBI-style accession2taxid.
   
   * Options
    --threads : The number of threads used (all by default)
-   --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
-   --accession-level : Set 1 to use accession level taxonomy (0 by default).
+   --max-ram : The maximum RAM usage. (128 GiB by default)
+   --taxonomy-path : Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
+   --accession-level : Set 1 to creat a DB for accession level classification (0 by default).
+   --cds-info : List of absolute paths to CDS files.
+   --make-library : Make species library for faster execution (1 by default).
 ```
-This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
+This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete `*_diffIdx` and `*_info` files and `DATE-TIME` folder (e.g., `2025-1-24-10-32`) if generated.
 
-### Building a DB with GTDB taxonomy
-#### 1. Prepare GTDB taxonomy and accession2taxid
-*Requirements*: 
-You need assembly FASTA files whose file name (or path) includes the assembly accession.
+### GTDB based database
+>*Requirements*: 
+You need assembly FASTA files whose file name (or path) includes the assembly accession like `GCF_028750015.1` (regex, `GC[AF]_[0-9].[0-9]`).
 If you downloaded assemblies using `ncbi-genome-download`, you probably don't have to care about it.
-The regular expression of assembly accessions is (GC[AF]_[0-9].[0-9])
-
-```
-# 1. 
-# 1-1. Move to the 'util' directory
-cd METABULI_DIR/util
-
-# 1-2. Run prepare_gtdb_taxonomy.sh
-./prepare_gtdb_taxonomy.sh <DBDIR>
-  - DBDIR : Result files are stored in 'DBDIR/taxonomy'. 
-
-** Please clone Metabuli's repository to use this script.
-** It is not provided in the precompiled binaries or bioconda package.
-```
-In `DBDIR/taxonomy`, it will generate taxonomy `dmp` files and `assacc_to_taxid.tsv` with other files.
-
-```
-# 2. 
-metabuli add-to-library <FASTA list> <accession2taxid> <DBDIR> --assembly true
-  - FASTA list : A file containing absolute paths of each assembly file.
-    Each path must include a corresponding assembly accession. 
-  - accession2taxid : 'assacc_to_taxid.tsv' from the previous step
-  - DBDIR : The same DBDIR from the previous step.
-
-** When resume is needed, remove the files in DBDIR/library and run the command again.
-```
-This will add your FASTA files to DBDIR/library according to their species taxonomy ID and generate 'my.accession2taxid'
-
+#### 1. Download taxonkit-generated GTDB taxdump files [here](https://github.com/shenwei356/gtdb-taxdump/releases).
 #### 2. Build
-```
-# Get the list of absoulte paths of files in your library
-find <DBDIR>/library -type f -name '*.fna' > library-files.txt
 
-metabuli build <DBDIR> <LIB_FILES> <accession2taxid> [options]
-- DBDIR: The same DBDIR from the previous step. 
-- <LIB_FILES>: A file containing absolute paths of the FASTA files in DBDIR/library (library-files.txt)
-- accession2taxid : A path to NCBI-style accession2taxid.
+```
+GTDB_TAXDUMP: the directory where you downloaded the GTDB taxdump files.
+FASTA_LIST: A file containing absolute paths of each assembly file.
+DBDIR: The directory where the database will be generated.
+
+metabuli build <DBDIR> <FASTA_LIST> <GTDB_TAXDUMP/taxid.map> --taxonomy-path <GTDB_TAXDUMP> --gtdb 1 [options]
   
-  * Options
-   --threads : The number of CPU-cores used (all by default)
-   --taxonomy-path: Directory where the taxonomy dump files are stored. (DBDIR/taxonomy by default)
-   --reduced-aa : 0. Use 20 alphabets or 1. Use 15 alphabets to encode amino acids.
-   --spacing-mask : Binary mask for spaced metamer. The same mask must be used for DB creation and classification. 
-                    A mask should contain at least eight '1's, and '0' means skip.
-   --accession-level : Set 1 to use accession level taxonomy (0 by default).
+  * Options described above. 
 ```
-This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete '\*\_diffIdx' and '\*\_info' if generated.
+This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete `*_diffIdx` and `*_info` files and `DATE-TIME` folder (e.g., `2025-1-24-10-32`) if generated.
 
+---
+
+## Update database 
+You can add new sequences to an existing database, of which taxonomy will be used.
+You can add new taxa if the previous taxonomy does not include them (see "Add sequences of new taxa" below). 
+
+Two files you need:
+1. **List of new FASTA files** : Each sequence must have a unique `>accession.version` or `>accesion` header.
+2. **NCBI-style accession2taxid** : Sequences with accessions absent here are skipped. Put any number in the GI column. Version number is ignored.
+   ```
+   accession  accession.version  taxID  gi 
+   SequenceA  SequenceA.1 960611  0
+   SequenceB  SequenceB.1 960612  0
+   NoVersionOkay  NoVersionOkay 960613  0
+   ```
+
+```
+metabuli updateDB <NEW DBDIR> <FASTA_LIST> <accession2taxid> <OLD DBDIR> [options]
+  - FASTA list: A file of paths to the FASTA file to be added.
+  - accession2taxid : A path to NCBI-style accession2taxid.
+
+* Options
+  --threads : The number of threads used (all by default)
+  --max-ram : The maximum RAM usage. (128 GiB by default)
+  --accession-level : Set 1 to creat a DB for accession level classification (0 by default).
+  --make-library : Make species library for faster execution (1 by default).
+  --new-taxa : List of new taxa to be added.
+```
+
+### Add sequences of new taxa
+> NOTE: Mixing taxonomies within the same domain is not recommended. For example, adding prokaryotes to a GTDB database using NCBI taxonomy will cause issues, but adding eukaryotes or viruses with NCBI taxonomy is fine since GTDB does not cover them.
+ 
+You can use `--new-taxa` option to add new taxa to the taxonomy tree.
+
+#### 1. Check if you need to add new taxa
+Check `nodes.dmp`, `names.dmp`, and `merged.dmp` files used in the previous DB creation.
+You can retrieve them from `taxonomyDB` file in the previous DB directory.
+```
+metabuli taxdump <OLD DBDIR/taxonomyDB>
+```
+
+#### 2. Create a list of new taxa
+If you have **accession2taxid** and **taxonomy dump** files of the new sequences, you can use `createnewtaxalist` to create an input for `--new-taxa` option. If not, you have to prepare the input manually (see below).
+```
+metabuli createnewtaxalist <OLD DBDIR> <FASTA_LIST> <new taxonomy dump> <accession2taxid> <OUTDIR>
+```
+It generates `newtaxa.tsv` for `--new-taxa` option and `newtaxa.accession2taxid`.
+>Note: The tax. IDs of the new taxa can be changed to be compatible with the previous taxonomy.
+
+##### Example
+Suppose you want to add some eukaryotic sequences to the pre-built GTDB database.
+Since GTDB tree doesn't include eukaryotes, you may want to use NCBI taxonomy for them.
+You can download `taxdump` files from [here](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/) and `accession2taxid` from [here](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/).
+```
+metabuli createnewtaxalist <GTDB dir> <new seq list> <NCBI taxdump dir> <NCBI accession2taxid> <out dir>
+metabuli updateDB <new db dir> <new seq list> <out dir/newtaxa.accession2taxid> <GTDB dir> --new-taxa <out dir/newtaxa.tsv>
+```
+
+#### 3. Manually prepare a list of new taxa
+This list will be given to the `updateDB` command via the `--new-taxa` option.
+The format is TSV as follows:
+```
+taxID parentID rank name
+```
+The added taxon must be linked to an existing taxon in the taxonomy tree of the previous database.
+
+##### Example
+Suppose you want to add Saccharomyces cerevisiae sequences to the pre-built GTDB database. 
+After inspecting taxonomy dump files generated by `taxdump`, you will find that the taxonomy does not include the Fungi kingdom. Its taxonomy has only one eukaryote (Homo sapiens). In this case, your new taxa list and accession2taxid should be like these.
+```
+# New taxa list
+# It should be a four-column TSV file.
+# taxid  parentTaxID rank  name // Don't put this header in your actual file.
+10000013	10000012	species	Saccharomyces cerevisiae
+10000012	10000011	genus	Saccharomyces
+10000011	10000010	family	Saccharomycetaceae
+10000010	10000009	order	Saccharomycetales
+10000009	10000008	class	Saccharomycetes
+10000008	10000007	phylum	Ascomycota
+10000007	10000000	kingdom	Fungi // 10000000 is Eukaroyte taxID of the pre-built DB.
+
+# accession2taxid
+accession accession.version taxid gi
+newseq1 newseq1 10000013  0
+newseq2 newseq2 10000013  0
+```
 
 ## Example
 > The example here was detecting SARS-CoV-2 variant-specific reads, but has changed since the pre-built DB no longer contains the variant genomes.
@@ -302,3 +423,6 @@ fasterq-dump --split-files SRR14484345
   92.2331 510490  442     species 694009  Severe acute respiratory syndrome-related coronavirus
   92.1433 509993  509993  no rank 2697049 Severe acute respiratory syndrome coronavirus 2
   ```
+
+## Reference
+Shen, W., Ren, H., TaxonKit: a practical and efficient NCBI Taxonomy toolkit, Journal of Genetics and Genomics, https://doi.org/10.1016/j.jgg.2021.03.006

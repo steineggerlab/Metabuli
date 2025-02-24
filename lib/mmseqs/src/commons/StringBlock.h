@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <numeric>
+#include <fstream>
+#include <iostream>
 
 #include "FastSort.h"
 
@@ -28,6 +30,23 @@ public:
             free(data);
             free(offsets);
         }
+    }
+
+    StringBlock(const StringBlock * other) {
+        byteCapacity = other->byteCapacity;
+        entryCapacity = other->entryCapacity;
+        entryCount = other->entryCount;
+        externalData = false; // The new instance will manage its own memory
+        if (entryCapacity == entryCount) {
+            entryCapacity++;
+        }
+
+        data = (char*)malloc(byteCapacity * sizeof(char));
+        memcpy(data, other->data, byteCapacity * sizeof(char));
+
+        offsets = (T*)malloc(entryCapacity * sizeof(T));
+        memcpy(offsets, other->offsets, other->entryCapacity * sizeof(T));
+        offsets[other->entryCount] = other->byteCapacity;
     }
 
     const char* getString(T idx) const {
@@ -125,6 +144,20 @@ public:
         T* offsets = (T*)p;
         p += entryCapacity * sizeof(T);
         return new StringBlock<T>(byteCapacity, entryCapacity, entryCount, data, offsets);
+    }
+
+    void printOffsets(std::ofstream& out) {
+        for (T i = 0; i < entryCount; ++i) {
+            out << offsets[i] << "\n";
+        }
+        out << std::endl;
+    }
+
+    void printData(std::ofstream& out) {
+        for (T i = 0; i < byteCapacity; ++i) {
+            out << data[i];
+        }
+        out << std::endl;
     }
 
 private:

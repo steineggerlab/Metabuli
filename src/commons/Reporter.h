@@ -4,17 +4,18 @@
 #include "iostream"
 #include "fstream"
 #include <unordered_map>
-#include "NcbiTaxonomy.h"
+#include "TaxonomyWrapper.h"
 #include "LocalParameters.h"
-
+#include "KSeqWrapper.h"
+#include <cstdint>
 using namespace std;
-
 
 class Reporter {
 private:
+    const LocalParameters & par;
     string outDir;
     string jobId;
-    NcbiTaxonomy * taxonomy;
+    TaxonomyWrapper * taxonomy;
 
     // Output
     string reportFileName;
@@ -22,11 +23,12 @@ private:
     ofstream readClassificationFile;
 
 public:
-    Reporter(const LocalParameters &par, NcbiTaxonomy *taxonomy);
+    Reporter(const LocalParameters &par, TaxonomyWrapper *taxonomy);
     // Write report
     void writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt, bool krona = true);
     void writeReport(FILE *FP, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts,
                      unsigned long totalReads, TaxID taxID = 0, int depth = 0);
+    void kronaReport(FILE *FP, const TaxonomyWrapper &taxDB, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts, unsigned long totalReads, TaxID taxID = 0, int depth = 0);
 
     // Read by read classification results
     void openReadClassificationFile();
@@ -34,6 +36,15 @@ public:
     void closeReadClassificationFile();
 
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts> &map, TaxID key);
+
+    // Extract reads classified to a specific clade
+    void getReadsClassifiedToClade(TaxID cladeId,
+                                   const string &readClassificationFileName,
+                                   vector<size_t> &readIdxs);
+
+    void printSpecifiedReads(const vector<size_t> & readIdxs,
+                             const string & readFileName,
+                             string & outFileName); 
 
     // Setter
     void setReportFileName(const string &reportFileName) {

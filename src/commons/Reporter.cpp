@@ -1,7 +1,8 @@
 #include "Reporter.h"
 #include "taxonomyreport.cpp"
 
-Reporter::Reporter(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxonomy(taxonomy) {
+Reporter::Reporter(const LocalParameters &par, TaxonomyWrapper *taxonomy) : par(par), taxonomy(taxonomy) {
+    if (par.targetTaxId != 0) {return;}
     if (par.contamList == "") { // classify module
         if (par.seqMode == 2) {
             outDir = par.filenames[3];
@@ -13,10 +14,7 @@ Reporter::Reporter(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxonom
         // Output file names
         reportFileName = outDir + + "/" + jobId + "_report.tsv";
         readClassificationFileName = outDir + "/" + jobId + "_classifications.tsv";
-    }
-
-    
-    
+    }    
 }
 
 void Reporter::openReadClassificationFile() {
@@ -29,15 +27,18 @@ void Reporter::writeReadClassification(const vector<Query> & queryList, bool cla
             continue;
         }
         readClassificationFile << queryList[i].isClassified << "\t" << queryList[i].name << "\t"
-                               << queryList[i].classification << "\t"
+                               << taxonomy->getOriginalTaxID(queryList[i].classification) << "\t"
                                << queryList[i].queryLength + queryList[i].queryLength2 << "\t"
                                << queryList[i].score << "\t"
                                << taxonomy->getString(taxonomy->taxonNode(queryList[i].classification)->rankIdx) << "\t";
         // for (size_t j = 0; j < queryList[i].pathScores.size(); j++) {
         //     readClassificationFile << queryList[i].pathScores[j] << " ";
         // }
+        if (par.printLineage) {
+            readClassificationFile << taxonomy->taxLineage2(taxonomy->taxonNode(queryList[i].classification)) << "\t";
+        }
         for (auto it = queryList[i].taxCnt.begin(); it != queryList[i].taxCnt.end(); ++it) {
-            readClassificationFile << it->first << ":" << it->second << " ";
+            readClassificationFile << taxonomy->getOriginalTaxID(it->first) << ":" << it->second << " ";
         }
         readClassificationFile << "\n";
     }
@@ -45,6 +46,35 @@ void Reporter::writeReadClassification(const vector<Query> & queryList, bool cla
 
 void Reporter::closeReadClassificationFile() {
     readClassificationFile.close();
+}
+
+void Reporter::kronaReport(FILE *FP, const TaxonomyWrapper &taxDB, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts, unsigned long totalReads, TaxID taxID, int depth) {
+    std::unordered_map<TaxID, TaxonCounts>::const_iterator it = cladeCounts.find(taxID);
+    unsigned int cladeCount = it == cladeCounts.end() ? 0 : it->second.cladeCount;
+    if (taxID == 0) {
+        if (cladeCount > 0) {
+            fprintf(FP, "<node name=\"unclassified\"><magnitude><val>%d</val></magnitude></node>", cladeCount);
+        }
+        kronaReport(FP, taxDB, cladeCounts, totalReads, 1);
+    } else {
+        if (cladeCount == 0) {
+            return;
+        }
+        const TaxonNode *taxon = taxDB.taxonNode(taxID);
+        std::string escapedName = escapeAttribute(taxDB.getString(taxon->nameIdx));
+        fprintf(FP, "<node name=\"%s\"><magnitude><val>%d</val></magnitude>", escapedName.c_str(), cladeCount);
+        std::vector<TaxID> children = it->second.children;
+        SORT_SERIAL(children.begin(), children.end(), [&](int a, int b) { return cladeCountVal(cladeCounts, a) > cladeCountVal(cladeCounts, b); });
+        for (size_t i = 0; i < children.size(); ++i) {
+            TaxID childTaxId = children[i];
+            if (cladeCounts.count(childTaxId)) {
+                kronaReport(FP, taxDB, cladeCounts, totalReads, childTaxId, depth + 1);
+            } else {
+                break;
+            }
+        }
+        fprintf(FP, "</node>");
+    }
 }
 
 void Reporter::writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt, bool krona) {
@@ -58,7 +88,7 @@ void Reporter::writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int
     if (krona) {
         FILE *kronaFile = fopen((outDir + "/" + jobId + "_krona.html").c_str(), "w");
         fwrite(krona_prelude_html, krona_prelude_html_len, sizeof(char), kronaFile);
-        fprintf(kronaFile, "<node name=\"all\"><magnitude><val>%zu</val></magnitude>", numOfQuery);
+        fprintf(kronaFile, "<node name=\"all\"><magnitude><val>%zu</val></magnitude>", (size_t) numOfQuery);
         kronaReport(kronaFile, *taxonomy, cladeCounts, numOfQuery);
         fprintf(kronaFile, "</node></krona></div></body></html>");
         fclose(kronaFile);
@@ -84,7 +114,7 @@ void Reporter::writeReport(FILE *FP, const std::unordered_map<TaxID, TaxonCounts
         const TaxonNode *taxon = taxonomy->taxonNode(taxID);
         fprintf(FP, "%.4f\t%i\t%i\t%s\t%i\t%s%s\n",
                 100 * cladeCount / double(totalReads), cladeCount, taxCount,
-                taxonomy->getString(taxon->rankIdx), taxID, std::string(2 * depth, ' ').c_str(), taxonomy->getString(taxon->nameIdx));
+                taxonomy->getString(taxon->rankIdx), taxonomy->getOriginalTaxID(taxID), std::string(2 * depth, ' ').c_str(), taxonomy->getString(taxon->nameIdx));
         std::vector<TaxID> children = it->second.children;
         SORT_SERIAL(children.begin(), children.end(), [&](int a, int b) { return cladeCountVal(cladeCounts, a) > cladeCountVal(cladeCounts, b); });
         for (size_t i = 0; i < children.size(); ++i) {
@@ -105,4 +135,119 @@ unsigned int Reporter::cladeCountVal(const std::unordered_map<TaxID, TaxonCounts
     } else {
         return it->second.cladeCount;
     }
+}
+
+void Reporter::getReadsClassifiedToClade(TaxID cladeId,
+                                         const string &readClassificationFileName,
+                                         vector<size_t> &readIdxs) {
+    FILE *results = fopen(readClassificationFileName.c_str(), "r");
+    if (!results) {
+        perror("Failed to open read-by-read classification file");
+        return;
+    }
+    char line[4096];
+    size_t idx = 0;
+    if (taxonomy->hasInternalTaxID()) {
+        unordered_map<TaxID, TaxID> extern2intern;
+        taxonomy->getExternal2internalTaxID(extern2intern);
+        while (fgets(line, sizeof(line), results)) {
+            int taxId;
+            if (sscanf(line, "%*s %*s %d", &taxId) == 1) {            
+                if (taxonomy->IsAncestor(cladeId, extern2intern[taxId])) {
+                    readIdxs.push_back(idx);
+                }
+            }
+            idx++;
+        }
+    } else {
+        while (fgets(line, sizeof(line), results)) {
+            int taxId;
+            if (sscanf(line, "%*s %*s %d", &taxId) == 1) {            
+                if (taxonomy->IsAncestor(cladeId, taxId)) {
+                    readIdxs.push_back(idx);
+                }
+            }
+            idx++;
+        }
+    }
+    fclose(results);
+}
+
+void Reporter::printSpecifiedReads(const vector<size_t> & readIdxs,
+                                   const string & readFileName,
+                                   string & outFileName) {
+    // Check FASTA or FASTQ
+    KSeqWrapper* tempKseq = KSeqFactory(readFileName.c_str());
+    tempKseq->ReadEntry();
+    bool isFasta = tempKseq->entry.qual.l == 0;
+
+    if (isFasta && par.extractMode == 2) {
+        Debug(Debug::ERROR) << "Cannot convert FASTA to FASTQ\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    delete tempKseq;
+
+    bool printFasta;
+    if (isFasta || par.extractMode == 1) {
+        printFasta = true;
+        outFileName += ".fna";
+    } else {
+        printFasta = false;
+        outFileName += ".fq";
+    }
+    
+    KSeqWrapper* kseq = KSeqFactory(readFileName.c_str());
+    FILE *outFile = fopen(outFileName.c_str(), "w");
+    if (!outFile) {
+        perror("Failed to open file");
+        return;
+    }
+
+    size_t readCnt = 0;
+    size_t idx = 0;
+
+    if (printFasta) {
+        while (kseq->ReadEntry()) {
+            if (readCnt == readIdxs[idx]) {
+                fprintf(outFile, ">%s", kseq->entry.name.s);
+                if (kseq->entry.comment.l > 0) {
+                    fprintf(outFile, " %s\n", kseq->entry.comment.s);
+                } else {
+                    fprintf(outFile, "\n");
+                }
+                fprintf(outFile, "%s\n", kseq->entry.sequence.s);
+                idx++;
+                if (idx == readIdxs.size()) {
+                    break;
+                }
+            }
+            readCnt++;
+        }
+    } else {
+        while (kseq->ReadEntry()) {
+            if (readCnt == readIdxs[idx]) {
+                fprintf(outFile, "@%s", kseq->entry.name.s);
+                if (kseq->entry.comment.l > 0) {
+                    fprintf(outFile, " %s\n", kseq->entry.comment.s);
+                } else {
+                    fprintf(outFile, "\n");
+                }
+                fprintf(outFile, "%s\n", kseq->entry.sequence.s);
+                fprintf(outFile, "+%s", kseq->entry.name.s);
+                if (kseq->entry.comment.l > 0) {
+                    fprintf(outFile, " %s\n", kseq->entry.comment.s);
+                } else {
+                    fprintf(outFile, "\n");
+                }
+                fprintf(outFile, "%s\n", kseq->entry.qual.s);
+                idx++;
+                if (idx == readIdxs.size()) {
+                    break;
+                }
+            }
+            readCnt++;
+        }
+    }
+    delete kseq;
 }

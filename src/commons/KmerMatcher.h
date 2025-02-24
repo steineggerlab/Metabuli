@@ -6,11 +6,13 @@
 #include "LocalParameters.h"
 #include "Match.h"
 #include "Mmap.h"
-#include "NcbiTaxonomy.h"
+#include "TaxonomyWrapper.h"
 #include "common.h"
 #include "unordered_map"
 #include <string>
 #include <vector>
+#include <unistd.h>
+#include <cstdint>
 
 #define BufferSize 16'777'216 // 16 * 1024 * 1024 // 16 M
 
@@ -25,7 +27,8 @@ using namespace std;
 
 class KmerMatcher {
 protected:
-  NcbiTaxonomy *taxonomy;
+  const LocalParameters &par;
+  TaxonomyWrapper *taxonomy;
   size_t threads;
   std::string dbDir;
   //   string targetDiffIdxFileName, targetInfoFileName, diffIdxSplitFileName;
@@ -100,7 +103,7 @@ protected:
   void loadTaxIdList(const LocalParameters & par);
 
 public:
-  KmerMatcher(const LocalParameters &par, NcbiTaxonomy *taxonomy);
+  KmerMatcher(const LocalParameters &par, TaxonomyWrapper *taxonomy);
 
   virtual ~KmerMatcher();
   

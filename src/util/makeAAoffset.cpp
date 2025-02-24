@@ -6,6 +6,7 @@
 #include "KmerMatcher.h"
 #include "common.h"
 #include "SeqIterator.h"
+#include <cstdint>
 
 using namespace std;
 
@@ -43,14 +44,11 @@ int makeAAoffset(int argc, const char **argv, const Command &command){
     
     uint64_t currentTargetKmer = 0;
     uint64_t currentTargetKmerAA = 0;
-    uint64_t currentAACnt = 0;
     uint64_t AAkmerCnt = 0;
     uint64_t currentAAOffset = 0;
 
     uint64_t MARKER = 16777215;
     MARKER = ~ MARKER;
-
-    SeqIterator * seqIterator = new SeqIterator(par);
 
     size_t loadedItems;
     bool isFirst = true;
@@ -69,7 +67,6 @@ int makeAAoffset(int argc, const char **argv, const Command &command){
         }
 
         while (loadedItems >= diffIdxBufferIdx + 7) {
-            size_t before = diffIdxPos;
             currentTargetKmer = KmerMatcher::getNextTargetKmer(currentTargetKmer,
                                                                diffIdxBuffer,
                                                                diffIdxBufferIdx,

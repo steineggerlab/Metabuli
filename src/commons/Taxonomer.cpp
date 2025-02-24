@@ -9,7 +9,7 @@
 #include <unordered_map>
 
 
-Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxonomy(taxonomy) {
+Taxonomer::Taxonomer(const LocalParameters &par, TaxonomyWrapper *taxonomy) : taxonomy(taxonomy) {
     // Parameters
     string spaceMask = "11111111";
     auto mask = new uint32_t[spaceMask.length()];
@@ -28,7 +28,7 @@ Taxonomer::Taxonomer(const LocalParameters &par, NcbiTaxonomy *taxonomy) : taxon
     minSSMatch = par.minSSMatch;
     minConsCnt = (size_t) par.minConsCnt;
     minConsCntEuk = (size_t) par.minConsCntEuk;
-    eukaryotaTaxId = par.eukaryotaTaxId;
+    eukaryotaTaxId = taxonomy->getEukaryotaTaxID();
     tieRatio = par.tieRatio;
 
     if (par.seqMode == 1 || par.seqMode == 2) {
@@ -243,7 +243,7 @@ TaxID Taxonomer::lowerRankClassification(const unordered_map<TaxID, unsigned int
         // Remove leaf nodes
         for (auto it = cladeCnt.begin(); it != cladeCnt.end(); it++) {
             TaxonNode const * taxon = taxonomy->taxonNode(it->first);
-            if (strcmp(taxonomy->getString(taxon->rankIdx), "") == 0) {
+            if (strcmp(taxonomy->getString(taxon->rankIdx), "") == 0 || strcmp(taxonomy->getString(taxon->rankIdx), "accession") == 0) {
                 // Remove current node from its parent's children list
                 cladeCnt[taxon->parentTaxId].children.erase(find(cladeCnt[taxon->parentTaxId].children.begin(),
                                                                  cladeCnt[taxon->parentTaxId].children.end(),
@@ -328,7 +328,6 @@ TaxonScore Taxonomer::getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpec
                 i ++;
             }
             if (i - start >= minConsCnt) {
-                // remainConsecutiveMatches(matchList, start, i, matchPaths, currentSpecies);
                 getMatchPaths(matchList, start, i, matchPaths, currentSpecies);
             }
         }

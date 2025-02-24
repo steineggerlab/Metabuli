@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "report.h"
+#include <cstdint>
 
 using namespace std;
 
@@ -37,9 +38,10 @@ int applyThreshold(int argc, const char **argv, const Command &command) {
     string taxonomy = par.filenames[3];
 
     // Load taxonomy
-    NcbiTaxonomy ncbiTaxonomy(taxonomy + "/names.dmp",
+    TaxonomyWrapper ncbiTaxonomy(taxonomy + "/names.dmp",
                               taxonomy + "/nodes.dmp",
-                              taxonomy + "/merged.dmp");
+                              taxonomy + "/merged.dmp",
+                              false);
 
     vector<Query> newResults;
     unordered_map<TaxID, unsigned int> taxonCounts;
@@ -80,7 +82,7 @@ int applyThreshold(int argc, const char **argv, const Command &command) {
             lineCnt++;
         }
     } else {
-        cerr << "Cannot open file for old result" << endl;
+        cout << "Cannot open file for old result" << endl;
     }
     old_result_file.close();
 
@@ -94,7 +96,7 @@ int applyThreshold(int argc, const char **argv, const Command &command) {
             "\t" << ncbiTaxonomy.taxonNode(result.classification)->rankIdx << endl;
         }
     } else {
-        cerr << "Cannot open file for new result" << endl;
+        cout << "Cannot open file for new result" << endl;
     }
     new_result_file.close();
 
@@ -104,7 +106,7 @@ int applyThreshold(int argc, const char **argv, const Command &command) {
     if (new_report_file.is_open()) {
         write_report_file(outDir + "/" + jobid + "_report.tsv", newResults.size(), taxonCounts, ncbiTaxonomy);
     } else {
-        cerr << "Cannot open file for new report" << endl;
+        cout << "Cannot open file for new report" << endl;
     }
     return 0;
 }

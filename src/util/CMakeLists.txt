@@ -10,4 +10,14 @@ set(util_source_files
         util/gradeByCladeSize.cpp
         util/expand_diffidx.cpp
         util/makeAAoffset.cpp
+        util/printinfo.cpp
+        util/query2reference.cpp
+        util/ictv-challenge-format.cpp
+        util/taxdump.cpp
+        util/accession2taxid.cpp
+        util/accession2taxid.h
+        util/editNames.cpp
+        util/editNames.h
+        util/createnewtaxalist.cpp
+        util/createnewtaxalist.h
         PARENT_SCOPE)

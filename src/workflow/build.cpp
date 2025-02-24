@@ -3,15 +3,19 @@
 #include "LocalParameters.h"
 #include <Command.h>
 #include "FileUtil.h"
+#include "accession2taxid.h"
+#include "editNames.h"
 
 void setDefaults_build(LocalParameters & par){
+    par.gtdb = 0;
+    par.makeLibrary = 1;
     par.reducedAA = 0;
+    par.ramUsage = 128;
     // par.spaceMask = "11111111";
     par.taxonomyPath = "" ;
     par.splitNum = 4096;
     par.maskProb = 0.9;
     par.maskMode = 1;
-    par.bufferSize = 10'000'000'000;
     par.accessionLevel = 0;
     // Get current date
     time_t now = time(0);
@@ -25,31 +29,56 @@ void setDefaults_build(LocalParameters & par){
 }
 
 int build(int argc, const char **argv, const Command &command){
-    // Load parameters
     LocalParameters &par = LocalParameters::getLocalInstance();
     setDefaults_build(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
-  
-    // If dbDirectory does not exist, create it
-    if (!FileUtil::directoryExists(par.filenames[0].c_str())) {
-        FileUtil::makeDir(par.filenames[0].c_str());
+    const string & dbDir = par.filenames[0];
+    if (!FileUtil::directoryExists(dbDir.c_str())) {
+        FileUtil::makeDir(dbDir.c_str());
+    }
+    
+    string taxonomyDir;
+    if (par.taxonomyPath.empty()) {
+        taxonomyDir = dbDir + "/taxonomy/";
+    } else {
+        taxonomyDir = par.taxonomyPath + "/";
     }
 
-    // Create index
-    IndexCreator idxCre(par);
-    idxCre.createIndex(par);
+    if (par.gtdb == 1) {
+        editNames(taxonomyDir + "/names.dmp", par.filenames[2]);
+        accession2taxid(par.filenames[1], par.filenames[2]);
+        par.filenames[2] = par.filenames[2].substr(0, par.filenames[2].find_last_of('.')) + ".accession2taxid";
+    }
 
+    TaxonomyWrapper * taxonomy =  new TaxonomyWrapper(taxonomyDir + "/names.dmp",
+                                                      taxonomyDir + "/nodes.dmp",
+                                                      taxonomyDir + "/merged.dmp",
+                                                      true);
+
+    IndexCreator idxCre(par, taxonomy);
+    idxCre.createIndex(par);
+    if (par.accessionLevel == 1) {
+        taxonomy = idxCre.getTaxonomy();
+    }
+    taxonomy->writeTaxonomyDB(dbDir + "/taxonomyDB");
+    
     if(idxCre.getNumOfFlush() == 1) {
-        cerr << "Index creation completed." << endl;
+        delete taxonomy;
+        cout << "Index creation completed." << endl;
         return 0;
     }
 
-    // Merge index files
     cout << "Merge reference DB files ... " << endl;
     int numOfSplits = idxCre.getNumOfFlush();
-    FileMerger merger(par);
-    merger.mergeTargetFiles(par, numOfSplits);
-    cerr << "Index creation completed." << endl;
-
+    FileMerger merger(par, taxonomy);
+    for (int i = 0; i < numOfSplits; i++) {
+        merger.addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
+                               dbDir + "/" + to_string(i) + "_info");
+    }
+    merger.updateTaxId2SpeciesTaxId(dbDir + "/taxID_list");
+    merger.setMergedFileNames(dbDir + "/diffIdx", dbDir + "/info", dbDir + "/split");  
+    merger.mergeTargetFiles();
+    delete taxonomy;
+    cout << "Index creation completed." << endl;
     return 0;
 }

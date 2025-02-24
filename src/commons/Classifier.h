@@ -30,6 +30,9 @@
 #include "KmerExtractor.h"
 #include "Taxonomer.h"
 #include "Reporter.h"
+#include <cstdint>
+#include "TaxonomyWrapper.h"
+
 #define BufferSize 16'777'216 //16 * 1024 * 1024 // 16 M
 using namespace std;
 
@@ -45,7 +48,7 @@ protected:
     KmerMatcher * kmerMatcher;
     // Taxonomer * taxonomer;
     Reporter * reporter;
-    NcbiTaxonomy * taxonomy;
+    TaxonomyWrapper * taxonomy;
 
     unordered_map<TaxID, unsigned int> taxCounts;
 

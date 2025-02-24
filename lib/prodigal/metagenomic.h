@@ -21,9 +21,9 @@
 #ifndef SAMPLE_H_
 #define SAMPLE_H_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
 #include "prodigalsequence.h"
 #include "training.h"
 #include "node.h"

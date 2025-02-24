@@ -3,7 +3,7 @@
 #include "Command.h"
 
 extern int build(int argc, const char **argv, const Command& command);
-extern int updataDB(int argc, const char **argv, const Command& command);
+extern int updateDB(int argc, const char **argv, const Command& command);
 extern int classify(int argc, const char **argv, const Command& command);
 extern int groupGeneration(int argc, const char **argv, const Command& command);
 extern int filter(int argc, const char **argv, const Command& command);
@@ -18,5 +18,13 @@ extern int databaseReport(int argc, const char **argv, const Command& command);
 extern int mapping2taxon(int argc, const char **argv, const Command& command);
 extern int expand_diffidx(int argc, const char **argv, const Command& command);
 extern int makeAAoffset(int argc, const char **argv, const Command& command);
+extern int extract(int argc, const char **argv, const Command& command);
+extern int printInfo(int argc, const char **argv, const Command& command);
+extern int query2reference(int argc, const char **argv, const Command& command);
+extern int ictvFormat(int argc, const char **argv, const Command& command);
+extern int taxdump(int argc, const char **argv, const Command& command);
+extern int accession2taxid(int argc, const char **argv, const Command& command);
+extern int editNames(int argc, const char **argv, const Command& command);
+extern int createnewtaxalist(int argc, const char **argv, const Command& command);
 
 #endif //ADCLASSIFIER2_LOCALCOMMANDDECLARATIONS_H

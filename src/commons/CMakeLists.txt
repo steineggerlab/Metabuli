@@ -37,4 +37,6 @@ set(commons_source_files
 		commons/Taxonomer.cpp
 		commons/Reporter.h
 		commons/Reporter.cpp
+		commons/TaxonomyWrapper.h
+		commons/TaxonomyWrapper.cpp
         PARENT_SCOPE)

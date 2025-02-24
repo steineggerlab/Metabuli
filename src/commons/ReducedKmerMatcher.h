@@ -3,7 +3,7 @@
 
 #include "KmerMatcher.h"
 #include <unordered_map>
-#include "NcbiTaxonomy.h"
+#include "TaxonomyWrapper.h"
 
 class ReducedKmerMatcher : public KmerMatcher {
 protected:
@@ -56,7 +56,7 @@ public:
     }
 
     explicit ReducedKmerMatcher(LocalParameters & par,
-                                NcbiTaxonomy * taxonomy)
+                                TaxonomyWrapper * taxonomy)
                                 : KmerMatcher(par,taxonomy) {
         MARKER = 0Xffffffff;
     }

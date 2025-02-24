@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <time.h>
+#include <cstdint>
 
 template <typename T>
 struct MmapedData

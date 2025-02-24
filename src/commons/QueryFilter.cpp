@@ -9,7 +9,7 @@ QueryFilter::QueryFilter(LocalParameters & par) {
     printMode = par.printMode;
     seqMode = par.seqMode;
     contams = Util::split(par.contamList, ",");
-    loadDbParameters(par);
+    loadDbParameters(par, dbDir);
     
     // Taxonomy
     taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);

@@ -20,6 +20,7 @@
 #include <vector>
 #include "xxhash.h"
 #include "SeqIterator.h"
+#include <cstdint>
 
 #define MIN_SINGLE_GENOME 20000
 #define IDEAL_SINGLE_GENOME 100000
@@ -43,9 +44,15 @@ private:
     mask mlist[MAX_MASKS];
     struct _metagenomic_bin * meta;
 
+    /* Set a bit to 1 */
+    void set(unsigned char *bm, int ndx) {
+        bm[ndx>>3] |= (1 << (ndx&0x07));
+    }
+
 public:
     int fng, ng;
     int is_meta;
+    int is_first_meta;
     int nn, max_phase;
     double max_score;
     struct _node *nodes;

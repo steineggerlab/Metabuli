@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <regex>
+#include <cstdint>
 
 using namespace std;
 
@@ -38,8 +39,8 @@ struct Score2{
 
 
 
-char compareTaxonAtRank(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountOfGroup & count,
-                             const string & rank, const LocalParameters & par, size_t idx = 0, const string& readId = "");
+char compareTaxonAtRank(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTaxonomy, CountOfGroup & count,
+                             const string & rank);
 
 void setGradeByCladeSizeDefault(LocalParameters & par){
     par.readIdCol = 1;
@@ -77,7 +78,7 @@ int gradeByCladeSize(int argc, const char **argv, const Command &command) {
     string names = taxonomy + "/names.dmp";
     string nodes = taxonomy + "/nodes.dmp";
     string merged = taxonomy + "/merged.dmp";
-    NcbiTaxonomy ncbiTaxonomy(names, nodes, merged);
+    TaxonomyWrapper ncbiTaxonomy(names, nodes, merged, false);
     cout << "Taxonomy loaded" << endl;
 
     // Load the mapping file (answer sheet) (accession to taxID)
@@ -222,15 +223,15 @@ ncbiTaxonomy, par, cout, cerr)
                 }
 
                 if (cladeCnt < 3) { // 1, 2
-                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[0], par.testRank, par);
+                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[0], par.testRank);
                 } else if (cladeCnt < 5) {
-                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[1], par.testRank, par);
+                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[1], par.testRank);
                 } else if (cladeCnt < 9) {
-                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[2], par.testRank, par);
+                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[2], par.testRank);
                 } else if (cladeCnt < 17) {
-                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[3], par.testRank, par);
+                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[3], par.testRank);
                 } else {
-                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[4], par.testRank, par);
+                    compareTaxonAtRank(classInt, rightAnswer, ncbiTaxonomy, results[i].countsOfGroups[4], par.testRank);
                 }
             }
             readClassification.close();
@@ -271,8 +272,8 @@ ncbiTaxonomy, par, cout, cerr)
     return 0;
 }
 
-char compareTaxonAtRank(TaxID shot, TaxID target, NcbiTaxonomy & ncbiTaxonomy, CountOfGroup & count,
-                             const string & rank, const LocalParameters & par, size_t idx, const string& readId) {
+char compareTaxonAtRank(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTaxonomy, CountOfGroup & count,
+                             const string & rank) {
     // Do not count if the rank of target is higher than current rank
     TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
     const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);

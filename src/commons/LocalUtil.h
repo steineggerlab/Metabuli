@@ -5,6 +5,7 @@
 #include <string>
 #include "common.h"
 #include "KSeqWrapper.h"
+#include <cstdint>
 
 class LocalUtil : public Util {
 public:

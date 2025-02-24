@@ -7,6 +7,7 @@
 #include "KmerExtractor.h"
 #include "Taxonomer.h"
 #include "Reporter.h"
+#include <cstdint>
 
 class QueryFilter {
 private:
@@ -23,7 +24,7 @@ private:
     KmerMatcher * kmerMatcher;
     Taxonomer * taxonomer;
     Reporter * reporter;
-    NcbiTaxonomy * taxonomy;
+    TaxonomyWrapper * taxonomy;
 
     // Kseq
     KSeqWrapper* filter_kseq1;

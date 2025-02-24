@@ -1,6 +1,6 @@
 #include "common.h"
 #include "FileUtil.h"
-#include "NcbiTaxonomy.h"
+#include "TaxonomyWrapper.h"
 #include <fstream>
 #include <iostream>
 #include <unistd.h>
@@ -8,6 +8,8 @@
 #include "Reporter.h"
 #include "Util.h"
 #include "sys/mman.h"
+#include <fcntl.h>
+
 
 void process_mem_usage(double &vm_usage, double &resident_set) {
   vm_usage = 0.0;
@@ -32,8 +34,8 @@ void process_mem_usage(double &vm_usage, double &resident_set) {
 }
 
 // Mostly copied from lib/mmseqs/src/taxonomy/NcbiTaxonomy.cpp
-NcbiTaxonomy *loadTaxonomy(const std::string &dbDir,
-                           const std::string &taxonomyDir) {
+TaxonomyWrapper *loadTaxonomy(const std::string &dbDir,
+                              const std::string &taxonomyDir) {
   std::string binFile = dbDir + "/taxonomyDB";
   if (fileExist(binFile)) {
     FILE *handle = fopen(binFile.c_str(), "r");
@@ -50,7 +52,7 @@ NcbiTaxonomy *loadTaxonomy(const std::string &dbDir,
       EXIT(EXIT_FAILURE);
     }
     fclose(handle);
-    NcbiTaxonomy *t = NcbiTaxonomy::unserialize(data);
+    TaxonomyWrapper *t = TaxonomyWrapper::unserialize(data);
     if (t != NULL) {
       t->setMmapData(data, sb.st_size);
       return t;
@@ -59,17 +61,18 @@ NcbiTaxonomy *loadTaxonomy(const std::string &dbDir,
                                "with createtaxdb.\n";
     }
   } else if (taxonomyDir != "") {
-    return new NcbiTaxonomy(taxonomyDir + "/names.dmp",
-                            taxonomyDir + "/nodes.dmp",
-                            taxonomyDir + "/merged.dmp");
+    return new TaxonomyWrapper(taxonomyDir + "/names.dmp",
+                               taxonomyDir + "/nodes.dmp",
+                               taxonomyDir + "/merged.dmp",
+                               false);
   }
-  return new NcbiTaxonomy(dbDir + "/taxonomy/names.dmp",
-                          dbDir + "/taxonomy/nodes.dmp",
-                          dbDir + "/taxonomy/merged.dmp");
+  return new TaxonomyWrapper(dbDir + "/taxonomy/names.dmp",
+                             dbDir + "/taxonomy/nodes.dmp",
+                             dbDir + "/taxonomy/merged.dmp",
+                             false);
 }
 
-int loadDbParameters(LocalParameters &par) {
-  std::string dbDir = par.filenames[1 + (par.seqMode == 2)];
+int loadDbParameters(LocalParameters &par, const std::string & dbDir) {
   if (fileExist(dbDir + "/db.parameters")) {
     // open db.parameters
     std::ifstream dbParametersFile;
@@ -79,22 +82,13 @@ int loadDbParameters(LocalParameters &par) {
       while (getline(dbParametersFile, eachLine)) {
         std::vector<std::string> tokens = Util::split(eachLine, "\t");
         if (tokens[0] == "Reduced_alphabet") {
-          // if (stoi(tokens[1]) != par.reducedAA){
-          //   if (par.reducedAA == 0){ // DB with reduced AA
-          //     cerr << "Warning: Current DB is built with reduced 15 amino acid alphabets." << endl;
-          //     cerr << "         --reduce-aa option will be ignored " << endl;
-          //   } else {
-          //     cerr << "Warning: Current DB is built with 20 amino acid alphabets." << endl;
-          //     cerr << "         --reduce-aa option will be ignored " << endl;
-          //   }
-          // }
           par.reducedAA = stoi(tokens[1]);
         } else if (tokens[0] == "Spaced_kmer_mask") {
           // par.spaceMask = tokens[1];
         } else if (tokens[0] == "Accession_level") {
           if (tokens[1] == "0" && par.accessionLevel == 1){
             par.accessionLevel = 0;
-            cerr << "Warning: Current DB doesn't support accession-level classification." << endl;
+            cout << "Warning: Current DB doesn't support accession-level classification." << endl;
           }
           if (tokens[1] == "1" && par.accessionLevel == 0){
             par.accessionLevel = 2;
@@ -103,12 +97,37 @@ int loadDbParameters(LocalParameters &par) {
           par.dbName = tokens[1];
         } else if (tokens[0] == "Creation_date") {
           par.dbDate = tokens[1];
+        } else if (tokens[0] == "Skip_redundancy") {
+          if (tokens[1] == "1") {
+            par.skipRedundancy = 1;
+          }
         }
       }
       return 1;
     }
   }
   return 0;
+}
+
+bool haveRedundancyInfo(const std::string & dbDir) {
+  bool res = true;
+  if (fileExist(dbDir + "/db.parameters")) {
+    // open db.parameters
+    std::ifstream dbParametersFile;
+    dbParametersFile.open(dbDir + "/db.parameters");
+    std::string eachLine;
+    if (dbParametersFile.is_open()) {
+      while (getline(dbParametersFile, eachLine)) {
+        std::vector<std::string> tokens = Util::split(eachLine, "\t");
+        if (tokens[0] == "Skip_redundancy" && tokens[1] == "1") {
+          return false;
+        }
+      }
+    }
+  } else {
+    res = true;
+  }
+  return res;
 }
 
 int searchAccession2TaxID(const std::string &name,
@@ -147,4 +166,129 @@ int searchAccession2TaxID(const std::string &name,
   }
 
   return 0;
+}
+
+void getObservedAccessionList(const string & fnaListFileName,
+                              vector<string> & fastaList,
+                              unordered_map<string, TaxID> & acc2taxid) {
+  ifstream fileListFile(fnaListFileName);
+  if (fileListFile.is_open()) {
+    for (string eachLine; getline(fileListFile, eachLine);) {
+      fastaList.push_back(eachLine);
+    }
+  } else {
+    cout << "Cannot open file for file list" << endl;
+  } 
+
+  // Iterate through the fasta files to get observed accessions
+  size_t accCnt = 0;
+  #pragma omp parallel default(none), shared(fastaList, cout, accCnt, acc2taxid)
+  {
+    unordered_map<string, TaxID> localAcc2taxid;
+    localAcc2taxid.reserve(4096 * 4);
+        
+    #pragma omp for schedule(dynamic, 1)
+    for (size_t i = 0; i < fastaList.size(); ++i) {
+        KSeqWrapper* kseq = KSeqFactory(fastaList[i].c_str());
+        while (kseq->ReadEntry()) {
+            const KSeqWrapper::KSeqEntry & e = kseq->entry;
+            // Get the accession ID without version
+            char* pos = strchr(e.name.s, '.'); 
+            if (pos != nullptr) {
+                *pos = '\0';
+                localAcc2taxid[e.name.s] = 0;
+            } else {
+                localAcc2taxid[e.name.s] = 0;
+            }
+        }
+        delete kseq;
+    } 
+    __sync_fetch_and_add(&accCnt, localAcc2taxid.size()); 
+    #pragma omp barrier
+    
+    #pragma omp critical
+    {
+        if (acc2taxid.size() < accCnt) {
+            acc2taxid.reserve(accCnt);
+        }
+    }  
+    #pragma omp critical
+    {
+        for (const auto & acc : localAcc2taxid) {
+            acc2taxid.insert(acc);
+        }
+    }                     
+  }
+}
+
+void fillAcc2TaxIdMap(unordered_map<string, TaxID> & acc2taxid,
+                      const string & acc2taxidFileName) {
+  cout << "Load mapping from accession ID to taxonomy ID ... " << flush;
+
+  // Open the file
+  int fd = open(acc2taxidFileName.c_str(), O_RDONLY);
+  if (fd < 0) {
+      cout << "Cannot open file for mapping from accession to tax ID" << endl;
+      return;
+  }
+
+  // Get the size of the file
+  struct stat sb;
+  if (fstat(fd, &sb) == -1) {
+      cout << "Cannot get the size of the file for mapping from accession to tax ID" << endl;
+      close(fd);
+      return;
+  }
+
+  size_t fileSize = sb.st_size;
+
+  // Map the file to memory
+  char* fileData = static_cast<char*>(mmap(nullptr, fileSize, PROT_READ, MAP_PRIVATE, fd, 0));
+  if (fileData == MAP_FAILED) {
+      cout << "mmap failed" << endl;
+      close(fd);
+      return;
+  }
+  close(fd);  // Close the file descriptor as it is no longer needed after mmap.
+
+  // Parse the file
+  char* current = fileData;
+  char* end = fileData + fileSize;
+
+  // Skip the header line
+  while (current < end && *current != '\n') {
+      ++current;
+  }
+  ++current;  // Move past the newline
+
+  char accession[16384];
+  int taxID;
+
+  while (current < end) {
+      // Read a line
+      char* lineStart = current;
+      while (current < end && *current != '\n') {
+          ++current;
+      }
+      std::string line(lineStart, current - lineStart);
+      // Parse the line
+      if (sscanf(line.c_str(), "%s\t%*s\t%d\t%*d", accession, &taxID) == 2) {
+        // Get the accession ID without version
+        char* pos = strchr(accession, '.');
+        if (pos != nullptr) {
+          *pos = '\0';
+        }
+        auto it = acc2taxid.find(accession);
+        if (it != acc2taxid.end()) {
+          acc2taxid[accession] = taxID;
+        }
+      }
+      ++current;  // Move to the next line
+  }
+
+  // Unmap the file
+  if (munmap(fileData, fileSize) == -1) {
+      cout << "munmap failed" << endl;
+  }                                        
+  cout << "Done" << endl;
 }

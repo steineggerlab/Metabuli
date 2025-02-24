@@ -32,13 +32,13 @@ LocalParameters::LocalParameters() :
                        typeid(int),
                        (void *) &archaeaTaxId,
                        "^[0-9]+$"),
-        EUKARYOTA_TAX_ID(EUKARYOTA_TAX_ID_ID,
-                         "--eukaryota-taxid",
-                         "Taxonomy ID of eukaryota taxon",
-                         "NCBI: 2759 [Default]\nCUSTOM: Check names.dmp file ",
-                         typeid(int),
-                         (void *) &eukaryotaTaxId,
-                         "^[0-9]+$"),
+        SKIP_REDUNDANCY(SKIP_REDUNDANCY_ID,
+                        "--skip-redundancy",
+                        "Not storing k-mer's redundancy.",
+                        "Not storing k-mer's redundancy.",
+                        typeid(int),
+                        (void *) &skipRedundancy,
+                        "[0-1]"),
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
                  "Sequencing type",
@@ -153,12 +153,33 @@ LocalParameters::LocalParameters() :
                     (void *) &minSSMatch,
                     "^[0-9]+$"),
         TIE_RATIO(TIE_RATIO_ID,
-                      "--tie-ratio",
-                      "Best * --tie-ratio is considered as a tie",
-                      "Best * --tie-ratio is considered as a tie",
-                      typeid(float),
-                      (void *) &tieRatio,
-                      "^0(\\.[0-9]+)?|1(\\.0+)?$"),
+                  "--tie-ratio",
+                  "Best * --tie-ratio is considered as a tie",
+                  "Best * --tie-ratio is considered as a tie",
+                  typeid(float),
+                  (void *) &tieRatio,
+                  "^0(\\.[0-9]+)?|1(\\.0+)?$"),
+        PRINT_LINEAGE(PRINT_LINEAGE_ID,
+                      "--lineage",
+                      "Print lineage information",
+                      "Print lineage information",
+                      typeid(int),
+                      (void *) &printLineage,
+                      "[0-1]"),
+        TARGET_TAX_ID(TARGET_TAX_ID_ID,
+               "--tax-id",
+               "Tax. ID of clade to be extracted",
+               "Tax. ID of clade to be extracted",
+               typeid(int),
+               (void *) &targetTaxId,
+               "^[0-9]+$"),
+        EXTRACT_MODE(EXTRACT_MODE_ID,
+                     "--extract-format",
+                     "0: original format, 1: FASTA, 2: FASTQ",
+                     "0: original format, 1: FASTA, 2: FASTQ",
+                     typeid(int),
+                     (void *) &extractMode,
+                     "[0-2]"),
         GROUP_KMER_THR(GROUP_KMER_THR_ID,
                     "--group-kmer-thr",
                     "Min. num. of shared kmer for read grouping",
@@ -236,6 +257,34 @@ LocalParameters::LocalParameters() :
                 typeid(std::string),
                 (void *) &dbDate,
                 "^.*$"),
+        CDS_INFO(CDS_INFO_ID,
+                 "--cds-info",
+                 "List of CDS files",
+                 "List of CDS files",
+                 typeid(std::string),
+                 (void *) &cdsInfo,
+                 "^.*$"),
+        MAKE_LIBRARY(MAKE_LIBRARY_ID,
+                     "--make-library",
+                     "Make library",
+                     "Make library",
+                     typeid(int),
+                     (void *) &makeLibrary,
+                     "[0-1]"),
+        GTDB(GTDB_ID,
+                "--gtdb",
+                "GTDB-based database creation",
+                "GTDB-based database creation",
+                typeid(int),
+                (void *) &gtdb,
+                "[0-1]"),
+        NEW_TAXA(NEW_TAXA_ID,
+                "--new-taxa",
+                "TSV file of new taxa to be added",
+                "TSV file of new taxa to be added",
+                typeid(std::string),
+                (void *) &newTaxa,
+                "^.*$"),
         TEST_RANK(TEST_RANK_ID,
                   "--test-rank",
                   ".",
@@ -312,14 +361,41 @@ LocalParameters::LocalParameters() :
                    "List of taxids to be filtered",
                      typeid(std::string),
                         (void *) &contamList,
-                        "^.*$") 
+                        "^.*$"),
+        INFO_BEGIN(INFO_BEGIN_ID,
+                "--info-begin",
+                "Begin of the info to print",
+                "Begin of the info to print",
+                typeid(size_t),
+                (void *) &infoBegin,
+                "^[0-9]+$"), 
+        INFO_END(INFO_END_ID,
+                "--info-end",
+                "End of the info to print",
+                "End of the info to print",
+                typeid(size_t),
+                (void *) &infoEnd,
+                "^[0-9]+$"),
+        KMER_BEGIN(KMER_BEGIN_ID,
+                "--kmer-begin",
+                "First k-mer to print",
+                "First k-mer to print",
+                typeid(size_t),
+                (void *) &kmerBegin,
+                "^[0-9]+$"),
+        KMER_END(KMER_END_ID,
+                "--kmer-end",
+                "Last k-mer to print",
+                "Last k-mer to print",
+                typeid(size_t),
+                (void *) &kmerEnd,
+                "^[0-9]+$")
   {
     // Initialize the parameters
-        // Superkingdom taxonomy id
+    // Superkingdom taxonomy id
     virusTaxId = 10239;
     bacteriaTaxId = 2;
     archaeaTaxId = 2157;
-    eukaryotaTaxId = 2759;
 
 
     // Classify
@@ -375,33 +451,40 @@ LocalParameters::LocalParameters() :
 
     // build
     build.push_back(&PARAM_THREADS);
-    build.push_back(&REDUCED_AA);
-    // build.push_back(&SPACED);
     build.push_back(&TAXONOMY_PATH);
     build.push_back(&SPLIT_NUM);
     build.push_back(&PARAM_MASK_PROBABILTY);
     build.push_back(&PARAM_MASK_RESIDUES);
-    build.push_back(&BUFFER_SIZE);
     build.push_back(&ACCESSION_LEVEL);
     build.push_back(&DB_NAME);
     build.push_back(&DB_DATE);
+    build.push_back(&CDS_INFO);
+    build.push_back(&RAM_USAGE);
+    build.push_back(&MAKE_LIBRARY);
+    build.push_back(&GTDB);
+
+    // updateDB
+    updateDB.push_back(&PARAM_THREADS);
+    updateDB.push_back(&SPLIT_NUM);
+    updateDB.push_back(&PARAM_MASK_PROBABILTY);
+    updateDB.push_back(&PARAM_MASK_RESIDUES);
+    updateDB.push_back(&ACCESSION_LEVEL);
+    updateDB.push_back(&DB_NAME);
+    updateDB.push_back(&DB_DATE);
+    updateDB.push_back(&CDS_INFO);
+    updateDB.push_back(&RAM_USAGE);
+    updateDB.push_back(&NEW_TAXA);
+    updateDB.push_back(&MAKE_LIBRARY);
 
     //classify
     classify.push_back(&PARAM_THREADS);
     classify.push_back(&SEQ_MODE);
-//     classify.push_back(&VIRUS_TAX_ID);
-//     classify.push_back(&REDUCED_AA);
     classify.push_back(&MIN_SCORE);
     classify.push_back(&MIN_COVERAGE);
     classify.push_back(&MIN_CONS_CNT);
     classify.push_back(&MIN_CONS_CNT_EUK);
     classify.push_back(&MIN_SP_SCORE);
-//     classify.push_back(&SPACED);
     classify.push_back(&HAMMING_MARGIN);
-//     classify.push_back(&PARAM_V);
-//     classify.push_back(&MIN_COVERED_POS);
-//     classify.push_back(&PRINT_LOG);
-//     classify.push_back(&MAX_GAP);
     classify.push_back(&TAXONOMY_PATH);
     classify.push_back(&PARAM_MASK_RESIDUES);
     classify.push_back(&PARAM_MASK_PROBABILTY);
@@ -409,7 +492,14 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MATCH_PER_KMER);
     classify.push_back(&ACCESSION_LEVEL);
     classify.push_back(&TIE_RATIO);
-    // classify.push_back(&MIN_SS_MATCH);
+    classify.push_back(&SKIP_REDUNDANCY);
+    classify.push_back(&PRINT_LINEAGE);
+
+    // extract
+    extract.push_back(&TAXONOMY_PATH);
+    extract.push_back(&SEQ_MODE);
+    extract.push_back(&TARGET_TAX_ID);
+    extract.push_back(&EXTRACT_MODE);
 
     //groupGeneration
     groupGeneration.push_back(&PARAM_THREADS);
@@ -440,7 +530,6 @@ LocalParameters::LocalParameters() :
     filter.push_back(&REDUCED_AA);
     filter.push_back(&MIN_SCORE);
     filter.push_back(&MIN_COVERAGE);
-    // filter.push_back(&SPACED);
     filter.push_back(&HAMMING_MARGIN);
     filter.push_back(&MIN_SP_SCORE);
     filter.push_back(&PARAM_V);
@@ -490,6 +579,16 @@ LocalParameters::LocalParameters() :
 
     // db report
     databaseReport.push_back(&TAXONOMY_PATH);
+
+    // printInfo
+    printInfo.push_back(&INFO_BEGIN);
+    printInfo.push_back(&INFO_END);
+
+    // expand_diffidx
+    expand_diffidx.push_back(&KMER_BEGIN);
+    expand_diffidx.push_back(&KMER_END);
+
+    query2reference.push_back(&TEST_RANK);
 }
 
 void LocalParameters::printParameters(const std::string &module, int argc, const char* pargv[],

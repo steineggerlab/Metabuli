@@ -83,7 +83,8 @@ static const std::map<std::string, int> NcbiRanks = {{ "forma", 1 },
                                                      { "subkingdom", 26 },
                                                      { "kingdom", 27 },
                                                      { "superkingdom", 28 },
-                                                     {"no rank", 29}};
+                                                     { "no rank", 29},
+                                                     { "realm", 30}};
 
 static const std::map<std::string, char> NcbiShortRanks = {{ "species", 's' },
                                                            { "genus", 'g' },
@@ -98,6 +99,7 @@ class NcbiTaxonomy {
 public:
     static NcbiTaxonomy* openTaxonomy(const std::string &database);
     NcbiTaxonomy(const std::string &namesFile,  const std::string &nodesFile, const std::string &mergedFile);
+    NcbiTaxonomy() {};
     ~NcbiTaxonomy();
 
     TaxonNode const * LCA(const std::vector<TaxID>& taxa) const;
@@ -127,17 +129,7 @@ public:
     TaxonNode* taxonNodes;
     size_t maxNodes;
 
-    // Added by jaebeom
-    bool IsAncestor2(TaxID ancestor, TaxID child);
-    TaxID getTaxIdAtRank(int taxId, const std::string & rank);
-    void createTaxIdListAtRank(std::vector<int> & taxIdList, std::vector<int> & taxIdListAtRank,
-                               const std::string & rank);
-    void setMmapData(char* data, size_t size) {
-        mmapData = data;
-        mmapSize = size;
-    }
-
-private:
+protected:
     size_t loadNodes(std::vector<TaxonNode> &tmpNodes, const std::string &nodesFile);
     size_t loadMerged(const std::string &mergedFile);
     void loadNames(std::vector<TaxonNode> &tmpNodes, const std::string &namesFile);

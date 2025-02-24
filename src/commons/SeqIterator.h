@@ -20,6 +20,7 @@
 #include "NucleotideMatrix.h"
 #include "SubstitutionMatrix.h"
 #include "tantan.h"
+#include <cstdint>
 
 #ifdef OPENMP
 #include <omp.h>
@@ -54,7 +55,15 @@ private:
 public:
     static const string iRCT;
     static const string atcg;
-
+    
+    string reverseComplement(string &read) const;
+    
+    void devideToCdsAndNonCds(const char *maskedSeq,
+                              size_t seqLen,
+                              const vector<CDSinfo> &cdsInfo, 
+                              vector<string> &cds,
+                              vector<string> &nonCds);
+    
     void fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite,
                              uint32_t seqID, vector<int> *aaFrames, uint32_t offset = 0);
 
@@ -64,7 +73,17 @@ public:
 
     void sixFrameTranslation(const char *seq, int seqLen, vector<int> *aaFrames);
 
-    bool translateBlock(const char *seq, PredictedBlock block, vector<int> & aaSeq);
+    bool translateBlock(const char *seq, PredictedBlock block, vector<int> & aaSeq, size_t length);
+
+    void translate(const string & seq, vector<int> & aa, int frame = 0) {
+        aa.clear();
+        if(aa.capacity() < seq.length() / 3 + 1) {
+            aa.reserve(seq.length() / 3 + 1);
+        }
+        for (int i = 0 + frame; i + 2 < (int) seq.length(); i = i + 3) {
+            aa.push_back(nuc2aa[nuc2int(atcg[seq[i]])][nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])]);
+        }
+    }
 
     void generateIntergenicKmerList(struct _gene *genes, struct _node *nodes, int numberOfGenes,
                                     vector<uint64_t> &intergenicKmerList, const char *seq);
@@ -80,6 +99,15 @@ public:
 
     int fillBufferWithKmerFromBlock(const PredictedBlock &block, const char *seq, TargetKmerBuffer &kmerBuffer,
                                      size_t &posToWrite, int seqID, int taxIdAtRank, const vector<int> & aaSeq);
+
+    int fillBufferWithKmerFromBlock(const char *seq,
+                                    TargetKmerBuffer &kmerBuffer,
+                                    size_t &posToWrite,
+                                    int seqID,
+                                    int taxIdAtRank,
+                                    const vector<int> & aaSeq);
+
+    void addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const int &kmerCnt, int frame = 0);
 
     static void maskLowComplexityRegions(const char * seq, char * maskedSeq, ProbabilityMatrix & probMat,
                                          float maskProb, const BaseMatrix * subMat);

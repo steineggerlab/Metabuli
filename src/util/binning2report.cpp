@@ -5,6 +5,7 @@
 #include <iostream>
 #include "IndexCreator.h"
 #include "report.h"
+#include <cstdint>
 
 using namespace std;
 
@@ -49,7 +50,7 @@ int binning2report(int argc, const char **argv, const Command &command){
             lineCnt++;
         }
     } else {
-        cerr << "Cannot open the file of binning result" << endl;
+        cout << "Cannot open the file of binning result" << endl;
     }
     binnings_file.close();
 
@@ -59,7 +60,7 @@ int binning2report(int argc, const char **argv, const Command &command){
     if (new_report_file.is_open()) {
         write_report_file(outDir + "/" + jobid + "_report.tsv", binnings.size(), taxonCounts, ncbiTaxonomy);
     } else {
-        cerr << "Cannot open file for new report" << endl;
+        cout << "Cannot open file for new report" << endl;
     }
     return 0;
 }
