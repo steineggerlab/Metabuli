@@ -82,7 +82,7 @@ public:
 
     size_t  fillKmerInfoBuffer(size_t bufferSize,
                             FILE *kmerInfoFp,
-                            TargetKmerInfo *infoBuffer) {
+                            TaxID *infoBuffer) {
         return loadBuffer(kmerInfoFp, infoBuffer, bufferSize);
     }
 };
@@ -100,7 +100,7 @@ protected:
     KmerMatcher *kmerMatcher;
     Taxonomer *taxonomer;
     Reporter *reporter;
-    NcbiTaxonomy *taxonomy;
+    TaxonomyWrapper *taxonomy;
     KmerFileHandler *kmerFileHandler;
     SeqIterator *seqIterator;
     

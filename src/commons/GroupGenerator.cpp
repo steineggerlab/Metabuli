@@ -4,51 +4,11 @@
 #include "common.h"
 #include "Kmer.h"
 
-
-void GroupGenerator::tempFunction() {
-    unordered_map<TaxID, unordered_set<TaxID>> subspecies_in_genus;
-
-    // FILE
-    string targetInfoFileName = dbDir + "/info";
-    FILE * kmerInfoFp = fopen(targetInfoFileName.c_str(), "rb");
-    size_t numOfInfoIdx = FileUtil::getFileSize(targetInfoFileName) / sizeof(TargetKmerInfo);
-    size_t infoIdx = 0;
-    cout << "read referece DB info from " << targetInfoFileName << endl;
-    cout << "number of info data: " << numOfInfoIdx << endl;
-
-    // Target K-mer buffer
-    TargetKmerInfo * kmerInfoBuffer = (TargetKmerInfo *) malloc(sizeof(TargetKmerInfo) * (kmerFileHandler->bufferSize + 1)); // 64 Mb
-    size_t kmerInfoBufferIdx = 0;
-
-    while (infoIdx < numOfInfoIdx) {
-        size_t tempBufferSize = kmerFileHandler->fillKmerInfoBuffer(kmerFileHandler->bufferSize, kmerInfoFp, kmerInfoBuffer);
-        for (int idx = 0; idx < tempBufferSize; idx++) {
-            TaxID targetId = kmerInfoBuffer[idx].sequenceID;
-            
-            if (string(taxonomy->getString(taxonomy->taxonNode(targetId)->rankIdx)) == "subspecies")  {
-                TaxID genusTaxId = taxonomy->getTaxIdAtRank(targetId, "genus");
-                subspecies_in_genus[genusTaxId].insert(targetId);
-            }
-        }
-        infoIdx += tempBufferSize;
-    }
-
-    for (const auto &entry : subspecies_in_genus) {
-        auto vec = entry.second;
-        cout << "Genus TaxID: " << entry.first 
-                << " - Unique Count: " << vec.size() << endl;
-    }
-
-    fclose(kmerInfoFp);   
-    free(kmerInfoBuffer); 
-    return;
-}
-
 GroupGenerator::GroupGenerator(LocalParameters & par) {
     // Load parameters
     dbDir = par.filenames[1 + (par.seqMode == 2)];
     matchPerKmer = par.matchPerKmer;
-    loadDbParameters(par);
+    loadDbParameters(par, par.filenames[1 + (par.seqMode == 2)]);
     
     cout << "DB name: " << par.dbName << endl;
     cout << "DB creation date: " << par.dbDate << endl;
@@ -371,7 +331,7 @@ void GroupGenerator::makeGroups(const unordered_map<uint32_t, unordered_map<uint
     }
 
     cout << "Query group created successfully : " << groupInfo.size() << " groups" << endl;
-    cout << "Time spent for query groups: " << double(time(nullptr) - beforeSearch) << endl;
+    cout << "Time spent: " << double(time(nullptr) - beforeSearch) << " seconds." << endl;
 
     return;
 }
@@ -517,7 +477,8 @@ void GroupGenerator::applyRepLabel(const string &resultFileDir,
             if (repLabelIt != repLabel.end() && repLabelIt->second != 0) {
                 fields[2] = to_string(repLabelIt->second);
                 fields[0] = "1";
-                fields[5] = taxonomy->getString(taxonomy->taxonNode(repLabelIt->second)->rankIdx);
+                // fields[5] = taxonomy->getString(taxonomy->taxonNode(repLabelIt->second)->rankIdx);
+                fields[5] = "-";
             }
         }
 
