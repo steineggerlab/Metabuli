@@ -21,4 +21,5 @@ set(util_source_files
         util/createnewtaxalist.cpp
         util/createnewtaxalist.h
         util/printDeltaIdx.cpp
+        util/makeBenchmarkSet.cpp
         PARENT_SCOPE)
