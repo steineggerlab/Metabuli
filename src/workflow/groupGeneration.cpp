@@ -26,6 +26,7 @@ void setGroupGenerationDefaults(LocalParameters & par){
     par.tieRatio = 0.95;
 
     par.groupKmerThr = 150;
+    par.groupScoreThr = 0.0;
     par.voteMode = 0;
     par.majorityThr = 0.5;
 }

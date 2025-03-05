@@ -77,6 +77,7 @@ public:
 
     // Group generation
     PARAMETER(GROUP_KMER_THR)
+    PARAMETER(GROUP_SCORE_THR)
     PARAMETER(VOTE_MODE)
     PARAMETER(MAJORITY_THR)
 
@@ -145,6 +146,7 @@ public:
     int minSSMatch;
     float tieRatio;
     int groupKmerThr;
+    float groupScoreThr;
     int voteMode;
     float majorityThr;
     int printLineage;

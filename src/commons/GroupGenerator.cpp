@@ -65,9 +65,11 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
 
     size_t voteMode = par.voteMode;
     float majorityThr = par.majorityThr;
+    float groupScoreThr = par.groupScoreThr;
     size_t groupKmerThr = par.groupKmerThr;
     cout << "voteMode: " << voteMode << endl;
     cout << "majorityThr: " << majorityThr << endl;
+    cout << "groupScoreThr: " << groupScoreThr << endl;
     cout << "groupKmerThr: " << groupKmerThr << endl;
     
     // Extract k-mers from query sequences and compare them to target k-mer DB
@@ -151,9 +153,9 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     loadMetabuliResult(outDir, metabuliResult);
 
     unordered_map<uint32_t, int> repLabel; 
-    getRepLabel(outDir, metabuliResult, groupInfo, repLabel, jobId, voteMode, majorityThr);
+    getRepLabel(outDir, metabuliResult, groupInfo, repLabel, jobId, voteMode, majorityThr, groupScoreThr);
 
-    applyRepLabel(outDir, outDir, queryGroupInfo, repLabel, jobId);
+    applyRepLabel(outDir, outDir, queryGroupInfo, repLabel, groupScoreThr, jobId);
     
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
 }
@@ -405,7 +407,8 @@ void GroupGenerator::getRepLabel(const string &groupRepFileDir,
                                  unordered_map<uint32_t, int> &repLabel, 
                                  const string &jobId, 
                                  int voteMode, 
-                                 float majorityThr) {
+                                 float majorityThr,
+                                 const float groupScoreThr) {
     for (const auto& group : groupInfo) {
         uint32_t groupId = group.first;
         const unordered_set<uint32_t>& queryIds = group.second;
@@ -415,7 +418,7 @@ void GroupGenerator::getRepLabel(const string &groupRepFileDir,
         for (const auto& queryId : queryIds) {
             int query_label = metabuliResult[queryId].first; 
             float score = metabuliResult[queryId].second;
-            if (query_label != 0) {
+            if (query_label != 0 || score < groupScoreThr) {
                 setTaxa.emplace_back(query_label, score, voteMode);
             }
         }
@@ -447,6 +450,7 @@ void GroupGenerator::applyRepLabel(const string &resultFileDir,
                                    const string &newResultFileDir, 
                                    const vector<int> &queryGroupInfo, 
                                    const unordered_map<uint32_t, int> &repLabel, 
+                                   const float groupScoreThr,
                                    const string &jobId) {
     ifstream inFile(resultFileDir + "/" + jobId + "_classifications.tsv");
     if (!inFile.is_open()) {
@@ -471,7 +475,7 @@ void GroupGenerator::applyRepLabel(const string &resultFileDir,
             fields.push_back(field);
         }
 
-        if (fields.size() > 2 && fields[0] == "0") {
+        if ((fields.size() > 2 && fields[0] == "0")||(fields.size() > 2 && std::stof(fields[4]) < groupScoreThr)) {
             uint32_t groupId = queryGroupInfo[queryIdx];
             auto repLabelIt = repLabel.find(groupId);
             if (repLabelIt != repLabel.end() && repLabelIt->second != 0) {

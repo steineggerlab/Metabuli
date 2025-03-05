@@ -135,12 +135,14 @@ public:
                      unordered_map<uint32_t, int> &repLabel, 
                      const string &jobId, 
                      int voteMode, 
-                     float majorityThr);
+                     float majorityThr,
+                     const float groupScoreThr);
 
     void applyRepLabel(const string &resultFileDir, 
                        const string &newResultFileDir, 
                        const vector<int> &queryGroupInfo, 
                        const unordered_map<uint32_t, int> &repLabel, 
+                       const float groupScoreThr, 
                        const string &jobId);
     
     void makeGroupsFromBinning(const string &binningFileDir, 

@@ -187,6 +187,13 @@ LocalParameters::LocalParameters() :
                     typeid(int),
                     (void *) &groupKmerThr,
                     "^[0-9]+$"),
+        GROUP_SCORE_THR(GROUP_SCORE_THR_ID,
+                    "--group-score-thr",
+                    "Min. score for read grouping",
+                    "Min. score for read grouping",
+                    typeid(float),
+                    (void *) &groupScoreThr,
+                    "^0(\\.[0-9]+)?|1(\\.0+)?$"),
         VOTE_MODE(VOTE_MODE_ID,
                     "--vote-mode",
                     "Vote mode of majority weighted LCA",
@@ -508,6 +515,7 @@ LocalParameters::LocalParameters() :
     groupGeneration.push_back(&RAM_USAGE);
     groupGeneration.push_back(&MATCH_PER_KMER);
     groupGeneration.push_back(&GROUP_KMER_THR);
+    groupGeneration.push_back(&GROUP_SCORE_THR);
     groupGeneration.push_back(&VOTE_MODE);
     groupGeneration.push_back(&MAJORITY_THR);
 
