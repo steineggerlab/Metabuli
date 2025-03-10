@@ -3,9 +3,13 @@
 #include "LocalParameters.h"
 #include <Command.h>
 #include "FileUtil.h"
+#include "accession2taxid.h"
+#include "editNames.h"
+
 
 void setDefaults_updateDB(LocalParameters & par){
-    par.makeLibrary = 1;
+    par.makeLibrary = 0;
+    par.gtdb = 0;
     // par.skipRedundancy = 1;
     par.reducedAA = 0;
     par.ramUsage = 128;
@@ -36,6 +40,11 @@ int updateDB(int argc, const char **argv, const Command &command){
     // If dbDirectory does not exist, create it
     if (!FileUtil::directoryExists(newDbDir.c_str())) {
         FileUtil::makeDir(newDbDir.c_str());
+    }
+
+    if (par.gtdb == 1) {
+        accession2taxid(par.filenames[1], par.filenames[2]);
+        par.filenames[2] = par.filenames[2].substr(0, par.filenames[2].find_last_of('.')) + ".accession2taxid";
     }
     
     // Load older taxonomy DB
