@@ -449,6 +449,7 @@ LocalParameters::LocalParameters() :
     updateDB.push_back(&RAM_USAGE);
     updateDB.push_back(&NEW_TAXA);
     updateDB.push_back(&MAKE_LIBRARY);
+    build.push_back(&GTDB);
 
     //classify
     classify.push_back(&PARAM_THREADS);
