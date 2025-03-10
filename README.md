@@ -67,10 +67,12 @@ Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic 
 - [Pre-built databases](#pre-built-databases)
 - [Classification](#classification)
 - [Extract](#extract)
-- [Custom database](#custom-database)
-  - [NCBI taxonomy based database](#ncbi-taxonomy-based-database)
-  - [GTDB based database](#gtdb-based-database)
-- [Update database](#update-database)
+- [GTDB-based custom database](#gtdb-based-custom-database)
+  - [Creat a new database](#creat-a-new-database)
+  - [Add new sequences to an existing database](#add-new-sequences-to-an-existing-database)
+- [NCBI or custom taxonomy based database](#ncbi-or-custom-taxonomy-based-database)
+  - [Creat a new database](#creat-a-new-database-1)
+  - [Add new sequences to an existing database](#add-new-sequences-to-an-existing-database-1)
 - [Example](#example)
   
 ## Installation
