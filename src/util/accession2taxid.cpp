@@ -67,8 +67,7 @@ int accession2taxid(const std::string & assemblyList, const std::string & assacc
     cout << "Generate accession to taxid mapping" << endl;
     unordered_map<string, int> acc2taxid;
     vector<string> unmapped;
-    regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
-
+    regex regex1("(GC[AF]_[0-9]+\\.[0-9]+)");
     
 #pragma omp parallel default(none), shared(acc2taxid, cout, assacc2taxid, assemblies, unmapped, regex1)
 {

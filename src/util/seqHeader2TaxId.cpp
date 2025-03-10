@@ -34,7 +34,8 @@ int seqHeader2TaxId(int argc, const char **argv, const Command &command) {
     string fasta;
     string line;
     string header;
-    regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
+    regex regex1("(GC[AF]_[0-9]+\\.[0-9]+)");
+
     smatch assacc;
     if(fastaList.is_open()){
         while(getline(fastaList, fasta, '\n')){

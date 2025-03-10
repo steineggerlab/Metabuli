@@ -195,7 +195,7 @@ ncbiTaxonomy, par, cout, cerr)
             int classInt;
 
             vector<Score2> tpOrFp;
-            regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
+            regex regex1("(GC[AF]_[0-9]+\\.[0-9]+)");
             smatch assacc;
             size_t numberOfClassifications = 0;
             while (getline(readClassification, resultLine, '\n')) {
