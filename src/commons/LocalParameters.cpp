@@ -245,8 +245,8 @@ LocalParameters::LocalParameters() :
                  "^.*$"),
         MAKE_LIBRARY(MAKE_LIBRARY_ID,
                      "--make-library",
-                     "Make library",
-                     "Make library",
+                     "Make species library. Use it when multiple species are in the same FASTA.",
+                     "Make library.",
                      typeid(int),
                      (void *) &makeLibrary,
                      "[0-1]"),
@@ -449,7 +449,7 @@ LocalParameters::LocalParameters() :
     updateDB.push_back(&RAM_USAGE);
     updateDB.push_back(&NEW_TAXA);
     updateDB.push_back(&MAKE_LIBRARY);
-    build.push_back(&GTDB);
+    updateDB.push_back(&GTDB);
 
     //classify
     classify.push_back(&PARAM_THREADS);

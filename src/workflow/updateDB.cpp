@@ -8,7 +8,8 @@
 
 
 void setDefaults_updateDB(LocalParameters & par){
-    par.makeLibrary = 1;
+    par.makeLibrary = 0;
+    par.gtdb = 0;
     // par.skipRedundancy = 1;
     par.reducedAA = 0;
     par.ramUsage = 128;
