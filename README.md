@@ -253,8 +253,8 @@ metabuli extract --seq-mode 3 read.fna JobID_classifications.tsv dbdir --tax-id 
 Use `--cds-info` to provide absolute paths to CDS files. For included accessions, the provided CDS is used, and Prodigal's gene prediction is skipped. Only GenBank/RefSeq CDS files are supported (e.g., GCA_000839185.1_ViralProj14174_cds_from_genomic.fna.gz).
 
 ### <u>***Creat a new database***</u>
->***Requirements***: 
-Reference FASTA file name (or path) must include the assembly accession (e.g., `GCF_028750015.1`, regex`GC[AF]_[0-9]+\.[0-9]+`). Files from RefSeq or GenBank meet this requirement.
+>[!IMPORTANT] 
+>***Requirements***: Reference FASTA file name (or path) must include the assembly accession (e.g., `GCF_028750015.1`, regex`GC[AF]_[0-9]+\.[0-9]+`). Files from RefSeq or GenBank meet this requirement.
 
 #### 1. Download taxonkit-generated GTDB taxdump files [here](https://github.com/shenwei356/gtdb-taxdump/releases).
 #### 2. Build
@@ -276,7 +276,8 @@ metabuli build --gtdb 1 <DBDIR> <FASTA_LIST> <GTDB_TAXDUMP/taxid.map> --taxonomy
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete `*_diffIdx` and `*_info` files.
 
 ### <u>***Add new sequences to an existing database***</u>
-> [!NOTE] If you want to use new GTDB release, please build a new database from scratch.
+> [!NOTE] 
+> If you want to use new GTDB release, please build a new database from scratch.
 
 You can add new sequences to a GTDB-based database. Expanding the taxonomy for virus or eukaryote is also possible.
 
@@ -299,7 +300,8 @@ metabuli updateDB --gtdb 1 <NEW DBDIR> <FASTA_LIST> <GTDB_TAXDUMP/taxid.map> <OL
 ```
 
 #### \<Add sequences of new taxa>
-> [!WARNING] Mixing taxonomies within the same domain is not recommended. For example, adding prokaryotes to a GTDB database using NCBI taxonomy will cause issues, but adding eukaryotes or viruses using NCBI taxonomy is fine since GTDB does not cover them.
+> [!WARNING] 
+> Mixing taxonomies within the same domain is not recommended. For example, adding prokaryotes to a GTDB database using NCBI taxonomy will cause issues, but adding eukaryotes or viruses using NCBI taxonomy is fine since GTDB does not cover them.
 
 1\. **Check taxdump** files to see if you need to add new taxa. `taxdump` command retrieves taxdump files of an existing database.
 
@@ -350,7 +352,8 @@ newseq2 newseq2 10000013  0
 ## NCBI or custom taxonomy based database
 ### <u>***Creat a new database***</u>
 
->[!IMPORTANT] Three requirements:
+>[!IMPORTANT] 
+Three requirements:
 > 1. **FASTA files** : Each sequence must have a unique `>accession.version` or `>accesion` header (e.g., `>CP001849.1` or `>CP001849`).
 > 2. **NCBI-style accession2taxid** : Sequences with accessions absent here are skipped, and versions are ignored.
 > 3. **NCBI-style taxonomy dump** : `names.dmp`, `nodes.dmp`, and `merged.dmp`. Sequences with tax. IDs absent here are skipped.
@@ -414,7 +417,7 @@ metabuli updateDB <NEW DBDIR> <FASTA_LIST> <accession2taxid> <OLD DBDIR> [option
 * Options
   --threads : The number of threads used (all by default)
   --max-ram : The maximum RAM usage. (128 GiB by default)
-  --accession-level : Set 1 to creat a DB for accession level classification (0 by default).
+  --accession-level : Set 1 to create a DB for accession level classification (0 by default).
   --make-library : Make species library for faster execution (1 by default).
   --new-taxa : List of new taxa to be added.
 ```
