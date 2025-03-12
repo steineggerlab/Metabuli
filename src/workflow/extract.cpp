@@ -60,16 +60,16 @@ int extract(int argc, const char **argv, const Command& command)
 
     string classificationFileName = par.filenames[1 + (par.seqMode == 2)];
     string dbDir = par.filenames[2 + (par.seqMode == 2)];
-    TaxID targetTaxID = par.targetTaxId;
+    TaxID externalTaxID = par.targetTaxId;
     
     TaxonomyWrapper *taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
     Reporter reporter(par, taxonomy);
 
-    targetTaxID = taxonomy->getInternalTaxID(targetTaxID);
+    TaxID targetTaxID = taxonomy->getInternalTaxID(externalTaxID);
 
     vector<size_t> readIdxs;
     
-    cout << "Extracting reads classified to taxon " << targetTaxID << " ... " << flush;
+    cout << "Extracting reads classified to taxon " << externalTaxID << " ... " << flush;
     reporter.getReadsClassifiedToClade(targetTaxID, classificationFileName, readIdxs);
     cout << "done." << endl;
 
@@ -78,7 +78,7 @@ int extract(int argc, const char **argv, const Command& command)
 
     extractBaseNameAndExtension(queryFileName, baseName, extension);
     cout << "Base name       : " << baseName << endl;
-    string outFileName = baseName + "_" + to_string(targetTaxID);
+    string outFileName = baseName + "_" + to_string(externalTaxID);
     reporter.printSpecifiedReads(readIdxs, queryFileName, outFileName);
     cout << "Extracted file  : " << outFileName << endl;
     
@@ -86,7 +86,7 @@ int extract(int argc, const char **argv, const Command& command)
         cout << "Processing the second file ... " << endl;
         queryFileName = par.filenames[1];
         extractBaseNameAndExtension(queryFileName, baseName, extension);
-        outFileName = baseName + "_" + to_string(targetTaxID);
+        outFileName = baseName + "_" + to_string(externalTaxID);
         reporter.printSpecifiedReads(readIdxs, queryFileName, outFileName);
         cout << "Extracted file 2: " << outFileName << endl;
     }
