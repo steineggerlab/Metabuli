@@ -14,6 +14,7 @@ add_executable(metabuli
         ${commons_source_files}
         ${util_source_files}
         ${workflow_source_files}
+        ${benchmark_source_files}
         metabuli.cpp
         LocalCommandDeclarations.h util/filter_by_genus.cpp)
 

@@ -42,6 +42,7 @@ public:
     std::vector<MMseqsParameter*> accession2taxid;
     std::vector<MMseqsParameter*> editNames;
     std::vector<MMseqsParameter*> createnewtaxalist;
+    std::vector<MMseqsParameter*> makeBenchmarkSet;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
