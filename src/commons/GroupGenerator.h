@@ -19,6 +19,8 @@
 #include "KSeqWrapper.h"
 #include <set>
 #include <cassert>
+#include <thread>
+#include <atomic>
 
 #define BufferSize 16'777'216 //16 * 1024 * 1024 // 16 M
 using namespace std;
@@ -67,12 +69,30 @@ protected:
 
 public:
     KmerFileHandler() {}
-    static void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t &localBufIdx);
-    static void getDiffIdx(const uint64_t &lastKmer, const uint64_t &entryToWrite, FILE *handleKmerTable, uint16_t *buffer, size_t &localBufIdx);
-    static void writeDiffIdx(uint16_t *buffer, FILE *handleKmerTable, uint16_t *toWrite, size_t size, size_t &localBufIdx);
-    static uint64_t getNextKmer(uint64_t lookingTarget, const struct MmapedData<uint16_t> & diffList, size_t & idx);
-    static void writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, const string& queryKmerFileDir, size_t& numOfSplits, size_t processedReadCnt, const string & jobid);
-    
+    static void flushKmerBuf(uint16_t *buffer, 
+                             FILE *handleKmerTable, 
+                             size_t &localBufIdx);
+    static void getDiffIdx(const uint64_t &lastKmer, 
+                           const uint64_t &entryToWrite, 
+                           FILE *handleKmerTable, 
+                           uint16_t *buffer, 
+                           size_t &localBufIdx,
+                           size_t bufferSize);
+    static void writeDiffIdx(uint16_t *buffer, 
+                             FILE *handleKmerTable, 
+                             uint16_t *toWrite, 
+                             size_t size, 
+                             size_t &localBufIdx,
+                             size_t bufferSize);
+    static uint64_t getNextKmer(uint64_t lookingTarget, 
+                                const struct MmapedData<uint16_t> & diffList, 
+                                size_t & idx);
+    static void writeQueryKmerFile(QueryKmerBuffer *queryKmerBuffer, 
+                                   const string& queryKmerFileDir, 
+                                   size_t& numOfSplits, 
+                                   size_t numOfThreads, 
+                                   size_t processedReadCnt, 
+                                   const string & jobId);
     static size_t bufferSize;
 
     template <typename T>
@@ -111,13 +131,17 @@ public:
     GroupGenerator(LocalParameters & par);
 
     void startGroupGeneration(const LocalParameters & par);
+
     void makeGraph(const string &queryKmerFileDir, 
-                   unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> &relation, 
                    size_t &numOfSplits, 
+                   size_t &numOfThreads,
                    const string &jobId);
 
-    void makeGroups(const unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> &relation, 
-                    unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
+    void saveSubGraphToFile(const map<uint32_t, map<uint32_t, uint32_t>> &subRelation, 
+                            const string &subGraphFileDir, 
+                            const string &jobId);
+
+    void makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
                     vector<int> &queryGroupInfo, 
                     int groupKmerThreshold);
 
