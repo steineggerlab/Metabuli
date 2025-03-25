@@ -10,7 +10,6 @@ void setClassifyDefaults(LocalParameters & par){
     par.maxShift = 1;
     par.skipRedundancy = 0;
     par.reducedAA = 0;
-    // par.spaceMask = "11111111";
     par.seqMode = 2;    
     par.minScore = 0;
     par.minCoverage = 0;
@@ -37,6 +36,8 @@ int classify(int argc, const char **argv, const Command& command)
     LocalParameters & par = LocalParameters::getLocalInstance();
     setClassifyDefaults(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
+
+    par.maxShift = 8 - par.smerLen;
 
     if (par.seqMode == 2) {
         // Check if the second argument is a directory
