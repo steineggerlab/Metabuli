@@ -145,7 +145,6 @@ public:
     void makeGraph(const string &queryKmerFileDir, 
                    size_t &numOfSplits, 
                    size_t &numOfThreads, 
-                   size_t &processedReadCnt,
                    size_t &numOfGraph,
                    const string &jobId);
 
@@ -154,7 +153,7 @@ public:
                             const size_t counter_now,
                             const string &jobId);
 
-    void makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
+    void makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo,
                     const string &subGraphFileDir, 
                     vector<int> &queryGroupInfo, 
                     int groupKmerThr, 
