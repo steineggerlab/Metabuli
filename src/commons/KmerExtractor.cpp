@@ -1,7 +1,7 @@
 #include "KmerExtractor.h"
 #include <unordered_map>
 
-KmerExtractor::KmerExtractor(const LocalParameters &par) {
+KmerExtractor::KmerExtractor(const LocalParameters &par) : par(par) {
     seqIterator = new SeqIterator(par);
     spaceNum = 0;
     maskMode = par.maskMode;
@@ -16,7 +16,7 @@ KmerExtractor::~KmerExtractor() {
     delete subMat;
 }
 
-void KmerExtractor::extractQueryKmers(QueryKmerBuffer &kmerBuffer,
+void KmerExtractor::extractQueryKmers(Buffer<QueryKmer> &kmerBuffer,
                                       vector<Query> & queryList,
                                       const QuerySplit & currentSplit,
                                       const LocalParameters &par,
@@ -48,7 +48,7 @@ void KmerExtractor::extractQueryKmers(QueryKmerBuffer &kmerBuffer,
 }
 
 void KmerExtractor::fillQueryKmerBufferParallel(KSeqWrapper *kseq,
-                                                QueryKmerBuffer &kmerBuffer,
+                                                Buffer<QueryKmer> &kmerBuffer,
                                                 std::vector<Query> &queryList,
                                                 const QuerySplit &currentSplit,
                                                 const LocalParameters &par) {   
@@ -143,7 +143,7 @@ queryList, currentSplit, processedQueryNum, kseq, chunkSize, chunkReads_thread, 
 
 void KmerExtractor::fillQueryKmerBufferParallel_paired(KSeqWrapper *kseq1,
                                                        KSeqWrapper *kseq2,
-                                                       QueryKmerBuffer &kmerBuffer,
+                                                       Buffer<QueryKmer> &kmerBuffer,
                                                        vector<Query> &queryList,
                                                        const QuerySplit &currentSplit,
                                                        const LocalParameters &par) {
@@ -268,7 +268,7 @@ void KmerExtractor::processSequence(size_t count,
                                     char *seq,
                                     char *maskedSeq,
                                     size_t & maxReadLength,
-                                    QueryKmerBuffer &kmerBuffer,
+                                    Buffer<QueryKmer> &kmerBuffer,
                                     const vector<Query> & queryList,
                                     vector<int> *aaFrames,
                                     bool isReverse) {
@@ -292,13 +292,23 @@ void KmerExtractor::processSequence(size_t count,
         if (isReverse) {
             posToWrite = kmerBuffer.reserveMemory(queryList[queryIdx].kmerCnt2);
             seqIterator->sixFrameTranslation(seq, (int) reads[i].length(), aaFrames);
-            seqIterator->fillQueryKmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
+            if (par.syncmer) {
+                seqIterator->fillQuerySyncmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
                                             (uint32_t) queryIdx, aaFrames, queryList[queryIdx].queryLength+3);
+            } else {
+                seqIterator->fillQueryKmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
+                                            (uint32_t) queryIdx, aaFrames, queryList[queryIdx].queryLength+3);
+            }   
         } else {
             posToWrite = kmerBuffer.reserveMemory(queryList[queryIdx].kmerCnt);
             seqIterator->sixFrameTranslation(seq, (int) reads[i].length(), aaFrames);
-            seqIterator->fillQueryKmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
+            if (par.syncmer) {
+                seqIterator->fillQuerySyncmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
                                             (uint32_t) queryIdx, aaFrames);
+            } else {
+                seqIterator->fillQueryKmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
+                                            (uint32_t) queryIdx, aaFrames);
+            }                                
         }
     }
 }

@@ -67,6 +67,13 @@ std::vector<Command> commands = {
                 "<diffIdx>",
                 CITATION_SPACEPHARER,
                 {{"Differential index", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty}}},
+        {"printDeltaIdx", printDeltaIdx, &localPar.expand_diffidx, COMMAND_EXPERT,
+                "Print k-mers stored in delta index",
+               nullptr,
+                "Jaebeom Kim <jbeom0731@gmail.com>",
+                "<deltaIdx>",
+                CITATION_SPACEPHARER,
+                {{"deltaIdx", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
         {"printInfo", printInfo, &localPar.printInfo, COMMAND_EXPERT,
                 "Print k-mer information",
                nullptr,
@@ -196,7 +203,7 @@ std::vector<Command> commands = {
                 CITATION_SPACEPHARER,
                 {{"names.dmp", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                  {"taxid.map", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
-        {"createnewtaxalist", createnewtaxalist, &localPar.createnewtaxalist, COMMAND_EXPERT,
+        {"createnewtaxalist", createnewtaxalist, &localPar.createnewtaxalist, COMMAND_DATABASE_CREATION,
                 "Create a accession2taxid and an input file for --new-taxa option",
                 nullptr,
                 "Jaebeom Kim <jbeom0731@gmail.com}",
@@ -206,7 +213,15 @@ std::vector<Command> commands = {
                  {"FASTA list", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                  {"new taxonomy dump", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory},
                  {"accession2taxid", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-                 {"output prefix", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile}}}
+                 {"output prefix", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
+        {"maketestsets", makeBenchmarkSet, &localPar.makeBenchmarkSet, COMMAND_EXPERT,
+                "Create test sets for benchmarking",
+                nullptr,
+                "Jaebeom Kim <jbeom0731@gmail.com}",
+                "<i: Assembly accessions> <i: Taxonomy dump>",
+                CITATION_SPACEPHARER,
+                {{"Assembly accessions", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                 {"Taxonomy dump", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}}
 };
 
 std::vector<KmerThreshold> externalThreshold = {};

@@ -7,7 +7,6 @@
 #include "printBinary.h"
 #include "common.h"
 #include "Mmap.h"
-#include "KmerBuffer.h"
 #include <algorithm>
 #include "kseq.h"
 #include "KSeqBufferReader.h"
@@ -46,11 +45,12 @@ private:
     int spaceNum_int;
     int bitsForCodon;
     int bitsFor8Codons;
+    int smerLen;
 
     void addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev, uint32_t kmerCnt, uint32_t frame,
                               int readLength);
 
-    void addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const PredictedBlock &block, const int &kmerCnt);
+    // void addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const PredictedBlock &block, int kmerCnt);
 
 public:
     static const string iRCT;
@@ -64,7 +64,10 @@ public:
                               vector<string> &cds,
                               vector<string> &nonCds);
     
-    void fillQueryKmerBuffer(const char *seq, int seqLen, QueryKmerBuffer &kmerBuffer, size_t &posToWrite,
+    void fillQueryKmerBuffer(const char *seq, int seqLen, Buffer<QueryKmer> &kmerBuffer, size_t &posToWrite,
+                             uint32_t seqID, vector<int> *aaFrames, uint32_t offset = 0);
+
+    void fillQuerySyncmerBuffer(const char *seq, int seqLen, Buffer<QueryKmer> &kmerBuffer, size_t &posToWrite,
                              uint32_t seqID, vector<int> *aaFrames, uint32_t offset = 0);
 
     string reverseCompliment(string &read) const;
@@ -97,17 +100,53 @@ public:
 
     size_t getNumOfKmerForBlock(const PredictedBlock &block);
 
-    int fillBufferWithKmerFromBlock(const PredictedBlock &block, const char *seq, TargetKmerBuffer &kmerBuffer,
-                                     size_t &posToWrite, int seqID, int taxIdAtRank, const vector<int> & aaSeq);
+    // int fillBufferWithKmerFromBlock(const PredictedBlock &block,
+    //                                 const char *seq, 
+    //                                 TargetKmerBuffer &kmerBuffer,
+    //                                 size_t &posToWrite, 
+    //                                 int seqID, 
+    //                                 int taxIdAtRank, 
+    //                                 const vector<int> & aaSeq);
 
     int fillBufferWithKmerFromBlock(const char *seq,
-                                    TargetKmerBuffer &kmerBuffer,
+                                    Buffer<TargetKmer> &kmerBuffer,
                                     size_t &posToWrite,
                                     int seqID,
                                     int taxIdAtRank,
-                                    const vector<int> & aaSeq);
+                                    const vector<int> & aaSeq,
+                                    int blockStrand = 0,
+                                    int blockStart = 0,
+                                    int blockEnd = 0);
+    
+    int fillBufferWithSyncmer(const char *seq,
+                              Buffer<TargetKmer> &kmerBuffer,
+                              size_t &posToWrite,
+                              int seqID,
+                              int taxIdAtRank,
+                              const vector<int> & aaSeq,
+                              int blockStrand = 0,
+                              int blockStart = 0,
+                              int blockEnd = 0);
 
-    void addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const int &kmerCnt, int frame = 0);
+    bool isSyncmer(const vector<int> &aaSeq, int startPos, int k, int s) {
+        int min_smer_value = INT32_MAX;
+        int min_smer_pos = -1;
+
+        for (int i = 0; i <= k - s; ++i) {
+            int current_value = 0;
+            for (int j = 0; j < s; ++j) {
+                current_value += aaSeq[startPos + i + j] * powers[j];
+            }
+            if (current_value < min_smer_value) {
+                min_smer_value = current_value;
+                min_smer_pos = i;
+            }
+        }
+        return (min_smer_pos == 0 || min_smer_pos == (k - s));
+    }
+    // bool isSyncmer(const vector<int> & aaSeq, int startPos, int k, int s);
+
+    void addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, int kmerCnt, int strand, int start, int end);
 
     static void maskLowComplexityRegions(const char * seq, char * maskedSeq, ProbabilityMatrix & probMat,
                                          float maskProb, const BaseMatrix * subMat);

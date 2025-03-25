@@ -5,7 +5,6 @@ set(commons_source_files
 	 	commons/IndexCreator.cpp
         commons/IndexCreator.h
         commons/Kmer.h
-        commons/KmerBuffer.h
         commons/SeqIterator.cpp
         commons/SeqIterator.h
         commons/Mmap.h

@@ -140,7 +140,7 @@ protected:
                                    size_t & uniqKmerCnt, 
                                    const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
-    void writeDiffIdx(uint16_t *buffer,
+    static void writeDiffIdx(uint16_t *buffer,
                       size_t bufferSize,
                       FILE* handleKmerTable,
                       uint16_t *toWrite,
@@ -151,7 +151,7 @@ protected:
 
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
 
-    size_t fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
+    size_t fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                 bool *checker,
                                 size_t &processedSplitCnt,
                                 const LocalParameters &par);
@@ -178,7 +178,7 @@ protected:
 
     void editTaxonomyDumpFiles(const vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid);
 
-    void reduceRedundancy(TargetKmerBuffer & kmerBuffer,
+    void reduceRedundancy(Buffer<TargetKmer> & kmerBuffer,
                           size_t * uniqeKmerIdx,
                           size_t & uniqKmerCnt,
                           vector<pair<size_t, size_t>> & uniqKmerIdxRanges,
@@ -252,6 +252,21 @@ public:
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
                     uint16_t *kmerBuf, size_t bufferSize, size_t & localBufIdx, size_t & totalBufferIdx);
 
+    static void getDeltaIdx(const Metamer & previousMetamer,
+                     const Metamer & currentMetamer,
+                     FILE* handleKmerTable,
+                     uint16_t * deltaIndexBuffer,
+                     size_t bufferSize,
+                     size_t & localBufIdx,
+                     size_t & totalBufferIdx);
+
+    static void getDeltaIdx(const Metamer & previousMetamer,
+                     const Metamer & currentMetamer,
+                     FILE* handleKmerTable,
+                     uint16_t * deltaIndexBuffer,
+                     size_t bufferSize,
+                     size_t & localBufIdx);
+
     void writeInfo(TaxID * entryToWrite, FILE * infoFile, TaxID * infoBuffer, size_t bufferSize, size_t & infoBufferIdx);
 
     unordered_set<TaxID> getTaxIdSet() { return taxIdSet; }
@@ -259,5 +274,7 @@ public:
     static void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
 
     static void flushInfoBuf(TaxID * buffer, FILE * infoFile, size_t & localBufIdx );
+
+    static bool compareMetamer(const Metamer & a, const Metamer & b);
 };
 #endif //ADKMER4_INDEXCREATOR_H

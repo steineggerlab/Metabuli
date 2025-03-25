@@ -20,4 +20,5 @@ set(util_source_files
         util/editNames.h
         util/createnewtaxalist.cpp
         util/createnewtaxalist.h
+        util/printDeltaIdx.cpp
         PARENT_SCOPE)

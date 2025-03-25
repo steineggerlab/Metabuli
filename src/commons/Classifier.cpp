@@ -37,7 +37,7 @@ Classifier::~Classifier() {
 }
 
 void Classifier::startClassify(const LocalParameters &par) {
-    QueryKmerBuffer queryKmerBuffer;
+    Buffer<QueryKmer> queryKmerBuffer;
     Buffer<Match> matchBuffer;
     vector<Query> queryList;
     size_t numOfTatalQueryKmerCnt = 0;
@@ -108,7 +108,8 @@ void Classifier::startClassify(const LocalParameters &par) {
                                              kseq1,
                                              kseq2); // sync kseq1 and kseq2
             // Search matches between query and target k-mers
-            if (kmerMatcher->matchKmers(&queryKmerBuffer, &matchBuffer)) {
+            if (kmerMatcher->matchMetamers(&queryKmerBuffer, &matchBuffer)) {
+                cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
                 kmerMatcher->sortMatches(&matchBuffer);
                 
                 // Classify queries based on the matches.

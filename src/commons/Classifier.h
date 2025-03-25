@@ -10,7 +10,6 @@
 #include "common.h"
 #include "NcbiTaxonomy.h"
 #include "Debug.h"
-#include "KmerBuffer.h"
 #include "IndexCreator.h"
 #include <cstdio>
 #include <ctime>

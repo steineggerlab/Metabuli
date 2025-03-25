@@ -39,6 +39,20 @@ LocalParameters::LocalParameters() :
                         typeid(int),
                         (void *) &skipRedundancy,
                         "[0-1]"),
+        SYNCMER(SYNCMER_ID,
+                "--syncmer",
+                "Using syncmer for k-mer selection",
+                "Using syncmer for k-mer selection",
+                typeid(int),
+                (void *) &syncmer,
+                "[0-1]"),
+        SMER_LEN(SMER_LEN_ID,
+                 "--smer-len",
+                 "s-mer length for syncmer selection",
+                 "s-mer length for syncmer selection",
+                 typeid(int),
+                 (void *) &smerLen,
+                 "[0-6]"),
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
                  "Sequencing type",
@@ -166,6 +180,13 @@ LocalParameters::LocalParameters() :
                       typeid(int),
                       (void *) &printLineage,
                       "[0-1]"),
+        MAX_SHIFT(MAX_SHIFT_ID,
+                    "--max-shift",
+                    "Max shift between two consecutive k-mers",
+                    "Max shift between two consecutive k-mers",
+                    typeid(int),
+                    (void *) &maxShift,
+                    "[1-7]"),
         TARGET_TAX_ID(TARGET_TAX_ID_ID,
                "--tax-id",
                "Tax. ID of clade to be extracted",
@@ -469,6 +490,8 @@ LocalParameters::LocalParameters() :
     build.push_back(&RAM_USAGE);
     build.push_back(&MAKE_LIBRARY);
     build.push_back(&GTDB);
+    build.push_back(&SYNCMER);
+    build.push_back(&SMER_LEN);
 
     // updateDB
     updateDB.push_back(&PARAM_THREADS);
@@ -482,6 +505,7 @@ LocalParameters::LocalParameters() :
     updateDB.push_back(&RAM_USAGE);
     updateDB.push_back(&NEW_TAXA);
     updateDB.push_back(&MAKE_LIBRARY);
+    updateDB.push_back(&SYNCMER);
 
     //classify
     classify.push_back(&PARAM_THREADS);
@@ -501,6 +525,11 @@ LocalParameters::LocalParameters() :
     classify.push_back(&TIE_RATIO);
     classify.push_back(&SKIP_REDUNDANCY);
     classify.push_back(&PRINT_LINEAGE);
+    classify.push_back(&SYNCMER);
+    classify.push_back(&SMER_LEN);
+    classify.push_back(&PRINT_LOG);
+    classify.push_back(&MAX_SHIFT);
+
 
     // extract
     extract.push_back(&TAXONOMY_PATH);

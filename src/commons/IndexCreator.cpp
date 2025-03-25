@@ -44,7 +44,7 @@ IndexCreator::~IndexCreator() {
 }
 
 void IndexCreator::createIndex(const LocalParameters &par) {
-    TargetKmerBuffer kmerBuffer(calculateBufferSize(par.ramUsage));
+    Buffer<TargetKmer> kmerBuffer(calculateBufferSize(par.ramUsage));
     indexReferenceSequences(kmerBuffer.bufferSize);
     
     if (!par.cdsInfo.empty()) {
@@ -480,43 +480,46 @@ void IndexCreator::writeTargetFiles(TargetKmer * kmerBuffer,
                                     size_t & kmerNum,
                                     const size_t * uniqKmerIdx,
                                     const vector<pair<size_t, size_t>> & uniqKmerIdxRanges) {
-    string diffIdxFileName;
-    string infoFileName;
-    diffIdxFileName = dbDir + "/" + to_string(numOfFlush) + "_diffIdx";
-    infoFileName = dbDir + "/" + to_string(numOfFlush) + "_info";
-
+    string diffIdxFileName = dbDir + "/" + to_string(numOfFlush) + "_deltaIdx.mtbl";
     FILE * diffIdxFile = fopen(diffIdxFileName.c_str(), "wb");
-    FILE * infoFile = fopen(infoFileName.c_str(), "wb");
-    if (diffIdxFile == nullptr || infoFile == nullptr){
+    if (diffIdxFile == nullptr){
         cout<<"Cannot open the file for writing target DB"<<endl;
         return;
     }
     numOfFlush++;
+
     size_t bufferSize = 1024 * 1024 * 32;
-    uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * bufferSize); // 64MB
-    TaxID *infoBuffer = (TaxID *)malloc(sizeof(TaxID) * bufferSize); // 128MB
+    uint16_t *deltaIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * bufferSize); // 64MB
     size_t localBufIdx = 0;
-    size_t localInfoBufIdx = 0;
-    uint64_t lastKmer = 0;
+    Metamer prevMetamer;
     size_t write = 0;
 
+    vector<Metamer> identicalMetamers;
+    uint64_t currentMetamer;
     for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
-        for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
-            writeInfo(&kmerBuffer[uniqKmerIdx[j]].seqId, infoFile, infoBuffer, bufferSize, localInfoBufIdx);
-            write++;
-            getDiffIdx(lastKmer, kmerBuffer[uniqKmerIdx[j]].ADkmer, diffIdxFile, diffIdxBuffer, bufferSize, localBufIdx);
-            lastKmer = kmerBuffer[uniqKmerIdx[j]].ADkmer;
+        size_t j = uniqKmerIdxRanges[i].first;
+        while (j < uniqKmerIdxRanges[i].second) {
+            identicalMetamers.clear();
+            currentMetamer = kmerBuffer[uniqKmerIdx[j]].metamer.metamer;
+            while (j < uniqKmerIdxRanges[i].second && 
+                   currentMetamer == kmerBuffer[uniqKmerIdx[j]].metamer.metamer) {
+                identicalMetamers.push_back(kmerBuffer[uniqKmerIdx[j]].metamer);
+                j++;
+            }
+            // Sort the identicalMetamers using compareMetamer
+            sort(identicalMetamers.begin(), identicalMetamers.end(), compareMetamer);
+            for (size_t k = 0; k < identicalMetamers.size(); k++) {
+                write++;
+                getDeltaIdx(prevMetamer, identicalMetamers[k], diffIdxFile, deltaIdxBuffer, bufferSize, localBufIdx);
+                prevMetamer = identicalMetamers[k];
+            }
         }
     }
-    flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
-    flushInfoBuf(infoBuffer, infoFile, localInfoBufIdx);
-
+    flushKmerBuf(deltaIdxBuffer, diffIdxFile, localBufIdx);    
     cout<<"total k-mer count  : "<< kmerNum << endl;
     cout<<"written k-mer count: "<< write << endl;
-    free(infoBuffer);
-    free(diffIdxBuffer);
+    free(deltaIdxBuffer);
     fclose(diffIdxFile);
-    fclose(infoFile);
     kmerNum = 0;
 }
 
@@ -525,18 +528,13 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
                                              const size_t * uniqKmerIdx,
                                              size_t & uniqKmerCnt,
                                              const vector<pair<size_t, size_t>> & uniqKmerIdxRanges){
-    string diffIdxFileName;
-    string infoFileName;
-    string splitFileName;
-
-    diffIdxFileName = dbDir + "/diffIdx";
-    infoFileName = dbDir + "/info";
-    splitFileName = dbDir + "/split";
+    string diffIdxFileName = dbDir + "/deltaIdx.mtbl";
+    string splitFileName = dbDir + "/deltaIdxSplits.mtbl";
 
     // Make splits
-    FILE * diffIdxSplitFile = fopen(splitFileName.c_str(), "wb");
-    DiffIdxSplit splitList[par.splitNum];
-    memset(splitList, 0, sizeof(DiffIdxSplit) * par.splitNum);
+    FILE * deltaIdxSplitFile = fopen(splitFileName.c_str(), "wb");
+    DeltaIdxOffset * offsetList = new DeltaIdxOffset[par.splitNum];
+    memset(offsetList, 0, sizeof(DeltaIdxOffset) * par.splitNum);
     size_t splitWidth = uniqKmerCnt / par.splitNum;
     size_t remainder = uniqKmerCnt % par.splitNum;
     size_t splitCnt = 1;
@@ -556,17 +554,17 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
             }
             bool found = false;
             for (size_t k = uniqKmerIdxRanges[j].first + start - counter; k + 1 < uniqKmerIdxRanges[j].second; k++) {
-                if (AminoAcidPart(kmerBuffer[uniqKmerIdx[k]].ADkmer) 
-                    != AminoAcidPart(kmerBuffer[uniqKmerIdx[k + 1]].ADkmer)) {
-                    splitList[splitCnt].ADkmer = kmerBuffer[uniqKmerIdx[k + 1]].ADkmer;
+                if (AminoAcidPart(kmerBuffer[uniqKmerIdx[k]].metamer.metamer) 
+                    != AminoAcidPart(kmerBuffer[uniqKmerIdx[k + 1]].metamer.metamer)) {
+                    offsetList[splitCnt].metamer = kmerBuffer[uniqKmerIdx[k + 1]].metamer;
                     splitCnt++;
                     found = true;
                     break;
                 }
             }
             if (!found) {
-                splitList[splitCnt].ADkmer = kmerBuffer[uniqKmerIdx[uniqKmerIdxRanges[j+1].first]].ADkmer;
-                cout << "Split " << splitCnt << " at " << splitList[splitCnt].ADkmer << endl;
+                offsetList[splitCnt].metamer = kmerBuffer[uniqKmerIdx[uniqKmerIdxRanges[j+1].first]].metamer;
+                cout << "Split " << splitCnt << " at " << offsetList[splitCnt].metamer.metamer << endl;
                 splitCnt++;
             }
             break;
@@ -574,61 +572,69 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
     }
 
     FILE * diffIdxFile = fopen(diffIdxFileName.c_str(), "wb");
-    FILE * infoFile = fopen(infoFileName.c_str(), "wb");
-    if (diffIdxFile == nullptr || infoFile == nullptr){
+    if (diffIdxFile == nullptr) {
         cout<<"Cannot open the file for writing target DB"<<endl;
         return;
     }
     numOfFlush++;
 
     size_t bufferSize = 1024 * 1024 * 32;
-    uint16_t *diffIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * bufferSize); // 64MB
-    TaxID *infoBuffer = (TaxID *)malloc(sizeof(TaxID) * bufferSize);
+    uint16_t *deltaIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * bufferSize); // 64MB
     size_t localBufIdx = 0;
-    size_t localInfoBufIdx = 0;
-    uint64_t lastKmer = 0;
-    size_t write = 0;
-
+    Metamer prevMetamer;
     size_t splitIdx = 1;
     size_t totalDiffIdx = 0;
+    size_t write = 0;
+
+    vector<Metamer> identicalMetamers;
+    uint64_t currentMetamer;
+
     cout << "Writing k-mers to disk" << endl;
     for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
-        for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
-            writeInfo(&kmerBuffer[uniqKmerIdx[j]].seqId, infoFile, infoBuffer, bufferSize, localInfoBufIdx);
-            write++;
-            getDiffIdx(lastKmer, kmerBuffer[uniqKmerIdx[j]].ADkmer, diffIdxFile, diffIdxBuffer, bufferSize, localBufIdx, totalDiffIdx);
-            lastKmer = kmerBuffer[uniqKmerIdx[j]].ADkmer;
-            if((splitIdx < splitCnt) && (lastKmer == splitList[splitIdx].ADkmer)){
-                splitList[splitIdx].diffIdxOffset = totalDiffIdx;
-                splitList[splitIdx].infoIdxOffset = write;
-                splitIdx ++;
+        size_t j = uniqKmerIdxRanges[i].first;
+        while (j < uniqKmerIdxRanges[i].second) {
+            identicalMetamers.clear();
+            currentMetamer = kmerBuffer[uniqKmerIdx[j]].metamer.metamer;
+            while (j < uniqKmerIdxRanges[i].second && 
+                   currentMetamer == kmerBuffer[uniqKmerIdx[j]].metamer.metamer) {
+                identicalMetamers.push_back(kmerBuffer[uniqKmerIdx[j]].metamer);
+                j++;
+            }
+            // Sort the identicalMetamers using compareMetamer
+            sort(identicalMetamers.begin(), identicalMetamers.end(), compareMetamer);
+            for (size_t k = 0; k < identicalMetamers.size(); k++) {
+                write++;
+                getDeltaIdx(prevMetamer, identicalMetamers[k], diffIdxFile, deltaIdxBuffer, bufferSize, localBufIdx, totalDiffIdx);
+                prevMetamer = identicalMetamers[k];
+                if ((splitIdx < splitCnt) && (prevMetamer.metamer == offsetList[splitIdx].metamer.metamer)) {
+                    offsetList[splitIdx].metamer = prevMetamer;
+                    offsetList[splitIdx].offset = totalDiffIdx;
+                    splitIdx ++;
+                }
             }
         }
     }
     cout<<"total k-mer count  : "<< kmerNum << endl;
     cout<<"written k-mer count: "<< write << endl;
 
-    flushKmerBuf(diffIdxBuffer, diffIdxFile, localBufIdx);
-    flushInfoBuf(infoBuffer, infoFile, localInfoBufIdx);
-    fwrite(splitList, sizeof(DiffIdxSplit), par.splitNum, diffIdxSplitFile);
+    flushKmerBuf(deltaIdxBuffer, diffIdxFile, localBufIdx);
+    fwrite(offsetList, sizeof(DeltaIdxOffset), par.splitNum, deltaIdxSplitFile);
 
-    free(diffIdxBuffer);
-    free(infoBuffer);
-    fclose(diffIdxSplitFile);
+    free(deltaIdxBuffer);
+    fclose(deltaIdxSplitFile);
     fclose(diffIdxFile);
-    fclose(infoFile);
     kmerNum = 0;
     cout << "Finished writing k-mers to disk" << endl;
 }
 
-void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
+void IndexCreator::reduceRedundancy(Buffer<TargetKmer> & kmerBuffer,
                                     size_t * uniqKmerIdx,
                                     size_t & uniqueKmerCnt,
                                     vector<pair<size_t, size_t>> & uniqKmerIdxRanges,
                                     const LocalParameters & par) {
     // Find the first index of garbage k-mer (UINT64_MAX)
     for(size_t checkN = kmerBuffer.startIndexOfReserve - 1; checkN != 0; checkN--){
-        if(kmerBuffer.buffer[checkN].ADkmer != UINT64_MAX){
+        if(kmerBuffer.buffer[checkN].metamer.metamer != UINT64_MAX){
             kmerBuffer.startIndexOfReserve = checkN + 1;
             break;
         }
@@ -637,7 +643,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
     // Find the first index of meaningful k-mer
     size_t startIdx = 0;
     for(size_t i = 0; i < kmerBuffer.startIndexOfReserve ; i++){
-        if(kmerBuffer.buffer[i].taxIdAtRank != 0){
+        if(kmerBuffer.buffer[i].spTaxId != 0){
             startIdx = i;
             break;
         }
@@ -648,7 +654,7 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
     size_t splitWidth = (kmerBuffer.startIndexOfReserve - startIdx) / par.threads;
     for (int i = 0; i < par.threads - 1; i++) {
         for (size_t j = startIdx + splitWidth; j + 1 < kmerBuffer.startIndexOfReserve; j++) {
-            if (AminoAcidPart(kmerBuffer.buffer[j].ADkmer) != AminoAcidPart(kmerBuffer.buffer[j + 1].ADkmer)) {
+            if (AminoAcidPart(kmerBuffer.buffer[j].metamer.metamer) != AminoAcidPart(kmerBuffer.buffer[j + 1].metamer.metamer)) {
                 splits.emplace_back(startIdx, j);
                 uniqKmerIdxRanges.emplace_back(pair<size_t, size_t>(startIdx, 0));
                 startIdx = j + 1;
@@ -678,11 +684,11 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
             endFlag = 0;
             for(size_t i = 1 + splits[split].offset; i < splits[split].end + 1 ; i++) {
                 taxIds.clear();
-                taxIds.push_back(lookingKmer->seqId);
+                taxIds.push_back(lookingKmer->metamer.id);
                 // Scan redundancy
-                while(lookingKmer->taxIdAtRank == kmerBuffer.buffer[i].taxIdAtRank &&
-                      lookingKmer->ADkmer == kmerBuffer.buffer[i].ADkmer){
-                    taxIds.push_back(kmerBuffer.buffer[i].seqId);
+                while(lookingKmer->spTaxId == kmerBuffer.buffer[i].spTaxId &&
+                      lookingKmer->metamer.metamer == kmerBuffer.buffer[i].metamer.metamer){
+                    taxIds.push_back(kmerBuffer.buffer[i].metamer.id);
                     i++;
                     if(i == splits[split].end + 1){
                         endFlag = 1;
@@ -690,9 +696,9 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
                     }
                 }
                 if(taxIds.size() > 1){
-                    lookingKmer->seqId = taxonomy->LCA(taxIds)->taxId;
+                    lookingKmer->metamer.id = taxonomy->LCA(taxIds)->taxId;
                 } else {
-                    lookingKmer->seqId= taxIds[0];
+                    lookingKmer->metamer.id = taxIds[0];
                 }
 
                 if (tempUniqKmerCnt >= 16 * 1024 * 1024) {
@@ -708,8 +714,8 @@ void IndexCreator::reduceRedundancy(TargetKmerBuffer & kmerBuffer,
             }
 
             //For the end part
-            if(!((kmerBuffer.buffer[splits[split].end - 1].ADkmer == kmerBuffer.buffer[splits[split].end].ADkmer) &&
-                 (kmerBuffer.buffer[splits[split].end - 1].taxIdAtRank == kmerBuffer.buffer[splits[split].end].taxIdAtRank))){
+            if(!((kmerBuffer.buffer[splits[split].end - 1].metamer.metamer == kmerBuffer.buffer[splits[split].end].metamer.metamer) &&
+                 (kmerBuffer.buffer[splits[split].end - 1].spTaxId == kmerBuffer.buffer[splits[split].end].spTaxId))){
                 if (tempUniqKmerCnt >= 16 * 1024 * 1024) {
                     memcpy(uniqKmerIdx + splits[split].offset, tempUniqKmerIdx, tempUniqKmerCnt * sizeof(size_t));
                     splits[split].offset += tempUniqKmerCnt;
@@ -746,6 +752,50 @@ void IndexCreator::getDiffIdx(const uint64_t & lastKmer,
         idx--;
     }
     writeDiffIdx(kmerBuf, bufferSize, handleKmerTable, (buffer + idx + 1), (4 - idx), localBufIdx);
+}
+
+void IndexCreator::getDeltaIdx(const Metamer & previousMetamer,
+                               const Metamer & currentMetamer,
+                               FILE* handleKmerTable,
+                               uint16_t * deltaIndexBuffer,
+                               size_t bufferSize,
+                               size_t & localBufIdx,
+                               size_t & totalBufferIdx) {
+    bitset<96> diff = Metamer::substract(currentMetamer, previousMetamer);
+    // cout << previousMetamer.metamer << " " << currentMetamer.metamer << " " << previousMetamer.id << " " << currentMetamer.id << endl;
+    // cout << diff << endl;                               
+    uint16_t buffer[7];
+    int idx = 5;
+    buffer[6] = SET_END_FLAG(static_cast<uint16_t>((diff & bitset<96>(0x7FFF)).to_ulong()));
+    diff >>= 15U;
+    while (diff.any()) {
+        uint16_t toWrite = GET_15_BITS(static_cast<uint16_t>((diff & bitset<96>(0x7FFF)).to_ulong()));
+        diff >>= 15U;
+        buffer[idx] = toWrite;
+        idx--;
+    }
+    totalBufferIdx += 6 - idx;
+    writeDiffIdx(deltaIndexBuffer, bufferSize, handleKmerTable, (buffer + idx + 1), (6 - idx), localBufIdx);
+}
+
+void IndexCreator::getDeltaIdx(const Metamer & previousMetamer,
+                               const Metamer & currentMetamer,
+                               FILE* handleKmerTable,
+                               uint16_t * deltaIndexBuffer,
+                               size_t bufferSize,
+                               size_t & localBufIdx) {
+    bitset<96> diff = Metamer::substract(currentMetamer, previousMetamer);                               
+    uint16_t buffer[7];
+    int idx = 5;
+    buffer[6] = SET_END_FLAG(static_cast<uint16_t>((diff & bitset<96>(0x7FFF)).to_ulong()));
+    diff >>= 15U;
+    while (diff.any()) {
+        uint16_t toWrite = GET_15_BITS(static_cast<uint16_t>((diff & bitset<96>(0x7FFF)).to_ulong()));
+        diff >>= 15U;
+        buffer[idx] = toWrite;
+        idx--;
+    }
+    writeDiffIdx(deltaIndexBuffer, bufferSize, handleKmerTable, (buffer + idx + 1), (6 - idx), localBufIdx);
 }
 
 void IndexCreator::getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
@@ -799,10 +849,23 @@ void IndexCreator::flushInfoBuf(TaxID * buffer, FILE * infoFile, size_t & localB
 int IndexCreator::getNumOfFlush() {return numOfFlush;}
 
 inline bool IndexCreator::compareForDiffIdx(const TargetKmer & a, const TargetKmer & b){
-    if (a.ADkmer != b.ADkmer) {
-        return a.ADkmer < b.ADkmer;
+    if (a.metamer.metamer != b.metamer.metamer) {
+        return a.metamer.metamer < b.metamer.metamer;
     }
-    return a.taxIdAtRank < b.taxIdAtRank;
+
+    if (a.spTaxId != b.spTaxId) {
+        return a.spTaxId < b.spTaxId;
+    }
+
+    return a.metamer.id < b.metamer.id;
+}
+
+inline bool IndexCreator::compareMetamer(const Metamer & a, const Metamer & b) {
+    if (a.metamer != b.metamer) {
+        return a.metamer < b.metamer;
+    }
+
+    return a.id < b.id;
 }
 
 void IndexCreator::load_assacc2taxid(const string & mappingFile, unordered_map<string, int> & assacc2taxid){
@@ -824,7 +887,7 @@ void IndexCreator::load_assacc2taxid(const string & mappingFile, unordered_map<s
     map.close();
 }
 
-size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
+size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                           bool *checker,
                                           size_t &processedBatchCnt,
                                           const LocalParameters &par) {
@@ -905,13 +968,23 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
     
                                 for (size_t cdsCnt = 0; cdsCnt < cds.size(); cdsCnt ++) {
                                     seqIterator.translate(cds[cdsCnt], aaSeq);
-                                    tempCheck = seqIterator.fillBufferWithKmerFromBlock(
-                                                    cds[cdsCnt].c_str(),
-                                                    kmerBuffer,
-                                                    posToWrite,
-                                                    accessionBatches[batchIdx].taxIDs[idx],
-                                                    accessionBatches[batchIdx].speciesID,
-                                                    aaSeq);
+                                    if (!par.syncmer) {
+                                        tempCheck = seqIterator.fillBufferWithKmerFromBlock(
+                                                        cds[cdsCnt].c_str(),
+                                                        kmerBuffer,
+                                                        posToWrite,
+                                                        accessionBatches[batchIdx].taxIDs[idx],
+                                                        accessionBatches[batchIdx].speciesID,
+                                                        aaSeq);
+                                    } else {
+                                        tempCheck = seqIterator.fillBufferWithSyncmer(
+                                                        cds[cdsCnt].c_str(),
+                                                        kmerBuffer,
+                                                        posToWrite,
+                                                        accessionBatches[batchIdx].taxIDs[idx],
+                                                        accessionBatches[batchIdx].speciesID,
+                                                        aaSeq);
+                                    }
                                     if (tempCheck == -1) {
                                         cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
                                     }
@@ -919,13 +992,23 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
 
                                 for (size_t nonCdsCnt = 0; nonCdsCnt < nonCds.size(); nonCdsCnt ++) {
                                     seqIterator.translate(nonCds[nonCdsCnt], aaSeq);
-                                    tempCheck = seqIterator.fillBufferWithKmerFromBlock(
-                                                    nonCds[nonCdsCnt].c_str(),
-                                                    kmerBuffer,
-                                                    posToWrite,
-                                                    accessionBatches[batchIdx].taxIDs[idx],
-                                                    accessionBatches[batchIdx].speciesID,
-                                                    aaSeq);
+                                    if (!par.syncmer) {
+                                        tempCheck = seqIterator.fillBufferWithKmerFromBlock(
+                                                        nonCds[nonCdsCnt].c_str(),
+                                                        kmerBuffer,
+                                                        posToWrite,
+                                                        accessionBatches[batchIdx].taxIDs[idx],
+                                                        accessionBatches[batchIdx].speciesID,
+                                                        aaSeq);
+                                    } else {
+                                        tempCheck = seqIterator.fillBufferWithSyncmer(
+                                                        nonCds[nonCdsCnt].c_str(),
+                                                        kmerBuffer,
+                                                        posToWrite,
+                                                        accessionBatches[batchIdx].taxIDs[idx],
+                                                        accessionBatches[batchIdx].speciesID,
+                                                        aaSeq);
+                                    }
                                     if (tempCheck == -1) {
                                         cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
                                     }
@@ -981,14 +1064,30 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                     for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
                                         aaSeq.clear();
                                         seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt], aaSeq, e.sequence.l);
-                                        tempCheck = seqIterator.fillBufferWithKmerFromBlock(
-                                                extendedORFs[orfCnt],
-                                                maskedSeq,
-                                                kmerBuffer,
-                                                posToWrite,
-                                                accessionBatches[batchIdx].taxIDs[idx],
-                                                accessionBatches[batchIdx].speciesID,
-                                                aaSeq);
+                                        if (!par.syncmer) {
+                                            tempCheck = seqIterator.fillBufferWithKmerFromBlock(
+                                                    maskedSeq,
+                                                    kmerBuffer,
+                                                    posToWrite,
+                                                    accessionBatches[batchIdx].taxIDs[idx],
+                                                    accessionBatches[batchIdx].speciesID,
+                                                    aaSeq,
+                                                    extendedORFs[orfCnt].strand,
+                                                    extendedORFs[orfCnt].start,
+                                                    extendedORFs[orfCnt].end);
+                                        } else {
+                                            tempCheck = seqIterator.fillBufferWithSyncmer(
+                                                    maskedSeq,
+                                                    kmerBuffer,
+                                                    posToWrite,
+                                                    accessionBatches[batchIdx].taxIDs[idx],
+                                                    accessionBatches[batchIdx].speciesID,
+                                                    aaSeq,
+                                                    extendedORFs[orfCnt].strand,
+                                                    extendedORFs[orfCnt].start,
+                                                    extendedORFs[orfCnt].end);
+                                        }
+                                        
                                         if (tempCheck == -1) {
                                             cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
                                         }
@@ -1016,14 +1115,30 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                     for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
                                         aaSeq.clear();
                                         seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt], aaSeq, e.sequence.l);
-                                        tempCheck = seqIterator.fillBufferWithKmerFromBlock(
-                                                extendedORFs[orfCnt],
+                                        if (!par.syncmer) {
+                                            tempCheck = seqIterator.fillBufferWithKmerFromBlock(
                                                 maskedSeq,
                                                 kmerBuffer,
                                                 posToWrite,
                                                 accessionBatches[batchIdx].taxIDs[idx],
                                                 accessionBatches[batchIdx].speciesID,
-                                                aaSeq);
+                                                aaSeq,
+                                                extendedORFs[orfCnt].strand,
+                                                extendedORFs[orfCnt].start,
+                                                extendedORFs[orfCnt].end);
+                                        } else {
+                                            tempCheck = seqIterator.fillBufferWithSyncmer(
+                                                maskedSeq,
+                                                kmerBuffer,
+                                                posToWrite,
+                                                accessionBatches[batchIdx].taxIDs[idx],
+                                                accessionBatches[batchIdx].speciesID,
+                                                aaSeq,
+                                                extendedORFs[orfCnt].strand,
+                                                extendedORFs[orfCnt].start,
+                                                extendedORFs[orfCnt].end);
+                                        }
+                                        
                                         if (tempCheck == -1) {
                                             cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
                                         }
@@ -1046,6 +1161,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     #pragma omp critical
                     {
                         cout << processedBatchCnt << " batches processed out of " << accessionBatches.size() << endl;
+                        // cout << fastaPaths[accessionBatches[batchIdx].whichFasta] << " processed\n";
                     }
                 } else {
                     checker[batchIdx] = false;

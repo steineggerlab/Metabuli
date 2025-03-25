@@ -278,6 +278,194 @@ void FileMerger::mergeTargetFiles() {
     cout<<diffIdxSplitFileName<<endl;
 }
 
+void FileMerger::mergeDeltaIdxFiles() {
+    size_t writtenKmerCnt = 0;
+   
+    // Files to write
+    FILE * mergedDeltaIdxFile = fopen(mergedDiffFileName.c_str(), "wb");
+    FILE * deltaIdxOffsetFile = fopen(diffIdxSplitFileName.c_str(), "wb");
+
+    // Buffers to fill
+    size_t bufferSize = 1024 * 1024 * 32;
+    uint16_t * deltaIdxBuffer = (uint16_t *)malloc(sizeof(uint16_t) * bufferSize);
+    size_t deltaBufferIdx = 0;
+    size_t totalBufferIdx = 0;
+    
+    // Prepare files to merge
+    size_t totalDeltaNum = 0;
+    size_t numOfSplits = diffIdxFileNames.size();
+    Metamer * lookingMetamers = new Metamer[numOfSplits];
+    size_t * deltaFileIdx = new size_t[numOfSplits];
+    memset(deltaFileIdx, 0, numOfSplits * sizeof(size_t));
+    size_t * maxIdxOfEachFiles = new size_t[numOfSplits];
+    struct MmapedData<uint16_t> *deltaFileList = new struct MmapedData<uint16_t>[numOfSplits];
+    size_t numOfKmerBeforeMerge = 0;
+    for (size_t file = 0; file < numOfSplits; file++) {
+        deltaFileList[file] = mmapData<uint16_t>(diffIdxFileNames[file].c_str());
+        maxIdxOfEachFiles[file] = deltaFileList[file].fileSize / sizeof(uint16_t);
+        totalDeltaNum += maxIdxOfEachFiles[file];
+    }
+
+    // To make differential index splits
+    uint64_t AAofTempSplitOffset = UINT64_MAX;
+    size_t sizeOfSplit = totalDeltaNum / (splitNum - 1);
+    size_t offsetList[splitNum + 1];
+    int offsetListIdx = 1;
+    for(int os = 0; os < splitNum; os++){
+        offsetList[os] = os * sizeOfSplit;
+    }
+    offsetList[splitNum] = UINT64_MAX;
+    DeltaIdxOffset splitList[splitNum];
+    memset(splitList, 0, sizeof(DeltaIdxOffset) * splitNum);
+    int splitListIdx = 1;
+
+    // get the first k-mer to write
+    size_t lastFileIdx = numOfSplits - 1;
+    size_t asdf = 0;
+    // SeqIterator * seqIterator = new SeqIterator(par); // DEBUG
+    for(size_t file = 0; file < numOfSplits; file++){
+        Metamer metamer;
+        lookingMetamers[file] = KmerMatcher::getNextTargetKmer(metamer, deltaFileList[file].data, deltaFileIdx[file], asdf);
+        // if (file == 2) {
+        //     seqIterator->printKmerInDNAsequence(lookingMetamers[file].metamer); 
+        //     cout << "\t";
+        //     cout << lookingMetamers[file].id << "\t";
+        //     print_binary64(64, lookingMetamers[file].metamer); cout << "\n";  
+        // }
+        numOfKmerBeforeMerge ++;
+    }
+
+    size_t idxOfMin = smallest(lookingMetamers, numOfSplits);
+    Metamer lastWrittenMetamer;
+    Metamer entryMetamer;
+    int splitCheck = 0;
+    size_t numOfincompletedFiles = numOfSplits;
+    vector<Metamer> identicalMetamers;
+    vector<Metamer> filteredMetamers;
+    unordered_map<TaxID, TaxID> observedSpecies2LCA;
+    int endPoint = 0;
+    size_t totalFilteredMetamers = 0;
+    while(true) {
+        entryMetamer = lookingMetamers[idxOfMin];
+
+        // Update looking k-mers
+        if (deltaFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin] ){
+            lookingMetamers[idxOfMin] = Metamer(UINT64_MAX, INT32_MAX);
+            numOfincompletedFiles--;
+            if (numOfincompletedFiles == 0) {
+                endPoint = 1;
+                break;
+            }
+        } else {
+            lookingMetamers[idxOfMin] = KmerMatcher::getNextTargetKmer(entryMetamer, deltaFileList[idxOfMin].data, deltaFileIdx[idxOfMin], asdf);
+            // if (idxOfMin == 2) {
+            //     seqIterator->printKmerInDNAsequence(lookingMetamers[idxOfMin].metamer); 
+            //     cout << "\t";
+            //     cout << lookingMetamers[idxOfMin].id << "\t";
+            //     print_binary64(64, lookingMetamers[idxOfMin].metamer); cout << "\n";  
+            // }
+            numOfKmerBeforeMerge ++;
+        }
+
+        idxOfMin = smallest(lookingMetamers, numOfSplits);
+        
+        // Collect identical k-mers
+        identicalMetamers.clear();
+        identicalMetamers.push_back(entryMetamer);
+        while (entryMetamer.metamer == lookingMetamers[idxOfMin].metamer) {
+            identicalMetamers.push_back(lookingMetamers[idxOfMin]);
+            if (deltaFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin]) {
+                lookingMetamers[idxOfMin] = Metamer(UINT64_MAX, INT32_MAX);
+                numOfincompletedFiles--;
+                if (numOfincompletedFiles == 0) {
+                    endPoint = 2;
+                    break;
+                }
+            } else {
+                lookingMetamers[idxOfMin] = KmerMatcher::getNextTargetKmer(lookingMetamers[idxOfMin], deltaFileList[idxOfMin].data, deltaFileIdx[idxOfMin], asdf);
+                // if (idxOfMin == 2) {
+                //     seqIterator->printKmerInDNAsequence(lookingMetamers[idxOfMin].metamer); 
+                //     cout << "\t";
+                //     cout << lookingMetamers[idxOfMin].id << "\t";
+                //     print_binary64(64, lookingMetamers[idxOfMin].metamer); cout << "\n";  
+                // }
+                numOfKmerBeforeMerge ++;
+            }
+            idxOfMin = smallest(lookingMetamers, numOfSplits);
+        }
+
+        // Remove duplicates wihin the same species
+        filteredMetamers.clear();
+        observedSpecies2LCA.clear();
+        for (size_t i = 0; i < identicalMetamers.size(); i++) {
+            if (observedSpecies2LCA.find(taxId2speciesId[identicalMetamers[i].id]) == observedSpecies2LCA.end()) {
+                filteredMetamers.push_back(identicalMetamers[i]);
+                observedSpecies2LCA[taxId2speciesId[identicalMetamers[i].id]] = identicalMetamers[i].id;
+            } else {
+                observedSpecies2LCA[taxId2speciesId[identicalMetamers[i].id]] = 
+                    taxonomy->LCA(observedSpecies2LCA[taxId2speciesId[identicalMetamers[i].id]], identicalMetamers[i].id);
+            }
+        }
+
+        // Label the LCA to the filteredMetamers
+        for (size_t k = 0; k < filteredMetamers.size(); k++) {
+            filteredMetamers[k].id = observedSpecies2LCA[taxId2speciesId[filteredMetamers[k].id]];
+        }
+
+        // Sort filtered Metamers
+        sort(filteredMetamers.begin(), filteredMetamers.end(), IndexCreator::compareMetamer);
+
+        for (size_t k = 0; k < filteredMetamers.size(); k++) {
+            IndexCreator::getDeltaIdx(lastWrittenMetamer, filteredMetamers[k], mergedDeltaIdxFile, deltaIdxBuffer, bufferSize, deltaBufferIdx, totalBufferIdx);
+            lastWrittenMetamer = filteredMetamers[k];
+            writtenKmerCnt++;
+            if (AminoAcidPart(lastWrittenMetamer.metamer) != AAofTempSplitOffset && splitCheck == 1) {
+                splitList[splitListIdx++] = {lastWrittenMetamer, totalBufferIdx};
+                splitCheck = 0;
+            }
+            if(totalBufferIdx >= offsetList[offsetListIdx]) { 
+                AAofTempSplitOffset = AminoAcidPart(lastWrittenMetamer.metamer);
+                splitCheck = 1;
+                offsetListIdx++;
+            }
+        }
+        totalFilteredMetamers += filteredMetamers.size();
+        if(endPoint == 2) break;
+    }
+
+    if (endPoint == 1) {
+        IndexCreator::getDeltaIdx(lastWrittenMetamer, entryMetamer, mergedDeltaIdxFile, deltaIdxBuffer, bufferSize, deltaBufferIdx, totalBufferIdx);
+        writtenKmerCnt++;
+    }
+
+    IndexCreator::flushKmerBuf(deltaIdxBuffer, mergedDeltaIdxFile, deltaBufferIdx);
+    fwrite(splitList, sizeof(DeltaIdxOffset), splitNum, deltaIdxOffsetFile);
+
+    free(deltaIdxBuffer);
+    fclose(mergedDeltaIdxFile);
+    fclose(deltaIdxOffsetFile);
+
+    for(size_t file = 0; file < numOfSplits; file++){
+        munmap(deltaFileList[file].data, deltaFileList[file].fileSize + 1);
+    }
+    cout<<"Creating target DB is done"<<endl;
+    cout<<"Total k-mer count    : " << numOfKmerBeforeMerge <<endl;
+    cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
+    cout << totalFilteredMetamers << endl;
+
+    delete[] deltaFileList;
+    delete[] lookingMetamers;
+    delete[] deltaFileIdx;
+    delete[] maxIdxOfEachFiles;
+
+    cout<<"done"<<endl;
+
+    cout<<"Reference DB files are as below"<<endl;
+    cout<<mergedDiffFileName<<endl;
+    cout<<string(dbDir) + "/taxID_list"<<endl;
+    cout<<diffIdxSplitFileName<<endl;
+}
+
 uint64_t FileMerger::getNextKmer(uint64_t lookingTarget, const struct MmapedData<uint16_t> & diffList, size_t & idx)
 {
     uint16_t fragment = 0;
@@ -325,6 +513,42 @@ size_t FileMerger::smallest(const uint64_t * lookingKmers,
           (lookingKmers[i] == min && taxId2speciesId.at(lookingInfos[i]) < minTaxIdAtRank)){
             min = lookingKmers[i];
             minTaxIdAtRank = taxId2speciesId.at(lookingInfos[i]);
+            idxOfMin = i;
+        }
+    }
+    return idxOfMin;
+}
+
+size_t FileMerger::smallest(const Metamer * lookingKmers,
+                            size_t fileCnt) {
+    size_t idxOfMin = 0;
+    uint64_t min = lookingKmers[0].metamer;
+    int minTaxIdAtRank;
+    if (min == UINT64_MAX) {
+        minTaxIdAtRank = INT32_MAX;
+    } else {
+        if (lookingKmers[0].id != INT32_MAX &&
+            taxId2speciesId.find((int) lookingKmers[0].id) == taxId2speciesId.end()) {
+            cout << lookingKmers[0].metamer << endl;
+            cout << "TaxID not found...: " << "0 " << lookingKmers[0].id << " " << taxonomy->getOriginalTaxID(lookingKmers[0].id) << endl;
+            exit(1);
+        }
+        minTaxIdAtRank = taxId2speciesId.at(lookingKmers[0].id);
+    }
+    for(size_t i = 1; i < fileCnt; i++) {
+        if (lookingKmers[i].id != INT32_MAX &&
+            taxId2speciesId.find((int) lookingKmers[i].id) == taxId2speciesId.end()) {
+            cout << lookingKmers[i].metamer << endl;
+            cout << "TaxID not found ..: " << i <<  " " << lookingKmers[i].id << " " << taxonomy->getOriginalTaxID(lookingKmers[i].id) << endl;
+            exit(1);
+        }
+        if (lookingKmers[i].metamer == UINT64_MAX || lookingKmers[i].id == INT32_MAX) {
+            continue;
+        }
+        if(lookingKmers[i].metamer < min ||
+          (lookingKmers[i].metamer == min && taxId2speciesId.at(lookingKmers[i].id) < minTaxIdAtRank)){
+            min = lookingKmers[i].metamer;
+            minTaxIdAtRank = taxId2speciesId.at(lookingKmers[i].id);
             idxOfMin = i;
         }
     }

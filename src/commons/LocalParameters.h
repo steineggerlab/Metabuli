@@ -43,6 +43,7 @@ public:
     std::vector<MMseqsParameter*> accession2taxid;
     std::vector<MMseqsParameter*> editNames;
     std::vector<MMseqsParameter*> createnewtaxalist;
+    std::vector<MMseqsParameter*> makeBenchmarkSet;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
@@ -51,6 +52,9 @@ public:
 
     // DB and classify
     PARAMETER(SKIP_REDUNDANCY)
+    PARAMETER(SYNCMER)
+    PARAMETER(SMER_LEN)
+
 
     // Classify
     PARAMETER(SEQ_MODE)
@@ -70,6 +74,7 @@ public:
     PARAMETER(MIN_SS_MATCH)
     PARAMETER(TIE_RATIO)
     PARAMETER(PRINT_LINEAGE)
+    PARAMETER(MAX_SHIFT)
 
     // extract
     PARAMETER(TARGET_TAX_ID)
@@ -127,6 +132,8 @@ public:
 
     // DB and classify
     int skipRedundancy;
+    int syncmer;
+    int smerLen;
 
     // Classify
     int seqMode;
@@ -150,6 +157,7 @@ public:
     int voteMode;
     float majorityThr;
     int printLineage;
+    int maxShift;
 
     // Extract
     int targetTaxId;
