@@ -134,16 +134,21 @@ public:
 
     void makeGraph(const string &queryKmerFileDir, 
                    size_t &numOfSplits, 
-                   size_t &numOfThreads,
+                   size_t &numOfThreads, 
+                   size_t &numOfGraph,
                    const string &jobId);
 
     void saveSubGraphToFile(const map<uint32_t, map<uint32_t, uint32_t>> &subRelation, 
                             const string &subGraphFileDir, 
+                            const size_t counter_now,
                             const string &jobId);
 
-    void makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
+    void makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo,
+                    const string &subGraphFileDir, 
                     vector<int> &queryGroupInfo, 
-                    int groupKmerThreshold);
+                    int groupKmerThr, 
+                    size_t &numOfGraph,
+                    const string &jobId);
 
     void saveGroupsToFile(const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
                           const vector<int> &queryGroupInfo, 
