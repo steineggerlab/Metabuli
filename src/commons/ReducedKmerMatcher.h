@@ -35,7 +35,7 @@ public:
     }
 
 
-    uint16_t getHammings(uint64_t kmer1, uint64_t kmer2) override {  //hammings 87654321
+    inline uint16_t getHammings(uint64_t kmer1, uint64_t kmer2) override {  //hammings 87654321
         uint16_t hammings = 0;
         for (int i = 0; i < 8; i++) {
             hammings |= hammingLookup[GET_4_BITS(kmer1)][GET_4_BITS(kmer2)] << 2U * i;
@@ -45,7 +45,7 @@ public:
         return hammings;
     }
 
-    uint16_t getHammings_reverse(uint64_t kmer1, uint64_t kmer2) override {
+    inline uint16_t getHammings_reverse(uint64_t kmer1, uint64_t kmer2) override {
         uint16_t hammings = 0;
         for (int i = 0; i < 8; i++) {
             hammings |= hammingLookup[GET_4_BITS(kmer1)][GET_4_BITS(kmer2)] << 2U * (7-i);
@@ -58,7 +58,10 @@ public:
     explicit ReducedKmerMatcher(LocalParameters & par,
                                 TaxonomyWrapper * taxonomy)
                                 : KmerMatcher(par,taxonomy) {
-        MARKER = 0Xffffffff;
+        DNA_MASK = 0Xffffffff;
+        DNA_MASK = ~ DNA_MASK;
+        AA_MASK = 0xffffffffU;     
+    
     }
 
     ~ReducedKmerMatcher() override = default;

@@ -88,6 +88,9 @@ private:
 
     // Internal
     int denominator;
+    int bitsPerCodon;
+    int totalDnaBits;
+    uint32_t lastCodonMask;
     // vector<const Match *> speciesMatches;
 
     // chooseBestTaxon
@@ -189,9 +192,9 @@ public:
                                 unordered_map<TaxID, unsigned int> & taxCnt,
                                 int queryLength);
 
-    static bool isConsecutive(const Match * match1, const Match * match2);
+    bool isConsecutive(const Match * match1, const Match * match2);
 
-    static bool isConsecutive(const Match * match1, const Match * match2, int shift);
+    bool isConsecutive(const Match * match1, const Match * match2, int shift);
 
 
     // static bool isConsecutive_diffFrame(const Match * match1, const Match * match2);

@@ -37,6 +37,15 @@ Taxonomer::Taxonomer(const LocalParameters &par, TaxonomyWrapper *taxonomy) : ta
         denominator = 1000;
     }
 
+    if (par.reducedAA == 1) {
+        bitsPerCodon = 4;
+        totalDnaBits = 32;
+        lastCodonMask = 0x0FFFFFFF;
+    } else {
+        bitsPerCodon = 3;
+        totalDnaBits = 24;
+        lastCodonMask = 0x1FFFFF;
+    }
 
     // chooseBestTaxon
     taxCnt.reserve(4096);
@@ -994,7 +1003,7 @@ depthScore Taxonomer::DFS(
 bool Taxonomer::isConsecutive(const Match * match1, const Match * match2) {
     // match1 87654321 -> 08765432
     // match2 98765432 -> 08765432
-    return (match1->dnaEncoding >> 3) == (match2->dnaEncoding & 0x1FFFFF);
+    return (match1->dnaEncoding >> bitsPerCodon) == (match2->dnaEncoding & lastCodonMask);
 }
 
 bool Taxonomer::isConsecutive(const Match * match1, const Match * match2, int shift) {
@@ -1002,7 +1011,7 @@ bool Taxonomer::isConsecutive(const Match * match1, const Match * match2, int sh
     // match2 ---98765432 -> ---**765432
     // uint32_t dnaEncoding1 = match1->dnaEncoding >> (3 * shift);
     // uint32_t dnaEncoding2 = match2->dnaEncoding & ((1U << (24 - 3 * shift)) - 1);
-    return (match1->dnaEncoding >> (3 * shift)) == (match2->dnaEncoding & ((1U << (24 - 3 * shift)) - 1));
+    return (match1->dnaEncoding >> (bitsPerCodon * shift)) == (match2->dnaEncoding & ((1U << (totalDnaBits - bitsPerCodon * shift)) - 1));
 }
 
 // bool Taxonomer::isConsecutive_diffFrame(const Match * match1, const Match * match2) {

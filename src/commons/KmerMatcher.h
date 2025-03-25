@@ -15,7 +15,7 @@
 
 #define BufferSize 16'777'216 // 16 * 1024 * 1024 // 16 M
 
-#define AMINO_ACID_PART(kmer) ((kmer) & MARKER)
+#define AMINO_ACID_PART(kmer) ((kmer) & DNA_MASK)
 
 // Input
 // 1. Query K-mers
@@ -34,7 +34,9 @@ protected:
   std::string dbDir;
   //   string targetDiffIdxFileName, targetInfoFileName, diffIdxSplitFileName;
   //   MmapedData<DiffIdxSplit> diffIdxSplits;
-  uint64_t MARKER;
+  uint64_t DNA_MASK; // ignore DNA encoding
+  uint64_t AA_MASK;  // ignore AA encoding
+  // uint64_t MARKER;
   int bitsForCodon = 3;
   uint8_t hammingMargin;
   size_t totalMatchCnt;
@@ -73,7 +75,7 @@ protected:
                                // search begins.
   };
 
-  inline size_t AminoAcidPart(size_t kmer) const { return (kmer)&MARKER; }
+  inline size_t AminoAcidPart(size_t kmer) const { return (kmer)&DNA_MASK; }
 
 
 template <typename T>

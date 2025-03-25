@@ -12,9 +12,17 @@ KmerMatcher::KmerMatcher(const LocalParameters & par,
     threads = par.threads;
     dbDir = par.filenames[1 + (par.seqMode == 2)];
     hammingMargin = par.hammingMargin;
+    DNA_MASK = 16777215;
+    DNA_MASK = ~ DNA_MASK;
+    AA_MASK = 0xffffffU;     
     
-    MARKER = 16777215;
-    MARKER = ~ MARKER;
+    // if (par.reducedAA == 1){
+    //     MARKER = 0Xffffffff;
+    //     MARKER = ~ MARKER;
+    // } else {
+        
+    // }
+    
     totalMatchCnt = 0;
 
     this->taxonomy = taxonomy;
@@ -854,7 +862,7 @@ void KmerMatcher::compareDna(uint64_t query,
     for (size_t h = 0; h < targetKmersToCompare.size(); h++) {
         if (hammingDists[h] <= maxHamming) {
             selectedHammingSum[selectedMatchIdx] = hammingDists[h];
-            selectedDnaEncodings[selectedMatchIdx] = GET_24_BITS_UINT(targetKmersToCompare[h]);
+            selectedDnaEncodings[selectedMatchIdx] = (unsigned int) (targetKmersToCompare[h] & AA_MASK);
             selectedHammings[selectedMatchIdx] = (frame < 3)
                 ? getHammings(query, targetKmersToCompare[h])
                 : getHammings_reverse(query, targetKmersToCompare[h]);

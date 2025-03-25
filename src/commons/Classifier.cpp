@@ -18,6 +18,7 @@ Classifier::Classifier(LocalParameters & par) {
     // Agents
     queryIndexer = new QueryIndexer(par);
     kmerExtractor = new KmerExtractor(par);
+    // kmerMatcher = new KmerMatcher(par, taxonomy);
     if (par.reducedAA) {
         kmerMatcher = new ReducedKmerMatcher(par, taxonomy);
     } else {

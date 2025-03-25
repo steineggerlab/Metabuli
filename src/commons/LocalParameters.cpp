@@ -459,6 +459,7 @@ LocalParameters::LocalParameters() :
     build.push_back(&GTDB);
     build.push_back(&SYNCMER);
     build.push_back(&SMER_LEN);
+    build.push_back(&REDUCED_AA);
 
     // updateDB
     updateDB.push_back(&PARAM_THREADS);
@@ -496,6 +497,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&SMER_LEN);
     classify.push_back(&PRINT_LOG);
     classify.push_back(&MAX_SHIFT);
+    classify.push_back(&REDUCED_AA);
 
 
     // extract
