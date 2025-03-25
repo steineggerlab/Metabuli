@@ -43,7 +43,6 @@ public:
     std::vector<MMseqsParameter*> editNames;
     std::vector<MMseqsParameter*> createnewtaxalist;
     std::vector<MMseqsParameter*> makeBenchmarkSet;
-    std::vector<MMseqsParameter*> newcommnad;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
@@ -54,8 +53,6 @@ public:
     PARAMETER(SKIP_REDUNDANCY)
     PARAMETER(SYNCMER)
     PARAMETER(SMER_LEN)
-
-    PARAMETER(NEW)
 
 
     // Classify
