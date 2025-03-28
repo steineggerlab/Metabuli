@@ -25,6 +25,12 @@
 #define BufferSize 16'777'216 //16 * 1024 * 1024 // 16 M
 using namespace std;
 
+struct Relation {
+    uint32_t id1;
+    uint32_t id2;
+    uint32_t weight;
+};
+
 // DisjointSet class for handling union-find operations
 class DisjointSet {
 public:
@@ -65,6 +71,9 @@ public:
 };
 
 class KmerFileHandler {
+private:
+    std::vector<uint64_t> kmerBoundaries;
+    bool boundariesInitialized = false;
 protected:
 
 public:
@@ -84,10 +93,11 @@ public:
                              size_t size, 
                              size_t &localBufIdx,
                              size_t bufferSize);
-    static uint64_t getNextKmer(uint64_t lookingTarget, 
-                                const struct MmapedData<uint16_t> & diffList, 
-                                size_t & idx);
-    static void writeQueryKmerFile(QueryKmerBuffer *queryKmerBuffer, 
+    static vector<uint64_t> getNextKmersBatch(const MmapedData<uint16_t> &diffList,
+                                              size_t &idx,
+                                              uint64_t &currentVal,
+                                              size_t maxBatchSize);
+    void writeQueryKmerFile(Buffer<QueryKmer>& queryKmerBuffer, 
                                    const string& queryKmerFileDir, 
                                    size_t& numOfSplits, 
                                    size_t numOfThreads, 
@@ -135,15 +145,16 @@ public:
     void makeGraph(const string &queryKmerFileDir, 
                    size_t &numOfSplits, 
                    size_t &numOfThreads, 
+                   size_t &processedReadCnt,
                    size_t &numOfGraph,
                    const string &jobId);
 
-    void saveSubGraphToFile(const map<uint32_t, map<uint32_t, uint32_t>> &subRelation, 
+    void saveSubGraphToFile(const unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> &subRelation, 
                             const string &subGraphFileDir, 
                             const size_t counter_now,
                             const string &jobId);
 
-    void makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo,
+    void makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
                     const string &subGraphFileDir, 
                     vector<int> &queryGroupInfo, 
                     int groupKmerThr, 
@@ -154,6 +165,11 @@ public:
                           const vector<int> &queryGroupInfo, 
                           const string &groupFileDir, 
                           const string &jobId);
+
+    void loadGroupsFromFile(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo,
+                       vector<int> &queryGroupInfo,
+                       const string &groupFileDir,
+                       const string &jobId);
 
     void loadMetabuliResult(const string &resultFileDir, 
                             vector<pair<int, float>> &metabuliResult);

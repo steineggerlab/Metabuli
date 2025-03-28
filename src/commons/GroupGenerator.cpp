@@ -42,8 +42,7 @@ GroupGenerator::~GroupGenerator() {
 }
 
 void GroupGenerator::startGroupGeneration(const LocalParameters &par) {  
-
-    QueryKmerBuffer queryKmerBuffer;
+    Buffer<QueryKmer> queryKmerBuffer;
     vector<Query> queryList;
     size_t numOfTatalQueryKmerCnt = 0;
     size_t numOfThreads = par.threads;
@@ -74,7 +73,7 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     cout << "groupScoreThr: " << groupScoreThr << endl;
     cout << "groupKmerThr: " << groupKmerThr << endl;
     
-    // Extract k-mers from query sequences and compare them to target k-mer DB
+    //Extract k-mers from query sequences and compare them to target k-mer DB
     while (!complete) {
         tries++;
 
@@ -123,7 +122,7 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
                                              kseq1,
                                              kseq2); // sync kseq1 and kseq2            
             // saveQueryIdToFile
-            kmerFileHandler->writeQueryKmerFile(&queryKmerBuffer, outDir, numOfSplits, numOfThreads, processedReadCnt, jobId);
+            kmerFileHandler->writeQueryKmerFile(queryKmerBuffer, outDir, numOfSplits, numOfThreads, processedReadCnt, jobId);
             processedReadCnt += queryReadSplit[splitIdx].readCnt;
             cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
 
@@ -139,13 +138,16 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
         }
     }   
 
-    makeGraph(outDir, numOfSplits, numOfThreads, numOfGraph, jobId);   
+    makeGraph(outDir, numOfSplits, numOfThreads, processedReadCnt, numOfGraph, jobId);   
+    // numOfGraph = 128;
+    // processedReadCnt = 12048859;
     unordered_map<uint32_t, unordered_set<uint32_t>> groupInfo;
     vector<int> queryGroupInfo;
     queryGroupInfo.resize(processedReadCnt, -1);
     makeGroups(groupInfo, outDir, queryGroupInfo, groupKmerThr, numOfGraph, jobId);
     
     saveGroupsToFile(groupInfo, queryGroupInfo, outDir, jobId);
+    // loadGroupsFromFile(groupInfo, queryGroupInfo, outDir, jobId);
     
     vector<pair<int, float>> metabuliResult;       
     metabuliResult.resize(processedReadCnt, make_pair(-1, 0.0f));
@@ -203,6 +205,7 @@ void GroupGenerator::makeGroupsFromBinning(const string &binningFileDir,
 void GroupGenerator::makeGraph(const string &queryKmerFileDir, 
                                size_t &numOfSplits, 
                                size_t &numOfThreads, 
+                               size_t &processedReadCnt,
                                size_t &numOfGraph,
                                const string &jobId) {
     
@@ -212,126 +215,134 @@ void GroupGenerator::makeGraph(const string &queryKmerFileDir,
     const size_t RELATION_THRESHOLD = 100'000'000;  // relation 크기 제한
     std::atomic<int> counter(0);
 
-    #pragma omp parallel num_threads(numOfThreads)
-    {
-        int threadIdx = omp_get_thread_num();
-        size_t processedRelationCnt = 0;
-        map<uint32_t, map<uint32_t, uint32_t>> threadRelation;
+#pragma omp parallel num_threads(numOfThreads)
+{
+    int threadIdx = omp_get_thread_num();
+    size_t processedRelationCnt = 0;
+    unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> threadRelation;
 
-        // 스레드별 파일 정보 할당
-        struct MmapedData<uint16_t> *diffFileList = new struct MmapedData<uint16_t>[numOfSplits];
-        struct MmapedData<QueryKmerInfo> *infoFileList = new struct MmapedData<QueryKmerInfo>[numOfSplits];
+    // 파일 관련 초기화
+    MmapedData<uint16_t> *diffFileList = new MmapedData<uint16_t>[numOfSplits];
+    MmapedData<QueryKmerInfo> *infoFileList = new MmapedData<QueryKmerInfo>[numOfSplits];
 
-        uint64_t *lookingKmers = new uint64_t[numOfSplits];
-        auto *lookingInfos = new QueryKmerInfo[numOfSplits];
-        auto *diffFileIdx = new size_t[numOfSplits];
-        memset(diffFileIdx, 0, numOfSplits * sizeof(size_t));
-        auto *infoFileIdx = new size_t[numOfSplits];
-        memset(infoFileIdx, 0, numOfSplits * sizeof(size_t));
-        auto *maxIdxOfEachFiles = new size_t[numOfSplits];
+    // 💡 버퍼링용 구조
+    vector<vector<uint64_t>> kmerBuffers(numOfSplits);
+    vector<size_t> kmerBufferPos(numOfSplits, 0);
+    vector<uint64_t> kmerCurrentVal(numOfSplits, 0);  // 각 파일에 대한 누적값
 
-        // 파일 초기화 및 mmap 처리
+    QueryKmerInfo *lookingInfos = new QueryKmerInfo[numOfSplits];
+    size_t *infoFileIdx = new size_t[numOfSplits]();
+    size_t *maxInfoIdx = new size_t[numOfSplits];
+
+    const size_t BATCH_SIZE = 1024;
+
+    for (size_t file = 0; file < numOfSplits; ++file) {
+        string diffFile = queryKmerFileDir + "/" + jobId + "_queryKmerRelation" + to_string(file) + "_diffIdx" + to_string(threadIdx);
+        string infoFile = queryKmerFileDir + "/" + jobId + "_queryKmerRelation" + to_string(file) + "_info" + to_string(threadIdx);
+
+        diffFileList[file] = mmapData<uint16_t>(diffFile.c_str());
+        infoFileList[file] = mmapData<QueryKmerInfo>(infoFile.c_str());
+
+        if (!diffFileList[file].data || !infoFileList[file].data || infoFileList[file].fileSize == 0) {
+            kmerBufferPos[file] = BATCH_SIZE;  // 비워서 skip 처리
+            continue;
+        }
+
+        maxInfoIdx[file] = infoFileList[file].fileSize / sizeof(QueryKmerInfo);
+        kmerBuffers[file] = kmerFileHandler->getNextKmersBatch(diffFileList[file], infoFileIdx[file], kmerCurrentVal[file], BATCH_SIZE);
+        kmerBufferPos[file] = 0;
+
+        if (!kmerBuffers[file].empty()) {
+            lookingInfos[file] = infoFileList[file].data[infoFileIdx[file]++];
+        }
+    }
+
+    vector<uint32_t> currentQueryIds;
+    currentQueryIds.reserve(1024);
+
+    while (true) {
+        uint64_t currentKmer = UINT64_MAX;
+
+        // 💡 가장 작은 k-mer 찾기
         for (size_t file = 0; file < numOfSplits; ++file) {
-            string diffIdxFilename = queryKmerFileDir + "/" + jobId + "_queryKmerRelation" + to_string(file) + "_diffIdx" + to_string(threadIdx);
-            string infoFilename = queryKmerFileDir + "/" + jobId + "_queryKmerRelation" + to_string(file) + "_info" + to_string(threadIdx);
-
-            diffFileList[file] = mmapData<uint16_t>(diffIdxFilename.c_str());
-            infoFileList[file] = mmapData<QueryKmerInfo>(infoFilename.c_str());
-
-            if (!diffFileList[file].data || !infoFileList[file].data || infoFileList[file].fileSize == 0) {
-                lookingKmers[file] = UINT64_MAX; // 해당 파일을 무시하도록 설정
-                continue;
-            }
-
-            lookingKmers[file] = kmerFileHandler->getNextKmer(0, diffFileList[file], diffFileIdx[file]);
-            lookingInfos[file] = infoFileList[file].data[0];
-            infoFileIdx[file]++;
-            maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
-        }
-
-        vector<uint32_t> currentQueryIds;
-        currentQueryIds.reserve(1024);
-        while (true) {
-            uint64_t currentKmer = UINT64_MAX;
-
-            // 가장 작은 k-mer 찾기 (스레드별 파일에서 찾음)
-            for (size_t file = 0; file < numOfSplits; ++file) {
-                if (lookingKmers[file] < currentKmer) {
-                    currentKmer = lookingKmers[file];
-                }
-            }
-
-            if (currentKmer == UINT64_MAX) {
-                break;
-            }
-
-            currentQueryIds.clear();
-
-            // 현재 k-mer에 해당하는 query ID들을 수집
-            for (size_t file = 0; file < numOfSplits; ++file) {
-                while (lookingKmers[file] == currentKmer) {
-                    currentQueryIds.push_back(lookingInfos[file].sequenceID);
-
-                    lookingKmers[file] = kmerFileHandler->getNextKmer(lookingKmers[file], diffFileList[file], diffFileIdx[file]);
-
-                    if (!infoFileList[file].data || infoFileIdx[file] >= infoFileList[file].fileSize / sizeof(QueryKmerInfo)) {
-                        lookingKmers[file] = UINT64_MAX; // 파일 끝 도달
-                        break;
-                    }
-                    lookingInfos[file] = infoFileList[file].data[infoFileIdx[file]];
-                    infoFileIdx[file]++;
-                }
-            }
-            // 관계 저장 (스레드별)
-            for (size_t i = 0; i < currentQueryIds.size(); ++i) {
-                for (size_t j = i; j < currentQueryIds.size(); ++j) {
-                    if (currentQueryIds[i] != UINT32_MAX && currentQueryIds[j] != UINT32_MAX){
-                        if (currentQueryIds[i] < currentQueryIds[j]) {
-                            threadRelation[currentQueryIds[i]][currentQueryIds[j]]++;
-                            processedRelationCnt++;
-                        } else if (currentQueryIds[i] > currentQueryIds[j]) {
-                            threadRelation[currentQueryIds[j]][currentQueryIds[i]]++;
-                            processedRelationCnt++;
-                        }
-                    }
-                }
-            }
-
-            // relation이 threshold를 넘으면 저장 후 초기화
-            if (processedRelationCnt > RELATION_THRESHOLD) {                
-                size_t counter_now = counter.fetch_add(1, std::memory_order_relaxed);
-                saveSubGraphToFile(threadRelation, queryKmerFileDir, counter_now, jobId);
-                threadRelation.clear();
-                processedRelationCnt = 0;
+            if (kmerBufferPos[file] < kmerBuffers[file].size()) {
+                currentKmer = min(currentKmer, kmerBuffers[file][kmerBufferPos[file]]);
             }
         }
 
-        // 남아 있는 관계 저장
-        if (!threadRelation.empty()) {
+        if (currentKmer == UINT64_MAX) break;
+
+        currentQueryIds.clear();
+
+        // 💡 현재 k-mer에 해당하는 queryID들 수집
+        for (size_t file = 0; file < numOfSplits; ++file) {
+            uint32_t seqId = lookingInfos[file].sequenceID;
+            while (kmerBufferPos[file] < kmerBuffers[file].size() &&
+                   kmerBuffers[file][kmerBufferPos[file]] == currentKmer) {
+                uint32_t seqId = lookingInfos[file].sequenceID;
+
+                if (seqId != UINT32_MAX && seqId < processedReadCnt) {
+                    currentQueryIds.push_back(seqId);
+                }
+
+                kmerBufferPos[file]++;  // ✅ 반드시 한 칸은 이동해야 함
+
+                // 다음 info 로딩
+                if (infoFileIdx[file] < maxInfoIdx[file]) {
+                    lookingInfos[file] = infoFileList[file].data[infoFileIdx[file]++];
+                } else {
+                    lookingInfos[file] = QueryKmerInfo();
+                    lookingInfos[file].sequenceID = UINT32_MAX;
+                }
+
+                // 버퍼 다 썼으면 재충전
+                if (kmerBufferPos[file] >= kmerBuffers[file].size()) {
+                    kmerBuffers[file] = kmerFileHandler->getNextKmersBatch(diffFileList[file], infoFileIdx[file], kmerCurrentVal[file], BATCH_SIZE);
+                    kmerBufferPos[file] = 0;
+                    if (kmerBuffers[file].empty()) {
+                        kmerBufferPos[file] = BATCH_SIZE;
+                    }
+                }
+            }
+        }
+
+        // 💡 관계 저장
+        for (size_t i = 0; i < currentQueryIds.size(); ++i) {
+            for (size_t j = i; j < currentQueryIds.size(); ++j) {
+                if (currentQueryIds[i] != UINT32_MAX && currentQueryIds[j] != UINT32_MAX){
+                    uint32_t a = min(currentQueryIds[i], currentQueryIds[j]);
+                    uint32_t b = max(currentQueryIds[i], currentQueryIds[j]);
+                    threadRelation[a][b]++;
+                    processedRelationCnt++;
+                }
+            }
+        }
+
+        if (processedRelationCnt > RELATION_THRESHOLD) {
             size_t counter_now = counter.fetch_add(1, std::memory_order_relaxed);
             saveSubGraphToFile(threadRelation, queryKmerFileDir, counter_now, jobId);
+            threadRelation.clear();
+            processedRelationCnt = 0;
         }
-
-
-        // 파일 닫기
-        for (size_t file = 0; file < numOfSplits; file++) {
-            if (diffFileList[file].data) {
-                munmap(diffFileList[file].data, diffFileList[file].fileSize);
-            }
-            if (infoFileList[file].data) {
-                munmap(infoFileList[file].data, infoFileList[file].fileSize);
-            }
-        }
-
-        // 동적 메모리 해제
-        delete[] diffFileList;
-        delete[] infoFileList;
-        delete[] lookingInfos;
-        delete[] lookingKmers;
-        delete[] diffFileIdx;
-        delete[] infoFileIdx;
-        delete[] maxIdxOfEachFiles;
     }
+
+    if (!threadRelation.empty()) {
+        size_t counter_now = counter.fetch_add(1, std::memory_order_relaxed);
+        saveSubGraphToFile(threadRelation, queryKmerFileDir, counter_now, jobId);
+    }
+
+    // mmap 해제
+    for (size_t file = 0; file < numOfSplits; file++) {
+        if (diffFileList[file].data) munmap(diffFileList[file].data, diffFileList[file].fileSize);
+        if (infoFileList[file].data) munmap(infoFileList[file].data, infoFileList[file].fileSize);
+    }
+
+    delete[] diffFileList;
+    delete[] infoFileList;
+    delete[] lookingInfos;
+    delete[] infoFileIdx;
+    delete[] maxInfoIdx;
+}
 
     
     numOfGraph = counter.fetch_add(1, std::memory_order_relaxed);
@@ -342,31 +353,41 @@ void GroupGenerator::makeGraph(const string &queryKmerFileDir,
 
 
 
-void GroupGenerator::saveSubGraphToFile(const map<uint32_t, map<uint32_t, uint32_t>> &subRelation, 
+void GroupGenerator::saveSubGraphToFile(const unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> &subRelation, 
                                         const string &subGraphFileDir, 
                                         const size_t counter_now,
-                                        const string &jobId){
-    const string& subGraphFileName = subGraphFileDir + "/" + jobId + "_subGraph" + to_string(counter_now);
+                                        const string &jobId) {
+    const string subGraphFileName = subGraphFileDir + "/" + jobId + "_subGraph" + to_string(counter_now);
 
-    ofstream outFile(subGraphFileName);
+    ofstream outFile(subGraphFileName, ios::binary);
     if (!outFile.is_open()) {
         cerr << "Error opening file: " << subGraphFileName << endl;
         return;
     }
 
-    for (const auto &[queryid_1, inner_map] : subRelation) {
-        for (const auto &[queryid_2, weight] : inner_map) {
-            outFile << queryid_1 << "," << queryid_2 << "," << weight << "\n";
+    // 정렬 후 저장
+    vector<tuple<uint32_t, uint32_t, uint32_t>> sortedRelations;
+    for (const auto &[id1, inner_map] : subRelation) {
+        for (const auto &[id2, weight] : inner_map) {
+            sortedRelations.emplace_back(id1, id2, weight);
         }
     }
-    
+    sort(sortedRelations.begin(), sortedRelations.end());
+
+    for (const auto &[id1, id2, weight] : sortedRelations) {
+        outFile.write(reinterpret_cast<const char*>(&id1), sizeof(uint32_t));
+        outFile.write(reinterpret_cast<const char*>(&id2), sizeof(uint32_t));
+        outFile.write(reinterpret_cast<const char*>(&weight), sizeof(uint32_t));
+    }
+
     outFile.close();
+
     #pragma omp critical
     {
         cout << "Query sub-graph saved to " << subGraphFileName << " successfully." << endl;
     }
-    
 }
+
 
 
 void GroupGenerator::makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
@@ -380,39 +401,42 @@ void GroupGenerator::makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>>
 
     cout << "Creating groups based on graph..." << endl;
 
+    const size_t BATCH_SIZE = 4096;
+
+    struct Relation {
+        uint32_t id1, id2, weight;
+    };
+
     vector<ifstream> files(numOfGraph);
-    vector<tuple<uint32_t, uint32_t, uint32_t>> currentLines(numOfGraph);  // (id1, id2, weight)
+    vector<queue<tuple<uint32_t, uint32_t, uint32_t>>> relationBuffers(numOfGraph);
     vector<bool> fileHasData(numOfGraph, true);
 
-    // 1. open all files and read the first line
     for (size_t i = 0; i < numOfGraph; ++i) {
         string fileName = subGraphFileDir + "/" + jobId + "_subGraph" + to_string(i);
-        files[i].open(fileName);
+        files[i].open(fileName, ios::binary);
         if (!files[i].is_open()) {
             cerr << "Error opening file: " << fileName << endl;
             fileHasData[i] = false;
             continue;
         }
-        string line;
-        if (getline(files[i], line)) {
-            istringstream ss(line);
-            string token;
-            getline(ss, token, ','); uint32_t id1 = stoi(token);
-            getline(ss, token, ','); uint32_t id2 = stoi(token);
-            getline(ss, token, ','); uint32_t weight = stoi(token);
-            currentLines[i] = {id1, id2, weight};
-        } else {
-            fileHasData[i] = false;
+
+        // 첫 배치 read - 버퍼 기반
+        vector<Relation> buffer(BATCH_SIZE);
+        files[i].read(reinterpret_cast<char*>(buffer.data()), BATCH_SIZE * sizeof(Relation));
+        size_t numRead = files[i].gcount() / sizeof(Relation);
+
+        for (size_t j = 0; j < numRead; ++j) {
+            relationBuffers[i].emplace(buffer[j].id1, buffer[j].id2, buffer[j].weight);
         }
+
+        if (relationBuffers[i].empty()) fileHasData[i] = false;
     }
 
-    // 2. process until all files are done
     while (true) {
-        // 가장 작은 (id1, id2) 찾기
         pair<uint32_t, uint32_t> minKey = {UINT32_MAX, UINT32_MAX};
         for (size_t i = 0; i < numOfGraph; ++i) {
-            if (fileHasData[i]) {
-                auto [id1, id2, _] = currentLines[i];
+            if (fileHasData[i] && !relationBuffers[i].empty()) {
+                auto [id1, id2, _] = relationBuffers[i].front();
                 if (make_pair(id1, id2) < minKey) {
                     minKey = {id1, id2};
                 }
@@ -420,38 +444,37 @@ void GroupGenerator::makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>>
         }
         if (minKey == make_pair(UINT32_MAX, UINT32_MAX)) break;
 
-        // 동일한 relation에 대해 weight 누적
         uint32_t totalWeight = 0;
         for (size_t i = 0; i < numOfGraph; ++i) {
-            if (fileHasData[i]) {
-                auto [id1, id2, weight] = currentLines[i];
+            if (fileHasData[i] && !relationBuffers[i].empty()) {
+                auto [id1, id2, weight] = relationBuffers[i].front();
                 if (make_pair(id1, id2) == minKey) {
                     totalWeight += weight;
-                    string line;
-                    if (getline(files[i], line)) {
-                        istringstream ss(line);
-                        string token;
-                        getline(ss, token, ','); id1 = stoi(token);
-                        getline(ss, token, ','); id2 = stoi(token);
-                        getline(ss, token, ','); weight = stoi(token);
-                        currentLines[i] = {id1, id2, weight};
-                    } else {
-                        fileHasData[i] = false;
+                    relationBuffers[i].pop();
+
+                    if (relationBuffers[i].empty()) {
+                        vector<Relation> buffer(BATCH_SIZE);
+                        files[i].read(reinterpret_cast<char*>(buffer.data()), BATCH_SIZE * sizeof(Relation));
+                        size_t numRead = files[i].gcount() / sizeof(Relation);
+
+                        for (size_t j = 0; j < numRead; ++j) {
+                            relationBuffers[i].emplace(buffer[j].id1, buffer[j].id2, buffer[j].weight);
+                        }
+
+                        if (relationBuffers[i].empty()) fileHasData[i] = false;
                     }
                 }
             }
         }
 
-        // 조건에 따라 union
         if (totalWeight >= groupKmerThr) {
-            uint32_t id1 = get<0>(minKey), id2 = get<1>(minKey);
+            uint32_t id1 = minKey.first, id2 = minKey.second;
             if (ds.parent.find(id1) == ds.parent.end()) ds.makeSet(id1);
             if (ds.parent.find(id2) == ds.parent.end()) ds.makeSet(id2);
             ds.unionSets(id1, id2);
         }
     }
 
-    // 그룹 수집
     for (const auto& [queryId, _] : ds.parent) {
         uint32_t groupId = ds.find(queryId);
         groupInfo[groupId].insert(queryId);
@@ -462,6 +485,8 @@ void GroupGenerator::makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>>
     cout << "Query group created successfully : " << groupInfo.size() << " groups" << endl;
     cout << "Time spent: " << double(time(nullptr) - beforeSearch) << " seconds." << endl;
 }
+
+
 
 
 void GroupGenerator::saveGroupsToFile(const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
@@ -503,6 +528,51 @@ void GroupGenerator::saveGroupsToFile(const unordered_map<uint32_t, unordered_se
     return;
 }
 
+void GroupGenerator::loadGroupsFromFile(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo,
+                                        vector<int> &queryGroupInfo,
+                                        const string &groupFileDir,
+                                        const string &jobId) {
+    const string groupInfoFileName = groupFileDir + "/" + jobId + "_groups";
+    const string queryGroupInfoFileName = groupFileDir + "/" + jobId + "_queryGroupMap";
+
+    // 1. Load groupInfo
+    ifstream inFile1(groupInfoFileName);
+    if (!inFile1.is_open()) {
+        cerr << "Error opening file: " << groupInfoFileName << endl;
+        return;
+    }
+
+    string line;
+    while (getline(inFile1, line)) {
+        istringstream ss(line);
+        uint32_t groupId;
+        ss >> groupId;
+
+        uint32_t queryId;
+        while (ss >> queryId) {
+            groupInfo[groupId].insert(queryId);
+        }
+    }
+    inFile1.close();
+    cout << "Group info loaded from " << groupInfoFileName << " successfully." << endl;
+
+    // 2. Load queryGroupInfo
+    ifstream inFile2(queryGroupInfoFileName);
+    if (!inFile2.is_open()) {
+        cerr << "Error opening file: " << queryGroupInfoFileName << endl;
+        return;
+    }
+
+    queryGroupInfo.clear();
+    int groupId;
+    while (inFile2 >> groupId) {
+        queryGroupInfo.push_back(groupId);
+    }
+    inFile2.close();
+    cout << "Query-to-group map loaded from " << queryGroupInfoFileName << " successfully." << endl;
+}
+
+
 void GroupGenerator::loadMetabuliResult(const string &resultFileDir, 
                                         vector<pair<int, float>> &metabuliResult) {
     ifstream inFile(resultFileDir + "/1_classifications.tsv");
@@ -535,6 +605,16 @@ void GroupGenerator::getRepLabel(const string &groupRepFileDir,
                                  int voteMode, 
                                  float majorityThr,
                                  const float groupScoreThr) {
+
+    for (const auto& [groupId, queryIds] : groupInfo) {
+        for (uint32_t queryId : queryIds) {
+            if (queryId >= metabuliResult.size()) {
+                cerr << "[ERROR] queryId " << queryId << " out of bounds! (max = " << metabuliResult.size() << ")" << endl;
+            }
+        }
+    }
+
+
     for (const auto& group : groupInfo) {
         uint32_t groupId = group.first;
         const unordered_set<uint32_t>& queryIds = group.second;
@@ -658,44 +738,71 @@ void KmerFileHandler::writeDiffIdx(uint16_t *buffer, FILE *handleKmerTable, uint
     localBufIdx += size; // Update buffer index
 }
 
-uint64_t KmerFileHandler::getNextKmer(uint64_t lookingTarget, const struct MmapedData<uint16_t> & diffList, size_t & idx) {
+vector<uint64_t> KmerFileHandler::getNextKmersBatch(const struct MmapedData<uint16_t>& diffList, size_t& idx, uint64_t& currentVal, size_t maxBatchSize) {
+    vector<uint64_t> batch;
     uint16_t fragment = 0;
     uint64_t diffIn64bit = 0;
-    uint16_t check = 32768; // 2^15
+    uint16_t check = 32768;
 
-    if (idx >= diffList.fileSize / sizeof(uint16_t)) {
-        return UINT64_MAX;  
-    }
+    size_t totalElements = diffList.fileSize / sizeof(uint16_t);
+    size_t count = 0;
 
-    fragment = diffList.data[idx++];
-    while(!(fragment & check)) {
-        diffIn64bit |= fragment;
-        diffIn64bit <<= 15u;
+    while (idx < totalElements && count < maxBatchSize) {
+        diffIn64bit = 0;
         fragment = diffList.data[idx++];
+        while (!(fragment & check)) {
+            diffIn64bit |= fragment;
+            diffIn64bit <<= 15u;
+            if (idx >= totalElements) break;  // 오류 방지
+            fragment = diffList.data[idx++];
+        }
+        fragment &= ~check;
+        diffIn64bit |= fragment;
+
+        currentVal += diffIn64bit;
+        batch.push_back(currentVal);
+        count++;
     }
 
-    fragment &= ~check;
-    diffIn64bit |= fragment;
-
-    return diffIn64bit + lookingTarget;
+    return batch;
 }
 
-void KmerFileHandler::writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer, 
+
+void KmerFileHandler::writeQueryKmerFile(Buffer<QueryKmer>& queryKmerBuffer, 
                                          const string& queryKmerFileDir, 
                                          size_t& numOfSplits, 
                                          size_t numOfThreads,
                                          size_t processedReadCnt, 
                                          const string & jobId) {
 
-    size_t queryKmerNum = queryKmerBuffer->startIndexOfReserve;
-    QueryKmer *queryKmerList = queryKmerBuffer->buffer;
+    size_t queryKmerNum = queryKmerBuffer.startIndexOfReserve;
+    QueryKmer *queryKmerList = queryKmerBuffer.buffer;
     for (size_t checkN = queryKmerNum - 1; checkN > 0; checkN--) {
         if (queryKmerList[checkN].ADkmer != UINT64_MAX) {
             queryKmerNum = checkN + 1;
             break;
         }
     }
-    
+
+    // 💡 첫 split일 때만 k-mer 개수 기반으로 균등 분포 계산
+    if (!boundariesInitialized) {
+        vector<uint64_t> allKmers(queryKmerNum);
+        for (size_t i = 0; i < queryKmerNum; ++i)
+            allKmers[i] = queryKmerList[i].ADkmer;
+
+        std::sort(allKmers.begin(), allKmers.end());
+
+        kmerBoundaries.clear();
+        for (size_t i = 0; i <= numOfThreads; ++i) {
+            size_t index = (i * queryKmerNum) / numOfThreads;
+            if (index >= queryKmerNum) index = queryKmerNum - 1;
+            kmerBoundaries.push_back(allKmers[index]);
+        }
+
+        boundariesInitialized = true;
+    }
+
+    // 💾 파일 열기 및 버퍼 준비
     vector<FILE*> diffIdxFiles(numOfThreads, nullptr);
     vector<FILE*> infoFiles(numOfThreads, nullptr);
     vector<uint16_t*> diffIdxBuffers(numOfThreads, nullptr);
@@ -713,7 +820,7 @@ void KmerFileHandler::writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer,
             cout << "Cannot open file for writing: " << diffIdxFileName << " or " << infoFileName << endl;
             return;
         }
-        
+
         diffIdxBuffers[i] = (uint16_t *)malloc(sizeof(uint16_t) * bufferSize);
         if (diffIdxBuffers[i] == nullptr ) {
             cout << "Memory allocation failed for diffIdxBuffer[" << i << "]" << endl;
@@ -725,21 +832,22 @@ void KmerFileHandler::writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer,
 
     uint64_t lastKmer[numOfThreads] = {0, };
     size_t write = 0;
-    const uint64_t MAX_KMER = UINT64_MAX;
-    size_t rangeSize = MAX_KMER / numOfThreads;
-    
-    for(size_t i = 0; i < queryKmerNum ; i++) {
-        queryKmerList[i].info.sequenceID += processedReadCnt;
-        size_t splitIdx = min(queryKmerList[i].ADkmer / rangeSize, numOfThreads - 1);   
 
-        fwrite(&queryKmerList[i].info, sizeof (QueryKmerInfo), 1, infoFiles[splitIdx]); 
+    for (size_t i = 0; i < queryKmerNum ; i++) {
+        queryKmerList[i].info.sequenceID += processedReadCnt;
+
+        // 💡 실제 분포 기반 boundary를 사용한 split index 결정
+        size_t splitIdx = upper_bound(kmerBoundaries.begin(), kmerBoundaries.end(), queryKmerList[i].ADkmer) - kmerBoundaries.begin() - 1;
+        if (splitIdx >= numOfThreads) splitIdx = numOfThreads - 1;
+
+        fwrite(&queryKmerList[i].info, sizeof(QueryKmerInfo), 1, infoFiles[splitIdx]); 
         getDiffIdx(lastKmer[splitIdx], queryKmerList[i].ADkmer, diffIdxFiles[splitIdx], diffIdxBuffers[splitIdx], localBufIdxs[splitIdx], bufferSize); 
         lastKmer[splitIdx] = queryKmerList[i].ADkmer;   
         write++; 
     }
 
-    cout<<"total k-mer count  : "<< queryKmerNum << endl;
-    cout<<"written k-mer count: "<< write <<endl;
+    cout << "total k-mer count  : " << queryKmerNum << endl;
+    cout << "written k-mer count: " << write << endl;
 
     for (size_t i = 0; i < numOfThreads; i++) {
         flushKmerBuf(diffIdxBuffers[i], diffIdxFiles[i], localBufIdxs[i]);
@@ -750,6 +858,5 @@ void KmerFileHandler::writeQueryKmerFile(QueryKmerBuffer * queryKmerBuffer,
     }
 
     numOfSplits++;
-
-    return;
 }
+
