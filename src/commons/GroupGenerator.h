@@ -93,10 +93,11 @@ public:
                              size_t size, 
                              size_t &localBufIdx,
                              size_t bufferSize);
-    static vector<uint64_t> getNextKmersBatch(const MmapedData<uint16_t> &diffList,
-                                              size_t &idx,
-                                              uint64_t &currentVal,
-                                              size_t maxBatchSize);
+    vector<uint64_t> getNextKmersBatch(const struct MmapedData<uint16_t>& diffList, 
+                                       size_t& idx, 
+                                       uint64_t& currentVal, 
+                                       size_t maxBatchSize);
+
     void writeQueryKmerFile(Buffer<QueryKmer>& queryKmerBuffer, 
                                    const string& queryKmerFileDir, 
                                    size_t& numOfSplits, 
@@ -146,6 +147,7 @@ public:
                    size_t &numOfSplits, 
                    size_t &numOfThreads, 
                    size_t &numOfGraph,
+                   size_t processedReadCnt,
                    const string &jobId);
 
     void saveSubGraphToFile(const unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> &subRelation, 
