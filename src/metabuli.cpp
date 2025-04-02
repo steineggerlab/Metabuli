@@ -189,7 +189,7 @@ std::vector<Command> commands = {
         {"createnewtaxalist", createnewtaxalist, &localPar.createnewtaxalist, COMMAND_EXPERT,
                 "Create a accession2taxid and an input file for --new-taxa option",
                 nullptr,
-                "Jaebeom Kim <jbeom0731@gmail.com}",
+                "Jaebeom Kim <jbeom0731@gmail.com>",
                 "<i: old database> <i: FASTA list> <i: new taxonomy dump> <i: accession2taxid> <o: output prefix>",
                 CITATION_SPACEPHARER,
                 {{"old database", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory},
@@ -197,6 +197,14 @@ std::vector<Command> commands = {
                  {"new taxonomy dump", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory},
                  {"accession2taxid", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                  {"output prefix", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile}}}
+        {"classified2full", classified2full, &localPar.classified2full, COMMAND_EXPERT,
+                "Generate full taxonomy information from a classified output file",
+                nullptr,
+                "Siyoung Choi <remy0502@snu.ac.kr>",
+                "<i: classified file> <i: taxonomy dump>",
+                CITATION_SPACEPHARER,
+                {{"classified file", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                {"taxonomy dump", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}}
 };
 
 std::vector<KmerThreshold> externalThreshold = {};

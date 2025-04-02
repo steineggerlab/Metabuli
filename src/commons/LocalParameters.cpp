@@ -368,7 +368,29 @@ LocalParameters::LocalParameters() :
                 "Last k-mer to print",
                 typeid(size_t),
                 (void *) &kmerEnd,
-                "^[0-9]+$")
+                "^[0-9]+$"),
+        TAX_ID(TAX_ID_ID,
+               "--tax-id",
+               "Taxonomy ID to print",
+               "Taxonomy ID to print",
+               typeid(bool),
+               (void *) &taxId,
+               ""),
+        RANK(RANK_ID,
+               "--rank",
+               "Rank to print",
+               "Rank to print",
+               typeid(bool),
+               (void *) &rank,
+               ""),
+        ALL(ALL_ID,
+                "--all",
+                "all information of classified file to print",
+                "all information of classified file to print",
+                typeid(bool),
+                (void *) &all,
+                "")
+        
   {
     // Initialize the parameters
     // Superkingdom taxonomy id
@@ -421,6 +443,11 @@ LocalParameters::LocalParameters() :
     // Filter
     printMode = 0;
     contamList = "";
+
+    // classified to full taxonomy
+    taxId = false;
+    rank = false;
+    all = false;
 
 
     // build
@@ -542,6 +569,11 @@ LocalParameters::LocalParameters() :
     expand_diffidx.push_back(&KMER_END);
 
     query2reference.push_back(&TEST_RANK);
+
+    //classified2full
+    classified2full.push_back(&TAX_ID);
+    classified2full.push_back(&RANK);
+    classified2full.push_back(&ALL);
 }
 
 void LocalParameters::printParameters(const std::string &module, int argc, const char* pargv[],
