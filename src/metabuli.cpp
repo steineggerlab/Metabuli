@@ -196,7 +196,7 @@ std::vector<Command> commands = {
                  {"FASTA list", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                  {"new taxonomy dump", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory},
                  {"accession2taxid", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-                 {"output prefix", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile}}}
+                 {"output prefix", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
         {"classified2full", classified2full, &localPar.classified2full, COMMAND_EXPERT,
                 "Generate full taxonomy information from a classified output file",
                 nullptr,
