@@ -4,27 +4,28 @@
 #include "common.h"
 
 Classifier::Classifier(LocalParameters & par) {
-    // Load parameters
     dbDir = par.filenames[1 + (par.seqMode == 2)];
+    if(FileUtil::fileExists(string(dbDir + "/diffIdx").c_str())) {
+        isNewDB = false;
+    } else {
+        isNewDB = true; 
+    }
+
     matchPerKmer = par.matchPerKmer;
     loadDbParameters(par, par.filenames[1 + (par.seqMode == 2)]);
 
     cout << "DB name: " << par.dbName << endl;
     cout << "DB creation date: " << par.dbDate << endl;
     
-    // Taxonomy
     taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
 
-    // Agents
     queryIndexer = new QueryIndexer(par);
     kmerExtractor = new KmerExtractor(par);
-    // kmerMatcher = new KmerMatcher(par, taxonomy);
     if (par.reducedAA) {
         kmerMatcher = new ReducedKmerMatcher(par, taxonomy);
     } else {
         kmerMatcher = new KmerMatcher(par, taxonomy);
     }
-    // taxonomer = new Taxonomer(par, taxonomy);
     reporter = new Reporter(par, taxonomy);
 }
 
@@ -33,7 +34,6 @@ Classifier::~Classifier() {
     delete queryIndexer;
     delete kmerExtractor;
     delete kmerMatcher;
-    // delete taxonomer;
     delete reporter;
 }
 
@@ -110,30 +110,41 @@ void Classifier::startClassify(const LocalParameters &par) {
                                              kseq2); // sync kseq1 and kseq2
             
             // Search matches between query and target k-mers
-            if (kmerMatcher->matchMetamers(&queryKmerBuffer, &matchBuffer)) {
+            bool searchComplete = false;
+            if (isNewDB) {
+                searchComplete = kmerMatcher->matchMetamers(&queryKmerBuffer, &matchBuffer);
+            } else {
+                cout << "here" << endl;
+                searchComplete = kmerMatcher->matchKmers(&queryKmerBuffer, &matchBuffer);
+            }
+
+            if (searchComplete) {
                 cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
                 kmerMatcher->sortMatches(&matchBuffer);
-                
-                // Classify queries based on the matches.
                 assignTaxonomy(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
-
-                // Write classification results
                 reporter->writeReadClassification(queryList);
-
-                // Print progress
                 processedReadCnt += queryReadSplit[splitIdx].readCnt;
                 cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
-
                 numOfTatalQueryKmerCnt += queryKmerBuffer.startIndexOfReserve;
             } else { // search was incomplete
-                // Increase matchPerKmer and try again 
                 matchPerKmer += 4;
-                // delete kseq1;
-                // delete kseq2;
                 cout << "--match-per-kmer was increased to " << matchPerKmer << " and searching again..." << endl;
-                // cout << "The search was incomplete. Increasing --match-per-kmer to " << matchPerKmer << " and trying again..." << endl;
                 break;
             }
+
+            // if (kmerMatcher->matchMetamers(&queryKmerBuffer, &matchBuffer)) {
+            //     cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
+            //     kmerMatcher->sortMatches(&matchBuffer);
+            //     assignTaxonomy(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
+            //     reporter->writeReadClassification(queryList);
+            //     processedReadCnt += queryReadSplit[splitIdx].readCnt;
+            //     cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
+            //     numOfTatalQueryKmerCnt += queryKmerBuffer.startIndexOfReserve;
+            // } else { // search was incomplete
+            //     matchPerKmer += 4;
+            //     cout << "--match-per-kmer was increased to " << matchPerKmer << " and searching again..." << endl;
+            //     break;
+            // }
          }
          
         delete kseq1;

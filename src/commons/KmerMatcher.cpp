@@ -531,8 +531,6 @@ bool KmerMatcher::matchMetamers(Buffer<QueryKmer> * queryKmerBuffer,
 #pragma omp parallel default(none), shared(splitCheckList, totalOverFlowCnt, \
 querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numOfDiffIdx, redundancyStored, targetInfoFileName)
 {
-    SeqIterator seqIter(par);
-    // FILE
     FILE * diffIdxFp = fopen(targetDiffIdxFileName.c_str(), "rb");
 
     // Target K-mer buffer
@@ -586,19 +584,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
         if (querySplits[i].deltaIdxOffset.metamer.metamer == 0 && querySplits[i].deltaIdxOffset.offset == 0) {
             currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
                                                   diffIdxBufferIdx, diffIdxPos);
-            // seqIter.printKmerInDNAsequence(currentTargetKmer.metamer); cout << "\t";
-            // print_binary64(64, currentTargetKmer.metamer); cout << "\t";
-            // cout << currentTargetKmer.id << "\n";              
         }
-
-        // if (i == 11) {
-        //     cout << currentTargetKmer.metamer << "\t" << currentTargetKmer.id << "\n";
-        // }
-
-        // if (taxId2speciesId.find(currentTargetKmer.id) == taxId2speciesId.end()) {
-        //     cout << "Cannot find the species ID for " << currentTargetKmer.id << endl;
-        // }
-        
         currentQuery = UINT64_MAX;
         currentQueryAA = UINT64_MAX;
         for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
@@ -625,9 +611,6 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                                          selectedDnaEncodings[k],
                                          selectedHammings[k],
                                          selectedHammingSum[k]};
-                    // if (taxId2speciesId[candidateKmerInfos[idx]] == 0) {
-                    //     cout << candidateKmerInfos[idx] << "\t" << taxId2speciesId[candidateKmerInfos[idx]] << "\n";
-                    // }
                     matchCnt++;
                 }
                 continue;
@@ -658,10 +641,6 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                                          selectedDnaEncodings[k],
                                          selectedHammings[k],
                                          selectedHammingSum[k]};
-                    // if (taxId2speciesId[candidateKmerInfos[idx]] == 0) {
-                    //     cout << candidateKmerInfos[idx] << "\t" << taxId2speciesId[candidateKmerInfos[idx]] << "\n";
-                    // }
-                    // cout << candidateKmerInfos[idx] << "\t" << taxId2speciesId[candidateKmerInfos[idx]] << "\n";
                     matchCnt++;
                 }
                 currentQuery = queryKmerList[j].ADkmer;
@@ -685,18 +664,6 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                 }
                 currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
                                                       diffIdxBufferIdx, diffIdxPos);
-            // if (i == 11) {
-            //     if (taxId2speciesId.find(currentTargetKmer.id) == taxId2speciesId.end()) {
-            //         cout << currentTargetKmer.metamer << "\t" << currentTargetKmer.id << "\tX\n";
-            //     } else {
-            //         cout << currentTargetKmer.metamer << "\t" << currentTargetKmer.id << "\t" << taxId2speciesId[currentTargetKmer.id] << "\n";
-            //     }
-                
-            // }
-
-            //     seqIter.printKmerInDNAsequence(currentTargetKmer.metamer); cout << "\t";
-            //     print_binary64(64, currentTargetKmer.metamer); cout << "\t";
-            // cout << currentTargetKmer.id << "\n";
             }
 
             if (currentQueryAA != AMINO_ACID_PART(currentTargetKmer.metamer)) {
@@ -707,50 +674,16 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
             while (diffIdxPos != numOfDiffIdx &&
                    currentQueryAA == AMINO_ACID_PART(currentTargetKmer.metamer)) {
                 candidateTargetKmers.push_back(currentTargetKmer.metamer);
-                // if (taxId2speciesId[currentTargetKmer.id] == 0) {
-                //         cout << i << " " << currentTargetKmer.id << "\t" << taxId2speciesId[currentTargetKmer.id] << "\n";
-                // }
                 if (redundancyStored) {
                     candidateKmerInfos.push_back(currentTargetKmer.id & mask);
                 } else {
                     candidateKmerInfos.push_back(currentTargetKmer.id);
                 }
-
-                // if (par.printLog) {
-                //            cout << "# "<< queryKmerList[j].info.sequenceID << "\t" << queryKmerList[j].info.pos << "\t"
-                //                 << (int) queryKmerList[j].info.frame << endl;
-                //            cout << "Query  k-mer: ";
-                //            print_binary64(64, currentQuery);
-                //            cout << "\t";
-                //            seqIter.printKmerInDNAsequence(currentQuery);
-                //            cout << endl;
-                //            cout << "Target k-mer: ";
-                //            print_binary64(64, currentTargetKmer.metamer);
-                //            cout << "\t";
-                //            seqIter.printKmerInDNAsequence(currentTargetKmer.metamer);
-                //            cout << endl;
-                //            cout << "\t" << taxonomy->getOriginalTaxID(currentTargetKmer.id)
-                //                 << "\t" << taxonomy->getOriginalTaxID(taxId2speciesId[currentTargetKmer.id])<< endl;
-                //            cout << (int) getHammingDistanceSum(currentQuery, currentTargetKmer.metamer) << "\t";
-                //            print_binary16(16, getHammings(currentQuery, currentTargetKmer.metamer)); cout << endl;
-                //        }
                 if (unlikely(BufferSize < diffIdxBufferIdx + 10)){
                     loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
                 }
                 currentTargetKmer = getNextTargetKmer(currentTargetKmer, diffIdxBuffer,
                                                       diffIdxBufferIdx, diffIdxPos);
-                // if (i == 11) {
-                //     if (taxId2speciesId.find(currentTargetKmer.id) == taxId2speciesId.end()) {
-                //         cout << currentTargetKmer.metamer << "\t" << currentTargetKmer.id << "\tX\n";
-                //     } else {
-                //         cout << currentTargetKmer.metamer << "\t" << currentTargetKmer.id << "\t" << taxId2speciesId[currentTargetKmer.id] << "\n";
-                //     }
-                // }
-                                      
-            //     seqIter.printKmerInDNAsequence(currentTargetKmer.metamer); cout << "\t";
-            //     print_binary64(64, currentTargetKmer.metamer); cout << "\t";
-            // cout << currentTargetKmer.id << "\n";
-                // kmerInfoBufferIdx ++;
             }
 
             if (candidateTargetKmers.size() > selectedMatches.size()) {
@@ -776,7 +709,6 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                 } 
                 moveMatches(matchBuffer->buffer + posToWrite, matches, matchCnt);
             }
-
             for (size_t k = 0; k < selectedMatchCnt; k++) {
                 idx = selectedMatches[k];
                 matches[matchCnt] = {queryKmerList[j].info,
@@ -785,9 +717,6 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                                      selectedDnaEncodings[k],
                                      selectedHammings[k],
                                      selectedHammingSum[k]};
-                // if (taxId2speciesId[candidateKmerInfos[idx]] == 0) {
-                //     cout << candidateKmerInfos[idx] << "\t" << taxId2speciesId[candidateKmerInfos[idx]] << "\n";
-                // }
                 matchCnt++;
             }
         } // End of one split
@@ -810,7 +739,6 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
     delete[] matches;
     fclose(diffIdxFp);
     free(diffIdxBuffer);
-    // free(kmerInfoBuffer);
 } // End of omp parallel
         
     if (totalOverFlowCnt > 0) {

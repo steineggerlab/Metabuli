@@ -65,6 +65,7 @@ void FileMerger::updateTaxId2SpeciesTaxId(const string & taxIdListFileName) {
     //     cout << "OR " << taxonomy->getOriginalTaxID(taxid.first) << " " << taxonomy->getOriginalTaxID(taxid.second) << endl;
     // }
     fclose(taxIdFile);
+    Debug(Debug::INFO) << "Species-level taxonomy IDs are prepared.\n";
 }
 
 void FileMerger::printTaxIdList(const string & taxIdListFileName) {
@@ -413,7 +414,7 @@ void FileMerger::mergeDeltaIdxFiles() {
         }
 
         // Sort filtered Metamers
-        sort(filteredMetamers.begin(), filteredMetamers.end(), IndexCreator::compareMetamer);
+        sort(filteredMetamers.begin(), filteredMetamers.end(), IndexCreator::compareMetamerID);
 
         for (size_t k = 0; k < filteredMetamers.size(); k++) {
             IndexCreator::getDeltaIdx(lastWrittenMetamer, filteredMetamers[k], mergedDeltaIdxFile, deltaIdxBuffer, bufferSize, deltaBufferIdx, totalBufferIdx);

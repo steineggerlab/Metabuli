@@ -42,6 +42,7 @@ protected:
     // Parameters
     string dbDir;
     size_t matchPerKmer;
+    bool isNewDB;
 
     // Agents
     QueryIndexer * queryIndexer;

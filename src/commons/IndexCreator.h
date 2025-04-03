@@ -95,6 +95,7 @@ protected:
     // Parameters
     const LocalParameters & par;
     bool isUpdating;
+    bool isNewFormat;
 
     uint64_t MARKER;
     BaseMatrix *subMat;
@@ -129,16 +130,24 @@ protected:
         }
     };
 
-    void writeTargetFiles(TargetKmer * kmerBuffer,
-                          size_t & kmerNum,
-                          const size_t * uniqeKmerIdx,
-                          const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
+    void writeTargetFiles(
+        TargetKmer * kmerBuffer,
+        size_t & kmerNum,
+        const size_t * uniqeKmerIdx,
+        const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
     void writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
                                    size_t & kmerNum,
                                    const size_t * uniqeKmerIdx, 
                                    size_t & uniqKmerCnt, 
                                    const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
+
+    void writeTargetFilesAndSplits_oldFormat(
+        TargetKmer * kmerBuffer,
+        size_t & kmerNum,
+        const size_t * uniqeKmerIdx, 
+        size_t & uniqKmerCnt, 
+        const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
     static void writeDiffIdx(uint16_t *buffer,
                       size_t bufferSize,
@@ -243,6 +252,7 @@ public:
     }
 
     void setIsUpdating(bool isUpdating) { this->isUpdating = isUpdating; }
+    void setIsNewFormat(bool isNewFormat) { this->isNewFormat = isNewFormat; }
 
     void createIndex(const LocalParameters & par);
 
@@ -275,6 +285,6 @@ public:
 
     static void flushInfoBuf(TaxID * buffer, FILE * infoFile, size_t & localBufIdx );
 
-    static bool compareMetamer(const Metamer & a, const Metamer & b);
+    static bool compareMetamerID(const Metamer & a, const Metamer & b);
 };
 #endif //ADKMER4_INDEXCREATOR_H
