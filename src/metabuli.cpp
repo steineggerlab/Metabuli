@@ -170,7 +170,7 @@ std::vector<Command> commands = {
                 "<result file>",
                 CITATION_SPACEPHARER,
                 {{"result file", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
-        {"taxdump", taxdump, &localPar.taxdump, COMMAND_TAXONOMY,
+        {"taxdump", taxdump, &localPar.taxdump, COMMAND_DB,
                 "Generates taxonomy dump files (*.dmp) from a prebuilt taxonomyDB file",
                 nullptr,
                 "Jaebeom Kim <jbeom0731@gmail.com>",

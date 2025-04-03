@@ -371,7 +371,7 @@ void SeqIterator::fillQuerySyncmerBuffer(
     uint32_t seqID, 
     vector<int> *aaFrames,
     uint32_t offset) 
-    {
+{
     int forOrRev;
     uint64_t tempKmer = 0;
     int checkN;

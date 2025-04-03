@@ -129,13 +129,12 @@ public:
                               int blockEnd = 0);
 
     bool isSyncmer(const vector<int> &aaSeq, int startPos, int k, int s) {
-        int min_smer_value = INT32_MAX;
+        size_t min_smer_value = UINT64_MAX;
         int min_smer_pos = -1;
-
         for (int i = 0; i <= k - s; ++i) {
-            int current_value = 0;
+            size_t current_value = 0;
             for (int j = 0; j < s; ++j) {
-                current_value += aaSeq[startPos + i + j] * powers[j];
+                current_value |= (size_t) aaSeq[startPos + i + j] << (5 * j);
             }
             if (current_value < min_smer_value) {
                 min_smer_value = current_value;
@@ -144,7 +143,6 @@ public:
         }
         return (min_smer_pos == 0 || min_smer_pos == (k - s));
     }
-    // bool isSyncmer(const vector<int> & aaSeq, int startPos, int k, int s);
 
     void addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, int kmerCnt, int strand, int start, int end);
 
