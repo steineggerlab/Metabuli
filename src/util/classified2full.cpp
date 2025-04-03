@@ -7,8 +7,10 @@
 
 using namespace std;
 
+int classified2full(const string &classifiedFile, const string&taxonomyDir, const LocalParameters &par);
+
 struct ClassificationData {
-    int readID;
+    int isclassified;
     string queryName;
     int taxonomyID;
     int effectiveReadLength;
@@ -23,7 +25,7 @@ ClassificationData parseLine(const string& line) {
     istringstream iss(line);
     string temp;
 
-    iss >> data.readID >> data.queryName >> data.taxonomyID >> data.effectiveReadLength >> data.dnaIdentityScore >> data.classificationRank;
+    iss >> data.isclassified >> data.queryName >> data.taxonomyID >> data.effectiveReadLength >> data.dnaIdentityScore >> data.classificationRank;
 
     while (iss >> temp) {
         size_t colonPos = temp.find(':');
@@ -53,10 +55,10 @@ int classified2full(int argc, const char **argv, const Command &command) {
         return 0;
     }
 
-    return classified2full(classifiedFile,taxonomyDir);
+    return classified2full(classifiedFile,taxonomyDir, par);
 }
 
-int classified2full(const string &classifiedFile, const string&taxonomyDir){
+int classified2full(const string &classifiedFile, const string&taxonomyDir, const LocalParameters &par) {
     const string & nodesFile = taxonomyDir + "/nodes.dmp";
     const string & namesFile = taxonomyDir + "/names.dmp";
     const string & mergedFile = taxonomyDir + "/merged.dmp";
@@ -67,8 +69,9 @@ int classified2full(const string &classifiedFile, const string&taxonomyDir){
     string class2fullFileName = classifiedFile.substr(0, classifiedFile.find_last_of('.')) + "_full.tsv";
     cout << "Write full taxonomy information to: " << endl;
     cout << class2fullFileName << endl;
-    FILE *class2fullFile = fopen(class2fullFileName.c_str(), "w");
-    if (class2fullFile == NULL) {
+    ofstream class2fullFile(class2fullFileName.c_str());
+    // FILE *class2fullFile = fopen(class2fullFileName.c_str(), "w");
+    if (!class2fullFile.is_open()) {
         Debug(Debug::ERROR) << "Could not open " << class2fullFileName << " for writing\n";
         EXIT(EXIT_FAILURE);
     } 
@@ -82,7 +85,7 @@ int classified2full(const string &classifiedFile, const string&taxonomyDir){
             if (par.all){
                 class2fullFile << line << "\t" << fullTaxonomy << "\n";
             } else {
-                class2fullFile << data.readID << "\t";
+                class2fullFile << data.queryName << "\t";
                 if (par.taxId) class2fullFile << data.taxonomyID << "\t";
                 if (par.rank) class2fullFile << data.classificationRank << "\t";
                 class2fullFile << fullTaxonomy << "\n";
@@ -92,7 +95,8 @@ int classified2full(const string &classifiedFile, const string&taxonomyDir){
         cerr << "Cannot open file for adding full taxonomy" << endl;
     }
 
-    classifiedFile.close();
+    file.close();
+    class2fullFile.close();
 
     return 0;
 

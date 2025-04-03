@@ -1,0 +1,2 @@
+/usr/bin/ar qc libprodigal.a CMakeFiles/prodigal.dir/bitmap.cpp.o CMakeFiles/prodigal.dir/dprog.cpp.o CMakeFiles/prodigal.dir/gene.cpp.o CMakeFiles/prodigal.dir/metagenomic.cpp.o CMakeFiles/prodigal.dir/node.cpp.o CMakeFiles/prodigal.dir/prodigalsequence.cpp.o CMakeFiles/prodigal.dir/training.cpp.o
+/usr/bin/ranlib libprodigal.a
