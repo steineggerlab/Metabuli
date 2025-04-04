@@ -93,10 +93,12 @@ public:
                              size_t size, 
                              size_t &localBufIdx,
                              size_t bufferSize);
-    vector<uint64_t> getNextKmersBatch(const struct MmapedData<uint16_t>& diffList, 
-                                       size_t& idx, 
-                                       uint64_t& currentVal, 
-                                       size_t maxBatchSize);
+    vector<pair<uint64_t, QueryKmerInfo>> getNextKmersBatch(const MmapedData<uint16_t>& diffList,
+                                                            const MmapedData<QueryKmerInfo>& infoList,
+                                                            size_t& idxDiff,
+                                                            size_t& idxInfo,
+                                                            uint64_t& currentVal,
+                                                            size_t maxBatchSize);
 
     void writeQueryKmerFile(Buffer<QueryKmer>& queryKmerBuffer, 
                                    const string& queryKmerFileDir, 
