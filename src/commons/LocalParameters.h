@@ -42,7 +42,7 @@ public:
     std::vector<MMseqsParameter*> accession2taxid;
     std::vector<MMseqsParameter*> editNames;
     std::vector<MMseqsParameter*> createnewtaxalist;
-    std::vector<MMseqsParameter*> classified2full;
+    std::vector<MMseqsParameter*> classifiedRefiner;
     
 
     // Superkingdom taxonomy id
@@ -116,9 +116,11 @@ public:
     PARAMETER(KMER_END)
 
     // classified2full
-    PARAMETER(TAX_ID)
-    PARAMETER(RANK)
-    PARAMETER(ALL)
+    PARAMETER(UNCLASSIFIED)
+    PARAMETER(REMOVE_CONTAM)
+    PARAMETER(SELECT_TARGET)
+    PARAMETER(SELECT_COLUMNS)
+
 
 
     // Superkingdom taxonomy id
@@ -194,9 +196,10 @@ public:
     size_t kmerEnd;
 
     // classified2full
-    bool taxId;
-    bool rank;
-    bool all;
+    bool unclassified;
+    std::string removeContam;
+    std::string selectTarget;
+    std::string selectColumns;
 
     void printParameters(const std::string &module, int argc,
                          const char* pargv[],

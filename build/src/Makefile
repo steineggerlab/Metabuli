@@ -655,29 +655,29 @@ util/binning2report.cpp.s:
 	cd /home/borijoa/work/Metabuli/build && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/metabuli.dir/build.make src/CMakeFiles/metabuli.dir/util/binning2report.cpp.s
 .PHONY : util/binning2report.cpp.s
 
-util/classified2full.o: util/classified2full.cpp.o
-.PHONY : util/classified2full.o
+util/classifiedRefiner.o: util/classifiedRefiner.cpp.o
+.PHONY : util/classifiedRefiner.o
 
 # target to build an object file
-util/classified2full.cpp.o:
-	cd /home/borijoa/work/Metabuli/build && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/metabuli.dir/build.make src/CMakeFiles/metabuli.dir/util/classified2full.cpp.o
-.PHONY : util/classified2full.cpp.o
+util/classifiedRefiner.cpp.o:
+	cd /home/borijoa/work/Metabuli/build && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/metabuli.dir/build.make src/CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.o
+.PHONY : util/classifiedRefiner.cpp.o
 
-util/classified2full.i: util/classified2full.cpp.i
-.PHONY : util/classified2full.i
+util/classifiedRefiner.i: util/classifiedRefiner.cpp.i
+.PHONY : util/classifiedRefiner.i
 
 # target to preprocess a source file
-util/classified2full.cpp.i:
-	cd /home/borijoa/work/Metabuli/build && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/metabuli.dir/build.make src/CMakeFiles/metabuli.dir/util/classified2full.cpp.i
-.PHONY : util/classified2full.cpp.i
+util/classifiedRefiner.cpp.i:
+	cd /home/borijoa/work/Metabuli/build && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/metabuli.dir/build.make src/CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.i
+.PHONY : util/classifiedRefiner.cpp.i
 
-util/classified2full.s: util/classified2full.cpp.s
-.PHONY : util/classified2full.s
+util/classifiedRefiner.s: util/classifiedRefiner.cpp.s
+.PHONY : util/classifiedRefiner.s
 
 # target to generate assembly for a file
-util/classified2full.cpp.s:
-	cd /home/borijoa/work/Metabuli/build && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/metabuli.dir/build.make src/CMakeFiles/metabuli.dir/util/classified2full.cpp.s
-.PHONY : util/classified2full.cpp.s
+util/classifiedRefiner.cpp.s:
+	cd /home/borijoa/work/Metabuli/build && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/metabuli.dir/build.make src/CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.s
+.PHONY : util/classifiedRefiner.cpp.s
 
 util/createnewtaxalist.o: util/createnewtaxalist.cpp.o
 .PHONY : util/createnewtaxalist.o
@@ -1256,9 +1256,9 @@ help:
 	@echo "... util/binning2report.o"
 	@echo "... util/binning2report.i"
 	@echo "... util/binning2report.s"
-	@echo "... util/classified2full.o"
-	@echo "... util/classified2full.i"
-	@echo "... util/classified2full.s"
+	@echo "... util/classifiedRefiner.o"
+	@echo "... util/classifiedRefiner.i"
+	@echo "... util/classifiedRefiner.s"
 	@echo "... util/createnewtaxalist.o"
 	@echo "... util/createnewtaxalist.i"
 	@echo "... util/createnewtaxalist.s"

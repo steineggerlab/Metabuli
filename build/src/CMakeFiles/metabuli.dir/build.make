@@ -531,19 +531,19 @@ src/CMakeFiles/metabuli.dir/util/createnewtaxalist.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/metabuli.dir/util/createnewtaxalist.cpp.s"
 	cd /home/borijoa/work/Metabuli/build/src && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/borijoa/work/Metabuli/src/util/createnewtaxalist.cpp -o CMakeFiles/metabuli.dir/util/createnewtaxalist.cpp.s
 
-src/CMakeFiles/metabuli.dir/util/classified2full.cpp.o: src/CMakeFiles/metabuli.dir/flags.make
-src/CMakeFiles/metabuli.dir/util/classified2full.cpp.o: ../src/util/classified2full.cpp
-src/CMakeFiles/metabuli.dir/util/classified2full.cpp.o: src/CMakeFiles/metabuli.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/borijoa/work/Metabuli/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_34) "Building CXX object src/CMakeFiles/metabuli.dir/util/classified2full.cpp.o"
-	cd /home/borijoa/work/Metabuli/build/src && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/metabuli.dir/util/classified2full.cpp.o -MF CMakeFiles/metabuli.dir/util/classified2full.cpp.o.d -o CMakeFiles/metabuli.dir/util/classified2full.cpp.o -c /home/borijoa/work/Metabuli/src/util/classified2full.cpp
+src/CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.o: src/CMakeFiles/metabuli.dir/flags.make
+src/CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.o: ../src/util/classifiedRefiner.cpp
+src/CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.o: src/CMakeFiles/metabuli.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/borijoa/work/Metabuli/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_34) "Building CXX object src/CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.o"
+	cd /home/borijoa/work/Metabuli/build/src && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.o -MF CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.o.d -o CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.o -c /home/borijoa/work/Metabuli/src/util/classifiedRefiner.cpp
 
-src/CMakeFiles/metabuli.dir/util/classified2full.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/metabuli.dir/util/classified2full.cpp.i"
-	cd /home/borijoa/work/Metabuli/build/src && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/borijoa/work/Metabuli/src/util/classified2full.cpp > CMakeFiles/metabuli.dir/util/classified2full.cpp.i
+src/CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.i"
+	cd /home/borijoa/work/Metabuli/build/src && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/borijoa/work/Metabuli/src/util/classifiedRefiner.cpp > CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.i
 
-src/CMakeFiles/metabuli.dir/util/classified2full.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/metabuli.dir/util/classified2full.cpp.s"
-	cd /home/borijoa/work/Metabuli/build/src && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/borijoa/work/Metabuli/src/util/classified2full.cpp -o CMakeFiles/metabuli.dir/util/classified2full.cpp.s
+src/CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.s"
+	cd /home/borijoa/work/Metabuli/build/src && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/borijoa/work/Metabuli/src/util/classifiedRefiner.cpp -o CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.s
 
 src/CMakeFiles/metabuli.dir/workflow/classify.cpp.o: src/CMakeFiles/metabuli.dir/flags.make
 src/CMakeFiles/metabuli.dir/workflow/classify.cpp.o: ../src/workflow/classify.cpp
@@ -692,7 +692,7 @@ metabuli_OBJECTS = \
 "CMakeFiles/metabuli.dir/util/accession2taxid.cpp.o" \
 "CMakeFiles/metabuli.dir/util/editNames.cpp.o" \
 "CMakeFiles/metabuli.dir/util/createnewtaxalist.cpp.o" \
-"CMakeFiles/metabuli.dir/util/classified2full.cpp.o" \
+"CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.o" \
 "CMakeFiles/metabuli.dir/workflow/classify.cpp.o" \
 "CMakeFiles/metabuli.dir/workflow/updateDB.cpp.o" \
 "CMakeFiles/metabuli.dir/workflow/add_to_library.cpp.o" \
@@ -738,7 +738,7 @@ src/metabuli: src/CMakeFiles/metabuli.dir/util/taxdump.cpp.o
 src/metabuli: src/CMakeFiles/metabuli.dir/util/accession2taxid.cpp.o
 src/metabuli: src/CMakeFiles/metabuli.dir/util/editNames.cpp.o
 src/metabuli: src/CMakeFiles/metabuli.dir/util/createnewtaxalist.cpp.o
-src/metabuli: src/CMakeFiles/metabuli.dir/util/classified2full.cpp.o
+src/metabuli: src/CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.o
 src/metabuli: src/CMakeFiles/metabuli.dir/workflow/classify.cpp.o
 src/metabuli: src/CMakeFiles/metabuli.dir/workflow/updateDB.cpp.o
 src/metabuli: src/CMakeFiles/metabuli.dir/workflow/add_to_library.cpp.o

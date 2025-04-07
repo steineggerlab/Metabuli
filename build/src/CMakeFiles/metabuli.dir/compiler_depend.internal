@@ -9173,8 +9173,8 @@ src/CMakeFiles/metabuli.dir/util/binning2report.cpp.o
  /usr/include/bzlib.h
  /home/borijoa/work/Metabuli/src/util/report.h
 
-src/CMakeFiles/metabuli.dir/util/classified2full.cpp.o
- /home/borijoa/work/Metabuli/src/util/classified2full.cpp
+src/CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.o
+ /home/borijoa/work/Metabuli/src/util/classifiedRefiner.cpp
  /usr/include/stdc-predef.h
  /home/borijoa/work/Metabuli/src/commons/LocalParameters.h
  /home/borijoa/work/Metabuli/lib/mmseqs/src/commons/Parameters.h

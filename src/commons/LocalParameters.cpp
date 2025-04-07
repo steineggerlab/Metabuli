@@ -369,27 +369,35 @@ LocalParameters::LocalParameters() :
                 typeid(size_t),
                 (void *) &kmerEnd,
                 "^[0-9]+$"),
-        TAX_ID(TAX_ID_ID,
-               "--tax-id",
-               "Taxonomy ID to print",
-               "Taxonomy ID to print",
-               typeid(bool),
-               (void *) &taxId,
-               ""),
-        RANK(RANK_ID,
-               "--rank",
-               "Rank to print",
-               "Rank to print",
-               typeid(bool),
-               (void *) &rank,
-               ""),
-        ALL(ALL_ID,
-                "--all",
-                "all information of classified file to print",
-                "all information of classified file to print",
+        UNCLASSIFIED(UNCLASSIFIED_ID,
+                "--unclassified",
+                "Remove unclassified reads",
+                "Remove unclassified reads",
                 typeid(bool),
-                (void *) &all,
-                "")
+                (void *) &unclassified,
+                ""),
+        REMOVE_CONTAM(REMOVE_CONTAM_ID,
+                "--remove-contam",
+                "Remove contaminants taxId",
+                "Remove contaminants taxId",
+                typeid(std::string),
+                (void *) &removeContam,
+                "^.*$"),
+        SELECT_TARGET(SELECT_TARGET_ID,
+                "--select-target",
+                "Select target taxId",
+                "Select target taxId",
+                typeid(std::string),
+                (void *) &selectTarget,
+                "^.*$"),
+        SELECT_COLUMNS(SELECT_COLUMNS_ID,
+                "--select-columns",
+                "0:Classified or not, 1:Read ID, 2:Taxonomy ID, 3:Effective read length, 4:DNA identity score, 5:Classification rank, 6:List of taxID : k-mer match count, 7: Full Lineage",
+                "0:Classified or not, 1:Read ID, 2:Taxonomy ID, 3:Effective read length, 4:DNA identity score, 5:Classification rank, 6:List of taxID : k-mer match count, 7: Full Lineage",
+                typeid(std::string),
+                (void *) &selectColumns,
+                "^.*$")
+        
         
   {
     // Initialize the parameters
@@ -445,9 +453,11 @@ LocalParameters::LocalParameters() :
     contamList = "";
 
     // classified to full taxonomy
-    taxId = false;
-    rank = false;
-    all = false;
+    unclassified = false;
+    removeContam = "";
+    selectTarget = "";
+    selectColumns = "";
+
 
 
     // build
@@ -571,9 +581,11 @@ LocalParameters::LocalParameters() :
     query2reference.push_back(&TEST_RANK);
 
     //classified2full
-    classified2full.push_back(&TAX_ID);
-    classified2full.push_back(&RANK);
-    classified2full.push_back(&ALL);
+    classifiedRefiner.push_back(&UNCLASSIFIED);
+    classifiedRefiner.push_back(&REMOVE_CONTAM);
+    classifiedRefiner.push_back(&SELECT_TARGET);
+    classifiedRefiner.push_back(&SELECT_COLUMNS);
+
 }
 
 void LocalParameters::printParameters(const std::string &module, int argc, const char* pargv[],

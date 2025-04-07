@@ -28,7 +28,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/borijoa/work/Metabuli/src/util/accession2taxid.cpp" "src/CMakeFiles/metabuli.dir/util/accession2taxid.cpp.o" "gcc" "src/CMakeFiles/metabuli.dir/util/accession2taxid.cpp.o.d"
   "/home/borijoa/work/Metabuli/src/util/apply-threshold.cpp" "src/CMakeFiles/metabuli.dir/util/apply-threshold.cpp.o" "gcc" "src/CMakeFiles/metabuli.dir/util/apply-threshold.cpp.o.d"
   "/home/borijoa/work/Metabuli/src/util/binning2report.cpp" "src/CMakeFiles/metabuli.dir/util/binning2report.cpp.o" "gcc" "src/CMakeFiles/metabuli.dir/util/binning2report.cpp.o.d"
-  "/home/borijoa/work/Metabuli/src/util/classified2full.cpp" "src/CMakeFiles/metabuli.dir/util/classified2full.cpp.o" "gcc" "src/CMakeFiles/metabuli.dir/util/classified2full.cpp.o.d"
+  "/home/borijoa/work/Metabuli/src/util/classifiedRefiner.cpp" "src/CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.o" "gcc" "src/CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.o.d"
   "/home/borijoa/work/Metabuli/src/util/createnewtaxalist.cpp" "src/CMakeFiles/metabuli.dir/util/createnewtaxalist.cpp.o" "gcc" "src/CMakeFiles/metabuli.dir/util/createnewtaxalist.cpp.o.d"
   "/home/borijoa/work/Metabuli/src/util/database-report.cpp" "src/CMakeFiles/metabuli.dir/util/database-report.cpp.o" "gcc" "src/CMakeFiles/metabuli.dir/util/database-report.cpp.o.d"
   "/home/borijoa/work/Metabuli/src/util/editNames.cpp" "src/CMakeFiles/metabuli.dir/util/editNames.cpp.o" "gcc" "src/CMakeFiles/metabuli.dir/util/editNames.cpp.o.d"

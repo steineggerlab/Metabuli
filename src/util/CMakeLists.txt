@@ -20,5 +20,5 @@ set(util_source_files
         util/editNames.h
         util/createnewtaxalist.cpp
         util/createnewtaxalist.h
-        util/classified2full.cpp
+        util/classifiedRefiner.cpp
         PARENT_SCOPE)

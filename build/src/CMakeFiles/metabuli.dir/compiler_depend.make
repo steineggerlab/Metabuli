@@ -9153,7 +9153,7 @@ src/CMakeFiles/metabuli.dir/util/binning2report.cpp.o: ../src/util/binning2repor
   /usr/include/bzlib.h \
   ../src/util/report.h
 
-src/CMakeFiles/metabuli.dir/util/classified2full.cpp.o: ../src/util/classified2full.cpp \
+src/CMakeFiles/metabuli.dir/util/classifiedRefiner.cpp.o: ../src/util/classifiedRefiner.cpp \
   /usr/include/stdc-predef.h \
   ../src/commons/LocalParameters.h \
   ../lib/mmseqs/src/commons/Parameters.h \
@@ -20111,6 +20111,8 @@ lib/mmseqs/generated/VTML40.out.h:
 
 ../lib/mmseqs/lib/ips4o/ips4o/classifier.hpp:
 
+../src/util/classifiedRefiner.cpp:
+
 /usr/include/x86_64-linux-gnu/bits/waitflags.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h:
@@ -20422,8 +20424,6 @@ lib/mmseqs/generated/blosum62.out.h:
 ../lib/prodigal/metagenomic.h:
 
 /usr/include/c++/11/bits/deque.tcc:
-
-../src/util/classified2full.cpp:
 
 ../lib/mmseqs/src/commons/SubstitutionMatrix.h:
 
