@@ -59,8 +59,6 @@ public:
     PARAMETER(SEQ_MODE)
     PARAMETER(REDUCED_AA)
     PARAMETER(MIN_SCORE)
-    PARAMETER(MIN_COVERAGE)
-    PARAMETER(MIN_COVERED_POS)
     PARAMETER(HAMMING_MARGIN)
     PARAMETER(MIN_SP_SCORE)
     PARAMETER(TINFO_PATH)
@@ -136,9 +134,7 @@ public:
     int minConsCnt;
     uint8_t hammingMargin;
     float minSpScore;
-    float minCoverage;
     int ramUsage;
-    int minCoveredPos;
     int printLog;
     int maxGap;
     int minConsCntEuk;

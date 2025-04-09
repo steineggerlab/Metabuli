@@ -10,7 +10,6 @@ extern int grade(int argc, const char **argv, const Command& command);
 extern int gradeByCladeSize(int argc, const char **argv, const Command& command);
 extern int seqHeader2TaxId(int argc, const char **argv, const Command& command);
 extern int addToLibrary(int argc, const char **argv, const Command& command);
-extern int applyThreshold(int argc, const char **argv, const Command& command);
 extern int binning2report(int argc, const char **argv, const Command& command);
 extern int filterByGenus(int argc, const char **argv, const Command& command);
 extern int databaseReport(int argc, const char **argv, const Command& command);

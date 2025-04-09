@@ -131,20 +131,6 @@ void Classifier::startClassify(const LocalParameters &par) {
                 cout << "--match-per-kmer was increased to " << matchPerKmer << " and searching again..." << endl;
                 break;
             }
-
-            // if (kmerMatcher->matchMetamers(&queryKmerBuffer, &matchBuffer)) {
-            //     cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
-            //     kmerMatcher->sortMatches(&matchBuffer);
-            //     assignTaxonomy(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
-            //     reporter->writeReadClassification(queryList);
-            //     processedReadCnt += queryReadSplit[splitIdx].readCnt;
-            //     cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
-            //     numOfTatalQueryKmerCnt += queryKmerBuffer.startIndexOfReserve;
-            // } else { // search was incomplete
-            //     matchPerKmer += 4;
-            //     cout << "--match-per-kmer was increased to " << matchPerKmer << " and searching again..." << endl;
-            //     break;
-            // }
          }
          
         delete kseq1;
@@ -159,11 +145,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
     cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
     reporter->closeReadClassificationFile();
-
-    // Write report files
     reporter->writeReportFile(totalSeqCnt, taxCounts);
-
-    // Memory deallocation
     free(matchBuffer.buffer);
 }
 
@@ -173,7 +155,6 @@ void Classifier::assignTaxonomy(const Match *matchList,
                                const LocalParameters &par) {
     time_t beforeAnalyze = time(nullptr);
     cout << "Analyzing matches ..." << endl;
-
     // Divide matches into blocks for multi threading
     size_t seqNum = queryList.size();
     MatchBlock *matchBlocks = new MatchBlock[seqNum];
@@ -192,7 +173,7 @@ void Classifier::assignTaxonomy(const Match *matchList,
 #pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqNum, queryList, blockIdx, par)
     {
         Taxonomer taxonomer(par, taxonomy);
-#pragma omp for schedule(dynamic, 1)
+        #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < blockIdx; ++i) {
             taxonomer.chooseBestTaxon(matchBlocks[i].id,
                             matchBlocks[i].start,

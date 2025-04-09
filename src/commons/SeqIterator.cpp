@@ -383,7 +383,7 @@ void SeqIterator::fillQuerySyncmerBuffer(
             tempKmer = 0;
             checkN = 0;
 
-            if (!isSyncmer(aaFrames[frame], kmerCnt, 8, smerLen)) {
+            if (!isSyncmer(aaFrames[frame], kmerCnt)) {
                 kmerBuffer.buffer[posToWrite++] = {UINT64_MAX, 0, 0, frame};
                 continue;
             }
@@ -538,7 +538,7 @@ int SeqIterator::fillBufferWithSyncmer(const char *seq,
         checkN = 0;
 
         // Skip if not syncmer
-        if (!isSyncmer(aaSeq, kmerCnt, 8, smerLen)) {
+        if (!isSyncmer(aaSeq, kmerCnt)) {
             continue;
         }
 

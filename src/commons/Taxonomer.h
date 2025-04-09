@@ -59,6 +59,68 @@ struct MatchPath {
     }
 };
 
+struct MatchPath2 {
+    MatchPath2(int start, int end, float score, int hammingDist, int depth, const Match * startMatch, const Match * endMatch) :
+         start(start), end(end), score(score), hammingDist(hammingDist), depth(depth), startMatch(startMatch), endMatch(endMatch) {}
+    MatchPath2() : start(0), end(0), score(0.f), hammingDist(0), depth(0), startMatch(nullptr), endMatch(nullptr) {}
+    MatchPath2(const Match * startMatch, size_t matchIdx) 
+        : start(startMatch->qInfo.pos),
+        end(startMatch->qInfo.pos + 23),
+        score(startMatch->getScore()),
+        hammingDist(startMatch->hamming),
+        depth(1),
+        matchIdx(matchIdx),
+        prevMatchPath(nullptr),
+        startMatch(startMatch),
+        endMatch(startMatch) {}
+    
+    int start;                // query coordinate
+    int end;                  // query coordinate
+    float score;
+    int hammingDist;
+    int depth;
+    size_t matchIdx;
+    const MatchPath2 * prevMatchPath;
+    const Match * startMatch;
+    const Match * endMatch;
+    int overlapStart;
+    int overlapEnd;
+    bool tied;
+
+    vector<size_t> matchIdxs;
+    vector<float> cumulativeScore;
+
+
+    void printMatchPath() {
+        std::cout << start << " " << end << " " << score << " " << hammingDist << " " << depth << std::endl;
+    }
+
+    // It is used to check if two match paths are tied
+    // 1. Similar covered region
+    // 2. Similar length
+    // 3. Similar score
+    // path 1 has higher score, lower Hamming distance, later start position
+    static bool isTied(
+        const MatchPath2 & path1,
+        const MatchPath2 & path2) 
+    {
+        constexpr int DEPTH_TOLERANCE = 3;
+        constexpr int SCORE_TOLERANCE = 6;
+        constexpr int POS_TOLERANCE = 6;
+        
+        if (std::abs(path1.depth - path2.depth) > DEPTH_TOLERANCE) {
+            return false;
+        }
+
+        if (path1.score - path2.score > SCORE_TOLERANCE) {
+            return false;
+        }
+        
+        return (std::abs(path1.start - path2.start) < POS_TOLERANCE 
+                && std::abs(path1.end - path2.end) < POS_TOLERANCE);
+    }
+};
+
 struct MatchBlock {
     MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) {}
     MatchBlock() : start(0), end(0), id(0) {}
@@ -78,7 +140,6 @@ private:
 
     // Parameters from user
     int maxGap;
-    int minCoveredPos;
     int accessionLevel;
     int minSSMatch;
     size_t minConsCnt;
@@ -101,8 +162,6 @@ private:
     vector<MatchPath> combinedMatchPaths;
     vector<TaxID> maxSpecies;
     vector<TaxID> speciesList;
-    vector<size_t> speciesPathIdx;
-    vector<size_t> speciesCombPathIdx;
     vector<float> speciesScores;
 
     // remainConsecutiveMatches
@@ -114,6 +173,11 @@ private:
     // getMatchPaths
     vector<bool> connectedToNext;
     vector<MatchPath> localMatchPaths;
+
+
+    vector<MatchPath2> localMatchPaths2;
+    vector<MatchPath2> matchPaths2;
+    vector<MatchPath2> combinedMatchPaths2;
 
     // lowerRankClassification
     unordered_map<TaxID, TaxonCounts> cladeCnt;
@@ -142,6 +206,48 @@ private:
     float calScoreIncrement(uint16_t hammings, int shift);
     int calHammingDistIncrement(uint16_t hammings, int shift);
 
+    void printSpeciesMatches (
+       const Match *matchList,
+       const std::pair<size_t, size_t> & bestSpeciesRange
+    );
+
+    TaxonScore getBestSpeciesMatches(
+        std::pair<size_t, size_t> & bestSpeciesRange,
+        const Match *matchList,
+        size_t end,
+        size_t offset,
+        int queryLength);
+
+    TaxonScore getBestSpeciesMatches2(
+        vector<std::pair<size_t, bool>> & optimalMatchIdx,
+        const Match *matchList,
+        size_t end,
+        size_t offset,
+        int queryLength);
+
+    float combineMatchPaths(
+        vector<MatchPath> & matchPaths,
+        size_t matchPathStart,
+        vector<MatchPath> & combMatchPaths,
+        size_t combMatchPathStart,
+        int readLength);
+
+    float combineMatchPaths2(
+        vector<MatchPath2> & matchPaths,
+        vector<size_t> & selectedMatchPaths,
+        size_t matchPathStart,
+        int readLength,
+        const Match *matchList);
+
+    void compareOverlapRegion(MatchPath2 & matchPath1, MatchPath2 & matchPath2, const Match *matchList);
+
+    bool isMatchPathOverlapped(const MatchPath & matchPath1, const MatchPath & matchPath2);
+
+    void trimMatchPath(MatchPath & path1, const MatchPath & path2, int overlapLength);
+
+    bool isMatchPathOverlapped2(const MatchPath2 & matchPath1, const MatchPath2 & matchPath2);
+
+    void trimMatchPath2(MatchPath2 & path1, const MatchPath2 & path2, int overlapLength);
 
 public:
     Taxonomer(const LocalParameters & par, TaxonomyWrapper * taxonomy);
@@ -159,6 +265,14 @@ public:
                          vector<Query> & queryList,
                          const LocalParameters &par);
 
+    void chooseBestTaxon_syncmer(
+        uint32_t currentQuery,
+        size_t offset,
+        size_t end,
+        const Match *matchList,
+        vector<Query> & queryList,
+        const LocalParameters &par);
+
     void remainConsecutiveMatches(const Match * matchList,
                                   size_t start,
                                   size_t end,
@@ -174,18 +288,8 @@ public:
     void getMatchPaths2(const Match * matchList,
                        size_t start,
                        size_t end,
-                       vector<MatchPath> & matchPaths,
+                       vector<MatchPath2> & matchPaths,
                        TaxID speciesId);  
-
-    float combineMatchPaths(vector<MatchPath> & matchPaths,
-                            size_t matchPathStart,
-                            vector<MatchPath> & combMatchPaths,
-                            size_t combMatchPathStart,
-                            int readLength);
-
-    bool isMatchPathOverlapped(const MatchPath & matchPath1, const MatchPath & matchPath2);
-
-    void trimMatchPath(MatchPath & path1, const MatchPath & path2, int overlapLength);
 
     void filterRedundantMatches(const Match *matchList,
                                 const std::pair<size_t, size_t> & bestSpeciesRange,
@@ -199,9 +303,7 @@ public:
 
     // static bool isConsecutive_diffFrame(const Match * match1, const Match * match2);
 
-    TaxonScore getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpeciesRange,
-                                     const Match *matchList, size_t end,
-                                     size_t offset, int queryLength);
+
 
     TaxID lowerRankClassification(const unordered_map<TaxID, unsigned int> & taxCnt, TaxID speciesID, int queryLength);
 

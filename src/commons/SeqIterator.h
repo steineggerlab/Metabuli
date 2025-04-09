@@ -131,10 +131,14 @@ public:
     bool isSyncmer(const vector<int> &aaSeq, int startPos, int k, int s) {
         size_t min_smer_value = UINT64_MAX;
         int min_smer_pos = -1;
+        size_t current_value = 0;
         for (int i = 0; i <= k - s; ++i) {
-            size_t current_value = 0;
-            for (int j = 0; j < s; ++j) {
-                current_value |= (size_t) aaSeq[startPos + i + j] << (5 * j);
+            if (i == 0) {
+                for (int j = 0; j < s; ++j) {
+                    current_value |= (size_t) aaSeq[startPos + i + j] << (5 * j);
+                }
+            } else {
+                current_value = (current_value >> 5) | ((size_t) aaSeq[startPos + i + s - 1] << (5 * (s - 1)));
             }
             if (current_value < min_smer_value) {
                 min_smer_value = current_value;
@@ -142,6 +146,19 @@ public:
             }
         }
         return (min_smer_pos == 0 || min_smer_pos == (k - s));
+    }
+
+    bool isSyncmer(const vector<int> &aaSeq, int startPos) {
+        size_t smer1 = (size_t) aaSeq[startPos + 0];      // shift by 0 bits
+        smer1 |= (size_t) aaSeq[startPos + 1] << (5 * 1); // shift by 5 bits
+        smer1 |= (size_t) aaSeq[startPos + 2] << (5 * 2); // shift by 10 bits
+        smer1 |= (size_t) aaSeq[startPos + 3] << (5 * 3); // shift by 15 bits
+        smer1 |= (size_t) aaSeq[startPos + 4] << (5 * 4); // shift by 20 bits
+        smer1 |= (size_t) aaSeq[startPos + 5] << (5 * 5); // shift by 25 bits
+        size_t smer2 = (smer1 >> 5) | ((size_t) aaSeq[startPos + 6] << 25);
+        size_t smer3 = (smer2 >> 5) | ((size_t) aaSeq[startPos + 7] << 25);
+        size_t min_smer = min({smer1, smer2, smer3});
+        return (min_smer == smer1 || min_smer == smer3);        
     }
 
     void addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, int kmerCnt, int strand, int start, int end);

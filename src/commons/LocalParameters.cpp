@@ -41,8 +41,8 @@ LocalParameters::LocalParameters() :
                         "[0-1]"),
         SYNCMER(SYNCMER_ID,
                 "--syncmer",
-                "Using syncmer for k-mer selection",
-                "Using syncmer for k-mer selection",
+                "Using syncmer (k = 8, s = 6)",
+                "Using syncmer (k = 8, s = 6)",
                 typeid(int),
                 (void *) &syncmer,
                 "[0-1]"),
@@ -74,13 +74,6 @@ LocalParameters::LocalParameters() :
                   typeid(float),
                   (void *) &minScore,
                   "^0(\\.[0-9]+)?|1(\\.0+)?$"),
-        MIN_COVERAGE(MIN_COVERAGE_ID,
-                     "--min-cov",
-                     "Min. query coverage",
-                     "Min. query coverage (0.0-1.0)",
-                     typeid(float),
-                     (void *) &minCoverage,
-                     "^0(\\.[0-9]+)?|1(\\.0+)?$"),
         // SPACED(SPACED_ID,
         //        "--spacing-mask",
         //        "Binary patterned mask for spaced k-mer.\nThe same mask must be used for DB creation and classification",
@@ -89,13 +82,6 @@ LocalParameters::LocalParameters() :
         //        typeid(std::string),
         //        (void *) &spaceMask,
         //        "^.*$"),
-        MIN_COVERED_POS(MIN_COVERED_POS_ID,
-                        "--min-covered-pos",
-                        "Minimum number of covered positions of a range",
-                        "Minimum number of covered positions of a range",
-                        typeid(int),
-                        (void *) &minCoveredPos,
-                        "^[0-9]+$"),
         HAMMING_MARGIN(HAMMING_MARGIN_ID,
                        "--hamming-margin",
                        "Allowed extra Hamming distance", 
@@ -405,9 +391,7 @@ LocalParameters::LocalParameters() :
     minConsCnt = 4;
     hammingMargin = 0;
     minSpScore = 0;
-    minCoverage = 0;
     ramUsage = 0;
-    minCoveredPos = 0;
     printLog = 0;
     maxGap = 0;
     minConsCntEuk = 0;
@@ -479,7 +463,6 @@ LocalParameters::LocalParameters() :
     classify.push_back(&PARAM_THREADS);
     classify.push_back(&SEQ_MODE);
     classify.push_back(&MIN_SCORE);
-    classify.push_back(&MIN_COVERAGE);
     classify.push_back(&MIN_CONS_CNT);
     classify.push_back(&MIN_CONS_CNT_EUK);
     classify.push_back(&MIN_SP_SCORE);
@@ -512,12 +495,10 @@ LocalParameters::LocalParameters() :
     filter.push_back(&VIRUS_TAX_ID);
     filter.push_back(&REDUCED_AA);
     filter.push_back(&MIN_SCORE);
-    filter.push_back(&MIN_COVERAGE);
     filter.push_back(&HAMMING_MARGIN);
     filter.push_back(&MIN_SP_SCORE);
     filter.push_back(&PARAM_V);
     filter.push_back(&RAM_USAGE);
-    filter.push_back(&MIN_COVERED_POS);
     filter.push_back(&PRINT_LOG);
     filter.push_back(&MAX_GAP);
     filter.push_back(&TAXONOMY_PATH);
@@ -549,7 +530,6 @@ LocalParameters::LocalParameters() :
     // Apply thresholds
     applyThreshold.push_back(&MIN_SP_SCORE);
     applyThreshold.push_back(&MIN_SCORE);
-    applyThreshold.push_back(&MIN_COVERAGE);
 
     // Binning to report
     binning2report.push_back(&READID_COL);

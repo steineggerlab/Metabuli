@@ -250,5 +250,3 @@ std::vector<DatabaseDownload> externalDownloads = {
                 {}
         }
 };
-
-

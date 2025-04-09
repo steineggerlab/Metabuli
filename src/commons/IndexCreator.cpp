@@ -46,6 +46,7 @@ IndexCreator::~IndexCreator() {
 
 void IndexCreator::createIndex(const LocalParameters &par) {
     Buffer<TargetKmer> kmerBuffer(calculateBufferSize(par.ramUsage));
+    cout << "Target metamer buffer size: " << kmerBuffer.bufferSize << endl;
     indexReferenceSequences(kmerBuffer.bufferSize);
     
     if (!par.cdsInfo.empty()) {
