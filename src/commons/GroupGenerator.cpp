@@ -293,9 +293,14 @@ void GroupGenerator::makeGraph(const string &queryKmerFileDir,
                 }
             }
 
+            
+            std::sort(currentQueryIds.begin(), currentQueryIds.end());
+            auto last = std::unique(currentQueryIds.begin(), currentQueryIds.end());
+            currentQueryIds.erase(last, currentQueryIds.end());
+
             // 수집된 query ID 간 관계 누적
             for (size_t i = 0; i < currentQueryIds.size(); ++i) {
-                for (size_t j = 0; j < currentQueryIds.size(); ++j) {
+                for (size_t j = i; j < currentQueryIds.size(); ++j) {
                     if (currentQueryIds[i] != currentQueryIds[j]){                    
                         uint32_t a = min(currentQueryIds[i], currentQueryIds[j]);
                         uint32_t b = max(currentQueryIds[i], currentQueryIds[j]);
