@@ -200,8 +200,8 @@ string IndexCreator::addToLibrary(const std::string & dbDir,
 
 
 void IndexCreator::indexReferenceSequences(size_t bufferSize) {
-    vector<Accession> observedAccessionsVec;
-    unordered_map<string, size_t> accession2index;
+    vector<Accession> observedAccessionsVec;       // vector of observed accessions
+    unordered_map<string, size_t> accession2index; // map accession to its index in the observedAccessionsVec 
     if (par.makeLibrary) {
         getObservedAccessions(addToLibrary(dbDir, fnaListFileName, acc2taxidFileName), observedAccessionsVec, accession2index);
     } else {
@@ -216,9 +216,11 @@ void IndexCreator::indexReferenceSequences(size_t bufferSize) {
 }
 
 
-void IndexCreator::getObservedAccessions(const string & fnaListFileName,
-                                         vector<Accession> & observedAccessionsVec,
-                                         unordered_map<string, size_t> & accession2index) {
+void IndexCreator::getObservedAccessions(
+    const string & fnaListFileName,
+    vector<Accession> & observedAccessionsVec,
+    unordered_map<string, size_t> & accession2index) 
+{
     ifstream fileListFile(fnaListFileName);
     if (fileListFile.is_open()) {
         for (string eachLine; getline(fileListFile, eachLine);) {
@@ -265,6 +267,7 @@ void IndexCreator::getObservedAccessions(const string & fnaListFileName,
         {
             if (observedAccessionsVec.size() < accCnt) {
                 observedAccessionsVec.resize(accCnt);
+                accession2index.reserve(accCnt);
             }
         }   
 
@@ -378,17 +381,21 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
     }
 
     // Second, convert external taxIDs to internal taxIDs
+    cout << "Converting external taxIDs to internal taxIDs" << endl;
     vector<std::string> unmappedAccessions;
+    std::unordered_map<TaxID, TaxID> external2internalTaxID;
+    taxonomy->getExternal2internalTaxID(external2internalTaxID);
+    cout << "external2internalTaxID" << endl;
     for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {    
-        if (taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID) == 0 || observedAccessionsVec[i].taxID == 0) {
-            // cout << "TaxID is 0 for accession " << observedAccessionsVec[i].accession << " " << observedAccessionsVec[i].taxID << endl;
+        auto it = external2internalTaxID.find(observedAccessionsVec[i].taxID);
+        if (it == external2internalTaxID.end() || observedAccessionsVec[i].taxID == 0) {
+            // cout << "TaxID is not found for accession " << observedAccessionsVec[i].accession << " " << observedAccessionsVec[i].taxID << endl;
             unmappedAccessions.push_back(observedAccessionsVec[i].accession);
             continue;
         }
-        observedAccessionsVec[i].taxID = taxonomy->getInternalTaxID(observedAccessionsVec[i].taxID);
-        observedAccessionsVec[i].speciesID = taxonomy->getTaxIdAtRank(observedAccessionsVec[i].taxID, "species");    
-
-        taxIdSet.insert(observedAccessionsVec[i].taxID);
+        observedAccessionsVec[i].taxID = it->second; // store the internal taxID
+        observedAccessionsVec[i].speciesID = taxonomy->getTaxIdAtRank(it->second, "species");
+        taxIdSet.insert(it->second);
     }
     
     string mappingFileName = dbDir + "/acc2taxid.map";
