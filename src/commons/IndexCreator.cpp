@@ -1295,6 +1295,9 @@ void IndexCreator::writeDbParameters() {
     fprintf(handle, "Mask_prob\t%f\n", par.maskProb);
     fprintf(handle, "Skip_redundancy\t1\n");
     fprintf(handle, "Syncmer\t%d\n", par.syncmer);
+    if (par.syncmer == 1) {
+        fprintf(handle, "Syncmer_len\t%d\n", par.smerLen);
+    }
     fclose(handle);
 }
 
