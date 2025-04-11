@@ -6,7 +6,7 @@
 
 void setClassifyDefaults(LocalParameters & par){
     par.syncmer = 0;
-    // par.smerLen = 6;
+    par.smerLen = 6;
     // par.maxShift = 1;
     par.skipRedundancy = 0;
     par.reducedAA = 0;

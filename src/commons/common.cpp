@@ -106,23 +106,14 @@ int loadDbParameters(LocalParameters &par, const std::string & dbDir) {
             cout << "Syncmer is enabled because the DB was created with syncmer." << endl;
             par.syncmer = 1;
           }     
+        } else if (tokens[0] == "S-mer_len") {
+          cout << "Syncmer length is set to " << tokens[1] << " following DB's configuration." << endl;
+          par.smerLen = stoi(tokens[1]);
         }
       }
-      if (par.syncmer == 1) {
-        par.smerLen = 6;
-        par.maxShift = 2;
-      } else {
-        par.maxShift = 1;
-      } 
       return 1;
     }
   }
-  if (par.syncmer == 1) {
-    par.smerLen = 6;
-    par.maxShift = 2;
-  } else {
-    par.maxShift = 1;
-  } 
   return 0;
 }
 

@@ -89,7 +89,10 @@ private:
     int bitsPerCodon;
     int totalDnaBits;
     uint32_t lastCodonMask;
+    int maxCodonShift;
     int dnaShift;
+    int smerLength;
+    int minSubSpeciesMatch;
 
     // vector<const Match *> speciesMatches;
 

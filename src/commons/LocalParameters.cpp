@@ -442,7 +442,7 @@ LocalParameters::LocalParameters() :
     build.push_back(&MAKE_LIBRARY);
     build.push_back(&GTDB);
     build.push_back(&SYNCMER);
-    // build.push_back(&SMER_LEN);
+    build.push_back(&SMER_LEN);
     build.push_back(&REDUCED_AA);
 
     // updateDB
@@ -477,7 +477,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&SKIP_REDUNDANCY);
     classify.push_back(&PRINT_LINEAGE);
     classify.push_back(&SYNCMER);
-    // classify.push_back(&SMER_LEN);
+    classify.push_back(&SMER_LEN);
     classify.push_back(&PRINT_LOG);
     // classify.push_back(&MAX_SHIFT);
     classify.push_back(&REDUCED_AA);
