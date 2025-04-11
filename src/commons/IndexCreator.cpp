@@ -75,6 +75,7 @@ void IndexCreator::createIndex(const LocalParameters &par) {
 #endif
     while(processedBatchCnt < batchNum) {
         memset(kmerBuffer.buffer, 0, kmerBuffer.bufferSize * sizeof(TargetKmer));
+        cout << "Buffer initialized" << endl;
         fillTargetKmerBuffer(kmerBuffer, batchChecker, processedBatchCnt, par);
 
         // Sort the k-mers
@@ -213,6 +214,10 @@ void IndexCreator::indexReferenceSequences(size_t bufferSize) {
     vector<Accession> accessionsWithTaxonomy;
     getAccessionBatches(observedAccessionsVec, bufferSize);
     cout << "Number of accession batches: " << accessionBatches.size() << endl;
+    sort(accessionBatches.begin(), accessionBatches.end(),
+         [](const AccessionBatch &a, const AccessionBatch &b) {
+             return a.totalLength < b.totalLength;
+         });
 }
 
 
@@ -471,7 +476,7 @@ void IndexCreator::getAccessionBatches(std::vector<Accession> & observedAccessio
                 }
             }
             // Add the batch
-            accessionBatches.emplace_back(currentFasta, currentSpeciesID, 0, 0);
+            accessionBatches.emplace_back(currentFasta, currentSpeciesID, 0, 0, lengthSum);
             accessionBatches.back().orders = orders;
             accessionBatches.back().lengths = lengths;
             accessionBatches.back().taxIDs = taxIDs;
@@ -1012,13 +1017,21 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                 for (size_t p = 0; p < accessionBatches[batchIdx].lengths.size(); p++) {
                     totalLength += accessionBatches[batchIdx].lengths[p];
                 }
-                size_t estimatedKmerCnt = (totalLength + totalLength / 5) / 3;
-
+                size_t estimatedKmerCnt = static_cast<size_t>(
+                    (totalLength * 1.3 / 3.0) / ((8 - par.smerLen + 1) / 2.0)
+                );
+                
                 ProdigalWrapper * prodigal = new ProdigalWrapper();
                 trained = false;
 
                 // Process current split if buffer has enough space.
                 posToWrite = kmerBuffer.reserveMemory(estimatedKmerCnt);
+                // #pragma omp critical
+                // cout << accessionBatches[batchIdx].speciesID << "\t"
+                //      << accessionBatches[batchIdx].whichFasta << "\t"
+                //      << estimatedKmerCnt << "\t"
+                //      << posToWrite << endl;
+
                 if (posToWrite + estimatedKmerCnt < kmerBuffer.bufferSize) {
                     KSeqWrapper* kseq = KSeqFactory(fastaPaths[accessionBatches[batchIdx].whichFasta].c_str());
                     size_t seqCnt = 0;
@@ -1115,13 +1128,10 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                         }
                                         seqCnt++;
                                     }
-                                    // #pragma omp critical
-                                    // {
-                                    //     cout << "Training " << accessionBatches[batchIdx].speciesID << "\t" << training_seq->entry.name.s << "\t" << training_seq->entry.sequence.l << endl;
-                                    // }
                                     lengthOfTrainingSeq = training_seq->entry.sequence.l;
                                     prodigal->is_meta = 0;
-                                    if (lengthOfTrainingSeq < 100'000) {
+                                    if (lengthOfTrainingSeq < 100'000 
+                                        || taxonomy->IsAncestor(accessionBatches[batchIdx].speciesID, taxonomy->getEukaryotaTaxID())) {
                                         prodigal->is_meta = 1;
                                         prodigal->trainMeta(training_seq->entry.sequence.s);
                                     } else {

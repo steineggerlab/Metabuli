@@ -383,7 +383,7 @@ void SeqIterator::fillQuerySyncmerBuffer(
             tempKmer = 0;
             checkN = 0;
 
-            if (!isSyncmer(aaFrames[frame], kmerCnt)) {
+            if (!isSyncmer(aaFrames[frame], kmerCnt, 8, smerLen)) {
                 kmerBuffer.buffer[posToWrite++] = {UINT64_MAX, 0, 0, frame};
                 continue;
             }
@@ -538,7 +538,7 @@ int SeqIterator::fillBufferWithSyncmer(const char *seq,
         checkN = 0;
 
         // Skip if not syncmer
-        if (!isSyncmer(aaSeq, kmerCnt)) {
+        if (!isSyncmer(aaSeq, kmerCnt, 8, smerLen)) {
             continue;
         }
 
@@ -550,12 +550,11 @@ int SeqIterator::fillBufferWithSyncmer(const char *seq,
             tempKmer += aaSeq[kmerCnt + i] * powers[j] * mask[i];
         }
         if (checkN == 1) {
-            kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0};
+            kmerBuffer.buffer[posToWrite++] = {UINT64_MAX, -1, 0};
         } else {
             addDNAInfo_TargetKmer(tempKmer, seq, kmerCnt, blockStrand, blockStart, blockEnd);
-            kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID};
+            kmerBuffer.buffer[posToWrite++] = {tempKmer, taxIdAtRank, seqID};
         }
-        posToWrite++;
     }
     return 0;                                    
  }

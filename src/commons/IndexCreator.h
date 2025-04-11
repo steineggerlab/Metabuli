@@ -13,7 +13,6 @@
 #include "SeqIterator.h"
 #include "BitManipulateMacros.h"
 #include "common.h"
-#include "NcbiTaxonomy.h"
 #include "FastSort.h"
 #include "LocalParameters.h"
 #include "NucleotideMatrix.h"
@@ -73,6 +72,7 @@ struct AccessionBatch {
     TaxID speciesID;
     uint32_t trainingSeqFasta;
     uint32_t trainingSeqIdx;
+    uint64_t totalLength;
     vector<uint32_t> orders;
     vector<TaxID> taxIDs;
     vector<uint32_t> lengths;
@@ -84,8 +84,8 @@ struct AccessionBatch {
         }
     }
 
-    AccessionBatch(uint32_t whichFasta, TaxID speciesID, uint32_t trainingSeqFasta, uint32_t trainingSeqIdx)
-        : whichFasta(whichFasta), speciesID(speciesID), trainingSeqFasta(trainingSeqFasta), trainingSeqIdx(trainingSeqIdx) {}
+    AccessionBatch(uint32_t whichFasta, TaxID speciesID, uint32_t trainingSeqFasta, uint32_t trainingSeqIdx, uint64_t totalLength) 
+        : whichFasta(whichFasta), speciesID(speciesID), trainingSeqFasta(trainingSeqFasta), trainingSeqIdx(trainingSeqIdx), totalLength(totalLength) {}
 };
 
 using namespace std;
