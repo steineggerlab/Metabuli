@@ -121,6 +121,14 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
                                              par,
                                              kseq1,
                                              kseq2); // sync kseq1 and kseq2            
+            for (size_t i = 0; i < queryKmerBuffer.startIndexOfReserve; ++i) {
+                const auto& kmer = queryKmerBuffer.buffer[i].ADkmer;
+                const auto& seqID = queryKmerBuffer.buffer[i].info.sequenceID;
+                cout << "[EXTRACT] splitIdx: " << splitIdx
+                        << ", seqID: " << seqID
+                        << ", kmer: " << kmer
+                        << ", kmerIdx: " << i << endl;
+            }
             // saveQueryIdToFile
             kmerFileHandler->writeQueryKmerFile(queryKmerBuffer, outDir, numOfSplits, numOfThreads, processedReadCnt, jobId);
             processedReadCnt += queryReadSplit[splitIdx].readCnt;
@@ -128,7 +136,7 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
 
             numOfTatalQueryKmerCnt += queryKmerBuffer.startIndexOfReserve;
         }
-
+        return ;
         delete kseq1;
         if (par.seqMode == 2) {
             delete kseq2;
@@ -263,7 +271,8 @@ void GroupGenerator::makeGraph(const string &queryKmerFileDir,
                     currentKmer = min(currentKmer, kmerInfoBuffers[file][bufferPos[file]].first);
                 }
             }
-
+            
+            
             if (currentKmer == UINT64_MAX) break;
 
             currentQueryIds.clear();
@@ -274,6 +283,11 @@ void GroupGenerator::makeGraph(const string &queryKmerFileDir,
                     kmerInfoBuffers[file][bufferPos[file]].first == currentKmer) {
                     
                     uint32_t seqId = kmerInfoBuffers[file][bufferPos[file]].second.sequenceID;
+                    // #pragma omp critical 
+                    // cout << "[READ ] seqID: " << seqId
+                    // << ", kmer: " << currentKmer
+                    // << ", fileIdx: " << file << ", thread: " << threadIdx << endl;
+            
 
                     if (seqId != UINT32_MAX && seqId < processedReadCnt) {
                         currentQueryIds.push_back(seqId);
@@ -304,10 +318,10 @@ void GroupGenerator::makeGraph(const string &queryKmerFileDir,
                     if (currentQueryIds[i] != currentQueryIds[j]){                    
                         uint32_t a = min(currentQueryIds[i], currentQueryIds[j]);
                         uint32_t b = max(currentQueryIds[i], currentQueryIds[j]);
-                        threadRelation[a][b]++;
                         if (threadRelation[a][b] == 0){
                             processedRelationCnt++;
                         }
+			threadRelation[a][b]++;
                     }
                 }
             }
@@ -845,6 +859,12 @@ void KmerFileHandler::writeQueryKmerFile(Buffer<QueryKmer>& queryKmerBuffer,
         size_t splitIdx = upper_bound(kmerBoundaries.begin(), kmerBoundaries.end(), queryKmerList[i].ADkmer) - kmerBoundaries.begin() - 1;
         if (splitIdx >= numOfThreads) splitIdx = numOfThreads - 1;
 
+        // cout << "[WRITE] seqID: " << queryKmerList[i].info.sequenceID
+        // << ", kmer: " << queryKmerList[i].ADkmer
+        // << ", fileIdx: " << splitIdx << endl;
+
+	
+        queryKmerList[i].info.sequenceID += processedReadCnt;
         fwrite(&queryKmerList[i].info, sizeof(QueryKmerInfo), 1, infoFiles[splitIdx]); 
         getDiffIdx(lastKmer[splitIdx], queryKmerList[i].ADkmer, diffIdxFiles[splitIdx], diffIdxBuffers[splitIdx], localBufIdxs[splitIdx], bufferSize); 
         lastKmer[splitIdx] = queryKmerList[i].ADkmer;   
