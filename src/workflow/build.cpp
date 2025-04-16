@@ -52,26 +52,28 @@ int build(int argc, const char **argv, const Command &command){
         par.filenames[2] = par.filenames[2].substr(0, par.filenames[2].find_last_of('.')) + ".accession2taxid";
     }
 
-    TaxonomyWrapper * taxonomy =  new TaxonomyWrapper(taxonomyDir + "/names.dmp",
-                                                      taxonomyDir + "/nodes.dmp",
-                                                      taxonomyDir + "/merged.dmp",
-                                                      true);
+    // TaxonomyWrapper * taxonomy =  new TaxonomyWrapper(taxonomyDir + "/names.dmp",
+    //                                                   taxonomyDir + "/nodes.dmp",
+    //                                                   taxonomyDir + "/merged.dmp",
+    //                                                   true);
 
-    IndexCreator idxCre(par, taxonomy);
-    idxCre.createIndex(par);
-    if (par.accessionLevel == 1) {
-        taxonomy = idxCre.getTaxonomy();
-    }
-    taxonomy->writeTaxonomyDB(dbDir + "/taxonomyDB");
+    TaxonomyWrapper * taxonomy;
+    taxonomy = loadTaxonomy(dbDir, "");
+    // IndexCreator idxCre(par, taxonomy);
+    // idxCre.createIndex(par);
+    // if (par.accessionLevel == 1) {
+    //     taxonomy = idxCre.getTaxonomy();
+    // }
+    // taxonomy->writeTaxonomyDB(dbDir + "/taxonomyDB");
     
-    if(idxCre.getNumOfFlush() == 1) {
-        delete taxonomy;
-        cout << "Index creation completed." << endl;
-        return 0;
-    }
+    // if(idxCre.getNumOfFlush() == 1) {
+    //     delete taxonomy;
+    //     cout << "Index creation completed." << endl;
+    //     return 0;
+    // }
 
     cout << "Merge reference DB files ... " << endl;
-    int numOfSplits = idxCre.getNumOfFlush();
+    int numOfSplits = 217;//idxCre.getNumOfFlush();
     FileMerger merger(par, taxonomy);
     for (int i = 0; i < numOfSplits; i++) {
         merger.addFilesToMerge(dbDir + "/" + to_string(i) + "_deltaIdx.mtbl", "");

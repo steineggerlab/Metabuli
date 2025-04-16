@@ -350,7 +350,7 @@ void FileMerger::mergeDeltaIdxFiles() {
         entryMetamer = lookingMetamers[idxOfMin];
 
         // Update looking k-mers
-        if (deltaFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin] ){
+        if (unlikely(deltaFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin])) {
             lookingMetamers[idxOfMin] = Metamer(UINT64_MAX, INT32_MAX);
             numOfincompletedFiles--;
             if (numOfincompletedFiles == 0) {
@@ -375,7 +375,7 @@ void FileMerger::mergeDeltaIdxFiles() {
         identicalMetamers.push_back(entryMetamer);
         while (entryMetamer.metamer == lookingMetamers[idxOfMin].metamer) {
             identicalMetamers.push_back(lookingMetamers[idxOfMin]);
-            if (deltaFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin]) {
+            if (unlikely(deltaFileIdx[idxOfMin] >= maxIdxOfEachFiles[idxOfMin])) {
                 lookingMetamers[idxOfMin] = Metamer(UINT64_MAX, INT32_MAX);
                 numOfincompletedFiles--;
                 if (numOfincompletedFiles == 0) {
@@ -528,21 +528,21 @@ size_t FileMerger::smallest(const Metamer * lookingKmers,
     if (min == UINT64_MAX) {
         minTaxIdAtRank = INT32_MAX;
     } else {
-        if (lookingKmers[0].id != INT32_MAX &&
-            taxId2speciesId.find((int) lookingKmers[0].id) == taxId2speciesId.end()) {
-            cout << lookingKmers[0].metamer << endl;
-            cout << "TaxID not found...: " << "0 " << lookingKmers[0].id << " " << taxonomy->getOriginalTaxID(lookingKmers[0].id) << endl;
-            exit(1);
-        }
+        // if (lookingKmers[0].id != INT32_MAX &&
+        //     taxId2speciesId.find((int) lookingKmers[0].id) == taxId2speciesId.end()) {
+        //     cout << lookingKmers[0].metamer << endl;
+        //     cout << "TaxID not found...: " << "0 " << lookingKmers[0].id << " " << taxonomy->getOriginalTaxID(lookingKmers[0].id) << endl;
+        //     exit(1);
+        // }
         minTaxIdAtRank = taxId2speciesId.at(lookingKmers[0].id);
     }
     for(size_t i = 1; i < fileCnt; i++) {
-        if (lookingKmers[i].id != INT32_MAX &&
-            taxId2speciesId.find((int) lookingKmers[i].id) == taxId2speciesId.end()) {
-            cout << lookingKmers[i].metamer << endl;
-            cout << "TaxID not found ..: " << i <<  " " << lookingKmers[i].id << " " << taxonomy->getOriginalTaxID(lookingKmers[i].id) << endl;
-            exit(1);
-        }
+        // if (lookingKmers[i].id != INT32_MAX &&
+        //     taxId2speciesId.find((int) lookingKmers[i].id) == taxId2speciesId.end()) {
+        //     cout << lookingKmers[i].metamer << endl;
+        //     cout << "TaxID not found ..: " << i <<  " " << lookingKmers[i].id << " " << taxonomy->getOriginalTaxID(lookingKmers[i].id) << endl;
+        //     exit(1);
+        // }
         if (lookingKmers[i].metamer == UINT64_MAX || lookingKmers[i].id == INT32_MAX) {
             continue;
         }
