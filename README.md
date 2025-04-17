@@ -22,14 +22,12 @@ For more details, please see
 
 Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic classification via joint analysis of amino acid and DNA. Nature Methods (2024).](https://doi.org/10.1038/s41592-024-02273-y)
 
-<p align="center"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/marv_metabuli_small.png" height="350" /></p>
-
 ---
 ### 🖥️  [Metabuli App](https://github.com/steineggerlab/Metabuli-App) for Windows, MacOS, and Linux are now available!
 > Run taxonomic profiling in just a few clicks and explore results with Sankey and Krona plots.
 
 > Download the app for your OS [here](https://github.com/steineggerlab/Metabuli-App/releases)—no separate Metabuli installation needed.
-<p align="center"><img src="https://raw.githubusercontent.com/jaebeom-kim/Metabuli/master/.github/metabuli.jpg" height="500" /></p>
+<p align="center"><img src="https://raw.githubusercontent.com/jaebeom-kim/Metabuli/master/.github/metabuli.jpg" style="max-height: 500px; width: auto;" /></p>
 
 
 ---
@@ -212,7 +210,7 @@ The proportion of reads that are assigned to each taxon.
 
 #### JobID_krona.html
 It is for an interactive taxonomy report (Krona). You can use any modern web browser to open `JobID_krona.html`.
-<p align="left"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/image.png" height="350" /></p>
+<p align="left"><img src="https://raw.githubusercontent.com/steineggerlab/Metabuli/master/.github/image.png" style="max-height: 350px; width: auto;" /></p>
 
 
 ### Resource requirements
