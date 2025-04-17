@@ -399,6 +399,10 @@ void FileMerger::mergeDeltaIdxFiles() {
         filteredMetamers.clear();
         observedSpecies2LCA.clear();
         for (size_t i = 0; i < identicalMetamers.size(); i++) {
+            if (taxId2speciesId[identicalMetamers[i].id] == 0) {
+                cout << "TaxID not found 3: " << identicalMetamers[i].id << endl;
+                continue;
+            }
             if (observedSpecies2LCA.find(taxId2speciesId[identicalMetamers[i].id]) == observedSpecies2LCA.end()) {
                 filteredMetamers.push_back(identicalMetamers[i]);
                 observedSpecies2LCA[taxId2speciesId[identicalMetamers[i].id]] = identicalMetamers[i].id;

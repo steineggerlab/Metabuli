@@ -70,10 +70,10 @@ int build(int argc, const char **argv, const Command &command){
     //     delete taxonomy;
     //     cout << "Index creation completed." << endl;
     //     return 0;
-    // }
+    }
 
     cout << "Merge reference DB files ... " << endl;
-    int numOfSplits = 217;//idxCre.getNumOfFlush();
+    int numOfSplits = 2; //idxCre.getNumOfFlush();
     FileMerger merger(par, taxonomy);
     for (int i = 0; i < numOfSplits; i++) {
         merger.addFilesToMerge(dbDir + "/" + to_string(i) + "_deltaIdx.mtbl", "");
