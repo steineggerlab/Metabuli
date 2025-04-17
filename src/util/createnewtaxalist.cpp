@@ -70,20 +70,20 @@ int getTaxonomyOfAccessions(std::unordered_map<std::string, TaxID>  & observedAc
     int fd = open(acc2taxidFileName.c_str(), O_RDONLY);
     if (fd < 0) {
         cerr << "Cannot open file for mapping from accession to tax ID" << endl;
-        return;
+        return 0;
     }
     struct stat sb;
     if (fstat(fd, &sb) == -1) {
         cerr << "Cannot get the size of the file for mapping from accession to tax ID" << endl;
         close(fd);
-        return;
+        return 0;
     }
     size_t fileSize = sb.st_size;
     char* fileData = static_cast<char*>(mmap(nullptr, fileSize, PROT_READ, MAP_PRIVATE, fd, 0));
     if (fileData == MAP_FAILED) {
         cerr << "mmap failed" << endl;
         close(fd);
-        return;
+        return 0;
     }
     close(fd);
 
