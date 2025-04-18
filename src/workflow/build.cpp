@@ -70,7 +70,7 @@ int build(int argc, const char **argv, const Command &command){
     //     delete taxonomy;
     //     cout << "Index creation completed." << endl;
     //     return 0;
-    }
+    // }
 
     cout << "Merge reference DB files ... " << endl;
     int numOfSplits = 2; //idxCre.getNumOfFlush();
