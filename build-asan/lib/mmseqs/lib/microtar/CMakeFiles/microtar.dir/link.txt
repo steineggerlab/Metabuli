@@ -1,0 +1,2 @@
+/usr/bin/ar qc libmicrotar.a CMakeFiles/microtar.dir/microtar.c.o
+/usr/bin/ranlib libmicrotar.a

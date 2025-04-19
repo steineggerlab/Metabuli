@@ -117,9 +117,10 @@ public:
 
     // classified2full
     PARAMETER(UNCLASSIFIED)
-    PARAMETER(REMOVE_CONTAM)
-    PARAMETER(SELECT_TARGET)
+    PARAMETER(EXCLUDE_CONTAM)
+    PARAMETER(INCLUDE_TARGET)
     PARAMETER(SELECT_COLUMNS)
+    PARAMETER(REPORT)
 
 
 
@@ -197,9 +198,10 @@ public:
 
     // classified2full
     bool unclassified;
-    std::string removeContam;
-    std::string selectTarget;
+    std::string excludeContam;
+    std::string includeTarget;
     std::string selectColumns;
+    bool report;
 
     void printParameters(const std::string &module, int argc,
                          const char* pargv[],

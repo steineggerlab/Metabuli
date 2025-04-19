@@ -1,0 +1,42 @@
+Performing C++ SOURCE FILE Test HAVE_FLAG_SANITIZE_MEMORY failed with the following output:
+Change Dir: /home/borijoa/work/Metabuli/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_371f2/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_371f2.dir/build.make CMakeFiles/cmTC_371f2.dir/build
+gmake[1]: Entering directory '/home/borijoa/work/Metabuli/build-asan/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_371f2.dir/src.cxx.o
+/usr/bin/c++ -DHAVE_FLAG_SANITIZE_MEMORY  -Werror -fsanitize=memory   -fsanitize=memory -o CMakeFiles/cmTC_371f2.dir/src.cxx.o -c /home/borijoa/work/Metabuli/build-asan/CMakeFiles/CMakeTmp/src.cxx
+c++: error: unrecognized argument to '-fsanitize=' option: 'memory'
+c++: error: unrecognized argument to '-fsanitize=' option: 'memory'
+gmake[1]: *** [CMakeFiles/cmTC_371f2.dir/build.make:78: CMakeFiles/cmTC_371f2.dir/src.cxx.o] Error 1
+gmake[1]: Leaving directory '/home/borijoa/work/Metabuli/build-asan/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_371f2/fast] Error 2
+
+
+Source file was:
+int main() { return 0; }
+Performing C++ SOURCE FILE Test ATOMIC_LIBRARY_NATIVE failed with the following output:
+Change Dir: /home/borijoa/work/Metabuli/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_cfd9c/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_cfd9c.dir/build.make CMakeFiles/cmTC_cfd9c.dir/build
+gmake[1]: Entering directory '/home/borijoa/work/Metabuli/build-asan/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_cfd9c.dir/src.cxx.o
+/usr/bin/c++ -DATOMIC_LIBRARY_NATIVE   -o CMakeFiles/cmTC_cfd9c.dir/src.cxx.o -c /home/borijoa/work/Metabuli/build-asan/CMakeFiles/CMakeTmp/src.cxx
+Linking CXX executable cmTC_cfd9c
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_cfd9c.dir/link.txt --verbose=1
+/usr/bin/c++ -rdynamic CMakeFiles/cmTC_cfd9c.dir/src.cxx.o -o cmTC_cfd9c 
+/usr/bin/ld: CMakeFiles/cmTC_cfd9c.dir/src.cxx.o: in function `main':
+src.cxx:(.text+0x42): undefined reference to `__atomic_fetch_add_16'
+collect2: error: ld returned 1 exit status
+gmake[1]: *** [CMakeFiles/cmTC_cfd9c.dir/build.make:99: cmTC_cfd9c] Error 1
+gmake[1]: Leaving directory '/home/borijoa/work/Metabuli/build-asan/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_cfd9c/fast] Error 2
+
+
+Source file was:
+
+           int main() {
+             volatile unsigned __int128 all_ = 4;
+             __atomic_fetch_add(&all_, 8, __ATOMIC_RELAXED);
+             return 0;
+           }
+        

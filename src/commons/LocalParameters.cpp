@@ -376,24 +376,24 @@ LocalParameters::LocalParameters() :
                 typeid(bool),
                 (void *) &unclassified,
                 ""),
-        REMOVE_CONTAM(REMOVE_CONTAM_ID,
-                "--remove-contam",
+        EXCLUDE_CONTAM(EXCLUDE_CONTAM_ID,
+                "--exclude-contam",
                 "Remove contaminants taxId",
                 "Remove contaminants taxId",
                 typeid(std::string),
-                (void *) &removeContam,
+                (void *) &excludeContam,
                 "^.*$"),
-        SELECT_TARGET(SELECT_TARGET_ID,
-                "--select-target",
+        INCLUDE_TARGET(INCLUDE_TARGET_ID,
+                "--include-target",
                 "Select target taxId",
                 "Select target taxId",
                 typeid(std::string),
-                (void *) &selectTarget,
+                (void *) &includeTarget,
                 "^.*$"),
         SELECT_COLUMNS(SELECT_COLUMNS_ID,
                 "--select-columns",
-                "0:Classified or not, 1:Read ID, 2:Taxonomy ID, 3:Effective read length, 4:DNA identity score, 5:Classification rank, 6:List of taxID : k-mer match count, 7: Full Lineage",
-                "0:Classified or not, 1:Read ID, 2:Taxonomy ID, 3:Effective read length, 4:DNA identity score, 5:Classification rank, 6:List of taxID : k-mer match count, 7: Full Lineage",
+                "select columns with number 0~7, 0: classified or not 7: full lineage",
+                "select columns with number 0~7, 0: classified or not 7: full lineage",
                 typeid(std::string),
                 (void *) &selectColumns,
                 "^.*$")
@@ -454,8 +454,8 @@ LocalParameters::LocalParameters() :
 
     // classified to full taxonomy
     unclassified = false;
-    removeContam = "";
-    selectTarget = "";
+    excludeContam = "";
+    includeTarget = "";
     selectColumns = "";
 
 
@@ -582,8 +582,8 @@ LocalParameters::LocalParameters() :
 
     //classified2full
     classifiedRefiner.push_back(&UNCLASSIFIED);
-    classifiedRefiner.push_back(&REMOVE_CONTAM);
-    classifiedRefiner.push_back(&SELECT_TARGET);
+    classifiedRefiner.push_back(&EXCLUDE_CONTAM);
+    classifiedRefiner.push_back(&INCLUDE_TARGET);
     classifiedRefiner.push_back(&SELECT_COLUMNS);
 
 }

@@ -4,8 +4,11 @@
 #include "Debug.h"
 #include "unordered_map"
 #include "NcbiTaxonomy.h"
+#include "omp.h"
+
 
 using namespace std;
+
 
 int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, const LocalParameters &par);
 bool checktaxId(TaxonomyWrapper *taxonomy, const vector <int> &contamIdx, const int &taxonomyId);
@@ -36,14 +39,7 @@ ClassificationResult parseFields(const std::vector<std::string>& fields) {
     result.dnaIdentityScore = std::stof(fields[4]);
     result.classificationRank = fields[5];
     result.taxIdKmerCounts = fields[6];
-
-    
-
-    if (fields.size() == 8) {
-        result.fullLineage = fields[7];
-    } else {
-        result.fullLineage = "";
-    }
+    result.fullLineage = fields[7];
 
     return result;
 }
@@ -75,36 +71,42 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
     const string & namesFile = taxonomyDir + "/names.dmp";
     const string & mergedFile = taxonomyDir + "/merged.dmp";
 
-    TaxonomyWrapper *taxonomy = new TaxonomyWrapper(namesFile, nodesFile, mergedFile, false);
-    vector<string> fields;
+    
+    TaxonomyWrapper *taxonomy = new TaxonomyWrapper(namesFile, nodesFile, mergedFile, true);
+    unordered_map<TaxID, TaxID> extern2intern; // for external2internalTaxID
+    taxonomy->getExternal2internalTaxID(extern2intern); // fill extern2intern
 
     string refinedFileName = classifiedFile.substr(0, classifiedFile.find_last_of('.')) + "_refined.tsv";
     cout << "Write refined classification result to: " << endl;
     cout << refinedFileName << endl;
     ofstream refinedFile(refinedFileName.c_str());
+    
     if (!refinedFile.is_open()) {
         Debug(Debug::ERROR) << "Could not open " << refinedFileName << " for writing\n";
         EXIT(EXIT_FAILURE);
     } 
 
+    refinedFile.close();
+    
+    //excluding
     // Parse contamIds, targetIds, selected columns
     vector<string> contams;
-    vector<int> contamsIdx;
-    if (!par.removeContam.empty()) {
-        contams = Util::split(par.removeContam, ",");
+    vector<TaxID> contamsTaxIds;
+    if (!par.excludeContam.empty()) {
+        contams = Util::split(par.excludeContam, ",");
         // stoi
-        for (const auto &contam : contams) {
-            contamsIdx.push_back(stoi(contam));
+        for (const string &contam : contams) {
+            contamsTaxIds.push_back(extern2intern[stoi(contam)]);
         }
     }
 
     vector<string> targets;
-    vector<int> targetsIdx;
-    if (!par.selectTarget.empty()) {
-        targets = Util::split(par.selectTarget, ",");
+    vector<int> targetsTaxIds;
+    if (!par.includeTarget.empty()) {
+        targets = Util::split(par.includeTarget, ",");
         // stoi
-        for (const auto &target : targets) {
-            targetsIdx.push_back(stoi(target));
+        for (const string &target : targets) {
+            targetsTaxIds.push_back(extern2intern[stoi(target)]);
         }
     }
 
@@ -119,51 +121,85 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
     } else {
         columnsIdx = {0,1,2,3,4,5,6,7};
     }
-
     ifstream file(classifiedFile);
-    if (file.is_open()) {
-        string line;
-        while (getline(file, line)) {
-            fields = Util::split(line, "\t");
-            if (fields.size() == 6){
-                fields.push_back("");
-            }
-
-            ClassificationResult data = parseFields(fields);
-            if(data.fullLineage==""){
-                data.fullLineage = taxonomy->taxLineage2(taxonomy->taxonNode(data.taxonomyId));
-                fields.push_back(data.fullLineage);
-            }
-
-            // remove unclassified
-            if (par.unclassified == true && data.isClassified == false) {
-                continue;
-            }
-            // remove contaminants
-            if (contamsIdx.size() > 0 && checktaxId(taxonomy, contamsIdx, data.taxonomyId)) {
-                continue;
-            }
-            // select targets
-            if (targetsIdx.size() > 0 && !checktaxId(taxonomy, targetsIdx, data.taxonomyId)) {
-                continue;
-            }
-            // write to file
-            for (size_t i = 0; i < columnsIdx.size(); i++) {
-                refinedFile << fields[columnsIdx[i]] << "\t";
-            }
-            refinedFile << "\n";           
-        }
-    } else {
-        cerr << "Cannot open file for refining classification result" << endl;
+    ofstream refinedFileAppend(refinedFileName.c_str(), ios::app); // Append mode for parallel writes
+    if (!file.is_open() || !refinedFileAppend.is_open()) {
+    Debug(Debug::ERROR) << "Could not open input or output file\n";
+    EXIT(EXIT_FAILURE);
     }
 
-    file.close();
-    refinedFile.close();
+    const size_t CHUNK_SIZE = 1000;
+    
+
+    #pragma omp parallel default(none) shared(file, refinedFileAppend, taxonomy, extern2intern, contamsTaxIds, targetsTaxIds, columnsIdx, par, cout)
+    {
+    
+        #pragma omp single
+        {
+            vector<string> chunk;
+            string line;
+            while (true){
+                chunk.clear();
+
+                for(size_t i = 0; i < CHUNK_SIZE && getline(file, line); ++i) {
+                    chunk.push_back(line);
+                }
+
+                if (chunk.empty()) {
+                    break;
+                }
+            
+
+        #pragma omp task firstprivate(chunk)
+            {
+                for (const string &line : chunk){
+                    vector<string> fields = Util::split(line, "\t");
+                    if (fields.size() == 6) {
+                        fields.push_back("");
+                        fields.push_back("");
+                    }
+
+                    if (fields.size() == 7) {
+                        fields.push_back("");
+                    }
+
+                    ClassificationResult data = parseFields(fields);
+                    data.taxonomyId = extern2intern[data.taxonomyId];
+                    if (data.fullLineage == "") {
+                        data.fullLineage = taxonomy->taxLineage2(taxonomy->taxonNode(data.taxonomyId));
+                        fields.pop_back();
+                        fields.push_back(data.fullLineage);
+                    }
+
+                    // remove unclassified
+                    if (!(par.unclassified == true && data.isClassified == false) && !(contamsTaxIds.size() > 0 && checktaxId(taxonomy, contamsTaxIds, data.taxonomyId)) && !(targetsTaxIds.size() > 0 && !checktaxId(taxonomy, targetsTaxIds, data.taxonomyId))) {
+                    
+                        stringstream ss;
+                        for (size_t i = 0; i < columnsIdx.size(); i++) {
+                            ss << fields[columnsIdx[i]] << "\t";
+                        }
+                        ss << endl;
+                        
+                        #pragma omp critical
+                            {
+                                refinedFileAppend << ss.str();
+                            }
+                        
+                    }
+                }
+                }
+            }
+        }
+    
+    }
+    
+    refinedFileAppend.close();
     delete taxonomy;
 
     return 0;
 
 }
+
 
 bool checktaxId(TaxonomyWrapper *taxonomy, const vector <int> &contamIdx, const int &taxonomyId) {
     for (const auto &contam : contamIdx) {
@@ -171,6 +207,7 @@ bool checktaxId(TaxonomyWrapper *taxonomy, const vector <int> &contamIdx, const 
             return true;
         }
     }
+    return false;
 }
 /*
     for (size_t i = 0; i < columnsIdx.size(); i++) {
