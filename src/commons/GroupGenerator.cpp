@@ -121,14 +121,14 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
                                              par,
                                              kseq1,
                                              kseq2); // sync kseq1 and kseq2            
-            for (size_t i = 0; i < queryKmerBuffer.startIndexOfReserve; ++i) {
-                const auto& kmer = queryKmerBuffer.buffer[i].ADkmer;
-                const auto& seqID = queryKmerBuffer.buffer[i].info.sequenceID;
-                cout << "[EXTRACT] splitIdx: " << splitIdx
-                        << ", seqID: " << seqID
-                        << ", kmer: " << kmer
-                        << ", kmerIdx: " << i << endl;
-            }
+            // for (size_t i = 0; i < queryKmerBuffer.startIndexOfReserve; ++i) {
+            //     const auto& kmer = queryKmerBuffer.buffer[i].ADkmer;
+            //     const auto& seqID = queryKmerBuffer.buffer[i].info.sequenceID;
+            //     cout << "[EXTRACT] splitIdx: " << splitIdx
+            //             << ", seqID: " << seqID
+            //             << ", kmer: " << kmer
+            //             << ", kmerIdx: " << i << endl;
+            // }
             // saveQueryIdToFile
             kmerFileHandler->writeQueryKmerFile(queryKmerBuffer, outDir, numOfSplits, numOfThreads, processedReadCnt, jobId);
             processedReadCnt += queryReadSplit[splitIdx].readCnt;
@@ -136,7 +136,6 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
 
             numOfTatalQueryKmerCnt += queryKmerBuffer.startIndexOfReserve;
         }
-        return ;
         delete kseq1;
         if (par.seqMode == 2) {
             delete kseq2;
@@ -858,12 +857,7 @@ void KmerFileHandler::writeQueryKmerFile(Buffer<QueryKmer>& queryKmerBuffer,
         // 💡 실제 분포 기반 boundary를 사용한 split index 결정
         size_t splitIdx = upper_bound(kmerBoundaries.begin(), kmerBoundaries.end(), queryKmerList[i].ADkmer) - kmerBoundaries.begin() - 1;
         if (splitIdx >= numOfThreads) splitIdx = numOfThreads - 1;
-
-        // cout << "[WRITE] seqID: " << queryKmerList[i].info.sequenceID
-        // << ", kmer: " << queryKmerList[i].ADkmer
-        // << ", fileIdx: " << splitIdx << endl;
-
-	
+        
         queryKmerList[i].info.sequenceID += processedReadCnt;
         fwrite(&queryKmerList[i].info, sizeof(QueryKmerInfo), 1, infoFiles[splitIdx]); 
         getDiffIdx(lastKmer[splitIdx], queryKmerList[i].ADkmer, diffIdxFiles[splitIdx], diffIdxBuffers[splitIdx], localBufIdxs[splitIdx], bufferSize); 
