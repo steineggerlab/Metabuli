@@ -111,7 +111,7 @@ lib/mmseqs/data/CMakeFiles/generated: lib/mmseqs/generated/tsv2exprofiledb.sh.h
 
 lib/mmseqs/generated/CovSeqidQscPercMinDiag.lib.h: ../lib/mmseqs/data/resources/CovSeqidQscPercMinDiag.lib
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating ../generated/CovSeqidQscPercMinDiag.lib.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true CovSeqidQscPercMinDiag.lib
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck CovSeqidQscPercMinDiag.lib
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/xxd -i CovSeqidQscPercMinDiag.lib > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/CovSeqidQscPercMinDiag.lib.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/CovSeqidQscPercMinDiag.lib.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/CovSeqidQscPercMinDiag.lib.h.tmp
@@ -119,7 +119,7 @@ lib/mmseqs/generated/CovSeqidQscPercMinDiag.lib.h: ../lib/mmseqs/data/resources/
 
 lib/mmseqs/generated/CovSeqidQscPercMinDiagTargetCov.lib.h: ../lib/mmseqs/data/resources/CovSeqidQscPercMinDiagTargetCov.lib
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Generating ../generated/CovSeqidQscPercMinDiagTargetCov.lib.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true CovSeqidQscPercMinDiagTargetCov.lib
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck CovSeqidQscPercMinDiagTargetCov.lib
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/xxd -i CovSeqidQscPercMinDiagTargetCov.lib > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/CovSeqidQscPercMinDiagTargetCov.lib.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/CovSeqidQscPercMinDiagTargetCov.lib.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/CovSeqidQscPercMinDiagTargetCov.lib.h.tmp
@@ -127,7 +127,7 @@ lib/mmseqs/generated/CovSeqidQscPercMinDiagTargetCov.lib.h: ../lib/mmseqs/data/r
 
 lib/mmseqs/generated/ExpOpt3_8_polished.cs32.lib.h: ../lib/mmseqs/data/resources/ExpOpt3_8_polished.cs32.lib
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Generating ../generated/ExpOpt3_8_polished.cs32.lib.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true ExpOpt3_8_polished.cs32.lib
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck ExpOpt3_8_polished.cs32.lib
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/xxd -i ExpOpt3_8_polished.cs32.lib > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/ExpOpt3_8_polished.cs32.lib.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/ExpOpt3_8_polished.cs32.lib.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/ExpOpt3_8_polished.cs32.lib.h.tmp
@@ -135,7 +135,7 @@ lib/mmseqs/generated/ExpOpt3_8_polished.cs32.lib.h: ../lib/mmseqs/data/resources
 
 lib/mmseqs/generated/K4000.crf.h: ../lib/mmseqs/data/resources/K4000.crf
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Generating ../generated/K4000.crf.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true K4000.crf
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck K4000.crf
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/xxd -i K4000.crf > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/K4000.crf.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/K4000.crf.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/K4000.crf.h.tmp
@@ -143,7 +143,7 @@ lib/mmseqs/generated/K4000.crf.h: ../lib/mmseqs/data/resources/K4000.crf
 
 lib/mmseqs/generated/Library255_may17.lib.h: ../lib/mmseqs/data/resources/Library255_may17.lib
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Generating ../generated/Library255_may17.lib.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true Library255_may17.lib
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck Library255_may17.lib
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/xxd -i Library255_may17.lib > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/Library255_may17.lib.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/Library255_may17.lib.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/Library255_may17.lib.h.tmp
@@ -151,7 +151,7 @@ lib/mmseqs/generated/Library255_may17.lib.h: ../lib/mmseqs/data/resources/Librar
 
 lib/mmseqs/generated/PAM30.out.h: ../lib/mmseqs/data/PAM30.out
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Generating ../generated/PAM30.out.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true PAM30.out
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck PAM30.out
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /usr/bin/xxd -i PAM30.out > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/PAM30.out.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/PAM30.out.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/PAM30.out.h.tmp
@@ -159,7 +159,7 @@ lib/mmseqs/generated/PAM30.out.h: ../lib/mmseqs/data/PAM30.out
 
 lib/mmseqs/generated/VTML40.out.h: ../lib/mmseqs/data/VTML40.out
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Generating ../generated/VTML40.out.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true VTML40.out
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck VTML40.out
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /usr/bin/xxd -i VTML40.out > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/VTML40.out.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/VTML40.out.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/VTML40.out.h.tmp
@@ -167,7 +167,7 @@ lib/mmseqs/generated/VTML40.out.h: ../lib/mmseqs/data/VTML40.out
 
 lib/mmseqs/generated/VTML80.out.h: ../lib/mmseqs/data/VTML80.out
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Generating ../generated/VTML80.out.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true VTML80.out
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck VTML80.out
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /usr/bin/xxd -i VTML80.out > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/VTML80.out.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/VTML80.out.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/VTML80.out.h.tmp
@@ -175,7 +175,7 @@ lib/mmseqs/generated/VTML80.out.h: ../lib/mmseqs/data/VTML80.out
 
 lib/mmseqs/generated/blastn.sh.h: ../lib/mmseqs/data/workflow/blastn.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Generating ../generated/blastn.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true blastn.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck blastn.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i blastn.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/blastn.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/blastn.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/blastn.sh.h.tmp
@@ -183,7 +183,7 @@ lib/mmseqs/generated/blastn.sh.h: ../lib/mmseqs/data/workflow/blastn.sh
 
 lib/mmseqs/generated/blastp.sh.h: ../lib/mmseqs/data/workflow/blastp.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Generating ../generated/blastp.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true blastp.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck blastp.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i blastp.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/blastp.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/blastp.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/blastp.sh.h.tmp
@@ -191,7 +191,7 @@ lib/mmseqs/generated/blastp.sh.h: ../lib/mmseqs/data/workflow/blastp.sh
 
 lib/mmseqs/generated/blastpgp.sh.h: ../lib/mmseqs/data/workflow/blastpgp.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Generating ../generated/blastpgp.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true blastpgp.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck blastpgp.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i blastpgp.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/blastpgp.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/blastpgp.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/blastpgp.sh.h.tmp
@@ -199,7 +199,7 @@ lib/mmseqs/generated/blastpgp.sh.h: ../lib/mmseqs/data/workflow/blastpgp.sh
 
 lib/mmseqs/generated/blosum62.out.h: ../lib/mmseqs/data/blosum62.out
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Generating ../generated/blosum62.out.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true blosum62.out
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck blosum62.out
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /usr/bin/xxd -i blosum62.out > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/blosum62.out.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/blosum62.out.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/blosum62.out.h.tmp
@@ -207,7 +207,7 @@ lib/mmseqs/generated/blosum62.out.h: ../lib/mmseqs/data/blosum62.out
 
 lib/mmseqs/generated/cascaded_clustering.sh.h: ../lib/mmseqs/data/workflow/cascaded_clustering.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Generating ../generated/cascaded_clustering.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true cascaded_clustering.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck cascaded_clustering.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i cascaded_clustering.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/cascaded_clustering.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/cascaded_clustering.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/cascaded_clustering.sh.h.tmp
@@ -215,7 +215,7 @@ lib/mmseqs/generated/cascaded_clustering.sh.h: ../lib/mmseqs/data/workflow/casca
 
 lib/mmseqs/generated/clustering.sh.h: ../lib/mmseqs/data/workflow/clustering.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Generating ../generated/clustering.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true clustering.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck clustering.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i clustering.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/clustering.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/clustering.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/clustering.sh.h.tmp
@@ -223,7 +223,7 @@ lib/mmseqs/generated/clustering.sh.h: ../lib/mmseqs/data/workflow/clustering.sh
 
 lib/mmseqs/generated/createindex.sh.h: ../lib/mmseqs/data/workflow/createindex.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Generating ../generated/createindex.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true createindex.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck createindex.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i createindex.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/createindex.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/createindex.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/createindex.sh.h.tmp
@@ -231,7 +231,7 @@ lib/mmseqs/generated/createindex.sh.h: ../lib/mmseqs/data/workflow/createindex.s
 
 lib/mmseqs/generated/createtaxdb.sh.h: ../lib/mmseqs/data/workflow/createtaxdb.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Generating ../generated/createtaxdb.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true createtaxdb.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck createtaxdb.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i createtaxdb.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/createtaxdb.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/createtaxdb.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/createtaxdb.sh.h.tmp
@@ -239,7 +239,7 @@ lib/mmseqs/generated/createtaxdb.sh.h: ../lib/mmseqs/data/workflow/createtaxdb.s
 
 lib/mmseqs/generated/cs219.lib.h: ../lib/mmseqs/data/resources/cs219.lib
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Generating ../generated/cs219.lib.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true cs219.lib
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck cs219.lib
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/xxd -i cs219.lib > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/cs219.lib.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/cs219.lib.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/cs219.lib.h.tmp
@@ -247,7 +247,7 @@ lib/mmseqs/generated/cs219.lib.h: ../lib/mmseqs/data/resources/cs219.lib
 
 lib/mmseqs/generated/databases.sh.h: ../lib/mmseqs/data/workflow/databases.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Generating ../generated/databases.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true databases.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck databases.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i databases.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/databases.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/databases.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/databases.sh.h.tmp
@@ -255,7 +255,7 @@ lib/mmseqs/generated/databases.sh.h: ../lib/mmseqs/data/workflow/databases.sh
 
 lib/mmseqs/generated/easycluster.sh.h: ../lib/mmseqs/data/workflow/easycluster.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Generating ../generated/easycluster.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true easycluster.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck easycluster.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i easycluster.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/easycluster.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/easycluster.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/easycluster.sh.h.tmp
@@ -263,7 +263,7 @@ lib/mmseqs/generated/easycluster.sh.h: ../lib/mmseqs/data/workflow/easycluster.s
 
 lib/mmseqs/generated/easyrbh.sh.h: ../lib/mmseqs/data/workflow/easyrbh.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Generating ../generated/easyrbh.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true easyrbh.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck easyrbh.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i easyrbh.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/easyrbh.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/easyrbh.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/easyrbh.sh.h.tmp
@@ -271,7 +271,7 @@ lib/mmseqs/generated/easyrbh.sh.h: ../lib/mmseqs/data/workflow/easyrbh.sh
 
 lib/mmseqs/generated/easysearch.sh.h: ../lib/mmseqs/data/workflow/easysearch.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Generating ../generated/easysearch.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true easysearch.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck easysearch.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i easysearch.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/easysearch.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/easysearch.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/easysearch.sh.h.tmp
@@ -279,7 +279,7 @@ lib/mmseqs/generated/easysearch.sh.h: ../lib/mmseqs/data/workflow/easysearch.sh
 
 lib/mmseqs/generated/easytaxonomy.sh.h: ../lib/mmseqs/data/workflow/easytaxonomy.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Generating ../generated/easytaxonomy.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true easytaxonomy.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck easytaxonomy.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i easytaxonomy.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/easytaxonomy.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/easytaxonomy.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/easytaxonomy.sh.h.tmp
@@ -287,7 +287,7 @@ lib/mmseqs/generated/easytaxonomy.sh.h: ../lib/mmseqs/data/workflow/easytaxonomy
 
 lib/mmseqs/generated/enrich.sh.h: ../lib/mmseqs/data/workflow/enrich.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Generating ../generated/enrich.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true enrich.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck enrich.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i enrich.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/enrich.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/enrich.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/enrich.sh.h.tmp
@@ -295,7 +295,7 @@ lib/mmseqs/generated/enrich.sh.h: ../lib/mmseqs/data/workflow/enrich.sh
 
 lib/mmseqs/generated/iterativepp.sh.h: ../lib/mmseqs/data/workflow/iterativepp.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Generating ../generated/iterativepp.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true iterativepp.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck iterativepp.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i iterativepp.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/iterativepp.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/iterativepp.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/iterativepp.sh.h.tmp
@@ -303,7 +303,7 @@ lib/mmseqs/generated/iterativepp.sh.h: ../lib/mmseqs/data/workflow/iterativepp.s
 
 lib/mmseqs/generated/krona_prelude.html.h: ../lib/mmseqs/data/resources/krona_prelude.html
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Generating ../generated/krona_prelude.html.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true krona_prelude.html
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck krona_prelude.html
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/xxd -i krona_prelude.html > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/krona_prelude.html.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/krona_prelude.html.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/krona_prelude.html.h.tmp
@@ -311,7 +311,7 @@ lib/mmseqs/generated/krona_prelude.html.h: ../lib/mmseqs/data/resources/krona_pr
 
 lib/mmseqs/generated/libPolished_8.lib.h: ../lib/mmseqs/data/resources/libPolished_8.lib
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Generating ../generated/libPolished_8.lib.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true libPolished_8.lib
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck libPolished_8.lib
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/xxd -i libPolished_8.lib > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/libPolished_8.lib.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/libPolished_8.lib.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/libPolished_8.lib.h.tmp
@@ -319,7 +319,7 @@ lib/mmseqs/generated/libPolished_8.lib.h: ../lib/mmseqs/data/resources/libPolish
 
 lib/mmseqs/generated/linclust.sh.h: ../lib/mmseqs/data/workflow/linclust.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Generating ../generated/linclust.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true linclust.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck linclust.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i linclust.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/linclust.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/linclust.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/linclust.sh.h.tmp
@@ -327,7 +327,7 @@ lib/mmseqs/generated/linclust.sh.h: ../lib/mmseqs/data/workflow/linclust.sh
 
 lib/mmseqs/generated/linsearch.sh.h: ../lib/mmseqs/data/workflow/linsearch.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Generating ../generated/linsearch.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true linsearch.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck linsearch.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i linsearch.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/linsearch.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/linsearch.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/linsearch.sh.h.tmp
@@ -335,7 +335,7 @@ lib/mmseqs/generated/linsearch.sh.h: ../lib/mmseqs/data/workflow/linsearch.sh
 
 lib/mmseqs/generated/map.sh.h: ../lib/mmseqs/data/workflow/map.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Generating ../generated/map.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true map.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck map.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i map.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/map.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/map.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/map.sh.h.tmp
@@ -343,7 +343,7 @@ lib/mmseqs/generated/map.sh.h: ../lib/mmseqs/data/workflow/map.sh
 
 lib/mmseqs/generated/multihitdb.sh.h: ../lib/mmseqs/data/workflow/multihitdb.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Generating ../generated/multihitdb.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true multihitdb.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck multihitdb.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i multihitdb.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/multihitdb.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/multihitdb.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/multihitdb.sh.h.tmp
@@ -351,7 +351,7 @@ lib/mmseqs/generated/multihitdb.sh.h: ../lib/mmseqs/data/workflow/multihitdb.sh
 
 lib/mmseqs/generated/multihitsearch.sh.h: ../lib/mmseqs/data/workflow/multihitsearch.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_31) "Generating ../generated/multihitsearch.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true multihitsearch.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck multihitsearch.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i multihitsearch.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/multihitsearch.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/multihitsearch.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/multihitsearch.sh.h.tmp
@@ -359,7 +359,7 @@ lib/mmseqs/generated/multihitsearch.sh.h: ../lib/mmseqs/data/workflow/multihitse
 
 lib/mmseqs/generated/nucleotide.out.h: ../lib/mmseqs/data/nucleotide.out
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_32) "Generating ../generated/nucleotide.out.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true nucleotide.out
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck nucleotide.out
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /usr/bin/xxd -i nucleotide.out > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/nucleotide.out.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/nucleotide.out.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/nucleotide.out.h.tmp
@@ -367,7 +367,7 @@ lib/mmseqs/generated/nucleotide.out.h: ../lib/mmseqs/data/nucleotide.out
 
 lib/mmseqs/generated/nucleotide_clustering.sh.h: ../lib/mmseqs/data/workflow/nucleotide_clustering.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_33) "Generating ../generated/nucleotide_clustering.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true nucleotide_clustering.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck nucleotide_clustering.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i nucleotide_clustering.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/nucleotide_clustering.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/nucleotide_clustering.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/nucleotide_clustering.sh.h.tmp
@@ -375,7 +375,7 @@ lib/mmseqs/generated/nucleotide_clustering.sh.h: ../lib/mmseqs/data/workflow/nuc
 
 lib/mmseqs/generated/rbh.sh.h: ../lib/mmseqs/data/workflow/rbh.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_34) "Generating ../generated/rbh.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true rbh.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck rbh.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i rbh.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/rbh.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/rbh.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/rbh.sh.h.tmp
@@ -383,7 +383,7 @@ lib/mmseqs/generated/rbh.sh.h: ../lib/mmseqs/data/workflow/rbh.sh
 
 lib/mmseqs/generated/result_viz_prelude.html.zst.h: ../lib/mmseqs/data/resources/result_viz_prelude.html.zst
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_35) "Generating ../generated/result_viz_prelude.html.zst.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true result_viz_prelude.html.zst
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck result_viz_prelude.html.zst
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/xxd -i result_viz_prelude.html.zst > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/result_viz_prelude.html.zst.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/resources && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/result_viz_prelude.html.zst.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/result_viz_prelude.html.zst.h.tmp
@@ -391,7 +391,7 @@ lib/mmseqs/generated/result_viz_prelude.html.zst.h: ../lib/mmseqs/data/resources
 
 lib/mmseqs/generated/searchslicedtargetprofile.sh.h: ../lib/mmseqs/data/workflow/searchslicedtargetprofile.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_36) "Generating ../generated/searchslicedtargetprofile.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true searchslicedtargetprofile.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck searchslicedtargetprofile.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i searchslicedtargetprofile.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/searchslicedtargetprofile.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/searchslicedtargetprofile.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/searchslicedtargetprofile.sh.h.tmp
@@ -399,7 +399,7 @@ lib/mmseqs/generated/searchslicedtargetprofile.sh.h: ../lib/mmseqs/data/workflow
 
 lib/mmseqs/generated/searchtargetprofile.sh.h: ../lib/mmseqs/data/workflow/searchtargetprofile.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_37) "Generating ../generated/searchtargetprofile.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true searchtargetprofile.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck searchtargetprofile.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i searchtargetprofile.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/searchtargetprofile.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/searchtargetprofile.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/searchtargetprofile.sh.h.tmp
@@ -407,7 +407,7 @@ lib/mmseqs/generated/searchtargetprofile.sh.h: ../lib/mmseqs/data/workflow/searc
 
 lib/mmseqs/generated/taxonomy.sh.h: ../lib/mmseqs/data/workflow/taxonomy.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Generating ../generated/taxonomy.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true taxonomy.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck taxonomy.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i taxonomy.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/taxonomy.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/taxonomy.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/taxonomy.sh.h.tmp
@@ -415,7 +415,7 @@ lib/mmseqs/generated/taxonomy.sh.h: ../lib/mmseqs/data/workflow/taxonomy.sh
 
 lib/mmseqs/generated/taxpercontig.sh.h: ../lib/mmseqs/data/workflow/taxpercontig.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_39) "Generating ../generated/taxpercontig.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true taxpercontig.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck taxpercontig.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i taxpercontig.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/taxpercontig.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/taxpercontig.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/taxpercontig.sh.h.tmp
@@ -423,7 +423,7 @@ lib/mmseqs/generated/taxpercontig.sh.h: ../lib/mmseqs/data/workflow/taxpercontig
 
 lib/mmseqs/generated/translated_search.sh.h: ../lib/mmseqs/data/workflow/translated_search.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Generating ../generated/translated_search.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true translated_search.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck translated_search.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i translated_search.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/translated_search.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/translated_search.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/translated_search.sh.h.tmp
@@ -431,7 +431,7 @@ lib/mmseqs/generated/translated_search.sh.h: ../lib/mmseqs/data/workflow/transla
 
 lib/mmseqs/generated/tsv2exprofiledb.sh.h: ../lib/mmseqs/data/workflow/tsv2exprofiledb.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_41) "Generating ../generated/tsv2exprofiledb.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true tsv2exprofiledb.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck tsv2exprofiledb.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i tsv2exprofiledb.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/tsv2exprofiledb.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/tsv2exprofiledb.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/tsv2exprofiledb.sh.h.tmp
@@ -439,7 +439,7 @@ lib/mmseqs/generated/tsv2exprofiledb.sh.h: ../lib/mmseqs/data/workflow/tsv2expro
 
 lib/mmseqs/generated/update_clustering.sh.h: ../lib/mmseqs/data/workflow/update_clustering.sh
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/borijoa/work/Metabuli/build-asan/CMakeFiles --progress-num=$(CMAKE_PROGRESS_42) "Generating ../generated/update_clustering.sh.h"
-	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh true update_clustering.sh
+	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /home/borijoa/work/Metabuli/lib/mmseqs/cmake/checkshell.sh /usr/bin/shellcheck update_clustering.sh
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && mkdir -p /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/xxd -i update_clustering.sh > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/update_clustering.sh.h
 	cd /home/borijoa/work/Metabuli/lib/mmseqs/data/workflow && /usr/bin/sed 's!unsigned char!static const unsigned char!' < /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/update_clustering.sh.h > /home/borijoa/work/Metabuli/build-asan/lib/mmseqs/generated/update_clustering.sh.h.tmp
