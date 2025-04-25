@@ -146,10 +146,12 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     }   
 
     makeGraph(outDir, numOfSplits, numOfThreads, numOfGraph, processedReadCnt, jobId);   
+    int dynamicGroupKmerThr = static_cast<int>(dynamicThresholding(outDir, numOfGraph, jobId, double(groupKmerThr)));
     unordered_map<uint32_t, unordered_set<uint32_t>> groupInfo;
     vector<int> queryGroupInfo;
     queryGroupInfo.resize(processedReadCnt, -1);
-    makeGroups(groupInfo, outDir, queryGroupInfo, groupKmerThr, numOfGraph, jobId);
+    //makeGroups(groupInfo, outDir, queryGroupInfo, groupKmerThr, numOfGraph, jobId);
+    makeGroups(groupInfo, outDir, queryGroupInfo, dynamicGroupKmerThr, numOfGraph, jobId);
     
     saveGroupsToFile(groupInfo, queryGroupInfo, outDir, jobId);
     // loadGroupsFromFile(groupInfo, queryGroupInfo, outDir, jobId);
@@ -395,6 +397,84 @@ void GroupGenerator::saveSubGraphToFile(const unordered_map<uint32_t, unordered_
     }
 }
 
+double GroupGenerator::dynamicThresholding(const std::string &subGraphFileDir,
+                                           size_t numOfGraph,
+                                           const std::string &jobId,
+                                           double k) {
+    double global_mean = 0.0;
+    double global_M2 = 0.0;
+    size_t global_count = 0;
+    size_t BLOCK_SIZE = 10000;
+
+    for (size_t i = 0; i < numOfGraph; ++i) {
+        std::string fileName = subGraphFileDir + "/" + jobId + "_subGraph" + std::to_string(i);
+        std::ifstream file(fileName, std::ios::binary);
+        if (!file.is_open()) {
+            std::cerr << "Error opening file: " << fileName << std::endl;
+            continue;
+        }
+
+        // Block-wise 계산 변수
+        double block_sum = 0.0, block_sq_sum = 0.0;
+        size_t block_count = 0;
+
+        uint32_t id1, id2, weight;
+        while (file.read(reinterpret_cast<char*>(&id1), sizeof(uint32_t))) {
+            file.read(reinterpret_cast<char*>(&id2), sizeof(uint32_t));
+            file.read(reinterpret_cast<char*>(&weight), sizeof(uint32_t));
+            double w = static_cast<double>(weight);
+            block_sum += w;
+            block_sq_sum += w * w;
+            ++block_count;
+
+            if (block_count == BLOCK_SIZE) {
+                double block_mean = block_sum / block_count;
+                double block_var = (block_sq_sum / block_count) - (block_mean * block_mean);
+                double block_M2 = block_var * block_count;
+
+                // Welford-style 병합
+                double delta = block_mean - global_mean;
+                size_t total_n = global_count + block_count;
+
+                global_mean += delta * (static_cast<double>(block_count) / total_n);
+                global_M2 += block_M2 + delta * delta * global_count * block_count / total_n;
+                global_count = total_n;
+
+                block_sum = block_sq_sum = 0.0;
+                block_count = 0;
+            }
+        }
+
+        // 마지막 블록 처리
+        if (block_count > 0) {
+            double block_mean = block_sum / block_count;
+            double block_var = (block_sq_sum / block_count) - (block_mean * block_mean);
+            double block_M2 = block_var * block_count;
+
+            double delta = block_mean - global_mean;
+            size_t total_n = global_count + block_count;
+
+            global_mean += delta * (static_cast<double>(block_count) / total_n);
+            global_M2 += block_M2 + delta * delta * global_count * block_count / total_n;
+            global_count = total_n;
+        }
+    }
+
+    if (global_count < 2) {
+        std::cerr << "Not enough data to compute threshold." << std::endl;
+        return 0;
+    }
+
+    double stddev = std::sqrt(global_M2 / (global_count - 1));
+    double threshold = global_mean + k * stddev;
+
+    std::cout << "Number of shared kmer mean: " << global_mean
+                << ", stddev: " << stddev
+                << ", kmer threshold (mean + " << k << "*std): " << threshold << std::endl;
+
+    return threshold;
+}
+    
 
 void GroupGenerator::makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
                                 const string &subGraphFileDir, 

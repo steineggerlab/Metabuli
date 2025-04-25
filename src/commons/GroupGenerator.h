@@ -156,6 +156,10 @@ public:
                             const string &subGraphFileDir, 
                             const size_t counter_now,
                             const string &jobId);
+    double dynamicThresholding(const std::string &subGraphFileDir,
+                               size_t numOfGraph,
+                               const std::string &jobId,
+                               double k);
 
     void makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo,
                     const string &subGraphFileDir, 
