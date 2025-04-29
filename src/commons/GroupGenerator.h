@@ -172,6 +172,10 @@ public:
                         vector<Relation>& mergedRelations,
                         int groupKmerThr,
                         int topN);
+    double dynamicThresholding(const std::string &subGraphFileDir,
+                               size_t numOfGraph,
+                               const std::string &jobId,
+                               double k);
 
     void makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo,
                     const string &subGraphFileDir, 
