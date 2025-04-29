@@ -81,7 +81,7 @@ public:
     PARAMETER(EXTRACT_MODE)
 
     // Group generation
-    PARAMETER(GROUP_KMER_THR)
+    PARAMETER(THR_K)
     PARAMETER(GROUP_SCORE_THR)
     PARAMETER(VOTE_MODE)
     PARAMETER(MAJORITY_THR)
@@ -152,7 +152,7 @@ public:
     int matchPerKmer;
     int minSSMatch;
     float tieRatio;
-    int groupKmerThr;
+    float thresholdK;
     float groupScoreThr;
     int voteMode;
     float majorityThr;

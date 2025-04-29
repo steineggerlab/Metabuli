@@ -25,7 +25,7 @@ void setGroupGenerationDefaults(LocalParameters & par){
     par.accessionLevel = 0;
     par.tieRatio = 0.95;
 
-    par.groupKmerThr = 150;
+    par.thresholdK = 0.5;
     par.groupScoreThr = 0.0;
     par.voteMode = 0;
     par.majorityThr = 0.5;

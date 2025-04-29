@@ -67,11 +67,11 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     size_t voteMode = par.voteMode;
     float majorityThr = par.majorityThr;
     float groupScoreThr = par.groupScoreThr;
-    size_t groupKmerThr = par.groupKmerThr;
+    double thresholdK = par.thresholdK;
     cout << "voteMode: " << voteMode << endl;
     cout << "majorityThr: " << majorityThr << endl;
     cout << "groupScoreThr: " << groupScoreThr << endl;
-    cout << "groupKmerThr: " << groupKmerThr << endl;
+    cout << "thresholdK: " << thresholdK << endl;
     
     //Extract k-mers from query sequences and compare them to target k-mer DB
     while (!complete) {
@@ -146,7 +146,7 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     }   
 
     makeGraph(outDir, numOfSplits, numOfThreads, numOfGraph, processedReadCnt, jobId);   
-    int dynamicGroupKmerThr = static_cast<int>(dynamicThresholding(outDir, numOfGraph, jobId, double(groupKmerThr)));
+    int dynamicGroupKmerThr = static_cast<int>(dynamicThresholding(outDir, numOfGraph, jobId, thresholdK));
     unordered_map<uint32_t, unordered_set<uint32_t>> groupInfo;
     vector<int> queryGroupInfo;
     queryGroupInfo.resize(processedReadCnt, -1);
@@ -400,7 +400,7 @@ void GroupGenerator::saveSubGraphToFile(const unordered_map<uint32_t, unordered_
 double GroupGenerator::dynamicThresholding(const std::string &subGraphFileDir,
                                            size_t numOfGraph,
                                            const std::string &jobId,
-                                           double k) {
+                                           double thresholdK) {
     double global_mean = 0.0;
     double global_M2 = 0.0;
     size_t global_count = 0;
@@ -466,11 +466,11 @@ double GroupGenerator::dynamicThresholding(const std::string &subGraphFileDir,
     }
 
     double stddev = std::sqrt(global_M2 / (global_count - 1));
-    double threshold = global_mean + k * stddev;
+    double threshold = global_mean + thresholdK * stddev;
 
     std::cout << "Number of shared kmer mean: " << global_mean
                 << ", stddev: " << stddev
-                << ", kmer threshold (mean + " << k << "*std): " << threshold << std::endl;
+                << ", kmer threshold (mean + " << thresholdK << "*std): " << threshold << std::endl;
 
     return threshold;
 }

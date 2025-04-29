@@ -201,13 +201,13 @@ LocalParameters::LocalParameters() :
                      typeid(int),
                      (void *) &extractMode,
                      "[0-2]"),
-        GROUP_KMER_THR(GROUP_KMER_THR_ID,
-                    "--group-kmer-thr",
+        THR_K(THR_K_ID,
+                    "--thr-k",
                     "Min. num. of shared kmer for read grouping",
                     "Min. num. of shared kmer for read grouping",
-                    typeid(int),
-                    (void *) &groupKmerThr,
-                    "^[0-9]+$"),
+                    typeid(float),
+                    (void *) &thresholdK,
+                    "^0(\\.[0-9]+)?|1(\\.0+)?$"),
         GROUP_SCORE_THR(GROUP_SCORE_THR_ID,
                     "--group-score-thr",
                     "Min. score for read grouping",
@@ -444,7 +444,7 @@ LocalParameters::LocalParameters() :
     tieRatio = 0;
 
     // Group generation
-    groupKmerThr = 0;
+    thresholdK = 0.5;
     voteMode = 0;
     majorityThr = 0.0;
 
@@ -543,7 +543,7 @@ LocalParameters::LocalParameters() :
     groupGeneration.push_back(&TAXONOMY_PATH);
     groupGeneration.push_back(&RAM_USAGE);
     groupGeneration.push_back(&MATCH_PER_KMER);
-    groupGeneration.push_back(&GROUP_KMER_THR);
+    groupGeneration.push_back(&THR_K);
     groupGeneration.push_back(&GROUP_SCORE_THR);
     groupGeneration.push_back(&VOTE_MODE);
     groupGeneration.push_back(&MAJORITY_THR);
