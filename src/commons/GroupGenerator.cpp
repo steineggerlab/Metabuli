@@ -395,54 +395,45 @@ void GroupGenerator::saveSubGraphToFile(const unordered_map<uint32_t, unordered_
     }
 }
 
-
-void GroupGenerator::makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>>& groupInfo,
+void GroupGenerator::makeGroups(unordered_map<uint32_t, unordered_set<uint32_t> >& groupInfo,
                                 const string& subGraphFileDir,
                                 vector<int>& queryGroupInfo,
                                 int groupKmerThr,
-                                size_t& numOfGraph,
+                                size_t numOfGraph,
                                 const string& jobId) {
     DisjointSet ds;
     time_t beforeSearch = time(nullptr);
 
     cout << "Merging relations first..." << endl;
 
-    const int topN = 10;
     vector<Relation> mergedRelations;
-
-    // [1] 먼저 relation 합치기
-    mergeRelations(subGraphFileDir, numOfGraph, jobId, mergedRelations, groupKmerThr, topN);
+    mergeRelations(subGraphFileDir, numOfGraph, jobId, mergedRelations, groupKmerThr, 0); // topN은 무시
 
     cout << "Creating groups based on merged relations..." << endl;
 
-    unordered_map<uint32_t, int> edgeCount;  // id별 연결 수 관리
-
-    // [2] 그룹 생성
     ofstream relationLog(subGraphFileDir + "/" + jobId + "_allRelations.txt");
     if (!relationLog.is_open()) {
         cerr << "Failed to open relation log file." << endl;
         return;
     }
 
-    for (const auto& rel : mergedRelations) {
-        // 한 쪽이라도 topN 이하이면 연결 허용
-        if (edgeCount[rel.id1] < topN || edgeCount[rel.id2] < topN) {
-            relationLog << rel.id1 << ' ' << rel.id2 << ' ' << rel.weight << '\n';
+    for (size_t i = 0; i < mergedRelations.size(); ++i) {
+        const Relation& rel = mergedRelations[i];
 
-            if (ds.parent.find(rel.id1) == ds.parent.end()) ds.makeSet(rel.id1);
-            if (ds.parent.find(rel.id2) == ds.parent.end()) ds.makeSet(rel.id2);
-            ds.unionSets(rel.id1, rel.id2);
+        relationLog << rel.id1 << ' ' << rel.id2 << ' ' << rel.weight << '\n';
 
-            edgeCount[rel.id1]++;
-            edgeCount[rel.id2]++;
-        }
+        if (ds.parent.find(rel.id1) == ds.parent.end()) ds.makeSet(rel.id1);
+        if (ds.parent.find(rel.id2) == ds.parent.end()) ds.makeSet(rel.id2);
+        ds.unionSets(rel.id1, rel.id2);
     }
 
-    // [3] 그룹 결과 기록
-    for (const auto& [queryId, _] : ds.parent) {
+    for (unordered_map<uint32_t, uint32_t>::iterator it = ds.parent.begin(); it != ds.parent.end(); ++it) {
+        uint32_t queryId = it->first;
         uint32_t groupId = ds.find(queryId);
         groupInfo[groupId].insert(queryId);
-        if (queryId >= queryGroupInfo.size()) queryGroupInfo.resize(queryId + 1, -1);
+        if (queryId >= queryGroupInfo.size()) {
+            queryGroupInfo.resize(queryId + 1, -1);
+        }
         queryGroupInfo[queryId] = groupId;
     }
 
@@ -452,21 +443,23 @@ void GroupGenerator::makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>>
 
 
 void GroupGenerator::mergeRelations(const string& subGraphFileDir,
-                    size_t numOfGraph,
-                    const string& jobId,
-                    vector<Relation>& mergedRelations,
-                    int groupKmerThr,
-                    int topN) {
+                                    size_t numOfGraph,
+                                    const string& jobId,
+                                    vector<Relation>& mergedRelations,
+                                    int groupKmerThr,
+                                    int topN) { // topN 파라미터는 무시됨
     const size_t BATCH_SIZE = 4096;
 
+    unordered_map<Relation, uint32_t, relation_hash> totalRelations;
+
     vector<ifstream> files(numOfGraph);
-    vector<queue<Relation>> relationBuffers(numOfGraph);
+    vector<queue<Relation> > relationBuffers(numOfGraph);
     vector<bool> fileHasData(numOfGraph, true);
 
     // 파일 열고 초기 batch 읽기
     for (size_t i = 0; i < numOfGraph; ++i) {
         string fileName = subGraphFileDir + "/" + jobId + "_subGraph" + to_string(i);
-        files[i].open(fileName, ios::binary);
+        files[i].open(fileName.c_str(), ios::binary);
         if (!files[i].is_open()) {
             cerr << "Error opening file: " << fileName << endl;
             fileHasData[i] = false;
@@ -478,7 +471,7 @@ void GroupGenerator::mergeRelations(const string& subGraphFileDir,
             if (!files[i].read(reinterpret_cast<char*>(&r.id1), sizeof(uint32_t))) break;
             files[i].read(reinterpret_cast<char*>(&r.id2), sizeof(uint32_t));
             files[i].read(reinterpret_cast<char*>(&r.weight), sizeof(uint32_t));
-            relationBuffers[i].emplace(r);
+            relationBuffers[i].push(r);
         }
         if (relationBuffers[i].empty()) fileHasData[i] = false;
     }
@@ -490,30 +483,27 @@ void GroupGenerator::mergeRelations(const string& subGraphFileDir,
                 if (!files[i].read(reinterpret_cast<char*>(&r.id1), sizeof(uint32_t))) break;
                 files[i].read(reinterpret_cast<char*>(&r.id2), sizeof(uint32_t));
                 files[i].read(reinterpret_cast<char*>(&r.weight), sizeof(uint32_t));
-                relationBuffers[i].emplace(r);
+                relationBuffers[i].push(r);
             }
             if (relationBuffers[i].empty()) fileHasData[i] = false;
         }
     };
 
-    uint32_t currentId1 = UINT32_MAX;
-    unordered_map<Relation, uint32_t, relation_hash> currentRelations;
-
     bool finished = false;
     while (!finished) {
-        pair<uint32_t, uint32_t> minKey = {UINT32_MAX, UINT32_MAX};
+        pair<uint32_t, uint32_t> minKey(UINT32_MAX, UINT32_MAX);
         size_t selectedFile = -1;
         for (size_t i = 0; i < numOfGraph; ++i) {
             if (fileHasData[i] && !relationBuffers[i].empty()) {
-                const auto& r = relationBuffers[i].front();
+                const Relation& r = relationBuffers[i].front();
                 if (make_pair(r.id1, r.id2) < minKey) {
-                    minKey = {r.id1, r.id2};
+                    minKey = make_pair(r.id1, r.id2);
                     selectedFile = i;
                 }
             }
         }
 
-        if (minKey == make_pair(UINT32_MAX, UINT32_MAX)) {
+        if (minKey.first == UINT32_MAX) {
             finished = true;
             break;
         }
@@ -522,68 +512,21 @@ void GroupGenerator::mergeRelations(const string& subGraphFileDir,
         relationBuffers[selectedFile].pop();
         readNextBatch(selectedFile);
 
-        if (currentId1 == UINT32_MAX) {
-            currentId1 = r.id1;
-        }
-
-        if (r.id1 != currentId1) {
-            // currentId1에 대해 topN 정리
-            if (!currentRelations.empty()) {
-                // threshold 넘는 것만
-                vector<Relation> filtered;
-                for (const auto& [rel, totalWeight] : currentRelations) {
-                    if (totalWeight >= groupKmerThr) {
-                        filtered.push_back({rel.id1, rel.id2, totalWeight});
-                    }
-                }
-
-                // weight 기준 내림차순 정렬
-                sort(filtered.begin(), filtered.end(), [](const Relation& a, const Relation& b) {
-                    return a.weight > b.weight;
-                });
-
-                int actualTopN = min(topN, static_cast<int>(filtered.size()));
-                uint32_t thresholdWeight = (actualTopN > 0) ? filtered[actualTopN - 1].weight : 0;
-
-                for (const auto& rel : filtered) {
-                    if (rel.weight < thresholdWeight) break; // tie 고려
-                    mergedRelations.push_back(rel);
-                }
-            }
-
-            currentRelations.clear();
-            currentId1 = r.id1;
-        }
-
         Relation key = {r.id1, r.id2, 0};
-        currentRelations[key] += r.weight;
+        totalRelations[key] += r.weight;
     }
 
-    // 마지막 남은 것 처리
-    if (!currentRelations.empty()) {
-        vector<Relation> filtered;
-        for (const auto& [rel, totalWeight] : currentRelations) {
-            if (totalWeight >= groupKmerThr) {
-                filtered.push_back({rel.id1, rel.id2, totalWeight});
-            }
-        }
-
-        sort(filtered.begin(), filtered.end(), [](const Relation& a, const Relation& b) {
-            return a.weight > b.weight;
-        });
-
-        int actualTopN = min(topN, static_cast<int>(filtered.size()));
-        uint32_t thresholdWeight = (actualTopN > 0) ? filtered[actualTopN - 1].weight : 0;
-
-        for (const auto& rel : filtered) {
-            if (rel.weight < thresholdWeight) break;
-            mergedRelations.push_back(rel);
+    // merge 완료 후 모든 relation 저장
+    for (unordered_map<Relation, uint32_t, relation_hash>::iterator it = totalRelations.begin(); it != totalRelations.end(); ++it) {
+        const Relation& key = it->first;
+        uint32_t totalWeight = it->second;
+        if (totalWeight >= (uint32_t)groupKmerThr) {
+            mergedRelations.push_back(Relation{key.id1, key.id2, totalWeight});
         }
     }
 
     cout << "Relations merged successfully: " << mergedRelations.size() << " relations collected." << endl;
 }
-
 
 void GroupGenerator::saveGroupsToFile(const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
                                       const vector<int> &queryGroupInfo, 
@@ -727,7 +670,7 @@ void GroupGenerator::getRepLabel(const string &groupRepFileDir,
 
         WeightedTaxResult result = taxonomy->weightedMajorityLCA(setTaxa, majorityThr);
 
-        if (result.taxon != 0) {
+        if (result.taxon != 0 && result.taxon != 1) {
             repLabel[groupId] = result.taxon;
         }
     }
