@@ -872,13 +872,15 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                     while (kseq->ReadEntry()) {
                         if (seqCnt == accessionBatches[batchIdx].orders[idx]) {
                             const KSeqWrapper::KSeqEntry & e = kseq->entry;
-                            // #pragma omp critical
-                            // {
-                            //     cout << "Processing " << e.name.s << "\t" 
-                            //          << e.sequence.l << "\t" 
-                            //          << accessionBatches[batchIdx].speciesID << "\t" 
-                            //          << accessionBatches[batchIdx].taxIDs[idx] << "\n";
-                            // }
+                            #ifdef NDEBUG
+                                #pragma omp critical
+                                {
+                                    cout << "Processing " << e.name.s << "\t" 
+                                         << e.sequence.l << "\t" 
+                                         << accessionBatches[batchIdx].speciesID << "\t" 
+                                         << accessionBatches[batchIdx].taxIDs[idx] << "\n";
+                                }
+                            #endif
 
                             // Mask low complexity regions
                             char *maskedSeq = nullptr;
