@@ -883,8 +883,8 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                 {
                                     cout << "Processing " << e.name.s << "\t" 
                                          << e.sequence.l << "\t" 
-                                         << accessionBatches[batchIdx].speciesID << "\t" 
-                                         << accessionBatches[batchIdx].taxIDs[idx] << "\n";
+                                         << taxonomy->getOriginalTaxID(accessionBatches[batchIdx].speciesID) << "\t" 
+                                         << taxonomy->getOriginalTaxID(accessionBatches[batchIdx].taxIDs[idx]) << "\n";
                                 }
                             #endif
 
