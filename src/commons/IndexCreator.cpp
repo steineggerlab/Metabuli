@@ -867,6 +867,12 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                 posToWrite = kmerBuffer.reserveMemory(estimatedKmerCnt);
                 if (posToWrite + estimatedKmerCnt < kmerBuffer.bufferSize) {
                     KSeqWrapper* kseq = KSeqFactory(fastaPaths[accessionBatches[batchIdx].whichFasta].c_str());
+                    #ifdef NDEBUG
+                        #pragma omp critical
+                        {
+                            cout << fastaPaths[accessionBatches[batchIdx].whichFasta] << endl; 
+                        }
+                    #endif
                     size_t seqCnt = 0;
                     size_t idx = 0;
                     while (kseq->ReadEntry()) {
