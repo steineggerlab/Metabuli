@@ -2,8 +2,8 @@
 	path = util/Metabuli-regression
 	url = https://github.com/steineggerlab/Metabuli-regression.git
 	branch = main
+[submodule "./lib/mmseqs"]
+	url = https://github.com/jaebeom-kim/MMseqs2.git
 [submodule "lib/mmseqs"]
 	path = lib/mmseqs
-	url = https://github.com/soedinglab/MMseqs2.git
-[submodule "./lib/mmseqs"]
 	url = https://github.com/jaebeom-kim/MMseqs2.git
