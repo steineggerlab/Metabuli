@@ -63,11 +63,11 @@ public:
     _training * getTrainingInfo();
     _training getTrainingInfoCopy() { return tinf; }
     void setTrainingInfo(_training &tinf);
-    void getPredictedGenes(char * genome);
+    void getPredictedGenes(unsigned char * genome, size_t seqLength);
     void removeCompletelyOverlappingGenes();
-    void trainASpecies(char * genome);
-    void trainMeta(char * genome);
-    int getNextSeq(char * seq, int training);
+    void trainASpecies(unsigned char * genome, size_t seqLength);
+    void trainMeta(unsigned char * genome, size_t seqLength);
+    int getNextSeq(unsigned char * seq, int training, size_t length);
     void printGenes();
     ProdigalWrapper();
     ~ProdigalWrapper();

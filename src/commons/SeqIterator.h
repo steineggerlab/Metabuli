@@ -109,7 +109,7 @@ public:
 
     void addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const int &kmerCnt, int frame = 0);
 
-    static void maskLowComplexityRegions(const char * seq, char * maskedSeq, ProbabilityMatrix & probMat,
+    static void maskLowComplexityRegions(const unsigned char * seq, unsigned char * maskedSeq, ProbabilityMatrix & probMat,
                                          float maskProb, const BaseMatrix * subMat);
 
     void printKmerInDNAsequence(uint64_t kmer);
