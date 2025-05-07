@@ -139,7 +139,7 @@ void TaxonomyWrapper::initTaxonomy() {
     std::copy(tmpL.begin(), tmpL.end(), L);
 
     M = makeMatrix(maxNodes);
-    InitRangeMinimumQuery();
+    computeSparseTable();
 
     mmapData = NULL;
     mmapSize = 0;

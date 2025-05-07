@@ -2,7 +2,9 @@
 
 void write_report_file(const string &reportFileName, int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt,
                        NcbiTaxonomy & taxonomy) {
-    unordered_map<TaxID, TaxonCounts> cladeCounts = taxonomy.getCladeCounts(taxCnt);
+    std::unordered_map<TaxID, std::vector<TaxID>> parentToChildren = taxonomy.getParentToChildren();
+    unordered_map<TaxID, TaxonCounts> cladeCounts = taxonomy.getCladeCounts(taxCnt, parentToChildren);
+    // unordered_map<TaxID, TaxonCounts> cladeCounts = taxonomy.getCladeCounts(taxCnt);
     FILE *fp;
     fp = fopen(reportFileName.c_str(), "w");
     write_report(fp, cladeCounts, numOfQuery, taxonomy);
