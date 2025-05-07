@@ -466,7 +466,7 @@ double GroupGenerator::dynamicThresholding(const std::string &subGraphFileDir,
     }
 
     double stddev = std::sqrt(global_M2 / (global_count - 1));
-    double threshold = global_mean + thresholdK * stddev;
+    double threshold = max(global_mean + thresholdK * stddev, 0);
 
     std::cout << "Number of shared kmer mean: " << global_mean
                 << ", stddev: " << stddev

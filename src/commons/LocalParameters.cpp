@@ -207,7 +207,7 @@ LocalParameters::LocalParameters() :
                     "Min. num. of shared kmer for read grouping",
                     typeid(float),
                     (void *) &thresholdK,
-                    "^0(\\.[0-9]+)?|1(\\.0+)?$"),
+                    "^(-?(10(\\.0+)?|[0-9](\\.[0-9]+)?))$"),
         GROUP_SCORE_THR(GROUP_SCORE_THR_ID,
                     "--group-score-thr",
                     "Min. score for read grouping",
