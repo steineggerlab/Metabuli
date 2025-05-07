@@ -734,6 +734,8 @@ void GroupGenerator::getRepLabel(const string &groupRepFileDir,
         }
     }
 
+    std::unordered_map<int, int> external2internalTaxId;
+    taxonomy->getExternal2internalTaxID(external2internalTaxId);
 
     for (const auto& group : groupInfo) {
         uint32_t groupId = group.first;
@@ -742,7 +744,7 @@ void GroupGenerator::getRepLabel(const string &groupRepFileDir,
         vector<WeightedTaxHit> setTaxa;
 
         for (const auto& queryId : queryIds) {
-            int query_label = metabuliResult[queryId].first; 
+            int query_label = external2internalTaxId[metabuliResult[queryId].first]; 
             float score = metabuliResult[queryId].second;
             if (query_label != 0 && score >= groupScoreThr) {
                 setTaxa.emplace_back(query_label, score, voteMode);
@@ -805,7 +807,7 @@ void GroupGenerator::applyRepLabel(const string &resultFileDir,
             uint32_t groupId = queryGroupInfo[queryIdx];
             auto repLabelIt = repLabel.find(groupId);
             if (repLabelIt != repLabel.end() && repLabelIt->second != 0) {
-                fields[2] = to_string(repLabelIt->second);
+                fields[2] = to_string(taxonomy->getOriginalTaxID(repLabelIt->second));
                 fields[0] = "1";
                 // fields[5] = taxonomy->getString(taxonomy->taxonNode(repLabelIt->second)->rankIdx);
                 fields[5] = "-";
