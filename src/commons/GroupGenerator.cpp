@@ -120,16 +120,7 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
                                              queryReadSplit[splitIdx],
                                              par,
                                              kseq1,
-                                             kseq2); // sync kseq1 and kseq2            
-            // for (size_t i = 0; i < queryKmerBuffer.startIndexOfReserve; ++i) {
-            //     const auto& kmer = queryKmerBuffer.buffer[i].ADkmer;
-            //     const auto& seqID = queryKmerBuffer.buffer[i].info.sequenceID;
-            //     cout << "[EXTRACT] splitIdx: " << splitIdx
-            //             << ", seqID: " << seqID
-            //             << ", kmer: " << kmer
-            //             << ", kmerIdx: " << i << endl;
-            // }
-            // saveQueryIdToFile
+                                             kseq2); 
             kmerFileHandler->writeQueryKmerFile(queryKmerBuffer, outDir, numOfSplits, numOfThreads, processedReadCnt, jobId);
             processedReadCnt += queryReadSplit[splitIdx].readCnt;
             cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
@@ -150,7 +141,7 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     unordered_map<uint32_t, unordered_set<uint32_t>> groupInfo;
     vector<int> queryGroupInfo;
     queryGroupInfo.resize(processedReadCnt, -1);
-    //makeGroups(groupInfo, outDir, queryGroupInfo, groupKmerThr, numOfGraph, jobId);
+    // makeGroups(groupInfo, outDir, queryGroupInfo, groupKmerThr, numOfGraph, jobId);
     makeGroups(groupInfo, outDir, queryGroupInfo, dynamicGroupKmerThr, numOfGraph, jobId);
     
     saveGroupsToFile(groupInfo, queryGroupInfo, outDir, jobId);
@@ -322,7 +313,7 @@ void GroupGenerator::makeGraph(const string &queryKmerFileDir,
                         if (threadRelation[a][b] == 0){
                             processedRelationCnt++;
                         }
-			threadRelation[a][b]++;
+			            threadRelation[a][b]++;
                     }
                 }
             }
@@ -356,11 +347,6 @@ void GroupGenerator::makeGraph(const string &queryKmerFileDir,
     cout << "Relations generated from files successfully." << endl;
     cout << "Time spent: " << double(time(nullptr) - beforeSearch) << " seconds." << endl;
 }
-
-
-
-
-
 
 void GroupGenerator::saveSubGraphToFile(const unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> &subRelation, 
                                         const string &subGraphFileDir, 
@@ -756,6 +742,9 @@ void GroupGenerator::getRepLabel(const string &groupRepFileDir,
         if (result.taxon != 0 && result.taxon != 1) {
             repLabel[groupId] = result.taxon;
         }
+        else{
+            repLabel[groupId] = 0;
+        }
     }
 
     const string& groupRepFileName = groupRepFileDir + "/" + jobId + "_groupRep";
@@ -802,16 +791,23 @@ void GroupGenerator::applyRepLabel(const string &resultFileDir,
         while (getline(ss, field, '\t')) {
             fields.push_back(field);
         }
+        fields.push_back("-");
 
-        if ((fields.size() > 2) && ((fields[0] == "0") || (std::stof(fields[4]) < groupScoreThr))) {
-            uint32_t groupId = queryGroupInfo[queryIdx];
-            auto repLabelIt = repLabel.find(groupId);
-            if (repLabelIt != repLabel.end() && repLabelIt->second != 0) {
-                fields[2] = to_string(taxonomy->getOriginalTaxID(repLabelIt->second));
+        uint32_t groupId = queryGroupInfo[queryIdx];
+        auto repLabelIt = repLabel.find(groupId);
+        if (repLabelIt != repLabel.end() && repLabelIt->second != 0) {
+            if ((fields.size() > 2) && ((fields[0] == "0") || (std::stof(fields[4]) < groupScoreThr))) {
                 fields[0] = "1";
-                // fields[5] = taxonomy->getString(taxonomy->taxonNode(repLabelIt->second)->rankIdx);
+                fields[2] = to_string(taxonomy->getOriginalTaxID(repLabelIt->second));
                 fields[5] = "-";
             }
+            fields[7] = to_string(groupId);
+        }
+        else if (repLabelIt != repLabel.end() && repLabelIt->second == 0) {
+            fields[0] = "0";
+            fields[2] = "0";
+            fields[5] = "no rank";
+            fields[7] = to_string(groupId);
         }
 
         for (size_t i = 0; i < fields.size(); ++i) {

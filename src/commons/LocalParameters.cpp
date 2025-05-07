@@ -444,7 +444,7 @@ LocalParameters::LocalParameters() :
     tieRatio = 0;
 
     // Group generation
-    thresholdK = 2;
+    thresholdK = 2.5;
     voteMode = 0;
     majorityThr = 0.0;
 
