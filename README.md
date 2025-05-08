@@ -94,7 +94,7 @@ Metabuli also works on Linux ARM64 and Windows systems. Please check [https://mm
 
 ### Compile from source code
 ```
-git clone https://github.com/steineggerlab/Metabuli.git
+git clone --recurse-submodules https://github.com/steineggerlab/Metabuli.git
 cd Metabuli
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
@@ -177,34 +177,45 @@ This will generate three result files: `JobID_classifications.tsv`, `JobID_repor
 > Sankey diagram is available in the [GUI app](https://github.com/steineggerlab/Metabuli-App).
 
 #### JobID_classifications.tsv
-1. Classified or not
-2. Read ID
-3. Taxonomy identifier
-4. Effective read length
-5. DNA level identity score
-6. Classification Rank
-7. List of "taxID : k-mer match count"
+You can use `--lineage 1` option in `classify` module to print the full lineage next to `rank` column. 
+1. `is_classified`: Classified or not
+2. `name`: Read ID
+3. `taxID`: Tax. ID in the tax. dump files used in database creation
+4. `query_length`: Effective read length
+5. `score`: DNA level identity score
+6. `rank`: Taxonomic rank of the taxon
+7. `taxID:match_count`: List of "taxID : k-mer match count"
 
 ```
+#is_classified name  taxID query_length score rank taxID:match_count
 1 read_1  2688  294     0.627551 subspecies  2688:65
 1 read_2  2688  294     0.816327 subspecies  2688:78
 0 read_3  0     294     0        no rank
 ```
 
 #### JobID_report.tsv
-The proportion of reads that are assigned to each taxon.
+It follows Kraken2's report format. The first line is a header, and the rest of the lines are tab-separated values. The columns are as follows:
+
+1. `clade_proportion`: Percentage of reads classified to the clade rooted at this taxon
+2. `clade_count`: Number of reads classified to the clade rooted at this taxon
+3. `taxon_count`: Number of reads classified directly to this taxon
+4. `rank`: Taxonomic rank of the taxon
+5. `taxID`: Tax ID according to the taxonomy dump files used in the database creation
+6. `name`: Taxonomic name of the taxon
+
 ```
-33.73   77571   77571   0       no rank unclassified
-66.27   152429  132     1       no rank root
-64.05   147319  2021    8034    superkingdom      d__Bacteria
-22.22   51102   3       22784   phylum      p__Firmicutes
-22.07   50752   361     22785   class         c__Bacilli
-17.12   39382   57      123658  order           o__Bacillales
-15.81   36359   3       126766  family            f__Bacillaceae
-15.79   36312   26613   126767  genus               g__Bacillus
-2.47    5677    4115    170517  species               s__Bacillus amyloliquefaciens
-0.38    883     883     170531  subspecies                      RS_GCF_001705195.1
-0.16    360     360     170523  subspecies                      RS_GCF_003868675.1
+#clade_proportion  clade_count  taxon_count rank  taxID name  
+33.73   77571   77571   no rank 0        unclassified
+66.27   152429  132     no rank 1        root
+64.05   147319  2021    superkingdom  8034          d__Bacteria
+22.22   51102   3       phylum        22784         p__Firmicutes
+22.07   50752   361     class         22785            c__Bacilli
+17.12   39382   57      order         123658             o__Bacillales
+15.81   36359   3       family        126766              f__Bacillaceae
+15.79   36312   26613   genus         126767                 g__Bacillus
+2.47    5677    4115    species       170517                 s__Bacillus amyloliquefaciens
+0.38    883     883     subspecies    170531                        RS_GCF_001705195.1
+0.16    360     360     subspecies    170523                        RS_GCF_003868675.1
 
 ```
 

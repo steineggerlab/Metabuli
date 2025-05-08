@@ -4,9 +4,9 @@ void write_report_file(const string &reportFileName, int numOfQuery, unordered_m
                        NcbiTaxonomy & taxonomy) {
     std::unordered_map<TaxID, std::vector<TaxID>> parentToChildren = taxonomy.getParentToChildren();
     unordered_map<TaxID, TaxonCounts> cladeCounts = taxonomy.getCladeCounts(taxCnt, parentToChildren);
-    // unordered_map<TaxID, TaxonCounts> cladeCounts = taxonomy.getCladeCounts(taxCnt);
     FILE *fp;
     fp = fopen(reportFileName.c_str(), "w");
+    fprintf(fp, "#clade_proportion\tclade_count\ttaxon_count\trank\ttaxID\tname\n");
     write_report(fp, cladeCounts, numOfQuery, taxonomy);
     fclose(fp);
 }

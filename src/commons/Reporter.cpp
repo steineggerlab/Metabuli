@@ -22,25 +22,46 @@ void Reporter::openReadClassificationFile() {
 }
 
 void Reporter::writeReadClassification(const vector<Query> & queryList, bool classifiedOnly) {
+    readClassificationFile << "#is_classified\tname\ttaxID\tquery_length\tscore\trank";
+    if (par.printLineage) {
+        readClassificationFile << "\tlineage";
+    }
+    readClassificationFile << "\taxID:match_count\n";
     for (size_t i = 0; i < queryList.size(); i++) {
         if (classifiedOnly && !queryList[i].isClassified) {
             continue;
         }
-        readClassificationFile << queryList[i].isClassified << "\t" << queryList[i].name << "\t"
-                               << taxonomy->getOriginalTaxID(queryList[i].classification) << "\t"
-                               << queryList[i].queryLength + queryList[i].queryLength2 << "\t"
-                               << queryList[i].score << "\t"
-                               << taxonomy->getString(taxonomy->taxonNode(queryList[i].classification)->rankIdx) << "\t";
-        // for (size_t j = 0; j < queryList[i].pathScores.size(); j++) {
-        //     readClassificationFile << queryList[i].pathScores[j] << " ";
-        // }
-        if (par.printLineage) {
-            readClassificationFile << taxonomy->taxLineage2(taxonomy->taxonNode(queryList[i].classification)) << "\t";
+        if (queryList[i].isClassified != 0) {
+            readClassificationFile 
+                << queryList[i].isClassified << "\t" 
+                << queryList[i].name << "\t"
+                << taxonomy->getOriginalTaxID(queryList[i].classification) << "\t"
+                << queryList[i].queryLength + queryList[i].queryLength2 << "\t"
+                << queryList[i].score << "\t"
+                << taxonomy->getString(taxonomy->taxonNode(queryList[i].classification)->rankIdx) << "\t";
+            
+            if (par.printLineage) {
+                readClassificationFile << taxonomy->taxLineage2(taxonomy->taxonNode(queryList[i].classification)) << "\t";
+            }
+            
+            for (auto it = queryList[i].taxCnt.begin(); it != queryList[i].taxCnt.end(); ++it) {
+                readClassificationFile << taxonomy->getOriginalTaxID(it->first) << ":" << it->second << " ";
+            }
+            readClassificationFile << "\n";
+        } else {
+            readClassificationFile 
+                << queryList[i].isClassified << "\t" 
+                << queryList[i].name << "\t"
+                << taxonomy->getOriginalTaxID(queryList[i].classification) << "\t"
+                << queryList[i].queryLength + queryList[i].queryLength2 << "\t"
+                << queryList[i].score << "\t"
+                << "-" << "\t";
+            
+            if (par.printLineage) {
+                readClassificationFile << "-\t";
+            }
+            readClassificationFile << "-\t\n";
         }
-        for (auto it = queryList[i].taxCnt.begin(); it != queryList[i].taxCnt.end(); ++it) {
-            readClassificationFile << taxonomy->getOriginalTaxID(it->first) << ":" << it->second << " ";
-        }
-        readClassificationFile << "\n";
     }
 }
 
@@ -82,6 +103,7 @@ void Reporter::writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int
     unordered_map<TaxID, TaxonCounts> cladeCounts = taxonomy->getCladeCounts(taxCnt, parentToChildren);
     FILE *fp;
     fp = fopen((reportFileName).c_str(), "w");
+    fprintf(fp, "#clade_proportion\tclade_count\ttaxon_count\trank\ttaxID\tname\n");
     writeReport(fp, cladeCounts, numOfQuery);
     fclose(fp);
 
@@ -152,6 +174,9 @@ void Reporter::getReadsClassifiedToClade(TaxID cladeId,
         unordered_map<TaxID, TaxID> extern2intern;
         taxonomy->getExternal2internalTaxID(extern2intern);
         while (fgets(line, sizeof(line), results)) {
+            if (line[0] == '#') {
+                continue;
+            }
             int taxId;
             if (sscanf(line, "%*s %*s %d", &taxId) == 1) {            
                 if (taxonomy->IsAncestor(cladeId, extern2intern[taxId])) {
@@ -162,6 +187,9 @@ void Reporter::getReadsClassifiedToClade(TaxID cladeId,
         }
     } else {
         while (fgets(line, sizeof(line), results)) {
+            if (line[0] == '#') {
+                continue;
+            }
             int taxId;
             if (sscanf(line, "%*s %*s %d", &taxId) == 1) {            
                 if (taxonomy->IsAncestor(cladeId, taxId)) {
