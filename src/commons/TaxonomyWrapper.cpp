@@ -481,11 +481,16 @@ TaxID TaxonomyWrapper::getTaxIdAtRank(int taxId, const std::string & rank) const
     int rankIndex = findRankIndex(rank);
     const TaxonNode * curNode = taxonNode(taxId, true);
     int cnt = 0;
-    while ((NcbiTaxonomy::findRankIndex(getString(curNode->rankIdx)) < rankIndex ||
-            findRankIndex(getString(curNode->rankIdx)) == 29) && cnt < 30)  {
+
+    while (cnt < 30 && NcbiTaxonomy::findRankIndex(getString(curNode->rankIdx)) < rankIndex) {
         curNode = taxonNode(curNode->parentTaxId, true);
         cnt ++;
     }
+    // while ((NcbiTaxonomy::findRankIndex(getString(curNode->rankIdx)) < rankIndex ||
+    //         findRankIndex(getString(curNode->rankIdx)) == 29) && cnt < 30)  {
+    //     curNode = taxonNode(curNode->parentTaxId, true);
+    //     cnt ++;
+    // }
     if (cnt == 30) {
         return taxId;
     }
