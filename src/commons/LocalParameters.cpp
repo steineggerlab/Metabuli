@@ -180,6 +180,13 @@ LocalParameters::LocalParameters() :
                      typeid(int),
                      (void *) &extractMode,
                      "[0-2]"),
+        PARAM_OUTDIR(PARAM_OUTDIR_ID,
+                    "--outdir",
+                    "Output directory",
+                    "Output directory",
+                    typeid(std::string),
+                    (void *) &outputDir,
+                    "^.*$"),
         LIBRARY_PATH(LIBRARY_PATH_ID,
                      "--library-path",
                      "Path to library where the FASTA files are stored",
@@ -475,6 +482,7 @@ LocalParameters::LocalParameters() :
     extract.push_back(&SEQ_MODE);
     extract.push_back(&TARGET_TAX_ID);
     extract.push_back(&EXTRACT_MODE);
+    extract.push_back(&PARAM_OUTDIR);
 
     // filter 
     filter.push_back(&PARAM_THREADS);
