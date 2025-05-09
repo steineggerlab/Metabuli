@@ -13,7 +13,9 @@ add_executable(metabuli
         ${util_source_files}
         ${workflow_source_files}
         metabuli.cpp
-        LocalCommandDeclarations.h util/filter_by_genus.cpp)
+        LocalCommandDeclarations.h 
+        util/filter_by_genus.cpp
+        MetabuliBase.cpp)
 
 mmseqs_setup_derived_target(metabuli)
 target_link_libraries(metabuli version)

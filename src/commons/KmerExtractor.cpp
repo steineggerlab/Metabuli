@@ -282,7 +282,7 @@ void KmerExtractor::processSequence(size_t count,
                 delete[] maskedSeq;
                 maskedSeq = new char[maxReadLength];
             }
-            SeqIterator::maskLowComplexityRegions(reads[i].c_str(), maskedSeq, *probMatrix, maskProb, subMat);
+            SeqIterator::maskLowComplexityRegions((unsigned char *) reads[i].c_str(), (unsigned char *) maskedSeq, *probMatrix, maskProb, subMat);
             seq = maskedSeq;
         } else {
             seq = const_cast<char *>(reads[i].c_str());
