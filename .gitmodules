@@ -5,12 +5,3 @@
 [submodule "lib/mmseqs"]
 	path = lib/mmseqs
 	url = https://github.com/jaebeom-kim/MMseqs2.git
-[submodule "lib/fastp"]
-	path = lib/fastp
-	url = https://github.com/jaebeom-kim/fastp.git
-[submodule "lib/libdeflate"]
-	path = lib/libdeflate
-	url = https://github.com/ebiggers/libdeflate.git
-[submodule "lib/libisal"]
-	path = lib/libisal
-	url = https://github.com/intel/isa-l.git
