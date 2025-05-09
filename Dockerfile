@@ -1,8 +1,13 @@
 ARG APP=metabuli
-FROM --platform=$BUILDPLATFORM debian:stable as builder
+
+########################################
+# Builder stage (multi-arch cross-compile)
+########################################
+FROM --platform=$BUILDPLATFORM debian:stable AS builder
 ARG TARGETARCH
 ARG APP
 
+# Install build tools (including cross-compile libs)
 RUN dpkg --add-architecture $TARGETARCH \
     && apt-get update \
     && apt-get install -y \
@@ -12,8 +17,14 @@ RUN dpkg --add-architecture $TARGETARCH \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/build
+
+# Copy in your repo (including .git and .gitmodules)
 ADD . .
 
+# Ensure submodules are initialized
+RUN git submodule update --init --recursive
+
+# Build three variants
 RUN if [ "$TARGETARCH" = "arm64" ]; then \
       mkdir -p build_$TARGETARCH/src; \
       cd /opt/build/build_$TARGETARCH; \
