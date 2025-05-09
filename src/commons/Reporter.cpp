@@ -26,7 +26,7 @@ void Reporter::writeReadClassification(const vector<Query> & queryList, bool cla
     if (par.printLineage) {
         readClassificationFile << "\tlineage";
     }
-    readClassificationFile << "\taxID:match_count\n";
+    readClassificationFile << "\ttaxID:match_count\n";
     for (size_t i = 0; i < queryList.size(); i++) {
         if (classifiedOnly && !queryList[i].isClassified) {
             continue;
