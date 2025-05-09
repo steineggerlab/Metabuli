@@ -89,6 +89,8 @@ jobs:
           ARCH: arm64
           CPREF: aarch64
     steps:
+      - checkout: self
+        submodules: true
       - script: |
           sudo dpkg --add-architecture $ARCH
           cat << HEREDOC | sudo tee /etc/apt/sources.list
