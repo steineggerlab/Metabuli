@@ -3,6 +3,7 @@
 #include "LocalParameters.h"
 #include "FileUtil.h"
 #include "common.h"
+#include "LocalUtil.h"
 
 void setClassifyDefaults(LocalParameters & par){
     par.skipRedundancy = 0;
@@ -29,36 +30,82 @@ void setClassifyDefaults(LocalParameters & par){
     par.printLineage = 0;
 }
 
-int classify(int argc, const char **argv, const Command& command)
-{
+int classify(int argc, const char **argv, const Command& command) {
     LocalParameters & par = LocalParameters::getLocalInstance();
     setClassifyDefaults(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
-
+    string dbDir;
     if (par.seqMode == 2) {
-        // Check if the second argument is a directory
+        dbDir = par.filenames[2];
         if (FileUtil::directoryExists(par.filenames[1].c_str())) {
             cout << "Error: " << par.filenames[1] << " is a directory. Please specify a query file name." << endl;
             cout << "       For '--seq-mode 2', please provide two query files." << endl;
             exit(1);
         }
 
+        if (!LocalUtil::isValidQueryFile(par.filenames[0])) {
+            cout << "Error: " << par.filenames[0] << " is not a valid query file." << endl;
+            cout << "       Allowed extensions are .fna, .fasta, .fa, .fq, .fastq, and their gzip versions (e.g., .fna.gz)" << endl;
+            exit(1);
+        }
+        if (!LocalUtil::isValidQueryFile(par.filenames[1])) {
+            cout << "Error: " << par.filenames[1] << " is not a valid query file." << endl;
+            cout << "       Allowed extensions are .fna, .fasta, .fa, .fq, .fastq, and their gzip versions (e.g., .fna.gz)" << endl;
+            exit(1);
+        }
         if (!FileUtil::directoryExists(par.filenames[3].c_str())) {
             FileUtil::makeDir(par.filenames[3].c_str());
         }
     } else {
-        // Check if the second argument is file
+        dbDir = par.filenames[1];
         if (FileUtil::fileExists(par.filenames[1].c_str()) 
             && !FileUtil::directoryExists(par.filenames[1].c_str())) {
             cout << "Error: " << par.filenames[1] << " is a file. Please specify a database directory." << endl;
             cout << "       For '--seq-mode 1' and '--seq-mode 3', please provide one query file." << endl;
             exit(1);
         }
-
+        if (!LocalUtil::isValidQueryFile(par.filenames[0])) {
+            cout << "Error: " << par.filenames[0] << " is not a valid query file." << endl;
+            cout << "       Allowed extensions are .fna, .fasta, .fa, .fq, .fastq, and their gzip versions (e.g., .fna.gz)" << endl;
+            exit(1);
+        }
         if (!FileUtil::directoryExists(par.filenames[2].c_str())) {
             FileUtil::makeDir(par.filenames[2].c_str());
         }
     }
+
+    // Validate database directory
+    if (!FileUtil::directoryExists(dbDir.c_str())) {
+        cout << "Error: " << dbDir << " is not found." << endl;
+        exit(1);
+    }
+    const string & diffIdx = dbDir + "/diffIdx";
+    const string & info = dbDir + "/info";
+    const string & split = dbDir + "/split";
+    const string & taxonomy = dbDir + "/taxonomyDB";
+    if (!FileUtil::fileExists(diffIdx.c_str())) {
+        cout << "Error: " << diffIdx << " is not found." << endl;
+        exit(1);
+    }
+    if (!FileUtil::fileExists(info.c_str())) {
+        cout << "Error: " << info << " is not found." << endl;
+        exit(1);
+    }
+    if (!FileUtil::fileExists(split.c_str())) {
+        cout << "Error: " << split << " is not found." << endl;
+        exit(1);
+    }
+    if (!FileUtil::fileExists(taxonomy.c_str())
+        && par.taxonomyPath.empty()
+        && !FileUtil::fileExists((dbDir + "/taxonomy/merged.dmp").c_str())) {
+        cout << "Error: taxonomy files are not found." << endl;
+        cout << "       One of the followings should be provided:" << endl;
+        cout << "       1. File: " << taxonomy << endl;
+        cout << "       2. Dir : " << dbDir + "/taxonomy" << endl;
+        cout << "       3. Specify --taxonomy-path" << endl;
+        exit(1);
+    }
+    
 
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
