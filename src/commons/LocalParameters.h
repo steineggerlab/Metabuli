@@ -115,12 +115,14 @@ public:
     PARAMETER(KMER_BEGIN)
     PARAMETER(KMER_END)
 
-    // classified2full
+    // classifiedRefiner
     PARAMETER(UNCLASSIFIED)
     PARAMETER(EXCLUDE_CONTAM)
     PARAMETER(INCLUDE_TARGET)
     PARAMETER(SELECT_COLUMNS)
     PARAMETER(REPORT)
+    PARAMETER(CRITERION_RANK)
+
 
 
 
@@ -202,6 +204,7 @@ public:
     std::string includeTarget;
     std::string selectColumns;
     bool report;
+    std::string criterionRank;
 
     void printParameters(const std::string &module, int argc,
                          const char* pargv[],

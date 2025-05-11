@@ -23,9 +23,9 @@ private:
     ofstream readClassificationFile;
 
 public:
-    Reporter(const LocalParameters &par, TaxonomyWrapper *taxonomy);
+    Reporter(const LocalParameters &par, TaxonomyWrapper *taxonomy, const std::string &customReportFileName = "");
     // Write report
-    void writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt, bool krona = true);
+    void writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt, bool krona = true, const std::string &kronaFileName = "");
     void writeReport(FILE *FP, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts,
                      unsigned long totalReads, TaxID taxID = 0, int depth = 0);
     void kronaReport(FILE *FP, const TaxonomyWrapper &taxDB, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts, unsigned long totalReads, TaxID taxID = 0, int depth = 0);

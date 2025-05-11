@@ -396,7 +396,22 @@ LocalParameters::LocalParameters() :
                 "select columns with number 0~7, 0: classified or not 7: full lineage",
                 typeid(std::string),
                 (void *) &selectColumns,
+                "^.*$"),
+        REPORT(REPORT_ID,
+                "--report",
+                "make report of refined classification file",
+                "make report of refined classification file",
+                typeid(bool),
+                (void *) &report,
+                ""),
+        CRITERION_RANK(CRITERION_RANK_ID,
+                "--criterion-rank",
+                "transform based on specific rank add * to save reads with higher ranks in separate file",
+                "transform based on specific rank add * to save reads with higher ranks in separate file",
+                typeid(std::string),
+                (void *) &criterionRank,
                 "^.*$")
+            
         
         
   {
@@ -457,6 +472,8 @@ LocalParameters::LocalParameters() :
     excludeContam = "";
     includeTarget = "";
     selectColumns = "";
+    report = false;
+    criterionRank = "";
 
 
 
@@ -585,6 +602,9 @@ LocalParameters::LocalParameters() :
     classifiedRefiner.push_back(&EXCLUDE_CONTAM);
     classifiedRefiner.push_back(&INCLUDE_TARGET);
     classifiedRefiner.push_back(&SELECT_COLUMNS);
+    classifiedRefiner.push_back(&REPORT);
+    classifiedRefiner.push_back(&CRITERION_RANK);
+    classifiedRefiner.push_back(&PARAM_THREADS);
 
 }
 

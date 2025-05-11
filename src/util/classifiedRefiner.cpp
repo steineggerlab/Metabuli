@@ -67,6 +67,10 @@ int classifiedRefiner(int argc, const char **argv, const Command &command) {
 //fulltaxonomy
 
 int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, const LocalParameters &par) {
+    #ifdef OPENMP
+    omp_set_num_threads(par.threads);
+    #endif
+    
     const string & nodesFile = taxonomyDir + "/nodes.dmp";
     const string & namesFile = taxonomyDir + "/names.dmp";
     const string & mergedFile = taxonomyDir + "/merged.dmp";
@@ -75,6 +79,9 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
     TaxonomyWrapper *taxonomy = new TaxonomyWrapper(namesFile, nodesFile, mergedFile, true);
     unordered_map<TaxID, TaxID> extern2intern; // for external2internalTaxID
     taxonomy->getExternal2internalTaxID(extern2intern); // fill extern2intern
+
+    string reportFileName = classifiedFile.substr(0, classifiedFile.find_last_of('.')) + "_refined_report.tsv";
+    Reporter * reporter = new Reporter(par, taxonomy,reportFileName);
 
     string refinedFileName = classifiedFile.substr(0, classifiedFile.find_last_of('.')) + "_refined.tsv";
     cout << "Write refined classification result to: " << endl;
@@ -121,6 +128,34 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
     } else {
         columnsIdx = {0,1,2,3,4,5,6,7};
     }
+
+    // criterionRank process
+    std::string criterionRank = par.criterionRank;
+    bool createUpperRanksFile = false;
+
+    // process *
+    if (!criterionRank.empty() && criterionRank.back() == '*') {
+        createUpperRanksFile = true; // 
+        criterionRank.pop_back();   // remove '*'
+    }
+
+    // check if criterionRank is valid
+    if (!criterionRank.empty() && taxonomy->findRankIndex(criterionRank) == -1) {
+        Debug(Debug::ERROR) << "Invalid criterion rank: " << criterionRank << ". Rank not found in NcbiRanks.\n";
+        EXIT(EXIT_FAILURE);
+    }
+
+    std::string upperRankFileName = classifiedFile.substr(0, classifiedFile.find_last_of('.')) + "_upperRanks.tsv";
+
+    if(createUpperRanksFile){
+        ofstream upperRankFile(upperRankFileName.c_str());        
+        if (!upperRankFile.is_open()) {
+            Debug(Debug::ERROR) << "Could not open " << upperRankFileName << " for writing\n";
+            EXIT(EXIT_FAILURE);
+        } 
+        upperRankFile.close();
+    }
+
     ifstream file(classifiedFile);
     ofstream refinedFileAppend(refinedFileName.c_str(), ios::app); // Append mode for parallel writes
     if (!file.is_open() || !refinedFileAppend.is_open()) {
@@ -128,41 +163,109 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
     EXIT(EXIT_FAILURE);
     }
 
+    ofstream upperRankFileAppend;
+    if (createUpperRanksFile) {
+        upperRankFileAppend.open(upperRankFileName.c_str(), ios::app); // open file with append mode
+        if (!upperRankFileAppend.is_open()) {
+            Debug(Debug::ERROR) << "Could not open " << upperRankFileName << " for writing\n";
+            EXIT(EXIT_FAILURE);
+        }
+    }
+    
+
     const size_t CHUNK_SIZE = 1000;
     
 
-    #pragma omp parallel default(none) shared(file, refinedFileAppend, taxonomy, extern2intern, contamsTaxIds, targetsTaxIds, columnsIdx, par, cout)
+    //to make report
+    size_t totalSeqCnt = 0;
+    std::unordered_map<TaxID, unsigned int> taxcntSum;
+    std::vector<std::string> resultChunk;
+    std::vector<std::string> upperRanks;
+    
+    #pragma omp parallel default(none) shared(file, refinedFileAppend, taxonomy, extern2intern, contamsTaxIds, targetsTaxIds, columnsIdx, par, totalSeqCnt, resultChunk, taxcntSum,upperRanks, upperRankFileAppend, createUpperRanksFile, criterionRank)
     {
     
         #pragma omp single
         {
+            resultChunk.resize(10000*omp_get_num_threads()); 
+            upperRanks.resize(10000*omp_get_num_threads());
             vector<string> chunk;
             string line;
+            size_t chunkCnt = 0;
+            std::unordered_map<TaxID, unsigned int> taxcnt;
+
             while (true){
                 chunk.clear();
-
+                chunkCnt++;
                 for(size_t i = 0; i < CHUNK_SIZE && getline(file, line); ++i) {
+                    
+                    totalSeqCnt++;
                     chunk.push_back(line);
                 }
 
+                // chunkCnt condition check
+                if (chunkCnt > 10 * omp_get_num_threads()) {
+                    #pragma omp taskwait 
+
+                    for (const string &line : resultChunk) {
+                        refinedFileAppend << line;
+                    }
+
+                    resultChunk.clear();
+                    resultChunk.resize(10000 * omp_get_num_threads());
+
+                    if(createUpperRanksFile){
+                        for (const string &line : upperRanks) {
+                            if (!line.empty()) { 
+                                upperRankFileAppend << line;
+                            }
+                        }
+    
+                        upperRanks.clear();
+                        upperRanks.resize(10000 * omp_get_num_threads());
+                    }
+                    
+                    chunkCnt = 1;
+                }
+
                 if (chunk.empty()) {
+                    #pragma omp taskwait 
+
+                    for (const string &line : resultChunk) {
+                        refinedFileAppend << line;
+                    }
+                    resultChunk.clear();
+
+                    if(createUpperRanksFile){
+                        for (const string &line : upperRanks) {
+                            if (!line.empty()) { 
+                                upperRankFileAppend << line;
+                            }
+                        }
+    
+                        upperRanks.clear();
+                        upperRanks.resize(10000 * omp_get_num_threads());
+                    }
                     break;
                 }
             
-
-        #pragma omp task firstprivate(chunk)
+        #pragma omp task firstprivate(chunk,chunkCnt)
             {
-                for (const string &line : chunk){
+                
+                std::unordered_map<TaxID, unsigned int> taxCounts;
+                for (size_t localIdx = 0; localIdx < chunk.size(); ++localIdx) {
+                    const string &line = chunk[localIdx];
                     vector<string> fields = Util::split(line, "\t");
+            
                     if (fields.size() == 6) {
                         fields.push_back("");
                         fields.push_back("");
                     }
-
+            
                     if (fields.size() == 7) {
                         fields.push_back("");
                     }
-
+            
                     ClassificationResult data = parseFields(fields);
                     data.taxonomyId = extern2intern[data.taxonomyId];
                     if (data.fullLineage == "") {
@@ -170,22 +273,54 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
                         fields.pop_back();
                         fields.push_back(data.fullLineage);
                     }
-
+            
                     // remove unclassified
-                    if (!(par.unclassified == true && data.isClassified == false) && !(contamsTaxIds.size() > 0 && checktaxId(taxonomy, contamsTaxIds, data.taxonomyId)) && !(targetsTaxIds.size() > 0 && !checktaxId(taxonomy, targetsTaxIds, data.taxonomyId))) {
-                    
+                    if (!(par.unclassified == true && data.isClassified == false) &&
+                        !(contamsTaxIds.size() > 0 && checktaxId(taxonomy, contamsTaxIds, data.taxonomyId)) &&
+                        !(targetsTaxIds.size() > 0 && !checktaxId(taxonomy, targetsTaxIds, data.taxonomyId))) {
+                        
                         stringstream ss;
+                        stringstream tt;
+                        if(!criterionRank.empty()){ 
+                            int criterion = taxonomy->findRankIndex(criterionRank);
+                            if(taxonomy->findRankIndex(data.classificationRank)<=criterion){
+                                data.taxonomyId = taxonomy->getTaxIdAtRank(data.taxonomyId, criterionRank);
+                                fields[2] = std::to_string(data.taxonomyId);
+                                data.classificationRank = criterionRank;
+                                fields[5] = data.classificationRank;
+                            }else{
+                                if(createUpperRanksFile){
+                                    for (size_t i = 0; i < columnsIdx.size(); i++) {
+                                        tt << fields[columnsIdx[i]] << "\t";
+                                    }
+                                    tt << endl;
+                  
+                                    // index calculation
+                                    size_t globalIdx = (chunkCnt - 1) * CHUNK_SIZE + localIdx;
+                                    upperRanks[globalIdx] = tt.str();
+                                }
+                                continue;
+                            }
+                        }
+
                         for (size_t i = 0; i < columnsIdx.size(); i++) {
                             ss << fields[columnsIdx[i]] << "\t";
                         }
                         ss << endl;
-                        
-                        #pragma omp critical
-                            {
-                                refinedFileAppend << ss.str();
-                            }
-                        
+                        ++taxCounts[data.taxonomyId];
+      
+                        // index calculation
+                        size_t globalIdx = (chunkCnt - 1) * CHUNK_SIZE + localIdx;
+                        resultChunk[globalIdx] = ss.str();
                     }
+                }
+                // taxCounts summation
+                #pragma omp critical
+                {
+                    for (const auto &it : taxCounts) {
+                        taxcntSum[it.first] += it.second;
+                    }
+
                 }
                 }
             }
@@ -194,10 +329,23 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
     }
     
     refinedFileAppend.close();
+    if(createUpperRanksFile){
+        upperRankFileAppend.close();
+    }
+
+
+    //krona addition
+    if(par.report) {
+        cout << "Write report to: " << endl;
+        cout << reportFileName << endl;
+
+        std::string kronaFileName = classifiedFile.substr(0, classifiedFile.find_last_of('.')) + "_refined_krona.html";
+        reporter->writeReportFile(totalSeqCnt+1, taxcntSum, true, kronaFileName);
+    }
     delete taxonomy;
+    delete reporter;
 
     return 0;
-
 }
 
 
@@ -209,9 +357,5 @@ bool checktaxId(TaxonomyWrapper *taxonomy, const vector <int> &contamIdx, const 
     }
     return false;
 }
-/*
-    for (size_t i = 0; i < columnsIdx.size(); i++) {
-        class2fullFile << fields[columnsIdx[i]] << "\t";
-    }
-*/
+
 
