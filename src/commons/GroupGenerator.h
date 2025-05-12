@@ -37,7 +37,7 @@ struct Relation {
 
 struct relation_hash {
     size_t operator()(const Relation& r) const {
-        return hash<uint32_t>()(r.id1) ^ (hash<uint32_t>()(r.id2) << 1);
+        return hash<uint64_t>()((static_cast<uint64_t>(r.id1) << 32) | r.id2);
     }
 };
 
@@ -166,23 +166,16 @@ public:
                             const string &subGraphFileDir, 
                             const size_t counter_now,
                             const string &jobId);
-    void mergeRelations(const string& subGraphFileDir,
-                        size_t numOfGraph,
-                        const string& jobId,
-                        vector<Relation>& mergedRelations,
-                        int groupKmerThr,
-                        int topN);
-    double dynamicThresholding(const std::string &subGraphFileDir,
-                               size_t numOfGraph,
-                               const std::string &jobId,
-                               double k);
+    double mergeRelations(const string& subGraphFileDir,
+                          size_t numOfGraph,
+                          const string& jobId,
+                          const double thresholdK);
 
-    void makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo,
-                    const string &subGraphFileDir, 
-                    vector<int> &queryGroupInfo, 
-                    int groupKmerThr, 
-                    size_t &numOfGraph,
-                    const string &jobId);
+    void makeGroups(const string& relationFileDir,
+                    const string& jobId,
+                    int groupKmerThr,
+                    unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
+                    vector<int> &queryGroupInfo);
 
     void saveGroupsToFile(const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
                           const vector<int> &queryGroupInfo, 
