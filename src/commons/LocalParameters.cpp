@@ -444,9 +444,10 @@ LocalParameters::LocalParameters() :
     tieRatio = 0;
 
     // Group generation
-    thresholdK = 2.5;
-    voteMode = 0;
-    majorityThr = 0.0;
+    thresholdK = 3;
+    voteMode = 2;
+    majorityThr = 0.4;
+    groupScoreThr=0.15;
 
     // Database creation
     tinfoPath = "";

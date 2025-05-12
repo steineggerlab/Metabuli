@@ -73,131 +73,92 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     cout << "groupScoreThr: " << groupScoreThr << endl;
     cout << "thresholdK: " << thresholdK << endl;
     
-    //Extract k-mers from query sequences and compare them to target k-mer DB
-    while (!complete) {
-        tries++;
+    // //Extract k-mers from query sequences and compare them to target k-mer DB
+    // while (!complete) {
+    //     tries++;
 
-        // new code
-        if (tries == 1) {
-                cout << "Indexing query file ...";
-        }
-        queryIndexer->setBytesPerKmer(matchPerKmer);
-        queryIndexer->indexQueryFile(processedReadCnt);
-        const vector<QuerySplit> & queryReadSplit = queryIndexer->getQuerySplits();
+    //     // new code
+    //     if (tries == 1) {
+    //             cout << "Indexing query file ...";
+    //     }
+    //     queryIndexer->setBytesPerKmer(matchPerKmer);
+    //     queryIndexer->indexQueryFile(processedReadCnt);
+    //     const vector<QuerySplit> & queryReadSplit = queryIndexer->getQuerySplits();
 
-        if (tries == 1) {
-            totalSeqCnt = queryIndexer->getReadNum_1();
-            cout << "Done" << endl;
-            cout << "Total number of sequences: " << queryIndexer->getReadNum_1() << endl;
-            cout << "Total read length: " << queryIndexer->getTotalReadLength() <<  "nt" << endl;
-        }
+    //     if (tries == 1) {
+    //         totalSeqCnt = queryIndexer->getReadNum_1();
+    //         cout << "Done" << endl;
+    //         cout << "Total number of sequences: " << queryIndexer->getReadNum_1() << endl;
+    //         cout << "Total read length: " << queryIndexer->getTotalReadLength() <<  "nt" << endl;
+    //     }
 
-        // Set up kseq
-        KSeqWrapper* kseq1 = KSeqFactory(par.filenames[0].c_str());
-        KSeqWrapper* kseq2 = nullptr;
-        if (par.seqMode == 2) { kseq2 = KSeqFactory(par.filenames[1].c_str()); }
+    //     // Set up kseq
+    //     KSeqWrapper* kseq1 = KSeqFactory(par.filenames[0].c_str());
+    //     KSeqWrapper* kseq2 = nullptr;
+    //     if (par.seqMode == 2) { kseq2 = KSeqFactory(par.filenames[1].c_str()); }
 
-        // Move kseq to unprocessed reads
-        for (size_t i = 0; i < processedReadCnt; i++) {
-            kseq1->ReadEntry();
-            if (par.seqMode == 2) { kseq2->ReadEntry(); }
-        }
+    //     // Move kseq to unprocessed reads
+    //     for (size_t i = 0; i < processedReadCnt; i++) {
+    //         kseq1->ReadEntry();
+    //         if (par.seqMode == 2) { kseq2->ReadEntry(); }
+    //     }
 
-        for (size_t splitIdx = 0; splitIdx < queryReadSplit.size(); splitIdx++) {
-            // Allocate memory for query list
-            queryList.clear();
-            queryList.resize(queryReadSplit[splitIdx].end - queryReadSplit[splitIdx].start);
+    //     for (size_t splitIdx = 0; splitIdx < queryReadSplit.size(); splitIdx++) {
+    //         // Allocate memory for query list
+    //         queryList.clear();
+    //         queryList.resize(queryReadSplit[splitIdx].end - queryReadSplit[splitIdx].start);
 
-            // Allocate memory for query k-mer buffer
-            queryKmerBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt);
+    //         // Allocate memory for query k-mer buffer
+    //         queryKmerBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt);
 
-            // Initialize query k-mer buffer and match buffer
-            queryKmerBuffer.startIndexOfReserve = 0;
+    //         // Initialize query k-mer buffer and match buffer
+    //         queryKmerBuffer.startIndexOfReserve = 0;
 
-            // Extract query k-mers
-            kmerExtractor->extractQueryKmers(queryKmerBuffer,
-                                             queryList,
-                                             queryReadSplit[splitIdx],
-                                             par,
-                                             kseq1,
-                                             kseq2); 
-            kmerFileHandler->writeQueryKmerFile(queryKmerBuffer, outDir, numOfSplits, numOfThreads, processedReadCnt, jobId);
-            processedReadCnt += queryReadSplit[splitIdx].readCnt;
-            cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
+    //         // Extract query k-mers
+    //         kmerExtractor->extractQueryKmers(queryKmerBuffer,
+    //                                          queryList,
+    //                                          queryReadSplit[splitIdx],
+    //                                          par,
+    //                                          kseq1,
+    //                                          kseq2); 
+    //         kmerFileHandler->writeQueryKmerFile(queryKmerBuffer, outDir, numOfSplits, numOfThreads, processedReadCnt, jobId);
+    //         processedReadCnt += queryReadSplit[splitIdx].readCnt;
+    //         cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
 
-            numOfTatalQueryKmerCnt += queryKmerBuffer.startIndexOfReserve;
-        }
-        delete kseq1;
-        if (par.seqMode == 2) {
-            delete kseq2;
-        }
-        if (processedReadCnt == totalSeqCnt) {
-            complete = true;
-        }
-    }   
+    //         numOfTatalQueryKmerCnt += queryKmerBuffer.startIndexOfReserve;
+    //     }
+    //     delete kseq1;
+    //     if (par.seqMode == 2) {
+    //         delete kseq2;
+    //     }
+    //     if (processedReadCnt == totalSeqCnt) {
+    //         complete = true;
+    //     }
+    // }   
+    processedReadCnt = 12048859;
+    numOfSplits = 6;
+    //makeGraph(outDir, numOfSplits, numOfThreads, numOfGraph, processedReadCnt, jobId);   
+    numOfGraph = 32;
 
-    makeGraph(outDir, numOfSplits, numOfThreads, numOfGraph, processedReadCnt, jobId);   
-    int dynamicGroupKmerThr = static_cast<int>(dynamicThresholding(outDir, numOfGraph, jobId, thresholdK));
+    // int dynamicGroupKmerThr = static_cast<int>(dynamicThresholding(outDir, numOfGraph, jobId, thresholdK));
     unordered_map<uint32_t, unordered_set<uint32_t>> groupInfo;
     vector<int> queryGroupInfo;
-    queryGroupInfo.resize(processedReadCnt, -1);
-    // makeGroups(groupInfo, outDir, queryGroupInfo, groupKmerThr, numOfGraph, jobId);
-    makeGroups(groupInfo, outDir, queryGroupInfo, dynamicGroupKmerThr, numOfGraph, jobId);
+    // queryGroupInfo.resize(processedReadCnt, -1);
+    // makeGroups(groupInfo, outDir, queryGroupInfo, dynamicGroupKmerThr, numOfGraph, jobId);
     
-    saveGroupsToFile(groupInfo, queryGroupInfo, outDir, jobId);
-    // loadGroupsFromFile(groupInfo, queryGroupInfo, outDir, jobId);
+    // saveGroupsToFile(groupInfo, queryGroupInfo, outDir, jobId);
+    loadGroupsFromFile(groupInfo, queryGroupInfo, outDir, jobId);
     
-    vector<pair<int, float>> metabuliResult;       
-    metabuliResult.resize(processedReadCnt, make_pair(-1, 0.0f));
-    loadMetabuliResult(outDir, metabuliResult);
+    // vector<pair<int, float>> metabuliResult;       
+    // metabuliResult.resize(processedReadCnt, make_pair(-1, 0.0f));
+    // loadMetabuliResult(outDir, metabuliResult);
 
     unordered_map<uint32_t, int> repLabel; 
-    getRepLabel(outDir, metabuliResult, groupInfo, repLabel, jobId, voteMode, majorityThr, groupScoreThr);
-
+    // getRepLabel(outDir, metabuliResult, groupInfo, repLabel, jobId, voteMode, majorityThr, groupScoreThr);
+    loadRepLabel(outDir, repLabel, jobId);
     applyRepLabel(outDir, outDir, queryGroupInfo, repLabel, groupScoreThr, jobId);
     
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
-}
-
-void GroupGenerator::makeGroupsFromBinning(const string &binningFileDir, 
-                                           unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> &relation,
-                                           unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
-                                           vector<int> &queryGroupInfo, 
-                                           int groupKmerThr) {
-    // Map to store the count of shared Y nodes between X nodes
-    DisjointSet ds;
-    string line;
-
-    cout << "Creating groups based on graph..." << endl;
-    time_t beforeSearch = time(nullptr);
-    
-    for (const auto& currentQueryRelation : relation) {
-        uint32_t currentQueryId = currentQueryRelation.first;
-        for (const auto& [otherQueryId, count] : currentQueryRelation.second) {
-            if (count >= groupKmerThr) {
-                if (ds.parent.find(currentQueryId) == ds.parent.end()) {
-                    ds.makeSet(currentQueryId);
-                }
-                if (ds.parent.find(otherQueryId) == ds.parent.end()) {
-                    ds.makeSet(otherQueryId);
-                }
-                ds.unionSets(currentQueryId, otherQueryId);
-            }
-        }
-    }
-
-    // Collect nodes into groups
-    for (const auto& p : ds.parent) {
-        uint32_t currentQueryId = p.first;
-        uint32_t groupId = ds.find(currentQueryId);
-        groupInfo[groupId].insert(currentQueryId);
-        queryGroupInfo[currentQueryId] = groupId;
-    }
-
-    cout << "Query group created successfully : " << groupInfo.size() << " groups" << endl;
-    cout << "Time spent for query groups: " << double(time(nullptr) - beforeSearch) << endl;
-
-    return;
 }
 
 void GroupGenerator::makeGraph(const string &queryKmerFileDir, 
@@ -242,6 +203,15 @@ void GroupGenerator::makeGraph(const string &queryKmerFileDir,
 
             diffFileList[file] = mmapData<uint16_t>(diffFile.c_str());
             infoFileList[file] = mmapData<QueryKmerInfo>(infoFile.c_str());
+
+            if (!diffFileList[file].data) {
+                cerr << "Failed to mmap diff file " << file << endl;
+                exit(1);
+            }
+            if (!infoFileList[file].data) {
+                cerr << "Failed to mmap info file " << file << endl;
+                exit(1);
+            }
 
             kmerInfoBuffers[file] = kmerFileHandler->getNextKmersBatch(
                 diffFileList[file], infoFileList[file], 
@@ -387,6 +357,9 @@ double GroupGenerator::dynamicThresholding(const std::string &subGraphFileDir,
                                            size_t numOfGraph,
                                            const std::string &jobId,
                                            double thresholdK) {
+    cout << "Calculate appropriate threshold..." << endl;
+    time_t beforeSearch = time(nullptr);
+
     double global_mean = 0.0;
     double global_M2 = 0.0;
     size_t global_count = 0;
@@ -454,60 +427,13 @@ double GroupGenerator::dynamicThresholding(const std::string &subGraphFileDir,
     double stddev = std::sqrt(global_M2 / (global_count - 1));
     double threshold = max(global_mean + thresholdK * stddev, 0.0);
 
-    std::cout << "Number of shared kmer mean: " << global_mean
+    cout << "Number of shared kmer mean: " << global_mean
                 << ", stddev: " << stddev
                 << ", kmer threshold (mean + " << thresholdK << "*std): " << threshold << std::endl;
+    cout << "Time spent: " << double(time(nullptr) - beforeSearch) << " seconds." << endl;
 
     return threshold;
 }
-    
-
-void GroupGenerator::makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
-                                const string &subGraphFileDir, 
-                                vector<int> &queryGroupInfo, 
-                                int groupKmerThr, 
-                                size_t &numOfGraph,
-                                const string &jobId) {
-    DisjointSet ds;
-    time_t beforeSearch = time(nullptr);
-
-    cout << "Merging relations first..." << endl;
-
-    vector<Relation> mergedRelations;
-    mergeRelations(subGraphFileDir, numOfGraph, jobId, mergedRelations, groupKmerThr, 0); // topN은 무시
-
-    cout << "Creating groups based on merged relations..." << endl;
-
-    ofstream relationLog(subGraphFileDir + "/" + jobId + "_allRelations.txt");
-    if (!relationLog.is_open()) {
-        cerr << "Failed to open relation log file." << endl;
-        return;
-    }
-
-    for (size_t i = 0; i < mergedRelations.size(); ++i) {
-        const Relation& rel = mergedRelations[i];
-
-        relationLog << rel.id1 << ' ' << rel.id2 << ' ' << rel.weight << '\n';
-
-        if (ds.parent.find(rel.id1) == ds.parent.end()) ds.makeSet(rel.id1);
-        if (ds.parent.find(rel.id2) == ds.parent.end()) ds.makeSet(rel.id2);
-        ds.unionSets(rel.id1, rel.id2);
-    }
-
-    for (unordered_map<uint32_t, uint32_t>::iterator it = ds.parent.begin(); it != ds.parent.end(); ++it) {
-        uint32_t queryId = it->first;
-        uint32_t groupId = ds.find(queryId);
-        groupInfo[groupId].insert(queryId);
-        if (queryId >= queryGroupInfo.size()) {
-            queryGroupInfo.resize(queryId + 1, -1);
-        }
-        queryGroupInfo[queryId] = groupId;
-    }
-
-    cout << "Query groups created successfully: " << groupInfo.size() << " groups." << endl;
-    cout << "Time spent: " << double(time(nullptr) - beforeSearch) << " seconds." << endl;
-}
-
 
 void GroupGenerator::mergeRelations(const string& subGraphFileDir,
                                     size_t numOfGraph,
@@ -515,6 +441,9 @@ void GroupGenerator::mergeRelations(const string& subGraphFileDir,
                                     vector<Relation>& mergedRelations,
                                     int groupKmerThr,
                                     int topN) { // topN 파라미터는 무시됨
+    cout << "Merging relations first..." << endl;
+    time_t beforeSearch = time(nullptr);
+
     const size_t BATCH_SIZE = 4096;
 
     unordered_map<Relation, uint32_t, relation_hash> totalRelations;
@@ -592,8 +521,59 @@ void GroupGenerator::mergeRelations(const string& subGraphFileDir,
         }
     }
 
+    ofstream relationLog(subGraphFileDir + "/" + jobId + "_allRelations.txt");
+    if (!relationLog.is_open()) {
+        cerr << "Failed to open relation log file." << endl;
+        return;
+    }
+
+    for (size_t i = 0; i < mergedRelations.size(); ++i) {
+        const Relation& rel = mergedRelations[i];
+
+        relationLog << rel.id1 << ' ' << rel.id2 << ' ' << rel.weight << '\n';
+    }
+
     cout << "Relations merged successfully: " << mergedRelations.size() << " relations collected." << endl;
+    cout << "Time spent: " << double(time(nullptr) - beforeSearch) << " seconds." << endl;
 }
+
+void GroupGenerator::makeGroups(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
+                                const string &subGraphFileDir, 
+                                vector<int> &queryGroupInfo, 
+                                int groupKmerThr, 
+                                size_t &numOfGraph,
+                                const string &jobId) {
+
+    vector<Relation> mergedRelations;
+    mergeRelations(subGraphFileDir, numOfGraph, jobId, mergedRelations, groupKmerThr, 0); // topN은 무시
+
+    cout << "Creating groups based on merged relations..." << endl;
+    time_t beforeSearch = time(nullptr);
+
+    DisjointSet ds;
+    for (size_t i = 0; i < mergedRelations.size(); ++i) {
+        const Relation& rel = mergedRelations[i];
+
+        if (ds.parent.find(rel.id1) == ds.parent.end()) ds.makeSet(rel.id1);
+        if (ds.parent.find(rel.id2) == ds.parent.end()) ds.makeSet(rel.id2);
+        ds.unionSets(rel.id1, rel.id2);
+    }
+
+    for (unordered_map<uint32_t, uint32_t>::iterator it = ds.parent.begin(); it != ds.parent.end(); ++it) {
+        uint32_t queryId = it->first;
+        uint32_t groupId = ds.find(queryId);
+        groupInfo[groupId].insert(queryId);
+        if (queryId >= queryGroupInfo.size()) {
+            queryGroupInfo.resize(queryId + 1, -1);
+        }
+        queryGroupInfo[queryId] = groupId;
+    }
+
+    cout << "Query groups created successfully: " << groupInfo.size() << " groups." << endl;
+    cout << "Time spent: " << double(time(nullptr) - beforeSearch) << " seconds." << endl;
+}
+
+
 
 void GroupGenerator::saveGroupsToFile(const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
                                       const vector<int> &queryGroupInfo, 
@@ -703,6 +683,8 @@ void GroupGenerator::loadMetabuliResult(const string &resultFileDir,
     cout << "Original Metabuli result loaded from " << resultFileDir + "/1_classifications.tsv" << " successfully." << endl;
 }
 
+
+
 void GroupGenerator::getRepLabel(const string &groupRepFileDir, 
                                  vector<pair<int, float>> &metabuliResult, 
                                  const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
@@ -711,14 +693,8 @@ void GroupGenerator::getRepLabel(const string &groupRepFileDir,
                                  int voteMode, 
                                  float majorityThr,
                                  const float groupScoreThr) {
-
-    for (const auto& [groupId, queryIds] : groupInfo) {
-        for (uint32_t queryId : queryIds) {
-            if (queryId >= metabuliResult.size()) {
-                continue;
-            }
-        }
-    }
+    cout << "Find query group representative labels..." << endl;    
+    time_t beforeSearch = time(nullptr);
 
     std::unordered_map<int, int> external2internalTaxId;
     taxonomy->getExternal2internalTaxID(external2internalTaxId);
@@ -760,7 +736,38 @@ void GroupGenerator::getRepLabel(const string &groupRepFileDir,
 
     outFile.close();
 
-    cout << "Query group representative label saved to " << groupRepFileName << " successfully." << endl;
+    cout << "Query group representative label saved to " << groupRepFileName << " successfully." << endl;    
+    cout << "Time spent: " << double(time(nullptr) - beforeSearch) << " seconds." << endl;
+}
+
+void GroupGenerator::loadRepLabel(const std::string &groupRepFileDir,
+                                  std::unordered_map<uint32_t, int> &repLabel,
+                                  const std::string &jobId) {
+    const std::string groupRepFileName = groupRepFileDir + "/" + jobId + "_groupRep";
+    std::ifstream inFile(groupRepFileName);
+    if (!inFile.is_open()) {
+        std::cerr << "Error opening file: " << groupRepFileName << std::endl;
+        return;
+    }
+
+    std::string line;
+    while (std::getline(inFile, line)) {
+        std::istringstream ss(line);
+        uint32_t groupId;
+        int groupRep;
+
+        ss >> groupId >> groupRep;
+        if (ss.fail()) {
+            std::cerr << "Warning: failed to parse line: " << line << std::endl;
+            continue;
+        }
+
+        repLabel[groupId] = groupRep;
+    }
+
+    inFile.close();
+
+    std::cout << "Representative labels loaded from " << groupRepFileName << " successfully." << std::endl;
 }
 
 void GroupGenerator::applyRepLabel(const string &resultFileDir, 
@@ -769,6 +776,9 @@ void GroupGenerator::applyRepLabel(const string &resultFileDir,
                                    const unordered_map<uint32_t, int> &repLabel, 
                                    const float groupScoreThr,
                                    const string &jobId) {
+    cout << "Apply query group representative labels..." << endl;    
+    time_t beforeSearch = time(nullptr);
+
     ifstream inFile(resultFileDir + "/" + jobId + "_classifications.tsv");
     if (!inFile.is_open()) {
         cerr << "Error opening file: " << newResultFileDir + "/" + jobId + "_classifications.tsv" << endl;
@@ -791,25 +801,32 @@ void GroupGenerator::applyRepLabel(const string &resultFileDir,
         while (getline(ss, field, '\t')) {
             fields.push_back(field);
         }
-        fields.push_back("-");
+
+        while (fields.size() < 8) {
+                fields.push_back("-");
+        }
 
         uint32_t groupId = queryGroupInfo[queryIdx];
-        auto repLabelIt = repLabel.find(groupId);
-        if (repLabelIt != repLabel.end() && repLabelIt->second != 0) {
-            if ((fields.size() > 2) && ((fields[0] == "0") || (std::stof(fields[4]) < groupScoreThr))) {
-                fields[0] = "1";
-                fields[2] = to_string(taxonomy->getOriginalTaxID(repLabelIt->second));
-                fields[5] = "-";
+        if (groupId != -1){
+            auto repLabelIt = repLabel.find(groupId);
+            if (repLabelIt != repLabel.end()){
+                fields[7] = to_string(groupId);
+                // LCA successed
+                if (repLabelIt->second != 0) {
+                    if ((fields[0] == "0") || (std::stof(fields[4]) < groupScoreThr)) {
+                        fields[0] = "1";
+                        fields[2] = to_string(taxonomy->getOriginalTaxID(repLabelIt->second));
+                        fields[5] = taxonomy->getString(taxonomy->taxonNode(repLabelIt->second)->rankIdx);
+                    }
+                }
+                // LCA failed
+                else {
+                    fields[0] = "0";
+                    fields[2] = "0";
+                    fields[5] = "no rank";
+                }            
             }
-            fields[7] = to_string(groupId);
         }
-        else if (repLabelIt != repLabel.end() && repLabelIt->second == 0) {
-            fields[0] = "0";
-            fields[2] = "0";
-            fields[5] = "no rank";
-            fields[7] = to_string(groupId);
-        }
-
         for (size_t i = 0; i < fields.size(); ++i) {
             outFile << fields[i]; 
             if (i < fields.size() - 1) {  
@@ -823,7 +840,8 @@ void GroupGenerator::applyRepLabel(const string &resultFileDir,
     inFile.close();
     outFile.close();
     
-    cout << "Result saved to " << newResultFileDir << " successfully." << endl;
+    cout << "Result saved to " << newResultFileDir << " successfully." << endl;    
+    cout << "Time spent: " << double(time(nullptr) - beforeSearch) << " seconds." << endl;
 }
 
 // KmerFileHandler function implementations
@@ -894,10 +912,6 @@ vector<pair<uint64_t, QueryKmerInfo>> KmerFileHandler::getNextKmersBatch(const M
 
     return batch;
 }
-
-
-
-
 
 void KmerFileHandler::writeQueryKmerFile(Buffer<QueryKmer>& queryKmerBuffer, 
                                          const string& queryKmerFileDir, 

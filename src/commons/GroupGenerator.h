@@ -205,6 +205,10 @@ public:
                      int voteMode, 
                      float majorityThr,
                      const float groupScoreThr);
+    
+    void loadRepLabel(const std::string &groupRepFileDir,
+                      std::unordered_map<uint32_t, int> &repLabel,
+                      const std::string &jobId);
 
     void applyRepLabel(const string &resultFileDir, 
                        const string &newResultFileDir, 
