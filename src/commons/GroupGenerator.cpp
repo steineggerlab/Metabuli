@@ -805,15 +805,22 @@ void GroupGenerator::applyRepLabel(const string &resultFileDir,
         while (fields.size() < 8) {
                 fields.push_back("-");
         }
+        
+        // metabuli-p
+        if (std::stof(fields[4]) < groupScoreThr) {
+            fields[0] = "0";
+            fields[2] = "0";
+            fields[5] = "no rank";
+        }
 
-        uint32_t groupId = queryGroupInfo[queryIdx];
+        int groupId = queryGroupInfo[queryIdx];
         if (groupId != -1){
+            fields[7] = to_string(groupId);
             auto repLabelIt = repLabel.find(groupId);
             if (repLabelIt != repLabel.end()){
-                fields[7] = to_string(groupId);
                 // LCA successed
                 if (repLabelIt->second != 0) {
-                    if ((fields[0] == "0") || (std::stof(fields[4]) < groupScoreThr)) {
+                    if (fields[0] == "0") {
                         fields[0] = "1";
                         fields[2] = to_string(taxonomy->getOriginalTaxID(repLabelIt->second));
                         fields[5] = taxonomy->getString(taxonomy->taxonNode(repLabelIt->second)->rankIdx);
