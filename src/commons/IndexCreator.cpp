@@ -867,24 +867,32 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                 posToWrite = kmerBuffer.reserveMemory(estimatedKmerCnt);
                 if (posToWrite + estimatedKmerCnt < kmerBuffer.bufferSize) {
                     KSeqWrapper* kseq = KSeqFactory(fastaPaths[accessionBatches[batchIdx].whichFasta].c_str());
+                    #ifdef NDEBUG
+                        #pragma omp critical
+                        {
+                            cout << fastaPaths[accessionBatches[batchIdx].whichFasta] << endl; 
+                        }
+                    #endif
                     size_t seqCnt = 0;
                     size_t idx = 0;
                     while (kseq->ReadEntry()) {
                         if (seqCnt == accessionBatches[batchIdx].orders[idx]) {
                             const KSeqWrapper::KSeqEntry & e = kseq->entry;
-                            // #pragma omp critical
-                            // {
-                            //     cout << "Processing " << e.name.s << "\t" 
-                            //          << e.sequence.l << "\t" 
-                            //          << accessionBatches[batchIdx].speciesID << "\t" 
-                            //          << accessionBatches[batchIdx].taxIDs[idx] << "\n";
-                            // }
+                            #ifdef NDEBUG
+                                #pragma omp critical
+                                {
+                                    cout << "Processing " << e.name.s << "\t" 
+                                         << e.sequence.l << "\t" 
+                                         << taxonomy->getOriginalTaxID(accessionBatches[batchIdx].speciesID) << "\t" 
+                                         << taxonomy->getOriginalTaxID(accessionBatches[batchIdx].taxIDs[idx]) << "\n";
+                                }
+                            #endif
 
                             // Mask low complexity regions
                             char *maskedSeq = nullptr;
                             if (par.maskMode) {
                                 maskedSeq = new char[e.sequence.l + 1]; // TODO: reuse the buffer
-                                SeqIterator::maskLowComplexityRegions(e.sequence.s, maskedSeq, probMatrix, par.maskProb, subMat);
+                                SeqIterator::maskLowComplexityRegions((unsigned char *) e.sequence.s, (unsigned char *) maskedSeq, probMatrix, par.maskProb, subMat);
                                 maskedSeq[e.sequence.l] = '\0';
                             } else {
                                 maskedSeq = e.sequence.s;
@@ -949,13 +957,13 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                     prodigal->is_meta = 0;
                                     if (lengthOfTrainingSeq < 100'000) {
                                         prodigal->is_meta = 1;
-                                        prodigal->trainMeta(training_seq->entry.sequence.s);
+                                        prodigal->trainMeta((unsigned char *) training_seq->entry.sequence.s, training_seq->entry.sequence.l);
                                     } else {
-                                        prodigal->trainASpecies(training_seq->entry.sequence.s);
+                                        prodigal->trainASpecies((unsigned char *) training_seq->entry.sequence.s, training_seq->entry.sequence.l);
                                     }
 
                                     // Generate intergenic 23-mer list. It is used to determine extension direction of intergenic sequences.
-                                    prodigal->getPredictedGenes(training_seq->entry.sequence.s);
+                                    prodigal->getPredictedGenes((unsigned char *) training_seq->entry.sequence.s, training_seq->entry.sequence.l);
                                     seqIterator.generateIntergenicKmerList(prodigal->genes, prodigal->nodes,
                                                                            prodigal->getNumberOfPredictedGenes(),
                                                                            intergenicKmers, training_seq->entry.sequence.s);
@@ -971,7 +979,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
 
                                 if (seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, e.sequence.l)) {
                                     // Get extended ORFs
-                                    prodigal->getPredictedGenes(e.sequence.s);
+                                    prodigal->getPredictedGenes((unsigned char *) e.sequence.s, e.sequence.l);
                                     prodigal->removeCompletelyOverlappingGenes();
                                     prodigal->getExtendedORFs(prodigal->finalGenes, prodigal->nodes, extendedORFs,
                                                                  prodigal->fng, e.sequence.l,
@@ -997,7 +1005,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                     reverseCompliment = seqIterator.reverseCompliment(e.sequence.s, e.sequence.l);
 
                                     // Get extended ORFs
-                                    prodigal->getPredictedGenes(reverseCompliment);
+                                    prodigal->getPredictedGenes((unsigned char *) reverseCompliment, e.sequence.l);
                                     prodigal->removeCompletelyOverlappingGenes();
                                     prodigal->getExtendedORFs(prodigal->finalGenes, prodigal->nodes, extendedORFs,
                                                                      prodigal->fng, e.sequence.l,
@@ -1007,7 +1015,7 @@ size_t IndexCreator::fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
                                     if (par.maskMode) {
                                         delete[] maskedSeq;
                                         maskedSeq = new char[e.sequence.l + 1];
-                                        SeqIterator::maskLowComplexityRegions(reverseCompliment, maskedSeq, probMatrix, par.maskProb, subMat);
+                                        SeqIterator::maskLowComplexityRegions((unsigned char *) reverseCompliment, (unsigned char *) maskedSeq, probMatrix, par.maskProb, subMat);
                                         maskedSeq[e.sequence.l] = '\0';
                                     } else {
                                         maskedSeq = reverseCompliment;

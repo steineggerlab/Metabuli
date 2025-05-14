@@ -75,6 +75,7 @@ public:
     // extract
     PARAMETER(TARGET_TAX_ID)
     PARAMETER(EXTRACT_MODE)
+    PARAMETER(PARAM_OUTDIR)
 
     // DB build parameters
     PARAMETER(LIBRARY_PATH)
@@ -157,6 +158,7 @@ public:
     // Extract
     int targetTaxId;
     int extractMode;
+    std::string outputDir;
 
     // Database creation
     std::string tinfoPath;

@@ -6,8 +6,6 @@
 
 int createnewtaxalist(TaxonomyWrapper * oldTaxonomy,
                       TaxonomyWrapper * newTaxonomy,
-                      const std::string & newNodesFileName,
-                      const std::string & newNamesFileName, 
                       const std::string & accession2taxidFileName, 
                       std::vector<NewTaxon> & newTaxaList,
                       std::map<std::string, TaxID> & newAccessions,
