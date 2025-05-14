@@ -10,7 +10,7 @@
 using namespace std;
 
 
-int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, const LocalParameters &par);
+int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, const LocalParameters &par);
 bool checktaxId(TaxonomyWrapper *taxonomy, const vector <int> &contamIdx, const int &taxonomyId);
 
 struct ClassificationResult {
@@ -38,8 +38,12 @@ ClassificationResult parseFields(const std::vector<std::string>& fields) {
     result.effectiveReadLength = std::stoi(fields[3]);
     result.dnaIdentityScore = std::stof(fields[4]);
     result.classificationRank = fields[5];
+    
     result.taxIdKmerCounts = fields[6];
     result.fullLineage = fields[7];
+
+
+    
 
     return result;
 }
@@ -60,13 +64,13 @@ int classifiedRefiner(int argc, const char **argv, const Command &command) {
         return 0;
     }
 
-    return classifiedRefiner2(classifiedFile,taxonomyDir, par);
+    return classifiedRefiner(classifiedFile,taxonomyDir, par);
 }
 //unclassified
 //contam extract mode or see only what we want to see
 //fulltaxonomy
 
-int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, const LocalParameters &par) {
+int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, const LocalParameters &par) {
     #ifdef OPENMP
     omp_set_num_threads(par.threads);
     #endif
@@ -99,8 +103,8 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
     // Parse contamIds, targetIds, selected columns
     vector<string> contams;
     vector<TaxID> contamsTaxIds;
-    if (!par.excludeContam.empty()) {
-        contams = Util::split(par.excludeContam, ",");
+    if (!par.excludeTaxid.empty()) {
+        contams = Util::split(par.excludeTaxid, ",");
         // stoi
         for (const string &contam : contams) {
             contamsTaxIds.push_back(extern2intern[stoi(contam)]);
@@ -109,11 +113,18 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
 
     vector<string> targets;
     vector<int> targetsTaxIds;
-    if (!par.includeTarget.empty()) {
-        targets = Util::split(par.includeTarget, ",");
+    if (!par.selectTaxid.empty()) {
+        targets = Util::split(par.selectTaxid, ",");
         // stoi
         for (const string &target : targets) {
             targetsTaxIds.push_back(extern2intern[stoi(target)]);
+            const int targetId = extern2intern[stoi(target)];
+
+            if (checktaxId(taxonomy, contamsTaxIds, targetId)) {
+                Debug(Debug::ERROR) << "Excluded taxid is selected : " << target << "\n";
+                EXIT(EXIT_FAILURE);
+            }
+            
         }
     }
 
@@ -124,20 +135,19 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
         // stoi
         for (const auto &column : columns) {
             columnsIdx.push_back(stoi(column));
+            if (stoi(column) > 7) {
+                Debug(Debug::ERROR) << "Invalid column index: " << column;
+                EXIT(EXIT_FAILURE);
+            } 
         }
     } else {
-        columnsIdx = {0,1,2,3,4,5,6,7};
+        columnsIdx = {0,1,2,3,4,5,6};
     }
 
     // criterionRank process
-    std::string criterionRank = par.criterionRank;
-    bool createUpperRanksFile = false;
+    std::string criterionRank = par.rank;
+    int createUpperRanksFile = par.higherRankFile;
 
-    // process *
-    if (!criterionRank.empty() && criterionRank.back() == '*') {
-        createUpperRanksFile = true; // 
-        criterionRank.pop_back();   // remove '*'
-    }
 
     // check if criterionRank is valid
     if (!criterionRank.empty() && taxonomy->findRankIndex(criterionRank) == -1) {
@@ -145,9 +155,11 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
         EXIT(EXIT_FAILURE);
     }
 
-    std::string upperRankFileName = classifiedFile.substr(0, classifiedFile.find_last_of('.')) + "_upperRanks.tsv";
+    std::string upperRankFileName = classifiedFile.substr(0, classifiedFile.find_last_of('.')) + "_refined_higherRanks.tsv";
 
-    if(createUpperRanksFile){
+    if(createUpperRanksFile==2){
+        cout << "Write higher rank reads to: " << endl;
+        cout << upperRankFileName << endl;
         ofstream upperRankFile(upperRankFileName.c_str());        
         if (!upperRankFile.is_open()) {
             Debug(Debug::ERROR) << "Could not open " << upperRankFileName << " for writing\n";
@@ -163,8 +175,15 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
     EXIT(EXIT_FAILURE);
     }
 
+    std::string firstLine;
+    std::getline(file, firstLine);
+
+    if (firstLine[0] != '#') {
+        file.seekg(0);
+    }
+
     ofstream upperRankFileAppend;
-    if (createUpperRanksFile) {
+    if (createUpperRanksFile==2) {
         upperRankFileAppend.open(upperRankFileName.c_str(), ios::app); // open file with append mode
         if (!upperRankFileAppend.is_open()) {
             Debug(Debug::ERROR) << "Could not open " << upperRankFileName << " for writing\n";
@@ -214,7 +233,7 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
                     resultChunk.clear();
                     resultChunk.resize(10000 * omp_get_num_threads());
 
-                    if(createUpperRanksFile){
+                    if(createUpperRanksFile==2){
                         for (const string &line : upperRanks) {
                             if (!line.empty()) { 
                                 upperRankFileAppend << line;
@@ -236,7 +255,7 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
                     }
                     resultChunk.clear();
 
-                    if(createUpperRanksFile){
+                    if(createUpperRanksFile==2){
                         for (const string &line : upperRanks) {
                             if (!line.empty()) { 
                                 upperRankFileAppend << line;
@@ -256,26 +275,33 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
                 for (size_t localIdx = 0; localIdx < chunk.size(); ++localIdx) {
                     const string &line = chunk[localIdx];
                     vector<string> fields = Util::split(line, "\t");
+
             
                     if (fields.size() == 6) {
-                        fields.push_back("");
-                        fields.push_back("");
+                        fields.push_back("-");
+                        fields.push_back("-");
                     }
             
                     if (fields.size() == 7) {
-                        fields.push_back("");
+                        fields.push_back("-");
                     }
+
             
                     ClassificationResult data = parseFields(fields);
+
+                    if (data.fullLineage != "-" && par.selectColumns == "") {
+                        columnsIdx.push_back(7);
+                    }
+
                     data.taxonomyId = extern2intern[data.taxonomyId];
-                    if (data.fullLineage == "") {
+                    if (data.fullLineage == "-") {
                         data.fullLineage = taxonomy->taxLineage2(taxonomy->taxonNode(data.taxonomyId));
                         fields.pop_back();
                         fields.push_back(data.fullLineage);
                     }
             
                     // remove unclassified
-                    if (!(par.unclassified == true && data.isClassified == false) &&
+                    if (!(par.removeUnclassified == true && data.isClassified == false) &&
                         !(contamsTaxIds.size() > 0 && checktaxId(taxonomy, contamsTaxIds, data.taxonomyId)) &&
                         !(targetsTaxIds.size() > 0 && !checktaxId(taxonomy, targetsTaxIds, data.taxonomyId))) {
                         
@@ -289,7 +315,8 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
                                 data.classificationRank = criterionRank;
                                 fields[5] = data.classificationRank;
                             }else{
-                                if(createUpperRanksFile){
+                                if(createUpperRanksFile == 0){continue;}
+                                if(createUpperRanksFile == 2){
                                     for (size_t i = 0; i < columnsIdx.size(); i++) {
                                         tt << fields[columnsIdx[i]] << "\t";
                                     }
@@ -298,8 +325,9 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
                                     // index calculation
                                     size_t globalIdx = (chunkCnt - 1) * CHUNK_SIZE + localIdx;
                                     upperRanks[globalIdx] = tt.str();
+                                    continue;
                                 }
-                                continue;
+                                
                             }
                         }
 
@@ -329,7 +357,7 @@ int classifiedRefiner2(const string &classifiedFile, const string&taxonomyDir, c
     }
     
     refinedFileAppend.close();
-    if(createUpperRanksFile){
+    if(createUpperRanksFile == 2){
         upperRankFileAppend.close();
     }
 

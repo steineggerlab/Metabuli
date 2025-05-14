@@ -116,12 +116,13 @@ public:
     PARAMETER(KMER_END)
 
     // classifiedRefiner
-    PARAMETER(UNCLASSIFIED)
-    PARAMETER(EXCLUDE_CONTAM)
-    PARAMETER(INCLUDE_TARGET)
+    PARAMETER(REMOVE_UNCLASSIFIED)
+    PARAMETER(EXCLUDE_TAXID)
+    PARAMETER(SELECT_TAXID)
     PARAMETER(SELECT_COLUMNS)
     PARAMETER(REPORT)
-    PARAMETER(CRITERION_RANK)
+    PARAMETER(RANK)
+    PARAMETER(HIGHER_RANK_FILE)
 
 
 
@@ -199,12 +200,14 @@ public:
     size_t kmerEnd;
 
     // classified2full
-    bool unclassified;
-    std::string excludeContam;
-    std::string includeTarget;
+    bool removeUnclassified;
+    std::string excludeTaxid;
+    std::string selectTaxid;
     std::string selectColumns;
     bool report;
-    std::string criterionRank;
+    std::string rank;
+    int higherRankFile;
+   
 
     void printParameters(const std::string &module, int argc,
                          const char* pargv[],

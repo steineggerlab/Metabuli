@@ -308,8 +308,8 @@ LocalParameters::LocalParameters() :
                      "^[0-9]+$"),
         PRINT_COLUMNS(PRINT_COLUMNS_ID,
                       "--print-columns",
-                      "CSV of column numbers to be printed",
-                      "CSV of column numbers to be printed",
+                      "CSV of columns to print",
+                      "CSV of columns to print",
                       typeid(std::string),
                       (void *) &printColumns,
                       "^.*$"),
@@ -369,48 +369,55 @@ LocalParameters::LocalParameters() :
                 typeid(size_t),
                 (void *) &kmerEnd,
                 "^[0-9]+$"),
-        UNCLASSIFIED(UNCLASSIFIED_ID,
-                "--unclassified",
+        REMOVE_UNCLASSIFIED(REMOVE_UNCLASSIFIED_ID,
+                "--remove-unclassified",
                 "Remove unclassified reads",
                 "Remove unclassified reads",
                 typeid(bool),
-                (void *) &unclassified,
+                (void *) &removeUnclassified,
                 ""),
-        EXCLUDE_CONTAM(EXCLUDE_CONTAM_ID,
-                "--exclude-contam",
-                "Remove contaminants taxId",
-                "Remove contaminants taxId",
+        EXCLUDE_TAXID(EXCLUDE_TAXID_ID,
+                "--exclude-taxid",
+                "Exclude taxId as well as its children",
+                "Exclude taxId as well as its children",
                 typeid(std::string),
-                (void *) &excludeContam,
+                (void *) &excludeTaxid,
                 "^.*$"),
-        INCLUDE_TARGET(INCLUDE_TARGET_ID,
-                "--include-target",
-                "Select target taxId",
-                "Select target taxId",
+        SELECT_TAXID(SELECT_TAXID_ID,
+                "--select-taxid",
+                "Select taxId as well as its children",
+                "Select taxId as well as its children",
                 typeid(std::string),
-                (void *) &includeTarget,
+                (void *) &selectTaxid,
                 "^.*$"),
         SELECT_COLUMNS(SELECT_COLUMNS_ID,
                 "--select-columns",
-                "select columns with number 0~7, 0: classified or not 7: full lineage",
-                "select columns with number 0~7, 0: classified or not 7: full lineage",
+                "Select columns with number, (7:full lineage, generated if absent)",
+                "Select columns with number, (7:full lineage, generated if absent)",
                 typeid(std::string),
                 (void *) &selectColumns,
                 "^.*$"),
         REPORT(REPORT_ID,
                 "--report",
-                "make report of refined classification file",
-                "make report of refined classification file",
+                "Make report of refined classification file",
+                "Make report of refined classification file",
                 typeid(bool),
                 (void *) &report,
                 ""),
-        CRITERION_RANK(CRITERION_RANK_ID,
-                "--criterion-rank",
-                "transform based on specific rank add * to save reads with higher ranks in separate file",
-                "transform based on specific rank add * to save reads with higher ranks in separate file",
+        RANK(RANK_ID,
+                "--rank",
+                "Adjust classification to the specified rank",
+                "Adjust classification to the specified rank",
                 typeid(std::string),
-                (void *) &criterionRank,
-                "^.*$")
+                (void *) &rank,
+                "^.*$"),
+        HIGHER_RANK_FILE(HIGHER_RANK_FILE_ID,
+                "--rank-file-type",
+                "0: without higher rank, 1: with higher rank, 2: separate file for higher rank classification",
+                "0: without higher rank, 1: with higher rank, 2: separate file for higher rank classification",
+                typeid(int),
+                (void *) &higherRankFile,
+                "^[0-2]$")
             
         
         
@@ -468,12 +475,14 @@ LocalParameters::LocalParameters() :
     contamList = "";
 
     // classified to full taxonomy
-    unclassified = false;
-    excludeContam = "";
-    includeTarget = "";
+    removeUnclassified = false;
+    excludeTaxid = "";
+    selectTaxid = "";
     selectColumns = "";
     report = false;
-    criterionRank = "";
+    rank = "";
+    higherRankFile = 0;
+
 
 
 
@@ -598,13 +607,15 @@ LocalParameters::LocalParameters() :
     query2reference.push_back(&TEST_RANK);
 
     //classified2full
-    classifiedRefiner.push_back(&UNCLASSIFIED);
-    classifiedRefiner.push_back(&EXCLUDE_CONTAM);
-    classifiedRefiner.push_back(&INCLUDE_TARGET);
+    classifiedRefiner.push_back(&REMOVE_UNCLASSIFIED);
+    classifiedRefiner.push_back(&EXCLUDE_TAXID);
+    classifiedRefiner.push_back(&SELECT_TAXID);
     classifiedRefiner.push_back(&SELECT_COLUMNS);
     classifiedRefiner.push_back(&REPORT);
-    classifiedRefiner.push_back(&CRITERION_RANK);
+    classifiedRefiner.push_back(&RANK);
+    classifiedRefiner.push_back(&HIGHER_RANK_FILE);
     classifiedRefiner.push_back(&PARAM_THREADS);
+    
 
 }
 
