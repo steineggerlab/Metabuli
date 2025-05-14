@@ -147,8 +147,8 @@ void Classifier::startClassify(const LocalParameters &par) {
     cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
     reporter->closeReadClassificationFile();
 
-    // Write report files, default: krona not included
-    reporter->writeReportFile(totalSeqCnt, taxCounts, false);
+    // Write report files
+    reporter->writeReportFile(totalSeqCnt, taxCounts);
 
     // Memory deallocation
     free(matchBuffer.buffer);
