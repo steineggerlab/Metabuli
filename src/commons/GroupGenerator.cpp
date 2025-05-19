@@ -145,7 +145,7 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     queryGroupInfo.resize(processedReadCnt, -1);
     int dynamicGroupKmerThr = static_cast<int>(mergeRelations(outDir, numOfGraph, jobId, thresholdK));
     
-    makeGroups(outDir, jobId, dynamicGroupKmerThr, groupInfo, queryGroupInfo);    
+    makeGroups(outDir, jobId, 120, groupInfo, queryGroupInfo);    
     saveGroupsToFile(groupInfo, queryGroupInfo, outDir, jobId);
     loadGroupsFromFile(groupInfo, queryGroupInfo, outDir, jobId);
     

@@ -646,8 +646,9 @@ WeightedTaxResult NcbiTaxonomy::weightedMajorityLCA(const std::vector<WeightedTa
             int currMinRank = ROOT_RANK;
             TaxID currParentTaxId = node->parentTaxId;
             while (currParentTaxId != currTaxId) {
-                int currRankInd = NcbiTaxonomy::findRankIndex(getString(node->rankIdx));
-                if ((currRankInd > 0) && (currRankInd < currMinRank)) {
+                const std::string &rank = getString(node->rankIdx);
+                int currRankInd = NcbiTaxonomy::findRankIndex(rank);
+                if ((currRankInd > 0) && (currRankInd < currMinRank) && (rank != "no rank")) {
                     currMinRank = currRankInd;
                     // the rank can only go up on the way to the root, so we can break
                     break;
