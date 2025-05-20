@@ -34,16 +34,22 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
     // Read 1
     if (seqMode == 1 || seqMode == 3) {
         KSeqWrapper* kseq = KSeqFactory(queryPath_1.c_str());
+        size_t seqPos = 0;
         
         // Skip processed reads
         for (size_t i = 0; i < processedQueryNum; i++) {
             kseq->ReadEntry();
-            // start++;
+            seqPos++;
         }
         size_t start = 0;
         size_t kmerCnt = 0;
         size_t seqCnt = 0;
         while (kseq->ReadEntry()) {
+            seqPos++;
+            if (unlikely(kseq->entry.sequence.l == 0 || kseq->entry.name.l == 0)) {
+                std::cout << seqPos << "th entry has no sequence or name" << std::endl;
+                exit(1);
+            }
             readNum_1++;
             seqCnt++;
             totalReadLength += kseq->entry.sequence.l;
@@ -71,10 +77,14 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
     } else {
         KSeqWrapper* kseq_1 = KSeqFactory(queryPath_1.c_str());
         KSeqWrapper* kseq_2 = KSeqFactory(queryPath_2.c_str());
+        size_t seqPos1 = 0;
+        size_t seqPos2 = 0;
         // Skip processed reads
         for (size_t i = 0; i < processedQueryNum; i++) {
             kseq_1->ReadEntry();
             kseq_2->ReadEntry();
+            seqPos1++;
+            seqPos2++;
         }
         size_t kmerCnt = 0;
         size_t seqCnt_1 = 0;
@@ -85,6 +95,12 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
         int kmerCnt_int_2; 
         while(true) {
             if (kseq_1->ReadEntry()) {
+                seqPos1++;
+                if (unlikely(kseq_1->entry.sequence.l == 0 || kseq_1->entry.name.l == 0)) {
+                    std::cout << "In file " << queryPath_1 << ", " << std::endl << "\t";
+                    std::cout << seqPos1 << "th entry has no sequence or name" << std::endl;
+                    exit(1);
+                }
                 readNum_1++;
                 seqCnt_1++;
                 totalReadLength += kseq_1->entry.sequence.l;
@@ -94,6 +110,12 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
             }
 
             if (kseq_2->ReadEntry()) {
+                seqPos2++;
+                if (unlikely(kseq_2->entry.sequence.l == 0 || kseq_2->entry.name.l == 0)) {
+                    std::cout << "In file " << queryPath_2 << ", " << std::endl << "\t";
+                    std::cout << seqPos2 << "th entry has no sequence or name" << std::endl;
+                    exit(1);
+                }
                 readNum_2++;
                 seqCnt_2++;
                 totalReadLength += kseq_2->entry.sequence.l;
