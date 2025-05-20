@@ -4,10 +4,12 @@
 #include "FileUtil.h"
 #include "common.h"
 #include "LocalUtil.h"
+#include "fastq_info.cpp"
 
 void setClassifyDefaults(LocalParameters & par){
     par.skipRedundancy = 0;
     par.reducedAA = 0;
+    par.validateInput = 0;
     // par.spaceMask = "11111111";
     par.seqMode = 2;    
     par.minScore = 0;
@@ -56,6 +58,36 @@ int classify(int argc, const char **argv, const Command& command) {
         if (!FileUtil::directoryExists(par.filenames[3].c_str())) {
             FileUtil::makeDir(par.filenames[3].c_str());
         }
+
+        if (par.validateInput) {
+            if (LocalUtil::isFasta(par.filenames[0])) {
+                cout << "Validating FASTA file: " << par.filenames[0] << endl;
+                int validateRes = validate_fasta_file(par.filenames[0].c_str(), 1);
+                if (validateRes != 0) {
+                    cout << "Error: " << par.filenames[0] << " is not a valid FASTA file." << endl;
+                    cout << "       Please check the entries in the file" << endl;
+                    return 1;
+                }
+
+                cout << "Validating FASTA file: " << par.filenames[1] << endl;
+                validateRes = validate_fasta_file(par.filenames[1].c_str(), 1);
+                if (validateRes != 0) {
+                    cout << "Error: " << par.filenames[1] << " is not a valid FASTA file." << endl;
+                    cout << "       Please check the entries in the file" << endl;
+                    return 1;
+                }
+            }
+            if (LocalUtil::isFastq(par.filenames[0])) {
+                cout << "Validating FASTQ file: " << par.filenames[0] << endl;
+                FASTQ_FILE* fd1=validate_single_fastq_file(par.filenames[0].c_str());
+                fastq_destroy(fd1);
+
+                cout << "Validating FASTQ file: " << par.filenames[1] << endl;
+                FASTQ_FILE* fd2=validate_single_fastq_file(par.filenames[1].c_str());
+                fastq_destroy(fd2);
+            }
+
+        }
     } else {
         dbDir = par.filenames[1];
         if (FileUtil::fileExists(par.filenames[1].c_str()) 
@@ -71,6 +103,22 @@ int classify(int argc, const char **argv, const Command& command) {
         }
         if (!FileUtil::directoryExists(par.filenames[2].c_str())) {
             FileUtil::makeDir(par.filenames[2].c_str());
+        }
+        if (par.validateInput) {
+            if (LocalUtil::isFasta(par.filenames[0])) {
+                cout << "Validating FASTA file: " << par.filenames[0] << endl;
+                int validateRes = validate_fasta_file(par.filenames[0].c_str(), 1);
+                if (validateRes != 0) {
+                    cout << "Error: " << par.filenames[0] << " is not a valid FASTA file." << endl;
+                    cout << "       Please check the entries in the file" << endl;
+                    return 1;
+                }
+            }
+            if (LocalUtil::isFastq(par.filenames[0])) {
+                cout << "Validating FASTQ file: " << par.filenames[0] << endl;
+                FASTQ_FILE* fd1=validate_single_fastq_file(par.filenames[0].c_str());
+                fastq_destroy(fd1);
+            }
         }
     }
 

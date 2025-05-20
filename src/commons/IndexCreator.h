@@ -22,6 +22,7 @@
 #include "LocalUtil.h"
 #include <cstdint>
 #include "TaxonomyWrapper.h"
+#include "fasta_validate.h"
 
 #include <omp.h>
 // #ifdef OPENMP
