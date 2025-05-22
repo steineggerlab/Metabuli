@@ -22,6 +22,7 @@
 #ifndef HASH
 #define HASH
 #include <stdlib.h>
+#include <cstdint>
 #if defined (__cplusplus) || (defined (__STDC__) && __STDC__)
 #define __ptr_t         void *
 #else /* Not C++ or ANSI C.  */
@@ -29,7 +30,7 @@
 #endif /* C++ or ANSI C.  */           
 
 #ifndef ulong
-#define ulong unsigned long long
+#define ulong uint64_t
 #endif
 
 #ifndef NULL

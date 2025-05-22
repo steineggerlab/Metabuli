@@ -8,7 +8,7 @@ variables:
 
 jobs:
   - job: build_ubuntu
-    displayName: Ubuntu Metabuli
+    displayName: Ubuntu
     pool:
       vmImage: 'Ubuntu-22.04'
     timeoutInMinutes: 120
