@@ -143,6 +143,7 @@ Downloaded files are stored in `OUTDIR/DB_NAME` directory, which can be provided
 ---
 
 ## Classification
+> [!NOTE] We commend running software like `fastp` or `fastplong` to remove adapters and low-quality reads before classification. 
 ```
 metabuli classify <i:FASTA/Q> <i:DBDIR> <o:OUTDIR> <Job ID> [options]
 - INPUT : FASTA/Q file of reads you want to classify. (gzip supported)
@@ -160,6 +161,7 @@ metabuli classify --seq-mode 1 read.fna dbdir outdir jobid
 metabuli classify --seq-mode 3 read.fna dbdir outdir jobid
 
   * Important parameters:
+   --validate-input : Validate query file format (0 by default)
    --threads : The number of threads used (all by default)
    --max-ram : The maximum RAM usage. (128 GiB by default)
    --min-score : The minimum score to be classified 
@@ -307,6 +309,7 @@ metabuli build --gtdb 1 <DBDIR> <FASTA_LIST> <GTDB_TAXDUMP/taxid.map> --taxonomy
    --max-ram : The maximum RAM usage. (128 GiB by default)
    --accession-level : Set 1 to creat a DB for accession level classification (0 by default).
    --cds-info : List of absolute paths to CDS files.
+   --validate-input : Validate FASTA file format (0 by default)
   
 ```
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete `*_diffIdx` and `*_info` files.
@@ -333,6 +336,7 @@ metabuli updateDB --gtdb 1 <NEW DBDIR> <FASTA_LIST> <GTDB_TAXDUMP/taxid.map> <OL
   --max-ram: The maximum RAM usage. (128 GiB by default)
   --accession-level: Set 1 to add new sequences for accession level classification (0 by default).
   --cds-info: List of absolute paths to CDS files.
+  --validate-input : Validate FASTA file format (0 by default)
 ```
 
 #### \<Add sequences of new taxa>
@@ -421,6 +425,7 @@ metabuli build <DBDIR> <FASTA_LIST> <accession2taxid> --taxonomy-path <TAXDUMP> 
   --max-ram: The maximum RAM usage. (128 GiB by default)
   --accession-level: Set 1 to creat a DB for accession level classification (0 by default).
   --cds-info: List of absolute paths to CDS files.
+  --validate-input : Validate FASTA file format (0 by default)
 ```
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete `*_diffIdx` and `*_info` files and `DATE-TIME` folder (e.g., `2025-1-24-10-32`) if generated.
 
@@ -456,6 +461,7 @@ metabuli updateDB <NEW DBDIR> <FASTA_LIST> <accession2taxid> <OLD DBDIR> [option
   --accession-level : Set 1 to create a DB for accession level classification (0 by default).
   --make-library : Make species library for faster execution (1 by default).
   --new-taxa : List of new taxa to be added.
+  --validate-input : Validate FASTA file format (0 by default)
 ```
 
 #### \<Add sequences of new taxa> - Please refer [this section](#add-sequences-of-new-taxa).
@@ -489,4 +495,6 @@ fasterq-dump --split-files SRR14484345
   ```
 
 ## Reference
-Shen, W., Ren, H., TaxonKit: a practical and efficient NCBI Taxonomy toolkit, Journal of Genetics and Genomics, https://doi.org/10.1016/j.jgg.2021.03.006
+- **Taxonomy dump**: [Shen W, Ren H. TaxonKit: a practical and efficient NCBI Taxonomy toolkit. Journal of Genetics and Genomics (2021).](https://doi.org/10.1016/j.jgg.2021.03.006)
+- **FASTA format validation**: [Edwards R.A. fasta_validate: a fast and efficient fasta validator written in pure C. Zenodo.](https://doi.org/10.5281/zenodo.2532044) 
+- **FASTQ format validation**: [Fonseca N, Manning J. nunofonseca/fastq_utils: 0.25.2. Zenodo.](https://doi.org/10.5281/zenodo.7755574)
