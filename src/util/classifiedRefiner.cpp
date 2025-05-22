@@ -48,8 +48,20 @@ ClassificationResult parseFields(const std::vector<std::string>& fields) {
     return result;
 }
 
+void classifiedRefinerDefault(LocalParameters & par){
+    par.removeUnclassified = false;
+    par.excludeTaxid = "";
+    par.selectTaxid = "";
+    par.selectColumns = "";
+    par.report = false;
+    par.rank = "";
+    par.higherRankFile = 0;
+    par.minScore = 0.0;
+}
+
 int classifiedRefiner(int argc, const char **argv, const Command &command) {
     LocalParameters &par = LocalParameters::getLocalInstance();
+    classifiedRefinerDefault(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
     const string &classifiedFile = par.filenames[0];
     const string &taxonomyDir = par.filenames[1];
@@ -72,7 +84,7 @@ int classifiedRefiner(int argc, const char **argv, const Command &command) {
 
 int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, const LocalParameters &par) {
     #ifdef OPENMP
-    omp_set_num_threads(par.threads);
+        omp_set_num_threads(par.threads);
     #endif
     
     const string & nodesFile = taxonomyDir + "/nodes.dmp";
@@ -303,7 +315,8 @@ int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, co
                     // remove unclassified
                     if (!(par.removeUnclassified == true && data.isClassified == false) &&
                         !(contamsTaxIds.size() > 0 && checktaxId(taxonomy, contamsTaxIds, data.taxonomyId)) &&
-                        !(targetsTaxIds.size() > 0 && !checktaxId(taxonomy, targetsTaxIds, data.taxonomyId))) {
+                        !(targetsTaxIds.size() > 0 && !checktaxId(taxonomy, targetsTaxIds, data.taxonomyId)) && 
+                        !(data.isClassified == true && par.minScore > data.dnaIdentityScore)) { 
                         
                         stringstream ss;
                         stringstream tt;

@@ -264,6 +264,13 @@ LocalParameters::LocalParameters() :
                 typeid(int),
                 (void *) &gtdb,
                 "[0-1]"),
+        VALIDATE_INPUT(VALIDATE_INPUT_ID,
+                      "--validate-input",
+                      "Validate format of input FASTA/FASTQ file(s)",
+                      "Validate format of input FASTA/FASTQ file(s)",
+                      typeid(int),
+                      (void *) &validateInput,
+                      "[0-1]"),
         NEW_TAXA(NEW_TAXA_ID,
                 "--new-taxa",
                 "TSV file of new taxa to be added",
@@ -506,6 +513,7 @@ LocalParameters::LocalParameters() :
     build.push_back(&RAM_USAGE);
     build.push_back(&MAKE_LIBRARY);
     build.push_back(&GTDB);
+    build.push_back(&VALIDATE_INPUT);
 
     // updateDB
     updateDB.push_back(&PARAM_THREADS);
@@ -520,6 +528,7 @@ LocalParameters::LocalParameters() :
     updateDB.push_back(&NEW_TAXA);
     updateDB.push_back(&MAKE_LIBRARY);
     updateDB.push_back(&GTDB);
+    updateDB.push_back(&VALIDATE_INPUT);
 
     //classify
     classify.push_back(&PARAM_THREADS);
@@ -539,6 +548,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&TIE_RATIO);
     classify.push_back(&SKIP_REDUNDANCY);
     classify.push_back(&PRINT_LINEAGE);
+    classify.push_back(&VALIDATE_INPUT);
 
     // extract
     extract.push_back(&TAXONOMY_PATH);
@@ -623,6 +633,7 @@ LocalParameters::LocalParameters() :
     classifiedRefiner.push_back(&RANK);
     classifiedRefiner.push_back(&HIGHER_RANK_FILE);
     classifiedRefiner.push_back(&PARAM_THREADS);
+    classifiedRefiner.push_back(&MIN_SCORE);
     
 
 }

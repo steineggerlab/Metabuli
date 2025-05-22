@@ -5,11 +5,13 @@
 #include "FileUtil.h"
 #include "accession2taxid.h"
 #include "editNames.h"
+#include "fasta_validate.h"
 
 
 void setDefaults_updateDB(LocalParameters & par){
     par.makeLibrary = 0;
     par.gtdb = 0;
+    par.validateInput = 0;
     // par.skipRedundancy = 1;
     par.reducedAA = 0;
     par.ramUsage = 128;
@@ -41,6 +43,38 @@ int updateDB(int argc, const char **argv, const Command &command){
     if (!FileUtil::directoryExists(newDbDir.c_str())) {
         FileUtil::makeDir(newDbDir.c_str());
     }
+
+    if (par.validateInput == 1) {
+        const string & fnaListFileName = par.filenames[1];
+        // Read the file line by line
+        ifstream file(fnaListFileName);
+        if (!file.is_open()) {
+            cout << "Error: Unable to open file " << fnaListFileName << endl;
+            return 1;
+        }
+        string singleFastaName;
+        while (getline(file, singleFastaName)) {
+            if (!LocalUtil::isFasta(singleFastaName)) {
+                cout << "Error: " << singleFastaName << " has a unsupported extension." << endl;
+                cout << "       Allowed extensions are .fna, .fasta, .fa, and their gzip versions (e.g., .fna.gz)" << endl;
+                file.close();
+                return 1;
+            }
+            if (!FileUtil::fileExists(singleFastaName.c_str())) {
+                cout << "Error: " << singleFastaName << " does not exist." << endl;
+                file.close();
+                return 1;
+            }
+            int validateRes = validate_fasta_file(singleFastaName.c_str(), 1);
+            if (validateRes != 0) {
+                cout << "Error: " << singleFastaName << " is not a valid FASTA file." << endl;
+                cout << "       Please check the entries in the file" << endl;
+                file.close();
+                return 1;
+            }
+        }
+    }
+
 
     if (par.gtdb == 1) {
         accession2taxid(par.filenames[1], par.filenames[2]);

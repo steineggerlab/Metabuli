@@ -168,9 +168,11 @@ int searchAccession2TaxID(const std::string &name,
   return 0;
 }
 
-void getObservedAccessionList(const string & fnaListFileName,
-                              vector<string> & fastaList,
-                              unordered_map<string, TaxID> & acc2taxid) {
+void getObservedAccessionList(
+  const string & fnaListFileName,
+  vector<string> & fastaList,
+  unordered_map<string, TaxID> & acc2taxid) 
+{
   ifstream fileListFile(fnaListFileName);
   if (fileListFile.is_open()) {
     for (string eachLine; getline(fileListFile, eachLine);) {
@@ -192,6 +194,12 @@ void getObservedAccessionList(const string & fnaListFileName,
         KSeqWrapper* kseq = KSeqFactory(fastaList[i].c_str());
         while (kseq->ReadEntry()) {
             const KSeqWrapper::KSeqEntry & e = kseq->entry;
+            if (e.sequence.l == 0) {
+              cout << "Empty sequence in " << fastaList[i] << endl;
+            }
+            if (e.name.l == 0) {
+              cout << "Empty name in " << fastaList[i] << endl;
+            }
             // Get the accession ID without version
             char* pos = strchr(e.name.s, '.'); 
             if (pos != nullptr) {
