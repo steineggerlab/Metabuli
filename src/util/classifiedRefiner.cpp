@@ -102,6 +102,11 @@ int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, co
     string refinedFileName = classifiedFile.substr(0, classifiedFile.find_last_of('.')) + "_refined.tsv";
     cout << "Write refined classification result to: " << endl;
     cout << refinedFileName << endl;
+
+    if (!FileUtil::fileExists(refinedFileName.c_str())) {
+        Debug(Debug::INFO) << refinedFileName << " is already exists.\n";
+        return 0;
+    }
     ofstream refinedFile(refinedFileName.c_str());
     
     if (!refinedFile.is_open()) {
