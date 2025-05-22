@@ -66,7 +66,7 @@ jobs:
           fi
 
           make -j $(nproc --all)
-        displayName: Build
+        displayName: Build Metabuli
       - script: |
           cd ${BUILD_SOURCESDIRECTORY}
           ./util/Metabuli-regression/run_regression.sh ./build/src/metabuli examples 
@@ -212,8 +212,8 @@ jobs:
       vmImage: 'ubuntu-latest'
     dependsOn:
       - build_macos
-      - build_ubuntu_2004
-      - build_ubuntu_cross_2004
+      - build_ubuntu
+      - build_ubuntu_cross
       - build_windows
     steps:
       - script: |
