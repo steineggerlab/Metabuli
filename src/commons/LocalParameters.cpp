@@ -315,8 +315,8 @@ LocalParameters::LocalParameters() :
                      "^[0-9]+$"),
         PRINT_COLUMNS(PRINT_COLUMNS_ID,
                       "--print-columns",
-                      "CSV of column numbers to be printed",
-                      "CSV of column numbers to be printed",
+                      "CSV of columns to print",
+                      "CSV of columns to print",
                       typeid(std::string),
                       (void *) &printColumns,
                       "^.*$"),
@@ -375,7 +375,59 @@ LocalParameters::LocalParameters() :
                 "Last k-mer to print",
                 typeid(size_t),
                 (void *) &kmerEnd,
-                "^[0-9]+$")
+                "^[0-9]+$"),
+        REMOVE_UNCLASSIFIED(REMOVE_UNCLASSIFIED_ID,
+                "--remove-unclassified",
+                "Remove unclassified reads",
+                "Remove unclassified reads",
+                typeid(bool),
+                (void *) &removeUnclassified,
+                ""),
+        EXCLUDE_TAXID(EXCLUDE_TAXID_ID,
+                "--exclude-taxid",
+                "Exclude taxId as well as its children",
+                "Exclude taxId as well as its children",
+                typeid(std::string),
+                (void *) &excludeTaxid,
+                "^.*$"),
+        SELECT_TAXID(SELECT_TAXID_ID,
+                "--select-taxid",
+                "Select taxId as well as its children",
+                "Select taxId as well as its children",
+                typeid(std::string),
+                (void *) &selectTaxid,
+                "^.*$"),
+        SELECT_COLUMNS(SELECT_COLUMNS_ID,
+                "--select-columns",
+                "Select columns with number, (7:full lineage, generated if absent)",
+                "Select columns with number, (7:full lineage, generated if absent)",
+                typeid(std::string),
+                (void *) &selectColumns,
+                "^.*$"),
+        REPORT(REPORT_ID,
+                "--report",
+                "Make report of refined classification file",
+                "Make report of refined classification file",
+                typeid(bool),
+                (void *) &report,
+                ""),
+        RANK(RANK_ID,
+                "--rank",
+                "Adjust classification to the specified rank",
+                "Adjust classification to the specified rank",
+                typeid(std::string),
+                (void *) &rank,
+                "^.*$"),
+        HIGHER_RANK_FILE(HIGHER_RANK_FILE_ID,
+                "--rank-file-type",
+                "0: without higher rank, 1: with higher rank, 2: separate file for higher rank classification",
+                "0: without higher rank, 1: with higher rank, 2: separate file for higher rank classification",
+                typeid(int),
+                (void *) &higherRankFile,
+                "^[0-2]$")
+            
+        
+        
   {
     // Initialize the parameters
     // Superkingdom taxonomy id
@@ -428,6 +480,17 @@ LocalParameters::LocalParameters() :
     // Filter
     printMode = 0;
     contamList = "";
+
+    // classified to full taxonomy
+    removeUnclassified = false;
+    excludeTaxid = "";
+    selectTaxid = "";
+    selectColumns = "";
+    report = false;
+    rank = "";
+    higherRankFile = 0;
+
+
 
 
     // build
@@ -550,6 +613,18 @@ LocalParameters::LocalParameters() :
     expand_diffidx.push_back(&KMER_END);
 
     query2reference.push_back(&TEST_RANK);
+
+    //classified2full
+    classifiedRefiner.push_back(&REMOVE_UNCLASSIFIED);
+    classifiedRefiner.push_back(&EXCLUDE_TAXID);
+    classifiedRefiner.push_back(&SELECT_TAXID);
+    classifiedRefiner.push_back(&SELECT_COLUMNS);
+    classifiedRefiner.push_back(&REPORT);
+    classifiedRefiner.push_back(&RANK);
+    classifiedRefiner.push_back(&HIGHER_RANK_FILE);
+    classifiedRefiner.push_back(&PARAM_THREADS);
+    
+
 }
 
 void LocalParameters::printParameters(const std::string &module, int argc, const char* pargv[],

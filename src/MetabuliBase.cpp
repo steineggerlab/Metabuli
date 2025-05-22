@@ -181,7 +181,15 @@ std::vector<Command> metabuliCommands = {
                  {"FASTA list", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                  {"new taxonomy dump", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory},
                  {"accession2taxid", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-                 {"output prefix", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile}}}
+                 {"output prefix", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
+        {"classifiedRefiner", classifiedRefiner, &localPar.classifiedRefiner, COMMAND_FORMAT_CONVERSION,
+                "Generates refined classification file from classified file",
+                nullptr,
+                "Siyoung Choi <remy0502@snu.ac.kr>",
+                "<i: classified file> <i: taxonomy dump>",
+                CITATION_SPACEPHARER,
+                {{"classified file", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                {"taxonomy dump", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}}
 };
 
 std::vector<KmerThreshold> externalThreshold = {};
