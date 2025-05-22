@@ -105,16 +105,17 @@ jobs:
       - checkout: self
         submodules: true
       - script: |
-          sudo dpkg --add-architecture $ARCH
+          CODENAME=$(lsb_release -cs)
+          sudo dpkg --add-architecture "$ARCH"
           cat << HEREDOC | sudo tee /etc/apt/sources.list
-          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu/ focal main universe multiverse
-          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu/ focal-updates main universe multiverse
-          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu/ focal-backports main universe multiverse
-          deb [arch=amd64,i386] http://security.ubuntu.com/ubuntu/ focal-security main universe multiverse
-          deb [arch=$ARCH] http://ports.ubuntu.com/ubuntu-ports/ focal main  universe multiverse
-          deb [arch=$ARCH] http://ports.ubuntu.com/ubuntu-ports/ focal-updates main universe multiverse
-          deb [arch=$ARCH] http://ports.ubuntu.com/ubuntu-ports/ focal-backports main universe multiverse
-          deb [arch=$ARCH] http://ports.ubuntu.com/ubuntu-ports/ focal-security main universe multiverse
+          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu/ ${CODENAME} main universe multiverse
+          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu/ ${CODENAME}-updates main universe multiverse
+          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu/ ${CODENAME}-backports main universe multiverse
+          deb [arch=amd64,i386] http://security.ubuntu.com/ubuntu/ ${CODENAME}-security main universe multiverse
+          deb [arch=$ARCH] http://ports.ubuntu.com/ubuntu-ports/ ${CODENAME} main universe multiverse
+          deb [arch=$ARCH] http://ports.ubuntu.com/ubuntu-ports/ ${CODENAME}-updates main universe multiverse
+          deb [arch=$ARCH] http://ports.ubuntu.com/ubuntu-ports/ ${CODENAME}-backports main universe multiverse
+          deb [arch=$ARCH] http://ports.ubuntu.com/ubuntu-ports/ ${CODENAME}-security main universe multiverse
           HEREDOC
           sudo apt-get update
           sudo apt-get -y install -o APT::Immediate-Configure=false crossbuild-essential-$ARCH zlib1g-dev:$ARCH libbz2-dev:$ARCH
