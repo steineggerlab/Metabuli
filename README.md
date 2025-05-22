@@ -143,7 +143,8 @@ Downloaded files are stored in `OUTDIR/DB_NAME` directory, which can be provided
 ---
 
 ## Classification
-> [!NOTE] We commend running software like `fastp` or `fastplong` to remove adapters and low-quality reads before classification. 
+> [!NOTE] 
+> We commend running software like `fastp` or `fastplong` to remove adapters and low-quality reads before classification. 
 ```
 metabuli classify <i:FASTA/Q> <i:DBDIR> <o:OUTDIR> <Job ID> [options]
 - INPUT : FASTA/Q file of reads you want to classify. (gzip supported)
@@ -243,13 +244,15 @@ metabuli classifiedRefiner <i:read-by-read classification> <i:DBDIR> [options]
 
 * Options
    --threads : The number of threads to utilize (all by default)
+   --min-score : Remove classifications with score below this value
    --remove-unclassified : Remove unclassified reads
-   --exclude-taxid : Remove list of taxids as well as its children (e.g., 1758,9685,1234)
-   --select-taxid : Select list of taxids as well as its children (e.g., 1758,9685,1234)
+   --exclude-taxid : Remove list of taxids as well as its children (e.g., 1758,9685)
+   --select-taxid : Select list of taxids as well as its children (e.g., 1758,9685)
    --select-columns : Select list of columns with number and handle full lineage as 7 (generated if absent) (e.g., 2,5,7,3)
-   --report : Write report of refined classification file
+   --report : Write report of refined classification results
    --rank : Adjust classification to the specified rank
-   --rank-file-type : Choose how to handle reads assigned to higher taxonomic ranks when using the --rank option. [0: exclude higher rank, 1: include higher rank, 2: make separate file for higher rank classification]
+   --rank-file-type : Choose how to handle classifications at higher ranks when using --rank option. 
+        [0: exclude them, 1: include them, 2: make separate file for them]
 
 ```
 #### Output

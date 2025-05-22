@@ -633,6 +633,7 @@ LocalParameters::LocalParameters() :
     classifiedRefiner.push_back(&RANK);
     classifiedRefiner.push_back(&HIGHER_RANK_FILE);
     classifiedRefiner.push_back(&PARAM_THREADS);
+    classifiedRefiner.push_back(&MIN_SCORE);
     
 
 }
