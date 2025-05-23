@@ -7,10 +7,10 @@ variables:
     regression: 1
 
 jobs:
-  - job: build_ubuntu_2004
-    displayName: Ubuntu 2004
+  - job: build_ubuntu
+    displayName: Ubuntu
     pool:
-      vmImage: 'Ubuntu-20.04'
+      vmImage: 'Ubuntu-22.04'
     timeoutInMinutes: 120
     strategy:
       matrix:
@@ -18,22 +18,22 @@ jobs:
           SIMD: 'AVX2'
           STATIC: 1
           MPI: 0
-          BUILD_TYPE: RelWithDebInfo
+          BUILD_TYPE: Release
         # sse41:
         #   SIMD: 'SSE4_1'
         #   STATIC: 1
         #   MPI: 0
-        #   BUILD_TYPE: RelWithDebInfo
+        #   BUILD_TYPE: Release
         sse2:
           SIMD: 'SSE2'
           STATIC: 1
           MPI: 0
-          BUILD_TYPE: RelWithDebInfo
+          BUILD_TYPE: Release
         avx2_mpi:
           SIMD: 'AVX2'
           STATIC: 0
           MPI: 1
-          BUILD_TYPE: RelWithDebInfo
+          BUILD_TYPE: Release
         asan:
           SIMD: 'AVX2'
           STATIC: 0
@@ -43,7 +43,7 @@ jobs:
       - checkout: self
         submodules: true
       - script: |
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+          # sudo add-apt-repository ppa:ubuntu-toolchain-r/test
           sudo apt-get update
           sudo apt-get install -y gcc-11 g++-11 libgcc-11-dev rustc cargo build-essential
         displayName: Install newer GCC
@@ -53,20 +53,33 @@ jobs:
         displayName: Install Dependencies
         condition: eq(variables['MPI'], 1)
       - script: |
+          # mkdir build && cd build
+          # export CC=gcc-11 ; export CXX=g++-11
+          # if [ "${STATIC}" -eq "1" ]; then
+          #     LIBGOMP=/usr/lib/gcc/x86_64-linux-gnu/11
+          #     cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DBUILD_SHARED_LIBS=OFF \
+          #       -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc \
+          #       -static-libstdc++" -DCMAKE_FIND_LIBRARY_SUFFIXES=".a" \
+          #       -DENABLE_WERROR=0 -DHAVE_${SIMD}=1 -DHAVE_MPI=${MPI} ..
+          # else
+          #     cmake -DHAVE_SANITIZER=1 -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DHAVE_TESTS=1 \
+          #       -DENABLE_WERROR=1 -DHAVE_${SIMD}=1 -DHAVE_MPI=${MPI} ..
+          # fi
           mkdir build && cd build
           export CC=gcc-11 ; export CXX=g++-11
           if [ "${STATIC}" -eq "1" ]; then
-              cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DBUILD_SHARED_LIBS=OFF \
-                -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc \
-                -static-libstdc++" -DCMAKE_FIND_LIBRARY_SUFFIXES=".a" \
-                -DENABLE_WERROR=0 -DHAVE_${SIMD}=1 -DHAVE_MPI=${MPI} ..
+            LIBGOMP=/usr/lib/gcc/x86_64-linux-gnu/11
+            cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DFORCE_STATIC_DEPS=1 -DHAVE_TESTS=1 \
+              -DOpenMP_C_FLAGS="-fopenmp -I${LIBGOMP}" -DOpenMP_C_LIB_NAMES=gomp -DOpenMP_CXX_FLAGS="-fopenmp -I${LIBGOMP}" -DOpenMP_CXX_LIB_NAMES=gomp -DOpenMP_gomp_LIBRARY=${LIBGOMP}/libgomp.a \
+              -DENABLE_WERROR=0 -DHAVE_${SIMD}=1 -DHAVE_MPI=${MPI} ..
           else
-              cmake -DHAVE_SANITIZER=1 -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-                -DENABLE_WERROR=0 -DHAVE_${SIMD}=1 -DHAVE_MPI=${MPI} ..
+            cmake -DHAVE_SANITIZER=1 -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DHAVE_TESTS=1 \
+              -DENABLE_WERROR=0 -DHAVE_${SIMD}=1 -DHAVE_MPI=${MPI} ..
           fi
 
-          make -j $(nproc --all)
-        displayName: Build
+
+          make -j $(nproc --all) VERBOSE=1
+        displayName: Build Metabuli
       - script: |
           cd ${BUILD_SOURCESDIRECTORY}
           ./util/Metabuli-regression/run_regression.sh ./build/src/metabuli examples 
@@ -78,10 +91,10 @@ jobs:
           targetPath: $(Build.SourcesDirectory)/build/src/metabuli
           artifactName: metabuli-linux-$(SIMD)
 
-  - job: build_ubuntu_cross_2004
-    displayName: Ubuntu 2004 Cross-Compile
+  - job: build_ubuntu_cross
+    displayName: Ubuntu Cross-Compile
     pool:
-      vmImage: 'Ubuntu-20.04'
+      vmImage: 'Ubuntu-22.04'
     strategy:
       matrix:
         arm64:
@@ -92,16 +105,17 @@ jobs:
       - checkout: self
         submodules: true
       - script: |
-          sudo dpkg --add-architecture $ARCH
+          CODENAME=$(lsb_release -cs)
+          sudo dpkg --add-architecture "$ARCH"
           cat << HEREDOC | sudo tee /etc/apt/sources.list
-          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu/ focal main universe multiverse
-          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu/ focal-updates main universe multiverse
-          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu/ focal-backports main universe multiverse
-          deb [arch=amd64,i386] http://security.ubuntu.com/ubuntu/ focal-security main universe multiverse
-          deb [arch=$ARCH] http://ports.ubuntu.com/ubuntu-ports/ focal main  universe multiverse
-          deb [arch=$ARCH] http://ports.ubuntu.com/ubuntu-ports/ focal-updates main universe multiverse
-          deb [arch=$ARCH] http://ports.ubuntu.com/ubuntu-ports/ focal-backports main universe multiverse
-          deb [arch=$ARCH] http://ports.ubuntu.com/ubuntu-ports/ focal-security main universe multiverse
+          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu/ ${CODENAME} main universe multiverse
+          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu/ ${CODENAME}-updates main universe multiverse
+          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu/ ${CODENAME}-backports main universe multiverse
+          deb [arch=amd64,i386] http://security.ubuntu.com/ubuntu/ ${CODENAME}-security main universe multiverse
+          deb [arch=$ARCH] http://ports.ubuntu.com/ubuntu-ports/ ${CODENAME} main universe multiverse
+          deb [arch=$ARCH] http://ports.ubuntu.com/ubuntu-ports/ ${CODENAME}-updates main universe multiverse
+          deb [arch=$ARCH] http://ports.ubuntu.com/ubuntu-ports/ ${CODENAME}-backports main universe multiverse
+          deb [arch=$ARCH] http://ports.ubuntu.com/ubuntu-ports/ ${CODENAME}-security main universe multiverse
           HEREDOC
           sudo apt-get update
           sudo apt-get -y install -o APT::Immediate-Configure=false crossbuild-essential-$ARCH zlib1g-dev:$ARCH libbz2-dev:$ARCH
@@ -109,13 +123,12 @@ jobs:
         displayName: Install Toolchain
       - script: |
           mkdir build && cd build
+          LIBGOMP=/usr/lib/gcc-cross/${CPREF}-linux-gnu/11;
           CC=${CPREF}-linux-gnu-gcc CXX=${CPREF}-linux-gnu-g++ \
-           cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DHAVE_TESTS=1 \
-            -DBUILD_SHARED_LIBS=OFF \
-            -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc \
-            -static-libstdc++" -DCMAKE_FIND_LIBRARY_SUFFIXES=".a" \
-            -DRust_CARGO_TARGET=${CPREF}-unknown-linux-gnu \
+          cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DHAVE_TESTS=1 -DFORCE_STATIC_DEPS=1 \
+            -DOpenMP_C_FLAGS="-fopenmp -I${LIBGOMP}" -DOpenMP_C_LIB_NAMES=gomp -DOpenMP_CXX_FLAGS="-fopenmp -I${LIBGOMP}" -DOpenMP_CXX_LIB_NAMES=gomp -DOpenMP_gomp_LIBRARY=${LIBGOMP}/libgomp.a \
             -DENABLE_WERROR=0 -DHAVE_${SIMD}=1 ..
+
           make -j $(nproc --all)
         displayName: Build Metabuli
       - task: PublishPipelineArtifact@0
@@ -212,8 +225,8 @@ jobs:
       vmImage: 'ubuntu-latest'
     dependsOn:
       - build_macos
-      - build_ubuntu_2004
-      - build_ubuntu_cross_2004
+      - build_ubuntu
+      - build_ubuntu_cross
       - build_windows
     steps:
       - script: |

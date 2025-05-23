@@ -113,7 +113,7 @@ std::vector<Command> metabuliCommands = {
         //             {{"List of absolute paths of files to be added. One path per line.", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
         //              {"NCBI style accession2taxid file. It should be consistent to tax dump files.", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
         //              {"DB directory", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}},
-        {"binning2report", binning2report, &localPar.binning2report, COMMAND_FORMAT_CONVERSION,
+        {"make-report", binning2report, &localPar.binning2report, COMMAND_FORMAT_CONVERSION,
                 "It generates Kraken style report file from binning results",
                 nullptr,
                 "Jaebeom Kim <jbeom0731@gmail.com>",
