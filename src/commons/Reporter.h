@@ -22,6 +22,8 @@ private:
     string readClassificationFileName;
     ofstream readClassificationFile;
 
+    bool isFirstTime = true;
+
 public:
     Reporter(const LocalParameters &par, TaxonomyWrapper *taxonomy, const std::string &customReportFileName = "");
     // Write report

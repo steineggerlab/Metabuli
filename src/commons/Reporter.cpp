@@ -26,11 +26,14 @@ void Reporter::openReadClassificationFile() {
 }
 
 void Reporter::writeReadClassification(const vector<Query> & queryList, bool classifiedOnly) {
-    readClassificationFile << "#is_classified\tname\ttaxID\tquery_length\tscore\trank";
-    if (par.printLineage) {
-        readClassificationFile << "\tlineage";
+    if (isFirstTime) {
+        readClassificationFile << "#query_id\tname\ttaxID\tquery_length\tscore\trank";
+        if (par.printLineage) {
+            readClassificationFile << "\tlineage";
+        }
+        readClassificationFile << "\ttaxID:match_count\n";
+        isFirstTime = false;
     }
-    readClassificationFile << "\ttaxID:match_count\n";
     for (size_t i = 0; i < queryList.size(); i++) {
         if (classifiedOnly && !queryList[i].isClassified) {
             continue;
