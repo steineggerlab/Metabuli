@@ -26,7 +26,7 @@ struct Match { // 24 byte
 
     void printMatch() const {
         std::cout << qInfo.sequenceID << " " << qInfo.pos << " " << qInfo.frame << " "
-        << targetId << " " << speciesId << " " << rightEndHamming << " " << (int)hamming << " " << getScore() << std::endl;
+        << targetId << " " << speciesId << " " << rightEndHamming << " " << (int)hamming << " " << getScore() << "\n";
     }
 
     float getScore(float score = 0.0f, int cnt = 0) const { 

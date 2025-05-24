@@ -26,7 +26,7 @@ KmerMatcher::~KmerMatcher() {
 }
 
 void KmerMatcher::loadTaxIdList(const LocalParameters & par) {
-    cout << "Loading the list for taxonomy IDs ... ";
+    cout << "Loading the list for taxonomy IDs ... " << std::flush;
     if (par.contamList != "") {
         vector<string> contams = Util::split(par.contamList, ",");
         for (auto &contam : contams) {

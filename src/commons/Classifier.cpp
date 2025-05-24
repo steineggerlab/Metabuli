@@ -54,7 +54,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 
         // Get splits for remaining sequences
         if (tries == 1) {
-                cout << "Indexing query file ...";
+                cout << "Indexing query file ..." << std::flush;
         }
         queryIndexer->setBytesPerKmer(matchPerKmer);
         queryIndexer->indexQueryFile(processedReadCnt);
@@ -132,7 +132,7 @@ void Classifier::startClassify(const LocalParameters &par) {
                 // cout << "The search was incomplete. Increasing --match-per-kmer to " << matchPerKmer << " and trying again..." << endl;
                 break;
             }
-         }
+        }
          
         delete kseq1;
         if (par.seqMode == 2) {
