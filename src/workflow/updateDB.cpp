@@ -6,12 +6,14 @@
 #include "accession2taxid.h"
 #include "editNames.h"
 #include "fasta_validate.h"
+#include "validateDatabase.h"
 
 
 void setDefaults_updateDB(LocalParameters & par){
     par.makeLibrary = 0;
     par.gtdb = 0;
     par.validateInput = 0;
+    par.validateDb = 0;
     // par.skipRedundancy = 1;
     par.reducedAA = 0;
     par.ramUsage = 128;
@@ -150,5 +152,16 @@ int updateDB(int argc, const char **argv, const Command &command){
     merger.mergeTargetFiles();
     delete taxonomy;
     cout << "Index creation completed." << endl;
+
+
+    if (par.validateDb) {
+        cout << "Validating the updated database..." << endl;
+        if (validateDatabase(newDbDir) != 0) {
+            cerr << "Database validation failed." << endl;
+            return 1;
+        }
+        cout << "Database validation completed successfully." << endl;
+    }
+
     return 0;
 }

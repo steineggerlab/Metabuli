@@ -6,6 +6,7 @@
 #include "accession2taxid.h"
 #include "editNames.h"
 #include "fasta_validate.h"
+#include "validateDatabase.h"
 
 void setDefaults_build(LocalParameters & par){
     par.gtdb = 0;
@@ -13,6 +14,7 @@ void setDefaults_build(LocalParameters & par){
     par.reducedAA = 0;
     par.ramUsage = 128;
     par.validateInput = 0;
+    par.validateDb = 0;
     // par.spaceMask = "11111111";
     par.taxonomyPath = "" ;
     par.splitNum = 4096;
@@ -113,5 +115,14 @@ int build(int argc, const char **argv, const Command &command){
     merger.mergeTargetFiles();
     delete taxonomy;
     cout << "Index creation completed." << endl;
+
+    if (par.validateDb) {
+        cout << "Validating the created database..." << endl;
+        if (validateDatabase(dbDir) != 0) {
+            cerr << "Database validation failed." << endl;
+            return 1;
+        }
+        cout << "Database validation completed successfully." << endl;
+    }
     return 0;
 }

@@ -5,11 +5,13 @@
 #include "common.h"
 #include "LocalUtil.h"
 #include "fastq_info.cpp"
+#include "validateDatabase.h"
 
 void setClassifyDefaults(LocalParameters & par){
     par.skipRedundancy = 0;
     par.reducedAA = 0;
     par.validateInput = 0;
+    par.validateDb = 0;
     // par.spaceMask = "11111111";
     par.seqMode = 2;    
     par.minScore = 0;
@@ -86,7 +88,12 @@ int classify(int argc, const char **argv, const Command& command) {
                 FASTQ_FILE* fd2=validate_single_fastq_file(par.filenames[1].c_str());
                 fastq_destroy(fd2);
             }
-
+        }
+        if (par.validateDb) {
+            if (validateDatabase(dbDir) != 0) {
+                cout << "Error: Database validation failed." << endl;
+                exit(1);
+            }
         }
     } else {
         dbDir = par.filenames[1];
@@ -118,6 +125,12 @@ int classify(int argc, const char **argv, const Command& command) {
                 cout << "Validating FASTQ file: " << par.filenames[0] << endl;
                 FASTQ_FILE* fd1=validate_single_fastq_file(par.filenames[0].c_str());
                 fastq_destroy(fd1);
+            }
+        }
+        if (par.validateDb) {
+            if (validateDatabase(dbDir) != 0) {
+                cout << "Error: Database validation failed." << endl;
+                exit(1);
             }
         }
     }

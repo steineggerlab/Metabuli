@@ -53,6 +53,7 @@ public:
 
     // DB and classify
     PARAMETER(SKIP_REDUNDANCY)
+    PARAMETER(VALIDATE_DB)
 
     // Classify
     PARAMETER(SEQ_MODE)
@@ -137,6 +138,7 @@ public:
 
     // DB and classify
     int skipRedundancy;
+    int validateDb;
 
     // Classify
     int seqMode;
