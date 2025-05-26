@@ -163,6 +163,7 @@ metabuli classify --seq-mode 3 read.fna dbdir outdir jobid
 
   * Important parameters:
    --validate-input : Validate query file format (0 by default)
+   --validate-db : Validate DB files (0 by default)
    --threads : The number of threads used (all by default)
    --max-ram : The maximum RAM usage. (128 GiB by default)
    --min-score : The minimum score to be classified 
@@ -313,6 +314,7 @@ metabuli build --gtdb 1 <DBDIR> <FASTA_LIST> <GTDB_TAXDUMP/taxid.map> --taxonomy
    --accession-level : Set 1 to creat a DB for accession level classification (0 by default).
    --cds-info : List of absolute paths to CDS files.
    --validate-input : Validate FASTA file format (0 by default)
+   --validate-db : Validate created DB files (0 by default)
   
 ```
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete `*_diffIdx` and `*_info` files.
@@ -340,6 +342,7 @@ metabuli updateDB --gtdb 1 <NEW DBDIR> <FASTA_LIST> <GTDB_TAXDUMP/taxid.map> <OL
   --accession-level: Set 1 to add new sequences for accession level classification (0 by default).
   --cds-info: List of absolute paths to CDS files.
   --validate-input : Validate FASTA file format (0 by default)
+  --validate-db : Validate created DB files (0 by default)
 ```
 
 #### \<Add sequences of new taxa>
@@ -429,6 +432,7 @@ metabuli build <DBDIR> <FASTA_LIST> <accession2taxid> --taxonomy-path <TAXDUMP> 
   --accession-level: Set 1 to creat a DB for accession level classification (0 by default).
   --cds-info: List of absolute paths to CDS files.
   --validate-input : Validate FASTA file format (0 by default)
+  --validate-db : Validate created DB files (0 by default)
 ```
 This will generate **diffIdx**, **info**, **split**, and **taxID_list** and some other files. You can delete `*_diffIdx` and `*_info` files and `DATE-TIME` folder (e.g., `2025-1-24-10-32`) if generated.
 
@@ -465,6 +469,7 @@ metabuli updateDB <NEW DBDIR> <FASTA_LIST> <accession2taxid> <OLD DBDIR> [option
   --make-library : Make species library for faster execution (1 by default).
   --new-taxa : List of new taxa to be added.
   --validate-input : Validate FASTA file format (0 by default)
+  --validate-db : Validate created DB files (0 by default)
 ```
 
 #### \<Add sequences of new taxa> - Please refer [this section](#add-sequences-of-new-taxa).

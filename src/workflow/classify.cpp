@@ -136,37 +136,38 @@ int classify(int argc, const char **argv, const Command& command) {
     }
 
     // Validate database directory
-    if (!FileUtil::directoryExists(dbDir.c_str())) {
-        cout << "Error: " << dbDir << " is not found." << endl;
-        exit(1);
+    if (!par.validateDb) {
+        if (!FileUtil::directoryExists(dbDir.c_str())) {
+            cout << "Error: " << dbDir << " is not found." << endl;
+            exit(1);
+        }
+        const string & diffIdx = dbDir + "/diffIdx";
+        const string & info = dbDir + "/info";
+        const string & split = dbDir + "/split";
+        const string & taxonomy = dbDir + "/taxonomyDB";
+        if (!FileUtil::fileExists(diffIdx.c_str())) {
+            cout << "Error: " << diffIdx << " is not found." << endl;
+            exit(1);
+        }
+        if (!FileUtil::fileExists(info.c_str())) {
+            cout << "Error: " << info << " is not found." << endl;
+            exit(1);
+        }
+        if (!FileUtil::fileExists(split.c_str())) {
+            cout << "Error: " << split << " is not found." << endl;
+            exit(1);
+        }
+        if (!FileUtil::fileExists(taxonomy.c_str())
+            && par.taxonomyPath.empty()
+            && !FileUtil::fileExists((dbDir + "/taxonomy/merged.dmp").c_str())) {
+            cout << "Error: taxonomy files are not found." << endl;
+            cout << "       One of the followings should be provided:" << endl;
+            cout << "       1. File: " << taxonomy << endl;
+            cout << "       2. Dir : " << dbDir + "/taxonomy" << endl;
+            cout << "       3. Specify --taxonomy-path" << endl;
+            exit(1);
+        }
     }
-    const string & diffIdx = dbDir + "/diffIdx";
-    const string & info = dbDir + "/info";
-    const string & split = dbDir + "/split";
-    const string & taxonomy = dbDir + "/taxonomyDB";
-    if (!FileUtil::fileExists(diffIdx.c_str())) {
-        cout << "Error: " << diffIdx << " is not found." << endl;
-        exit(1);
-    }
-    if (!FileUtil::fileExists(info.c_str())) {
-        cout << "Error: " << info << " is not found." << endl;
-        exit(1);
-    }
-    if (!FileUtil::fileExists(split.c_str())) {
-        cout << "Error: " << split << " is not found." << endl;
-        exit(1);
-    }
-    if (!FileUtil::fileExists(taxonomy.c_str())
-        && par.taxonomyPath.empty()
-        && !FileUtil::fileExists((dbDir + "/taxonomy/merged.dmp").c_str())) {
-        cout << "Error: taxonomy files are not found." << endl;
-        cout << "       One of the followings should be provided:" << endl;
-        cout << "       1. File: " << taxonomy << endl;
-        cout << "       2. Dir : " << dbDir + "/taxonomy" << endl;
-        cout << "       3. Specify --taxonomy-path" << endl;
-        exit(1);
-    }
-    
 
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
