@@ -191,7 +191,7 @@ std::vector<Command> metabuliCommands = {
                 {{"classified file", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                 {"taxonomy dump", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}},
         {"validatedb", validateDatabase, &localPar.validateDatabase, COMMAND_DATABASE_CREATION,
-                "Validate the database",
+                "Validate a database",
                 nullptr,
                 "Jaebeom Kim <jbeom0731@gmail.com>",
                 "<i: database directory>",
