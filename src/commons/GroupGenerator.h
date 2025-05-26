@@ -169,6 +169,7 @@ public:
     double mergeRelations(const string& subGraphFileDir,
                           size_t numOfGraph,
                           const string& jobId,
+                          const vector<pair<int, float>>& metabuliResult,
                           const double thresholdK);
 
     void makeGroups(const string& relationFileDir,

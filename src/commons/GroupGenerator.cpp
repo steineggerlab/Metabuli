@@ -140,18 +140,19 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     // makeGraph(outDir, numOfSplits, numOfThreads, numOfGraph, processedReadCnt, jobId);   
     numOfGraph = 32;
 
+    vector<pair<int, float>> metabuliResult;       
+    metabuliResult.resize(processedReadCnt, make_pair(-1, 0.0f));
+    loadMetabuliResult(outDir, metabuliResult);
+
     unordered_map<uint32_t, unordered_set<uint32_t>> groupInfo;
     vector<int> queryGroupInfo;
     queryGroupInfo.resize(processedReadCnt, -1);
-    int dynamicGroupKmerThr = static_cast<int>(mergeRelations(outDir, numOfGraph, jobId, thresholdK));
+    int dynamicGroupKmerThr = static_cast<int>(mergeRelations(outDir, numOfGraph, jobId, metabuliResult, thresholdK));
     
     makeGroups(outDir, jobId, 120, groupInfo, queryGroupInfo);    
     saveGroupsToFile(groupInfo, queryGroupInfo, outDir, jobId);
     loadGroupsFromFile(groupInfo, queryGroupInfo, outDir, jobId);
     
-    vector<pair<int, float>> metabuliResult;       
-    metabuliResult.resize(processedReadCnt, make_pair(-1, 0.0f));
-    loadMetabuliResult(outDir, metabuliResult);
 
     unordered_map<uint32_t, int> repLabel; 
     getRepLabel(outDir, metabuliResult, groupInfo, repLabel, jobId, voteMode, majorityThr, groupScoreThr);
@@ -356,8 +357,9 @@ void GroupGenerator::saveSubGraphToFile(const unordered_map<uint32_t, unordered_
 double GroupGenerator::mergeRelations(const string& subGraphFileDir,
                                       size_t numOfGraph,
                                       const string& jobId,
-                                      const double thresholdK) {
-    cout << "Merging and calculating threshold..." << endl;
+                                      const vector<pair<int, float>>& metabuliResult,
+                                      double thresholdK) {
+    cout << "Merging and calculating threshold via elbow..." << endl;
     time_t before = time(nullptr);
 
     const size_t BATCH_SIZE = 4096;
@@ -402,29 +404,24 @@ double GroupGenerator::mergeRelations(const string& subGraphFileDir,
         if (relationBuffers[i].empty()) fileHasData[i] = false;
     };
 
-    // 통계 변수
-    double mean = 0.0, M2 = 0.0;
-    size_t count = 0;
-    uint32_t minWeight = UINT32_MAX;
-    uint32_t maxWeight = 0;
+    // weight 저장
+    std::unordered_map<int, int> external2internalTaxId;
+    taxonomy->getExternal2internalTaxID(external2internalTaxId);
+    vector<double> trueWeights, falseWeights;
 
     while (true) {
         pair<uint32_t, uint32_t> minKey = {UINT32_MAX, UINT32_MAX};
 
-        // 모든 파일의 버퍼들 중 가장 작은 key 찾기
         for (size_t i = 0; i < numOfGraph; ++i) {
             if (!relationBuffers[i].empty()) {
                 const Relation& r = relationBuffers[i].front();
                 pair<uint32_t, uint32_t> key = {r.id1, r.id2};
-                if (key < minKey) {
-                    minKey = key;
-                }
+                if (key < minKey) minKey = key;
             }
         }
 
-        if (minKey.first == UINT32_MAX) break; // 모두 끝났으면 종료
+        if (minKey.first == UINT32_MAX) break;
 
-        // 같은 key를 가진 관계들 모아서 weight 합산
         uint32_t totalWeight = 0;
 
         for (size_t i = 0; i < numOfGraph; ++i) {
@@ -434,42 +431,73 @@ double GroupGenerator::mergeRelations(const string& subGraphFileDir,
                     totalWeight += r.weight;
                     relationBuffers[i].pop();
                     if (relationBuffers[i].empty()) readNextBatch(i);
-                } else {
-                    break;
-                }
+                } else break;
             }
         }
 
-        // 저장 및 통계 계산
-        relationLog << minKey.first << ' ' << minKey.second << ' ' << totalWeight << '\n';
-
-        double w = static_cast<double>(totalWeight);
-        ++count;
-        double delta = w - mean;
-        mean += delta / count;
-        M2 += delta * (w - mean);
+        // metabuli 결과 기반 taxonomy 비교
+        int label1 = external2internalTaxId[metabuliResult[minKey.first].first];
+        int label2 = external2internalTaxId[metabuliResult[minKey.second].first];
         
-        minWeight = std::min(minWeight, totalWeight);
-        maxWeight = std::max(maxWeight, totalWeight);
+        if (taxonomy->getTaxIdAtRank(label1, "genus") == taxonomy->getTaxIdAtRank(label2, "genus"))
+        //if (taxonomy->getTaxIdAtRank(metabuliResult[minKey.first].first, "genus") == taxonomy->getTaxIdAtRank(metabuliResult[minKey.second].first, "genus"))
+            trueWeights.push_back(totalWeight);
+        else
+            falseWeights.push_back(totalWeight);
+
+        relationLog << minKey.first << ' ' << minKey.second << ' ' << totalWeight << '\n';
     }
 
     relationLog.close();
 
-    if (count < 2) {
-        cerr << "Not enough data to compute threshold." << endl;
+    if (trueWeights.size() < 10 || falseWeights.size() < 10) {
+        cerr << "Insufficient true/false edges for elbow detection." << endl;
         return 0.0;
     }
 
-    double stddev = sqrt(M2 / (count - 1));
-    double threshold = max(mean + thresholdK * stddev, 0.0);
+    // Elbow 계산 함수
+    auto findElbow = [](const vector<double>& data) -> double {
+        vector<double> sorted = data;
+        std::sort(sorted.begin(), sorted.end());
 
-    cout << "Mean: " << mean << ", Stddev: " << stddev
-         << ", Threshold: " << threshold << endl;
-    cout << "Max weight: " << maxWeight << ", Min weight: " << minWeight << endl;
+        size_t N = sorted.size();
+        vector<double> x(N), y(N);
+        for (size_t i = 0; i < N; ++i) {
+            x[i] = sorted[i];
+            y[i] = static_cast<double>(i) / (N - 1);
+        }
+
+        double x0 = x.front(), y0 = y.front();
+        double x1 = x.back(), y1 = y.back();
+        double dx = x1 - x0, dy = y1 - y0;
+        double maxDist = -1.0;
+        size_t elbowIdx = 0;
+
+        for (size_t i = 0; i < N; ++i) {
+            double px = x[i], py = y[i];
+            double u = ((px - x0) * dx + (py - y0) * dy) / (dx * dx + dy * dy);
+            double projx = x0 + u * dx, projy = y0 + u * dy;
+            double dist = sqrt((projx - px)*(projx - px) + (projy - py)*(projy - py));
+            if (dist > maxDist) {
+                maxDist = dist;
+                elbowIdx = i;
+            }
+        }
+        return x[elbowIdx];
+    };
+
+    double elbowFalse = findElbow(falseWeights);
+    double elbowTrue = findElbow(trueWeights);
+    double threshold = elbowFalse * (1.0 - thresholdK) + elbowTrue * thresholdK;
+
+    cout << "[Elbow-based thresholding]" << endl;
+    cout << "False elbow: " << elbowFalse << ", True elbow: " << elbowTrue << endl;
+    cout << "Threshold (K=" << thresholdK << "): " << threshold << endl;
     cout << "Time: " << time(nullptr) - before << " sec" << endl;
 
     return threshold;
 }
+
 
 void GroupGenerator::makeGroups(const string& relationFileDir,
                                 const string& jobId,
