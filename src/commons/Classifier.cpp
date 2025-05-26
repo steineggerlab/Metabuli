@@ -124,12 +124,9 @@ void Classifier::startClassify(const LocalParameters &par) {
 
                 numOfTatalQueryKmerCnt += queryKmerBuffer.startIndexOfReserve;
             } else { // search was incomplete
-                // Increase matchPerKmer and try again 
+                // increase matchPerKmer and try again 
                 matchPerKmer += 4;
-                // delete kseq1;
-                // delete kseq2;
                 cout << "--match-per-kmer was increased to " << matchPerKmer << " and searching again..." << endl;
-                // cout << "The search was incomplete. Increasing --match-per-kmer to " << matchPerKmer << " and trying again..." << endl;
                 break;
             }
         }

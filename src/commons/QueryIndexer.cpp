@@ -47,7 +47,7 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
         while (kseq->ReadEntry()) {
             seqPos++;
             if (unlikely(kseq->entry.sequence.l == 0 || kseq->entry.name.l == 0)) {
-                std::cout << seqPos << "th entry has no sequence or name" << std::endl;
+                std::cout << seqPos << "th entry has no sequence or name." << std::endl;
                 exit(1);
             }
             readNum_1++;
@@ -67,12 +67,6 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
             }
         }
         querySplits.emplace_back(start, readNum_1, kmerCnt, seqCnt);
-        // Print elements
-        // for (auto & querySplit : querySplits) {
-        //     std::cout << "start: " << querySplit.start << "\t";
-        //     std::cout << "end: " << querySplit.end << "\t";
-        //     std::cout << "kmerCnt: " << querySplit.kmerCnt << "\n";
-        // }
         delete kseq;
     } else {
         KSeqWrapper* kseq_1 = KSeqFactory(queryPath_1.c_str());
@@ -98,7 +92,7 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
                 seqPos1++;
                 if (unlikely(kseq_1->entry.sequence.l == 0 || kseq_1->entry.name.l == 0)) {
                     std::cout << "In file " << queryPath_1 << ", " << std::endl << "\t";
-                    std::cout << seqPos1 << "th entry has no sequence or name" << std::endl;
+                    std::cout << seqPos1 << "th entry has no sequence or name." << std::endl;
                     exit(1);
                 }
                 readNum_1++;
@@ -113,7 +107,7 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
                 seqPos2++;
                 if (unlikely(kseq_2->entry.sequence.l == 0 || kseq_2->entry.name.l == 0)) {
                     std::cout << "In file " << queryPath_2 << ", " << std::endl << "\t";
-                    std::cout << seqPos2 << "th entry has no sequence or name" << std::endl;
+                    std::cout << seqPos2 << "th entry has no sequence or name." << std::endl;
                     exit(1);
                 }
                 readNum_2++;
