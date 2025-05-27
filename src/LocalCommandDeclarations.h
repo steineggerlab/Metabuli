@@ -26,5 +26,6 @@ extern int editNames(int argc, const char **argv, const Command& command);
 extern int createnewtaxalist(int argc, const char **argv, const Command& command);
 extern int printDeltaIdx(int argc, const char **argv, const Command& command); 
 extern int makeBenchmarkSet(int argc, const char **argv, const Command &command);
+extern int makeQuerySet(int argc, const char **argv, const Command &command);
 
 #endif //ADCLASSIFIER2_LOCALCOMMANDDECLARATIONS_H

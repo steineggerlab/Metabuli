@@ -15,6 +15,15 @@
 #define kmerLength 8
 #define AA(kmer) ((kmer) & ~16777215)
 
+struct Assembly {
+    std::string name;
+    TaxID taxid;
+    TaxID speciesId;
+    TaxID genusId;
+    TaxID familyId;
+    Assembly(std::string name) : name(name) {}
+};
+
 struct KmerCnt {
     KmerCnt(size_t length, size_t kmerCnt, size_t totalCnt) : length(length), kmerCnt(kmerCnt), totalCnt(totalCnt) {}
     KmerCnt() : length(0), kmerCnt(0), totalCnt(0){}

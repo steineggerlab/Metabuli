@@ -1,22 +1,12 @@
-#include "IndexCreator.h"
 #include <iostream>
 #include <istream>
 #include <string>
 #include <vector>
-#include "report.h"
 #include "FileUtil.h"
 #include <cstdint>
+#include "common.h"
 
 using namespace std;
-
-struct Assembly {
-    string name;
-    TaxID taxid;
-    TaxID speciesId;
-    TaxID genusId;
-    TaxID familyId;
-    Assembly(string name) : name(name) {}
-};
 
 int makeBenchmarkSet(int argc, const char **argv, const Command &command) {
     std::srand(4);
