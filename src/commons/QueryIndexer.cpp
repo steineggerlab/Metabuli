@@ -22,8 +22,8 @@ QueryIndexer::QueryIndexer(const LocalParameters & par) {
 }
 
 void QueryIndexer::setAvailableRam() {
-    availableRam = (((size_t) maxRam * 1024 * 1024 * 1024) * 85) / 100
-               - ((size_t) 128 * 1024 * 1024 * threads);
+    availableRam = ((size_t) maxRam * (size_t) 1024 * 1024 * 1024)
+                         - ((size_t) 128 * 1024 * 1024 * (size_t) threads);
     // std::cout << "availableRam: " << availableRam << "\n";
 }
 
