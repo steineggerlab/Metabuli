@@ -214,7 +214,7 @@ jobs:
       #     %BUILD_SOURCESDIRECTORY%\build\metabuli\metabuli.bat version
       #   displayName: Setup Busybox
       - script: |
-          %CYGWIN_ROOT%\bin\bash.exe -cl "${BUILD_SOURCESDIRECTORY}/util/Metabuli-regression/run_regression.sh $(cygpath ${BUILD_SOURCESDIRECTORY}/build/build_sse2/src/metabuli.exe) $(cygpath ${BUILD_SOURCESDIRECTORY}/examples)"
+          %CYGWIN_ROOT%\bin\bash.exe -cl "${BUILD_SOURCESDIRECTORY}/util/Metabuli-regression/run_regression.sh $(cygpath ${BUILD_SOURCESDIRECTORY}/build/build_sse41/src/metabuli.exe) $(cygpath ${BUILD_SOURCESDIRECTORY}/examples)"
         displayName: Run Regression Suite
         condition: eq(variables['regression'], 1)
 
