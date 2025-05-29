@@ -37,8 +37,7 @@ void FileMerger::updateTaxId2SpeciesTaxId(const string & taxIdListFileName) {
     }
 
     char taxID[100];
-    while(feof(taxIdFile) == 0) {
-        fscanf(taxIdFile,"%s",taxID);
+    while(fscanf(taxIdFile,"%s",taxID) == 1) {
         TaxID taxId = atol(taxID);
         TaxonNode const * taxon = taxonomy->taxonNode(taxId);
         if (taxId == taxon->taxId){
@@ -72,20 +71,7 @@ void FileMerger::printTaxIdList(const string & taxIdListFileName) {
     for (auto & taxid: taxId2speciesId) {
         fprintf(taxidListFile, "%d\n", taxid.first);
     }
-    
-
-    FILE * taxIdFile;
-    if((taxIdFile = fopen(taxIdListFileName.c_str(),"r")) == NULL){
-        cout << "Cannot open the taxID list file: " << taxIdListFileName << endl;
-        return;
-    }
-
-    char taxID[100];
-    while(feof(taxIdFile) == 0) {
-        fscanf(taxIdFile,"%s",taxID);
-        cout << taxID << endl;
-    }
-    fclose(taxIdFile);
+    fclose(taxidListFile);
 }
 
 void FileMerger::mergeTargetFiles() {
@@ -134,8 +120,7 @@ void FileMerger::mergeTargetFiles() {
         // cout << os * sizeOfSplit << endl;
     }
     offsetList[splitNum] = UINT64_MAX;
-    DiffIdxSplit splitList[splitNum];
-    memset(splitList, 0, sizeof(DiffIdxSplit) * splitNum);
+    DiffIdxSplit splitList[splitNum] = {};
     int splitListIdx = 1;
 
     // get the first k-mer to write
