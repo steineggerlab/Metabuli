@@ -535,8 +535,7 @@ void IndexCreator::writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
 
     // Make splits
     FILE * diffIdxSplitFile = fopen(splitFileName.c_str(), "wb");
-    DiffIdxSplit splitList[par.splitNum];
-    memset(splitList, 0, sizeof(DiffIdxSplit) * par.splitNum);
+    DiffIdxSplit splitList[par.splitNum] = {};
     size_t splitWidth = uniqKmerCnt / par.splitNum;
     size_t remainder = uniqKmerCnt % par.splitNum;
     size_t splitCnt = 1;
