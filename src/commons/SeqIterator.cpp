@@ -447,10 +447,10 @@ SeqIterator::fillBufferWithKmerFromBlock(const PredictedBlock &block, const char
             tempKmer += aaSeq[kmerCnt + i] * powers[j] * mask[i];
         }
         if (checkN == 1) {
-            kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0};
+            kmerBuffer.buffer[posToWrite] = {0, -1, UINT64_MAX};
         } else {
             addDNAInfo_TargetKmer(tempKmer, seq, block, kmerCnt);
-            kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID};
+            kmerBuffer.buffer[posToWrite] = {seqID, taxIdAtRank, tempKmer};
         }
         posToWrite++;
     }
@@ -493,10 +493,10 @@ int SeqIterator::fillBufferWithKmerFromBlock(const char *seq, TargetKmerBuffer &
             tempKmer += aaSeq[kmerCnt + i] * powers[j] * mask[i];
         }
         if (checkN == 1) {
-            kmerBuffer.buffer[posToWrite] = {UINT64_MAX, -1, 0};
+            kmerBuffer.buffer[posToWrite] = {0, -1, UINT64_MAX};
         } else {
             addDNAInfo_TargetKmer(tempKmer, seq, kmerCnt);
-            kmerBuffer.buffer[posToWrite] = {tempKmer, taxIdAtRank, seqID};
+            kmerBuffer.buffer[posToWrite] = {seqID, taxIdAtRank, tempKmer};
         }
         posToWrite++;
     }
@@ -504,7 +504,7 @@ int SeqIterator::fillBufferWithKmerFromBlock(const char *seq, TargetKmerBuffer &
 }
 
 // It adds DNA information to kmers referring the original DNA sequence.
-void SeqIterator::addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const int &kmerCnt, int frame) {
+void SeqIterator::addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const int &kmerCnt) {
     kmer <<= bitsFor8Codons;
     int start = kmerCnt * 3;
     for (int i = 0, j = 0; i < kmerLength + spaceNum_int; i ++, j += mask_int[i]) {
