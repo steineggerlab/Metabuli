@@ -85,8 +85,8 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
         size_t seqCnt_2 = 0;
         size_t start = 0;
         bool end = false;
-        int kmerCnt_int_1;
-        int kmerCnt_int_2; 
+        int kmerCnt_int_1 = 0;
+        int kmerCnt_int_2 = 0;
         while(true) {
             if (kseq_1->ReadEntry()) {
                 seqPos1++;
