@@ -533,7 +533,6 @@ void TaxonomyWrapper::checkNewTaxa(const std::string & newTaxaFile) const {
                 EXIT(EXIT_FAILURE);
             }
             TaxID taxId = (TaxID) strtol(result[0].c_str(), NULL, 10);
-            TaxID parentTaxId = (TaxID) strtol(result[1].c_str(), NULL, 10);
             std::string & name = result[3];
             // Check if new taxID is already in the taxonomy
             // Problmatic cases:
