@@ -39,6 +39,13 @@ LocalParameters::LocalParameters() :
                         typeid(int),
                         (void *) &skipRedundancy,
                         "[0-1]"),
+        VALIDATE_DB(VALIDATE_DB_ID,
+                     "--validate-db",
+                     "Validate the database",
+                     "Validate the database. It checks if all required files are present and if the k-mer count is consistent.",
+                     typeid(int),
+                     (void *) &validateDb,
+                     "[0-1]"),
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
                  "Sequencing type",
@@ -514,6 +521,7 @@ LocalParameters::LocalParameters() :
     build.push_back(&MAKE_LIBRARY);
     build.push_back(&GTDB);
     build.push_back(&VALIDATE_INPUT);
+    build.push_back(&VALIDATE_DB);
 
     // updateDB
     updateDB.push_back(&PARAM_THREADS);
@@ -529,6 +537,7 @@ LocalParameters::LocalParameters() :
     updateDB.push_back(&MAKE_LIBRARY);
     updateDB.push_back(&GTDB);
     updateDB.push_back(&VALIDATE_INPUT);
+    updateDB.push_back(&VALIDATE_DB);
 
     //classify
     classify.push_back(&PARAM_THREADS);
@@ -549,6 +558,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&SKIP_REDUNDANCY);
     classify.push_back(&PRINT_LINEAGE);
     classify.push_back(&VALIDATE_INPUT);
+    classify.push_back(&VALIDATE_DB);
 
     // extract
     extract.push_back(&TAXONOMY_PATH);

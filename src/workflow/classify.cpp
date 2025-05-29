@@ -5,11 +5,13 @@
 #include "common.h"
 #include "LocalUtil.h"
 #include "fastq_info.cpp"
+#include "validateDatabase.h"
 
 void setClassifyDefaults(LocalParameters & par){
     par.skipRedundancy = 0;
     par.reducedAA = 0;
     par.validateInput = 0;
+    par.validateDb = 0;
     // par.spaceMask = "11111111";
     par.seqMode = 2;    
     par.minScore = 0;
@@ -86,7 +88,12 @@ int classify(int argc, const char **argv, const Command& command) {
                 FASTQ_FILE* fd2=validate_single_fastq_file(par.filenames[1].c_str());
                 fastq_destroy(fd2);
             }
-
+        }
+        if (par.validateDb) {
+            if (validateDatabase(dbDir) != 0) {
+                cout << "Error: Database validation failed." << endl;
+                exit(1);
+            }
         }
     } else {
         dbDir = par.filenames[1];
@@ -120,40 +127,47 @@ int classify(int argc, const char **argv, const Command& command) {
                 fastq_destroy(fd1);
             }
         }
+        if (par.validateDb) {
+            if (validateDatabase(dbDir) != 0) {
+                cout << "Error: Database validation failed." << endl;
+                exit(1);
+            }
+        }
     }
 
     // Validate database directory
-    if (!FileUtil::directoryExists(dbDir.c_str())) {
-        cout << "Error: " << dbDir << " is not found." << endl;
-        exit(1);
+    if (!par.validateDb) {
+        if (!FileUtil::directoryExists(dbDir.c_str())) {
+            cout << "Error: " << dbDir << " is not found." << endl;
+            exit(1);
+        }
+        const string & diffIdx = dbDir + "/diffIdx";
+        const string & info = dbDir + "/info";
+        const string & split = dbDir + "/split";
+        const string & taxonomy = dbDir + "/taxonomyDB";
+        if (!FileUtil::fileExists(diffIdx.c_str())) {
+            cout << "Error: " << diffIdx << " is not found." << endl;
+            exit(1);
+        }
+        if (!FileUtil::fileExists(info.c_str())) {
+            cout << "Error: " << info << " is not found." << endl;
+            exit(1);
+        }
+        if (!FileUtil::fileExists(split.c_str())) {
+            cout << "Error: " << split << " is not found." << endl;
+            exit(1);
+        }
+        if (!FileUtil::fileExists(taxonomy.c_str())
+            && par.taxonomyPath.empty()
+            && !FileUtil::fileExists((dbDir + "/taxonomy/merged.dmp").c_str())) {
+            cout << "Error: taxonomy files are not found." << endl;
+            cout << "       One of the followings should be provided:" << endl;
+            cout << "       1. File: " << taxonomy << endl;
+            cout << "       2. Dir : " << dbDir + "/taxonomy" << endl;
+            cout << "       3. Specify --taxonomy-path" << endl;
+            exit(1);
+        }
     }
-    const string & diffIdx = dbDir + "/diffIdx";
-    const string & info = dbDir + "/info";
-    const string & split = dbDir + "/split";
-    const string & taxonomy = dbDir + "/taxonomyDB";
-    if (!FileUtil::fileExists(diffIdx.c_str())) {
-        cout << "Error: " << diffIdx << " is not found." << endl;
-        exit(1);
-    }
-    if (!FileUtil::fileExists(info.c_str())) {
-        cout << "Error: " << info << " is not found." << endl;
-        exit(1);
-    }
-    if (!FileUtil::fileExists(split.c_str())) {
-        cout << "Error: " << split << " is not found." << endl;
-        exit(1);
-    }
-    if (!FileUtil::fileExists(taxonomy.c_str())
-        && par.taxonomyPath.empty()
-        && !FileUtil::fileExists((dbDir + "/taxonomy/merged.dmp").c_str())) {
-        cout << "Error: taxonomy files are not found." << endl;
-        cout << "       One of the followings should be provided:" << endl;
-        cout << "       1. File: " << taxonomy << endl;
-        cout << "       2. Dir : " << dbDir + "/taxonomy" << endl;
-        cout << "       3. Specify --taxonomy-path" << endl;
-        exit(1);
-    }
-    
 
 #ifdef OPENMP
     omp_set_num_threads(par.threads);

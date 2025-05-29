@@ -43,6 +43,7 @@ public:
     std::vector<MMseqsParameter*> editNames;
     std::vector<MMseqsParameter*> createnewtaxalist;
     std::vector<MMseqsParameter*> classifiedRefiner;
+    std::vector<MMseqsParameter*> validateDatabase;
     
 
     // Superkingdom taxonomy id
@@ -52,6 +53,7 @@ public:
 
     // DB and classify
     PARAMETER(SKIP_REDUNDANCY)
+    PARAMETER(VALIDATE_DB)
 
     // Classify
     PARAMETER(SEQ_MODE)
@@ -136,6 +138,7 @@ public:
 
     // DB and classify
     int skipRedundancy;
+    int validateDb;
 
     // Classify
     int seqMode;

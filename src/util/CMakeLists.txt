@@ -21,4 +21,6 @@ set(util_source_files
         util/createnewtaxalist.cpp
         util/createnewtaxalist.h
         util/classifiedRefiner.cpp
+        util/validateDatabase.cpp
+        util/validateDatabase.h
         PARENT_SCOPE)

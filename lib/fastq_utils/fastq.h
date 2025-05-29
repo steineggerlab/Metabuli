@@ -20,7 +20,7 @@
 #
 # =========================================================
 */
-#define VERSION "0.25.2"
+#define FASTQ_UTIL_VERSION "0.25.2"
 
 #define DEFAULT  0
 #define CASAVA18 1

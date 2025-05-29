@@ -62,7 +62,7 @@ gzFile fastq_open(const char* filename,const char *mode);
 static void fastq_close(gzFile fd);
 
 void fastq_print_version() {
-  fprintf(stderr,"fastq_utils %s\n",VERSION);
+  fprintf(stderr,"fastq_utils %s\n",FASTQ_UTIL_VERSION);
 }
 
 
