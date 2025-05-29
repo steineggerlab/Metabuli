@@ -177,7 +177,6 @@ int createnewtaxalist(int argc, const char **argv, const Command &command) {
     cout << "Creating a new taxa list..." << endl;
     createnewtaxalist(oldTaxonomy,
                       newTaxonomy, 
-                      accession2taxidFileName, 
                       newTaxaList, 
                       newAcc2taxid, 
                       unmappedAccessions);
@@ -244,7 +243,6 @@ int createnewtaxalist(int argc, const char **argv, const Command &command) {
 
 int createnewtaxalist(TaxonomyWrapper * oldTaxonomy,
                       TaxonomyWrapper * newTaxonomy,
-                      const std::string & accession2taxidFileName, 
                       std::vector<NewTaxon> & newTaxaList,
                       std::map<std::string, TaxID> & newAccessions,
                       std::vector<std::string> & unmappedAccessions) {
@@ -301,7 +299,6 @@ int createnewtaxalist(TaxonomyWrapper * oldTaxonomy,
 
     cout << "\tChanging conflicting tax IDs" << endl;
     for (std::pair<const std::string, int>& entry : newAccessions) {
-        const std::string& accession = entry.first;
         int& taxID = entry.second;
         auto it = changedTaxIDs.find(taxID);
         if (it != changedTaxIDs.end()) {
