@@ -122,9 +122,8 @@ int updateDB(int argc, const char **argv, const Command &command){
         return 1;
     } else {
         char taxID[100];
-        while(feof(oldTaxIdListFile) == 0) {
-            fscanf(oldTaxIdListFile,"%s",taxID);
-            taxIdSet.insert(atol(taxID));
+        while (fscanf(oldTaxIdListFile, "%31s", taxID) == 1) {
+           taxIdSet.insert(static_cast<TaxID>(std::stoul(taxID)));
         }
         fclose(oldTaxIdListFile);
         FILE * taxidListFile = fopen((newDbDir + "/taxID_list").c_str(), "w");
