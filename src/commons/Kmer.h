@@ -19,9 +19,6 @@ typedef struct QueryKmer {
 } QueryKmer; // 16 byte
 
 struct TargetKmer{
-    TargetKmer(): seqId(0), taxIdAtRank(0), ADkmer(0) {};
-    TargetKmer(uint64_t ADkmer, TaxID taxIdAtRank, int seqId)
-        : seqId(seqId), taxIdAtRank(taxIdAtRank), ADkmer(ADkmer) {}
     TaxID seqId; // 4 byte
     TaxID taxIdAtRank; // 4 byte
     uint64_t ADkmer; // 8 byte
