@@ -7,6 +7,7 @@
 #include <ctime>
 #include <fstream>
 #include <unordered_set>
+#include <atomic>
 #include "printBinary.h"
 #include "Mmap.h"
 #include "Kmer.h"
@@ -77,7 +78,7 @@ struct AccessionBatch {
     vector<TaxID> taxIDs;
     vector<uint32_t> lengths;
 
-    void print() {
+    void print() const {
         std::cout << "whichFasta: " << whichFasta << " speciesID: " << speciesID << " trainingSeqFasta: " << trainingSeqFasta << " trainingSeqIdx: " << trainingSeqIdx << endl;
         for (size_t i = 0; i < orders.size(); ++i) {
             std::cout << "order: " << orders[i] << " taxID: " << taxIDs[i] << " length: " << lengths[i] << endl;
@@ -161,7 +162,7 @@ protected:
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
 
     size_t fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
-                                bool *checker,
+                                std::vector<std::atomic<bool>> & batchChecker,
                                 size_t &processedSplitCnt,
                                 const LocalParameters &par);
 

@@ -99,7 +99,7 @@ struct Buffer {
     size_t bufferSize;
 
     explicit Buffer(size_t sizeOfBuffer=100) {
-        buffer = (T *) malloc(sizeof(T) * sizeOfBuffer);
+        buffer = (T *) calloc(sizeOfBuffer, sizeof(T));
         bufferSize = sizeOfBuffer;
         startIndexOfReserve = 0;
     };

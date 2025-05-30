@@ -99,6 +99,10 @@ struct TargetKmer{
         : metamer(metamer, seqId), spTaxId(taxIdAtRank) {}
     Metamer metamer; // 12 byte
     TaxID spTaxId; // 4 byte
+
+    void print() const {
+        std::cout << "metamer: " << metamer.metamer << " id: " << metamer.id << " spTaxId: " << spTaxId << std::endl;
+    }
 };
 
 #endif //ADKMER3_KMER_H

@@ -107,7 +107,7 @@ TaxonomyWrapper::TaxonomyWrapper(const std::string &namesFile, const std::string
     // for (size_t i = 0; i < maxNodes; ++i) {
     //     taxonNodes[i].print();
     // }
-
+    setEukaryoteTaxID();
     initTaxonomy();
 }
 
