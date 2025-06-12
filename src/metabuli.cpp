@@ -219,7 +219,16 @@ std::vector<Command> commands = {
                 "<i: Assembly accessions> <i: Taxonomy dump>",
                 CITATION_SPACEPHARER,
                 {{"Assembly accessions", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
-                 {"Taxonomy dump", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}}
+                 {"Taxonomy dump", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}},
+        {"make-virus-benchmark-set", makeVirusBenchmarkSet, &localPar.makeBenchmarkSet, COMMAND_EXPERT,
+                "Create test sets for benchmarking virus classification",
+                nullptr,
+                "Jaebeom Kim <jbeom0731@gmail.com}",
+                "<i: assembly accessions> <i: taxonomy dump> <i: assembly accession 2 taxid>",
+                CITATION_SPACEPHARER,
+                {{"Assembly accessions", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                 {"Taxonomy dump", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory},
+                 {"Assembly accession to taxid mapping", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}}
 };
 
 std::vector<KmerThreshold> externalThreshold = {};
