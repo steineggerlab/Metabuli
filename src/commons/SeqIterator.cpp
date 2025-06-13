@@ -18,12 +18,12 @@ SeqIterator::~SeqIterator() {
 SeqIterator::SeqIterator(const LocalParameters &par) {
 
     // Mask for spaced k-mer
-    size_t maskLen = 8; // par.spaceMask.length();
+    size_t maskLen = kmerLength; // par.spaceMask.length();
     mask = new uint32_t[maskLen+1];
     mask_int = new int[maskLen+1];
     spaceNum = 0;
     spaceNum_int = 0;
-    string spaceMask = "11111111"; // par.spaceMask;
+    string spaceMask = string(kmerLength, '1'); // par.spaceMask;
     smerLen = par.smerLen;
     for(size_t i = 0; i < maskLen; i++){
         mask[i] = spaceMask[i] - 48;
@@ -344,7 +344,7 @@ void SeqIterator::fillQueryKmerBuffer(
             if (checkN == 1) {
                 kmerBuffer.buffer[posToWrite] = {UINT64_MAX, 0, 0, frame};
             } else {
-                addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame, seqLen);
+                //addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame, seqLen);
                 if (forOrRev == 0) {
                     kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3) + offset, frame};
                 } else {

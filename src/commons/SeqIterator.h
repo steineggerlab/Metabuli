@@ -27,7 +27,8 @@
 
 KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
 
-#define kmerLength 8
+//#define kmerLength 8
+#define kmerLength 12
 
 #define nuc2int(x) (x & 14u)>>1u
 
@@ -36,7 +37,8 @@ using namespace std;
 class SeqIterator {
 private:
     // vector<int> aaFrames[6];
-    uint64_t powers[10];
+    // uint64_t powers[10];
+    uint64_t powers[kmerLength + 2];
     int nuc2aa[8][8][8];
     uint64_t nuc2num[4][4][4];
     uint32_t * mask;
