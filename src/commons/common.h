@@ -21,7 +21,18 @@ struct Assembly {
     TaxID speciesId;
     TaxID genusId;
     TaxID familyId;
+    TaxID orderId;
     Assembly(std::string name) : name(name) {}
+    Assembly() : name(""), taxid(0), speciesId(0), genusId(0), familyId(0), orderId(0) {}
+    
+
+    void print () const {
+        std::cout << "Assembly: " << name << ", TaxID: " << taxid
+                  << ", SpeciesID: " << speciesId
+                  << ", GenusID: " << genusId
+                  << ", FamilyID: " << familyId
+                  << ", OrderID: " << orderId << std::endl;
+    }
 };
 
 struct KmerCnt {

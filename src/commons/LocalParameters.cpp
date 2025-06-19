@@ -375,7 +375,21 @@ LocalParameters::LocalParameters() :
                 "Last k-mer to print",
                 typeid(size_t),
                 (void *) &kmerEnd,
-                "^[0-9]+$")
+                "^[0-9]+$"),
+        RANDOM_SEED(RANDOM_SEED_ID,
+                    "--random-seed",
+                    "Random seed for random number generation",
+                    "Random seed for random number generation",
+                    typeid(int),
+                    (void *) &randomSeed,
+                    "^[0-9]+"),
+        ASSACC2TAXID(ASSACC2TAXID_ID,
+                    "--assacc2taxid",
+                    "Path to the file mapping from accession to tax ID",
+                    "Path to the file mapping from accession to tax ID",
+                    typeid(std::string),
+                    (void *) &assacc2taxid,
+                    "^.*$") 
   {
     // Initialize the parameters
     // Superkingdom taxonomy id
@@ -552,6 +566,10 @@ LocalParameters::LocalParameters() :
     expand_diffidx.push_back(&KMER_END);
 
     query2reference.push_back(&TEST_RANK);
+
+    makeBenchmarkSet.push_back(&RANDOM_SEED);
+    makeBenchmarkSet.push_back(&ASSACC2TAXID);
+    makeBenchmarkSet.push_back(&TEST_TYPE);
 }
 
 void LocalParameters::printParameters(const std::string &module, int argc, const char* pargv[],

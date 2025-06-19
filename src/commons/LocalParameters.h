@@ -116,6 +116,10 @@ public:
     PARAMETER(KMER_BEGIN)
     PARAMETER(KMER_END)
 
+    // benchmark set
+    PARAMETER(RANDOM_SEED)
+    PARAMETER(ASSACC2TAXID)
+
     // Superkingdom taxonomy id
     int virusTaxId;
     int bacteriaTaxId;
@@ -188,6 +192,10 @@ public:
     size_t infoEnd;
     size_t kmerBegin;
     size_t kmerEnd;
+
+    // benchmark set
+    int randomSeed;
+    std::string assacc2taxid;
 
     void printParameters(const std::string &module, int argc,
                          const char* pargv[],
