@@ -25,6 +25,8 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
     spaceNum_int = 0;
     string spaceMask = "11111111"; // par.spaceMask;
     smerLen = par.smerLen;
+    smerMask = (1u << (5 * smerLen)) - 1;
+
     for(size_t i = 0; i < maskLen; i++){
         mask[i] = spaceMask[i] - 48;
         mask_int[i] = spaceMask[i] - 48;
@@ -48,6 +50,7 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
         powers[i] = pow;
         pow *= numOfAlphabets;
     }
+    dnaMask = (1ULL << bitsFor8Codons) - 1;
 
     // Codon table
     if (par.reducedAA == 0) {
@@ -421,6 +424,145 @@ void SeqIterator::fillQuerySyncmerBuffer(
     }
 }
 
+void SeqIterator::fillQuerySyncmerBuffer2(
+    const char *seq,
+    int seqLen, 
+    Buffer<QueryKmer> &kmerBuffer, 
+    size_t &posToWrite, 
+    uint32_t seqID, 
+    uint32_t offset) 
+{
+    size_t end;
+
+    int forOrRev;
+    uint64_t tempKmer = 0;
+    int checkN;
+    int usedLen = LocalUtil::getMaxCoveredLength(seqLen);
+    int begin = 0;
+    int end = 0;
+    for (int frame = 0; frame < 6; frame++) {
+        forOrRev = frame < 3 ? 1 : -1;
+        if (forOrRev == 1) {
+            begin = frame % 3;
+        } else {
+            begin = (seqLen % 3) - (frame % 3);
+            if (begin < 0) {
+                begin += 3;
+            }
+        }
+        end = begin + usedLen - 1;
+
+        SequenceBlock block(begin, end, forOrRev);
+
+        uint32_t len = aaFrames[frame].size();
+        forOrRev = frame / 3;
+        for (uint32_t kmerCnt = 0; kmerCnt < len - kmerLength - spaceNum + 1; kmerCnt++) {
+            // Convert amino acid 8-mer to an integer
+            tempKmer = 0;
+            checkN = 0;
+
+            if (!isSyncmer(aaFrames[frame], kmerCnt, 8, smerLen)) {
+                kmerBuffer.buffer[posToWrite++] = {UINT64_MAX, 0, 0, frame};
+                continue;
+            }
+
+            for (uint32_t i = 0, j = 0; i < kmerLength + spaceNum; i++, j += mask[i]) { // j:0-7, i:0-11
+                if (-1 == aaFrames[frame][kmerCnt + i]) {
+                    checkN = 1;
+                    break;
+                }
+                tempKmer += aaFrames[frame][kmerCnt + i] * powers[j] * mask[i];
+            }
+
+            // Add DNA info
+            if (checkN == 1) {
+                kmerBuffer.buffer[posToWrite] = {UINT64_MAX, 0, 0, frame};
+            } else {
+                addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame, seqLen);
+                if (forOrRev == 0) {
+                    kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3) + offset, frame};
+                } else {
+                    if ((seqLen % 3 == 1 && (frame == 3 || frame == 4)) || (seqLen % 3 == 0 && frame == 3)) {
+                        kmerBuffer.buffer[posToWrite] = {tempKmer, seqID,
+                                                         seqLen - ((frame % 3) + (kmerCnt * 3)) - 24 + offset - 3,
+                                                         frame};
+                    } else {
+                        kmerBuffer.buffer[posToWrite] = {tempKmer, seqID,
+                                                         seqLen - ((frame % 3) + (kmerCnt * 3)) - 24 + offset, 
+                                                         frame};
+                    }
+                }
+            }
+            // cout << kmerBuffer.buffer[posToWrite].info.frame << " " << kmerBuffer.buffer[posToWrite].info.pos << " ";
+            // printKmerInDNAsequence(tempKmer); cout << endl;
+            posToWrite++;
+        }
+    }
+}
+
+
+template<typename AAGetter, typename CodonGetter>
+int SeqIterator::extactQuerySyncmers(const char *seq,
+                               Buffer<QueryKmer> &buffer,
+                               size_t &pos,
+                               int seqID,
+                               SequenceBlock block,
+                               AAGetter getAA,
+                               CodonGetter getCodonBits) {
+    int len = (block.end - block.start + 1) / 3;
+    uint64_t aaPart = 0, dnaPart = 0;
+    deque<Smer> dq;
+    int smerCnt = 0, loaded = 0;
+    uint64_t smer = 0;
+    int prevPos = -kmerLength;
+    int posStart = 0;
+
+    while (posStart <= len - kmerLength) {
+        bool sawN = false;
+        // Slide the sub-mer window
+        smerCnt -= (smerCnt > 0);
+        while (smerCnt < kmerLength - smerLen + 1) {
+            loaded -= (loaded == smerLen);
+            while (loaded < smerLen) {
+                int aa = getAA(posStart + smerCnt + loaded);
+                if (aa < 0) { sawN = true; break; }
+                smer = (smer << 5) | (uint64_t)aa;
+                loaded++;
+            }
+            if (sawN) break;
+            smer &= smerMask;
+            while (!dq.empty() && dq.back().value > smer) dq.pop_back();
+            dq.emplace_back(smer, posStart + smerCnt);
+            smerCnt++;
+        }
+        if (sawN) {
+            posStart += smerCnt + loaded + 1;
+            dq.clear(); smerCnt = loaded = 0; smer = 0;
+            continue;
+        }
+        if (!dq.empty() && dq.front().pos < posStart) dq.pop_front();
+
+        int anchor1 = posStart;
+        int anchor2 = posStart + (kmerLength - smerLen);
+        if (!dq.empty() && (dq.front().pos == anchor1 || dq.front().pos == anchor2)) {
+            int shifts = posStart - prevPos;
+            int aaStart = posStart + kmerLength - shifts;
+            // Single loop: append both AA and DNA bits
+            for (int i = 0; i < shifts; ++i) {
+                aaPart = (aaPart << 5) | (uint64_t)getAA(aaStart + i);
+                dnaPart = (dnaPart << bitsForCodon) | getCodonBits(aaStart + i);
+            }
+            prevPos = posStart;
+
+            uint64_t key = (aaPart << bitsFor8Codons) | (dnaPart & dnaMask);
+            buffer.buffer[pos++] = { key, seqID, POS , FRAME };
+        }
+        ++posStart;
+    }
+    return 0;
+}
+
+
 void
 SeqIterator::addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev, uint32_t kmerCnt, uint32_t frame,
                                   int seqLen) {
@@ -450,7 +592,7 @@ SeqIterator::addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev,
     }
 }
 
-bool SeqIterator::translateBlock(const char *seq, PredictedBlock block, vector<int> & aaSeq, size_t length) {
+bool SeqIterator::translateBlock(const char *seq, SequenceBlock block, vector<int> & aaSeq, size_t length) {
     aaSeq.clear();
     if(aaSeq.capacity() < length / 3 + 1) {
         aaSeq.reserve(length / 3 + 1);
@@ -468,7 +610,7 @@ bool SeqIterator::translateBlock(const char *seq, PredictedBlock block, vector<i
     return true;
 }
 
-string SeqIterator::reverseCompliment(string &read) const {
+string SeqIterator::reverseComplement(string &read) const {
     int len = read.length();
     string out;
     for (int i = 0; i < len; i++) {
@@ -478,7 +620,7 @@ string SeqIterator::reverseCompliment(string &read) const {
     return out;
 }
 
-char *SeqIterator::reverseCompliment(char *read, size_t length) const {
+char *SeqIterator::reverseComplement(char *read, size_t length) const {
     char *revCom = (char *) malloc(sizeof(char) * (length + 1));
     for (size_t i = 0; i < length; i++) {
         revCom[length - i - 1] = iRCT[read[i]];
@@ -521,43 +663,125 @@ int SeqIterator::fillBufferWithKmerFromBlock(const char *seq,
     return 0;
 }
 
-int SeqIterator::fillBufferWithSyncmer(const char *seq,
-                                       Buffer<TargetKmer> &kmerBuffer,
-                                       size_t &posToWrite,
-                                       int seqID,
-                                       int taxIdAtRank,
-                                       const vector<int> & aaSeq,
-                                       int blockStrand,
-                                       int blockStart,
-                                       int blockEnd) {
-    uint64_t tempKmer = 0;
-    int len = (int) aaSeq.size();
-    int checkN;
-    for (int kmerCnt = 0; kmerCnt < len - kmerLength - spaceNum_int + 1; kmerCnt++) {
-        tempKmer = 0;
-        checkN = 0;
+int SeqIterator::fillBufferWithSyncmers(const char *seq,
+                                        Buffer<TargetKmer> &kmerBuffer,
+                                        size_t &posToWrite,
+                                        int seqID,
+                                        int taxIdAtRank,
+                                        SequenceBlock block) {
+    auto getAAForward = [&](int idx) {
+        int ci = block.start + idx * 3;
+        uint8_t b0 = atcg[(unsigned char)seq[ci]];
+        uint8_t b1 = atcg[(unsigned char)seq[ci + 1]];
+        uint8_t b2 = atcg[(unsigned char)seq[ci + 2]];
+        return nuc2aa[nuc2int(b0)][nuc2int(b1)][nuc2int(b2)];
+    };
+    auto getCodonForward = [&](int idx) {
+        int ci = block.start + idx * 3;
+        uint8_t c0 = atcg[(unsigned char)seq[ci]];
+        uint8_t c1 = atcg[(unsigned char)seq[ci + 1]];
+        uint8_t c2 = atcg[(unsigned char)seq[ci + 2]];
+        return nuc2num[nuc2int(c0)][nuc2int(c1)][nuc2int(c2)];
+    };
+    auto getAAReverse = [&](int idx) {
+        int ci = block.end - idx * 3;
+        uint8_t b0 = iRCT[atcg[(unsigned char)seq[ci]]];
+        uint8_t b1 = iRCT[atcg[(unsigned char)seq[ci - 1]]];
+        uint8_t b2 = iRCT[atcg[(unsigned char)seq[ci - 2]]];
+        return nuc2aa[nuc2int(b0)][nuc2int(b1)][nuc2int(b2)];
+    };
+    auto getCodonReverse = [&](int idx) {
+        int ci = block.end - idx * 3;
+        uint8_t c0 = iRCT[atcg[(unsigned char)seq[ci]]];
+        uint8_t c1 = iRCT[atcg[(unsigned char)seq[ci - 1]]];
+        uint8_t c2 = iRCT[atcg[(unsigned char)seq[ci - 2]]];
+        return nuc2num[nuc2int(c0)][nuc2int(c1)][nuc2int(c2)];
+    };
 
-        // Skip if not syncmer
-        if (!isSyncmer(aaSeq, kmerCnt, 8, smerLen)) {
+    if (block.strand > -1) {
+        return extactTargetSyncmers(seq,
+                                   kmerBuffer,
+                                   posToWrite,
+                                   seqID,
+                                   taxIdAtRank,
+                                   block,
+                                   getAAForward,
+                                   getCodonForward);
+    } else {
+        return extactTargetSyncmers(seq,
+                                   kmerBuffer,
+                                   posToWrite,
+                                   seqID,
+                                   taxIdAtRank,
+                                   block,
+                                   getAAReverse,
+                                   getCodonReverse);
+    }
+}
+
+// Core syncmer extraction with lambda abstraction
+// Simplified emission loop by merging AA and DNA append into one loop
+template<typename AAGetter, typename CodonGetter>
+int SeqIterator::extactTargetSyncmers(const char *seq,
+                               Buffer<TargetKmer> &buffer,
+                               size_t &pos,
+                               int seqID,
+                               int taxId,
+                               SequenceBlock block,
+                               AAGetter getAA,
+                               CodonGetter getCodonBits) {
+    int len = (block.end - block.start + 1) / 3;
+    uint64_t aaPart = 0, dnaPart = 0;
+    deque<Smer> dq;
+    int smerCnt = 0, loaded = 0;
+    uint64_t smer = 0;
+    int prevPos = -kmerLength;
+    int posStart = 0;
+
+    while (posStart <= len - kmerLength) {
+        bool sawN = false;
+        // Slide the sub-mer window
+        smerCnt -= (smerCnt > 0);
+        while (smerCnt < kmerLength - smerLen + 1) {
+            loaded -= (loaded == smerLen);
+            while (loaded < smerLen) {
+                int aa = getAA(posStart + smerCnt + loaded);
+                if (aa < 0) { sawN = true; break; }
+                smer = (smer << 5) | (uint64_t)aa;
+                loaded++;
+            }
+            if (sawN) break;
+            smer &= smerMask;
+            while (!dq.empty() && dq.back().value > smer) dq.pop_back();
+            dq.emplace_back(smer, posStart + smerCnt);
+            smerCnt++;
+        }
+        if (sawN) {
+            posStart += smerCnt + loaded + 1;
+            dq.clear(); smerCnt = loaded = 0; smer = 0;
             continue;
         }
+        if (!dq.empty() && dq.front().pos < posStart) dq.pop_front();
 
-        for (uint32_t i = 0, j = 0; i < kmerLength + spaceNum; i++, j += mask[i]) {
-            if (-1 == aaSeq[kmerCnt + i]) {
-                checkN = 1;
-                break;
+        int anchor1 = posStart;
+        int anchor2 = posStart + (kmerLength - smerLen);
+        if (!dq.empty() && (dq.front().pos == anchor1 || dq.front().pos == anchor2)) {
+            int shifts = posStart - prevPos;
+            int aaStart = posStart + kmerLength - shifts;
+            // Single loop: append both AA and DNA bits
+            for (int i = 0; i < shifts; ++i) {
+                aaPart = (aaPart << 5) | (uint64_t)getAA(aaStart + i);
+                dnaPart = (dnaPart << bitsForCodon) | getCodonBits(aaStart + i);
             }
-            tempKmer += aaSeq[kmerCnt + i] * powers[j] * mask[i];
+            prevPos = posStart;
+
+            uint64_t key = (aaPart << bitsFor8Codons) | (dnaPart & dnaMask);
+            buffer.buffer[pos++] = { key, taxId, seqID };
         }
-        if (checkN == 1) {
-            kmerBuffer.buffer[posToWrite++] = {UINT64_MAX, -1, 0};
-        } else {
-            addDNAInfo_TargetKmer(tempKmer, seq, kmerCnt, blockStrand, blockStart, blockEnd);
-            kmerBuffer.buffer[posToWrite++] = {tempKmer, taxIdAtRank, seqID};
-        }
+        ++posStart;
     }
-    return 0;                                    
- }
+    return 0;
+}
 
 // It adds DNA information to kmers referring the original DNA sequence.
 // void SeqIterator::addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, int kmerCnt) {
@@ -610,7 +834,7 @@ size_t SeqIterator::kmerNumOfSixFrameTranslation(const char *seq) {
     return (len / 3 - kmerLength) * 6;
 }
 
-size_t SeqIterator::getNumOfKmerForBlock(const PredictedBlock &block) {
+size_t SeqIterator::getNumOfKmerForBlock(const SequenceBlock &block) {
     size_t len = block.end - block.start + 1;
     return len / 3 - 7;
 }
@@ -728,15 +952,7 @@ void SeqIterator::maskLowComplexityRegions(const char *seq, char *maskedSeq, Pro
     }
 }
 
-string SeqIterator::reverseComplement(string &read) const {
-    int len = read.length();
-    string out;
-    for (int i = 0; i < len; i++) {
-        out.push_back(iRCT[read[i]]);
-    }
-    reverse(out.begin(), out.end());
-    return out;
-}
+
 
 
 void SeqIterator::devideToCdsAndNonCds(const char *maskedSeq,

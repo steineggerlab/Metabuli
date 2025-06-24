@@ -5,6 +5,12 @@
 #include <cstdint>
 #include <bitset>
 
+struct Smer {
+    uint64_t value;
+    uint64_t pos;
+    Smer(uint64_t value, uint64_t pos) : value(value), pos(pos) {}
+};
+
 struct QueryKmerInfo {
     explicit QueryKmerInfo(uint32_t seqID = 0, uint32_t pos = 0, uint8_t frame = 0 ) : pos(pos), sequenceID(seqID), frame(frame) {}
     uint64_t pos : 32;

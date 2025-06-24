@@ -342,7 +342,7 @@ void ProdigalWrapper::updateTrainingInfo(_training &tinf2) {
 
 // It makes the blocks for translation
 // Each block has a predicted gene part and an intergenic region. When another gene shows up, new block starts.
-void ProdigalWrapper::getExtendedORFs(struct _gene *genes, struct _node *nodes, vector<PredictedBlock> &blocks,
+void ProdigalWrapper::getExtendedORFs(struct _gene *genes, struct _node *nodes, vector<SequenceBlock> &blocks,
                                        size_t numOfGene, size_t length,
                                        size_t &blockIdx, vector<uint64_t> &intergenicKmerList, const char *seq) {
 

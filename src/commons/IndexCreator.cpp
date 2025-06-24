@@ -554,7 +554,7 @@ void IndexCreator::writeTargetFiles(
         fclose(infoFile);
     }    
     cout<<"total k-mer count  : "<< kmerNum << endl;
-    cout<<"written k-mer count: "<< write << endl;    
+    cout<<"Number of written k-mers: "<< write << endl;    
     kmerNum = 0;
 }
 
@@ -735,6 +735,8 @@ void IndexCreator::reduceRedundancy(Buffer<TargetKmer> & kmerBuffer,
             break;
         }
     }
+
+    cout << "Number of k-mers before redundancy reduction: " << kmerBuffer.startIndexOfReserve - startIdx << endl;
 
     // Make splits
     vector<Split> splits;
@@ -988,11 +990,11 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
         SeqIterator seqIterator(par);
         size_t posToWrite;
         size_t orfNum;
-        vector<PredictedBlock> extendedORFs;
+        vector<SequenceBlock> extendedORFs;
         priority_queue<uint64_t> standardList;
         priority_queue<uint64_t> currentList;
         size_t lengthOfTrainingSeq;
-        char *reverseCompliment;
+        char *reverseComplement;
         vector<uint64_t> intergenicKmers;
         vector<int> aaSeq;
         vector<string> cds;
@@ -1079,13 +1081,12 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                                     accessionBatches[batchIdx].speciesID,
                                                     aaSeq);
                                 } else {
-                                    tempCheck = seqIterator.fillBufferWithSyncmer(
+                                    tempCheck = seqIterator.fillBufferWithSyncmers(
                                                     cds[cdsCnt].c_str(),
                                                     kmerBuffer,
                                                     posToWrite,
                                                     accessionBatches[batchIdx].taxIDs[idx],
-                                                    accessionBatches[batchIdx].speciesID,
-                                                    aaSeq);
+                                                    accessionBatches[batchIdx].speciesID);
                                 }
                                 if (tempCheck == -1) {
                                     cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
@@ -1102,13 +1103,12 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                                     accessionBatches[batchIdx].speciesID,
                                                     aaSeq);
                                 } else {
-                                    tempCheck = seqIterator.fillBufferWithSyncmer(
+                                    tempCheck = seqIterator.fillBufferWithSyncmers(
                                                     nonCds[nonCdsCnt].c_str(),
                                                     kmerBuffer,
                                                     posToWrite,
                                                     accessionBatches[batchIdx].taxIDs[idx],
-                                                    accessionBatches[batchIdx].speciesID,
-                                                    aaSeq);
+                                                    accessionBatches[batchIdx].speciesID);
                                 }
                                 if (tempCheck == -1) {
                                     cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
@@ -1161,6 +1161,8 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                     aaSeq.clear();
                                     seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt], aaSeq, e.sequence.l);
                                     if (!par.syncmer) {
+                                        aaSeq.clear();
+                                        seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt], aaSeq, e.sequence.l);
                                         tempCheck = seqIterator.fillBufferWithKmerFromBlock(
                                                 maskedSeq,
                                                 kmerBuffer,
@@ -1172,44 +1174,41 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                                 extendedORFs[orfCnt].start,
                                                 extendedORFs[orfCnt].end);
                                     } else {
-                                        tempCheck = seqIterator.fillBufferWithSyncmer(
+                                        tempCheck = seqIterator.fillBufferWithSyncmers(
                                                 maskedSeq,
                                                 kmerBuffer,
                                                 posToWrite,
                                                 accessionBatches[batchIdx].taxIDs[idx],
                                                 accessionBatches[batchIdx].speciesID,
-                                                aaSeq,
-                                                extendedORFs[orfCnt].strand,
-                                                extendedORFs[orfCnt].start,
-                                                extendedORFs[orfCnt].end);
+                                                extendedORFs[orfCnt]);
                                     }    
                                     if (tempCheck == -1) {
                                         cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
                                     }
                                 }
                             } else { // Reverse complement
-                                reverseCompliment = seqIterator.reverseCompliment(e.sequence.s, e.sequence.l);
+                                reverseComplement = seqIterator.reverseComplement(e.sequence.s, e.sequence.l);
                                 // Get extended ORFs
-                                prodigal->getPredictedGenes(reverseCompliment);
+                                prodigal->getPredictedGenes(reverseComplement);
                                 prodigal->removeCompletelyOverlappingGenes();
                                 prodigal->getExtendedORFs(prodigal->finalGenes, prodigal->nodes, extendedORFs,
                                                                  prodigal->fng, e.sequence.l,
-                                                            orfNum, intergenicKmers, reverseCompliment);
+                                                            orfNum, intergenicKmers, reverseComplement);
 
                                 // Get reverse masked sequence
                                 if (par.maskMode) {
                                     delete[] maskedSeq;
                                     maskedSeq = new char[e.sequence.l + 1];
-                                    SeqIterator::maskLowComplexityRegions(reverseCompliment, maskedSeq, probMatrix, par.maskProb, subMat);
+                                    SeqIterator::maskLowComplexityRegions(reverseComplement, maskedSeq, probMatrix, par.maskProb, subMat);
                                     maskedSeq[e.sequence.l] = '\0';
                                 } else {
-                                    maskedSeq = reverseCompliment;
+                                    maskedSeq = reverseComplement;
                                 }
 
                                 for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
-                                    aaSeq.clear();
-                                    seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt], aaSeq, e.sequence.l);
                                     if (!par.syncmer) {
+                                        aaSeq.clear();
+                                        seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt], aaSeq, e.sequence.l);
                                         tempCheck = seqIterator.fillBufferWithKmerFromBlock(
                                             maskedSeq,
                                             kmerBuffer,
@@ -1221,23 +1220,20 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                             extendedORFs[orfCnt].start,
                                             extendedORFs[orfCnt].end);
                                     } else {
-                                        tempCheck = seqIterator.fillBufferWithSyncmer(
-                                            maskedSeq,
-                                            kmerBuffer,
-                                            posToWrite,
-                                            accessionBatches[batchIdx].taxIDs[idx],
-                                            accessionBatches[batchIdx].speciesID,
-                                            aaSeq,
-                                            extendedORFs[orfCnt].strand,
-                                            extendedORFs[orfCnt].start,
-                                            extendedORFs[orfCnt].end);
+                                        tempCheck = seqIterator.fillBufferWithSyncmers(
+                                                maskedSeq,
+                                                kmerBuffer,
+                                                posToWrite,
+                                                accessionBatches[batchIdx].taxIDs[idx],
+                                                accessionBatches[batchIdx].speciesID,
+                                                extendedORFs[orfCnt]);
                                     }
                                         
                                     if (tempCheck == -1) {
                                         cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
                                     }
                                 }
-                                free(reverseCompliment);  
+                                free(reverseComplement);  
                             }                            
                         }
                         idx++;
