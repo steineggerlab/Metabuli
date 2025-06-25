@@ -80,6 +80,12 @@ public:
     unordered_map<uint32_t, uint32_t> rank;
 };
 
+struct MetabuliInfo {
+    int label;
+    float score;
+    string name;
+};
+
 class KmerFileHandler {
 private:
     std::vector<uint64_t> kmerBoundaries;
@@ -169,7 +175,7 @@ public:
     double mergeRelations(const string& subGraphFileDir,
                           size_t numOfGraph,
                           const string& jobId,
-                          const vector<pair<int, float>>& metabuliResult,
+                          const vector<MetabuliInfo>& metabuliResult,
                           const double thresholdK);
 
     void makeGroups(const string& relationFileDir,
@@ -189,10 +195,10 @@ public:
                        const string &jobId);
 
     void loadMetabuliResult(const string &resultFileDir, 
-                            vector<pair<int, float>> &metabuliResult);
+                            vector<MetabuliInfo>& metabuliResult);
 
     void getRepLabel(const string &groupRepFileDir, 
-                     vector<pair<int, float>> &metabuliResult, 
+                     vector<MetabuliInfo>& metabuliResult, 
                      const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
                      unordered_map<uint32_t, int> &repLabel, 
                      const string &jobId, 
