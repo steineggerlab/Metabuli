@@ -5,60 +5,28 @@
 #include <deque>
 
 #include "Kmer.h"
+#include "KmerScanner.h"
 #include "GeneticCode.h"
 #include "common.h"
 
-struct Syncmer {
-    uint64_t value;
-    uint32_t pos;
-    void printAA(const GeneticCode & code) const {
-        uint64_t aaPart = value >> 24;
-        for (int i = 0; i < 8; ++i) {
-            int aa = (aaPart >> (35 - 5 * i)) & 0x1F;
-            cout << code.aminoacids[aa];
-        }
-    }
 
-    void printDNA(const GeneticCode & code) const {
-        uint64_t dnaPart = value & 0xFFFFFF;
-        uint64_t aaPart = value >> 24;
-        for (int i = 0; i < 8; ++i) {
-            int aa = (aaPart >> (35 - 5 * i)) & 0x1F;
-            int codon = (dnaPart >> (21 - 3 * i)) & 0x7;
-            cout << code.aa2codon[aa][codon];
-        }
-    }
-};
 
-class SyncmerScanner {
-private:
+class SyncmerScanner : public KmerScanner {
+protected:
     // Internal values
-    const GeneticCode &geneticCode;
     int smerLen;
     uint64_t smerMask;
-    uint64_t dnaMask;
 
     // Variables for syncmer scanning
-    const char *seq;
-    size_t seqStart;
-    size_t seqEnd;
-    size_t seqLen;
-    size_t aaLen;
-
-    uint64_t dnaPart;
-    uint64_t aaPart;
     std::deque<Smer> dq;
-    int smerCnt, loadedCharCnt;
+    int smerCnt;
     uint64_t smer;
-    int prevPos;
-    int posStart;
     uint64_t syncmer;
 
 public:
-    SyncmerScanner(int smerLen, const GeneticCode &geneticCode) : geneticCode(geneticCode) {
+    SyncmerScanner(int smerLen, const GeneticCode &geneticCode) : KmerScanner(geneticCode) {
         this->smerLen = smerLen;
         this->smerMask = (1ULL << (5 * smerLen)) - 1;
-        this->dnaMask = (1ULL << 24) - 1;    
     }
 
     void initScanner(const char * seq, size_t seqStart, size_t seqEnd) {
@@ -77,7 +45,7 @@ public:
         this->posStart = 0;
     }
 
-    Syncmer getNextSyncmer(bool forward) {
+    Kmer next(bool forward) {
         bool syncmerFound = false;
         syncmer = 0;
         int aa = 0;
@@ -146,7 +114,7 @@ public:
     }
 
 
-    Syncmer getNextSyncmer_forward() {
+    Kmer getNextSyncmer_forward() {
         bool syncmerFound = false;
         syncmer = 0;
         while (posStart <= aaLen - 8 && !syncmerFound) {
@@ -197,7 +165,7 @@ public:
     }
 
 
-    Syncmer getNextSyncmer_reverse() {
+    Kmer getNextSyncmer_reverse() {
         bool syncmerFound = false;
         syncmer = 0;
         while (posStart <= aaLen - 8 && !syncmerFound) {

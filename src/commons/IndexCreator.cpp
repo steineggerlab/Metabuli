@@ -1081,12 +1081,13 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                                     accessionBatches[batchIdx].speciesID,
                                                     aaSeq);
                                 } else {
-                                    tempCheck = seqIterator.fillBufferWithSyncmers(
+                                    tempCheck = seqIterator.extractTargetKmers(
                                                     cds[cdsCnt].c_str(),
                                                     kmerBuffer,
                                                     posToWrite,
                                                     accessionBatches[batchIdx].taxIDs[idx],
-                                                    accessionBatches[batchIdx].speciesID);
+                                                    accessionBatches[batchIdx].speciesID,
+                                                    {0, cds[cdsCnt].length() - 1, 1});
                                 }
                                 if (tempCheck == -1) {
                                     cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
@@ -1103,12 +1104,13 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                                     accessionBatches[batchIdx].speciesID,
                                                     aaSeq);
                                 } else {
-                                    tempCheck = seqIterator.fillBufferWithSyncmers(
+                                    tempCheck = seqIterator.extractTargetKmers(
                                                     nonCds[nonCdsCnt].c_str(),
                                                     kmerBuffer,
                                                     posToWrite,
                                                     accessionBatches[batchIdx].taxIDs[idx],
-                                                    accessionBatches[batchIdx].speciesID);
+                                                    accessionBatches[batchIdx].speciesID,
+                                                    {0, cds[nonCdsCnt].length() - 1, 1});
                                 }
                                 if (tempCheck == -1) {
                                     cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
@@ -1158,30 +1160,13 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                                         orfNum, intergenicKmers, e.sequence.s);
                                 // Get k-mers from extended ORFs
                                 for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
-                                    aaSeq.clear();
-                                    seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt], aaSeq, e.sequence.l);
-                                    if (!par.syncmer) {
-                                        aaSeq.clear();
-                                        seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt], aaSeq, e.sequence.l);
-                                        tempCheck = seqIterator.fillBufferWithKmerFromBlock(
-                                                maskedSeq,
-                                                kmerBuffer,
-                                                posToWrite,
-                                                accessionBatches[batchIdx].taxIDs[idx],
-                                                accessionBatches[batchIdx].speciesID,
-                                                aaSeq,
-                                                extendedORFs[orfCnt].strand,
-                                                extendedORFs[orfCnt].start,
-                                                extendedORFs[orfCnt].end);
-                                    } else {
-                                        tempCheck = seqIterator.fillBufferWithSyncmers(
-                                                maskedSeq,
-                                                kmerBuffer,
-                                                posToWrite,
-                                                accessionBatches[batchIdx].taxIDs[idx],
-                                                accessionBatches[batchIdx].speciesID,
-                                                extendedORFs[orfCnt]);
-                                    }    
+                                    tempCheck = seqIterator.extractTargetKmers(
+                                                    maskedSeq,
+                                                    kmerBuffer,
+                                                    posToWrite,
+                                                    accessionBatches[batchIdx].taxIDs[idx],
+                                                    accessionBatches[batchIdx].speciesID,
+                                                    extendedORFs[orfCnt]);
                                     if (tempCheck == -1) {
                                         cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
                                     }
@@ -1206,29 +1191,13 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                 }
 
                                 for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
-                                    if (!par.syncmer) {
-                                        aaSeq.clear();
-                                        seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt], aaSeq, e.sequence.l);
-                                        tempCheck = seqIterator.fillBufferWithKmerFromBlock(
-                                            maskedSeq,
-                                            kmerBuffer,
-                                            posToWrite,
-                                            accessionBatches[batchIdx].taxIDs[idx],
-                                            accessionBatches[batchIdx].speciesID,
-                                            aaSeq,
-                                            extendedORFs[orfCnt].strand,
-                                            extendedORFs[orfCnt].start,
-                                            extendedORFs[orfCnt].end);
-                                    } else {
-                                        tempCheck = seqIterator.fillBufferWithSyncmers(
-                                                maskedSeq,
-                                                kmerBuffer,
-                                                posToWrite,
-                                                accessionBatches[batchIdx].taxIDs[idx],
-                                                accessionBatches[batchIdx].speciesID,
-                                                extendedORFs[orfCnt]);
-                                    }
-                                        
+                                    tempCheck = seqIterator.extractTargetKmers(
+                                                    maskedSeq,
+                                                    kmerBuffer,
+                                                    posToWrite,
+                                                    accessionBatches[batchIdx].taxIDs[idx],
+                                                    accessionBatches[batchIdx].speciesID,
+                                                    extendedORFs[orfCnt]);
                                     if (tempCheck == -1) {
                                         cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
                                     }

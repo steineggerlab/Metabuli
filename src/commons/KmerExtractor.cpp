@@ -2,7 +2,7 @@
 #include <unordered_map>
 
 KmerExtractor::KmerExtractor(const LocalParameters &par, const GeneticCode & geneticCode) : par(par) {
-    seqIterator = new SeqIterator(par, geneticCode);
+    kmerScanner = par.syncmer ? new SyncmerScanner(par.smerLen, geneticCode) : new KmerScanner(geneticCode);
     spaceNum = 0;
     maskMode = par.maskMode;
     maskProb = par.maskProb;
@@ -11,7 +11,6 @@ KmerExtractor::KmerExtractor(const LocalParameters &par, const GeneticCode & gen
 }
 
 KmerExtractor::~KmerExtractor() {
-    delete seqIterator;
     delete probMatrix;
     delete subMat;
 }
@@ -291,25 +290,43 @@ void KmerExtractor::processSequence(size_t count,
         size_t posToWrite = 0;
         if (isReverse) {
             posToWrite = kmerBuffer.reserveMemory(queryList[queryIdx].kmerCnt2);
-            if (par.syncmer) {
-                seqIterator->fillQuerySyncmerBuffer2(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
+            fillQueryKmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
                                             (uint32_t) queryIdx+1, queryList[queryIdx].queryLength+3);
-            } else {
-                seqIterator->sixFrameTranslation(seq, (int) reads[i].length(), aaFrames);
-                seqIterator->fillQueryKmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
-                                            (uint32_t) queryIdx+1, aaFrames, queryList[queryIdx].queryLength+3);
-            }   
         } else {
             posToWrite = kmerBuffer.reserveMemory(queryList[queryIdx].kmerCnt);
-            if (par.syncmer) {
-                seqIterator->fillQuerySyncmerBuffer2(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
-                                            (uint32_t) queryIdx+1);
-            } else {
-                seqIterator->sixFrameTranslation(seq, (int) reads[i].length(), aaFrames);
-                seqIterator->fillQueryKmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
-                                            (uint32_t) queryIdx+1, aaFrames);
-            }                                
+            fillQueryKmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
+                                            (uint32_t) queryIdx+1);                             
         }
+    }
+}
+
+void KmerExtractor::fillQueryKmerBuffer(
+    const char *seq,
+    int seqLen, 
+    Buffer<QueryKmer> &kmerBuffer, 
+    size_t &posToWrite, 
+    uint32_t seqID, 
+    uint32_t offset) 
+{
+    int usedLen = LocalUtil::getMaxCoveredLength(seqLen);
+    for (int frame = 0; frame < 6; frame++) {
+        bool isForward = frame < 3;
+        int begin = 0;
+        if (isForward) {
+            begin = frame % 3;
+        } else {
+            begin = (seqLen % 3) - (frame % 3);
+            if (begin < 0) {
+                begin += 3;
+            }
+        }
+        kmerScanner->initScanner(seq, begin, begin + usedLen - 1);
+        while(true) {
+            Kmer syncmer = kmerScanner->next(isForward);
+            if (syncmer.value == UINT64_MAX) break;
+            // syncmer.printAA(geneticCode); cout << " "; syncmer.printDNA(geneticCode); cout << endl;
+            kmerBuffer.buffer[posToWrite++] = {syncmer.value, seqID, syncmer.pos, frame};
+        }        
     }
 }
 

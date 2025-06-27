@@ -40,7 +40,7 @@ using namespace std;
 class SeqIterator {
 private:
     const GeneticCode & geneticCode;
-    SyncmerScanner * syncmerScanner;
+    KmerScanner * kmerScanner;
     uint64_t powers[10];
     uint32_t * mask;
     int * mask_int;
@@ -51,13 +51,6 @@ private:
     int smerLen;
     uint32_t smerMask;
     uint64_t dnaMask;
-
-    void addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev, uint32_t kmerCnt, uint32_t frame,
-                              int readLength);
-
-    void addDNAInfo_QueryKmer2(uint64_t &kmer, const char *seq, int forOrRev, uint32_t kmerCnt, uint32_t frame,
-                              int readLength);
-
     // void addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const PredictedBlock &block, int kmerCnt);
 
 public:
@@ -71,16 +64,6 @@ public:
                               const vector<CDSinfo> &cdsInfo, 
                               vector<string> &cds,
                               vector<string> &nonCds);
-    
-    void fillQueryKmerBuffer(const char *seq, int seqLen, Buffer<QueryKmer> &kmerBuffer, size_t &posToWrite,
-                             uint32_t seqID, vector<int> *aaFrames, uint32_t offset = 0);
-
-    void fillQuerySyncmerBuffer(const char *seq, int seqLen, Buffer<QueryKmer> &kmerBuffer, size_t &posToWrite,
-                             uint32_t seqID, vector<int> *aaFrames, uint32_t offset = 0);
-
-        void fillQuerySyncmerBuffer2(const char *seq, int seqLen, Buffer<QueryKmer> &kmerBuffer, size_t &posToWrite,
-                             uint32_t seqID, uint32_t offset = 0);
-
 
     char *reverseComplement(char *read, size_t length) const;
 
@@ -111,14 +94,6 @@ public:
 
     size_t getNumOfKmerForBlock(const SequenceBlock &block);
 
-    // int fillBufferWithKmerFromBlock(const PredictedBlock &block,
-    //                                 const char *seq, 
-    //                                 TargetKmerBuffer &kmerBuffer,
-    //                                 size_t &posToWrite, 
-    //                                 int seqID, 
-    //                                 int taxIdAtRank, 
-    //                                 const vector<int> & aaSeq);
-
     int fillBufferWithKmerFromBlock(const char *seq,
                                     Buffer<TargetKmer> &kmerBuffer,
                                     size_t &posToWrite,
@@ -129,32 +104,12 @@ public:
                                     int blockStart = 0,
                                     int blockEnd = 0);
 
-    template<typename AAGetter, typename CodonGetter>
-    int extactTargetSyncmers(const char *seq,
-                               Buffer<TargetKmer> &buffer,
-                               size_t &pos,
-                               int seqID,
-                               int taxId,
-                               SequenceBlock block,
-                               AAGetter getAA,
-                               CodonGetter getCodonBits);
-
-    template<typename AAGetter, typename CodonGetter>
-    int extactQuerySyncmers(const char *seq,
-                            Buffer<QueryKmer> &buffer,
-                            size_t &pos,
-                            int seqID,
-                            SequenceBlock block,
-                            AAGetter getAA,
-                            CodonGetter getCodonBits);
-
-
-    int fillBufferWithSyncmers(const char *seq,
-                                         Buffer<TargetKmer> &kmerBuffer,
-                                         size_t &posToWrite,
-                                         int seqID,
-                                         int taxIdAtRank,
-                                         SequenceBlock block = {0, 0, 0});
+    int extractTargetKmers(const char *seq,
+                           Buffer<TargetKmer> &kmerBuffer,
+                           size_t &posToWrite,
+                           int seqID,
+                           int taxIdAtRank,
+                           SequenceBlock block);
 
     bool isSyncmer(const vector<int> &aaSeq, int startPos, int k, int s) {
         size_t min_smer_value = UINT64_MAX;
@@ -163,12 +118,10 @@ public:
         for (int i = 0; i <= k - s; ++i) {
             if (i == 0) {
                 for (int j = 0; j < s; ++j) {
-                    // current_value |= (size_t) aaSeq[startPos + i + j] << (5 * j);
                     current_value = (current_value << 5) | aaSeq[startPos + i + j];
                 }
             } else {
                 current_value = (current_value << 5) | aaSeq[startPos + i + s - 1];
-                // current_value = (current_value >> 5) | ((size_t) aaSeq[startPos + i + s - 1] << (5 * (s - 1)));
             }
             current_value = current_value & ((1ULL << (5 * s)) - 1); // Mask to keep only the last s amino acids
             if (current_value < min_smer_value) {
@@ -177,19 +130,6 @@ public:
             }
         }
         return (min_smer_pos == 0 || min_smer_pos == (k - s));
-    }
-
-    bool isSyncmer(const vector<int> &aaSeq, int startPos) {
-        size_t smer1 = (size_t) aaSeq[startPos + 0];      // shift by 0 bits
-        smer1 |= (size_t) aaSeq[startPos + 1] << (5 * 1); // shift by 5 bits
-        smer1 |= (size_t) aaSeq[startPos + 2] << (5 * 2); // shift by 10 bits
-        smer1 |= (size_t) aaSeq[startPos + 3] << (5 * 3); // shift by 15 bits
-        smer1 |= (size_t) aaSeq[startPos + 4] << (5 * 4); // shift by 20 bits
-        smer1 |= (size_t) aaSeq[startPos + 5] << (5 * 5); // shift by 25 bits
-        size_t smer2 = (smer1 >> 5) | ((size_t) aaSeq[startPos + 6] << 25);
-        size_t smer3 = (smer2 >> 5) | ((size_t) aaSeq[startPos + 7] << 25);
-        size_t min_smer = min({smer1, smer2, smer3});
-        return (min_smer == smer1 || min_smer == smer3);        
     }
 
     void addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, int kmerCnt, int strand, int start, int end);

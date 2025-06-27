@@ -11,7 +11,8 @@
 class KmerExtractor {
 private:
     const LocalParameters &par;
-    SeqIterator * seqIterator;
+    KmerScanner * kmerScanner;
+    
     // Parameters
     int spaceNum;
     int maskMode;
@@ -56,6 +57,14 @@ private:
                          const vector<Query> & queryList,
                          vector<int> *aaFrames,
                          bool isReverse);
+
+    void fillQueryKmerBuffer(
+        const char *seq,
+        int seqLen, 
+        Buffer<QueryKmer> &kmerBuffer, 
+        size_t &posToWrite, 
+        uint32_t seqID, 
+        uint32_t offset = 0);
                                       
 public:
     explicit KmerExtractor(const LocalParameters & par, const GeneticCode &geneticCode);

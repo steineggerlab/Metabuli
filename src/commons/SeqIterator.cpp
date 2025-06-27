@@ -26,9 +26,9 @@ SeqIterator::SeqIterator(const LocalParameters &par, const GeneticCode &geneticC
     }
 
     if (par.syncmer) {
-        syncmerScanner = new SyncmerScanner(smerLen, geneticCode);
+        kmerScanner = new SyncmerScanner(smerLen, geneticCode);
     } else {
-        syncmerScanner = nullptr;
+        kmerScanner = new KmerScanner(geneticCode);
     }
 
     // powers
@@ -110,213 +110,6 @@ void SeqIterator::sixFrameTranslation(const char *seq, int len, vector<int> *aaF
     }
 }
 
-void SeqIterator::fillQueryKmerBuffer(
-    const char *seq,
-    int seqLen, 
-    Buffer<QueryKmer> &kmerBuffer, 
-    size_t &posToWrite, 
-    uint32_t seqID, 
-    vector<int> *aaFrames,
-    uint32_t offset) 
-    {
-    int forOrRev;
-    uint64_t tempKmer = 0;
-    int checkN;
-    for (uint8_t frame = 0; frame < 6; frame++) {
-        uint32_t len = aaFrames[frame].size();
-        forOrRev = frame / 3;
-        for (uint32_t kmerCnt = 0; kmerCnt < len - kmerLength - spaceNum + 1; kmerCnt++) {
-            // Convert amino acid 8-mer to an integer
-            tempKmer = 0;
-            checkN = 0;
-            for (uint32_t i = 0, j = 0; i < kmerLength + spaceNum; i++, j += mask[i]) { // j:0-7, i:0-11
-                if (-1 == aaFrames[frame][kmerCnt + i]) {
-                    checkN = 1;
-                    break;
-                }
-                tempKmer += aaFrames[frame][kmerCnt + i] * powers[j] * mask[i];
-            }
-
-            // Add DNA info
-            if (checkN == 1) {
-                kmerBuffer.buffer[posToWrite] = {UINT64_MAX, 0, 0, frame};
-            } else {
-                addDNAInfo_QueryKmer(tempKmer, seq, forOrRev, kmerCnt, frame, seqLen);
-                if (forOrRev == 0) {
-                    kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3) + offset, frame};
-                } else {
-                    if ((seqLen % 3 == 1 && (frame == 3 || frame == 4)) || (seqLen % 3 == 0 && frame == 3)) {
-                        kmerBuffer.buffer[posToWrite] = {tempKmer, seqID,
-                                                         seqLen - ((frame % 3) + (kmerCnt * 3)) - 24 + offset - 3,
-                                                         frame};
-                    } else {
-                        kmerBuffer.buffer[posToWrite] = {tempKmer, seqID,
-                                                         seqLen - ((frame % 3) + (kmerCnt * 3)) - 24 + offset, frame};
-                    }
-                }
-            }
-            // printKmerInDNAsequence(tempKmer); cout << endl;
-            posToWrite++;
-        }
-    }
-}
-
-void SeqIterator::fillQuerySyncmerBuffer(
-    const char *seq,
-    int seqLen, 
-    Buffer<QueryKmer> &kmerBuffer, 
-    size_t &posToWrite, 
-    uint32_t seqID, 
-    vector<int> *aaFrames,
-    uint32_t offset) 
-{
-    int forOrRev;
-    uint64_t tempKmer = 0;
-    int checkN;
-    for (uint8_t frame = 0; frame < 6; frame++) {
-        uint32_t len = aaFrames[frame].size();
-        forOrRev = frame / 3;
-        for (uint32_t kmerCnt = 0; kmerCnt < len - kmerLength - spaceNum + 1; kmerCnt++) {
-            // Convert amino acid 8-mer to an integer
-            tempKmer = 0;
-            checkN = 0;
-
-            if (!isSyncmer(aaFrames[frame], kmerCnt, 8, smerLen)) {
-                kmerBuffer.buffer[posToWrite++] = {UINT64_MAX, 0, 0, frame};
-                continue;
-            }
-
-            for (uint32_t i = 0, j = 0; i < kmerLength + spaceNum; i++, j += mask[i]) { // j:0-7, i:0-11
-                if (-1 == aaFrames[frame][kmerCnt + i]) {
-                    checkN = 1;
-                    break;
-                }
-                tempKmer = (tempKmer << 5) | (uint64_t)aaFrames[frame][kmerCnt + i];
-            }
-
-            // Add DNA info
-            if (checkN == 1) {
-                kmerBuffer.buffer[posToWrite] = {UINT64_MAX, 0, 0, frame};
-            } else {
-                addDNAInfo_QueryKmer2(tempKmer, seq, forOrRev, kmerCnt, frame, seqLen);
-                if (forOrRev == 0) {
-                    kmerBuffer.buffer[posToWrite] = {tempKmer, seqID, (frame % 3) + (kmerCnt * 3) + offset, frame};
-                } else {
-                    if ((seqLen % 3 == 1 && (frame == 3 || frame == 4)) 
-                        || (seqLen % 3 == 0 && frame == 3)) {
-                        kmerBuffer.buffer[posToWrite] = {tempKmer, seqID,
-                                                         seqLen - ((frame % 3) + (kmerCnt * 3)) - 24 + offset - 3,
-                                                         frame};
-                    } else {
-                        kmerBuffer.buffer[posToWrite] = {tempKmer, seqID,
-                                                         seqLen - ((frame % 3) + (kmerCnt * 3)) - 24 + offset, frame};
-                    }
-                }
-            }
-            // cout << kmerBuffer.buffer[posToWrite].info.frame << " " << kmerBuffer.buffer[posToWrite].info.pos << " ";
-            // printKmerInDNAsequence(tempKmer); cout << endl;
-            posToWrite++;
-        }
-    }
-}
-
-void SeqIterator::fillQuerySyncmerBuffer2(
-    const char *seq,
-    int seqLen, 
-    Buffer<QueryKmer> &kmerBuffer, 
-    size_t &posToWrite, 
-    uint32_t seqID, 
-    uint32_t offset) 
-{
-    int usedLen = LocalUtil::getMaxCoveredLength(seqLen);
-    for (int frame = 0; frame < 6; frame++) {
-        bool isForward = frame < 3;
-        int begin = 0;
-        if (isForward) {
-            begin = frame % 3;
-        } else {
-            begin = (seqLen % 3) - (frame % 3);
-            if (begin < 0) {
-                begin += 3;
-            }
-        }
-        syncmerScanner->initScanner(seq, begin, begin + usedLen - 1);
-        while(true) {
-            Syncmer syncmer = syncmerScanner->getNextSyncmer(isForward);
-            if (syncmer.value == UINT64_MAX) break;
-            // syncmer.printAA(geneticCode); cout << " "; syncmer.printDNA(geneticCode); cout << endl;
-            kmerBuffer.buffer[posToWrite++] = {syncmer.value, seqID, syncmer.pos, frame};
-        }        
-    }
-}
-
-void
-SeqIterator::addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev, uint32_t kmerCnt, uint32_t frame,
-                                  int seqLen) {
-    uint32_t start = (frame % 3) + (kmerCnt * 3);
-    kmer <<= bitsFor8Codons;
-    size_t end = seqLen - 1;
-
-    if (forOrRev == 0) { // Forward
-        for (int i = 0, j = 0; i < kmerLength + spaceNum_int; i++, j += mask_int[i]) {
-            kmer |= (geneticCode.getCodon(atcg[seq[start + i * 3]], atcg[seq[start + i * 3 + 1]], atcg[seq[start + i * 3 + 2]])
-                    * mask[i]) << ((j) * bitsForCodon);
-            // kmer |= (nuc2num[nuc2int(atcg[seq[start + i * 3]])][nuc2int(atcg[seq[start + i * 3 + 1]])][
-            //         nuc2int(atcg[seq[start + i * 3 + 2]])] * mask[i]) << (j * bitsForCodon);
-        }
-    } else { // Reverse
-        if ((seqLen % 3 == 1 && (frame == 3 || frame == 4)) || (seqLen % 3 == 0 && frame == 3)) {
-            for (int i = 0, j = 0; i < kmerLength + spaceNum_int; i ++, j += mask_int[i]) {
-                kmer |= (geneticCode.getCodon(iRCT[atcg[seq[end - (start + i*3) - 3]]],
-                        iRCT[atcg[seq[end - (start + i*3 + 1) - 3]]],
-                        iRCT[atcg[seq[end - (start + i*3 + 2) - 3]]]) * mask[i]) << ((j) * bitsForCodon);
-                // kmer |= (nuc2num[nuc2int(iRCT[atcg[seq[end - (start + i*3) - 3]]])][
-                //         nuc2int(iRCT[atcg[seq[end - (start + i*3 + 1) - 3]]])][
-                //         nuc2int(iRCT[atcg[seq[end - (start + i*3 + 2) - 3]]])] * mask[i]) << (j * bitsForCodon);
-            }
-        } else {
-            for (int i = 0, j = 0; i < kmerLength + spaceNum_int; i ++, j += mask_int[i]) {
-                kmer |= (geneticCode.getCodon(iRCT[atcg[seq[end - (start + i*3)]]],
-                        iRCT[atcg[seq[end - (start + i*3 + 1)]]],
-                        iRCT[atcg[seq[end - (start + i*3 + 2)]]]) * mask[i]) << ((j) * bitsForCodon);
-                // kmer |= (nuc2num[nuc2int(iRCT[atcg[seq[end - (start + i*3)]]])][
-                //         nuc2int(iRCT[atcg[seq[end - (start + i*3 + 1)]]])][
-                //         nuc2int(iRCT[atcg[seq[end - (start + i*3 + 2)]]])] * mask[i]) << (j * bitsForCodon);
-            }
-        }
-    }
-}
-
-
-void
-SeqIterator::addDNAInfo_QueryKmer2(uint64_t &kmer, const char *seq, int forOrRev, uint32_t kmerCnt, uint32_t frame,
-                                  int seqLen) {
-    uint32_t start = (frame % 3) + (kmerCnt * 3);
-    kmer <<= bitsFor8Codons;
-    size_t end = seqLen - 1;
-
-    if (forOrRev == 0) { // Forward
-        for (int i = 0, j = 0; i < kmerLength + spaceNum_int; i++, j += mask_int[i]) {
-            kmer |= (geneticCode.getCodon(atcg[seq[start + i * 3]], atcg[seq[start + i * 3 + 1]], atcg[seq[start + i * 3 + 2]])
-                    * mask[i]) << ((7-j) * bitsForCodon);
-        }
-    } else { // Reverse
-        if ((seqLen % 3 == 1 && (frame == 3 || frame == 4)) || (seqLen % 3 == 0 && frame == 3)) {
-            for (int i = 0, j = 0; i < kmerLength + spaceNum_int; i ++, j += mask_int[i]) {
-                kmer |= (geneticCode.getCodon(iRCT[atcg[seq[end - (start + i*3) - 3]]],
-                        iRCT[atcg[seq[end - (start + i*3 + 1) - 3]]],
-                        iRCT[atcg[seq[end - (start + i*3 + 2) - 3]]]) * mask[i]) << ((7-j) * bitsForCodon);
-            }
-        } else {
-            for (int i = 0, j = 0; i < kmerLength + spaceNum_int; i ++, j += mask_int[i]) {
-                kmer |= (geneticCode.getCodon(iRCT[atcg[seq[end - (start + i*3)]]],
-                        iRCT[atcg[seq[end - (start + i*3 + 1)]]],
-                        iRCT[atcg[seq[end - (start + i*3 + 2)]]]) * mask[i]) << ((7-j) * bitsForCodon);
-            }
-        }
-    }
-}
-
 bool SeqIterator::translateBlock(const char *seq, SequenceBlock block, vector<int> & aaSeq, size_t length) {
     aaSeq.clear();
     if(aaSeq.capacity() < length / 3 + 1) {
@@ -387,16 +180,18 @@ int SeqIterator::fillBufferWithKmerFromBlock(const char *seq,
     return 0;
 }
 
-int SeqIterator::fillBufferWithSyncmers(const char *seq,
-                                        Buffer<TargetKmer> &kmerBuffer,
-                                        size_t &posToWrite,
-                                        int seqID,
-                                        int taxIdAtRank,
-                                        SequenceBlock block) {
-    syncmerScanner->initScanner(seq, block.start, block.end);
+int SeqIterator::extractTargetKmers(
+    const char *seq,
+    Buffer<TargetKmer> &kmerBuffer,
+    size_t &posToWrite,
+    int seqID,
+    int taxIdAtRank,
+    SequenceBlock block) 
+{
+    kmerScanner->initScanner(seq, block.start, block.end);
     bool isForward = block.strand > -1;
     while (true) {
-        Syncmer syncmer = syncmerScanner->getNextSyncmer(isForward);
+        Kmer syncmer = kmerScanner->next(isForward);
         if (syncmer.value == UINT64_MAX) break; // No more syncmers
         kmerBuffer.buffer[posToWrite++] = {syncmer.value, taxIdAtRank, seqID};
     }
@@ -405,67 +200,67 @@ int SeqIterator::fillBufferWithSyncmers(const char *seq,
 
 // Core syncmer extraction with lambda abstraction
 // Simplified emission loop by merging AA and DNA append into one loop
-template<typename AAGetter, typename CodonGetter>
-int SeqIterator::extactTargetSyncmers(const char *seq,
-                               Buffer<TargetKmer> &buffer,
-                               size_t &pos,
-                               int seqID,
-                               int taxId,
-                               SequenceBlock block,
-                               AAGetter getAA,
-                               CodonGetter getCodonBits) {
-    int len = (block.end - block.start + 1) / 3;
-    uint64_t aaPart = 0, dnaPart = 0;
-    deque<Smer> dq;
-    int smerCnt = 0, loaded = 0;
-    uint64_t smer = 0;
-    int prevPos = -kmerLength;
-    int posStart = 0;
+// template<typename AAGetter, typename CodonGetter>
+// int SeqIterator::extactTargetSyncmers(const char *seq,
+//                                Buffer<TargetKmer> &buffer,
+//                                size_t &pos,
+//                                int seqID,
+//                                int taxId,
+//                                SequenceBlock block,
+//                                AAGetter getAA,
+//                                CodonGetter getCodonBits) {
+//     int len = (block.end - block.start + 1) / 3;
+//     uint64_t aaPart = 0, dnaPart = 0;
+//     deque<Smer> dq;
+//     int smerCnt = 0, loaded = 0;
+//     uint64_t smer = 0;
+//     int prevPos = -kmerLength;
+//     int posStart = 0;
 
-    while (posStart <= len - kmerLength) {
-        bool sawN = false;
-        // Slide the sub-mer window
-        smerCnt -= (smerCnt > 0);
-        while (smerCnt < kmerLength - smerLen + 1) {
-            loaded -= (loaded == smerLen);
-            while (loaded < smerLen) {
-                int aa = getAA(posStart + smerCnt + loaded);
-                if (aa < 0) { sawN = true; break; }
-                smer = (smer << 5) | (uint64_t)aa;
-                loaded++;
-            }
-            if (sawN) break;
-            smer &= smerMask;
-            while (!dq.empty() && dq.back().value > smer) dq.pop_back();
-            dq.emplace_back(smer, posStart + smerCnt);
-            smerCnt++;
-        }
-        if (sawN) {
-            posStart += smerCnt + loaded + 1;
-            dq.clear(); smerCnt = loaded = 0; smer = 0;
-            continue;
-        }
-        if (!dq.empty() && dq.front().pos < posStart) dq.pop_front();
+//     while (posStart <= len - kmerLength) {
+//         bool sawN = false;
+//         // Slide the sub-mer window
+//         smerCnt -= (smerCnt > 0);
+//         while (smerCnt < kmerLength - smerLen + 1) {
+//             loaded -= (loaded == smerLen);
+//             while (loaded < smerLen) {
+//                 int aa = getAA(posStart + smerCnt + loaded);
+//                 if (aa < 0) { sawN = true; break; }
+//                 smer = (smer << 5) | (uint64_t)aa;
+//                 loaded++;
+//             }
+//             if (sawN) break;
+//             smer &= smerMask;
+//             while (!dq.empty() && dq.back().value > smer) dq.pop_back();
+//             dq.emplace_back(smer, posStart + smerCnt);
+//             smerCnt++;
+//         }
+//         if (sawN) {
+//             posStart += smerCnt + loaded + 1;
+//             dq.clear(); smerCnt = loaded = 0; smer = 0;
+//             continue;
+//         }
+//         if (!dq.empty() && dq.front().pos < posStart) dq.pop_front();
 
-        int anchor1 = posStart;
-        int anchor2 = posStart + (kmerLength - smerLen);
-        if (!dq.empty() && (dq.front().pos == anchor1 || dq.front().pos == anchor2)) {
-            int shifts = posStart - prevPos;
-            int aaStart = posStart + kmerLength - shifts;
-            // Single loop: append both AA and DNA bits
-            for (int i = 0; i < shifts; ++i) {
-                aaPart = (aaPart << 5) | (uint64_t)getAA(aaStart + i); // posStart + kmerLength - shifts + i
-                dnaPart = (dnaPart << bitsForCodon) | getCodonBits(aaStart + i);
-            }
-            prevPos = posStart;
+//         int anchor1 = posStart;
+//         int anchor2 = posStart + (kmerLength - smerLen);
+//         if (!dq.empty() && (dq.front().pos == anchor1 || dq.front().pos == anchor2)) {
+//             int shifts = posStart - prevPos;
+//             int aaStart = posStart + kmerLength - shifts;
+//             // Single loop: append both AA and DNA bits
+//             for (int i = 0; i < shifts; ++i) {
+//                 aaPart = (aaPart << 5) | (uint64_t)getAA(aaStart + i); // posStart + kmerLength - shifts + i
+//                 dnaPart = (dnaPart << bitsForCodon) | getCodonBits(aaStart + i);
+//             }
+//             prevPos = posStart;
 
-            uint64_t key = (aaPart << bitsFor8Codons) | (dnaPart & dnaMask);
-            buffer.buffer[pos++] = { key, taxId, seqID };
-        }
-        ++posStart;
-    }
-    return 0;
-}
+//             uint64_t key = (aaPart << bitsFor8Codons) | (dnaPart & dnaMask);
+//             buffer.buffer[pos++] = { key, taxId, seqID };
+//         }
+//         ++posStart;
+//     }
+//     return 0;
+// }
 
 // It adds DNA information to kmers referring the original DNA sequence.
 // void SeqIterator::addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, int kmerCnt) {

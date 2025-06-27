@@ -16,7 +16,7 @@ class GeneticCode {
                                  "................................................................"
                                  "................................................................";
         int nuc2aa[8][8][8];
-        int nuc2num[4][4][4];
+        int nuc2num[8][8][8];
         std::string aminoacids;
         std::vector<std::vector<std::string>> aa2codon;
 
@@ -165,6 +165,9 @@ class GeneticCode {
                         nuc2aa[7][i][j] = -1;
                         nuc2aa[i][7][j] = -1;
                         nuc2aa[i][j][7] = -1;
+                        nuc2num[7][i][j] = -1;
+                        nuc2num[i][7][j] = -1;
+                        nuc2num[i][j][7] = -1;
                     }
                 }
 
