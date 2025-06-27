@@ -15,6 +15,9 @@
 #define kmerLength 8
 #define AA(kmer) ((kmer) & ~16777215)
 
+extern const std::string atcg;
+extern const std::string iRCT;
+
 struct Assembly {
     std::string name;
     TaxID taxid;

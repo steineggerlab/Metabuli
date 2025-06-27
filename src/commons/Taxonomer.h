@@ -209,6 +209,10 @@ public:
 
     bool isConsecutive(const Match * match1, const Match * match2, int shift);
 
+    bool isConsecutive2(const Match * match1, const Match * match2);
+
+    bool isConsecutive2(const Match * match1, const Match * match2, int shift);
+
     TaxID lowerRankClassification(const unordered_map<TaxID, unsigned int> & taxCnt, TaxID speciesID, int queryLength);
 
     void getSpeciesCladeCounts(const unordered_map<TaxID, unsigned int> & taxCnt,

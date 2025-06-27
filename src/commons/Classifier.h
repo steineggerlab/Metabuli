@@ -45,6 +45,7 @@ protected:
     bool isNewDB;
 
     // Agents
+    GeneticCode * geneticCode;
     QueryIndexer * queryIndexer;
     KmerExtractor * kmerExtractor;
     KmerMatcher * kmerMatcher;

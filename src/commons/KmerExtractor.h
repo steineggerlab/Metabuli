@@ -58,7 +58,7 @@ private:
                          bool isReverse);
                                       
 public:
-    explicit KmerExtractor(const LocalParameters & par);
+    explicit KmerExtractor(const LocalParameters & par, const GeneticCode &geneticCode);
     ~KmerExtractor();
     void extractQueryKmers(Buffer<QueryKmer> &kmerBuffer,
                            vector<Query> & queryList,

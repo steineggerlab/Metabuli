@@ -527,13 +527,26 @@ void Taxonomer::getMatchPaths(
                     const MatchPath * bestPath = nullptr;
                     float bestScore = 0;
                     for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++curIdx) {
-                        if (isConsecutive(matchList + curIdx, matchList + nextIdx, shift)) {
-                            connectedToNext[curIdx - start] = true;
-                            if (localMatchPaths[curIdx - start].score > bestScore) {
-                                bestPath = &localMatchPaths[curIdx - start];
-                                bestScore = localMatchPaths[curIdx - start].score;
+                        if (par.syncmer) {
+                            // For syncmer, we need to check if the match is consecutive
+                            if (isConsecutive2(matchList + curIdx, matchList + nextIdx, shift)) {
+                                connectedToNext[curIdx - start] = true;
+                                if (localMatchPaths[curIdx - start].score > bestScore) {
+                                    bestPath = &localMatchPaths[curIdx - start];
+                                    bestScore = localMatchPaths[curIdx - start].score;
+                                }
+                            }
+                        } else {
+                            // For non-syncmer, we can directly check if the match is consecutive
+                            if (isConsecutive(matchList + curIdx, matchList + nextIdx, shift)) {
+                                connectedToNext[curIdx - start] = true;
+                                if (localMatchPaths[curIdx - start].score > bestScore) {
+                                    bestPath = &localMatchPaths[curIdx - start];
+                                    bestScore = localMatchPaths[curIdx - start].score;
+                                }
                             }
                         }
+
                     }
                     if (bestPath != nullptr) {
                         localMatchPaths[nextIdx - start].start = bestPath->start;                        
@@ -585,11 +598,23 @@ void Taxonomer::getMatchPaths(
                     const MatchPath * bestPath = nullptr;
                     float bestScore = 0;
                     for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++curIdx) {
-                        if (isConsecutive(matchList + nextIdx, matchList + curIdx, shift)) {
-                            connectedToNext[curIdx - start] = true;
-                            if (localMatchPaths[curIdx - start].score > bestScore) {
-                                bestPath = &localMatchPaths[curIdx - start];
-                                bestScore = localMatchPaths[curIdx - start].score;
+                        if (par.syncmer) {
+                            // For syncmer, we need to check if the match is consecutive
+                            if (isConsecutive2(matchList + nextIdx, matchList + curIdx, shift)) {
+                                connectedToNext[curIdx - start] = true;
+                                if (localMatchPaths[curIdx - start].score > bestScore) {
+                                    bestPath = &localMatchPaths[curIdx - start];
+                                    bestScore = localMatchPaths[curIdx - start].score;
+                                }
+                            }
+                        } else {
+                            // For non-syncmer, we can directly check if the match is consecutive
+                            if (isConsecutive(matchList + nextIdx, matchList + curIdx, shift)) {
+                                connectedToNext[curIdx - start] = true;
+                                if (localMatchPaths[curIdx - start].score > bestScore) {
+                                    bestPath = &localMatchPaths[curIdx - start];
+                                    bestScore = localMatchPaths[curIdx - start].score;
+                                }
                             }
                         }
                     }
@@ -624,7 +649,7 @@ void Taxonomer::getMatchPaths(
 float Taxonomer::calScoreIncrement(uint16_t hammings, int shift) {
     float scoreIncrement = 0;
     for (int i = 0; i < shift; i++) {
-        uint8_t hamming = (hammings >> (14 - i * 2)) & 0b11;
+        uint8_t hamming = (hammings >> (i * 2)) & 0b11;
         if (hamming == 0) {
             scoreIncrement += 3.0f;
         } else {
@@ -637,7 +662,7 @@ float Taxonomer::calScoreIncrement(uint16_t hammings, int shift) {
 int Taxonomer::calHammingDistIncrement(uint16_t hammings, int shift) {
     int hammingDistIncrement = 0;
     for (int i = 0; i < shift; i++) {
-        hammingDistIncrement += (hammings >> (14 - i * 2)) & 0b11;
+        hammingDistIncrement += (hammings >> (i * 2)) & 0b11;
     }
     return hammingDistIncrement;
 }
@@ -854,6 +879,23 @@ bool Taxonomer::isConsecutive(const Match * match1, const Match * match2, int sh
     // uint32_t dnaEncoding1 = match1->dnaEncoding >> (3 * shift);
     // uint32_t dnaEncoding2 = match2->dnaEncoding & ((1U << (24 - 3 * shift)) - 1);
     return (match1->dnaEncoding >> (bitsPerCodon * shift)) == (match2->dnaEncoding & ((1U << (totalDnaBits - bitsPerCodon * shift)) - 1));
+}
+
+
+bool Taxonomer::isConsecutive2(const Match * match1, const Match * match2) {
+    // match1 12345678 -> 02345678
+    // match2 23456789 -> 02345678 // Mask 3 LSBits Mask = 
+    
+    return (match1->dnaEncoding & lastCodonMask) == (match2->dnaEncoding >> bitsPerCodon);
+}
+
+bool Taxonomer::isConsecutive2(const Match * match1, const Match * match2, int shift) {
+    // match1 ---01234567 -> ---**234567
+    // match2 ---23456789 -> ---**234567
+    // uint32_t dnaEncoding1 = match1->dnaEncoding >> (3 * shift);
+    // uint32_t dnaEncoding2 = match2->dnaEncoding & ((1U << (24 - 3 * shift)) - 1);
+    return (match1->dnaEncoding & ((1U << (totalDnaBits - bitsPerCodon * shift)) - 1)) 
+        == (match2->dnaEncoding >> (bitsPerCodon * shift));
 }
 
 void Taxonomer::ensureArraySize(size_t newSize) {

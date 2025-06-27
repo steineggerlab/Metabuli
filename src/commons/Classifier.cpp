@@ -19,8 +19,9 @@ Classifier::Classifier(LocalParameters & par) {
     
     taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
 
+    geneticCode = new GeneticCode(par.reducedAA == 1);
     queryIndexer = new QueryIndexer(par);
-    kmerExtractor = new KmerExtractor(par);
+    kmerExtractor = new KmerExtractor(par, *geneticCode);
     if (par.reducedAA) {
         kmerMatcher = new ReducedKmerMatcher(par, taxonomy);
     } else {
@@ -86,6 +87,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 
             // Allocate memory for query k-mer buffer
             queryKmerBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt);
+            memset(queryKmerBuffer.buffer, 0, queryReadSplit[splitIdx].kmerCnt * sizeof(QueryKmer));
 
             // Allocate memory for match buffer
             if (queryReadSplit.size() == 1) {
@@ -175,7 +177,7 @@ void Classifier::assignTaxonomy(const Match *matchList,
         Taxonomer taxonomer(par, taxonomy);
         #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < blockIdx; ++i) {
-            taxonomer.chooseBestTaxon(matchBlocks[i].id,
+            taxonomer.chooseBestTaxon(matchBlocks[i].id - 1,
                             matchBlocks[i].start,
                             matchBlocks[i].end,
                             matchList,

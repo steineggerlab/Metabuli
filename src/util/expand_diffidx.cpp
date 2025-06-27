@@ -39,7 +39,8 @@ int expand_diffidx(int argc, const char **argv, const Command &command){
     uint64_t MARKER = 16777215;
     MARKER = ~ MARKER;
 
-    SeqIterator * seqIterator = new SeqIterator(par);
+    GeneticCode geneticCode(par.reducedAA == 1);
+    SeqIterator * seqIterator = new SeqIterator(par, geneticCode);
     size_t loadedItems;
     bool isFirst = true;
     size_t total = 0;

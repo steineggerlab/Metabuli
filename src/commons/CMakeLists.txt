@@ -36,4 +36,6 @@ set(commons_source_files
 		commons/Reporter.cpp
 		commons/TaxonomyWrapper.h
 		commons/TaxonomyWrapper.cpp
+		commons/SyncmerScanner.h
+		commons/GeneticCode.h
         PARENT_SCOPE)

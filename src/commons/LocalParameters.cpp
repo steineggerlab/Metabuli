@@ -52,7 +52,7 @@ LocalParameters::LocalParameters() :
                  "s-mer length for syncmer selection",
                  typeid(int),
                  (void *) &smerLen,
-                 "[0-6]"),
+                 "[0-7]"),
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
                  "Sequencing type",

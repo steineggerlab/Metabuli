@@ -53,7 +53,7 @@ struct Match { // 24 byte
         if (cnt == range) {
             return score;
         }
-        int currentHamming = GET_2_BITS(rightEndHamming >> (14 - cnt * 2));
+        int currentHamming = GET_2_BITS(rightEndHamming >> (cnt * 2));
         if (currentHamming == 0) {
             score += 3.0f;
         } else {
@@ -66,7 +66,7 @@ struct Match { // 24 byte
         if (cnt == range) {
             return score;
         }
-        int currentHamming = GET_2_BITS(rightEndHamming >> (cnt * 2));
+        int currentHamming = GET_2_BITS(rightEndHamming >> (14 - cnt * 2));
         if (currentHamming == 0) {
             score += 3.0f;
         } else {
@@ -78,7 +78,7 @@ struct Match { // 24 byte
     int getRightPartHammingDist(const int range) const {
         int sum = 0;
         for (int i = 0; i < range; i++) {
-            sum += GET_2_BITS(rightEndHamming >> (14 - i * 2));
+            sum += GET_2_BITS(rightEndHamming >> (i * 2));
         }
         return sum;
     }
@@ -86,7 +86,7 @@ struct Match { // 24 byte
     int getLeftPartHammingDist(const int range) const {
         int sum = 0;
         for (int i = 0; i < range; i++) {
-            sum += GET_2_BITS(rightEndHamming >> (i * 2));
+            sum += GET_2_BITS(rightEndHamming >> (14 - i * 2));
         }
         return sum;
     }

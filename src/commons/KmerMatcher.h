@@ -8,6 +8,8 @@
 #include "TaxonomyWrapper.h"
 #include "common.h"
 #include "unordered_map"
+#include "GeneticCode.h"
+
 #include <string>
 #include <vector>
 #include <unistd.h>
@@ -30,6 +32,8 @@ class KmerMatcher {
 protected:
   const LocalParameters &par;
   TaxonomyWrapper *taxonomy;
+  GeneticCode *geneticCode;
+  
   size_t threads;
   std::string dbDir;
   //   string targetDiffIdxFileName, targetInfoFileName, diffIdxSplitFileName;
@@ -133,17 +137,6 @@ static void loadBuffer2(int fd, T *buffer, size_t &bufferIdx, size_t size, off_t
                   size_t & selectedMatchIdx,
                   uint8_t frame);
 
-  void compareDna2(uint64_t query,
-                  const uint64_t * targetKmersToCompare,
-                  size_t candidateCnt,
-                  std::vector<uint8_t> & hammingDists,
-                  std::vector<size_t> &selectedMatches,
-                  std::vector<uint8_t> &selectedHammingSum,
-                  std::vector<uint16_t> &rightEndHammings,
-                  std::vector<uint32_t> &selectedDnaEncodings,
-                  size_t & selectedMatchIdx,
-                  uint8_t frame);
-
   virtual uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2);
 
   virtual uint16_t getHammings(uint64_t kmer1, uint64_t kmer2);
@@ -190,15 +183,6 @@ public:
   bool matchMetamers(Buffer<QueryKmer> *queryKmerBuffer,
                      Buffer<Match> *matchBuffer,
                      const string &db = string());
-
-  // bool matchKmers2(QueryKmerBuffer *queryKmerBuffer,
-  //                 Buffer<Match> *matchBuffer,
-  //                 const string &db = string());
-  
-
-  bool matchKmers_skipDecoding(Buffer<QueryKmer> *queryKmerBuffer,
-                               Buffer<Match> *matchBuffer,
-                               const string &db = string());
 
   void sortMatches(Buffer<Match> *matchBuffer);
 
@@ -264,7 +248,7 @@ inline uint8_t KmerMatcher::getHammingDistanceSum(uint64_t kmer1,
 }
 
 inline uint16_t KmerMatcher::getHammings(uint64_t kmer1,
-                                         uint64_t kmer2) { // hammings 87654321
+                                         uint64_t kmer2) {
   uint16_t hammings = 0;
   for (int i = 0; i < 8; i++) {
     hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U * i);
@@ -276,7 +260,7 @@ inline uint16_t KmerMatcher::getHammings(uint64_t kmer1,
 
 inline uint16_t
 KmerMatcher::getHammings_reverse(uint64_t kmer1,
-                                 uint64_t kmer2) { // hammings 87654321
+                                 uint64_t kmer2) {
   uint16_t hammings = 0;
   for (int i = 0; i < 8; i++) {
     hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)]

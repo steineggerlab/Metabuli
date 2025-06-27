@@ -8,10 +8,15 @@
 #include <fstream>
 #include <unordered_set>
 #include <atomic>
+#include <omp.h>
+#include <cstdint>
+
+
 #include "printBinary.h"
 #include "Mmap.h"
 #include "Kmer.h"
 #include "SeqIterator.h"
+#include "TaxonomyWrapper.h"
 #include "BitManipulateMacros.h"
 #include "common.h"
 #include "FastSort.h"
@@ -20,10 +25,8 @@
 #include "SubstitutionMatrix.h"
 #include "tantan.h"
 #include "LocalUtil.h"
-#include <cstdint>
-#include "TaxonomyWrapper.h"
+#include "GeneticCode.h"
 
-#include <omp.h>
 // #ifdef OPENMP
 // #include <omp.h>
 // #endif
@@ -102,6 +105,7 @@ protected:
     BaseMatrix *subMat;
 
     // Inputs
+    GeneticCode * geneticCode;
     TaxonomyWrapper * taxonomy;
     bool externTaxonomy;
     // NcbiTaxonomy * taxonomy;

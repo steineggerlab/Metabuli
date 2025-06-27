@@ -22,6 +22,9 @@
 #include <cstdint>
 #include "LocalUtil.h"
 
+#include "GeneticCode.h"
+#include "SyncmerScanner.h"
+
 #ifdef OPENMP
 #include <omp.h>
 #endif
@@ -30,16 +33,15 @@ KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
 
 #define kmerLength 8
 
-#define nuc2int(x) (x & 14u)>>1u
+
 
 using namespace std;
 
 class SeqIterator {
 private:
-    // vector<int> aaFrames[6];
+    const GeneticCode & geneticCode;
+    SyncmerScanner * syncmerScanner;
     uint64_t powers[10];
-    int nuc2aa[8][8][8];
-    uint64_t nuc2num[4][4][4];
     uint32_t * mask;
     int * mask_int;
     uint32_t spaceNum;
@@ -53,11 +55,14 @@ private:
     void addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev, uint32_t kmerCnt, uint32_t frame,
                               int readLength);
 
+    void addDNAInfo_QueryKmer2(uint64_t &kmer, const char *seq, int forOrRev, uint32_t kmerCnt, uint32_t frame,
+                              int readLength);
+
     // void addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const PredictedBlock &block, int kmerCnt);
 
 public:
-    static const string iRCT;
-    static const string atcg;
+    SeqIterator(const LocalParameters &par, const GeneticCode &geneticCode);
+    ~SeqIterator();
     
     string reverseComplement(string &read) const;
     
@@ -89,7 +94,8 @@ public:
             aa.reserve(seq.length() / 3 + 1);
         }
         for (int i = 0 + frame; i + 2 < (int) seq.length(); i = i + 3) {
-            aa.push_back(nuc2aa[nuc2int(atcg[seq[i]])][nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])]);
+            aa.push_back(geneticCode.getAA(atcg[seq[i]], atcg[seq[i + 1]], atcg[seq[i + 2]]));
+            // aa.push_back(nuc2aa[nuc2int(atcg[seq[i]])][nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])]);
         }
     }
 
@@ -503,8 +509,7 @@ public:
         cout << "Syncmer: " << aaStr << " " << dnaStr;
     }
 
-    explicit SeqIterator(const LocalParameters &par);
-    ~SeqIterator();
+
 };
 
 #endif //ADKMER4_KMEREXTRACTOR_H

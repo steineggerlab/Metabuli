@@ -7,6 +7,7 @@
 #include "common.h"
 #include "SeqIterator.h"
 #include <cstdint>
+#include "GeneticCode.h"
 
 using namespace std;
 
@@ -25,8 +26,10 @@ int printDeltaIdx(int argc, const char **argv, const Command &command){
 
     bool complete = false;
     Metamer curMetamer;
+    GeneticCode geneticCode(par.reducedAA == 1);
 
-    SeqIterator * seqIterator = new SeqIterator(par);
+
+    SeqIterator * seqIterator = new SeqIterator(par, geneticCode);
     size_t loadedItems;
     bool isFirst = true;
 

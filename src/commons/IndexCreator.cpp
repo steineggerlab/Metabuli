@@ -33,7 +33,7 @@ IndexCreator::IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxono
         MARKER = 16777215;
         MARKER = ~ MARKER;
     }
-
+    geneticCode = new GeneticCode(par.reducedAA == 1);
     isUpdating = false;
     isNewFormat = true;
     subMat = new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0);
@@ -987,7 +987,7 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
     {
         ProbabilityMatrix probMatrix(*subMat);
         // ProdigalWrapper * prodigal = new ProdigalWrapper();
-        SeqIterator seqIterator(par);
+        SeqIterator seqIterator(par, *geneticCode);
         size_t posToWrite;
         size_t orfNum;
         vector<SequenceBlock> extendedORFs;
