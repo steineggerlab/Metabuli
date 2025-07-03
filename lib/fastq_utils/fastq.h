@@ -68,25 +68,25 @@ typedef long FASTQ_READ_OFFSET;
 // Print informational message
 #define PRINT_INFO(...) \
   do { \
-    fprintf(stderr, "INFO: "); \
-    fprintf(stderr, __VA_ARGS__); \
-    fprintf(stderr, "\n"); \
+    fprintf(stdout, "INFO: "); \
+    fprintf(stdout, __VA_ARGS__); \
+    fprintf(stdout, "\n"); \
   } while (0)
 
 // Print error message
 #define PRINT_ERROR(...) \
   do { \
-    fprintf(stderr, "\nERROR: "); \
-    fprintf(stderr, __VA_ARGS__); \
-    fprintf(stderr, "\n"); \
+    fprintf(stdout, "\nERROR: "); \
+    fprintf(stdout, __VA_ARGS__); \
+    fprintf(stdout, "\n"); \
   } while (0)
 
 // Print fatal error message and exit
 #define FATAL_ERROR(code, ...) \
   do { \
-    fprintf(stderr, "\nERROR: "); \
-    fprintf(stderr, __VA_ARGS__); \
-    fprintf(stderr, "\n"); \
+    fprintf(stdout, "\nERROR: "); \
+    fprintf(stdout, __VA_ARGS__); \
+    fprintf(stdout, "\n"); \
     exit(code); \
   } while (0)
 
@@ -94,8 +94,8 @@ typedef long FASTQ_READ_OFFSET;
 #ifdef DEBUG
 #define PRINT_DEBUG(...) \
   do { \
-    fprintf(stderr, "DEBUG: "); \
-    fprintf(stderr, __VA_ARGS__); \
+    fprintf(stdout, "DEBUG: "); \
+    fprintf(stdout, __VA_ARGS__); \
   } while (0)
 #else
 #define PRINT_DEBUG(...) do {} while (0)
@@ -115,7 +115,7 @@ typedef long FASTQ_READ_OFFSET;
 #define SYS_INT_ERROR_EXIT_STATUS 2
 #define FASTQ_FORMAT_ERROR_EXIT_STATUS 3
 
-#define PRINT_READS_PROCESSED(c,n) { if (c%n==0) { fprintf(stderr,"\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b%lu",c);fflush(stderr); }}
+#define PRINT_READS_PROCESSED(c,n) { if (c%n==0) { fprintf(stdout,"\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b%lu",c);fflush(stdout); }}
 
 extern unsigned long index_mem;
 extern char* encodings[];
