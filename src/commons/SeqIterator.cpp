@@ -656,7 +656,6 @@ void SeqIterator::devideToCdsAndNonCds(const char *maskedSeq,
     for (size_t i = 0; i < cdsInfo.size(); i++) {
         size_t locNum = cdsInfo[i].loc.size();
         int currStartCodonPos = 0;
-        int extend = 0;
         for (size_t j = 0; j < locNum; j++) {
             // Extend 21 bases to both sides for k-mer from CDS boudaries
             size_t begin = cdsInfo[i].loc[j].first - 1;
@@ -666,7 +665,6 @@ void SeqIterator::devideToCdsAndNonCds(const char *maskedSeq,
                 while (k < 7 && begin >= 3) {
                     begin -= 3;
                     currStartCodonPos += 3;
-                    extend += 3;
                     k++;
                 }
             }
@@ -674,7 +672,6 @@ void SeqIterator::devideToCdsAndNonCds(const char *maskedSeq,
                 int k = 0;
                 while (k < 7 && end + 3 < seqLen) {
                     end += 3;
-                    extend += 3;
                     k++;
                 }
             }    

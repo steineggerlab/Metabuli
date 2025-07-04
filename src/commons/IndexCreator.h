@@ -54,6 +54,8 @@ struct Accession {
 
         if (order != a.order)
             return order < a.order;
+        
+        return false;
     }
 
     static bool compare(const Accession & a, const Accession & b) {

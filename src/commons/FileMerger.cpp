@@ -120,7 +120,8 @@ void FileMerger::mergeTargetFiles() {
         // cout << os * sizeOfSplit << endl;
     }
     offsetList[splitNum] = UINT64_MAX;
-    DiffIdxSplit splitList[splitNum] = {};
+    DiffIdxSplit splitList[splitNum];
+    memset(splitList, 0, sizeof(DiffIdxSplit) * splitNum);
     int splitListIdx = 1;
 
     // get the first k-mer to write
