@@ -62,7 +62,7 @@ gzFile fastq_open(const char* filename,const char *mode);
 static void fastq_close(gzFile fd);
 
 void fastq_print_version() {
-  fprintf(stderr,"fastq_utils %s\n",FASTQ_UTIL_VERSION);
+  fprintf(stdout,"fastq_utils %s\n",FASTQ_UTIL_VERSION);
 }
 
 
@@ -479,17 +479,17 @@ char* fastq_get_readname(FASTQ_FILE* fd, FASTQ_ENTRY* e,char* rn,unsigned long *
   if ( fd->readname_format == UNDEF ) {
       fd->is_casava_18=is_casava_1_8_readname(rn);
       if (fd->is_casava_18) {
-        fprintf(stderr,"CASAVA=1.8\n");
+        fprintf(stdout,"CASAVA=1.8\n");
         fd->readname_format=CASAVA18;
       } else {
 	int is_int_name=is_int_readname(rn);
 	if ( is_int_name ) {
-	  fprintf(stderr,"Read name provided as an integer\n");
+	  fprintf(stdout,"Read name provided as an integer\n");
 	  fd->readname_format=INTEGERNAME;
 	} else {
 	  int no_suffix=is_nosuffix_readname(rn);
 	  if ( no_suffix ) {
-	    fprintf(stderr,"Read name provided with no suffix\n");
+	    fprintf(stdout,"Read name provided with no suffix\n");
 	    fd->readname_format=NOP;
 	  } else 
 	    fd->readname_format=DEFAULT;
@@ -500,7 +500,7 @@ char* fastq_get_readname(FASTQ_FILE* fd, FASTQ_ENTRY* e,char* rn,unsigned long *
   if ( fd->space==UNDEFSPACE ) {
     fd->space=is_color_space(e->seq,fd);
     if ( fd->space==COLORSPACE ) {
-      fprintf(stderr,"Color space\n");
+      fprintf(stdout,"Color space\n");
     }
   }
   

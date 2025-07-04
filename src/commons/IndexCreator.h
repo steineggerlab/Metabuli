@@ -7,6 +7,7 @@
 #include <ctime>
 #include <fstream>
 #include <unordered_set>
+#include <atomic>
 #include "printBinary.h"
 #include "Mmap.h"
 #include "Kmer.h"
@@ -53,6 +54,8 @@ struct Accession {
 
         if (order != a.order)
             return order < a.order;
+        
+        return false;
     }
 
     static bool compare(const Accession & a, const Accession & b) {
@@ -153,7 +156,7 @@ protected:
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
 
     size_t fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
-                                bool *checker,
+                                std::vector<std::atomic<bool>> & batchChecker,
                                 size_t &processedSplitCnt,
                                 const LocalParameters &par);
 

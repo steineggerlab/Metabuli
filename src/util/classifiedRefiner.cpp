@@ -240,7 +240,7 @@ int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, co
                 }
 
                 // chunkCnt condition check
-                if (chunkCnt > 10 * omp_get_num_threads()) {
+                if (chunkCnt > (size_t) 10 * omp_get_num_threads()) {
                     #pragma omp taskwait 
 
                     for (const string &line : resultChunk) {

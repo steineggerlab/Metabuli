@@ -65,22 +65,57 @@ typedef long FASTQ_READ_OFFSET;
 #define min(a,b) (a<b?a:b)
 #define max(a,b) (a>b?a:b)
 
+// Print informational message
+#define PRINT_INFO(...) \
+  do { \
+    fprintf(stdout, "INFO: "); \
+    fprintf(stdout, __VA_ARGS__); \
+    fprintf(stdout, "\n"); \
+  } while (0)
 
-#define PRINT_INFO(s...) {fprintf(stderr,"INFO:"); fprintf(stderr,##s );fprintf(stderr,"\n");}
-#define PRINT_ERROR(s...) {fprintf(stderr,"\nERROR: "); fprintf(stderr,##s );fprintf(stderr,"\n");}
-#define FATAL_ERROR(e,s...) {fprintf(stderr,"\nERROR: "); fprintf(stderr,##s );fprintf(stderr,"\n");exit(e);}
+// Print error message
+#define PRINT_ERROR(...) \
+  do { \
+    fprintf(stdout, "\nERROR: "); \
+    fprintf(stdout, __VA_ARGS__); \
+    fprintf(stdout, "\n"); \
+  } while (0)
 
+// Print fatal error message and exit
+#define FATAL_ERROR(code, ...) \
+  do { \
+    fprintf(stdout, "\nERROR: "); \
+    fprintf(stdout, __VA_ARGS__); \
+    fprintf(stdout, "\n"); \
+    exit(code); \
+  } while (0)
+
+// Print debug message (only if DEBUG is defined)
 #ifdef DEBUG
-#define PRINT_DEBUG(s...) { fprintf(stderr,"DEBUG: "); fprintf(stderr,##s ); }
+#define PRINT_DEBUG(...) \
+  do { \
+    fprintf(stdout, "DEBUG: "); \
+    fprintf(stdout, __VA_ARGS__); \
+  } while (0)
 #else
-#define PRINT_DEBUG(s...) 
+#define PRINT_DEBUG(...) do {} while (0)
 #endif
+
+// #define PRINT_INFO(s...) {fprintf(stderr,"INFO:"); fprintf(stderr,##s );fprintf(stderr,"\n");}
+// #define PRINT_ERROR(s...) {fprintf(stderr,"\nERROR: "); fprintf(stderr,##s );fprintf(stderr,"\n");}
+// #define FATAL_ERROR(e,s...) {fprintf(stderr,"\nERROR: "); fprintf(stderr,##s );fprintf(stderr,"\n");exit(e);}
+
+// #ifdef DEBUG
+// #define PRINT_DEBUG(s...) { fprintf(stderr,"DEBUG: "); fprintf(stderr,##s ); }
+// #else
+// #define PRINT_DEBUG(s...) 
+// #endif
 
 #define PARAMS_ERROR_EXIT_STATUS 1
 #define SYS_INT_ERROR_EXIT_STATUS 2
 #define FASTQ_FORMAT_ERROR_EXIT_STATUS 3
 
-#define PRINT_READS_PROCESSED(c,n) { if (c%n==0) { fprintf(stderr,"\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b%lu",c);fflush(stderr); }}
+#define PRINT_READS_PROCESSED(c,n) { if (c%n==0) { fprintf(stdout,"\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b%lu",c);fflush(stdout); }}
 
 extern unsigned long index_mem;
 extern char* encodings[];

@@ -30,79 +30,63 @@ void KmerMatcher::loadTaxIdList(const LocalParameters & par) {
     if (par.contamList != "") {
         vector<string> contams = Util::split(par.contamList, ",");
         for (auto &contam : contams) {
-            FILE *taxIdFile;
-            cout << dbDir + "/" + contam + "/taxID_list" << endl;
-            if ((taxIdFile = fopen((dbDir + "/" + contam + "/taxID_list").c_str(), "r")) == NULL) {
+            string fileName = dbDir + "/" + contam + "/taxID_list";
+            if (!FileUtil::fileExists(fileName.c_str())) {
+                std::cout << "TaxID list file for " << contam << " does not exist." << std::endl;
+                continue;
+            }
+            std::ifstream in{fileName};
+            if (!in.is_open()) {
                 std::cout << "Cannot open the taxID list file." << std::endl;
                 return;
             }
-            char taxID[100];
-            while (feof(taxIdFile) == 0) {
-                fscanf(taxIdFile, "%s", taxID);
-                TaxID taxId = atol(taxID);
-                TaxonNode const *taxon = taxonomy->taxonNode(taxId);
-                if (taxId == taxon->taxId) {
-                    TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
-                    TaxID genusTaxID = taxonomy->getTaxIdAtRank(taxId, "genus");
-                    while (taxon->taxId != speciesTaxID) {
-                        taxId2speciesId[taxon->taxId] = speciesTaxID;
-                        taxId2genusId[taxon->taxId] = genusTaxID;
-                        taxon = taxonomy->taxonNode(taxon->parentTaxId);
-                    }
-                    taxId2speciesId[speciesTaxID] = speciesTaxID;
-                    taxId2genusId[speciesTaxID] = genusTaxID;
-                } else {
-                    TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
-                    TaxID genusTaxID = taxonomy->getTaxIdAtRank(taxId, "genus");
-                    while (taxon->taxId != speciesTaxID) {
-                        taxId2speciesId[taxon->taxId] = speciesTaxID;
-                        taxId2genusId[taxon->taxId] = genusTaxID;
-                        taxon = taxonomy->taxonNode(taxon->parentTaxId);
-                    }
-                    taxId2speciesId[speciesTaxID] = speciesTaxID;
-                    taxId2genusId[speciesTaxID] = genusTaxID;
+            std::string line;
+            while (std::getline(in, line)) {
+                if (line.empty()) continue;                   
+                TaxID taxId = static_cast<TaxID>(std::stoul(line));
+                TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
+                TaxID genusTaxID = taxonomy->getTaxIdAtRank(taxId, "genus");
+                const TaxonNode* taxon = taxonomy->taxonNode(taxId);            
+                if (taxId != taxon->taxId) {
                     taxId2speciesId[taxId] = speciesTaxID;
                     taxId2genusId[taxId] = genusTaxID;
                 }
+                while (taxon->taxId != speciesTaxID) {
+                    taxId2speciesId[taxon->taxId] = speciesTaxID;
+                    taxId2genusId[taxon->taxId] = genusTaxID;
+                    taxon = taxonomy->taxonNode(taxon->parentTaxId);
+                }
+                taxId2speciesId[speciesTaxID] = speciesTaxID;
+                taxId2genusId[speciesTaxID] = genusTaxID;
             }
-            fclose(taxIdFile);
+            in.close();
         }
     } else {
-        FILE *taxIdFile;
-        if ((taxIdFile = fopen((dbDir + "/taxID_list").c_str(), "r")) == NULL) {
+        std::ifstream in{dbDir + "/taxID_list"};
+        if (!in.is_open()) {
             std::cout << "Cannot open the taxID list file." << std::endl;
             return;
         }
-        char taxID[100];
-        while (feof(taxIdFile) == 0) {
-            fscanf(taxIdFile, "%s", taxID);
-            TaxID taxId = atol(taxID);
-            TaxonNode const *taxon = taxonomy->taxonNode(taxId);
-            if (taxId == taxon->taxId) {
-                TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
-                TaxID genusTaxID = taxonomy->getTaxIdAtRank(taxId, "genus");
-                while (taxon->taxId != speciesTaxID) {
-                  taxId2speciesId[taxon->taxId] = speciesTaxID;
-                  taxId2genusId[taxon->taxId] = genusTaxID;
-                  taxon = taxonomy->taxonNode(taxon->parentTaxId);
-                }
-                taxId2speciesId[speciesTaxID] = speciesTaxID;
-                taxId2genusId[speciesTaxID] = genusTaxID;
-            } else {
-                TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
-                TaxID genusTaxID = taxonomy->getTaxIdAtRank(taxId, "genus");
-                while (taxon->taxId != speciesTaxID) {
-                  taxId2speciesId[taxon->taxId] = speciesTaxID;
-                  taxId2genusId[taxon->taxId] = genusTaxID;
-                  taxon = taxonomy->taxonNode(taxon->parentTaxId);
-                }
-                taxId2speciesId[speciesTaxID] = speciesTaxID;
-                taxId2genusId[speciesTaxID] = genusTaxID;
+        std::string line;
+        while (std::getline(in, line)) {
+            if (line.empty()) continue;                   
+            TaxID taxId = static_cast<TaxID>(std::stoul(line));
+            TaxID speciesTaxID = taxonomy->getTaxIdAtRank(taxId, "species");
+            TaxID genusTaxID = taxonomy->getTaxIdAtRank(taxId, "genus");
+            const TaxonNode* taxon = taxonomy->taxonNode(taxId);            
+            if (taxId != taxon->taxId) {
                 taxId2speciesId[taxId] = speciesTaxID;
                 taxId2genusId[taxId] = genusTaxID;
             }
+            while (taxon->taxId != speciesTaxID) {
+                taxId2speciesId[taxon->taxId] = speciesTaxID;
+                taxId2genusId[taxon->taxId] = genusTaxID;
+                taxon = taxonomy->taxonNode(taxon->parentTaxId);
+            }
+            taxId2speciesId[speciesTaxID] = speciesTaxID;
+            taxId2genusId[speciesTaxID] = genusTaxID;
         }
-        fclose(taxIdFile);
+        in.close();
     }
     cout << "Done" << endl;
 }
@@ -185,8 +169,9 @@ bool KmerMatcher::matchKmers(QueryKmerBuffer * queryKmerBuffer,
     std::fill_n(splitCheckList, threads, false);
     time_t beforeSearch = time(nullptr);
     size_t totalOverFlowCnt = 0;
-    int redundancyStored = par.skipRedundancy == 0;
-    unsigned int mask = ~((static_cast<unsigned int>(par.skipRedundancy == 0) << 31));
+    int redundancyStored = (par.skipRedundancy == 0);
+    unsigned int mask = ~((static_cast<unsigned int>(redundancyStored) << 31));
+    // 
 #pragma omp parallel default(none), shared(splitCheckList, totalOverFlowCnt, \
 querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numOfDiffIdx, redundancyStored, targetInfoFileName)
 {
@@ -344,15 +329,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
             while (diffIdxPos != numOfDiffIdx &&
                    currentQueryAA == AMINO_ACID_PART(currentTargetKmer)) {
                 candidateTargetKmers.push_back(currentTargetKmer);
-                if (redundancyStored) {
-                    candidateKmerInfos.push_back(getKmerInfo<TaxID>(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx)& mask);
-                } else {
-                    candidateKmerInfos.push_back(getKmerInfo<TaxID>(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx));
-                }
-                // candidateKmerInfos.push_back(getKmerInfo<TaxID>(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx) & mask);
-                if (candidateKmerInfos.back() < 0) {
-                    cout << candidateKmerInfos.back() << endl;
-                }
+                candidateKmerInfos.push_back(getKmerInfo<TaxID>(BufferSize, kmerInfoFp, kmerInfoBuffer, kmerInfoBufferIdx) & mask);
                 if (unlikely(BufferSize < diffIdxBufferIdx + 7)){
                     loadBuffer(diffIdxFp, diffIdxBuffer, diffIdxBufferIdx, BufferSize, ((int)(BufferSize - diffIdxBufferIdx)) * -1 );
                 }
