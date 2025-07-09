@@ -250,6 +250,13 @@ LocalParameters::LocalParameters() :
                     typeid(bool),
                     (void *) &assembly,
                     ""),
+        ONLY_AA(ONLY_AA_ID,
+                    "--only-aa",
+                    "Use AA 12mer",
+                    "Use AA 12mer",
+                    typeid(bool),
+                    (void *) &onlyAA,
+                    ""),
         SPLIT_NUM(SPLIT_NUM_ID,
                   "--split-num",
                   "A database is divided to N splits (offsets). During classification, unnecessary splits are skipped",
@@ -448,6 +455,7 @@ LocalParameters::LocalParameters() :
     voteMode = 2;
     majorityThr = 0.4;
     groupScoreThr=0.15;
+    onlyAA = false;
 
     // Database creation
     tinfoPath = "";
@@ -530,6 +538,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&SMER_LEN);
     classify.push_back(&PRINT_LOG);
     classify.push_back(&MAX_SHIFT);
+    classify.push_back(&ONLY_AA);
 
 
     // extract
@@ -548,6 +557,7 @@ LocalParameters::LocalParameters() :
     groupGeneration.push_back(&GROUP_SCORE_THR);
     groupGeneration.push_back(&VOTE_MODE);
     groupGeneration.push_back(&MAJORITY_THR);
+    groupGeneration.push_back(&ONLY_AA);
 
     
     groupGeneration.push_back(&MIN_SCORE);
@@ -584,6 +594,7 @@ LocalParameters::LocalParameters() :
     filter.push_back(&PRINT_MODE);
     filter.push_back(&CONTAM_LIST);
     filter.push_back(&ACCESSION_LEVEL);
+    filter.push_back(&ONLY_AA);
     
     //updateTargetDB
     exclusiontest_hiv.push_back(&TEST_RANK);

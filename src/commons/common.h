@@ -12,8 +12,8 @@
 
 #define likely(x) __builtin_expect((x),1)
 #define unlikely(x) __builtin_expect((x),0)
-//#define kmerLength 8
-#define kmerLength 12
+#define kmerLength 8
+#define kmerLengthAA 12
 #define AA(kmer) ((kmer) & ~16777215)
 
 struct KmerCnt {

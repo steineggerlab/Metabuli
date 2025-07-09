@@ -27,8 +27,8 @@
 
 KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
 
-//#define kmerLength 8
-#define kmerLength 12
+#define kmerLength 8
+#define kmerLengthAA 12
 
 #define nuc2int(x) (x & 14u)>>1u
 
@@ -38,7 +38,8 @@ class SeqIterator {
 private:
     // vector<int> aaFrames[6];
     // uint64_t powers[10];
-    uint64_t powers[kmerLength + 2];
+    uint32_t kmerLen;
+    uint64_t* powers;
     int nuc2aa[8][8][8];
     uint64_t nuc2num[4][4][4];
     uint32_t * mask;
@@ -48,6 +49,7 @@ private:
     int bitsForCodon;
     int bitsFor8Codons;
     int smerLen;
+    bool onlyAA;
 
     void addDNAInfo_QueryKmer(uint64_t &kmer, const char *seq, int forOrRev, uint32_t kmerCnt, uint32_t frame,
                               int readLength);
@@ -98,7 +100,7 @@ public:
     bool
     compareMinHashList(priority_queue<uint64_t> list1, priority_queue<uint64_t> &list2, size_t length1, size_t length2);
 
-    static size_t kmerNumOfSixFrameTranslation(const char *seq);
+    size_t kmerNumOfSixFrameTranslation(const char *seq);
 
     size_t getNumOfKmerForBlock(const PredictedBlock &block);
 

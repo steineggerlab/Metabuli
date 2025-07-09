@@ -29,6 +29,7 @@ void setGroupGenerationDefaults(LocalParameters & par){
     par.groupScoreThr = 0.0;
     par.voteMode = 0;
     par.majorityThr = 0.5;
+    par.onlyAA = false;
 }
 
 int groupGeneration(int argc, const char **argv, const Command& command)
