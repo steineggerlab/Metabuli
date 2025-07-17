@@ -15,6 +15,29 @@
 #define kmerLength 8
 #define AA(kmer) ((kmer) & ~16777215)
 
+extern const std::string atcg;
+extern const std::string iRCT;
+
+struct Assembly {
+    std::string name;
+    TaxID taxid;
+    TaxID speciesId;
+    TaxID genusId;
+    TaxID familyId;
+    TaxID orderId;
+    Assembly(std::string name) : name(name) {}
+    Assembly() : name(""), taxid(0), speciesId(0), genusId(0), familyId(0), orderId(0) {}
+    
+
+    void print () const {
+        std::cout << "Assembly: " << name << ", TaxID: " << taxid
+                  << ", SpeciesID: " << speciesId
+                  << ", GenusID: " << genusId
+                  << ", FamilyID: " << familyId
+                  << ", OrderID: " << orderId << std::endl;
+    }
+};
+
 struct KmerCnt {
     KmerCnt(size_t length, size_t kmerCnt, size_t totalCnt) : length(length), kmerCnt(kmerCnt), totalCnt(totalCnt) {}
     KmerCnt() : length(0), kmerCnt(0), totalCnt(0){}
@@ -32,27 +55,18 @@ struct CDSinfo{
     CDSinfo(uint32_t protId, int frame) : protId(protId), frame(frame) {}
 };
 
-struct SequenceBlock{
-    SequenceBlock(size_t start, size_t end, size_t length, size_t seqLength = 0)
-            : start(start), end(end), length(length), seqLength(seqLength) {}
-    SequenceBlock() : start(0), end(0), length(0), seqLength(0) { }
-    size_t start;
-    size_t end;
-    size_t length;
-    size_t seqLength;
-};
 
-typedef struct PredictedBlock {
-    PredictedBlock(int start, int end, int strand) : start(start), end(end), strand(strand) {}
+struct SequenceBlock {
+    SequenceBlock(int start, int end, int strand) : start(start), end(end), strand(strand) {}
 
-    void printPredictedBlock() {
+    void printSequenceBlock() {
         std::cout << strand << " " << start << " " << end << std::endl;
     }
 
     int start;
     int end;
     int strand; //true for forward
-} PredictedBlock;
+};
 
 struct Query{
     int queryId;
@@ -90,7 +104,7 @@ struct Buffer {
     size_t bufferSize;
 
     explicit Buffer(size_t sizeOfBuffer=100) {
-        buffer = (T *) malloc(sizeof(T) * sizeOfBuffer);
+        buffer = (T *) calloc(sizeOfBuffer, sizeof(T));
         bufferSize = sizeOfBuffer;
         startIndexOfReserve = 0;
     };

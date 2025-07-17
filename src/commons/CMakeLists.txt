@@ -5,7 +5,6 @@ set(commons_source_files
 	 	commons/IndexCreator.cpp
         commons/IndexCreator.h
         commons/Kmer.h
-        commons/KmerBuffer.h
         commons/SeqIterator.cpp
         commons/SeqIterator.h
         commons/Mmap.h
@@ -37,4 +36,7 @@ set(commons_source_files
 		commons/Reporter.cpp
 		commons/TaxonomyWrapper.h
 		commons/TaxonomyWrapper.cpp
+		commons/SyncmerScanner.h
+		commons/GeneticCode.h
+		commons/KmerScanner.h
         PARENT_SCOPE)

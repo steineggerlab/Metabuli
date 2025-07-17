@@ -19,6 +19,7 @@ private:
     std::vector<std::string> contams;
 
     // Agents
+    GeneticCode * geneticCode;
     QueryIndexer * queryIndexer;
     KmerExtractor * kmerExtractor;
     KmerMatcher * kmerMatcher;

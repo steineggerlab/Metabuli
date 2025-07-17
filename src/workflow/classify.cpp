@@ -8,19 +8,19 @@
 #include "validateDatabase.h"
 
 void setClassifyDefaults(LocalParameters & par){
+    par.syncmer = 0;
+    par.smerLen = 6;
+    // par.maxShift = 1;
     par.skipRedundancy = 0;
     par.reducedAA = 0;
     par.validateInput = 0;
     par.validateDb = 0;
-    // par.spaceMask = "11111111";
     par.seqMode = 2;    
     par.minScore = 0;
-    par.minCoverage = 0;
     par.minSpScore = 0;
     par.hammingMargin = 0;
     par.verbosity = 3;
     par.ramUsage = 128;
-    par.minCoveredPos = 4;
     par.printLog = 0;
     par.maxGap = 0;
     par.taxonomyPath = "" ;
@@ -38,6 +38,7 @@ int classify(int argc, const char **argv, const Command& command) {
     LocalParameters & par = LocalParameters::getLocalInstance();
     setClassifyDefaults(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
+    
     string dbDir;
     if (par.seqMode == 2) {
         dbDir = par.filenames[2];

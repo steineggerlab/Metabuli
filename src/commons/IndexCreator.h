@@ -8,13 +8,16 @@
 #include <fstream>
 #include <unordered_set>
 #include <atomic>
+#ifdef OPENMP
+    #include <omp.h>
+#endif
 #include "printBinary.h"
 #include "Mmap.h"
 #include "Kmer.h"
 #include "SeqIterator.h"
+#include "TaxonomyWrapper.h"
 #include "BitManipulateMacros.h"
 #include "common.h"
-#include "NcbiTaxonomy.h"
 #include "FastSort.h"
 #include "LocalParameters.h"
 #include "NucleotideMatrix.h"
@@ -24,11 +27,10 @@
 #include <cstdint>
 #include "TaxonomyWrapper.h"
 #include "fasta_validate.h"
+#include "GeneticCode.h"
 
-#include <omp.h>
-// #ifdef OPENMP
-// #include <omp.h>
-// #endif
+
+
 
 struct Accession {
     Accession() = default;
@@ -77,19 +79,20 @@ struct AccessionBatch {
     TaxID speciesID;
     uint32_t trainingSeqFasta;
     uint32_t trainingSeqIdx;
+    uint64_t totalLength;
     vector<uint32_t> orders;
     vector<TaxID> taxIDs;
     vector<uint32_t> lengths;
 
-    void print() {
+    void print() const {
         std::cout << "whichFasta: " << whichFasta << " speciesID: " << speciesID << " trainingSeqFasta: " << trainingSeqFasta << " trainingSeqIdx: " << trainingSeqIdx << endl;
         for (size_t i = 0; i < orders.size(); ++i) {
             std::cout << "order: " << orders[i] << " taxID: " << taxIDs[i] << " length: " << lengths[i] << endl;
         }
     }
 
-    AccessionBatch(uint32_t whichFasta, TaxID speciesID, uint32_t trainingSeqFasta, uint32_t trainingSeqIdx)
-        : whichFasta(whichFasta), speciesID(speciesID), trainingSeqFasta(trainingSeqFasta), trainingSeqIdx(trainingSeqIdx) {}
+    AccessionBatch(uint32_t whichFasta, TaxID speciesID, uint32_t trainingSeqFasta, uint32_t trainingSeqIdx, uint64_t totalLength) 
+        : whichFasta(whichFasta), speciesID(speciesID), trainingSeqFasta(trainingSeqFasta), trainingSeqIdx(trainingSeqIdx), totalLength(totalLength) {}
 };
 
 using namespace std;
@@ -99,11 +102,13 @@ protected:
     // Parameters
     const LocalParameters & par;
     bool isUpdating;
+    bool isNewFormat;
 
     uint64_t MARKER;
     BaseMatrix *subMat;
 
     // Inputs
+    GeneticCode * geneticCode;
     TaxonomyWrapper * taxonomy;
     bool externTaxonomy;
     // NcbiTaxonomy * taxonomy;
@@ -133,10 +138,11 @@ protected:
         }
     };
 
-    void writeTargetFiles(TargetKmer * kmerBuffer,
-                          size_t & kmerNum,
-                          const size_t * uniqeKmerIdx,
-                          const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
+    void writeTargetFiles(
+        TargetKmer * kmerBuffer,
+        size_t & kmerNum,
+        const size_t * uniqeKmerIdx,
+        const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
     void writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
                                    size_t & kmerNum,
@@ -144,7 +150,14 @@ protected:
                                    size_t & uniqKmerCnt, 
                                    const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
-    void writeDiffIdx(uint16_t *buffer,
+    void writeTargetFilesAndSplits_oldFormat(
+        TargetKmer * kmerBuffer,
+        size_t & kmerNum,
+        const size_t * uniqeKmerIdx, 
+        size_t & uniqKmerCnt, 
+        const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
+
+    static void writeDiffIdx(uint16_t *buffer,
                       size_t bufferSize,
                       FILE* handleKmerTable,
                       uint16_t *toWrite,
@@ -155,7 +168,7 @@ protected:
 
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
 
-    size_t fillTargetKmerBuffer(TargetKmerBuffer &kmerBuffer,
+    size_t fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,                 
                                 std::vector<std::atomic<bool>> & batchChecker,
                                 size_t &processedSplitCnt,
                                 const LocalParameters &par);
@@ -182,7 +195,7 @@ protected:
 
     void editTaxonomyDumpFiles(const vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid);
 
-    void reduceRedundancy(TargetKmerBuffer & kmerBuffer,
+    void reduceRedundancy(Buffer<TargetKmer> & kmerBuffer,
                           size_t * uniqeKmerIdx,
                           size_t & uniqKmerCnt,
                           vector<pair<size_t, size_t>> & uniqKmerIdxRanges,
@@ -247,6 +260,7 @@ public:
     }
 
     void setIsUpdating(bool isUpdating) { this->isUpdating = isUpdating; }
+    void setIsNewFormat(bool isNewFormat) { this->isNewFormat = isNewFormat; }
 
     void createIndex(const LocalParameters & par);
 
@@ -256,6 +270,21 @@ public:
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
                     uint16_t *kmerBuf, size_t bufferSize, size_t & localBufIdx, size_t & totalBufferIdx);
 
+    static void getDeltaIdx(const Metamer & previousMetamer,
+                     const Metamer & currentMetamer,
+                     FILE* handleKmerTable,
+                     uint16_t * deltaIndexBuffer,
+                     size_t bufferSize,
+                     size_t & localBufIdx,
+                     size_t & totalBufferIdx);
+
+    static void getDeltaIdx(const Metamer & previousMetamer,
+                     const Metamer & currentMetamer,
+                     FILE* handleKmerTable,
+                     uint16_t * deltaIndexBuffer,
+                     size_t bufferSize,
+                     size_t & localBufIdx);
+
     void writeInfo(TaxID * entryToWrite, FILE * infoFile, TaxID * infoBuffer, size_t bufferSize, size_t & infoBufferIdx);
 
     unordered_set<TaxID> getTaxIdSet() { return taxIdSet; }
@@ -263,5 +292,7 @@ public:
     static void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
 
     static void flushInfoBuf(TaxID * buffer, FILE * infoFile, size_t & localBufIdx );
+
+    static bool compareMetamerID(const Metamer & a, const Metamer & b);
 };
 #endif //ADKMER4_INDEXCREATOR_H

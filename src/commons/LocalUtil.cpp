@@ -19,22 +19,6 @@ std::string LocalUtil::getQueryBaseName(const std::string & queryPath) {
     return baseName;
 }
 
-
-void LocalUtil::splitQueryFile(std::vector<SequenceBlock> & sequences, const std::string &queryPath) {
-    KSeqWrapper* kseq = nullptr;
-    kseq = KSeqFactory(queryPath.c_str());
-    while (kseq->ReadEntry()) {
-        const KSeqWrapper::KSeqEntry & e = kseq->entry;
-        sequences.emplace_back(e.headerOffset - 1,
-                               e.sequenceOffset + e.sequence.l,
-                               e.sequenceOffset + e.sequence.l - e.headerOffset + 2,
-                               e.sequence.l);
-    }
-    delete kseq;
-}
-
-
-
 int LocalUtil::getFirstWhiteSpacePos(const std::string &str) {
     for (size_t i = 0; i < str.size(); ++i) {
         if (isspace(int(str[i]))) {

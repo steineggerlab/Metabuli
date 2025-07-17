@@ -15,8 +15,9 @@ QueryFilter::QueryFilter(LocalParameters & par) {
     taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
  
     // Agents
+    geneticCode = new GeneticCode(par.reducedAA == 1);
     queryIndexer = new QueryIndexer(par);
-    kmerExtractor = new KmerExtractor(par);
+    kmerExtractor = new KmerExtractor(par, *geneticCode);
     if (par.reducedAA) { kmerMatcher = new ReducedKmerMatcher(par, taxonomy);} 
     else { kmerMatcher = new KmerMatcher(par, taxonomy);}
     taxonomer = new Taxonomer(par, taxonomy);
@@ -125,7 +126,7 @@ void QueryFilter::filterReads(LocalParameters & par) {
 
     isFiltered = new bool[queryIndexer->getReadNum_1()];
     memset(isFiltered, 0, sizeof(bool) * queryIndexer->getReadNum_1());
-    QueryKmerBuffer kmerBuffer;
+    Buffer<QueryKmer> kmerBuffer;
     Buffer<Match> matchBuffer;
     vector<Query> queryList;
 

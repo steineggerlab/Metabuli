@@ -10,7 +10,18 @@
 #include "sys/mman.h"
 #include <fcntl.h>
 
+const std::string atcg =
+    "................................................................"
+    ".AGCG..GT..G.CN...ACTG.A.T.......agcg..gt..g.cn...actg.a.t......"
+    "................................................................"
+    "................................................................";
 
+const std::string iRCT =
+    "................................................................"
+    ".TVGH..CD..M.KN...YSAABW.R.......tvgh..cd..m.kn...ysaabw.r......"
+    "................................................................"
+    "................................................................";
+    
 void process_mem_usage(double &vm_usage, double &resident_set) {
   vm_usage = 0.0;
   resident_set = 0.0;
@@ -101,6 +112,14 @@ int loadDbParameters(LocalParameters &par, const std::string & dbDir) {
           if (tokens[1] == "1") {
             par.skipRedundancy = 1;
           }
+        } else if (tokens[0] == "Syncmer") {
+          if (tokens[1] == "1" && par.syncmer == 0) {
+            cout << "Syncmer is enabled because the DB was created with syncmer." << endl;
+            par.syncmer = 1;
+          }     
+        } else if (tokens[0] == "S-mer_len") {
+          cout << "Syncmer length is set to " << tokens[1] << " following DB's configuration." << endl;
+          par.smerLen = stoi(tokens[1]);
         }
       }
       return 1;

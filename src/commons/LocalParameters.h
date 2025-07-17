@@ -44,7 +44,7 @@ public:
     std::vector<MMseqsParameter*> createnewtaxalist;
     std::vector<MMseqsParameter*> classifiedRefiner;
     std::vector<MMseqsParameter*> validateDatabase;
-    
+    std::vector<MMseqsParameter*> makeBenchmarkSet;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
@@ -54,13 +54,13 @@ public:
     // DB and classify
     PARAMETER(SKIP_REDUNDANCY)
     PARAMETER(VALIDATE_DB)
+    PARAMETER(SYNCMER)
+    PARAMETER(SMER_LEN)
 
     // Classify
     PARAMETER(SEQ_MODE)
     PARAMETER(REDUCED_AA)
     PARAMETER(MIN_SCORE)
-    PARAMETER(MIN_COVERAGE)
-    PARAMETER(MIN_COVERED_POS)
     PARAMETER(HAMMING_MARGIN)
     PARAMETER(MIN_SP_SCORE)
     PARAMETER(TINFO_PATH)
@@ -73,6 +73,7 @@ public:
     PARAMETER(MIN_SS_MATCH)
     PARAMETER(TIE_RATIO)
     PARAMETER(PRINT_LINEAGE)
+    PARAMETER(MAX_SHIFT)
 
     // extract
     PARAMETER(TARGET_TAX_ID)
@@ -128,8 +129,9 @@ public:
     PARAMETER(RANK)
     PARAMETER(HIGHER_RANK_FILE)
 
-
-
+    // benchmark set
+    PARAMETER(RANDOM_SEED)
+    PARAMETER(ASSACC2TAXID)
 
     // Superkingdom taxonomy id
     int virusTaxId;
@@ -139,6 +141,8 @@ public:
     // DB and classify
     int skipRedundancy;
     int validateDb;
+    int syncmer;
+    int smerLen;
 
     // Classify
     int seqMode;
@@ -148,9 +152,7 @@ public:
     int minConsCnt;
     uint8_t hammingMargin;
     float minSpScore;
-    float minCoverage;
     int ramUsage;
-    int minCoveredPos;
     int printLog;
     int maxGap;
     int minConsCntEuk;
@@ -158,6 +160,7 @@ public:
     int minSSMatch;
     float tieRatio;
     int printLineage;
+    int maxShift;
 
     // Extract
     int targetTaxId;
@@ -206,7 +209,6 @@ public:
     size_t kmerBegin;
     size_t kmerEnd;
 
-    // classified2full
     bool removeUnclassified;
     std::string excludeTaxid;
     std::string selectTaxid;
@@ -215,6 +217,9 @@ public:
     std::string rank;
     int higherRankFile;
    
+    // benchmark set
+    int randomSeed;
+    std::string assacc2taxid;
 
     void printParameters(const std::string &module, int argc,
                          const char* pargv[],

@@ -2,13 +2,14 @@
 #define METABULI_KMERMATCHER_H
 #include "BitManipulateMacros.h"
 #include "FileUtil.h"
-#include "KmerBuffer.h"
 #include "LocalParameters.h"
 #include "Match.h"
 #include "Mmap.h"
 #include "TaxonomyWrapper.h"
 #include "common.h"
 #include "unordered_map"
+#include "GeneticCode.h"
+
 #include <string>
 #include <vector>
 #include <unistd.h>
@@ -16,7 +17,7 @@
 
 #define BufferSize 16'777'216 // 16 * 1024 * 1024 // 16 M
 
-#define AMINO_ACID_PART(kmer) ((kmer) & MARKER)
+#define AMINO_ACID_PART(kmer) ((kmer) & DNA_MASK)
 
 // Input
 // 1. Query K-mers
@@ -31,11 +32,15 @@ class KmerMatcher {
 protected:
   const LocalParameters &par;
   TaxonomyWrapper *taxonomy;
+  GeneticCode *geneticCode;
+  
   size_t threads;
   std::string dbDir;
   //   string targetDiffIdxFileName, targetInfoFileName, diffIdxSplitFileName;
   //   MmapedData<DiffIdxSplit> diffIdxSplits;
-  uint64_t MARKER;
+  uint64_t DNA_MASK; // ignore DNA encoding
+  uint64_t AA_MASK;  // ignore AA encoding
+  // uint64_t MARKER;
   int bitsForCodon = 3;
   uint8_t hammingMargin;
   size_t totalMatchCnt;
@@ -63,7 +68,18 @@ protected:
                                // search begins.
   };
 
-  inline size_t AminoAcidPart(size_t kmer) const { return (kmer)&MARKER; }
+  struct QueryKmerSplit2 {
+    QueryKmerSplit2(size_t start, size_t end, size_t length,
+                   const DeltaIdxOffset &deltaIdxOffset)
+        : start(start), end(end), length(length), deltaIdxOffset(deltaIdxOffset) {}
+    size_t start; // start idx in query k-mer list
+    size_t end;   // end idx in query k-mer list
+    size_t length;
+    DeltaIdxOffset deltaIdxOffset; // index in target k-mer list from where the
+                               // search begins.
+  };
+
+  inline size_t AminoAcidPart(size_t kmer) const { return (kmer)&DNA_MASK; }
 
 
 template <typename T>
@@ -121,17 +137,6 @@ static void loadBuffer2(int fd, T *buffer, size_t &bufferIdx, size_t size, off_t
                   size_t & selectedMatchIdx,
                   uint8_t frame);
 
-  void compareDna2(uint64_t query,
-                  const uint64_t * targetKmersToCompare,
-                  size_t candidateCnt,
-                  std::vector<uint8_t> & hammingDists,
-                  std::vector<size_t> &selectedMatches,
-                  std::vector<uint8_t> &selectedHammingSum,
-                  std::vector<uint16_t> &rightEndHammings,
-                  std::vector<uint32_t> &selectedDnaEncodings,
-                  size_t & selectedMatchIdx,
-                  uint8_t frame);
-
   virtual uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2);
 
   virtual uint16_t getHammings(uint64_t kmer1, uint64_t kmer2);
@@ -171,24 +176,31 @@ public:
 
   virtual ~KmerMatcher();
   
-  bool matchKmers(QueryKmerBuffer *queryKmerBuffer,
+  bool matchKmers(Buffer<QueryKmer> *queryKmerBuffer,
                   Buffer<Match> *matchBuffer,
                   const string &db = string());
 
-  // bool matchKmers2(QueryKmerBuffer *queryKmerBuffer,
-  //                 Buffer<Match> *matchBuffer,
-  //                 const string &db = string());
-  
-
-  bool matchKmers_skipDecoding(QueryKmerBuffer *queryKmerBuffer,
-                               Buffer<Match> *matchBuffer,
-                               const string &db = string());
+  bool matchMetamers(Buffer<QueryKmer> *queryKmerBuffer,
+                     Buffer<Match> *matchBuffer,
+                     const string &db = string());
 
   void sortMatches(Buffer<Match> *matchBuffer);
 
   static uint64_t getNextTargetKmer(uint64_t lookingTarget,
                                     const uint16_t *diffIdxBuffer,
                                     size_t &diffBufferIdx, size_t &totalPos);
+
+  static uint64_t getNextTargetKmer(uint64_t lookingTarget,
+                                    uint16_t *&diffIdxBuffer,
+                                    size_t &totalPos);
+
+  static uint64_t getFirstTargetKmer(uint64_t lookingTarget,
+                                     uint16_t *&diffIdxBuffer,
+                                     size_t &totalPos);
+
+  static Metamer getNextTargetKmer(const Metamer & lookingTarget,
+                                   const uint16_t *diffIdxBuffer,
+                                   size_t &diffBufferIdx, size_t &totalPos);
 
 
   // Getters
@@ -212,6 +224,69 @@ inline uint64_t KmerMatcher::getNextTargetKmer(uint64_t lookingTarget,
   return diffIn64bit + lookingTarget;
 }
 
+inline uint64_t KmerMatcher::getNextTargetKmer(
+  uint64_t lookingTarget,
+  uint16_t *&diffIdxBuffer,
+  size_t &totalPos) 
+{
+  // uint64_t diffIn64bit = 0;
+  // uint16_t fragment = *diffIdxBuffer++;
+  // totalPos++;
+  // while (!(fragment & 0x8000)) { // 27 %
+  //   diffIn64bit = (diffIn64bit << 15) | fragment;
+  //   fragment = *diffIdxBuffer++;
+  //   totalPos++;
+  // }
+  // diffIn64bit |= (fragment & 0x7FFF);
+  // return diffIn64bit + lookingTarget;
+
+
+  uint64_t diffIn64bit = 0;
+  while ((*diffIdxBuffer & 0x8000) == 0) { // 27 %
+    diffIn64bit = (diffIn64bit << 15) | *diffIdxBuffer;
+    ++diffIdxBuffer;
+    ++totalPos;
+  }
+  diffIn64bit = (diffIn64bit << 15) | (*diffIdxBuffer & 0x7FFF);
+  // diffIn64bit |= (*diffIdxBuffer & 0x7FFF);
+  ++totalPos;
+  ++diffIdxBuffer;
+  return diffIn64bit + lookingTarget;
+}
+
+inline uint64_t KmerMatcher::getFirstTargetKmer(
+  uint64_t lookingTarget,
+  uint16_t *&diffIdxBuffer,
+  size_t &totalPos)
+{
+  uint64_t diffIn64bit = 0;
+  while (!(*diffIdxBuffer & 0x8000)) { // 27 %
+    diffIn64bit = (diffIn64bit << 15) | *diffIdxBuffer;
+    ++diffIdxBuffer;
+    ++totalPos;
+  }
+  diffIn64bit = (diffIn64bit << 15) | (*diffIdxBuffer & 0x7FFF);
+  // diffIn64bit  (*diffIdxBuffer & 0x7FFF);
+  return diffIn64bit + lookingTarget;
+}
+
+inline Metamer KmerMatcher::getNextTargetKmer(const Metamer & lookingTarget,
+                                              const uint16_t *diffIdxBuffer,
+                                              size_t &diffBufferIdx,
+                                              size_t &totalPos) {
+  bitset<96> diffIn96bit;
+  uint16_t fragment = diffIdxBuffer[diffBufferIdx++];
+  totalPos++;
+  while (!(fragment & 0x8000)) { // 27 %
+    diffIn96bit |= fragment;
+    diffIn96bit <<= 15u;
+    fragment = diffIdxBuffer[diffBufferIdx++];
+    totalPos++;
+  }
+  diffIn96bit |= (fragment & 0x7FFF);
+  return lookingTarget.add(diffIn96bit);
+}
+
 inline uint8_t KmerMatcher::getHammingDistanceSum(uint64_t kmer1,
                                                   uint64_t kmer2) { // 12345678
   uint8_t hammingSum = 0;
@@ -227,7 +302,7 @@ inline uint8_t KmerMatcher::getHammingDistanceSum(uint64_t kmer1,
 }
 
 inline uint16_t KmerMatcher::getHammings(uint64_t kmer1,
-                                         uint64_t kmer2) { // hammings 87654321
+                                         uint64_t kmer2) {
   uint16_t hammings = 0;
   for (int i = 0; i < 8; i++) {
     hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U * i);
@@ -239,7 +314,7 @@ inline uint16_t KmerMatcher::getHammings(uint64_t kmer1,
 
 inline uint16_t
 KmerMatcher::getHammings_reverse(uint64_t kmer1,
-                                 uint64_t kmer2) { // hammings 87654321
+                                 uint64_t kmer2) {
   uint16_t hammings = 0;
   for (int i = 0; i < 8; i++) {
     hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)]

@@ -4,26 +4,29 @@
 #include "common.h"
 
 Classifier::Classifier(LocalParameters & par) {
-    // Load parameters
     dbDir = par.filenames[1 + (par.seqMode == 2)];
+    if(FileUtil::fileExists(string(dbDir + "/diffIdx").c_str())) {
+        isNewDB = false;
+    } else {
+        isNewDB = true; 
+    }
+
     matchPerKmer = par.matchPerKmer;
     loadDbParameters(par, par.filenames[1 + (par.seqMode == 2)]);
 
     cout << "DB name: " << par.dbName << endl;
     cout << "DB creation date: " << par.dbDate << endl;
     
-    // Taxonomy
     taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
 
-    // Agents
+    geneticCode = new GeneticCode(par.reducedAA == 1);
     queryIndexer = new QueryIndexer(par);
-    kmerExtractor = new KmerExtractor(par);
+    kmerExtractor = new KmerExtractor(par, *geneticCode);
     if (par.reducedAA) {
         kmerMatcher = new ReducedKmerMatcher(par, taxonomy);
     } else {
         kmerMatcher = new KmerMatcher(par, taxonomy);
     }
-    // taxonomer = new Taxonomer(par, taxonomy);
     reporter = new Reporter(par, taxonomy);
 }
 
@@ -32,12 +35,11 @@ Classifier::~Classifier() {
     delete queryIndexer;
     delete kmerExtractor;
     delete kmerMatcher;
-    // delete taxonomer;
     delete reporter;
 }
 
 void Classifier::startClassify(const LocalParameters &par) {
-    QueryKmerBuffer queryKmerBuffer;
+    Buffer<QueryKmer> queryKmerBuffer;
     Buffer<Match> matchBuffer;
     vector<Query> queryList;
     size_t numOfTatalQueryKmerCnt = 0;
@@ -85,6 +87,7 @@ void Classifier::startClassify(const LocalParameters &par) {
 
             // Allocate memory for query k-mer buffer
             queryKmerBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt);
+            memset(queryKmerBuffer.buffer, 0, queryReadSplit[splitIdx].kmerCnt * sizeof(QueryKmer));
 
             // Allocate memory for match buffer
             if (queryReadSplit.size() == 1) {
@@ -109,22 +112,23 @@ void Classifier::startClassify(const LocalParameters &par) {
                                              kseq2); // sync kseq1 and kseq2
             
             // Search matches between query and target k-mers
-            if (kmerMatcher->matchKmers(&queryKmerBuffer, &matchBuffer)) {
+            bool searchComplete = false;
+            if (isNewDB) {
+                searchComplete = kmerMatcher->matchMetamers(&queryKmerBuffer, &matchBuffer);
+            } else {
+                cout << "here" << endl;
+                searchComplete = kmerMatcher->matchKmers(&queryKmerBuffer, &matchBuffer);
+            }
+
+            if (searchComplete) {
+                cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
                 kmerMatcher->sortMatches(&matchBuffer);
-                
-                // Classify queries based on the matches.
                 assignTaxonomy(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
-
-                // Write classification results
                 reporter->writeReadClassification(queryList);
-
-                // Print progress
                 processedReadCnt += queryReadSplit[splitIdx].readCnt;
                 cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
-
                 numOfTatalQueryKmerCnt += queryKmerBuffer.startIndexOfReserve;
             } else { // search was incomplete
-                // increase matchPerKmer and try again 
                 matchPerKmer += 4;
                 cout << "--match-per-kmer was increased to " << matchPerKmer << " and searching again..." << endl;
                 break;
@@ -143,11 +147,7 @@ void Classifier::startClassify(const LocalParameters &par) {
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
     cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
     reporter->closeReadClassificationFile();
-
-    // Write report files
     reporter->writeReportFile(totalSeqCnt, taxCounts);
-
-    // Memory deallocation
     free(matchBuffer.buffer);
 }
 
@@ -157,7 +157,6 @@ void Classifier::assignTaxonomy(const Match *matchList,
                                const LocalParameters &par) {
     time_t beforeAnalyze = time(nullptr);
     cout << "Analyzing matches ..." << endl;
-
     // Divide matches into blocks for multi threading
     size_t seqNum = queryList.size();
     MatchBlock *matchBlocks = new MatchBlock[seqNum];
@@ -176,9 +175,9 @@ void Classifier::assignTaxonomy(const Match *matchList,
 #pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqNum, queryList, blockIdx, par)
     {
         Taxonomer taxonomer(par, taxonomy);
-#pragma omp for schedule(dynamic, 1)
+        #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < blockIdx; ++i) {
-            taxonomer.chooseBestTaxon(matchBlocks[i].id,
+            taxonomer.chooseBestTaxon(matchBlocks[i].id - 1,
                             matchBlocks[i].start,
                             matchBlocks[i].end,
                             matchList,

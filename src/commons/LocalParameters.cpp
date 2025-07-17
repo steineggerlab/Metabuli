@@ -46,6 +46,20 @@ LocalParameters::LocalParameters() :
                      typeid(int),
                      (void *) &validateDb,
                      "[0-1]"),
+        SYNCMER(SYNCMER_ID,
+                "--syncmer",
+                "Using syncmer (k = 8, s = 6)",
+                "Using syncmer (k = 8, s = 6)",
+                typeid(int),
+                (void *) &syncmer,
+                "[0-1]"),
+        SMER_LEN(SMER_LEN_ID,
+                 "--smer-len",
+                 "s-mer length for syncmer selection",
+                 "s-mer length for syncmer selection",
+                 typeid(int),
+                 (void *) &smerLen,
+                 "[0-7]"),
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
                  "Sequencing type",
@@ -67,13 +81,6 @@ LocalParameters::LocalParameters() :
                   typeid(float),
                   (void *) &minScore,
                   "^0(\\.[0-9]+)?|1(\\.0+)?$"),
-        MIN_COVERAGE(MIN_COVERAGE_ID,
-                     "--min-cov",
-                     "Min. query coverage",
-                     "Min. query coverage (0.0-1.0)",
-                     typeid(float),
-                     (void *) &minCoverage,
-                     "^0(\\.[0-9]+)?|1(\\.0+)?$"),
         // SPACED(SPACED_ID,
         //        "--spacing-mask",
         //        "Binary patterned mask for spaced k-mer.\nThe same mask must be used for DB creation and classification",
@@ -82,13 +89,6 @@ LocalParameters::LocalParameters() :
         //        typeid(std::string),
         //        (void *) &spaceMask,
         //        "^.*$"),
-        MIN_COVERED_POS(MIN_COVERED_POS_ID,
-                        "--min-covered-pos",
-                        "Minimum number of covered positions of a range",
-                        "Minimum number of covered positions of a range",
-                        typeid(int),
-                        (void *) &minCoveredPos,
-                        "^[0-9]+$"),
         HAMMING_MARGIN(HAMMING_MARGIN_ID,
                        "--hamming-margin",
                        "Allowed extra Hamming distance", 
@@ -173,6 +173,13 @@ LocalParameters::LocalParameters() :
                       typeid(int),
                       (void *) &printLineage,
                       "[0-1]"),
+        MAX_SHIFT(MAX_SHIFT_ID,
+                    "--max-shift",
+                    "Max triplet shift between two consecutive k-mers (8-smerLen by default)",
+                    "Max triplet shift between two consecutive k-mers (8-smerLen by default)",
+                    typeid(int),
+                    (void *) &maxShift,
+                    "[1-7]"),
         TARGET_TAX_ID(TARGET_TAX_ID_ID,
                "--tax-id",
                "Tax. ID of clade to be extracted",
@@ -438,10 +445,21 @@ LocalParameters::LocalParameters() :
                 "0: without higher rank, 1: with higher rank, 2: separate file for higher rank classification",
                 typeid(int),
                 (void *) &higherRankFile,
-                "^[0-2]$")
-            
-        
-        
+                "^[0-2]$"),
+        RANDOM_SEED(RANDOM_SEED_ID,
+                    "--random-seed",
+                    "Random seed for random number generation",
+                    "Random seed for random number generation",
+                    typeid(int),
+                    (void *) &randomSeed,
+                    "^[0-9]+"),
+        ASSACC2TAXID(ASSACC2TAXID_ID,
+                    "--assacc2taxid",
+                    "Path to the file mapping from accession to tax ID",
+                    "Path to the file mapping from accession to tax ID",
+                    typeid(std::string),
+                    (void *) &assacc2taxid,
+                    "^.*$") 
   {
     // Initialize the parameters
     // Superkingdom taxonomy id
@@ -457,9 +475,7 @@ LocalParameters::LocalParameters() :
     minConsCnt = 4;
     hammingMargin = 0;
     minSpScore = 0;
-    minCoverage = 0;
     ramUsage = 0;
-    minCoveredPos = 0;
     printLog = 0;
     maxGap = 0;
     minConsCntEuk = 0;
@@ -522,6 +538,10 @@ LocalParameters::LocalParameters() :
     build.push_back(&GTDB);
     build.push_back(&VALIDATE_INPUT);
     build.push_back(&VALIDATE_DB);
+    build.push_back(&SYNCMER);
+    build.push_back(&SMER_LEN);
+    build.push_back(&REDUCED_AA);
+
 
     // updateDB
     updateDB.push_back(&PARAM_THREADS);
@@ -538,12 +558,12 @@ LocalParameters::LocalParameters() :
     updateDB.push_back(&GTDB);
     updateDB.push_back(&VALIDATE_INPUT);
     updateDB.push_back(&VALIDATE_DB);
+    updateDB.push_back(&SYNCMER);
 
     //classify
     classify.push_back(&PARAM_THREADS);
     classify.push_back(&SEQ_MODE);
     classify.push_back(&MIN_SCORE);
-    classify.push_back(&MIN_COVERAGE);
     classify.push_back(&MIN_CONS_CNT);
     classify.push_back(&MIN_CONS_CNT_EUK);
     classify.push_back(&MIN_SP_SCORE);
@@ -559,6 +579,11 @@ LocalParameters::LocalParameters() :
     classify.push_back(&PRINT_LINEAGE);
     classify.push_back(&VALIDATE_INPUT);
     classify.push_back(&VALIDATE_DB);
+    classify.push_back(&SYNCMER);
+    classify.push_back(&SMER_LEN);
+    classify.push_back(&PRINT_LOG);
+    classify.push_back(&REDUCED_AA);
+
 
     // extract
     extract.push_back(&TAXONOMY_PATH);
@@ -573,12 +598,10 @@ LocalParameters::LocalParameters() :
     filter.push_back(&VIRUS_TAX_ID);
     filter.push_back(&REDUCED_AA);
     filter.push_back(&MIN_SCORE);
-    filter.push_back(&MIN_COVERAGE);
     filter.push_back(&HAMMING_MARGIN);
     filter.push_back(&MIN_SP_SCORE);
     filter.push_back(&PARAM_V);
     filter.push_back(&RAM_USAGE);
-    filter.push_back(&MIN_COVERED_POS);
     filter.push_back(&PRINT_LOG);
     filter.push_back(&MAX_GAP);
     filter.push_back(&TAXONOMY_PATH);
@@ -610,7 +633,6 @@ LocalParameters::LocalParameters() :
     // Apply thresholds
     applyThreshold.push_back(&MIN_SP_SCORE);
     applyThreshold.push_back(&MIN_SCORE);
-    applyThreshold.push_back(&MIN_COVERAGE);
 
     // Binning to report
     binning2report.push_back(&READID_COL);
@@ -634,7 +656,6 @@ LocalParameters::LocalParameters() :
 
     query2reference.push_back(&TEST_RANK);
 
-    //classified2full
     classifiedRefiner.push_back(&REMOVE_UNCLASSIFIED);
     classifiedRefiner.push_back(&EXCLUDE_TAXID);
     classifiedRefiner.push_back(&SELECT_TAXID);
@@ -644,8 +665,9 @@ LocalParameters::LocalParameters() :
     classifiedRefiner.push_back(&HIGHER_RANK_FILE);
     classifiedRefiner.push_back(&PARAM_THREADS);
     classifiedRefiner.push_back(&MIN_SCORE);
-    
-
+    makeBenchmarkSet.push_back(&RANDOM_SEED);
+    makeBenchmarkSet.push_back(&ASSACC2TAXID);
+    makeBenchmarkSet.push_back(&TEST_TYPE);
 }
 
 void LocalParameters::printParameters(const std::string &module, int argc, const char* pargv[],

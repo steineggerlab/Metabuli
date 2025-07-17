@@ -33,8 +33,6 @@ public:
     template<typename T>
     static T getQueryKmerNumber(T queryLength, int spaceNum);
 
-    static void splitQueryFile(std::vector<SequenceBlock> & seqSegments, const std::string & queryPath);
-
     template<typename T>
     static T getMaxCoveredLength(T queryLength);
 
