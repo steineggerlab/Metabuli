@@ -1087,7 +1087,7 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                                     posToWrite,
                                                     accessionBatches[batchIdx].taxIDs[idx],
                                                     accessionBatches[batchIdx].speciesID,
-                                                    {0, cds[cdsCnt].length() - 1, 1});
+                                                    {0, (int) cds[cdsCnt].length() - 1, 1});
                                 }
                                 if (tempCheck == -1) {
                                     cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
@@ -1110,7 +1110,7 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                                     posToWrite,
                                                     accessionBatches[batchIdx].taxIDs[idx],
                                                     accessionBatches[batchIdx].speciesID,
-                                                    {0, cds[nonCdsCnt].length() - 1, 1});
+                                                    {0, (int) cds[nonCdsCnt].length() - 1, 1});
                                 }
                                 if (tempCheck == -1) {
                                     cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;

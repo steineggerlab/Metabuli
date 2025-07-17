@@ -8,7 +8,9 @@
 #include <fstream>
 #include <unordered_set>
 #include <atomic>
-#include <omp.h>
+#ifdef OPENMP
+    #include <omp.h>
+#endif
 #include <cstdint>
 
 
@@ -27,9 +29,7 @@
 #include "LocalUtil.h"
 #include "GeneticCode.h"
 
-// #ifdef OPENMP
-// #include <omp.h>
-// #endif
+
 
 struct Accession {
     Accession() = default;
