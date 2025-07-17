@@ -92,7 +92,10 @@ queryList, currentSplit, processedQueryNum, kseq, chunkSize, chunkReads_thread, 
         }     
 #pragma omp single nowait
         {
-            int masterThread = omp_get_thread_num();
+            int masterThread = 0;
+            #ifdef OPENMP
+               masterThread = omp_get_thread_num();
+            #endif
             size_t count = 0;
             while (processedQueryNum < currentSplit.readCnt) {
                 // Find an idle thread
@@ -195,7 +198,10 @@ chunkSize, chunkReads1_thread, chunkReads2_thread, busyThreads, cout, emptyReads
         }     
 #pragma omp single nowait
         {
-            int masterThread = omp_get_thread_num();
+            int masterThread = 0;
+            #ifdef OPENMP
+               masterThread = omp_get_thread_num();
+            #endif
            
             while (processedQueryNum < currentSplit.readCnt) {
                 // Find an idle thread
@@ -325,7 +331,7 @@ void KmerExtractor::fillQueryKmerBuffer(
             Kmer syncmer = kmerScanner->next(isForward);
             if (syncmer.value == UINT64_MAX) break;
             // syncmer.printAA(geneticCode); cout << " "; syncmer.printDNA(geneticCode); cout << endl;
-            kmerBuffer.buffer[posToWrite++] = {syncmer.value, seqID, syncmer.pos, frame};
+            kmerBuffer.buffer[posToWrite++] = {syncmer.value, seqID, syncmer.pos, (uint8_t) frame};
         }        
     }
 }

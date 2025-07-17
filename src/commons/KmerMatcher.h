@@ -190,6 +190,14 @@ public:
                                     const uint16_t *diffIdxBuffer,
                                     size_t &diffBufferIdx, size_t &totalPos);
 
+  static uint64_t getNextTargetKmer(uint64_t lookingTarget,
+                                    uint16_t *&diffIdxBuffer,
+                                    size_t &totalPos);
+
+  static uint64_t getFirstTargetKmer(uint64_t lookingTarget,
+                                     uint16_t *&diffIdxBuffer,
+                                     size_t &totalPos);
+
   static Metamer getNextTargetKmer(const Metamer & lookingTarget,
                                    const uint16_t *diffIdxBuffer,
                                    size_t &diffBufferIdx, size_t &totalPos);
@@ -213,6 +221,52 @@ inline uint64_t KmerMatcher::getNextTargetKmer(uint64_t lookingTarget,
     totalPos++;
   }
   diffIn64bit |= (fragment & 0x7FFF);
+  return diffIn64bit + lookingTarget;
+}
+
+inline uint64_t KmerMatcher::getNextTargetKmer(
+  uint64_t lookingTarget,
+  uint16_t *&diffIdxBuffer,
+  size_t &totalPos) 
+{
+  // uint64_t diffIn64bit = 0;
+  // uint16_t fragment = *diffIdxBuffer++;
+  // totalPos++;
+  // while (!(fragment & 0x8000)) { // 27 %
+  //   diffIn64bit = (diffIn64bit << 15) | fragment;
+  //   fragment = *diffIdxBuffer++;
+  //   totalPos++;
+  // }
+  // diffIn64bit |= (fragment & 0x7FFF);
+  // return diffIn64bit + lookingTarget;
+
+
+  uint64_t diffIn64bit = 0;
+  while ((*diffIdxBuffer & 0x8000) == 0) { // 27 %
+    diffIn64bit = (diffIn64bit << 15) | *diffIdxBuffer;
+    ++diffIdxBuffer;
+    ++totalPos;
+  }
+  diffIn64bit = (diffIn64bit << 15) | (*diffIdxBuffer & 0x7FFF);
+  // diffIn64bit |= (*diffIdxBuffer & 0x7FFF);
+  ++totalPos;
+  ++diffIdxBuffer;
+  return diffIn64bit + lookingTarget;
+}
+
+inline uint64_t KmerMatcher::getFirstTargetKmer(
+  uint64_t lookingTarget,
+  uint16_t *&diffIdxBuffer,
+  size_t &totalPos)
+{
+  uint64_t diffIn64bit = 0;
+  while (!(*diffIdxBuffer & 0x8000)) { // 27 %
+    diffIn64bit = (diffIn64bit << 15) | *diffIdxBuffer;
+    ++diffIdxBuffer;
+    ++totalPos;
+  }
+  diffIn64bit = (diffIn64bit << 15) | (*diffIdxBuffer & 0x7FFF);
+  // diffIn64bit  (*diffIdxBuffer & 0x7FFF);
   return diffIn64bit + lookingTarget;
 }
 

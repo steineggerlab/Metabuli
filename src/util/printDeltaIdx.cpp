@@ -52,18 +52,21 @@ int printDeltaIdx(int argc, const char **argv, const Command &command){
                                                         deltaIdxBuffer,
                                                         deltaIdxBufferIdx,
                                                         deltaIdxPos);
-            if (idx >= par.kmerBegin && idx < par.kmerEnd) {
-                seqIterator->printKmerInDNAsequence(curMetamer.metamer); 
-                cout << "\t";
-                cout << curMetamer.id << "\t";
-                print_binary64(64, curMetamer.metamer); cout << "\n";  
-            }
+            // if (idx >= par.kmerBegin && idx < par.kmerEnd) {
+            //     seqIterator->printKmerInDNAsequence(curMetamer.metamer); 
+            //     cout << "\t";
+            //     cout << curMetamer.id << "\t";
+            //     print_binary64(64, curMetamer.metamer); cout << "\n";  
+            // }
             idx ++;
         }
         if (deltaIdxPos == numOfDiffIdx) {
             break;
         }
     }
+    cout << "Total number of 16-bit blocks: " << numOfDiffIdx << endl;
+    cout << "Scanned " << deltaIdxPos << " k-mers." << endl;
+    cout << "Total number of k-mers: " << idx << endl;
     fclose(deltaIdxFp);
     free(deltaIdxBuffer);
     return 0;

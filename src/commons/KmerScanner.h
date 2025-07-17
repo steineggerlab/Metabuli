@@ -36,10 +36,10 @@ protected:
     uint64_t dnaMask;
 
     const char *seq;
-    size_t seqStart;
-    size_t seqEnd;
-    size_t seqLen;
-    size_t aaLen;
+    uint32_t seqStart;
+    uint32_t seqEnd;
+    uint32_t seqLen;
+    uint32_t aaLen;
 
     uint64_t dnaPart;
     uint64_t aaPart;
