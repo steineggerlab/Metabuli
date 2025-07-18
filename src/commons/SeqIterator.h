@@ -102,7 +102,7 @@ public:
                                     const vector<int> & aaSeq,
                                     int blockStrand = 0,
                                     int blockStart = 0,
-                                    int blockEnd = 0);
+                                    int blockEnd = 0); // TODO: I don't need it anymore
 
     int extractTargetKmers(const char *seq,
                            Buffer<TargetKmer> &kmerBuffer,

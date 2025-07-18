@@ -50,6 +50,10 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     indexReferenceSequences(kmerBuffer.bufferSize);
     cout << "Made blocks for each thread" << endl;
 
+    if (!par.cdsInfo.empty()) {
+        loadCdsInfo(par.cdsInfo);
+    }
+
     // Write taxonomy id list
     FILE * taxidListFile = fopen(taxidListFileName.c_str(), "w");
     for (auto & taxid: taxIdSet) {
