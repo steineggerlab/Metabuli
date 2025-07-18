@@ -135,6 +135,7 @@ queryList, currentSplit, processedQueryNum, kseq, chunkSize, chunkReads_thread, 
                                  emptyReads[threadId],
                                  count,
                                  false);
+
                 if (par.threads == 1) {
                     processSequence(count, processedQueryNum, chunkReads_thread[threadId], emptyReads[threadId], seq, maskedSeq, readLength, kmerBuffer, queryList, false);
                 } else {
@@ -297,12 +298,21 @@ void KmerExtractor::processSequence(
         size_t posToWrite = 0;
         if (isReverse) {
             posToWrite = kmerBuffer.reserveMemory(queryList[queryIdx].kmerCnt2);
-            fillQueryKmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
-                                            (uint32_t) queryIdx+1, queryList[queryIdx].queryLength+3);
+            fillQueryKmerBuffer(
+                seq,
+                (int) reads[i].length(),
+                kmerBuffer,
+                posToWrite, 
+                (uint32_t) queryIdx+1,
+                queryList[queryIdx].queryLength+3);
         } else {
             posToWrite = kmerBuffer.reserveMemory(queryList[queryIdx].kmerCnt);
-            fillQueryKmerBuffer(seq, (int) reads[i].length(), kmerBuffer, posToWrite, 
-                                            (uint32_t) queryIdx+1);                             
+            fillQueryKmerBuffer(
+                seq, 
+                (int) reads[i].length(), 
+                kmerBuffer, 
+                posToWrite, 
+                (uint32_t) queryIdx+1);                             
         }
     }
 }

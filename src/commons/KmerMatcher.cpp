@@ -15,16 +15,7 @@ KmerMatcher::KmerMatcher(const LocalParameters & par,
     DNA_MASK = 16777215;
     DNA_MASK = ~ DNA_MASK;
     AA_MASK = 0xffffffU;     
-    
-    // if (par.reducedAA == 1){
-    //     MARKER = 0Xffffffff;
-    //     MARKER = ~ MARKER;
-    // } else {
-        
-    // }
-    
     totalMatchCnt = 0;
-
     this->taxonomy = taxonomy;
     geneticCode = new GeneticCode(par.reducedAA == 1);
     loadTaxIdList(par);
@@ -443,22 +434,15 @@ bool KmerMatcher::matchMetamers(Buffer<QueryKmer> * queryKmerBuffer,
     size_t queryKmerNum = queryKmerBuffer->startIndexOfReserve;
     QueryKmer * queryKmerList = queryKmerBuffer->buffer;
 
-    // Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
-    for (size_t checkN = queryKmerNum - 1; checkN > 0; checkN--) {
-        if (queryKmerList[checkN].ADkmer != UINT64_MAX) {
-            queryKmerNum = checkN + 1;
-            break;
-        }
-    }
-
     size_t blankCnt = 0;
     for (size_t i = 0; i < queryKmerNum; i++) {
         if (queryKmerList[i].info.sequenceID == 0) {
             blankCnt++;
-            queryKmerNum--;
+        } else {
+            break;
         }
     }
-    
+    queryKmerNum -= blankCnt;
     cout << "Total query k-mers: " << queryKmerNum << endl;
     // Filter out meaningless target splits
     size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);

@@ -23,6 +23,10 @@ typedef struct QueryKmer {
     QueryKmer():ADkmer(0), info(0,0,0){}
     uint64_t ADkmer; // 8 byte
     QueryKmerInfo info; // 8 byte
+    void print() const {
+        std::cout << "ADkmer: " << ADkmer << " seqID: " << info.sequenceID 
+                  << " pos: " << info.pos << " frame: " << (int)info.frame << std::endl;
+    }
 } QueryKmer; // 16 byte
 
 // struct TargetKmer{

@@ -142,22 +142,39 @@ int classify(int argc, const char **argv, const Command& command) {
             cout << "Error: " << dbDir << " is not found." << endl;
             exit(1);
         }
+        const string & deltaIdx = dbDir + "/deltaIdx.mtbl";
         const string & diffIdx = dbDir + "/diffIdx";
-        const string & info = dbDir + "/info";
-        const string & split = dbDir + "/split";
+
+        bool newFormat = false;
+        if (FileUtil::fileExists(diffIdx.c_str())) {
+            newFormat = false;
+        } else if (FileUtil::fileExists(deltaIdx.c_str())) {
+            newFormat = true;
+        } else {
+            cout << "Error: Neither " << diffIdx << " nor " << deltaIdx << " is found." << endl;
+            cout << "       Please check the database directory." << endl;
+            exit(1);
+        }
+
+        if (newFormat) {
+            const string & deltaIdxSplit = dbDir + "/deltaIdxSplits.mtbl";
+            if (!FileUtil::fileExists(deltaIdxSplit.c_str())) {
+                cout << "Error: " << deltaIdxSplit << " is not found." << endl;
+                exit(1);
+            }
+        } else {
+            const string & info = dbDir + "/info";
+            const string & split = dbDir + "/split";
+            if (!FileUtil::fileExists(info.c_str())) {
+                cout << "Error: " << info << " is not found." << endl;
+                exit(1);
+            }
+            if (!FileUtil::fileExists(split.c_str())) {
+                cout << "Error: " << split << " is not found." << endl;
+                exit(1);
+            }
+        }
         const string & taxonomy = dbDir + "/taxonomyDB";
-        if (!FileUtil::fileExists(diffIdx.c_str())) {
-            cout << "Error: " << diffIdx << " is not found." << endl;
-            exit(1);
-        }
-        if (!FileUtil::fileExists(info.c_str())) {
-            cout << "Error: " << info << " is not found." << endl;
-            exit(1);
-        }
-        if (!FileUtil::fileExists(split.c_str())) {
-            cout << "Error: " << split << " is not found." << endl;
-            exit(1);
-        }
         if (!FileUtil::fileExists(taxonomy.c_str())
             && par.taxonomyPath.empty()
             && !FileUtil::fileExists((dbDir + "/taxonomy/merged.dmp").c_str())) {

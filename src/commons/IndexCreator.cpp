@@ -71,7 +71,6 @@ void IndexCreator::createIndex(const LocalParameters &par) {
     size_t processedBatchCnt = 0;
     
     vector<pair<size_t, size_t>> uniqKmerIdxRanges;
-    cout << "Kmer buffer size: " << kmerBuffer.bufferSize << endl;
 #ifdef OPENMP
     omp_set_num_threads(par.threads);
 #endif

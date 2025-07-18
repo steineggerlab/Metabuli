@@ -10,6 +10,8 @@
 struct Kmer {
     uint64_t value;
     uint32_t pos;
+    Kmer() : value(0), pos(0) {}
+    Kmer(uint64_t value, uint32_t pos) : value(value), pos(pos) {}
     void printAA(const GeneticCode & code) const {
         uint64_t aaPart = value >> 24;
         for (int i = 0; i < 8; ++i) {
@@ -50,10 +52,15 @@ protected:
 
 public:
     KmerScanner(const GeneticCode &geneticCode) : geneticCode(geneticCode) {
+        // std::cout << "KmerScanner initialized." << std::endl;
         this->dnaMask = (1ULL << 24) - 1;    
     }
 
-    void initScanner(const char * seq, size_t seqStart, size_t seqEnd, bool isForward) {
+    const GeneticCode &getGeneticCode() const {
+        return geneticCode;
+    }
+
+    virtual void initScanner(const char * seq, size_t seqStart, size_t seqEnd, bool isForward) {
         this->seq = seq;
         this->seqStart = seqStart;
         this->seqEnd = seqEnd;
@@ -68,7 +75,7 @@ public:
     }
 
 
-    Kmer next() {
+    virtual Kmer next() {
         int aa = 0;
         int codon = 0;
         while (posStart <= aaLen - 8) {

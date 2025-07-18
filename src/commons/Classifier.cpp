@@ -127,7 +127,7 @@ void Classifier::startClassify(const LocalParameters &par) {
                 reporter->writeReadClassification(queryList);
                 processedReadCnt += queryReadSplit[splitIdx].readCnt;
                 cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
-                numOfTatalQueryKmerCnt += queryKmerBuffer.startIndexOfReserve;
+                // numOfTatalQueryKmerCnt += queryKmerBuffer.startIndexOfReserve;
             } else { // search was incomplete
                 matchPerKmer += 4;
                 cout << "--match-per-kmer was increased to " << matchPerKmer << " and searching again..." << endl;
@@ -144,7 +144,7 @@ void Classifier::startClassify(const LocalParameters &par) {
         }
     }
 
-    cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
+    // cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
     cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
     reporter->closeReadClassificationFile();
     reporter->writeReportFile(totalSeqCnt, taxCounts);
