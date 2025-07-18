@@ -11,7 +11,7 @@
 class KmerExtractor {
 private:
     const LocalParameters &par;
-    KmerScanner * kmerScanner;
+    KmerScanner ** kmerScanners;
     
     // Parameters
     int spaceNum;
@@ -46,17 +46,17 @@ private:
                           size_t & count,
                           bool isReverse);
 
-    void processSequence(size_t count,
-                         size_t processedQueryNum,
-                         const vector<string> & reads,
-                         const vector<bool> & emptyReads,
-                         char *seq,
-                         char *maskedSeq,
-                         size_t & maxReadLength,
-                         Buffer<QueryKmer> &kmerBuffer,
-                         const vector<Query> & queryList,
-                         vector<int> *aaFrames,
-                         bool isReverse);
+    void processSequence(
+        size_t count,
+        size_t processedQueryNum,
+        const vector<string> & reads,
+        const vector<bool> & emptyReads,
+        char *seq,
+        char *maskedSeq,
+        size_t & maxReadLength,
+        Buffer<QueryKmer> &kmerBuffer,
+        const vector<Query> & queryList,
+        bool isReverse);
 
     void fillQueryKmerBuffer(
         const char *seq,
@@ -76,9 +76,13 @@ public:
                            KSeqWrapper* kseq1,
                            KSeqWrapper* kseq2 = nullptr);
 
-
-
-
+    int extractTargetKmers(
+        const char *seq,
+        Buffer<TargetKmer> &kmerBuffer,
+        size_t &posToWrite,
+        int seqID,
+        int taxIdAtRank,
+        SequenceBlock block);
 };
 
 static inline bool compareForLinearSearch(const QueryKmer &a, const QueryKmer &b) {

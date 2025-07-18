@@ -11,7 +11,8 @@
 
 extern const char *version;
 
-IndexCreator::IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy) : par(par), taxonomy(taxonomy) {
+IndexCreator::IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy) 
+    : par(par), taxonomy(taxonomy) {
     dbDir = par.filenames[0];
     if (par.taxonomyPath.empty()) {
         taxonomyDir = dbDir + "/taxonomy/";
@@ -34,6 +35,7 @@ IndexCreator::IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxono
         MARKER = ~ MARKER;
     }
     geneticCode = new GeneticCode(par.reducedAA == 1);
+    kmerExtractor = new KmerExtractor(par, *geneticCode);
     isUpdating = false;
     isNewFormat = true;
     subMat = new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0);
@@ -41,6 +43,8 @@ IndexCreator::IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxono
 
 
 IndexCreator::~IndexCreator() {
+    delete geneticCode;
+    delete kmerExtractor;
     delete subMat;
 }
 
@@ -982,253 +986,6 @@ void IndexCreator::load_assacc2taxid(const string & mappingFile, unordered_map<s
     map.close();
 }
 
-// size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
-//                                           std::vector<std::atomic<bool>> & batchChecker,
-//                                           size_t &processedBatchCnt,
-//                                           const LocalParameters &par) {
-//     std::atomic<int> hasOverflow{0};
-// #pragma omp parallel default(none), shared(kmerBuffer, batchChecker, processedBatchCnt, hasOverflow, par, cout)
-//     {
-//         ProbabilityMatrix probMatrix(*subMat);
-//         // ProdigalWrapper * prodigal = new ProdigalWrapper();
-//         SeqIterator seqIterator(par, *geneticCode);
-//         size_t posToWrite;
-//         size_t orfNum;
-//         vector<SequenceBlock> extendedORFs;
-//         priority_queue<uint64_t> standardList;
-//         priority_queue<uint64_t> currentList;
-//         size_t lengthOfTrainingSeq;
-//         char *reverseComplement;
-//         vector<uint64_t> intergenicKmers;
-//         vector<int> aaSeq;
-//         vector<string> cds;
-//         vector<string> nonCds;
-//         bool trained = false;
-//         size_t estimatedKmerCnt = 0;
-// #pragma omp for schedule(dynamic, 1)
-//         for (size_t batchIdx = 0; batchIdx < accessionBatches.size(); batchIdx ++) {
-//             if (hasOverflow.load(std::memory_order_acquire))
-//                 continue;
-            
-//             if (batchChecker[batchIdx].exchange(true, std::memory_order_acq_rel))
-//                 continue; 
-            
-//             intergenicKmers.clear();
-//             standardList = priority_queue<uint64_t>();
-
-//             // Estimate the number of k-mers to be extracted from current split
-//             size_t totalLength = 0;
-//             for (size_t p = 0; p < accessionBatches[batchIdx].lengths.size(); p++) {
-//                 totalLength += accessionBatches[batchIdx].lengths[p];
-//             }
-
-//             if (par.syncmer) {
-//                 estimatedKmerCnt = static_cast<size_t>(
-//                     (totalLength * 1.3 / 3.0) / ((8 - par.smerLen + 1) / 2.0)
-//                 );
-//             } else {
-//                 estimatedKmerCnt = static_cast<size_t>(
-//                     (totalLength * 1.3) / 3.0
-//                 );
-//             }
-                
-//             ProdigalWrapper * prodigal = new ProdigalWrapper();
-//             trained = false;
-
-//             // Process current split if buffer has enough space.
-//             posToWrite = kmerBuffer.reserveMemory(estimatedKmerCnt);
-//             if (posToWrite + estimatedKmerCnt < kmerBuffer.bufferSize) {
-//                 KSeqWrapper* kseq = KSeqFactory(fastaPaths[accessionBatches[batchIdx].whichFasta].c_str());
-//                 size_t seqCnt = 0;
-//                 size_t idx = 0;
-//                 while (kseq->ReadEntry()) {
-//                     if (seqCnt == accessionBatches[batchIdx].orders[idx]) {
-//                         if (accessionBatches[batchIdx].taxIDs[idx] == 0) {
-//                             #pragma omp critical
-//                             {
-//                             accessionBatches[batchIdx].print();
-//                             exit(1);
-//                             }
-//                         }
-//                         const KSeqWrapper::KSeqEntry & e = kseq->entry;
-//                         // Mask low complexity regions
-//                         char *maskedSeq = nullptr;
-//                         if (par.maskMode) {
-//                             maskedSeq = new char[e.sequence.l + 1]; // TODO: reuse the buffer
-//                             SeqIterator::maskLowComplexityRegions((unsigned char *) e.sequence.s, (unsigned char *) maskedSeq, probMatrix, par.maskProb, subMat);
-//                             maskedSeq[e.sequence.l] = '\0';
-//                         } else {
-//                             maskedSeq = e.sequence.s;
-//                         }
-
-//                             orfNum = 0;
-//                             extendedORFs.clear();
-//                             int tempCheck = 0;                            
-//                             if (cdsInfoMap.find(string(e.name.s)) != cdsInfoMap.end()) {
-//                                 // Get CDS and non-CDS
-//                                 cds.clear();
-//                                 nonCds.clear();
-//                                 seqIterator.devideToCdsAndNonCds(maskedSeq,
-//                                                                  e.sequence.l,
-//                                                                  cdsInfoMap[string(e.name.s)],
-//                                                                  cds,
-//                                                                  nonCds);
-    
-//                                 for (size_t cdsCnt = 0; cdsCnt < cds.size(); cdsCnt ++) {
-//                                     seqIterator.translate(cds[cdsCnt], aaSeq);
-//                                     tempCheck = seqIterator.fillBufferWithKmerFromBlock(
-//                                                     cds[cdsCnt].c_str(),
-//                                                     kmerBuffer,
-//                                                     posToWrite,
-//                                                     accessionBatches[batchIdx].taxIDs[idx],
-//                                                     accessionBatches[batchIdx].speciesID,
-//                                                     aaSeq);
-//                                     if (tempCheck == -1) {
-//                                         cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
-//                                     }
-//                                 }
-
-//                                 for (size_t nonCdsCnt = 0; nonCdsCnt < nonCds.size(); nonCdsCnt ++) {
-//                                     seqIterator.translate(nonCds[nonCdsCnt], aaSeq);
-//                                     tempCheck = seqIterator.fillBufferWithKmerFromBlock(
-//                                                     nonCds[nonCdsCnt].c_str(),
-//                                                     kmerBuffer,
-//                                                     posToWrite,
-//                                                     accessionBatches[batchIdx].taxIDs[idx],
-//                                                     accessionBatches[batchIdx].speciesID,
-//                                                     aaSeq);
-//                                     if (tempCheck == -1) {
-//                                         cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
-//                                     }
-//                                 }
-//                             } else {
-//                                 // USE PRODIGAL
-//                                 if (!trained) {
-//                                     KSeqWrapper* training_seq = KSeqFactory(fastaPaths[accessionBatches[batchIdx].trainingSeqFasta].c_str()); 
-//                                     size_t seqCnt = 0;
-//                                     while (training_seq->ReadEntry()) {
-//                                         if (seqCnt == accessionBatches[batchIdx].trainingSeqIdx) {
-//                                             break;
-//                                         }
-//                                         seqCnt++;
-//                                     }
-//                                     // #pragma omp critical
-//                                     // {
-//                                     //     cout << "Training " << accessionBatches[batchIdx].speciesID << "\t" << training_seq->entry.name.s << "\t" << training_seq->entry.sequence.l << endl;
-//                                     // }
-//                                     lengthOfTrainingSeq = training_seq->entry.sequence.l;
-//                                     prodigal->is_meta = 0;
-//                                     if (lengthOfTrainingSeq < 100'000) {
-//                                         prodigal->is_meta = 1;
-//                                         prodigal->trainMeta((unsigned char *) training_seq->entry.sequence.s, training_seq->entry.sequence.l);
-//                                     } else {
-//                                         prodigal->trainASpecies((unsigned char *) training_seq->entry.sequence.s, training_seq->entry.sequence.l);
-//                                     }
-
-//                                     // Generate intergenic 23-mer list. It is used to determine extension direction of intergenic sequences.
-//                                     prodigal->getPredictedGenes((unsigned char *) training_seq->entry.sequence.s, training_seq->entry.sequence.l);
-//                                     seqIterator.generateIntergenicKmerList(prodigal->genes, prodigal->nodes,
-//                                                                            prodigal->getNumberOfPredictedGenes(),
-//                                                                            intergenicKmers, training_seq->entry.sequence.s);
-
-//                                     // Get min k-mer hash list for determining strandness
-//                                     seqIterator.getMinHashList(standardList, training_seq->entry.sequence.s);
-//                                     delete training_seq;
-//                                     trained = true;
-//                                 }
-
-//                                 currentList = priority_queue<uint64_t>();
-//                                 seqIterator.getMinHashList(currentList, e.sequence.s);
-
-//                                 if (seqIterator.compareMinHashList(standardList, currentList, lengthOfTrainingSeq, e.sequence.l)) {
-//                                     // Get extended ORFs
-//                                     prodigal->getPredictedGenes((unsigned char *) e.sequence.s, e.sequence.l);
-//                                     prodigal->removeCompletelyOverlappingGenes();
-//                                     prodigal->getExtendedORFs(prodigal->finalGenes, prodigal->nodes, extendedORFs,
-//                                                                  prodigal->fng, e.sequence.l,
-//                                                             orfNum, intergenicKmers, e.sequence.s);
-
-//                                     // Get k-mers from extended ORFs
-//                                     for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
-//                                         aaSeq.clear();
-//                                         seqIterator.translateBlock(maskedSeq, extendedORFs[orfCnt], aaSeq, e.sequence.l);
-//                                         tempCheck = seqIterator.fillBufferWithKmerFromBlock(
-//                                                 extendedORFs[orfCnt],
-//                                                 maskedSeq,
-//                                                 kmerBuffer,
-//                                                 posToWrite,
-//                                                 accessionBatches[batchIdx].taxIDs[idx],
-//                                                 accessionBatches[batchIdx].speciesID,
-//                                                 aaSeq);
-//                                         if (tempCheck == -1) {
-//                                             cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
-//                                         }
-//                                     }
-//                                 } else { // Reverse complement
-//                                     reverseCompliment = seqIterator.reverseCompliment(e.sequence.s, e.sequence.l);
-
-//                                     // Get extended ORFs
-//                                     prodigal->getPredictedGenes((unsigned char *) reverseCompliment, e.sequence.l);
-//                                     prodigal->removeCompletelyOverlappingGenes();
-//                                     prodigal->getExtendedORFs(prodigal->finalGenes, prodigal->nodes, extendedORFs,
-//                                                                      prodigal->fng, e.sequence.l,
-//                                                                 orfNum, intergenicKmers, reverseCompliment);
-
-//                                 // Get reverse masked sequence
-//                                 if (par.maskMode) {
-//                                     delete[] maskedSeq;
-//                                     maskedSeq = new char[e.sequence.l + 1];
-//                                     SeqIterator::maskLowComplexityRegions((unsigned char *) reverseComplement, (unsigned char *) maskedSeq, probMatrix, par.maskProb, subMat);
-//                                     maskedSeq[e.sequence.l] = '\0';
-//                                 } else {
-//                                     maskedSeq = reverseComplement;
-//                                 }
-
-//                                 for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
-//                                     tempCheck = seqIterator.extractTargetKmers(
-//                                                     maskedSeq,
-//                                                     kmerBuffer,
-//                                                     posToWrite,
-//                                                     accessionBatches[batchIdx].taxIDs[idx],
-//                                                     accessionBatches[batchIdx].speciesID,
-//                                                     extendedORFs[orfCnt]);
-//                                     if (tempCheck == -1) {
-//                                         cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
-//                                     }
-//                                 }
-//                                 free(reverseComplement);  
-//                             }                            
-//                         }
-//                         idx++;
-//                         if (par.maskMode) {
-//                             delete[] maskedSeq;
-//                         }
-//                         if (idx == accessionBatches[batchIdx].lengths.size()) {
-//                             break;
-//                         }
-//                     }
-//                     seqCnt++;
-//                 }
-//                 delete kseq;
-//                 __sync_fetch_and_add(&processedBatchCnt, 1);
-//                 #pragma omp critical
-//                 {
-//                     cout << processedBatchCnt << " batches processed out of " << accessionBatches.size() << endl;
-//                         // cout << fastaPaths[accessionBatches[batchIdx].whichFasta] << " processed\n";
-//                 }
-//             } else {
-//                 batchChecker[batchIdx].store(false, std::memory_order_release);
-//                 hasOverflow.fetch_add(1, std::memory_order_relaxed);
-//                 __sync_fetch_and_sub(&kmerBuffer.startIndexOfReserve, estimatedKmerCnt);
-//             }
-//             delete prodigal;   
-//         }
-//     }
-
-//     cout << "Before return: " << kmerBuffer.startIndexOfReserve << endl;
-//     return 0;
-// }
-
 size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                           std::vector<std::atomic<bool>> & batchChecker,
                                           size_t &processedBatchCnt,
@@ -1238,7 +995,7 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
     {
         ProbabilityMatrix probMatrix(*subMat);
         // ProdigalWrapper * prodigal = new ProdigalWrapper();
-        SeqIterator seqIterator(par, *geneticCode);
+        SeqIterator seqIterator(par);
         size_t posToWrite;
         size_t orfNum;
         vector<SequenceBlock> extendedORFs;
@@ -1247,7 +1004,6 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
         size_t lengthOfTrainingSeq;
         char *reverseComplement;
         vector<uint64_t> intergenicKmers;
-        vector<int> aaSeq;
         vector<string> cds;
         vector<string> nonCds;
         bool trained = false;
@@ -1322,47 +1078,25 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                                              nonCds);
 
                             for (size_t cdsCnt = 0; cdsCnt < cds.size(); cdsCnt ++) {
-                                seqIterator.translate(cds[cdsCnt], aaSeq);
-                                if (!par.syncmer) {
-                                    tempCheck = seqIterator.fillBufferWithKmerFromBlock(
-                                                    cds[cdsCnt].c_str(),
-                                                    kmerBuffer,
-                                                    posToWrite,
-                                                    accessionBatches[batchIdx].taxIDs[idx],
-                                                    accessionBatches[batchIdx].speciesID,
-                                                    aaSeq);
-                                } else {
-                                    tempCheck = seqIterator.extractTargetKmers(
-                                                    cds[cdsCnt].c_str(),
-                                                    kmerBuffer,
-                                                    posToWrite,
-                                                    accessionBatches[batchIdx].taxIDs[idx],
-                                                    accessionBatches[batchIdx].speciesID,
-                                                    {0, (int) cds[cdsCnt].length() - 1, 1});
-                                }
+                                tempCheck = kmerExtractor->extractTargetKmers(
+                                                cds[cdsCnt].c_str(),
+                                                kmerBuffer,
+                                                posToWrite,
+                                                accessionBatches[batchIdx].taxIDs[idx],
+                                                accessionBatches[batchIdx].speciesID,
+                                                {0, (int) cds[cdsCnt].length() - 1, 1});
                                 if (tempCheck == -1) {
                                     cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
                                 }
                             }
                             for (size_t nonCdsCnt = 0; nonCdsCnt < nonCds.size(); nonCdsCnt ++) {
-                                seqIterator.translate(nonCds[nonCdsCnt], aaSeq);
-                                if (!par.syncmer) {
-                                    tempCheck = seqIterator.fillBufferWithKmerFromBlock(
-                                                    nonCds[nonCdsCnt].c_str(),
-                                                    kmerBuffer,
-                                                    posToWrite,
-                                                    accessionBatches[batchIdx].taxIDs[idx],
-                                                    accessionBatches[batchIdx].speciesID,
-                                                    aaSeq);
-                                } else {
-                                    tempCheck = seqIterator.extractTargetKmers(
-                                                    nonCds[nonCdsCnt].c_str(),
-                                                    kmerBuffer,
-                                                    posToWrite,
-                                                    accessionBatches[batchIdx].taxIDs[idx],
-                                                    accessionBatches[batchIdx].speciesID,
-                                                    {0, (int) cds[nonCdsCnt].length() - 1, 1});
-                                }
+                                tempCheck = kmerExtractor->extractTargetKmers(
+                                                nonCds[nonCdsCnt].c_str(),
+                                                kmerBuffer,
+                                                posToWrite,
+                                                accessionBatches[batchIdx].taxIDs[idx],
+                                                accessionBatches[batchIdx].speciesID,
+                                                {0, (int) cds[nonCdsCnt].length() - 1, 1});
                                 if (tempCheck == -1) {
                                     cout << "ERROR: Buffer overflow " << e.name.s << e.sequence.l << endl;
                                 }
@@ -1414,7 +1148,7 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                                         orfNum, intergenicKmers, e.sequence.s);
                                 // Get k-mers from extended ORFs
                                 for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
-                                    tempCheck = seqIterator.extractTargetKmers(
+                                    tempCheck = kmerExtractor->extractTargetKmers(
                                                     maskedSeq,
                                                     kmerBuffer,
                                                     posToWrite,
@@ -1445,7 +1179,7 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,
                                 }
 
                                 for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
-                                    tempCheck = seqIterator.extractTargetKmers(
+                                    tempCheck = kmerExtractor->extractTargetKmers(
                                                     maskedSeq,
                                                     kmerBuffer,
                                                     posToWrite,

@@ -5,6 +5,12 @@
 QueryFilter::QueryFilter(LocalParameters & par) {
     // Load parameters
     dbDir = par.filenames[1 + (par.seqMode == 2)];
+    if(FileUtil::fileExists(string(dbDir + "/diffIdx").c_str())) {
+        isNewDB = false;
+    } else {
+        isNewDB = true; 
+    }
+
     matchPerKmer = par.matchPerKmer;
     printMode = par.printMode;
     seqMode = par.seqMode;
@@ -20,7 +26,7 @@ QueryFilter::QueryFilter(LocalParameters & par) {
     kmerExtractor = new KmerExtractor(par, *geneticCode);
     if (par.reducedAA) { kmerMatcher = new ReducedKmerMatcher(par, taxonomy);} 
     else { kmerMatcher = new KmerMatcher(par, taxonomy);}
-    taxonomer = new Taxonomer(par, taxonomy);
+    taxonomer = new Taxonomer(par, taxonomy, isNewDB);
     reporter = new Reporter(par, taxonomy);
     setInputAndOutputFiles(par);
     reporter->setReadClassificationFileName(readClassificationFileName);

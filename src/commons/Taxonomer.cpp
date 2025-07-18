@@ -9,7 +9,9 @@
 #include <unordered_map>
 
 
-Taxonomer::Taxonomer(const LocalParameters &par, TaxonomyWrapper *taxonomy) : taxonomy(taxonomy), par(par) {
+Taxonomer::Taxonomer(const LocalParameters &par, TaxonomyWrapper *taxonomy, bool isNewDB) 
+    : taxonomy(taxonomy), par(par), isNewDB(isNewDB) 
+{
     // Parameters
     string spaceMask = "11111111";
     auto mask = new uint32_t[spaceMask.length()];
@@ -64,12 +66,6 @@ Taxonomer::Taxonomer(const LocalParameters &par, TaxonomyWrapper *taxonomy) : ta
     maxSpecies.reserve(4096);
     speciesList.reserve(4096);
     speciesScores.reserve(4096);
-
-    // remainConsecutiveMatches
-    linkedMatchKeys.reserve(4096);
-    linkedMatchValues.reserve(4096);
-    linkedMatchValuesIdx.reserve(4096);
-    match2depthScore.reserve(4096); 
 
     // lowerRankClassification
     cladeCnt.reserve(4096);
@@ -527,8 +523,7 @@ void Taxonomer::getMatchPaths(
                     const MatchPath * bestPath = nullptr;
                     float bestScore = 0;
                     for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++curIdx) {
-                        if (par.syncmer) {
-                            // For syncmer, we need to check if the match is consecutive
+                        if (isNewDB) {
                             if (isConsecutive2(matchList + curIdx, matchList + nextIdx, shift)) {
                                 connectedToNext[curIdx - start] = true;
                                 if (localMatchPaths[curIdx - start].score > bestScore) {
@@ -537,7 +532,6 @@ void Taxonomer::getMatchPaths(
                                 }
                             }
                         } else {
-                            // For non-syncmer, we can directly check if the match is consecutive
                             if (isConsecutive(matchList + curIdx, matchList + nextIdx, shift)) {
                                 connectedToNext[curIdx - start] = true;
                                 if (localMatchPaths[curIdx - start].score > bestScore) {
@@ -598,8 +592,7 @@ void Taxonomer::getMatchPaths(
                     const MatchPath * bestPath = nullptr;
                     float bestScore = 0;
                     for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++curIdx) {
-                        if (par.syncmer) {
-                            // For syncmer, we need to check if the match is consecutive
+                        if (isNewDB) {
                             if (isConsecutive2(matchList + nextIdx, matchList + curIdx, shift)) {
                                 connectedToNext[curIdx - start] = true;
                                 if (localMatchPaths[curIdx - start].score > bestScore) {
@@ -608,7 +601,6 @@ void Taxonomer::getMatchPaths(
                                 }
                             }
                         } else {
-                            // For non-syncmer, we can directly check if the match is consecutive
                             if (isConsecutive(matchList + nextIdx, matchList + curIdx, shift)) {
                                 connectedToNext[curIdx - start] = true;
                                 if (localMatchPaths[curIdx - start].score > bestScore) {
@@ -667,206 +659,6 @@ int Taxonomer::calHammingDistIncrement(uint16_t hammings, int shift) {
     return hammingDistIncrement;
 }
 
-void Taxonomer::remainConsecutiveMatches(const Match * matchList,
-                                         size_t start,
-                                         size_t end,
-                                         vector<MatchPath> & matchPaths,
-                                         TaxID speciesId) {
-    size_t i = start;
-    linkedMatchKeys.clear();
-    linkedMatchValues.clear();
-    linkedMatchValuesIdx.clear();
-    
-    linkedMatchKeys.resize(end - start);
-    linkedMatchValuesIdx.resize(end - start);
-    size_t linkedMatchKeysIdx = 0;
-
-    size_t currPos = matchList[start].qInfo.pos;
-    uint64_t frame = matchList[start].qInfo.frame;
-    if (frame < 3) { // Forward frame
-        size_t curPosMatchStart = i;        
-        while (i < end && matchList[i].qInfo.pos == currPos) {
-            ++ i;
-        }
-        size_t curPosMatchEnd = i; // exclusive
-
-        while (i < end) {
-            uint32_t nextPos = matchList[i].qInfo.pos;
-            size_t nextPosMatchStart = i;
-            while (i < end  && nextPos == matchList[i].qInfo.pos) {
-                ++ i;
-            }
-            size_t nextPosMatchEnd = i; // exclusive
-
-            // Check if current position and next position are consecutive
-            if (currPos + 3 == nextPos) {
-                // Compare curPosMatches and nextPosMatches
-                for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++curIdx) {
-                    size_t startIdx = linkedMatchValues.size();
-                    bool found = false;
-                    for (size_t nextIdx = nextPosMatchStart; nextIdx < nextPosMatchEnd; nextIdx++) {
-                        if (isConsecutive(matchList + curIdx, matchList + nextIdx)){
-                            linkedMatchValues.push_back(matchList + nextIdx);
-                            found = true;
-                        }
-                    }
-                    if (found) {
-                        linkedMatchKeys[linkedMatchKeysIdx] = matchList + curIdx;
-                        linkedMatchValuesIdx[linkedMatchKeysIdx++] = startIdx;
-                    }
-                }
-            }
-            // Update curPosMatches and nextPosMatches
-            curPosMatchStart = nextPosMatchStart;
-            curPosMatchEnd = nextPosMatchEnd;
-            currPos = nextPos;
-        }
-    } else {
-        size_t curPosMatchStart = i;
-
-        while ( i < end && matchList[i].qInfo.pos == currPos) {
-            i++;
-        }
-        size_t curPosMatchEnd = i; // exclusive
-
-        while (i < end) {
-            uint32_t nextPos = matchList[i].qInfo.pos;
-            size_t nextPosMatchStart = i;
-            while (i < end  && nextPos == matchList[i].qInfo.pos) {
-                ++ i;
-            }
-            size_t nextPosMatchEnd = i; // exclusive
-
-            // Check if current position and next position are consecutive
-            if (currPos + 3 == nextPos) {
-                // Compare curPosMatches and nextPosMatches
-                for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++curIdx) {
-                    size_t startIdx = linkedMatchValues.size();
-                    bool found = false;
-                    for (size_t nextIdx = nextPosMatchStart; nextIdx < nextPosMatchEnd; nextIdx++) {
-                        if (isConsecutive(matchList + nextIdx, matchList + curIdx)){
-                            linkedMatchValues.push_back(matchList + nextIdx);
-                            found = true;
-                        }
-                    }
-                    if (found) {
-                        linkedMatchKeys[linkedMatchKeysIdx] = matchList + curIdx;
-                        linkedMatchValuesIdx[linkedMatchKeysIdx++] = startIdx;
-                    }
-                }
-            }
-            // Update curPosMatches and nextPosMatches
-            curPosMatchStart = nextPosMatchStart;
-            curPosMatchEnd = nextPosMatchEnd;
-            currPos = nextPos;
-        }
-    }
-
-    // Iterate linkedMatches to get filteredMatches 
-    // (ignore matches not enoughly consecutive)
-    size_t MIN_DEPTH = minConsCnt - 1;
-    if (taxonomy->IsAncestor(eukaryotaTaxId, speciesId)) {
-        MIN_DEPTH = minConsCntEuk - 1;
-    }
-
-    match2depthScore.clear();
-
-    for (size_t k = 0; k < linkedMatchKeysIdx; k++) {
-        const Match * key = linkedMatchKeys[k];
-        size_t startIdx = linkedMatchValuesIdx[k];
-        size_t endIdx = (k + 1 < linkedMatchKeysIdx) ? linkedMatchValuesIdx[k + 1] : linkedMatchValues.size();
-
-        if (match2depthScore.find(key) == match2depthScore.end()) {
-            depthScore bestPath{};
-            for (size_t j = startIdx; j < endIdx; j++) {
-                depthScore curPath = DFS(linkedMatchValues[j],
-                                         linkedMatchKeys,
-                                         linkedMatchKeysIdx,
-                                         linkedMatchValues,
-                                         linkedMatchValuesIdx,
-                                         1,
-                                         MIN_DEPTH, 
-                                         match2depthScore,
-                                         key->getScore(),
-                                         key->hamming);
-                if (curPath.score > bestPath.score && curPath.depth > MIN_DEPTH) {
-                    bestPath = curPath;
-                }
-            }
-            match2depthScore[key] = bestPath;
-            if (bestPath.depth > MIN_DEPTH) {
-                matchPaths.emplace_back(key->qInfo.pos, // start coordinate on query
-                                        key->qInfo.pos + bestPath.depth * 3 + 20, // end coordinate on query
-                                        bestPath.score, bestPath.hammingDist, bestPath.depth,
-                                        key,
-                                        bestPath.endMatch);
-            }
-        }
-    }
-}
-
-depthScore Taxonomer::DFS(
-    const Match *curMatch,
-    const vector<const Match *> &linkedMatchesKeys,
-    size_t linkedMatchKeysIdx,
-    const vector<const Match *> &linkedMatchesValues,
-    const vector<size_t> &linkedMatchesIndices,
-    size_t depth, size_t MIN_DEPTH,
-    unordered_map<const Match *, depthScore> &match2depthScore,
-    float score, int hammingDist) 
-{
-    depth++;
-    depthScore bestDepthScore{};
-    depthScore returnDepthScore;
-    depthScore curDepthScore;
-    float receivedScore = score;
-
-    auto it = find(linkedMatchesKeys.begin(), linkedMatchesKeys.end(), curMatch);
-    if (it == linkedMatchesKeys.end()) { // Reached a leaf node
-        uint8_t lastEndHamming = (curMatch->rightEndHamming >> 14);
-        if (lastEndHamming == 0) {
-            score += 3.0f;
-        } else {
-            score += 2.0f - 0.5f * lastEndHamming;
-        }
-        match2depthScore[curMatch] = depthScore(1, score - receivedScore, lastEndHamming, curMatch);
-        return depthScore(depth, score, hammingDist + lastEndHamming, curMatch);
-    } else { // Not a leaf node
-        size_t index = it - linkedMatchesKeys.begin();
-        size_t startIdx = linkedMatchesIndices[index];
-        size_t endIdx = (index + 1 < linkedMatchKeysIdx) ? linkedMatchesIndices[index + 1] : linkedMatchesValues.size();
-
-        uint8_t lastEndHamming = (curMatch->rightEndHamming >> 14);
-        if (lastEndHamming == 0) {
-            score += 3.0f;
-        } else {
-            score += 2.0f - 0.5f * lastEndHamming;
-        }
-        for (size_t i = startIdx; i < endIdx; ++i) {
-            const Match *nextMatch = linkedMatchesValues[i];
-            if (match2depthScore.find(nextMatch) != match2depthScore.end()) {
-                returnDepthScore = match2depthScore[nextMatch];
-                curDepthScore = depthScore(returnDepthScore.depth + depth,
-                                           returnDepthScore.score + score,
-                                           returnDepthScore.hammingDist + hammingDist + lastEndHamming,
-                                           returnDepthScore.endMatch);
-            } else {
-                curDepthScore = DFS(nextMatch, linkedMatchesKeys, linkedMatchKeysIdx, linkedMatchesValues, linkedMatchesIndices, depth, MIN_DEPTH, match2depthScore, score, hammingDist + lastEndHamming);
-            }
-            if (curDepthScore.score > bestDepthScore.score && curDepthScore.depth > MIN_DEPTH) {
-                bestDepthScore = curDepthScore;
-            }
-        }
-        if (bestDepthScore.depth > MIN_DEPTH) {
-            match2depthScore[curMatch] = depthScore(bestDepthScore.depth - depth + 1,
-                                                     bestDepthScore.score - receivedScore,
-                                                     bestDepthScore.hammingDist - hammingDist,
-                                                     bestDepthScore.endMatch);
-        }
-    }
-    return bestDepthScore;
-}
-
 bool Taxonomer::isConsecutive(const Match * match1, const Match * match2) {
     // match1 87654321 -> 08765432
     // match2 98765432 -> 08765432
@@ -884,8 +676,7 @@ bool Taxonomer::isConsecutive(const Match * match1, const Match * match2, int sh
 
 bool Taxonomer::isConsecutive2(const Match * match1, const Match * match2) {
     // match1 12345678 -> 02345678
-    // match2 23456789 -> 02345678 // Mask 3 LSBits Mask = 
-    
+    // match2 23456789 -> 02345678 
     return (match1->dnaEncoding & lastCodonMask) == (match2->dnaEncoding >> bitsPerCodon);
 }
 

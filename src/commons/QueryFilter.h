@@ -12,6 +12,7 @@
 class QueryFilter {
 private:
     // Parameters
+    bool isNewDB;
     std::string dbDir;
     size_t matchPerKmer;
     int printMode;

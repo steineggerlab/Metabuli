@@ -28,6 +28,7 @@
 #include "TaxonomyWrapper.h"
 #include "fasta_validate.h"
 #include "GeneticCode.h"
+#include "KmerExtractor.h"
 
 
 
@@ -108,8 +109,10 @@ protected:
     BaseMatrix *subMat;
 
     // Inputs
-    GeneticCode * geneticCode;
     TaxonomyWrapper * taxonomy;
+    GeneticCode * geneticCode;
+    KmerExtractor * kmerExtractor;
+
     bool externTaxonomy;
     // NcbiTaxonomy * taxonomy;
     string dbDir;

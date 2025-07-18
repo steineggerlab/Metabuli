@@ -3,30 +3,27 @@
 
 #include <iostream>
 #include <vector>
-#include "Kmer.h"
-#include "printBinary.h"
+#include <queue>
+#include <cstdint>
+#include <algorithm>
+#include <functional>
+
 #include "common.h"
 #include "Mmap.h"
-#include <algorithm>
-#include "kseq.h"
-#include "KSeqBufferReader.h"
-#include "ProdigalWrapper.h"
-#include <functional>
-//#include "xxh3.h"
 #include "xxhash.h"
-#include <queue>
 #include "LocalParameters.h"
 #include "NucleotideMatrix.h"
 #include "SubstitutionMatrix.h"
 #include "tantan.h"
-#include <cstdint>
 #include "LocalUtil.h"
-
-#include "GeneticCode.h"
 #include "SyncmerScanner.h"
-
+#include "Kmer.h"
+#include "printBinary.h"
+#include "kseq.h"
+#include "KSeqBufferReader.h"
+#include "ProdigalWrapper.h"
 #ifdef OPENMP
-#include <omp.h>
+    #include <omp.h>
 #endif
 
 KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
@@ -39,8 +36,6 @@ using namespace std;
 
 class SeqIterator {
 private:
-    const GeneticCode & geneticCode;
-    KmerScanner * kmerScanner;
     uint64_t powers[10];
     uint32_t * mask;
     int * mask_int;
@@ -51,10 +46,9 @@ private:
     int smerLen;
     uint32_t smerMask;
     uint64_t dnaMask;
-    // void addDNAInfo_TargetKmer(uint64_t &kmer, const char *seq, const PredictedBlock &block, int kmerCnt);
-
+    
 public:
-    SeqIterator(const LocalParameters &par, const GeneticCode &geneticCode);
+    SeqIterator(const LocalParameters &par); 
     ~SeqIterator();
     
     string reverseComplement(string &read) const;
@@ -67,49 +61,12 @@ public:
 
     char *reverseComplement(char *read, size_t length) const;
 
-    void sixFrameTranslation(const char *seq, int seqLen, vector<int> *aaFrames);
-
-    bool translateBlock(const char *seq, SequenceBlock block, vector<int> & aaSeq, size_t length);
-
-    void translate(const string & seq, vector<int> & aa, int frame = 0) {
-        aa.clear();
-        if(aa.capacity() < seq.length() / 3 + 1) {
-            aa.reserve(seq.length() / 3 + 1);
-        }
-        for (int i = 0 + frame; i + 2 < (int) seq.length(); i = i + 3) {
-            aa.push_back(geneticCode.getAA(atcg[seq[i]], atcg[seq[i + 1]], atcg[seq[i + 2]]));
-            // aa.push_back(nuc2aa[nuc2int(atcg[seq[i]])][nuc2int(atcg[seq[i + 1]])][nuc2int(atcg[seq[i + 2]])]);
-        }
-    }
-
     void generateIntergenicKmerList(struct _gene *genes, struct _node *nodes, int numberOfGenes,
                                     vector<uint64_t> &intergenicKmerList, const char *seq);
 
     void getMinHashList(priority_queue<uint64_t> &sortedHashQue, const char *seq);
 
-    bool
-    compareMinHashList(priority_queue<uint64_t> list1, priority_queue<uint64_t> &list2, size_t length1, size_t length2);
-
-    static size_t kmerNumOfSixFrameTranslation(const char *seq);
-
-    size_t getNumOfKmerForBlock(const SequenceBlock &block);
-
-    int fillBufferWithKmerFromBlock(const char *seq,
-                                    Buffer<TargetKmer> &kmerBuffer,
-                                    size_t &posToWrite,
-                                    int seqID,
-                                    int taxIdAtRank,
-                                    const vector<int> & aaSeq,
-                                    int blockStrand = 0,
-                                    int blockStart = 0,
-                                    int blockEnd = 0); // TODO: I don't need it anymore
-
-    int extractTargetKmers(const char *seq,
-                           Buffer<TargetKmer> &kmerBuffer,
-                           size_t &posToWrite,
-                           int seqID,
-                           int taxIdAtRank,
-                           SequenceBlock block);
+    bool compareMinHashList(priority_queue<uint64_t> list1, priority_queue<uint64_t> &list2, size_t length1, size_t length2);
 
     bool isSyncmer(const vector<int> &aaSeq, int startPos, int k, int s) {
         size_t min_smer_value = UINT64_MAX;
@@ -132,8 +89,6 @@ public:
         return (min_smer_pos == 0 || min_smer_pos == (k - s));
     }
 
-    void addDNAInfo_TargetKmer(uint64_t & kmer, const char * seq, int kmerCnt, int strand, int start, int end);
-
     static void maskLowComplexityRegions(const unsigned char * seq, unsigned char * maskedSeq, ProbabilityMatrix & probMat,
                                          float maskProb, const BaseMatrix * subMat);
 
@@ -142,7 +97,6 @@ public:
     void printAAKmer(uint64_t kmer, int shits = 28);
 
     void printSmer(const uint32_t smer) {
-        
         string aminoacid = "ARNDCQEGHILKMFPSTWYVX";
         string smerStr;
         for (int i = 0; i < smerLen; i++) {

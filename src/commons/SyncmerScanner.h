@@ -29,7 +29,7 @@ public:
         this->smerMask = (1ULL << (5 * smerLen)) - 1;
     }
 
-    void initScanner(const char * seq, size_t seqStart, size_t seqEnd) {
+    void initScanner(const char * seq, size_t seqStart, size_t seqEnd, bool isForward) {
         this->seq = seq;
         this->seqStart = seqStart;
         this->seqEnd = seqEnd;
@@ -43,9 +43,10 @@ public:
         this->smer = 0;
         this->prevPos = -8;
         this->posStart = 0;
+        this->isForward = isForward;
     }
 
-    Kmer next(bool forward) {
+    Kmer next() {
         bool syncmerFound = false;
         syncmer = 0;
         int aa = 0;
@@ -55,7 +56,7 @@ public:
             while (smerCnt < 8 - smerLen + 1) {
                 loadedCharCnt -= (loadedCharCnt == smerLen);
                 while (loadedCharCnt < smerLen) {
-                    if (forward) {
+                    if (isForward) {
                         int ci = seqStart + (posStart + smerCnt + loadedCharCnt) * 3;
                         aa = geneticCode.getAA(atcg[seq[ci]], atcg[seq[ci + 1]], atcg[seq[ci + 2]]);
                     } else {
@@ -83,7 +84,7 @@ public:
             int anchor2 = posStart + (8 - smerLen);
             if (!dq.empty() && (dq.front().pos == anchor1 || dq.front().pos == anchor2)) {
                 int shifts = posStart - prevPos;
-                if (forward) {
+                if (isForward) {
                     for (int i = 0; i < shifts; ++i) {
                         int ci = seqStart + (prevPos + 8 + i) * 3;
                         aaPart = (aaPart << 5) | (uint64_t)geneticCode.getAA(atcg[seq[ci]], atcg[seq[ci + 1]], atcg[seq[ci + 2]]);
@@ -103,7 +104,7 @@ public:
             ++posStart;
         }
         if (syncmerFound) {
-            if (forward) {
+            if (isForward) {
                 return {syncmer, seqStart + prevPos * 3};
             } else {
                 return {syncmer, seqEnd - (prevPos + 8) * 3 + 1};

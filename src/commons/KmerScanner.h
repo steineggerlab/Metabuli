@@ -40,6 +40,7 @@ protected:
     uint32_t seqEnd;
     uint32_t seqLen;
     int aaLen;
+    bool isForward;
 
     uint64_t dnaPart;
     uint64_t aaPart;
@@ -52,7 +53,7 @@ public:
         this->dnaMask = (1ULL << 24) - 1;    
     }
 
-    void initScanner(const char * seq, size_t seqStart, size_t seqEnd) {
+    void initScanner(const char * seq, size_t seqStart, size_t seqEnd, bool isForward) {
         this->seq = seq;
         this->seqStart = seqStart;
         this->seqEnd = seqEnd;
@@ -63,10 +64,11 @@ public:
         this->loadedCharCnt = 0;
         this->prevPos = -8;
         this->posStart = 0;
+        this->isForward = isForward;
     }
 
 
-    Kmer next(bool forward) {
+    Kmer next() {
         int aa = 0;
         int codon = 0;
         while (posStart <= aaLen - 8) {
@@ -74,7 +76,7 @@ public:
             loadedCharCnt -= (loadedCharCnt == 8);
             while (loadedCharCnt < 8) {
                 int ci;
-                if (forward) {
+                if (isForward) {
                     ci = seqStart + (posStart + loadedCharCnt) * 3;
                     aa = geneticCode.getAA(atcg[seq[ci]], atcg[seq[ci + 1]], atcg[seq[ci + 2]]);
                     codon = geneticCode.getCodon(atcg[seq[ci]], atcg[seq[ci + 1]], atcg[seq[ci + 2]]);
@@ -97,7 +99,7 @@ public:
             }
             prevPos = posStart;
             posStart++;
-            if (forward) {
+            if (isForward) {
                 return { (aaPart << 24) | (dnaPart & dnaMask), seqStart + prevPos * 3 };
             } else {
                 return { (aaPart << 24) | (dnaPart & dnaMask), seqEnd - (prevPos + 8) * 3 + 1 };

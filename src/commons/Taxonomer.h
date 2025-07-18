@@ -70,6 +70,7 @@ class Taxonomer {
 private:
     const LocalParameters & par;
     TaxonomyWrapper * taxonomy;
+    bool isNewDB;
 
     // spaced k-mer
     int unmaskedPos[9];
@@ -106,12 +107,6 @@ private:
     vector<TaxID> speciesList;
     vector<float> speciesScores;
 
-    // remainConsecutiveMatches
-    vector<const Match *> linkedMatchKeys;
-    vector<const Match *> linkedMatchValues;
-    vector<size_t> linkedMatchValuesIdx;
-    unordered_map<const Match *, depthScore> match2depthScore;
-
     // getMatchPaths
     vector<bool> connectedToNext;
     vector<MatchPath> localMatchPaths;
@@ -128,15 +123,6 @@ private:
 
     // Output
     unordered_map<TaxID, unsigned int> taxCounts;
-
-    depthScore DFS(const Match *curMatch,
-                   const vector<const Match *> &linkedMatchesKeys,
-                   size_t linkedMatchKeysIdx,
-                   const vector<const Match *> &linkedMatchesValues,
-                   const vector<size_t> &linkedMatchesIndices,
-                   size_t depth, size_t MIN_DEPTH,
-                   unordered_map<const Match *, depthScore> &match2depthScore,
-                   float score, int hammingDist);
 
     void ensureArraySize(size_t newSize);
 
@@ -165,7 +151,7 @@ private:
     void trimMatchPath(MatchPath & path1, const MatchPath & path2, int overlapLength);
 
 public:
-    Taxonomer(const LocalParameters & par, TaxonomyWrapper * taxonomy);
+    Taxonomer(const LocalParameters & par, TaxonomyWrapper * taxonomy, bool isNewDB);
     ~Taxonomer();
 
     void assignTaxonomy(const Match *matchList,
@@ -179,20 +165,6 @@ public:
                          const Match *matchList,
                          vector<Query> & queryList,
                          const LocalParameters &par);
-
-    void chooseBestTaxon_syncmer(
-        uint32_t currentQuery,
-        size_t offset,
-        size_t end,
-        const Match *matchList,
-        vector<Query> & queryList,
-        const LocalParameters &par);
-
-    void remainConsecutiveMatches(const Match * matchList,
-                                  size_t start,
-                                  size_t end,
-                                  vector<MatchPath> & matchPaths,
-                                  TaxID speciesId);
 
     void getMatchPaths(const Match * matchList,
                        size_t start,

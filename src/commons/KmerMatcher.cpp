@@ -98,11 +98,6 @@ void KmerMatcher::loadTaxIdList(const LocalParameters & par) {
         in.close();
     }
     cout << "Done" << endl;
-
-    // // Print taxId2speciesId
-    // for (auto &it : taxId2speciesId) {
-    //     cout << it.first << " " << it.second << endl;
-    // }
 }
 
 
@@ -189,7 +184,7 @@ bool KmerMatcher::matchKmers(Buffer<QueryKmer> * queryKmerBuffer,
 #pragma omp parallel default(none), shared(splitCheckList, totalOverFlowCnt, \
 querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numOfDiffIdx, redundancyStored, targetInfoFileName)
 {
-    SeqIterator seqIter(par, *geneticCode);
+    SeqIterator seqIter(par);
     // FILE
     FILE * diffIdxFp = fopen(targetDiffIdxFileName.c_str(), "rb");
     FILE * kmerInfoFp = fopen(targetInfoFileName.c_str(), "rb");
@@ -221,11 +216,9 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
     std::vector<uint8_t> selectedHammingSum;
     std::vector<size_t> selectedMatches;
     std::vector<uint16_t> selectedHammings;
-    std::vector<uint32_t> selectedDnaEncodings;
     selectedHammingSum.resize(1024);
     selectedMatches.resize(1024);
     selectedHammings.resize(1024);
-    selectedDnaEncodings.resize(1024);
     size_t selectedMatchCnt = 0;
 
     size_t posToWrite;
@@ -277,7 +270,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                     matches[matchCnt] = {queryKmerList[j].info,
                                          candidateKmerInfos[idx],
                                          taxId2speciesId[candidateKmerInfos[idx]],
-                                         selectedDnaEncodings[k],
+                                         (unsigned int) (candidateTargetKmers[idx] & AA_MASK),
                                          selectedHammings[k],
                                          selectedHammingSum[k]};
                     matchCnt++;
@@ -289,7 +282,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
             // Reuse the candidate target k-mers to compare in DNA level if queries are the same at amino acid level but not at DNA level
             if (currentQueryAA == AMINO_ACID_PART(queryKmerList[j].ADkmer)) {
                 compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, hammingDists, selectedMatches,
-                           selectedHammingSum, selectedHammings, selectedDnaEncodings, selectedMatchCnt, queryKmerList[j].info.frame);
+                           selectedHammingSum, selectedHammings, selectedMatchCnt, queryKmerList[j].info.frame);
                 // If local buffer is full, copy them to the shared buffer.
                 if (unlikely(matchCnt + selectedMatchCnt > localBufferSize)) {
                     // Check if the shared buffer is full.
@@ -307,7 +300,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                     matches[matchCnt] = {queryKmerList[j].info,
                                          candidateKmerInfos[idx],
                                          taxId2speciesId[candidateKmerInfos[idx]],
-                                         selectedDnaEncodings[k],
+                                         (unsigned int) (candidateTargetKmers[idx] & AA_MASK),
                                          selectedHammings[k],
                                          selectedHammingSum[k]};
                     matchCnt++;
@@ -375,12 +368,11 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                 selectedMatches.resize(candidateTargetKmers.size());
                 selectedHammingSum.resize(candidateTargetKmers.size());
                 selectedHammings.resize(candidateTargetKmers.size());
-                selectedDnaEncodings.resize(candidateTargetKmers.size());
             }
 
             // Compare the current query and the loaded target k-mers and select
             compareDna(currentQuery, candidateTargetKmers, hammingDists, selectedMatches, selectedHammingSum,
-                       selectedHammings, selectedDnaEncodings, selectedMatchCnt, queryKmerList[j].info.frame);
+                       selectedHammings, selectedMatchCnt, queryKmerList[j].info.frame);
 
             // If local buffer is full, copy them to the shared buffer.
             if (unlikely(matchCnt + selectedMatchCnt > localBufferSize)) {
@@ -400,7 +392,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                 matches[matchCnt] = {queryKmerList[j].info,
                                      candidateKmerInfos[idx],
                                      taxId2speciesId[candidateKmerInfos[idx]],
-                                     selectedDnaEncodings[k],
+                                     (unsigned int) (candidateTargetKmers[idx] & AA_MASK),
                                      selectedHammings[k],
                                      selectedHammingSum[k]};
                 matchCnt++;
@@ -550,11 +542,9 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
     std::vector<uint8_t> selectedHammingSum;
     std::vector<size_t> selectedMatches;
     std::vector<uint16_t> selectedHammings;
-    std::vector<uint32_t> selectedDnaEncodings;
     selectedHammingSum.resize(1024);
     selectedMatches.resize(1024);
     selectedHammings.resize(1024);
-    selectedDnaEncodings.resize(1024);
     size_t selectedMatchCnt = 0;
 
     size_t posToWrite;
@@ -600,7 +590,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                     matches[matchCnt] = {queryKmerList[j].info,
                                          candidateKmerInfos[idx],
                                          taxId2speciesId[candidateKmerInfos[idx]],
-                                         selectedDnaEncodings[k],
+                                         (unsigned int) (candidateTargetKmers[idx] & AA_MASK),
                                          selectedHammings[k],
                                          selectedHammingSum[k]};
                     matchCnt++;
@@ -612,7 +602,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
             // Reuse the candidate target k-mers to compare in DNA level if queries are the same at amino acid level but not at DNA level
             if (currentQueryAA == AMINO_ACID_PART(queryKmerList[j].ADkmer)) {
                 compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, hammingDists, selectedMatches,
-                           selectedHammingSum, selectedHammings, selectedDnaEncodings, selectedMatchCnt, queryKmerList[j].info.frame);
+                           selectedHammingSum, selectedHammings, selectedMatchCnt, queryKmerList[j].info.frame);
                 // If local buffer is full, copy them to the shared buffer.
                 if (unlikely(matchCnt + selectedMatchCnt > localBufferSize)) {
                     // Check if the shared buffer is full.
@@ -630,7 +620,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                     matches[matchCnt] = {queryKmerList[j].info,
                                          candidateKmerInfos[idx],
                                          taxId2speciesId[candidateKmerInfos[idx]],
-                                         selectedDnaEncodings[k],
+                                         (unsigned int) (candidateTargetKmers[idx] & AA_MASK),
                                          selectedHammings[k],
                                          selectedHammingSum[k]};
                     matchCnt++;
@@ -682,12 +672,11 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                 selectedMatches.resize(candidateTargetKmers.size());
                 selectedHammingSum.resize(candidateTargetKmers.size());
                 selectedHammings.resize(candidateTargetKmers.size());
-                selectedDnaEncodings.resize(candidateTargetKmers.size());
             }
 
             // Compare the current query and the loaded target k-mers and select
             compareDna(currentQuery, candidateTargetKmers, hammingDists, selectedMatches, selectedHammingSum,
-                       selectedHammings, selectedDnaEncodings, selectedMatchCnt, queryKmerList[j].info.frame);
+                       selectedHammings, selectedMatchCnt, queryKmerList[j].info.frame);
 
             // If local buffer is full, copy them to the shared buffer.
             if (unlikely(matchCnt + selectedMatchCnt > localBufferSize)) {
@@ -706,7 +695,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                 matches[matchCnt] = {queryKmerList[j].info,
                                      candidateKmerInfos[idx],
                                      taxId2speciesId[candidateKmerInfos[idx]],
-                                     selectedDnaEncodings[k],
+                                     (unsigned int) (candidateTargetKmers[idx] & AA_MASK),
                                      selectedHammings[k],
                                      selectedHammingSum[k]};
                 matchCnt++;
@@ -764,7 +753,6 @@ void KmerMatcher::compareDna(uint64_t query,
                              std::vector<size_t> &selectedMatches,
                              std::vector<uint8_t> &selectedHammingSum,
                              std::vector<uint16_t> &selectedHammings,
-                             std::vector<uint32_t> &selectedDnaEncodings,
                              size_t & selectedMatchIdx,
                              uint8_t frame) {
     hammingDists.resize(targetKmersToCompare.size());
@@ -782,7 +770,6 @@ void KmerMatcher::compareDna(uint64_t query,
     for (size_t h = 0; h < targetKmersToCompare.size(); h++) {
         if (hammingDists[h] <= maxHamming) {
             selectedHammingSum[selectedMatchIdx] = hammingDists[h];
-            selectedDnaEncodings[selectedMatchIdx] = (unsigned int) (targetKmersToCompare[h] & AA_MASK);
             selectedHammings[selectedMatchIdx] = (frame < 3)
                 ? getHammings(query, targetKmersToCompare[h])
                 : getHammings_reverse(query, targetKmersToCompare[h]);

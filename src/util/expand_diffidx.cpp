@@ -54,7 +54,7 @@ int expand_diffidx(int argc, const char **argv, const Command &command){
 
     start = chrono::high_resolution_clock::now();
     GeneticCode geneticCode(par.reducedAA == 1);
-    SeqIterator * seqIterator = new SeqIterator(par, geneticCode);
+    SeqIterator * seqIterator = new SeqIterator(par);
     size_t loadedItems;
     bool isFirst = true;
     size_t total = 0;

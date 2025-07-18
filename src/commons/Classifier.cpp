@@ -174,7 +174,7 @@ void Classifier::assignTaxonomy(const Match *matchList,
     // Process each block
 #pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqNum, queryList, blockIdx, par)
     {
-        Taxonomer taxonomer(par, taxonomy);
+        Taxonomer taxonomer(par, taxonomy, isNewDB);
         #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < blockIdx; ++i) {
             taxonomer.chooseBestTaxon(matchBlocks[i].id - 1,

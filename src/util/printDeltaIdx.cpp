@@ -29,7 +29,7 @@ int printDeltaIdx(int argc, const char **argv, const Command &command){
     GeneticCode geneticCode(par.reducedAA == 1);
 
 
-    SeqIterator * seqIterator = new SeqIterator(par, geneticCode);
+    SeqIterator * seqIterator = new SeqIterator(par);
     size_t loadedItems;
     bool isFirst = true;
 
