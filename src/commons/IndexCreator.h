@@ -252,7 +252,7 @@ public:
         }
     }
 
-    IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy);
+    IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy, bool isNewFormat);
 
     ~IndexCreator();
     

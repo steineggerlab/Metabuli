@@ -56,8 +56,9 @@ public:
     }
 
     explicit ReducedKmerMatcher(LocalParameters & par,
-                                TaxonomyWrapper * taxonomy)
-                                : KmerMatcher(par,taxonomy) {
+                                TaxonomyWrapper * taxonomy,
+                                bool isNewIdxFormat)
+                                : KmerMatcher(par, taxonomy, isNewIdxFormat) {
         DNA_MASK = 0Xffffffff;
         DNA_MASK = ~ DNA_MASK;
         AA_MASK = 0xffffffffU;     

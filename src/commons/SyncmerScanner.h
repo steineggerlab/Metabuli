@@ -22,6 +22,7 @@ protected:
     int smerCnt;
     uint64_t smer;
     uint64_t syncmer;
+    int prevPos;
 
 public:
     SyncmerScanner(int smerLen, const GeneticCode &geneticCode) : KmerScanner(geneticCode) {

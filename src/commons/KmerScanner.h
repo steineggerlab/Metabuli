@@ -2,6 +2,7 @@
 #define METABULI_KMERSCANNER_H
 
 #include <iostream>
+#include <deque>
 
 #include "Kmer.h"
 #include "GeneticCode.h"
@@ -47,7 +48,6 @@ protected:
     uint64_t dnaPart;
     uint64_t aaPart;
     int loadedCharCnt;
-    int prevPos;
     int posStart;
 
 public:
@@ -69,7 +69,6 @@ public:
         this->dnaPart = 0;
         this->aaPart = 0;
         this->loadedCharCnt = 0;
-        this->prevPos = -8;
         this->posStart = 0;
         this->isForward = isForward;
     }
@@ -99,22 +98,78 @@ public:
             }
             if (sawN) {
                 posStart += loadedCharCnt + 1;
-                prevPos = posStart - 8; 
                 dnaPart = aaPart = 0;
                 loadedCharCnt = 0;
                 continue;
             }
-            prevPos = posStart;
-            posStart++;
             if (isForward) {
-                return { (aaPart << 24) | (dnaPart & dnaMask), seqStart + prevPos * 3 };
+                return { (aaPart << 24) | (dnaPart & dnaMask), seqStart + (posStart++) * 3 };
             } else {
-                return { (aaPart << 24) | (dnaPart & dnaMask), seqEnd - (prevPos + 8) * 3 + 1 };
+                return { (aaPart << 24) | (dnaPart & dnaMask), seqEnd - ((posStart++) + 8) * 3 + 1 };
             }
         }
         return { UINT64_MAX, 0 }; // No more kmers found
     }
+};
 
+// OldKmerScanner is made to support searching old-format databases
+// Implementation is very efficient and puzzling, but it works
+class OldKmerScanner : public KmerScanner {
+    private: 
+        std::deque<size_t> dq;
+    public:
+        OldKmerScanner(const GeneticCode &geneticCode) : KmerScanner(geneticCode) {}
+        
+        void initScanner(const char * seq, size_t seqStart, size_t seqEnd, bool isForward) override {
+            KmerScanner::initScanner(seq, seqStart, seqEnd, isForward);
+            dq.clear();
+        }
+
+        Kmer next() override {
+            int aa = 0;
+            int codon = 0;
+            while (posStart <= aaLen - 8) {
+                bool sawN = false;
+                loadedCharCnt -= (loadedCharCnt == 8);
+                while (loadedCharCnt < 8) {
+                    int ci;
+                    if (isForward) {
+                        ci = seqEnd - (posStart + loadedCharCnt) * 3;
+                        aa    = geneticCode.getAA   (atcg[seq[ci - 2]], atcg[seq[ci - 1]], atcg[seq[ci]]);
+                        codon = geneticCode.getCodon(atcg[seq[ci - 2]], atcg[seq[ci - 1]], atcg[seq[ci]]);
+                    } else {
+                        ci = seqStart + (posStart + loadedCharCnt) * 3;
+                        aa    = geneticCode.getAA   (iRCT[atcg[seq[ci + 2]]], iRCT[atcg[seq[ci + 1]]], iRCT[atcg[seq[ci]]]);
+                        codon = geneticCode.getCodon(iRCT[atcg[seq[ci + 2]]], iRCT[atcg[seq[ci + 1]]], iRCT[atcg[seq[ci]]]);
+                    }
+                    if (aa < 0) { sawN = true; break; }
+                    if (dq.size() == 8) {
+                        aaPart = aaPart - dq.back();
+                        dq.pop_back();
+                    }
+                    for (auto &x : dq) {
+                        x *= 21;
+                    }
+                    dq.emplace_front(aa);
+                    aaPart = aaPart * 21 + aa;
+                    dnaPart = (dnaPart << 3) | (uint64_t)codon;
+                    loadedCharCnt++;
+                }
+                if (sawN) {
+                    posStart += loadedCharCnt + 1;
+                    dnaPart = aaPart = 0;
+                    loadedCharCnt = 0;
+                    dq.clear();
+                    continue;
+                }
+                if (isForward) {
+                    return { (aaPart << 24) | (dnaPart & dnaMask), seqEnd - ((posStart++) + 8) * 3 + 1};
+                } else {
+                    return { (aaPart << 24) | (dnaPart & dnaMask), seqStart + (posStart++) * 3 };
+                }    
+            }
+            return { UINT64_MAX, 0 }; // No more kmers found
+        }    
 };
 
 #endif // METABULI_KMERSCANNER_H

@@ -23,9 +23,9 @@ QueryFilter::QueryFilter(LocalParameters & par) {
     // Agents
     geneticCode = new GeneticCode(par.reducedAA == 1);
     queryIndexer = new QueryIndexer(par);
-    kmerExtractor = new KmerExtractor(par, *geneticCode);
-    if (par.reducedAA) { kmerMatcher = new ReducedKmerMatcher(par, taxonomy);} 
-    else { kmerMatcher = new KmerMatcher(par, taxonomy);}
+    kmerExtractor = new KmerExtractor(par, *geneticCode, isNewDB);
+    if (par.reducedAA) { kmerMatcher = new ReducedKmerMatcher(par, taxonomy, isNewDB);} 
+    else { kmerMatcher = new KmerMatcher(par, taxonomy, isNewDB);}
     taxonomer = new Taxonomer(par, taxonomy, isNewDB);
     reporter = new Reporter(par, taxonomy);
     setInputAndOutputFiles(par);

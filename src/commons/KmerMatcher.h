@@ -33,6 +33,7 @@ protected:
   const LocalParameters &par;
   TaxonomyWrapper *taxonomy;
   GeneticCode *geneticCode;
+  bool isNewIdxFormat;
   
   size_t threads;
   std::string dbDir;
@@ -49,6 +50,95 @@ protected:
       {1, 1, 0, 1, 2, 2, 2, 3}, {1, 1, 1, 0, 1, 2, 3, 3},
       {2, 2, 2, 1, 0, 1, 4, 4}, {1, 2, 2, 2, 1, 0, 4, 4},
       {3, 3, 2, 3, 4, 4, 0, 1}, {3, 2, 3, 3, 4, 4, 1, 0}};
+
+  static constexpr uint16_t HAMMING_LUT0[64] = {
+      /* row 0 */ 0,    1,    1,    1,    2,    1,    3,    3,
+      /* row 1 */ 1,    0,    1,    1,    2,    2,    3,    2,
+      /* row 2 */ 1,    1,    0,    1,    2,    2,    2,    3,
+      /* row 3 */ 1,    1,    1,    0,    1,    2,    3,    3,
+      /* row 4 */ 2,    2,    2,    1,    0,    1,    0,    0,
+      /* row 5 */ 1,    2,    2,    2,    1,    0,    0,    0,
+      /* row 6 */ 3,    3,    2,    3,    0,    0,    0,    1,
+      /* row 7 */ 3,    2,    3,    3,    0,    0,    1,    0,
+  };
+
+  static constexpr uint16_t HAMMING_LUT1[64] = {
+      /* row 0 */ 0,    4,    4,    4,    8,    4,   12,   12,
+      /* row 1 */ 4,    0,    4,    4,    8,    8,   12,    8,
+      /* row 2 */ 4,    4,    0,    4,    8,    8,    8,   12,
+      /* row 3 */ 4,    4,    4,    0,    4,    8,   12,   12,
+      /* row 4 */ 8,    8,    8,    4,    0,    4,    0,    0,
+      /* row 5 */ 4,    8,    8,    8,    4,    0,    0,    0,
+      /* row 6 */12,   12,    8,   12,    0,    0,    0,    4,
+      /* row 7 */12,    8,   12,   12,    0,    0,    4,    0,
+  };
+
+  static constexpr uint16_t HAMMING_LUT2[64] = {
+      /* row 0 */ 0,   16,   16,   16,   32,   16,   48,   48,
+      /* row 1 */16,    0,   16,   16,   32,   32,   48,   32,
+      /* row 2 */16,   16,    0,   16,   32,   32,   32,   48,
+      /* row 3 */16,   16,   16,    0,   16,   32,   48,   48,
+      /* row 4 */32,   32,   32,   16,    0,   16,    0,    0,
+      /* row 5 */16,   32,   32,   32,   16,    0,    0,    0,
+      /* row 6 */48,   48,   32,   48,    0,    0,    0,   16,
+      /* row 7 */48,   32,   48,   48,    0,    0,   16,    0,
+  };
+
+  static constexpr uint16_t HAMMING_LUT3[64] = {
+      /* row 0 */ 0,   64,   64,   64,  128,   64,  192,  192,
+      /* row 1 */64,    0,   64,   64,  128,  128,  192,  128,
+      /* row 2 */64,   64,    0,   64,  128,  128,  128,  192,
+      /* row 3 */64,   64,   64,    0,   64,  128,  192,  192,
+      /* row 4 */128, 128,  128,   64,    0,   64,    0,    0,
+      /* row 5 */64,  128,  128,  128,   64,    0,    0,    0,
+      /* row 6 */192, 192,  128,  192,    0,    0,    0,   64,
+      /* row 7 */192, 128,  192,  192,    0,    0,   64,    0,
+  };
+
+  static constexpr uint16_t HAMMING_LUT4[64] = {
+      /* row 0 */ 0,  256,  256,  256,  512,  256,  768,  768,
+      /* row 1 */256,   0,  256,  256,  512,  512,  768,  512,
+      /* row 2 */256, 256,    0,  256,  512,  512,  512,  768,
+      /* row 3 */256, 256,  256,    0,  256,  512,  768,  768,
+      /* row 4 */512, 512,  512,  256,    0,  256,    0,    0,
+      /* row 5 */256, 512,  512,  512,  256,    0,    0,    0,
+      /* row 6 */768, 768,  512,  768,    0,    0,    0,  256,
+      /* row 7 */768, 512,  768,  768,    0,    0,  256,    0,
+  };
+
+  static constexpr uint16_t HAMMING_LUT5[64] = {
+      /* row 0 */   0, 1024, 1024, 1024, 2048, 1024, 3072, 3072,
+      /* row 1 */1024,    0, 1024, 1024, 2048, 2048, 3072, 2048,
+      /* row 2 */1024, 1024,    0, 1024, 2048, 2048, 2048, 3072,
+      /* row 3 */1024, 1024, 1024,    0, 1024, 2048, 3072, 3072,
+      /* row 4 */2048, 2048, 2048, 1024,    0, 1024,    0,    0,
+      /* row 5 */1024, 2048, 2048, 2048, 1024,    0,    0,    0,
+      /* row 6 */3072, 3072, 2048, 3072,    0,    0,    0, 1024,
+      /* row 7 */3072, 2048, 3072, 3072,    0,    0, 1024,    0,
+  };
+
+  static constexpr uint16_t HAMMING_LUT6[64] = {
+      /* row 0 */    0, 4096, 4096, 4096,  8192, 4096, 12288, 12288,
+      /* row 1 */ 4096,    0, 4096, 4096,  8192, 8192, 12288,  8192,
+      /* row 2 */ 4096, 4096,    0, 4096,  8192, 8192,  8192, 12288,
+      /* row 3 */ 4096, 4096, 4096,    0,  4096, 8192, 12288, 12288,
+      /* row 4 */ 8192, 8192, 8192, 4096,     0, 4096,     0,    0,
+      /* row 5 */ 4096, 8192, 8192, 8192,  4096,    0,     0,    0,
+      /* row 6 */12288,12288, 8192,12288,     0,    0,     0, 4096,
+      /* row 7 */12288, 8192,12288,12288,     0,    0,  4096,    0,
+  };
+
+  static constexpr uint16_t HAMMING_LUT7[64] = {
+      /* row 0 */    0, 16384, 16384, 16384, 32768, 16384, 49152, 49152,
+      /* row 1 */16384,     0, 16384, 16384, 32768, 32768, 49152, 32768,
+      /* row 2 */16384, 16384,     0, 16384, 32768, 32768, 32768, 49152,
+      /* row 3 */16384, 16384, 16384,     0, 16384, 32768, 49152, 49152,
+      /* row 4 */32768, 32768, 32768, 16384,     0, 16384, 16384, 16384,
+      /* row 5 */16384, 32768, 32768, 32768, 16384,     0, 16384, 16384,
+      /* row 6 */49152, 49152, 32768, 49152,     0,     0,     0, 16384,
+      /* row 7 */49152, 32768, 49152, 49152,     0,     0, 16384,     0,
+  };
+
   unordered_map<TaxID, TaxID> taxId2speciesId;
   unordered_map<TaxID, TaxID> taxId2genusId;
 
@@ -171,7 +261,9 @@ static void loadBuffer2(int fd, T *buffer, size_t &bufferIdx, size_t size, off_t
   }
 
 public:
-  KmerMatcher(const LocalParameters &par, TaxonomyWrapper *taxonomy);
+  KmerMatcher(const LocalParameters &par,
+   TaxonomyWrapper *taxonomy,
+   bool isNewIdxFormat);
 
   virtual ~KmerMatcher();
   
@@ -267,31 +359,60 @@ inline uint8_t KmerMatcher::getHammingDistanceSum(uint64_t kmer1,
   return hammingSum;
 }
 
+
+// inline uint16_t KmerMatcher::getHammings(
+//   uint64_t kmer1, 
+//   uint64_t kmer2) 
+// {
+//   uint16_t h = 0;
+//   h |= HAMMING_LUT0[GET_3_BITS(kmer1) << 3 | GET_3_BITS(kmer2)];
+//   kmer1 >>= 3; kmer2 >>= 3;
+//   h |= HAMMING_LUT1[GET_3_BITS(kmer1) << 3 | GET_3_BITS(kmer2)];
+//   kmer1 >>= 3; kmer2 >>= 3;
+//   h |= HAMMING_LUT2[GET_3_BITS(kmer1) << 3 | GET_3_BITS(kmer2)];
+//   kmer1 >>= 3; kmer2 >>= 3;
+//   h |= HAMMING_LUT3[GET_3_BITS(kmer1) << 3 | GET_3_BITS(kmer2)];
+//   kmer1 >>= 3; kmer2 >>= 3;
+//   h |= HAMMING_LUT4[GET_3_BITS(kmer1) << 3 | GET_3_BITS(kmer2)];
+//   kmer1 >>= 3; kmer2 >>= 3;
+//   h |= HAMMING_LUT5[GET_3_BITS(kmer1) << 3 | GET_3_BITS(kmer2)];
+//   kmer1 >>= 3; kmer2 >>= 3;
+//   h |= HAMMING_LUT6[GET_3_BITS(kmer1) << 3 | GET_3_BITS(kmer2)];
+//   kmer1 >>= 3; kmer2 >>= 3;
+//   h |= HAMMING_LUT7[GET_3_BITS(kmer1) << 3 | GET_3_BITS(kmer2)];
+//   return h;
+// }
+
 inline uint16_t KmerMatcher::getHammings(
-  uint64_t kmer1,  // left-end 01234567 right-end
-  uint64_t kmer2)  // left-end 01234567 right-end
+  uint64_t kmer1, 
+  uint64_t kmer2) 
 {
-  uint16_t hammings = 0;
-  for (int i = 0; i < 8; i++) {
-    hammings |= (hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)] << 2U * i);
-    kmer1 >>= 3U;
-    kmer2 >>= 3U;
-  }
-  return hammings; // left-end 01234567 right-end
+  uint16_t h = 0;
+  h |= HAMMING_LUT0[GET_3_BITS(kmer1)       << 3 | GET_3_BITS(kmer2)];
+  h |= HAMMING_LUT1[GET_3_BITS(kmer1 >>  3) << 3 | GET_3_BITS(kmer2 >> 3)];
+  h |= HAMMING_LUT2[GET_3_BITS(kmer1 >>  6) << 3 | GET_3_BITS(kmer2 >> 6)];
+  h |= HAMMING_LUT3[GET_3_BITS(kmer1 >>  9) << 3 | GET_3_BITS(kmer2 >> 9)];
+  h |= HAMMING_LUT4[GET_3_BITS(kmer1 >> 12) << 3 | GET_3_BITS(kmer2 >> 12)];
+  h |= HAMMING_LUT5[GET_3_BITS(kmer1 >> 15) << 3 | GET_3_BITS(kmer2 >> 15)];
+  h |= HAMMING_LUT6[GET_3_BITS(kmer1 >> 18) << 3 | GET_3_BITS(kmer2 >> 18)];
+  h |= HAMMING_LUT7[GET_3_BITS(kmer1 >> 21) << 3 | GET_3_BITS(kmer2 >> 21)];
+  return h;
 }
 
 inline uint16_t KmerMatcher::getHammings_reverse(
   uint64_t kmer1,  // left-end 76543210 right-end
   uint64_t kmer2)  // left-end 76543210 right-end
 {
-  uint16_t hammings = 0;
-  for (int i = 0; i < 8; i++) {
-    hammings |= hammingLookup[GET_3_BITS(kmer1)][GET_3_BITS(kmer2)]
-                << 2U * (7 - i);
-    kmer1 >>= 3U;
-    kmer2 >>= 3U;
-  }
-  return hammings; // left-end 01234567 right-end
+  uint16_t h = 0;
+  h |= HAMMING_LUT7[GET_3_BITS(kmer1)       << 3 | GET_3_BITS(kmer2)];
+  h |= HAMMING_LUT6[GET_3_BITS(kmer1 >>  3) << 3 | GET_3_BITS(kmer2 >> 3)];
+  h |= HAMMING_LUT5[GET_3_BITS(kmer1 >>  6) << 3 | GET_3_BITS(kmer2 >> 6)];
+  h |= HAMMING_LUT4[GET_3_BITS(kmer1 >>  9) << 3 | GET_3_BITS(kmer2 >> 9)];
+  h |= HAMMING_LUT3[GET_3_BITS(kmer1 >> 12) << 3 | GET_3_BITS(kmer2 >> 12)];
+  h |= HAMMING_LUT2[GET_3_BITS(kmer1 >> 15) << 3 | GET_3_BITS(kmer2 >> 15)];
+  h |= HAMMING_LUT1[GET_3_BITS(kmer1 >> 18) << 3 | GET_3_BITS(kmer2 >> 18)];
+  h |= HAMMING_LUT0[GET_3_BITS(kmer1 >> 21) << 3 | GET_3_BITS(kmer2 >> 21)];
+  return h; // left-end 01234567 right-end
 }
 
 

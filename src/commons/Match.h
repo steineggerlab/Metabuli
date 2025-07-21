@@ -43,13 +43,7 @@ struct Match { // 24 byte
         }
     }
 
-    bool isConsecutive_DNA(const Match * match2) const {
-        // match1 87654321 -> 08765432
-        // match2 98765432 -> 08765432
-        return (dnaEncoding >> 3) == (match2->dnaEncoding & 0x1FFFFF);
-    }
-
-    float getRightPartScore(const int range, float score = 0.0f, int cnt = 0) const {
+    virtual float getRightPartScore(const int range, float score = 0.0f, int cnt = 0) const {
         if (cnt == range) {
             return score;
         }
@@ -62,7 +56,7 @@ struct Match { // 24 byte
         return getRightPartScore(range, score, cnt + 1);    
     }
 
-    float getLeftPartScore(const int range, float score = 0.0f, int cnt = 0) const {
+    virtual float getLeftPartScore(const int range, float score = 0.0f, int cnt = 0) const {
         if (cnt == range) {
             return score;
         }
@@ -75,7 +69,7 @@ struct Match { // 24 byte
         return getLeftPartScore(range, score, cnt + 1);    
     }
 
-    int getRightPartHammingDist(const int range) const {
+    virtual int getRightPartHammingDist(const int range) const {
         int sum = 0;
         for (int i = 0; i < range; i++) {
             sum += GET_2_BITS(rightEndHamming >> (i * 2));
@@ -83,10 +77,64 @@ struct Match { // 24 byte
         return sum;
     }
 
-    int getLeftPartHammingDist(const int range) const {
+    virtual int getLeftPartHammingDist(const int range) const {
         int sum = 0;
         for (int i = 0; i < range; i++) {
             sum += GET_2_BITS(rightEndHamming >> (14 - i * 2));
+        }
+        return sum;
+    }
+};
+
+
+struct OldMatch : Match { // 24 byte
+    OldMatch(){}
+    OldMatch(QueryKmerInfo qInfo,
+          int targetId,
+          TaxID speciesId,
+          uint32_t dnaEncoding,
+          uint16_t eachHamming,
+          uint8_t hamming)
+          : Match(qInfo, targetId, speciesId, dnaEncoding, eachHamming, hamming) { }
+
+    float getRightPartScore(const int range, float score = 0.0f, int cnt = 0) const override {
+        if (cnt == range) {
+            return score;
+        }
+        int currentHamming = GET_2_BITS(rightEndHamming >> (14 - cnt * 2));
+        if (currentHamming == 0) {
+            score += 3.0f;
+        } else {
+            score += 2.0f - 0.5f * currentHamming;
+        }
+        return getRightPartScore(range, score, cnt + 1);    
+    }
+
+    float getLeftPartScore(const int range, float score = 0.0f, int cnt = 0) const override {
+        if (cnt == range) {
+            return score;
+        }
+        int currentHamming = GET_2_BITS(rightEndHamming >> (cnt * 2));
+        if (currentHamming == 0) {
+            score += 3.0f;
+        } else {
+            score += 2.0f - 0.5f * currentHamming;
+        }
+        return getLeftPartScore(range, score, cnt + 1);    
+    }
+
+    int getRightPartHammingDist(const int range) const override {
+        int sum = 0;
+        for (int i = 0; i < range; i++) {
+            sum += GET_2_BITS(rightEndHamming >> (14 - i * 2));
+        }
+        return sum;
+    }
+
+    int getLeftPartHammingDist(const int range) const override {
+        int sum = 0;
+        for (int i = 0; i < range; i++) {
+            sum += GET_2_BITS(rightEndHamming >> (i * 2));
         }
         return sum;
     }

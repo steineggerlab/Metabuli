@@ -67,7 +67,10 @@ private:
         uint32_t offset = 0);
                                       
 public:
-    explicit KmerExtractor(const LocalParameters & par, const GeneticCode &geneticCode);
+    explicit KmerExtractor(
+        const LocalParameters & par,
+        const GeneticCode &geneticCode,
+        bool newKmerFormat);
     ~KmerExtractor();
     void extractQueryKmers(Buffer<QueryKmer> &kmerBuffer,
                            vector<Query> & queryList,

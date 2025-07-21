@@ -94,7 +94,7 @@ int build(int argc, const char **argv, const Command &command){
 
     // TaxonomyWrapper * taxonomy;
     // taxonomy = loadTaxonomy(dbDir, "");
-    IndexCreator idxCre(par, taxonomy);
+    IndexCreator idxCre(par, taxonomy, true);
     idxCre.createIndex(par);
     if (par.accessionLevel == 1) {
         taxonomy = idxCre.getTaxonomy();

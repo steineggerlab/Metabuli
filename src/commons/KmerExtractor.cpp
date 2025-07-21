@@ -1,14 +1,21 @@
 #include "KmerExtractor.h"
 #include <unordered_map>
 
-KmerExtractor::KmerExtractor(const LocalParameters &par, const GeneticCode & geneticCode) 
+KmerExtractor::KmerExtractor(
+    const LocalParameters &par,
+    const GeneticCode & geneticCode,
+    bool newKmerFormat) 
     : par(par), kmerScanners(new KmerScanner*[par.threads]) {
     // Initialize k-mer scanners for each thread
     for (int i = 0; i < par.threads; ++i) {
-        if (par.syncmer) {
-            kmerScanners[i] = new SyncmerScanner(par.smerLen, geneticCode);
+        if (!newKmerFormat) {
+            kmerScanners[i] = new OldKmerScanner(geneticCode);
         } else {
-            kmerScanners[i] = new KmerScanner(geneticCode);
+            if (par.syncmer) {
+                kmerScanners[i] = new SyncmerScanner(par.smerLen, geneticCode);
+            } else {
+                kmerScanners[i] = new KmerScanner(geneticCode);
+            }
         }
     }
     spaceNum = 0;

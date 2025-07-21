@@ -103,9 +103,8 @@ int updateDB(int argc, const char **argv, const Command &command){
         Debug(Debug::INFO) << "New taxonomy generated.\n";
     }
 
-    IndexCreator idxCre(par, taxonomy);
+    IndexCreator idxCre(par, taxonomy, isNewFormat);
     idxCre.setIsUpdating(true);
-    idxCre.setIsNewFormat(isNewFormat);
     idxCre.createIndex(par);
     if (par.accessionLevel == 1) {
         taxonomy = idxCre.getTaxonomy();

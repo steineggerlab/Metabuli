@@ -6,8 +6,22 @@
 #include <ostream>
 #include <vector>
 
-KmerMatcher::KmerMatcher(const LocalParameters & par,
-                         TaxonomyWrapper * taxonomy) : par(par) {                        
+constexpr uint16_t KmerMatcher::HAMMING_LUT0[64];
+constexpr uint16_t KmerMatcher::HAMMING_LUT1[64];
+constexpr uint16_t KmerMatcher::HAMMING_LUT2[64];
+constexpr uint16_t KmerMatcher::HAMMING_LUT3[64];
+constexpr uint16_t KmerMatcher::HAMMING_LUT4[64];
+constexpr uint16_t KmerMatcher::HAMMING_LUT5[64];
+constexpr uint16_t KmerMatcher::HAMMING_LUT6[64];
+constexpr uint16_t KmerMatcher::HAMMING_LUT7[64];
+
+
+KmerMatcher::KmerMatcher(
+    const LocalParameters & par,
+    TaxonomyWrapper * taxonomy,
+    bool isNewIdxFormat) 
+    : par(par), 
+      isNewIdxFormat(isNewIdxFormat) {                        
     // Parameters
     threads = par.threads;
     dbDir = par.filenames[1 + (par.seqMode == 2)];
@@ -113,13 +127,17 @@ bool KmerMatcher::matchKmers(Buffer<QueryKmer> * queryKmerBuffer,
     size_t queryKmerNum = queryKmerBuffer->startIndexOfReserve;
     QueryKmer * queryKmerList = queryKmerBuffer->buffer;
     
-    // Find the first index of garbage query k-mer (UINT64_MAX) and discard from there
-    for (size_t checkN = queryKmerNum - 1; checkN > 0; checkN--) {
-        if (queryKmerList[checkN].ADkmer != UINT64_MAX) {
-            queryKmerNum = checkN + 1;
+
+    size_t blankCnt = 0;
+    for (size_t i = 0; i < queryKmerNum; i++) {
+        if (queryKmerList[i].info.sequenceID == 0) {
+            blankCnt++;
+        } else {
             break;
         }
     }
+    queryKmerNum -= blankCnt;
+    cout << "Total query k-mers: " << queryKmerNum << endl;
     
     // Filter out meaningless target splits
     size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
@@ -137,7 +155,7 @@ bool KmerMatcher::matchKmers(Buffer<QueryKmer> * queryKmerBuffer,
     uint64_t queryAA;
     size_t quotient = queryKmerNum / threads;
     size_t remainder = queryKmerNum % threads;
-    size_t startIdx = 0;
+    size_t startIdx = blankCnt;
     size_t endIdx = 0; // endIdx is inclusive
     for (size_t i = 0; i < threads; i++) {
         endIdx = startIdx + quotient - 1;
@@ -754,7 +772,7 @@ void KmerMatcher::compareDna(uint64_t query,
     for (size_t h = 0; h < targetKmersToCompare.size(); h++) {
         if (hammingDists[h] <= maxHamming) {
             selectedHammingSum[selectedMatchIdx] = hammingDists[h];
-            selectedHammings[selectedMatchIdx] = (frame < 3)
+            selectedHammings[selectedMatchIdx] = !((frame < 3) ^ (isNewIdxFormat))
                 ? getHammings(query, targetKmersToCompare[h])
                 : getHammings_reverse(query, targetKmersToCompare[h]);
             selectedMatches[selectedMatchIdx++] = h;

@@ -110,8 +110,7 @@ struct Buffer {
     };
 
     size_t reserveMemory(size_t numOfKmer) {
-        size_t offsetToWrite = __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
-        return offsetToWrite;
+        return __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
     };
 
     void reallocateMemory(size_t sizeOfBuffer) {

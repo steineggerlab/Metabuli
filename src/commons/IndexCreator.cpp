@@ -11,8 +11,11 @@
 
 extern const char *version;
 
-IndexCreator::IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy) 
-    : par(par), taxonomy(taxonomy) {
+IndexCreator::IndexCreator(
+    const LocalParameters & par, 
+    TaxonomyWrapper * taxonomy,
+    bool isNewFormat) 
+    : par(par), taxonomy(taxonomy), isNewFormat(isNewFormat) {
     dbDir = par.filenames[0];
     if (par.taxonomyPath.empty()) {
         taxonomyDir = dbDir + "/taxonomy/";
@@ -35,9 +38,8 @@ IndexCreator::IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxono
         MARKER = ~ MARKER;
     }
     geneticCode = new GeneticCode(par.reducedAA == 1);
-    kmerExtractor = new KmerExtractor(par, *geneticCode);
+    kmerExtractor = new KmerExtractor(par, *geneticCode, isNewFormat);
     isUpdating = false;
-    isNewFormat = true;
     subMat = new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0);
 }
 

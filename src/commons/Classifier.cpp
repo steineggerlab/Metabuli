@@ -21,11 +21,11 @@ Classifier::Classifier(LocalParameters & par) {
 
     geneticCode = new GeneticCode(par.reducedAA == 1);
     queryIndexer = new QueryIndexer(par);
-    kmerExtractor = new KmerExtractor(par, *geneticCode);
+    kmerExtractor = new KmerExtractor(par, *geneticCode, isNewDB);
     if (par.reducedAA) {
-        kmerMatcher = new ReducedKmerMatcher(par, taxonomy);
+        kmerMatcher = new ReducedKmerMatcher(par, taxonomy, isNewDB);
     } else {
-        kmerMatcher = new KmerMatcher(par, taxonomy);
+        kmerMatcher = new KmerMatcher(par, taxonomy, isNewDB);
     }
     reporter = new Reporter(par, taxonomy);
 }

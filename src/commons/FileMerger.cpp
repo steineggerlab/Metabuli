@@ -313,12 +313,6 @@ void FileMerger::mergeDeltaIdxFiles() {
     for(size_t file = 0; file < numOfSplits; file++){
         Metamer metamer;
         lookingMetamers[file] = KmerMatcher::getNextTargetKmer(metamer, deltaFileList[file].data, deltaFileIdx[file], asdf);
-        // if (file == 2) {
-        //     seqIterator->printKmerInDNAsequence(lookingMetamers[file].metamer); 
-        //     cout << "\t";
-        //     cout << lookingMetamers[file].id << "\t";
-        //     print_binary64(64, lookingMetamers[file].metamer); cout << "\n";  
-        // }
         numOfKmerBeforeMerge ++;
     }
 
@@ -345,12 +339,6 @@ void FileMerger::mergeDeltaIdxFiles() {
             }
         } else {
             lookingMetamers[idxOfMin] = KmerMatcher::getNextTargetKmer(entryMetamer, deltaFileList[idxOfMin].data, deltaFileIdx[idxOfMin], asdf);
-            // if (idxOfMin == 2) {
-            //     seqIterator->printKmerInDNAsequence(lookingMetamers[idxOfMin].metamer); 
-            //     cout << "\t";
-            //     cout << lookingMetamers[idxOfMin].id << "\t";
-            //     print_binary64(64, lookingMetamers[idxOfMin].metamer); cout << "\n";  
-            // }
             numOfKmerBeforeMerge ++;
         }
 
@@ -370,12 +358,6 @@ void FileMerger::mergeDeltaIdxFiles() {
                 }
             } else {
                 lookingMetamers[idxOfMin] = KmerMatcher::getNextTargetKmer(lookingMetamers[idxOfMin], deltaFileList[idxOfMin].data, deltaFileIdx[idxOfMin], asdf);
-                // if (idxOfMin == 2) {
-                //     seqIterator->printKmerInDNAsequence(lookingMetamers[idxOfMin].metamer); 
-                //     cout << "\t";
-                //     cout << lookingMetamers[idxOfMin].id << "\t";
-                //     print_binary64(64, lookingMetamers[idxOfMin].metamer); cout << "\n";  
-                // }
                 numOfKmerBeforeMerge ++;
             }
             idxOfMin = smallest(lookingMetamers, numOfSplits);
@@ -487,19 +469,9 @@ size_t FileMerger::smallest(const uint64_t * lookingKmers,
     if (min == UINT64_MAX) {
         minTaxIdAtRank = INT_MAX;
     } else {
-        // if (taxId2speciesId.find((int) lookingInfos[0]) == taxId2speciesId.end()) {
-        //     cout << lookingKmers[0] << endl;
-        //     cout << "TaxID not found 1: " << lookingInfos[0] << endl;
-        //     exit(1);
-        // }
         minTaxIdAtRank = taxId2speciesId.at(lookingInfos[0]);
     }
     for(size_t i = 1; i < fileCnt; i++) {
-        // if (taxId2speciesId.find((int) lookingInfos[i]) == taxId2speciesId.end()) {
-        //     cout << lookingKmers[i] << endl;
-        //     cout << "TaxID not found 2: " << lookingInfos[i] << endl;
-        //     exit(1);
-        // }
         if(lookingKmers[i] < min ||
           (lookingKmers[i] == min && taxId2speciesId.at(lookingInfos[i]) < minTaxIdAtRank)){
             min = lookingKmers[i];
@@ -518,21 +490,9 @@ size_t FileMerger::smallest(const Metamer * lookingKmers,
     if (min == UINT64_MAX) {
         minTaxIdAtRank = INT32_MAX;
     } else {
-        // if (lookingKmers[0].id != INT32_MAX &&
-        //     taxId2speciesId.find((int) lookingKmers[0].id) == taxId2speciesId.end()) {
-        //     cout << lookingKmers[0].metamer << endl;
-        //     cout << "TaxID not found...: " << "0 " << lookingKmers[0].id << " " << taxonomy->getOriginalTaxID(lookingKmers[0].id) << endl;
-        //     exit(1);
-        // }
         minTaxIdAtRank = taxId2speciesId.at(lookingKmers[0].id);
     }
     for(size_t i = 1; i < fileCnt; i++) {
-        // if (lookingKmers[i].id != INT32_MAX &&
-        //     taxId2speciesId.find((int) lookingKmers[i].id) == taxId2speciesId.end()) {
-        //     cout << lookingKmers[i].metamer << endl;
-        //     cout << "TaxID not found ..: " << i <<  " " << lookingKmers[i].id << " " << taxonomy->getOriginalTaxID(lookingKmers[i].id) << endl;
-        //     exit(1);
-        // }
         if (lookingKmers[i].metamer == UINT64_MAX || lookingKmers[i].id == INT32_MAX) {
             continue;
         }
