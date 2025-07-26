@@ -20,6 +20,7 @@ class DeltaIdxReader {
 private:
     std::string infoFileName;
     std::string deltaIdxFileName;
+    size_t totalValueNum;
 
     // To manage values
     size_t valueBufferSize;
@@ -83,6 +84,8 @@ public:
         valueCnt = 0;
         valueBuffer = new TargetKmer[valueBufferSize];
         fillValueBuffer();
+        // Get the size of infoFile
+        totalValueNum = FileUtil::getFileSize(infoFileName) / sizeof(TaxID);
     }
 
     ~DeltaIdxReader() {
@@ -114,6 +117,10 @@ public:
 
     bool isCompleted() const {
         return fileCompleted && valueBufferCompleted;
+    }
+
+    size_t getTotalValueNum() const {
+        return totalValueNum;
     }
 
 

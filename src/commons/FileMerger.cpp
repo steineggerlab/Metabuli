@@ -286,7 +286,6 @@ void FileMerger::mergeTargetFiles4() {
     // Prepare files to merge
     size_t numOfKmerBeforeMerge = 0;
     size_t numOfSplits = diffIdxFileNames.size();
-
     DeltaIdxReader ** deltaIdxReaders = new DeltaIdxReader*[numOfSplits];
     size_t valueBufferSize = 1024 * 1024 * 32;
     for (size_t file = 0; file < numOfSplits; file++) {
@@ -294,6 +293,7 @@ void FileMerger::mergeTargetFiles4() {
                                                    infoFileNames[file],
                                                    valueBufferSize, 
                                                    1024 * 1024);
+        numOfKmerBeforeMerge += deltaIdxReaders[file]->getTotalValueNum();
     }
 
     // To make differential index splits
@@ -387,6 +387,16 @@ void FileMerger::mergeTargetFiles4() {
                 write++;
                 getDiffIdx(lastKmer, metamerBuffer.buffer[uniqKmerIdx[j]].metamer.metamer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx, bufferSize);
                 lastKmer = metamerBuffer.buffer[uniqKmerIdx[j]].metamer.metamer;
+
+                if (AminoAcidPart(lastWrittenKmer) != AAofTempSplitOffset && splitCheck == 1) {
+                    splitList[splitListIdx++] = {lastWrittenKmer, totalBufferIdx, totalInfoIdx};
+                    splitCheck = 0;
+                }
+                if (write == offsetList[offsetListIdx]) {
+                    AAofTempSplitOffset = AminoAcidPart(lastWrittenKmer);
+                    splitCheck = 1;
+                    offsetListIdx++;
+                }
             }
         }
         time_t writeTime = time(nullptr);
@@ -408,9 +418,7 @@ void FileMerger::mergeTargetFiles4() {
     fclose(diffIdxSplitFile);
 
     cout<<"Creating target DB is done"<<endl;
-    cout<<"Total k-mer count    : " << numOfKmerBeforeMerge <<endl;
-    cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
-
+    cout<<"Total k-mer count    : " << write <<endl;
     cout<<"done"<<endl;
 
     cout<<"Reference DB files you need are as below"<<endl;
@@ -527,366 +535,6 @@ void FileMerger::reduceRedundancy(Buffer<TargetKmer> & kmerBuffer,
         delete[] tempUniqKmerIdx;
     }
     delete[] cntOfEachSplit;
-}
-
-void FileMerger::mergeTargetFiles3() {
-    std::priority_queue<KmerNode, std::vector<KmerNode>, KmerCmp> pq;
-
-    size_t writtenKmerCnt = 0;
-   
-    // Files to write
-    FILE * mergedDiffFile = fopen(mergedDiffFileName.c_str(), "wb");
-    FILE * mergedInfoFile = fopen(mergedInfoFileName.c_str(), "wb");
-    FILE * diffIdxSplitFile = fopen(diffIdxSplitFileName.c_str(), "wb");
-
-    // Buffers to fill
-    size_t bufferSize = 1024 * 1024 * 512;
-    uint16_t * diffBuffer = (uint16_t *)malloc(sizeof(uint16_t) * bufferSize);
-    size_t diffBufferIdx = 0;
-    size_t totalBufferIdx = 0;
-    TaxID * infoBuffer = (TaxID *)malloc(sizeof(TaxID) * bufferSize);
-    size_t infoBufferIdx = 0;
-    size_t totalInfoIdx = 0;
-
-    // Prepare files to merge
-    size_t numOfKmerBeforeMerge = 0;
-    size_t numOfSplits = diffIdxFileNames.size();
-
-    // Open files to read
-    FILE ** deltaIdxListFps = new FILE*[numOfSplits];
-    FILE ** infoListFps = new FILE*[numOfSplits];
-    for (size_t file = 0; file < numOfSplits; file++) {
-        deltaIdxListFps[file] = fopen(diffIdxFileNames[file].c_str(), "rb");
-        infoListFps[file]     = fopen(infoFileNames[file].c_str(), "rb");
-    }
-
-    // Allocate reading buffers
-    uint16_t ** deltaIdxBuffers = new uint16_t*[numOfSplits];
-    uint16_t ** deltaIdxBufferStarts = new uint16_t*[numOfSplits];
-    uint16_t ** deltaIdxBufferEnds = new uint16_t*[numOfSplits];
-    TaxID ** infoBuffers = new TaxID*[numOfSplits];
-    TaxID ** infoBufferStarts = new TaxID*[numOfSplits];
-    TaxID ** infoBufferEnds = new TaxID*[numOfSplits];
-    size_t readBufferSize = 1024 * 1024; // 1MB 
-
-    for (size_t file = 0; file < numOfSplits; file++) {
-        deltaIdxBuffers[file] = new uint16_t[readBufferSize];
-        deltaIdxBufferStarts[file] = deltaIdxBuffers[file];
-        size_t itemCnt = loadBuffer2(deltaIdxListFps[file], deltaIdxBuffers[file], readBufferSize);
-        deltaIdxBufferEnds[file] = deltaIdxBuffers[file] + itemCnt;
-        
-        infoBuffers[file] = new TaxID[readBufferSize];
-        infoBufferStarts[file] = infoBuffers[file];
-        itemCnt = loadBuffer2(infoListFps[file], infoBuffers[file], readBufferSize);
-        infoBufferEnds[file] = infoBuffers[file] + itemCnt;
-    }
-
-    // To make differential index splits
-    uint64_t AAofTempSplitOffset = UINT64_MAX;
-    size_t sizeOfSplit = numOfKmerBeforeMerge / (splitNum - 1);
-    size_t offsetList[splitNum + 1];
-    int offsetListIdx = 1;
-    for(int os = 0; os < splitNum; os++){
-        offsetList[os] = os * sizeOfSplit;
-    }
-    offsetList[splitNum] = UINT64_MAX;
-    DiffIdxSplit splitList[splitNum];
-    memset(splitList, 0, sizeof(DiffIdxSplit) * splitNum);
-    int splitListIdx = 1;
-
-    // get the first k-mer to write
-    size_t lastFileIdx = numOfSplits - 1;
-    unsigned int mask = ~((static_cast<unsigned int>(removeRedundancyInfo) << 31));
-    uint64_t kmer;
-    int taxId;
-    for(size_t file = 0; file < numOfSplits; file++) {
-        kmer = KmerMatcher::getNextTargetKmer(0, deltaIdxBuffers[file]);
-        taxId = *infoBuffers[file];
-        ++infoBuffers[file];
-        pq.push({kmer, taxId, taxId2speciesId[taxId], file});
-    }
-
-    uint64_t lastWrittenKmer = 0;
-    int splitCheck = 0;
-    vector<TaxID> taxIds;
-    bool haveLast = false;
-    KmerNode lastOne;
-
-    cout << "Merging target files..." << endl;
-    while (!pq.empty()) { 
-        KmerNode entryNode = pq.top();
-        pq.pop();
-
-        if (!haveLast) {
-            lastOne = entryNode;
-            taxIds.push_back(entryNode.taxId);
-            haveLast = true;
-        } 
-        else if (entryNode.kmer != lastOne.kmer 
-            || entryNode.speciesId != lastOne.speciesId) {
-            // New k-mer found 
-            if (taxIds.size() > 1) {
-                lastOne.taxId = taxonomy->LCA(taxIds)->taxId;
-            } else {
-                lastOne.taxId = taxIds[0];
-            }
-            getDiffIdx(lastWrittenKmer, lastOne.kmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx, bufferSize);
-            lastWrittenKmer = lastOne.kmer;
-            writeInfo(lastOne.taxId, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx, bufferSize);
-            writtenKmerCnt++;
-
-            if (AminoAcidPart(lastWrittenKmer) != AAofTempSplitOffset && splitCheck == 1) {
-                splitList[splitListIdx++] = {lastWrittenKmer, totalBufferIdx, totalInfoIdx};
-                splitCheck = 0;
-            }
-
-            if (writtenKmerCnt == offsetList[offsetListIdx]) {
-                AAofTempSplitOffset = AminoAcidPart(lastWrittenKmer);
-                splitCheck = 1;
-                offsetListIdx++;
-            }
-
-            taxIds.clear();
-            taxIds.push_back(entryNode.taxId);
-            lastOne = entryNode;
-        } else {
-            // Redundant k-mer found
-            taxIds.push_back(entryNode.taxId);
-        }
-
-        if (deltaIdxBufferEnds[entryNode.file_idx] < deltaIdxBuffers[entryNode.file_idx] + 7) {
-            size_t itemCnt = loadBuffer2(deltaIdxListFps[entryNode.file_idx],
-                                         deltaIdxBufferStarts[entryNode.file_idx],
-                                         readBufferSize,
-                                         deltaIdxBufferEnds[entryNode.file_idx] - deltaIdxBuffers[entryNode.file_idx]);
-            if (itemCnt == 0) {
-                continue;
-            }
-            deltaIdxBuffers[entryNode.file_idx] = deltaIdxBufferStarts[entryNode.file_idx];
-            deltaIdxBufferEnds[entryNode.file_idx] = deltaIdxBuffers[entryNode.file_idx] + itemCnt;
-        }
-
-        kmer = KmerMatcher::getNextTargetKmer(entryNode.kmer, deltaIdxBuffers[entryNode.file_idx]);
-        taxId = *infoBuffers[entryNode.file_idx]++ & mask;
-        if (infoBuffers[entryNode.file_idx] == infoBufferEnds[entryNode.file_idx]) {
-            loadBuffer2(infoListFps[entryNode.file_idx],
-                        infoBufferStarts[entryNode.file_idx],
-                        readBufferSize);
-            infoBuffers[entryNode.file_idx] = infoBufferStarts[entryNode.file_idx];
-        }
-        pq.push({kmer, taxId, taxId2speciesId[taxId], entryNode.file_idx});
-    }
-
-    if (haveLast) {
-        if (taxIds.size() > 1) {
-            lastOne.taxId = taxonomy->LCA(taxIds)->taxId;
-        } else {
-            lastOne.taxId = taxIds[0];
-        }
-        getDiffIdx(lastWrittenKmer, lastOne.kmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx, bufferSize);
-        writeInfo(lastOne.taxId, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx, bufferSize);
-        writtenKmerCnt++;
-    }
-
-    IndexCreator::flushInfoBuf(infoBuffer, mergedInfoFile, infoBufferIdx);
-    IndexCreator::flushKmerBuf(diffBuffer, mergedDiffFile, diffBufferIdx);
-    fwrite(splitList, sizeof(DiffIdxSplit), splitNum, diffIdxSplitFile);
-    // for(int i = 0; i < splitNum; i++) {
-    //     cout<<splitList[i].ADkmer<< " "<<splitList[i].diffIdxOffset<< " "<<splitList[i].infoIdxOffset<<endl;
-    // }
-    free(diffBuffer);
-    free(infoBuffer);
-    fclose(mergedDiffFile);
-    fclose(mergedInfoFile);
-    fclose(diffIdxSplitFile);
-
-    cout<<"Creating target DB is done"<<endl;
-    cout<<"Total k-mer count    : " << numOfKmerBeforeMerge <<endl;
-    cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
-
-    cout<<"done"<<endl;
-
-    cout<<"Reference DB files you need are as below"<<endl;
-    cout<<mergedDiffFileName<<endl;
-    cout<<mergedInfoFileName<<endl;
-    cout<<string(dbDir) + "/taxID_list"<<endl;
-    cout<<diffIdxSplitFileName<<endl;
-}
-
-
-void FileMerger::mergeTargetFiles2() {
-    std::priority_queue<KmerNode, std::vector<KmerNode>, KmerCmp> pq;
-
-    size_t writtenKmerCnt = 0;
-   
-    // Files to write
-    FILE * mergedDiffFile = fopen(mergedDiffFileName.c_str(), "wb");
-    FILE * mergedInfoFile = fopen(mergedInfoFileName.c_str(), "wb");
-    FILE * diffIdxSplitFile = fopen(diffIdxSplitFileName.c_str(), "wb");
-
-    // Buffers to fill
-    size_t bufferSize = 1024 * 1024 * 512;
-    uint16_t * diffBuffer = (uint16_t *)malloc(sizeof(uint16_t) * bufferSize);
-    size_t diffBufferIdx = 0;
-    size_t totalBufferIdx = 0;
-    TaxID * infoBuffer = (TaxID *)malloc(sizeof(TaxID) * bufferSize);
-    size_t infoBufferIdx = 0;
-    size_t totalInfoIdx = 0;
-
-    // Prepare files to merge
-    size_t numOfKmerBeforeMerge = 0;
-    size_t numOfSplits = diffIdxFileNames.size();
-    size_t * diffFileIdx = new size_t[numOfSplits];
-    memset(diffFileIdx, 0, numOfSplits * sizeof(size_t));
-    size_t * infoFileIdx = new size_t[numOfSplits];
-    memset(infoFileIdx, 0, numOfSplits * sizeof(size_t));
-    size_t * maxIdxOfEachFiles = new size_t[numOfSplits];
-    struct MmapedData<uint16_t> *diffFileList = new struct MmapedData<uint16_t>[numOfSplits];
-    struct MmapedData<TaxID> *infoFileList = new struct MmapedData<TaxID>[numOfSplits];
-    uint16_t ** deltaIdxList = new uint16_t*[numOfSplits];
-    TaxID ** infoList = new TaxID*[numOfSplits];
-    size_t readBufferSize = 1024 * 1024; // 1MB 
-    FILE ** deltaIdxListFps = new FILE*[numOfSplits];
-    FILE ** infoListFps = new FILE*[numOfSplits];
-    for (size_t file = 0; file < numOfSplits; file++) {
-        deltaIdxListFps[file] = fopen(diffIdxFileNames[file].c_str(), "rb");
-        infoListFps[file] = fopen(infoFileNames[file].c_str(), "rb");
-        deltaIdxList[file] = new uint16_t[readBufferSize];
-        infoList[file]     = new TaxID[readBufferSize];
-        loadBuffer(deltaIdxListFps[file], deltaIdxList[file], diffFileIdx[file], readBufferSize);
-        loadBuffer(infoListFps[file], infoList[file], infoFileIdx[file], readBufferSize);
-        
-
-        // diffFileList[file] = mmapData<uint16_t>(diffIdxFileNames[file].c_str());
-        // infoFileList[file] = mmapData<TaxID>(infoFileNames[file].c_str());
-        maxIdxOfEachFiles[file] = diffFileList[file].fileSize / sizeof(uint16_t);
-        numOfKmerBeforeMerge += infoFileList[file].fileSize / sizeof(TaxID);
-    }
-
-    // To make differential index splits
-    uint64_t AAofTempSplitOffset = UINT64_MAX;
-    size_t sizeOfSplit = numOfKmerBeforeMerge / (splitNum - 1);
-    size_t offsetList[splitNum + 1];
-    int offsetListIdx = 1;
-    for(int os = 0; os < splitNum; os++){
-        offsetList[os] = os * sizeOfSplit;
-        // cout << os * sizeOfSplit << endl;
-    }
-    offsetList[splitNum] = UINT64_MAX;
-    DiffIdxSplit splitList[splitNum];
-    memset(splitList, 0, sizeof(DiffIdxSplit) * splitNum);
-    int splitListIdx = 1;
-
-    // get the first k-mer to write
-    size_t lastFileIdx = numOfSplits - 1;
-    unsigned int mask = ~((static_cast<unsigned int>(removeRedundancyInfo) << 31));
-    uint64_t kmer;
-    int taxId;
-    for(size_t file = 0; file < numOfSplits; file++) {
-        kmer = getNextKmer(0, diffFileList[file], diffFileIdx[file]);
-        taxId = infoFileList[file].data[0] & mask;
-        pq.push({kmer, taxId, taxId2speciesId[taxId], file});
-        infoFileIdx[file] ++;
-    }
-
-    uint64_t lastWrittenKmer = 0;
-    int splitCheck = 0;
-    vector<TaxID> taxIds;
-    bool haveLast = false;
-    KmerNode lastOne;
-    while (!pq.empty()) { 
-        KmerNode entryNode = pq.top();
-        pq.pop();
-
-        if (!haveLast) {
-            lastOne = entryNode;
-            taxIds.push_back(entryNode.taxId);
-            haveLast = true;
-        } 
-        else if (entryNode.kmer != lastOne.kmer 
-            || entryNode.speciesId != lastOne.speciesId) {
-            // New k-mer found 
-            if (taxIds.size() > 1) {
-                lastOne.taxId = taxonomy->LCA(taxIds)->taxId;
-            } else {
-                lastOne.taxId = taxIds[0];
-            }
-            getDiffIdx(lastWrittenKmer, lastOne.kmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx, bufferSize);
-            lastWrittenKmer = lastOne.kmer;
-            writeInfo(lastOne.taxId, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx, bufferSize);
-            writtenKmerCnt++;
-
-            if (AminoAcidPart(lastWrittenKmer) != AAofTempSplitOffset && splitCheck == 1) {
-                splitList[splitListIdx++] = {lastWrittenKmer, totalBufferIdx, totalInfoIdx};
-                splitCheck = 0;
-            }
-
-            if (writtenKmerCnt == offsetList[offsetListIdx]) {
-                AAofTempSplitOffset = AminoAcidPart(lastWrittenKmer);
-                splitCheck = 1;
-                offsetListIdx++;
-            }
-
-            taxIds.clear();
-            taxIds.push_back(entryNode.taxId);
-            lastOne = entryNode;
-        } else {
-            // Redundant k-mer found
-            taxIds.push_back(entryNode.taxId);
-        }
-
-        if (diffFileIdx[entryNode.file_idx] < maxIdxOfEachFiles[entryNode.file_idx]){
-            kmer = getNextKmer(entryNode.kmer, diffFileList[entryNode.file_idx], diffFileIdx[entryNode.file_idx]);
-            taxId = infoFileList[entryNode.file_idx].data[infoFileIdx[entryNode.file_idx]] & mask;
-            pq.push({kmer, taxId, taxId2speciesId[taxId], entryNode.file_idx});
-            infoFileIdx[entryNode.file_idx] ++;
-        }
-    }
-
-    if (haveLast) {
-        if (taxIds.size() > 1) {
-            lastOne.taxId = taxonomy->LCA(taxIds)->taxId;
-        } else {
-            lastOne.taxId = taxIds[0];
-        }
-        getDiffIdx(lastWrittenKmer, lastOne.kmer, mergedDiffFile, diffBuffer, diffBufferIdx, totalBufferIdx, bufferSize);
-        writeInfo(lastOne.taxId, mergedInfoFile, infoBuffer, infoBufferIdx, totalInfoIdx, bufferSize);
-        writtenKmerCnt++;
-    }
-
-    flushInfoBuf(infoBuffer, mergedInfoFile, infoBufferIdx);
-    flushKmerBuf(diffBuffer, mergedDiffFile, diffBufferIdx);
-    fwrite(splitList, sizeof(DiffIdxSplit), splitNum, diffIdxSplitFile);
-    // for(int i = 0; i < splitNum; i++) {
-    //     cout<<splitList[i].ADkmer<< " "<<splitList[i].diffIdxOffset<< " "<<splitList[i].infoIdxOffset<<endl;
-    // }
-    free(diffBuffer);
-    free(infoBuffer);
-    fclose(mergedDiffFile);
-    fclose(mergedInfoFile);
-    fclose(diffIdxSplitFile);
-
-    for(size_t file = 0; file < numOfSplits; file++){
-        munmap(diffFileList[file].data, diffFileList[file].fileSize + 1);
-        munmap(infoFileList[file].data, infoFileList[file].fileSize + 1);
-    }
-    cout<<"Creating target DB is done"<<endl;
-    cout<<"Total k-mer count    : " << numOfKmerBeforeMerge <<endl;
-    cout<<"Written k-mer count  : " << writtenKmerCnt << endl;
-
-    delete[] diffFileList;
-    delete[] infoFileList;
-    delete[] diffFileIdx;
-    delete[] infoFileIdx;
-    delete[] maxIdxOfEachFiles;
-
-    cout<<"done"<<endl;
-
-    cout<<"Reference DB files you need are as below"<<endl;
-    cout<<mergedDiffFileName<<endl;
-    cout<<mergedInfoFileName<<endl;
-    cout<<string(dbDir) + "/taxID_list"<<endl;
-    cout<<diffIdxSplitFileName<<endl;
 }
 
 void FileMerger::mergeDeltaIdxFiles() {
