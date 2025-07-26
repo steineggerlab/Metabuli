@@ -954,11 +954,13 @@ inline bool IndexCreator::compareForDiffIdx(const TargetKmer & a, const TargetKm
         return a.metamer.metamer < b.metamer.metamer;
     }
 
-    if (a.spTaxId != b.spTaxId) {
-        return a.spTaxId < b.spTaxId;
-    }
+    return a.spTaxId < b.spTaxId;
 
-    return a.metamer.id < b.metamer.id;
+    // if (a.spTaxId != b.spTaxId) {
+    //     return a.spTaxId < b.spTaxId;
+    // }
+
+    // return a.metamer.id < b.metamer.id;
 }
 
 inline bool IndexCreator::compareMetamerID(const Metamer & a, const Metamer & b) {

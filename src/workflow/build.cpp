@@ -92,8 +92,6 @@ int build(int argc, const char **argv, const Command &command){
                                                       taxonomyDir + "/merged.dmp",
                                                       true);
 
-    // TaxonomyWrapper * taxonomy;
-    // taxonomy = loadTaxonomy(dbDir, "");
     IndexCreator idxCre(par, taxonomy, true);
     idxCre.createIndex(par);
     if (par.accessionLevel == 1) {
@@ -111,11 +109,15 @@ int build(int argc, const char **argv, const Command &command){
     int numOfSplits = idxCre.getNumOfFlush();
     FileMerger merger(par, taxonomy);
     for (int i = 0; i < numOfSplits; i++) {
-        merger.addFilesToMerge(dbDir + "/" + to_string(i) + "_deltaIdx.mtbl", "");
+        merger.addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
+                                   dbDir + "/" + to_string(i) + "_info");
+        // merger.addFilesToMerge(dbDir + "/" + to_string(i) + "_deltaIdx.mtbl", "");
     }
     merger.updateTaxId2SpeciesTaxId(dbDir + "/taxID_list");
-    merger.setMergedFileNames(dbDir + "/deltaIdx.mtbl", "", dbDir + "/deltaIdxSplits.mtbl");  
-    merger.mergeDeltaIdxFiles();
+    merger.printFilesToMerge();
+    merger.setMergedFileNames(dbDir + "/diffIdx", dbDir + "/info", dbDir + "/split");
+    // merger.setMergedFileNames(dbDir + "/deltaIdx.mtbl", "", dbDir + "/deltaIdxSplits.mtbl");  
+    merger.mergeTargetFiles4();
     delete taxonomy;
     cout << "Index creation completed." << endl;
 

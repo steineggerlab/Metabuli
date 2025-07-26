@@ -169,8 +169,6 @@ protected:
 
     void writeDbParameters();
 
-    static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
-
     size_t fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,                 
                                 std::vector<std::atomic<bool>> & batchChecker,
                                 size_t &processedSplitCnt,
@@ -297,5 +295,7 @@ public:
     static void flushInfoBuf(TaxID * buffer, FILE * infoFile, size_t & localBufIdx );
 
     static bool compareMetamerID(const Metamer & a, const Metamer & b);
+
+    static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
 };
 #endif //ADKMER4_INDEXCREATOR_H

@@ -65,7 +65,7 @@ int expand_diffidx(int argc, const char **argv, const Command &command){
     vector<uint32_t> diffIdxCnts;
     size_t startIdx = par.kmerBegin;
     size_t endIdx = par.kmerEnd;
-    // size_t idx = 0;
+    size_t idx = 0;
 
     end = chrono::high_resolution_clock::now();
     duration = chrono::duration_cast<chrono::milliseconds>(end - start);
@@ -88,15 +88,15 @@ int expand_diffidx(int argc, const char **argv, const Command &command){
         // BufferSize < diffIdxBufferIdx + 7
         // Expand diff idx in buffer
         diffIdxBuffer = diffIdxBufferStart;
-        while (diffIdxBufferEnd >= diffIdxBuffer + 7) {
+        while (diffIdxBufferEnd >= diffIdxBuffer + 4) {
             currentTargetKmer = KmerMatcher::getNextTargetKmer(currentTargetKmer,
                                                                diffIdxBuffer,
                                                                diffIdxPos);
-            // if (idx >= startIdx && idx < endIdx) {
-            //     seqIterator->printKmerInDNAsequence(currentTargetKmer); cout << "\t";
-            //     print_binary64(64, currentTargetKmer); cout << "\n";  
-            // }
-            // idx ++;
+            if (idx >= startIdx && idx < endIdx) {
+                seqIterator->printKmerInDNAsequence(currentTargetKmer); cout << "\t";
+                print_binary64(64, currentTargetKmer); cout << "\n";  
+            }
+            idx ++;
         }
         if (diffIdxPos == numOfDiffIdx) {
             break;

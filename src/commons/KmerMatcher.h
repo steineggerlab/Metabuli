@@ -171,50 +171,6 @@ protected:
 
   inline size_t AminoAcidPart(size_t kmer) const { return (kmer)&DNA_MASK; }
 
-
-template <typename T>
-static size_t loadBuffer(FILE *fp, T *buffer, size_t size) {
-  return fread(buffer, sizeof(T), size, fp);
-}
-
-template <typename T>
-static size_t loadBuffer(FILE *fp, T *buffer, size_t &bufferIdx, size_t size) {
-  bufferIdx = 0;
-  return fread(buffer, sizeof(T), size, fp);
-}
-
-template <typename T>
-static size_t loadBuffer(FILE *fp, T *buffer, size_t &bufferIdx, size_t size,
-                       int cnt) {
-  bufferIdx = 0;                      
-  fseek(fp, cnt * sizeof(T), SEEK_CUR);
-  return fread(buffer, sizeof(T), size, fp);
-}
-
-template <typename T>
-static void loadBuffer2(int fd, T *buffer, size_t &bufferIdx, size_t size, off_t offset) {
-    ssize_t bytesRead = pread(fd, buffer, size * sizeof(T), offset);
-    if (bytesRead == -1) {
-      cerr << "Error reading file" << std::endl;
-    }
-    bufferIdx = 0;
-}
-
-template <typename T>
-static void loadBuffer2(int fd, T *buffer, size_t &bufferIdx, size_t size, off_t offset, int cnt) {
-    off_t newOffset = offset + cnt * sizeof(T);
-    ssize_t bytesRead = pread(fd, buffer, size * sizeof(T), newOffset);
-    if (bytesRead == -1) {
-      cerr << "Error reading file" << std::endl;
-    }
-    bufferIdx = 0;
-}
-
-  
-  // static TargetKmerInfo getKmerInfo(size_t bufferSize, FILE *kmerInfoFp,
-  //                                   TargetKmerInfo *infoBuffer,
-  //                                   size_t &infoBufferIdx);
-
   void moveMatches(Match *dest, Match *src, size_t & matchNum);
 
   void compareDna(uint64_t query,
@@ -236,29 +192,6 @@ static void loadBuffer2(int fd, T *buffer, size_t &bufferIdx, size_t size, off_t
 
   void loadTaxIdList(const LocalParameters & par);
 
-  template <typename T>
-  inline T getKmerInfo(size_t bufferSize,
-                       FILE *kmerInfoFp,
-                       T *infoBuffer,
-                       size_t &infoBufferIdx) {
-    if (unlikely(infoBufferIdx >= bufferSize)) {
-      loadBuffer(kmerInfoFp, infoBuffer, infoBufferIdx, bufferSize,
-                 static_cast<int>(infoBufferIdx - bufferSize));
-    }
-    return infoBuffer[infoBufferIdx];
-  }
-
-  template <typename T>
-  inline T getElement(size_t bufferSize,
-                       FILE *kmerInfoFp,
-                       T *infoBuffer,
-                       size_t &infoBufferIdx) {
-    if (unlikely(infoBufferIdx >= bufferSize)) {
-      loadBuffer(kmerInfoFp, infoBuffer, infoBufferIdx, bufferSize,
-                 static_cast<int>(infoBufferIdx - bufferSize));
-    }
-    return infoBuffer[infoBufferIdx];
-  }
 
 public:
   KmerMatcher(const LocalParameters &par,
@@ -289,6 +222,21 @@ public:
                                    const uint16_t *diffIdxBuffer,
                                    size_t &diffBufferIdx, size_t &totalPos);
 
+  static uint64_t getNextTargetKmer(
+          uint64_t lookingTarget,
+          uint16_t *&diffIdxBuffer); 
+
+  template <typename T>
+  static inline T getKmerInfo(size_t bufferSize,
+                       FILE *kmerInfoFp,
+                       T *infoBuffer,
+                       size_t &infoBufferIdx) {
+    if (unlikely(infoBufferIdx >= bufferSize)) {
+      loadBuffer(kmerInfoFp, infoBuffer, infoBufferIdx, bufferSize,
+                 static_cast<int>(infoBufferIdx - bufferSize));
+    }
+    return infoBuffer[infoBufferIdx];
+  }
 
   // Getters
   size_t getTotalMatchCnt() const { return totalMatchCnt; }
@@ -324,6 +272,21 @@ inline uint64_t KmerMatcher::getNextTargetKmer(
   }
   diffIn64bit = (diffIn64bit << 15) | (*diffIdxBuffer & 0x7FFF);
   ++totalPos;
+  ++diffIdxBuffer;
+  return diffIn64bit + lookingTarget;
+}
+
+
+inline uint64_t KmerMatcher::getNextTargetKmer(
+  uint64_t lookingTarget,
+  uint16_t *&diffIdxBuffer) 
+{
+  uint64_t diffIn64bit = 0;
+  while ((*diffIdxBuffer & 0x8000) == 0) { // 27 %
+    diffIn64bit = (diffIn64bit << 15) | *diffIdxBuffer;
+    ++diffIdxBuffer;
+  }
+  diffIn64bit = (diffIn64bit << 15) | (*diffIdxBuffer & 0x7FFF);
   ++diffIdxBuffer;
   return diffIn64bit + lookingTarget;
 }

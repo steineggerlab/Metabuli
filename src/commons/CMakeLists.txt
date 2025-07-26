@@ -39,4 +39,5 @@ set(commons_source_files
 		commons/SyncmerScanner.h
 		commons/GeneticCode.h
 		commons/KmerScanner.h
+		commons/DeltaIdxReader.h
         PARENT_SCOPE)

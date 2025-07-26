@@ -121,6 +121,45 @@ struct Buffer {
     };
 };
 
+template<typename T>
+struct ReadBuffer {
+    FILE * fp;
+    T * p;
+    size_t size;
+    T * start;
+    T * end;
+
+    explicit ReadBuffer(std::string file, size_t sizeOfBuffer=100) {
+        fp = fopen(file.c_str(), "rb");
+        if (!fp) {
+            std::cerr << "Error opening file: " << file << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        p = (T *) calloc(sizeOfBuffer, sizeof(T));
+        size = sizeOfBuffer;
+        start = p;
+        end = p;
+    };
+
+    size_t loadBuffer(size_t unused = 0) {
+        memmove(start,
+                start + (size - unused),
+                unused * sizeof(T));
+        size_t readCount = fread(start + unused, sizeof(T), size - unused, fp);
+        size = readCount + unused;
+        end = start + size;
+        p = start;
+        return readCount + unused;
+    }
+
+    inline T getNext() {
+        if (p >= end) {
+            loadBuffer();
+        }
+        return *p++;
+    }
+};
+
 inline bool fileExist(const std::string& name) {
     if (FILE *file = fopen(name.c_str(), "r")) {
         fclose(file);
@@ -149,6 +188,42 @@ template <typename T>
 size_t loadBuffer(FILE *fp, T *buffer, size_t &bufferIdx, size_t number) {
     bufferIdx = 0;
     return fread(buffer, sizeof(T), number, fp);
+}
+
+
+// template <typename T>
+// size_t loadBuffer2(FILE *fp, T *buffer, size_t number, int cnt) {
+//     fseek(fp, cnt * sizeof(T), SEEK_CUR);
+//     return fread(buffer, sizeof(T), number, fp);
+// }
+
+template <typename T>
+size_t loadBuffer2(FILE *fp, T *buffer, size_t number, size_t unused) {
+    memmove(buffer,
+            buffer + (number - unused),
+            unused * sizeof(T));
+    size_t readCount = fread(buffer + unused, sizeof(T), number - unused, fp);
+    return readCount + unused;
+}
+
+template <typename T>
+size_t loadBuffer2(FILE *fp, T *buffer, size_t number) {
+    return fread(buffer, sizeof(T), number, fp);
+}
+
+
+template <typename T>
+inline T getElement(
+    size_t bufferSize,
+    FILE *kmerInfoFp,
+    T *infoBuffer,
+    size_t &infoBufferIdx) 
+{
+    if (unlikely(infoBufferIdx >= bufferSize)) {
+        loadBuffer(kmerInfoFp, infoBuffer, infoBufferIdx, bufferSize,
+                static_cast<int>(infoBufferIdx - bufferSize));
+    }
+    return infoBuffer[infoBufferIdx];
 }
 
 void getObservedAccessionList(const std::string & fnaListFileName,
