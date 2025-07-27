@@ -1,7 +1,5 @@
 set(commons_source_files
         commons/common.h
-    	commons/FileMerger.h
-		commons/FileMerger.cpp
 	 	commons/IndexCreator.cpp
         commons/IndexCreator.h
         commons/Kmer.h
