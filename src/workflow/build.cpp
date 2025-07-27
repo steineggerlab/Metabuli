@@ -93,31 +93,28 @@ int build(int argc, const char **argv, const Command &command){
                                                       true);
 
     IndexCreator idxCre(par, taxonomy, true);
-    idxCre.createIndex(par);
-    if (par.accessionLevel == 1) {
-        taxonomy = idxCre.getTaxonomy();
-    }
-    taxonomy->writeTaxonomyDB(dbDir + "/taxonomyDB");
+    // idxCre.createIndex(par);
+    // if (par.accessionLevel == 1) {
+    //     taxonomy = idxCre.getTaxonomy();
+    // }
+    // taxonomy->writeTaxonomyDB(dbDir + "/taxonomyDB");
     
-    if(idxCre.getNumOfFlush() == 1) {
-        delete taxonomy;
-        cout << "Index creation completed." << endl;
-        return 0;
-    }
+    // if(idxCre.getNumOfFlush() == 1) {
+    //     delete taxonomy;
+    //     cout << "Index creation completed." << endl;
+    //     return 0;
+    // }
 
     cout << "Merge reference DB files ... " << endl;
-    int numOfSplits = idxCre.getNumOfFlush();
-    FileMerger merger(par, taxonomy);
-    for (int i = 0; i < numOfSplits; i++) {
-        merger.addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
-                                   dbDir + "/" + to_string(i) + "_info");
-        // merger.addFilesToMerge(dbDir + "/" + to_string(i) + "_deltaIdx.mtbl", "");
+    for (int i = 0; i < 4; i++) {
+        idxCre.addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
+                               dbDir + "/" + to_string(i) + "_info");
     }
-    merger.updateTaxId2SpeciesTaxId(dbDir + "/taxID_list");
-    merger.printFilesToMerge();
-    merger.setMergedFileNames(dbDir + "/diffIdx", dbDir + "/info", dbDir + "/split");
-    // merger.setMergedFileNames(dbDir + "/deltaIdx.mtbl", "", dbDir + "/deltaIdxSplits.mtbl");  
-    merger.mergeTargetFiles4();
+    idxCre.updateTaxId2SpeciesTaxId(dbDir + "/taxID_list");
+
+    idxCre.printFilesToMerge();
+    idxCre.setMergedFileNames(dbDir + "/diffIdx", dbDir + "/info", dbDir + "/split");
+    idxCre.mergeTargetFiles();
     delete taxonomy;
     cout << "Index creation completed." << endl;
 

@@ -137,28 +137,14 @@ int updateDB(int argc, const char **argv, const Command &command){
     // Merge index files
     cout << "Merge new and old DB files " << endl;;
     int numOfSplits = idxCre.getNumOfFlush();
-    FileMerger merger(par, taxonomy);
-    merger.setRemoveRedundancyInfo(haveRedundancyInfo(oldDbDir));
-    merger.updateTaxId2SpeciesTaxId(newDbDir + "/taxID_list"); 
-    if (isNewFormat) {
-        for (int i = 0; i < numOfSplits; i++) {
-            merger.addFilesToMerge(newDbDir + "/" + to_string(i) + "_deltaIdx.mtbl", "");
-        }
-        merger.addFilesToMerge(oldDbDir + "/deltaIdx.mtbl", "");
-        merger.printFilesToMerge();
-        merger.setMergedFileNames(newDbDir + "/deltaIdx.mtbl", "", newDbDir + "/deltaIdxSplits.mtbl");  
-        merger.mergeDeltaIdxFiles();
 
-    } else {
-        for (int i = 0; i < numOfSplits; i++) {
-            merger.addFilesToMerge(newDbDir + "/" + to_string(i) + "_diffIdx",
-                                   newDbDir + "/" + to_string(i) + "_info");
-        }
-        merger.addFilesToMerge(oldDbDir + "/diffIdx", oldDbDir + "/info");
-        merger.printFilesToMerge();
-        merger.setMergedFileNames(newDbDir + "/diffIdx", newDbDir + "/info", newDbDir + "/split");
-        merger.mergeTargetFiles();
-    }
+    // idxCre.setRemoveRedundancyInfo(haveRedundancyInfo(oldDbDir));
+    idxCre.updateTaxId2SpeciesTaxId(newDbDir + "/taxID_list"); 
+    idxCre.addFilesToMerge(oldDbDir + "/diffIdx", oldDbDir + "/info");
+    idxCre.printFilesToMerge();
+    idxCre.setMergedFileNames(newDbDir + "/diffIdx", newDbDir + "/info", newDbDir + "/split");
+    idxCre.mergeTargetFiles();
+    
     delete taxonomy;
     cout << "Index creation completed." << endl;
 

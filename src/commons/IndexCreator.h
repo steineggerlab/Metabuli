@@ -8,9 +8,12 @@
 #include <fstream>
 #include <unordered_set>
 #include <atomic>
+#include <cstdint>
 #ifdef OPENMP
     #include <omp.h>
 #endif
+
+
 #include "printBinary.h"
 #include "Mmap.h"
 #include "Kmer.h"
@@ -24,11 +27,11 @@
 #include "SubstitutionMatrix.h"
 #include "tantan.h"
 #include "LocalUtil.h"
-#include <cstdint>
 #include "TaxonomyWrapper.h"
 #include "fasta_validate.h"
 #include "GeneticCode.h"
 #include "KmerExtractor.h"
+#include "DeltaIdxReader.h"
 
 
 
@@ -107,6 +110,8 @@ protected:
 
     uint64_t MARKER;
     BaseMatrix *subMat;
+    bool removeRedundancyInfo;
+    unordered_map<TaxID, TaxID> taxId2speciesId;
 
     // Inputs
     TaxonomyWrapper * taxonomy;
@@ -131,6 +136,13 @@ protected:
     std::unordered_set<TaxID> taxIdSet;
     vector<string> fastaPaths;
     size_t numOfFlush=0;
+
+    // Database splits
+    std::vector<std::string> deltaIdxFileNames;
+    std::vector<std::string> infoFileNames;
+    std::string mergedDeltaIdxFileName;
+    std::string mergedInfoFileName;
+    std::string deltaIdxSplitFileName;
     struct Split{
         Split(size_t offset, size_t end) : offset(offset), end(end) {}
         size_t offset;
@@ -152,13 +164,6 @@ protected:
                                    const size_t * uniqeKmerIdx, 
                                    size_t & uniqKmerCnt, 
                                    const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
-
-    void writeTargetFilesAndSplits_oldFormat(
-        TargetKmer * kmerBuffer,
-        size_t & kmerNum,
-        const size_t * uniqeKmerIdx, 
-        size_t & uniqKmerCnt, 
-        const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
     static void writeDiffIdx(uint16_t *buffer,
                       size_t bufferSize,
@@ -204,17 +209,6 @@ protected:
 
     size_t AminoAcidPart(size_t kmer) {
         return (kmer) & MARKER;
-    }
-
-    int getNumberOfLines(const string & filename){
-        ifstream file(filename);
-        int cnt = 0;
-        string line;
-        while (getline(file, line)) {
-            cnt++;
-        }
-        file.close();
-        return cnt;
     }
 
     void loadCdsInfo(const string & cdsInfoFileList);
@@ -286,7 +280,7 @@ public:
                      size_t bufferSize,
                      size_t & localBufIdx);
 
-    void writeInfo(TaxID * entryToWrite, FILE * infoFile, TaxID * infoBuffer, size_t bufferSize, size_t & infoBufferIdx);
+    void writeInfo(TaxID entryToWrite, FILE * infoFile, TaxID * infoBuffer, size_t bufferSize, size_t & infoBufferIdx);
 
     unordered_set<TaxID> getTaxIdSet() { return taxIdSet; }
 
@@ -297,5 +291,21 @@ public:
     static bool compareMetamerID(const Metamer & a, const Metamer & b);
 
     static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
+
+    void printFilesToMerge() {
+        cout << "Files to merge :" << endl;
+        for (size_t i = 0; i < deltaIdxFileNames.size(); i++) {
+            cout << deltaIdxFileNames[i] << " " << infoFileNames[i] << endl;
+        }
+    }
+
+
+    void mergeTargetFiles();
+
+    void updateTaxId2SpeciesTaxId(const string & taxIdListFileName);
+
+    void addFilesToMerge(string diffIdxFileName, string infoFileName);
+
+    void setMergedFileNames(string diffFileName, string infoFileName, string splitFileName);
 };
 #endif //ADKMER4_INDEXCREATOR_H
