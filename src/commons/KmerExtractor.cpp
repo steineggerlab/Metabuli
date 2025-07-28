@@ -4,11 +4,11 @@
 KmerExtractor::KmerExtractor(
     const LocalParameters &par,
     const GeneticCode & geneticCode,
-    bool newKmerFormat) 
+    int kmerFormat) 
     : par(par), kmerScanners(new KmerScanner*[par.threads]) {
     // Initialize k-mer scanners for each thread
     for (int i = 0; i < par.threads; ++i) {
-        if (!newKmerFormat) {
+        if (kmerFormat == 1) {
             kmerScanners[i] = new OldKmerScanner(geneticCode);
         } else {
             if (par.syncmer) {

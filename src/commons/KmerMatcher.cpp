@@ -19,9 +19,10 @@ constexpr uint16_t KmerMatcher::HAMMING_LUT7[64];
 KmerMatcher::KmerMatcher(
     const LocalParameters & par,
     TaxonomyWrapper * taxonomy,
-    bool isNewIdxFormat) 
+    int kmerFormat) 
     : par(par), 
-      isNewIdxFormat(isNewIdxFormat) {                        
+      kmerFormat(kmerFormat) 
+{                        
     // Parameters
     threads = par.threads;
     dbDir = par.filenames[1 + (par.seqMode == 2)];
@@ -772,7 +773,7 @@ void KmerMatcher::compareDna(uint64_t query,
     for (size_t h = 0; h < targetKmersToCompare.size(); h++) {
         if (hammingDists[h] <= maxHamming) {
             selectedHammingSum[selectedMatchIdx] = hammingDists[h];
-            selectedHammings[selectedMatchIdx] = !((frame < 3) ^ (isNewIdxFormat))
+            selectedHammings[selectedMatchIdx] = !((frame < 3) ^ (kmerFormat == 2))
                 ? getHammings(query, targetKmersToCompare[h])
                 : getHammings_reverse(query, targetKmersToCompare[h]);
             selectedMatches[selectedMatchIdx++] = h;

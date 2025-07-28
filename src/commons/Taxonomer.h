@@ -70,7 +70,7 @@ class Taxonomer {
 private:
     const LocalParameters & par;
     TaxonomyWrapper * taxonomy;
-    bool isNewDB;
+    int kmerFormat;
 
     // spaced k-mer
     int unmaskedPos[9];
@@ -151,7 +151,7 @@ private:
     void trimMatchPath(MatchPath & path1, const MatchPath & path2, int overlapLength);
 
 public:
-    Taxonomer(const LocalParameters & par, TaxonomyWrapper * taxonomy, bool isNewDB);
+    Taxonomer(const LocalParameters & par, TaxonomyWrapper * taxonomy, int kmerFormat);
     ~Taxonomer();
 
     void assignTaxonomy(const Match *matchList,

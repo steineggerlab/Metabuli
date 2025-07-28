@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include <atomic>
 #include <cstdint>
+#include <iomanip>
 #ifdef OPENMP
     #include <omp.h>
 #endif
@@ -32,10 +33,6 @@
 #include "GeneticCode.h"
 #include "KmerExtractor.h"
 #include "DeltaIdxReader.h"
-
-
-
-
 struct Accession {
     Accession() = default;
     Accession(const string & accession, uint32_t whichFasta, uint32_t order, uint32_t length) 
@@ -106,7 +103,7 @@ protected:
     // Parameters
     const LocalParameters & par;
     bool isUpdating;
-    bool isNewFormat;
+    int kmerFormat;
 
     uint64_t MARKER;
     BaseMatrix *subMat;
@@ -159,25 +156,28 @@ protected:
         const size_t * uniqeKmerIdx,
         const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
-    void writeTargetFilesAndSplits(TargetKmer * kmerBuffer,
-                                   size_t & kmerNum,
-                                   const size_t * uniqeKmerIdx, 
-                                   size_t & uniqKmerCnt, 
-                                   const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
+    void writeTargetFilesAndSplits(
+        TargetKmer * kmerBuffer,
+        size_t & kmerNum,
+        const size_t * uniqeKmerIdx, 
+        size_t & uniqKmerCnt, 
+        const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
-    static void writeDiffIdx(uint16_t *buffer,
-                      size_t bufferSize,
-                      FILE* handleKmerTable,
-                      uint16_t *toWrite,
-                      size_t size,
-                      size_t & localBufIdx);
+    static void writeDiffIdx(
+        uint16_t *buffer,
+        size_t bufferSize,
+        FILE* handleKmerTable,
+        uint16_t *toWrite,
+        size_t size,
+        size_t & localBufIdx);
 
     void writeDbParameters();
 
-    size_t fillTargetKmerBuffer(Buffer<TargetKmer> &kmerBuffer,                 
-                                std::vector<std::atomic<bool>> & batchChecker,
-                                size_t &processedSplitCnt,
-                                const LocalParameters &par);
+    size_t fillTargetKmerBuffer(
+        Buffer<TargetKmer> &kmerBuffer,                 
+        std::vector<std::atomic<bool>> & batchChecker,
+        size_t &processedSplitCnt,
+        const LocalParameters &par);
 
     void indexReferenceSequences(size_t bufferSize);
 
@@ -204,8 +204,7 @@ protected:
     void reduceRedundancy(Buffer<TargetKmer> & kmerBuffer,
                           size_t * uniqeKmerIdx,
                           size_t & uniqKmerCnt,
-                          vector<pair<size_t, size_t>> & uniqKmerIdxRanges,
-                          const LocalParameters & par);
+                          vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
     size_t AminoAcidPart(size_t kmer) {
         return (kmer) & MARKER;
@@ -214,6 +213,22 @@ protected:
     void loadCdsInfo(const string & cdsInfoFileList);
 
     size_t calculateBufferSize(size_t maxRam) {
+        float c = 0.7;
+        if (maxRam <= 32) {
+            c = 0.6;
+        } else if (maxRam < 16) {
+            c = 0.5;
+        }
+        if ((maxRam * 1024.0 * 1024.0 * 1024.0 * c - (par.threads * 50.0 * 1024.0 * 1024.0)) <= 0.0) {
+            cerr << "Not enough memory to create index" << endl;
+            cerr << "Please increase the RAM usage or decrease the number of threads" << endl;
+            exit(EXIT_FAILURE);
+        }
+        return static_cast<size_t>((maxRam * 1024.0 * 1024.0 * 1024.0 * c - (par.threads * 50.0 * 1024.0 * 1024.0))/ 
+                                  (sizeof(TargetKmer) + sizeof(size_t)));
+    }
+
+    size_t calculateBufferSizeForMerge(size_t maxRam, int fileCnt) {
         float c = 0.7;
         if (maxRam <= 32) {
             c = 0.6;
@@ -244,7 +259,7 @@ public:
         }
     }
 
-    IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy, bool isNewFormat);
+    IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy, int kmerFormat);
 
     ~IndexCreator();
     
@@ -255,7 +270,7 @@ public:
     }
 
     void setIsUpdating(bool isUpdating) { this->isUpdating = isUpdating; }
-    void setIsNewFormat(bool isNewFormat) { this->isNewFormat = isNewFormat; }
+    void setIsNewFormat(int kmerFormat) { this->kmerFormat = kmerFormat; }
 
     void createIndex(const LocalParameters & par);
 
@@ -264,6 +279,12 @@ public:
 
     void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
                     uint16_t *kmerBuf, size_t bufferSize, size_t & localBufIdx, size_t & totalBufferIdx);
+
+    void getDiffIdx(
+        uint64_t lastKmer, 
+        uint64_t entryToWrite,
+        uint16_t *deltaBuffer,
+        size_t & localBufIdx);
 
     static void getDeltaIdx(const Metamer & previousMetamer,
                      const Metamer & currentMetamer,
@@ -281,7 +302,7 @@ public:
                      size_t & localBufIdx);
 
     void writeInfo(TaxID entryToWrite, FILE * infoFile, TaxID * infoBuffer, size_t bufferSize, size_t & infoBufferIdx);
-
+    
     unordered_set<TaxID> getTaxIdSet() { return taxIdSet; }
 
     static void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);

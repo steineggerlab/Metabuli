@@ -70,7 +70,7 @@ public:
     explicit KmerExtractor(
         const LocalParameters & par,
         const GeneticCode &geneticCode,
-        bool newKmerFormat);
+        int kmerFormat);
     ~KmerExtractor();
     void extractQueryKmers(Buffer<QueryKmer> &kmerBuffer,
                            vector<Query> & queryList,

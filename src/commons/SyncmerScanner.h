@@ -26,7 +26,7 @@ protected:
 
 public:
     SyncmerScanner(int smerLen, const GeneticCode &geneticCode) : KmerScanner(geneticCode) {
-        std::cout << "SyncmerScanner initialized with smerLen: " << smerLen << std::endl;
+        // std::cout << "SyncmerScanner initialized with smerLen: " << smerLen << std::endl;
         this->smerLen = smerLen;
         this->smerMask = (1ULL << (5 * smerLen)) - 1;
     }

@@ -33,7 +33,7 @@ protected:
   const LocalParameters &par;
   TaxonomyWrapper *taxonomy;
   GeneticCode *geneticCode;
-  bool isNewIdxFormat;
+  int kmerFormat;
   
   size_t threads;
   std::string dbDir;
@@ -195,8 +195,8 @@ protected:
 
 public:
   KmerMatcher(const LocalParameters &par,
-   TaxonomyWrapper *taxonomy,
-   bool isNewIdxFormat);
+    TaxonomyWrapper *taxonomy,
+    int kmerFormat);
 
   virtual ~KmerMatcher();
   

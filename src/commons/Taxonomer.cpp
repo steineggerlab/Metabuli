@@ -9,8 +9,8 @@
 #include <unordered_map>
 
 
-Taxonomer::Taxonomer(const LocalParameters &par, TaxonomyWrapper *taxonomy, bool isNewDB) 
-    : taxonomy(taxonomy), par(par), isNewDB(isNewDB) 
+Taxonomer::Taxonomer(const LocalParameters &par, TaxonomyWrapper *taxonomy, int kmerFormat) 
+    : taxonomy(taxonomy), par(par), kmerFormat(kmerFormat) 
 {
     // Parameters
     string spaceMask = "11111111";
@@ -523,7 +523,7 @@ void Taxonomer::getMatchPaths(
                     const MatchPath * bestPath = nullptr;
                     float bestScore = 0;
                     for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++curIdx) {
-                        if (isNewDB) {
+                        if (kmerFormat == 2) {
                             if (isConsecutive2(matchList + curIdx, matchList + nextIdx, shift)) {
                                 connectedToNext[curIdx - start] = true;
                                 if (localMatchPaths[curIdx - start].score > bestScore) {
@@ -592,7 +592,7 @@ void Taxonomer::getMatchPaths(
                     const MatchPath * bestPath = nullptr;
                     float bestScore = 0;
                     for (size_t curIdx = curPosMatchStart; curIdx < curPosMatchEnd; ++curIdx) {
-                        if (isNewDB) {
+                        if (kmerFormat == 2) {
                             if (isConsecutive2(matchList + nextIdx, matchList + curIdx, shift)) {
                                 connectedToNext[curIdx - start] = true;
                                 if (localMatchPaths[curIdx - start].score > bestScore) {

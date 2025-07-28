@@ -1,5 +1,4 @@
 #include "IndexCreator.h"
-#include "FileMerger.h"
 #include "LocalParameters.h"
 #include <Command.h>
 #include "FileUtil.h"
@@ -92,35 +91,38 @@ int build(int argc, const char **argv, const Command &command){
                                                       taxonomyDir + "/merged.dmp",
                                                       true);
 
-    IndexCreator idxCre(par, taxonomy, true);
-    // idxCre.createIndex(par);
-    // if (par.accessionLevel == 1) {
-    //     taxonomy = idxCre.getTaxonomy();
-    // }
-    // taxonomy->writeTaxonomyDB(dbDir + "/taxonomyDB");
+    IndexCreator idxCre(par, taxonomy, 2);
+    idxCre.createIndex(par);
+    if (par.accessionLevel == 1) 
+    {
+        taxonomy = idxCre.getTaxonomy();
+    }
+    taxonomy->writeTaxonomyDB(dbDir + "/taxonomyDB");
     
-    // if(idxCre.getNumOfFlush() == 1) {
-    //     delete taxonomy;
-    //     cout << "Index creation completed." << endl;
-    //     return 0;
-    // }
+    if (idxCre.getNumOfFlush() == 1) 
+    {
+        delete taxonomy;
+        cout << "Index creation completed." << endl;
+        return 0;
+    }
 
     cout << "Merge reference DB files ... " << endl;
-    for (int i = 0; i < 4; i++) {
-        idxCre.addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
-                               dbDir + "/" + to_string(i) + "_info");
-    }
-    idxCre.updateTaxId2SpeciesTaxId(dbDir + "/taxID_list");
-
+    // for (int i = 0; i < 3; i++) {
+    //     idxCre.addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
+    //                            dbDir + "/" + to_string(i) + "_info");
+    // }
+    // idxCre.updateTaxId2SpeciesTaxId(dbDir + "/taxID_list");
     idxCre.printFilesToMerge();
     idxCre.setMergedFileNames(dbDir + "/diffIdx", dbDir + "/info", dbDir + "/split");
     idxCre.mergeTargetFiles();
     delete taxonomy;
     cout << "Index creation completed." << endl;
 
-    if (par.validateDb) {
+    if (par.validateDb) 
+    {
         cout << "Validating the created database..." << endl;
-        if (validateDatabase(dbDir) != 0) {
+        if (validateDatabase(dbDir) != 0) 
+        {
             cerr << "Database validation failed." << endl;
             return 1;
         }

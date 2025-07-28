@@ -47,6 +47,11 @@ private:
             valueBuffer[valueCnt].metamer.id = *infoBuffer.p++;
             valueBuffer[valueCnt].metamer.metamer = getNextMetamer();
         }
+        if (infoBuffer.p == infoBuffer.end) {
+            if (infoBuffer.loadBuffer() == 0) {
+                fileCompleted = true;
+            }
+        }
     }
 
     uint64_t getNextMetamer() {

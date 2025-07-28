@@ -60,6 +60,13 @@ LocalParameters::LocalParameters() :
                  typeid(int),
                  (void *) &smerLen,
                  "[0-7]"),
+        KMER_FORMAT(KMER_FORMAT_ID,
+                    "--kmer-format",
+                    "K-mer format",
+                    "K-mer format",
+                    typeid(int),
+                    (void *) &kmerFormat,
+                    "[1-2]"),
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
                  "Sequencing type",
@@ -559,6 +566,7 @@ LocalParameters::LocalParameters() :
     updateDB.push_back(&VALIDATE_INPUT);
     updateDB.push_back(&VALIDATE_DB);
     updateDB.push_back(&SYNCMER);
+    updateDB.push_back(&REDUCED_AA);
 
     //classify
     classify.push_back(&PARAM_THREADS);
@@ -575,7 +583,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MATCH_PER_KMER);
     classify.push_back(&ACCESSION_LEVEL);
     classify.push_back(&TIE_RATIO);
-    classify.push_back(&SKIP_REDUNDANCY);
+    // classify.push_back(&SKIP_REDUNDANCY);
     classify.push_back(&PRINT_LINEAGE);
     classify.push_back(&VALIDATE_INPUT);
     classify.push_back(&VALIDATE_DB);

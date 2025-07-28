@@ -42,7 +42,7 @@ protected:
     // Parameters
     string dbDir;
     size_t matchPerKmer;
-    bool isNewDB;
+    int kmerFormat;
 
     // Agents
     GeneticCode * geneticCode;

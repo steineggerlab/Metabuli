@@ -5,14 +5,15 @@
 
 Classifier::Classifier(LocalParameters & par) {
     dbDir = par.filenames[1 + (par.seqMode == 2)];
-    if(FileUtil::fileExists(string(dbDir + "/diffIdx").c_str())) {
-        isNewDB = false;
-    } else {
-        isNewDB = true; 
-    }
+    // if(FileUtil::fileExists(string(dbDir + "/diffIdx").c_str())) {
+    //     isNewDB = false;
+    // } else {
+    //     isNewDB = true; 
+    // }
 
     matchPerKmer = par.matchPerKmer;
     loadDbParameters(par, par.filenames[1 + (par.seqMode == 2)]);
+    kmerFormat = par.kmerFormat;
 
     cout << "DB name: " << par.dbName << endl;
     cout << "DB creation date: " << par.dbDate << endl;
@@ -21,11 +22,11 @@ Classifier::Classifier(LocalParameters & par) {
 
     geneticCode = new GeneticCode(par.reducedAA == 1);
     queryIndexer = new QueryIndexer(par);
-    kmerExtractor = new KmerExtractor(par, *geneticCode, isNewDB);
+    kmerExtractor = new KmerExtractor(par, *geneticCode, kmerFormat);
     if (par.reducedAA) {
-        kmerMatcher = new ReducedKmerMatcher(par, taxonomy, isNewDB);
+        kmerMatcher = new ReducedKmerMatcher(par, taxonomy, kmerFormat);
     } else {
-        kmerMatcher = new KmerMatcher(par, taxonomy, isNewDB);
+        kmerMatcher = new KmerMatcher(par, taxonomy, kmerFormat);
     }
     reporter = new Reporter(par, taxonomy);
 }
@@ -113,12 +114,12 @@ void Classifier::startClassify(const LocalParameters &par) {
             
             // Search matches between query and target k-mers
             bool searchComplete = false;
-            if (isNewDB) {
-                searchComplete = kmerMatcher->matchMetamers(&queryKmerBuffer, &matchBuffer);
-            } else {
+            // if (isNewDB) {
+            //     searchComplete = kmerMatcher->matchMetamers(&queryKmerBuffer, &matchBuffer);
+            // } else {
                 cout << "here" << endl;
                 searchComplete = kmerMatcher->matchKmers(&queryKmerBuffer, &matchBuffer);
-            }
+            // }
 
             if (searchComplete) {
                 cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
@@ -148,7 +149,6 @@ void Classifier::startClassify(const LocalParameters &par) {
     cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
     reporter->closeReadClassificationFile();
     reporter->writeReportFile(totalSeqCnt, taxCounts);
-    free(matchBuffer.buffer);
 }
 
 void Classifier::assignTaxonomy(const Match *matchList,
@@ -174,7 +174,7 @@ void Classifier::assignTaxonomy(const Match *matchList,
     // Process each block
 #pragma omp parallel default(none), shared(cout, matchBlocks, matchList, seqNum, queryList, blockIdx, par)
     {
-        Taxonomer taxonomer(par, taxonomy, isNewDB);
+        Taxonomer taxonomer(par, taxonomy, kmerFormat);
         #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < blockIdx; ++i) {
             taxonomer.chooseBestTaxon(matchBlocks[i].id - 1,

@@ -109,6 +109,12 @@ struct Buffer {
         startIndexOfReserve = 0;
     };
 
+    ~Buffer() {
+        if (buffer) {
+            free(buffer);
+        }
+    };
+
     size_t reserveMemory(size_t numOfKmer) {
         return __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
     };

@@ -56,6 +56,7 @@ public:
     PARAMETER(VALIDATE_DB)
     PARAMETER(SYNCMER)
     PARAMETER(SMER_LEN)
+    PARAMETER(KMER_FORMAT)
 
     // Classify
     PARAMETER(SEQ_MODE)
@@ -143,6 +144,7 @@ public:
     int validateDb;
     int syncmer;
     int smerLen;
+    int kmerFormat;
 
     // Classify
     int seqMode;

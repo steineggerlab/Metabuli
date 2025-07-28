@@ -1,5 +1,4 @@
 #include "IndexCreator.h"
-#include "FileMerger.h"
 #include "LocalParameters.h"
 #include <Command.h>
 #include "FileUtil.h"
@@ -14,7 +13,8 @@ void setDefaults_updateDB(LocalParameters & par){
     par.gtdb = 0;
     par.validateInput = 0;
     par.validateDb = 0;
-    // par.skipRedundancy = 1;
+    par.kmerFormat = 1;
+    par.skipRedundancy = 0;
     par.reducedAA = 0;
     par.ramUsage = 128;
     par.taxonomyPath = "" ;
@@ -80,10 +80,6 @@ int updateDB(int argc, const char **argv, const Command &command){
         accession2taxid(par.filenames[1], par.filenames[2]);
         par.filenames[2] = par.filenames[2].substr(0, par.filenames[2].find_last_of('.')) + ".accession2taxid";
     }
-    bool isNewFormat = true;
-    if (FileUtil::fileExists(string(oldDbDir + "/diffIdx").c_str())) {
-        isNewFormat = false;
-    }
     
     // Load older taxonomy DB
     Debug(Debug::INFO) << "Loading taxonomy DB from " << oldDbDir << " ... ";
@@ -103,7 +99,8 @@ int updateDB(int argc, const char **argv, const Command &command){
         Debug(Debug::INFO) << "New taxonomy generated.\n";
     }
 
-    IndexCreator idxCre(par, taxonomy, isNewFormat);
+    loadDbParameters(par, oldDbDir);
+    IndexCreator idxCre(par, taxonomy, par.kmerFormat);
     idxCre.setIsUpdating(true);
     idxCre.createIndex(par);
     if (par.accessionLevel == 1) {
@@ -138,7 +135,6 @@ int updateDB(int argc, const char **argv, const Command &command){
     cout << "Merge new and old DB files " << endl;;
     int numOfSplits = idxCre.getNumOfFlush();
 
-    // idxCre.setRemoveRedundancyInfo(haveRedundancyInfo(oldDbDir));
     idxCre.updateTaxId2SpeciesTaxId(newDbDir + "/taxID_list"); 
     idxCre.addFilesToMerge(oldDbDir + "/diffIdx", oldDbDir + "/info");
     idxCre.printFilesToMerge();
