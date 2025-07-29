@@ -56,6 +56,10 @@ public:
         this->dnaMask = (1ULL << 24) - 1;    
     }
 
+    virtual ~KmerScanner() {
+        // std::cout << "KmerScanner destroyed." << std::endl;
+    }
+
     const GeneticCode &getGeneticCode() const {
         return geneticCode;
     }
@@ -119,6 +123,10 @@ class OldKmerScanner : public KmerScanner {
         std::deque<size_t> dq;
     public:
         OldKmerScanner(const GeneticCode &geneticCode) : KmerScanner(geneticCode) {}
+
+        ~OldKmerScanner() {
+            // std::cout << "OldKmerScanner destroyed." << std::endl;
+        }
         
         void initScanner(const char * seq, size_t seqStart, size_t seqEnd, bool isForward) override {
             KmerScanner::initScanner(seq, seqStart, seqEnd, isForward);
