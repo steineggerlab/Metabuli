@@ -19,6 +19,7 @@ constexpr uint16_t KmerMatcher::HAMMING_LUT7[64];
 KmerMatcher::KmerMatcher(
     const LocalParameters & par,
     TaxonomyWrapper * taxonomy,
+
     int kmerFormat) 
     : par(par), 
       kmerFormat(kmerFormat) 
@@ -38,6 +39,7 @@ KmerMatcher::KmerMatcher(
 
 
 KmerMatcher::~KmerMatcher() {
+    delete geneticCode;
 }
 
 void KmerMatcher::loadTaxIdList(const LocalParameters & par) {

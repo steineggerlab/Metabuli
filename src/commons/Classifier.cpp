@@ -37,6 +37,7 @@ Classifier::~Classifier() {
     delete kmerExtractor;
     delete kmerMatcher;
     delete reporter;
+    delete geneticCode;
 }
 
 void Classifier::startClassify(const LocalParameters &par) {
