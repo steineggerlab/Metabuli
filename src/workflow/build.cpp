@@ -1,5 +1,4 @@
 #include "IndexCreator.h"
-#include "FileMerger.h"
 #include "LocalParameters.h"
 #include <Command.h>
 #include "FileUtil.h"
@@ -9,6 +8,8 @@
 #include "validateDatabase.h"
 
 void setDefaults_build(LocalParameters & par){
+    par.syncmer = 0;
+    par.smerLen = 5;
     par.gtdb = 0;
     par.makeLibrary = 0;
     par.reducedAA = 0;
@@ -90,35 +91,38 @@ int build(int argc, const char **argv, const Command &command){
                                                       taxonomyDir + "/merged.dmp",
                                                       true);
 
-    IndexCreator idxCre(par, taxonomy);
+    IndexCreator idxCre(par, taxonomy, 2);
     idxCre.createIndex(par);
-    if (par.accessionLevel == 1) {
+    if (par.accessionLevel == 1) 
+    {
         taxonomy = idxCre.getTaxonomy();
     }
     taxonomy->writeTaxonomyDB(dbDir + "/taxonomyDB");
     
-    if(idxCre.getNumOfFlush() == 1) {
+    if (idxCre.getNumOfFlush() == 1) 
+    {
         delete taxonomy;
         cout << "Index creation completed." << endl;
         return 0;
     }
 
     cout << "Merge reference DB files ... " << endl;
-    int numOfSplits = idxCre.getNumOfFlush();
-    FileMerger merger(par, taxonomy);
-    for (int i = 0; i < numOfSplits; i++) {
-        merger.addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
-                               dbDir + "/" + to_string(i) + "_info");
-    }
-    merger.updateTaxId2SpeciesTaxId(dbDir + "/taxID_list");
-    merger.setMergedFileNames(dbDir + "/diffIdx", dbDir + "/info", dbDir + "/split");  
-    merger.mergeTargetFiles();
+    // for (int i = 0; i < 33; i++) {
+    //     idxCre.addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
+    //                            dbDir + "/" + to_string(i) + "_info");
+    // }
+    // idxCre.updateTaxId2SpeciesTaxId(dbDir + "/taxID_list");
+    idxCre.printFilesToMerge();
+    idxCre.setMergedFileNames(dbDir + "/diffIdx", dbDir + "/info", dbDir + "/split");
+    idxCre.mergeTargetFiles();
     delete taxonomy;
     cout << "Index creation completed." << endl;
 
-    if (par.validateDb) {
+    if (par.validateDb) 
+    {
         cout << "Validating the created database..." << endl;
-        if (validateDatabase(dbDir) != 0) {
+        if (validateDatabase(dbDir) != 0) 
+        {
             cerr << "Database validation failed." << endl;
             return 1;
         }

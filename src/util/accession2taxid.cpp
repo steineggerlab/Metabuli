@@ -3,8 +3,10 @@
 #include "Debug.h"
 #include <unordered_map>
 #include <regex>
-#include "KSeqWrapper.h"   
-#include <omp.h> 
+#include "KSeqWrapper.h"
+#ifdef OPENMP
+    #include <omp.h> 
+#endif
 #include "accession2taxid.h"
 
 using namespace std;

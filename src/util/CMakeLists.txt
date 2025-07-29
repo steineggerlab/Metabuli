@@ -1,6 +1,5 @@
 set(util_source_files
         util/binning2report.cpp
-        util/apply-threshold.cpp
         util/report.h
         util/report.cpp
         util/grade.cpp
@@ -22,4 +21,5 @@ set(util_source_files
         util/classifiedRefiner.cpp
         util/validateDatabase.cpp
         util/validateDatabase.h
+        util/printDeltaIdx.cpp
         PARENT_SCOPE)

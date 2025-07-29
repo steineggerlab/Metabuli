@@ -10,7 +10,9 @@
 
 class KmerExtractor {
 private:
-    SeqIterator * seqIterator;
+    const LocalParameters &par;
+    KmerScanner ** kmerScanners;
+    
     // Parameters
     int spaceNum;
     int maskMode;
@@ -22,14 +24,14 @@ private:
 
     // Extract query k-mer
     void fillQueryKmerBufferParallel(KSeqWrapper* kseq1,
-                                     QueryKmerBuffer &kmerBuffer,
+                                     Buffer<QueryKmer> &kmerBuffer,
                                      vector<Query> & queryList,
                                      const QuerySplit & currentSplit,
                                      const LocalParameters &par);
 
     void fillQueryKmerBufferParallel_paired(KSeqWrapper* kseq1,
                                             KSeqWrapper* kseq2,
-                                            QueryKmerBuffer &kmerBuffer,
+                                            Buffer<QueryKmer> &kmerBuffer,
                                             vector<Query> &queryList,
                                             const QuerySplit & currentSplit,
                                             const LocalParameters &par);
@@ -44,31 +46,46 @@ private:
                           size_t & count,
                           bool isReverse);
 
-    void processSequence(size_t count,
-                         size_t processedQueryNum,
-                         const vector<string> & reads,
-                         const vector<bool> & emptyReads,
-                         char *seq,
-                         char *maskedSeq,
-                         size_t & maxReadLength,
-                         QueryKmerBuffer &kmerBuffer,
-                         const vector<Query> & queryList,
-                         vector<int> *aaFrames,
-                         bool isReverse);
+    void processSequence(
+        size_t count,
+        size_t processedQueryNum,
+        const vector<string> & reads,
+        const vector<bool> & emptyReads,
+        char *seq,
+        char *maskedSeq,
+        size_t & maxReadLength,
+        Buffer<QueryKmer> &kmerBuffer,
+        const vector<Query> & queryList,
+        bool isReverse);
+
+    void fillQueryKmerBuffer(
+        const char *seq,
+        int seqLen, 
+        Buffer<QueryKmer> &kmerBuffer, 
+        size_t &posToWrite, 
+        uint32_t seqID, 
+        uint32_t offset = 0);
                                       
 public:
-    explicit KmerExtractor(const LocalParameters & par);
+    explicit KmerExtractor(
+        const LocalParameters & par,
+        const GeneticCode &geneticCode,
+        int kmerFormat);
     ~KmerExtractor();
-    void extractQueryKmers(QueryKmerBuffer &kmerBuffer,
+    void extractQueryKmers(Buffer<QueryKmer> &kmerBuffer,
                            vector<Query> & queryList,
                            const QuerySplit & currentSplit,
                            const LocalParameters &par,
                            KSeqWrapper* kseq1,
                            KSeqWrapper* kseq2 = nullptr);
 
-
-
-
+    int extractTargetKmers(
+        const char *seq,
+        Buffer<TargetKmer> &kmerBuffer,
+        size_t &posToWrite,
+        int seqID,
+        int taxIdAtRank,
+        SequenceBlock block);
 };
 
 static inline bool compareForLinearSearch(const QueryKmer &a, const QueryKmer &b) {

@@ -1,5 +1,4 @@
 #include "IndexCreator.h"
-#include "FileMerger.h"
 #include "LocalParameters.h"
 #include <Command.h>
 #include "FileUtil.h"
@@ -14,7 +13,8 @@ void setDefaults_updateDB(LocalParameters & par){
     par.gtdb = 0;
     par.validateInput = 0;
     par.validateDb = 0;
-    // par.skipRedundancy = 1;
+    par.kmerFormat = 1;
+    par.skipRedundancy = 0;
     par.reducedAA = 0;
     par.ramUsage = 128;
     par.taxonomyPath = "" ;
@@ -40,8 +40,6 @@ int updateDB(int argc, const char **argv, const Command &command){
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
     string newDbDir = par.filenames[0];
     string oldDbDir = par.filenames[3];
-
-    // If dbDirectory does not exist, create it
     if (!FileUtil::directoryExists(newDbDir.c_str())) {
         FileUtil::makeDir(newDbDir.c_str());
     }
@@ -98,11 +96,11 @@ int updateDB(int argc, const char **argv, const Command &command){
         TaxonomyWrapper * newTaxonomy = taxonomy->addNewTaxa(newTaxaList);
         delete taxonomy;
         taxonomy = newTaxonomy;
-        // taxonomy->writeNamesDmp(newDbDir + "/newnodes.dmp");
         Debug(Debug::INFO) << "New taxonomy generated.\n";
     }
 
-    IndexCreator idxCre(par, taxonomy);
+    loadDbParameters(par, oldDbDir);
+    IndexCreator idxCre(par, taxonomy, par.kmerFormat);
     idxCre.setIsUpdating(true);
     idxCre.createIndex(par);
     if (par.accessionLevel == 1) {
@@ -136,19 +134,13 @@ int updateDB(int argc, const char **argv, const Command &command){
     // Merge index files
     cout << "Merge new and old DB files " << endl;;
     int numOfSplits = idxCre.getNumOfFlush();
-    FileMerger merger(par, taxonomy);
-    for (int i = 0; i < numOfSplits; i++) {
-        merger.addFilesToMerge(newDbDir + "/" + to_string(i) + "_diffIdx",
-                               newDbDir + "/" + to_string(i) + "_info");
-    }
-    merger.addFilesToMerge(oldDbDir + "/diffIdx", oldDbDir + "/info");
-    merger.setMergedFileNames(newDbDir + "/diffIdx", newDbDir + "/info", newDbDir + "/split");
-    merger.printFilesToMerge();
-    merger.setRemoveRedundancyInfo(haveRedundancyInfo(oldDbDir));
-    merger.updateTaxId2SpeciesTaxId(newDbDir + "/taxID_list");
-    Debug(Debug::INFO) << "Species-level taxonomy IDs are prepared.\n";
+
+    idxCre.updateTaxId2SpeciesTaxId(newDbDir + "/taxID_list"); 
+    idxCre.addFilesToMerge(oldDbDir + "/diffIdx", oldDbDir + "/info");
+    idxCre.printFilesToMerge();
+    idxCre.setMergedFileNames(newDbDir + "/diffIdx", newDbDir + "/info", newDbDir + "/split");
+    idxCre.mergeTargetFiles();
     
-    merger.mergeTargetFiles();
     delete taxonomy;
     cout << "Index creation completed." << endl;
 

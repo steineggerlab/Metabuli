@@ -3,15 +3,12 @@
 
 void setFilterDefaults(LocalParameters & par) {
     par.reducedAA = 0;
-    // par.spaceMask = "11111111";
     par.seqMode = 2;
     par.minScore = 0.5;
-    par.minCoverage = 0;
     par.minSpScore = 0;
     par.hammingMargin = 0;
     par.verbosity = 3;
     par.ramUsage = 128;
-    par.minCoveredPos = 4;
     par.printLog = 0;
     par.maxGap = 0;
     par.taxonomyPath = "" ;

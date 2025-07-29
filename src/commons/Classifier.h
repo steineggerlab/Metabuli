@@ -10,7 +10,6 @@
 #include "common.h"
 #include "NcbiTaxonomy.h"
 #include "Debug.h"
-#include "KmerBuffer.h"
 #include "IndexCreator.h"
 #include <cstdio>
 #include <ctime>
@@ -43,8 +42,10 @@ protected:
     // Parameters
     string dbDir;
     size_t matchPerKmer;
+    int kmerFormat;
 
     // Agents
+    GeneticCode * geneticCode;
     QueryIndexer * queryIndexer;
     KmerExtractor * kmerExtractor;
     KmerMatcher * kmerMatcher;

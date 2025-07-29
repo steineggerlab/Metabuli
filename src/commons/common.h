@@ -15,6 +15,29 @@
 #define kmerLength 8
 #define AA(kmer) ((kmer) & ~16777215)
 
+extern const std::string atcg;
+extern const std::string iRCT;
+
+struct Assembly {
+    std::string name;
+    TaxID taxid;
+    TaxID speciesId;
+    TaxID genusId;
+    TaxID familyId;
+    TaxID orderId;
+    Assembly(std::string name) : name(name) {}
+    Assembly() : name(""), taxid(0), speciesId(0), genusId(0), familyId(0), orderId(0) {}
+    
+
+    void print () const {
+        std::cout << "Assembly: " << name << ", TaxID: " << taxid
+                  << ", SpeciesID: " << speciesId
+                  << ", GenusID: " << genusId
+                  << ", FamilyID: " << familyId
+                  << ", OrderID: " << orderId << std::endl;
+    }
+};
+
 struct KmerCnt {
     KmerCnt(size_t length, size_t kmerCnt, size_t totalCnt) : length(length), kmerCnt(kmerCnt), totalCnt(totalCnt) {}
     KmerCnt() : length(0), kmerCnt(0), totalCnt(0){}
@@ -32,27 +55,18 @@ struct CDSinfo{
     CDSinfo(uint32_t protId, int frame) : protId(protId), frame(frame) {}
 };
 
-struct SequenceBlock{
-    SequenceBlock(size_t start, size_t end, size_t length, size_t seqLength = 0)
-            : start(start), end(end), length(length), seqLength(seqLength) {}
-    SequenceBlock() : start(0), end(0), length(0), seqLength(0) { }
-    size_t start;
-    size_t end;
-    size_t length;
-    size_t seqLength;
-};
 
-typedef struct PredictedBlock {
-    PredictedBlock(int start, int end, int strand) : start(start), end(end), strand(strand) {}
+struct SequenceBlock {
+    SequenceBlock(int start, int end, int strand) : start(start), end(end), strand(strand) {}
 
-    void printPredictedBlock() {
+    void printSequenceBlock() {
         std::cout << strand << " " << start << " " << end << std::endl;
     }
 
     int start;
     int end;
     int strand; //true for forward
-} PredictedBlock;
+};
 
 struct Query{
     int queryId;
@@ -90,14 +104,19 @@ struct Buffer {
     size_t bufferSize;
 
     explicit Buffer(size_t sizeOfBuffer=100) {
-        buffer = (T *) malloc(sizeof(T) * sizeOfBuffer);
+        buffer = (T *) calloc(sizeOfBuffer, sizeof(T));
         bufferSize = sizeOfBuffer;
         startIndexOfReserve = 0;
     };
 
+    ~Buffer() {
+        if (buffer) {
+            free(buffer);
+        }
+    };
+
     size_t reserveMemory(size_t numOfKmer) {
-        size_t offsetToWrite = __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
-        return offsetToWrite;
+        return __sync_fetch_and_add(&startIndexOfReserve, numOfKmer);
     };
 
     void reallocateMemory(size_t sizeOfBuffer) {
@@ -106,6 +125,45 @@ struct Buffer {
             bufferSize = sizeOfBuffer;
         }
     };
+};
+
+template<typename T>
+struct ReadBuffer {
+    FILE * fp;
+    T * p;
+    size_t size;
+    T * start;
+    T * end;
+
+    explicit ReadBuffer(std::string file, size_t sizeOfBuffer=100) {
+        fp = fopen(file.c_str(), "rb");
+        if (!fp) {
+            std::cerr << "Error opening file: " << file << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        p = (T *) calloc(sizeOfBuffer, sizeof(T));
+        size = sizeOfBuffer;
+        start = p;
+        end = p;
+    };
+
+    size_t loadBuffer(size_t unused = 0) {
+        memmove(start,
+                start + (size - unused),
+                unused * sizeof(T));
+        size_t readCount = fread(start + unused, sizeof(T), size - unused, fp);
+        size = readCount + unused;
+        end = start + size;
+        p = start;
+        return readCount + unused;
+    }
+
+    inline T getNext() {
+        if (p >= end) {
+            loadBuffer();
+        }
+        return *p++;
+    }
 };
 
 inline bool fileExist(const std::string& name) {
@@ -136,6 +194,42 @@ template <typename T>
 size_t loadBuffer(FILE *fp, T *buffer, size_t &bufferIdx, size_t number) {
     bufferIdx = 0;
     return fread(buffer, sizeof(T), number, fp);
+}
+
+
+// template <typename T>
+// size_t loadBuffer2(FILE *fp, T *buffer, size_t number, int cnt) {
+//     fseek(fp, cnt * sizeof(T), SEEK_CUR);
+//     return fread(buffer, sizeof(T), number, fp);
+// }
+
+template <typename T>
+size_t loadBuffer2(FILE *fp, T *buffer, size_t number, size_t unused) {
+    memmove(buffer,
+            buffer + (number - unused),
+            unused * sizeof(T));
+    size_t readCount = fread(buffer + unused, sizeof(T), number - unused, fp);
+    return readCount + unused;
+}
+
+template <typename T>
+size_t loadBuffer2(FILE *fp, T *buffer, size_t number) {
+    return fread(buffer, sizeof(T), number, fp);
+}
+
+
+template <typename T>
+inline T getElement(
+    size_t bufferSize,
+    FILE *kmerInfoFp,
+    T *infoBuffer,
+    size_t &infoBufferIdx) 
+{
+    if (unlikely(infoBufferIdx >= bufferSize)) {
+        loadBuffer(kmerInfoFp, infoBuffer, infoBufferIdx, bufferSize,
+                static_cast<int>(infoBufferIdx - bufferSize));
+    }
+    return infoBuffer[infoBufferIdx];
 }
 
 void getObservedAccessionList(const std::string & fnaListFileName,
