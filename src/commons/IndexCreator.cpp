@@ -1582,7 +1582,11 @@ void IndexCreator::mergeTargetFiles() {
     vector<TaxID> taxIds;
 
     cout << "Merging target files..." << endl;
-    Buffer<TargetKmer> metamerBuffer(1024 * 1024 * 1024);
+    size_t metamerBufferSize = 1024 * 1024 * 1024;
+    if (metamerBufferSize < valueBufferSize * numOfSplits * 2) {
+        metamerBufferSize = valueBufferSize * numOfSplits * 2;
+    }
+    Buffer<TargetKmer> metamerBuffer(metamerBufferSize);
     std::atomic<int> hasOverflow{0};
     std::vector<std::atomic<bool>> completedSplits(numOfSplits);
     int remainingSplits = numOfSplits;

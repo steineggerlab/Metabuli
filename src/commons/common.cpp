@@ -118,7 +118,7 @@ int loadDbParameters(LocalParameters &par, const std::string & dbDir) {
             par.syncmer = 1;
           }     
         } else if (tokens[0] == "S-mer_len") {
-          cout << "Syncmer length is set to " << tokens[1] << " following DB's configuration." << endl;
+          cout << "s-mer length is set to " << tokens[1] << " according to the DB." << endl;
           par.smerLen = stoi(tokens[1]);
         } else if (tokens[0] == "Kmer_format") {
           par.kmerFormat = stoi(tokens[1]);

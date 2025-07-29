@@ -41,7 +41,7 @@ void KmerExtractor::extractQueryKmers(Buffer<QueryKmer> &kmerBuffer,
                                       KSeqWrapper* kseq1,
                                       KSeqWrapper* kseq2) {
     time_t beforeKmerExtraction = time(nullptr);
-    std::cout << "Extracting query metamers ... " << endl;
+    std::cout << "Query k-mer extraction : " << flush;
     if (par.seqMode == 1 || par.seqMode == 3) { // Single-end short-read sequence or long-read sequence
         fillQueryKmerBufferParallel(kseq1,
                                     kmerBuffer,
@@ -56,13 +56,13 @@ void KmerExtractor::extractQueryKmers(Buffer<QueryKmer> &kmerBuffer,
                                            currentSplit,
                                            par);
     }
-    cout << "Time spent for metamer extraction: " << double(time(nullptr) - beforeKmerExtraction) << endl;
+    cout << double(time(nullptr) - beforeKmerExtraction) << " s" << endl;
 
     // Sort query k-mer
     time_t beforeQueryKmerSort = time(nullptr);
-    cout << "Sorting query metamer list ..." << endl;
+    std::cout << "Query k-mer sorting    : " << flush;
     SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, compareForLinearSearch);
-    cout << "Time spent for sorting query metamer list: " << double(time(nullptr) - beforeQueryKmerSort) << endl;
+    cout << double(time(nullptr) - beforeQueryKmerSort) << " s" << endl;
 }
 
 void KmerExtractor::fillQueryKmerBufferParallel(KSeqWrapper *kseq,

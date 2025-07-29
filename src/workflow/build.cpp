@@ -107,7 +107,7 @@ int build(int argc, const char **argv, const Command &command){
     }
 
     cout << "Merge reference DB files ... " << endl;
-    // for (int i = 0; i < 3; i++) {
+    // for (int i = 0; i < 33; i++) {
     //     idxCre.addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
     //                            dbDir + "/" + to_string(i) + "_info");
     // }

@@ -69,7 +69,6 @@ public:
                     smer = (smer << 5) | (uint64_t)aa;                    
                     loadedCharCnt++;
                 }
-                Kmer temp(smer, 0);
                 if (sawN) break;
                 smer &= smerMask;
                 while (!dq.empty() && dq.back().value > smer) dq.pop_back();

@@ -41,7 +41,7 @@ KmerMatcher::~KmerMatcher() {
 }
 
 void KmerMatcher::loadTaxIdList(const LocalParameters & par) {
-    cout << "Loading the list for taxonomy IDs ... " << std::flush;
+    // cout << "Loading the list for taxonomy IDs ... " << std::flush;
     if (par.contamList != "") {
         vector<string> contams = Util::split(par.contamList, ",");
         for (auto &contam : contams) {
@@ -103,15 +103,13 @@ void KmerMatcher::loadTaxIdList(const LocalParameters & par) {
         }
         in.close();
     }
-    cout << "Done" << endl;
+    // cout << "Done" << endl;
 }
 
 
 bool KmerMatcher::matchKmers(Buffer<QueryKmer> * queryKmerBuffer,
                              Buffer<Match> * matchBuffer,
                              const string & db){
-    std::cout << "Comparing query and reference metamers..." << std::endl;
-    
     // Set database files
     if (db.empty()) {
         targetDiffIdxFileName = dbDir + "/diffIdx";
@@ -138,7 +136,9 @@ bool KmerMatcher::matchKmers(Buffer<QueryKmer> * queryKmerBuffer,
         }
     }
     queryKmerNum -= blankCnt;
-    cout << "Total query k-mers: " << queryKmerNum << endl;
+    std::cout << "Query k-mer number     : " << queryKmerNum << endl;
+
+    std::cout << "Reference k-mer search : " << flush;
     
     // Filter out meaningless target splits
     size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
@@ -434,7 +434,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
     if (totalOverFlowCnt > 0) {
         return false;
     }
-    std::cout << "Time spent for the comparison: " << double(time(nullptr) - beforeSearch) << std::endl;
+    std::cout << double(time(nullptr) - beforeSearch) << " s" << std::endl;
     free(splitCheckList);
     totalMatchCnt += matchBuffer->startIndexOfReserve;
     return true;
@@ -736,11 +736,11 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
 
 void KmerMatcher::sortMatches(Buffer<Match> * matchBuffer) {
     time_t beforeSortMatches = time(nullptr);
-    std::cout << "Sorting matches ..." << std::endl;
+    std::cout << "K-mer match sorting    : " << std::flush;
     SORT_PARALLEL(matchBuffer->buffer,
                   matchBuffer->buffer + matchBuffer->startIndexOfReserve,
                   compareMatches);
-    std::cout << "Time spent for sorting matches: " << double(time(nullptr) - beforeSortMatches) << std::endl;
+    std::cout << double(time(nullptr) - beforeSortMatches) << " s" << std::endl;
 }
 
 void KmerMatcher::moveMatches(Match *dest, Match *src, size_t & matchNum) {
