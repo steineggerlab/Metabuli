@@ -31,6 +31,19 @@ Please cite: [Kim J, Steinegger M. Metabuli: sensitive and specific metagenomic 
 
 
 ---
+### Update after latest release
+- ***Syncmer is introduced:*** half database size, double classification speed.
+- Older Metabuli versions are not compatible with the new database format.
+- New GTDB R226 database [here](https://hulk.mmseqs.com/jaebeom/gtdb226db/)
+  - Species representative genomes with checkm2 completeness > 70% and contamination < 5% are included.
+  - 129,671 species out of 143,614 species in GTDB R226 are included.
+- New pre-built at [https://mmseqs.com/metabuli](https://mmseqs.com/metabuli)
+  
+### Update in v1.1.1
+- `--validate-input` option added for FASTA/Q validation.
+- `--validate-db` option added for database validation.
+- `classifiedRefiner` module added to refine classification results.
+  
 ### Update in v1.1.0
 - Fix errors in v1.0.9
 - Custom DB creation became easier

@@ -9,7 +9,7 @@
 
 void setDefaults_build(LocalParameters & par){
     par.syncmer = 0;
-    par.smerLen = 6;
+    par.smerLen = 5;
     par.gtdb = 0;
     par.makeLibrary = 0;
     par.reducedAA = 0;
