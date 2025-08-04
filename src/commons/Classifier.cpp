@@ -123,6 +123,12 @@ void Classifier::startClassify(const LocalParameters &par) {
                 kmerMatcher->sortMatches(&matchBuffer);
                 assignTaxonomy(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
                 reporter->writeReadClassification(queryList);
+                
+                 for (size_t i = 0; i < queryList.size(); i++) {
+                    if (queryList[i].isClassified) {
+                        mappingResList.emplace_back(queryList[i].name, processedReadCnt + i, queryList[i].taxScore);
+                    }
+                }
                 processedReadCnt += queryReadSplit[splitIdx].readCnt;
                 cout << "Processed read count   : " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
                 // numOfTatalQueryKmerCnt += queryKmerBuffer.startIndexOfReserve;
@@ -144,10 +150,15 @@ void Classifier::startClassify(const LocalParameters &par) {
         cout << "--------------------" << endl;
     }
 
+
+    em();
     // cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
     cout << "Total k-mer match count: " << kmerMatcher->getTotalMatchCnt() << endl;
     reporter->closeReadClassificationFile();
     reporter->writeReportFile(totalSeqCnt, taxCounts);
+    reporter->writeReportFile2(totalSeqCnt, taxCounts_EM);
+    reporter->writeMappingRes(mappingResList);
+
 }
 
 void Classifier::assignTaxonomy(const Match *matchList,
@@ -191,5 +202,140 @@ void Classifier::assignTaxonomy(const Match *matchList,
     
     delete[] matchBlocks;
     cout << double(time(nullptr) - beforeAnalyze) << " s" << endl;
+
+}
+
+void Classifier::em() {
+    // unordered_map<TaxID, unsigned int> sp2uniqKmerCnt;
+    int maxTaxId = taxonomy->getMaxTaxID();
+    vector<uint32_t> sp2uniqKmerCnt(maxTaxId + 1, 0);
+    countUniqueKmerPerSpecies(sp2uniqKmerCnt);
+    vector<double> sp2lengthFactor(maxTaxId + 1, 0.0);
+    for (size_t i = 0; i < sp2uniqKmerCnt.size(); i++) {
+        if (sp2uniqKmerCnt[i] > 0) {
+            sp2lengthFactor[i] = 1.0 / log(sp2uniqKmerCnt[i]);
+        } else {
+            sp2lengthFactor[i] = 0.0;
+        }
+    }
+    std::unordered_set<TaxID> speciesSet;
+    time_t st = time(nullptr);
+    cout << "EM algorithm for taxonomic assignment: " << std::flush;
+    for (size_t i = 0; i < mappingResList.size(); i++) {
+        MappingRes &res = mappingResList[i];
+        for (const auto & sp2score : res.sp2score) {
+            if (sp2score.second > 0) {
+                speciesSet.insert(sp2score.first);
+            }
+        }
+    }
+
+    cout << "Species count: " << speciesSet.size() << std::endl;
+
+    std::unordered_map<TaxID, double> F, Fnew;
+    for (const auto & sp : speciesSet) {
+        F[sp] = 1.0 / speciesSet.size();
+        Fnew[sp] = 0.0;
+    }
+
+    for (size_t iter = 0; iter < 1000; ++iter) {
+        cout << "Iteration " << iter + 1 << ": " << std::endl;
+        for (auto & sp : Fnew) {
+            sp.second = 0.0; // Reset Fnew
+        }
+        for (size_t i = 0; i < mappingResList.size(); i++) {
+            MappingRes &res = mappingResList[i];
+            double denom = 0.0;
+            for (const auto & sp2score : res.sp2score) {
+                denom += sp2score.second * F[sp2score.first] * sp2lengthFactor[sp2score.first];
+            }
+            for (const auto & sp2score : res.sp2score) {
+                Fnew[sp2score.first] += (sp2score.second * F[sp2score.first] * sp2lengthFactor[sp2score.first]) / denom;
+            }
+        }
+        for (const auto & sp : speciesSet) {
+            Fnew[sp] /= mappingResList.size(); // Normalize
+        }
+        // cout << "Total probability: " << total << endl;
+        double delta = 0.0;
+        for (const auto & sp : speciesSet) {
+            delta += fabs(Fnew[sp] - F[sp]);
+        }
+        if (delta < 1e-6) {
+            break; // Convergence
+        }
+        F.swap(Fnew); // Update F with Fnew
+        cout << "Delta: " << delta << endl;
+    }
+
+    // Update mapping results with final probabilities
+    for (size_t i = 0; i < mappingResList.size(); i++) {
+        MappingRes &res = mappingResList[i];
+        double bestScore = -1.0;
+        TaxID bestTaxId = 0;
+        for (const auto & sp2score : res.sp2score) {
+            double score = F[sp2score.first] * sp2score.second * sp2lengthFactor[sp2score.first];
+            if (score > bestScore) {
+                bestScore = score;
+                bestTaxId = sp2score.first;
+            }
+        }
+        res.taxId = bestTaxId;
+        taxCounts_EM[bestTaxId] += 1;
+    }
+    cout << double(time(nullptr) - st) << " s" << endl;
+}
+
+
+void Classifier::countUniqueKmerPerSpecies(
+    vector<uint32_t> & sp2uniqKmerCnt) 
+{
+    string sp2uniqKmerCntFileName = dbDir + "/sp2uniqKmerCnt";
+    if (FileUtil::fileExists(sp2uniqKmerCntFileName.c_str())) {
+        cout << "Loading unique k-mer count per species from file: " << sp2uniqKmerCntFileName << endl;
+        ifstream sp2uniqKmerCntFile(sp2uniqKmerCntFileName);
+        if (!sp2uniqKmerCntFile.is_open()) {
+            cerr << "Error: Could not open file " << sp2uniqKmerCntFileName << endl;
+            return;
+        }
+        TaxID taxId;
+        uint32_t count;
+        while (sp2uniqKmerCntFile >> taxId >> count) {
+            if (taxId < sp2uniqKmerCnt.size()) {
+                sp2uniqKmerCnt[taxId] = count;
+            } else {
+                cerr << "Warning: TaxID " << taxId << " exceeds the size of sp2uniqKmerCnt vector." << endl;
+            }
+        }
+        sp2uniqKmerCntFile.close();
+        return;
+    } else {
+        string infoFileName = dbDir + "/info";
+        ReadBuffer<TaxID> readBuffer(infoFileName, 1000000);
+        TaxID taxId;
+        time_t st = time(nullptr);
+        unordered_map<TaxID, TaxID> & taxid2speciesId = kmerMatcher->getTaxId2SpeciesId();
+        cout << "Count unique k-mers per species: " << std::flush;
+        while((taxId = readBuffer.getNext()) != 0) {
+            TaxID speciesTaxId = taxid2speciesId[taxId];
+            if (speciesTaxId) {
+                ++sp2uniqKmerCnt[speciesTaxId];
+            }
+        }
+        cout << double(time(nullptr) - st) << " s" << endl;
+    
+        // Save the unique k-mer count per species to a file
+        ofstream sp2uniqKmerCntFile(sp2uniqKmerCntFileName);
+        if (!sp2uniqKmerCntFile.is_open()) {
+            cerr << "Error: Could not open file " << sp2uniqKmerCntFileName << " for writing." << endl;
+            return;
+        }
+        for (size_t i = 0; i < sp2uniqKmerCnt.size(); ++i) {
+            if (sp2uniqKmerCnt[i] > 0) {
+                sp2uniqKmerCntFile << i << " " << sp2uniqKmerCnt[i] << "\n";
+            }
+        }
+        sp2uniqKmerCntFile.close();
+    }
 
 }

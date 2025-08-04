@@ -28,7 +28,12 @@ int printInfo(int argc, const char **argv, const Command &command){
             continue;
         }
 
-        cout << infoFile.data[i] << "\n";
+        if (infoFile.data[i] == 372305) {
+            cout << "372305 " << i << "\n";
+            continue;
+        }
+
+        // cout << infoFile.data[i] << "\n";
     }
     munmap(infoFile.data, infoFile.fileSize + 1);
 

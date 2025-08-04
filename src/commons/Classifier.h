@@ -37,6 +37,7 @@ using namespace std;
 
 
 
+
 class Classifier {
 protected:
     // Parameters
@@ -54,6 +55,11 @@ protected:
     TaxonomyWrapper * taxonomy;
 
     unordered_map<TaxID, unsigned int> taxCounts;
+    unordered_map<TaxID, unsigned int> taxCounts_EM;
+    unordered_map<string, vector<pair<TaxID, float>>> mappingRes;
+    vector<MappingRes> mappingResList;
+
+    void countUniqueKmerPerSpecies(vector<uint32_t> & sp2uniqKmerCnt);
 
 public:
     void startClassify(const LocalParameters &par);
@@ -68,6 +74,8 @@ public:
     virtual ~Classifier();
 
     unordered_map<TaxID, unsigned int> & getTaxCounts() { return taxCounts; }
+
+    void em();
 
 };
 

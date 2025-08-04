@@ -18,6 +18,15 @@
 extern const std::string atcg;
 extern const std::string iRCT;
 
+struct MappingRes {
+    MappingRes(std::string queryName, size_t queryId, std::vector<std::pair<TaxID, float>> sp2score) 
+        : queryName(std::move(queryName)), queryId(queryId), sp2score(std::move(sp2score)) {}
+    std::string queryName;
+    size_t queryId;
+    TaxID taxId = 0; // taxID of the best match
+    std::vector<std::pair<TaxID, float>> sp2score; // taxID, score
+};
+
 struct Assembly {
     std::string name;
     TaxID taxid;
@@ -68,7 +77,7 @@ struct SequenceBlock {
     int strand; //true for forward
 };
 
-struct Query{
+struct Query {
     int queryId;
     int classification;
     float score;
@@ -83,6 +92,7 @@ struct Query{
 
     std::string name;
     std::map<TaxID,int> taxCnt; // 8 byte per element
+    std::vector<std::pair<TaxID, float>> taxScore;
     // std::vector<float> pathScores;
 
     bool operator==(int id) const { return queryId == id;}
@@ -147,20 +157,30 @@ struct ReadBuffer {
         end = p;
     };
 
+    ~ReadBuffer() {
+        if (fp) {
+            fclose(fp);
+        }
+        if (p) {
+            free(p);
+        }
+    };
+
     size_t loadBuffer(size_t unused = 0) {
         memmove(start,
                 start + (size - unused),
                 unused * sizeof(T));
         size_t readCount = fread(start + unused, sizeof(T), size - unused, fp);
-        size = readCount + unused;
-        end = start + size;
+        end = start + readCount + unused;
         p = start;
         return readCount + unused;
     }
 
     inline T getNext() {
         if (p >= end) {
-            loadBuffer();
+            if(loadBuffer() == 0) {
+               return T(); // Return default value if no more data 
+            }
         }
         return *p++;
     }

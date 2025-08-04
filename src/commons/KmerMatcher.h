@@ -210,6 +210,10 @@ public:
 
   void sortMatches(Buffer<Match> *matchBuffer);
 
+  unordered_map<TaxID, TaxID> &getTaxId2SpeciesId() {
+    return taxId2speciesId;
+  }
+
   static uint64_t getNextTargetKmer(uint64_t lookingTarget,
                                     const uint16_t *diffIdxBuffer,
                                     size_t &diffBufferIdx, size_t &totalPos);

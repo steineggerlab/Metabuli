@@ -406,6 +406,13 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
         observedAccessionsVec[i].speciesID = taxonomy->getTaxIdAtRank(it->second, "species");
         taxIdSet.insert(it->second);
         taxId2speciesId[it->second] = observedAccessionsVec[i].speciesID;
+        taxId2speciesId[observedAccessionsVec[i].speciesID] = observedAccessionsVec[i].speciesID;
+
+        if (observedAccessionsVec[i].speciesID == 0) {
+            cout << "Species ID is not found for accession " << observedAccessionsVec[i].accession << " " << it->second << endl;
+            unmappedAccessions.push_back(observedAccessionsVec[i].accession);
+            exit(1);
+        }
     }
     
     string mappingFileName = dbDir + "/acc2taxid.map";
@@ -797,6 +804,14 @@ void IndexCreator::reduceRedundancy(
                     }
                 }
                 if(taxIds.size() > 1){
+                    // const TaxonNode * lcaNode = taxonomy->LCA(taxIds);
+                    // const char * rank = taxonomy->getString(lcaNode->rankIdx);
+                    // if (strcmp(rank, "species") && strcmp(rank, "no rank")) {
+                    //     for (size_t j = 0; j < taxIds.size(); j++) {
+                    //         cout << taxIds[j] << " ";
+                    //     }
+                    //     cout << endl;
+                    // }
                     lookingKmer->metamer.id = taxonomy->LCA(taxIds)->taxId;
                 } else {
                     lookingKmer->metamer.id = taxIds[0];
@@ -1636,6 +1651,11 @@ void IndexCreator::mergeTargetFiles() {
                     }
                     metamerBuffer.buffer[posToWrite + split * valueBufferSize + i].spTaxId 
                         = taxId2speciesId[metamerBuffer.buffer[posToWrite + split * valueBufferSize + i].metamer.id & mask];
+
+                    if (metamerBuffer.buffer[posToWrite + split * valueBufferSize + i].spTaxId == 0) {
+                        cout << "tax id: " << metamerBuffer.buffer[posToWrite + split * valueBufferSize + i].metamer.id << endl;
+                        cout << (metamerBuffer.buffer[posToWrite + split * valueBufferSize + i].metamer.id & mask) << endl;
+                    }
                 }    
             }
         }

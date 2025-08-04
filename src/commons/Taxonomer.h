@@ -139,7 +139,7 @@ private:
         const Match *matchList,
         size_t end,
         size_t offset,
-        int queryLength);
+        Query & query);
 
     float combineMatchPaths(
         vector<MatchPath> & matchPaths,

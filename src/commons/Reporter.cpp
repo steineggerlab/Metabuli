@@ -16,7 +16,9 @@ Reporter::Reporter(const LocalParameters &par, TaxonomyWrapper *taxonomy, const 
             }
             // Output file names
             reportFileName = outDir + + "/" + jobId + "_report.tsv";
+            reportFileName_em = outDir + "/" + jobId + "_report_em.tsv";
             readClassificationFileName = outDir + "/" + jobId + "_classifications.tsv";
+            mappingResFileName = outDir + "/" + jobId + "_mapping_results.txt";
         }
     }    
 }
@@ -129,6 +131,33 @@ void Reporter::writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int
         fclose(kronaFile);
     }
 }
+
+
+void Reporter::writeReportFile2(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt, bool krona, const std::string &kronaFileName) {
+    std::unordered_map<TaxID, std::vector<TaxID>> parentToChildren = taxonomy->getParentToChildren();
+    unordered_map<TaxID, TaxonCounts> cladeCounts = taxonomy->getCladeCounts(taxCnt, parentToChildren);
+    FILE *fp;
+    fp = fopen((reportFileName_em).c_str(), "w");
+    fprintf(fp, "#clade_proportion\tclade_count\ttaxon_count\trank\ttaxID\tname\n");
+    writeReport(fp, cladeCounts, numOfQuery);
+    fclose(fp);
+
+    // Write Krona chart
+    if (krona) {
+        FILE *kronaFile = nullptr;
+        if (!kronaFileName.empty()){
+            kronaFile = fopen(kronaFileName.c_str(), "w");
+        } else{
+            kronaFile = fopen((outDir + "/" + jobId + "_krona_em.html").c_str(), "w");
+        }
+        fwrite(krona_prelude_html, krona_prelude_html_len, sizeof(char), kronaFile);
+        fprintf(kronaFile, "<node name=\"all\"><magnitude><val>%zu</val></magnitude>", (size_t) numOfQuery);
+        kronaReport(kronaFile, *taxonomy, cladeCounts, numOfQuery);
+        fprintf(kronaFile, "</node></krona></div></body></html>");
+        fclose(kronaFile);
+    }
+}
+
 
 void Reporter::writeReport(FILE *FP, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts,
                              unsigned long totalReads, TaxID taxID, int depth) {

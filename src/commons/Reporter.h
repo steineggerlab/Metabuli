@@ -19,8 +19,12 @@ private:
 
     // Output
     string reportFileName;
+    string reportFileName_em;
     string readClassificationFileName;
+    string mappingResFileName;
     ofstream readClassificationFile;
+    ofstream mappingResFile;
+
 
     bool isFirstTime = true;
 
@@ -28,6 +32,8 @@ public:
     Reporter(const LocalParameters &par, TaxonomyWrapper *taxonomy, const std::string &customReportFileName = "");
     // Write report
     void writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt, bool krona = true, const std::string &kronaFileName = "");
+    void writeReportFile2(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt, bool krona = true, const std::string &kronaFileName = "");
+    
     void writeReport(FILE *FP, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts,
                      unsigned long totalReads, TaxID taxID = 0, int depth = 0);
     void kronaReport(FILE *FP, const TaxonomyWrapper &taxDB, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts, unsigned long totalReads, TaxID taxID = 0, int depth = 0);
@@ -36,6 +42,20 @@ public:
     void openReadClassificationFile();
     void writeReadClassification(const vector<Query> & queryList, bool classifiedOnly = false);
     void closeReadClassificationFile();
+
+    // Mapping results
+    void openMappingResFile() { mappingResFile.open(mappingResFileName); }
+    void closeMappingResFile() { mappingResFile.close(); }
+    void writeMappingRes(const vector<MappingRes> & mappingResList) {
+        openMappingResFile();
+        if (mappingResFile.is_open()) {
+            for (const auto &res : mappingResList) {
+                mappingResFile << res.queryName << "\t" << taxonomy->getOriginalTaxID(res.taxId) << "\n";
+            }
+        } else {
+            cerr << "Mapping results file is not open!" << endl;
+        }
+    }
 
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts> &map, TaxID key);
 
