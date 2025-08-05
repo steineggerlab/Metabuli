@@ -406,6 +406,7 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
         observedAccessionsVec[i].speciesID = taxonomy->getTaxIdAtRank(it->second, "species");
         taxIdSet.insert(it->second);
         taxId2speciesId[it->second] = observedAccessionsVec[i].speciesID;
+        taxId2speciesId[observedAccessionsVec[i].speciesID] = observedAccessionsVec[i].speciesID;
     }
     
     string mappingFileName = dbDir + "/acc2taxid.map";

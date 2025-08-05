@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <iostream>
 #include <fstream>
+#include <omp.h>
 #include "TaxonomyWrapper.h"
 #include "createnewtaxalist.h"
 #include "common.h"
@@ -26,8 +27,8 @@ void getObservedAccessions(const std::string & fnaListFileName,
     size_t accCnt = 0;
     #pragma omp parallel default(none), shared(cout, fastaPaths, observedAccessions, accCnt)
     {
-        std::unordered_set<std::string> localObservedAccessions;
-        localObservedAccessions.reserve(4096 * 4);
+        std::vector<std::string> localObservedAccessions;
+        localObservedAccessions.reserve(4096 * 16);
         
         #pragma omp for schedule(static, 1)
         for (size_t i = 0; i < fastaPaths.size(); ++i) {
@@ -38,7 +39,7 @@ void getObservedAccessions(const std::string & fnaListFileName,
                 if (pos != nullptr) {
                     *pos = '\0';
                 }
-                localObservedAccessions.insert(string(e.name.s));
+                localObservedAccessions.push_back(string(e.name.s));
             }
             delete kseq;
         } 
@@ -54,16 +55,19 @@ void getObservedAccessions(const std::string & fnaListFileName,
 
         #pragma omp critical
         {
-            for (const auto & acc : localObservedAccessions) {
-                observedAccessions[acc] = 0;
+            for (size_t i = 0; i < localObservedAccessions.size(); ++i) {
+                observedAccessions[localObservedAccessions[i]] = 0; // Initialize with 0
             }
         }                     
     }                        
 }
 
-int getTaxonomyOfAccessions(std::unordered_map<std::string, TaxID>  & observedAccessions,
-                             TaxonomyWrapper * & taxonomy,
-                             const string & acc2taxidFileName) {
+int getTaxonomyOfAccessions(
+    std::unordered_map<std::string, TaxID>  & observedAccessions,
+    TaxonomyWrapper * & taxonomy,
+    const string & acc2taxidFileName,
+    size_t threadNum) 
+{
     unordered_map<TaxID, TaxID> old2merged;
     taxonomy->getMergedNodeMap(old2merged, false);
     
@@ -97,39 +101,90 @@ int getTaxonomyOfAccessions(std::unordered_map<std::string, TaxID>  & observedAc
     }
     ++current;
 
-    char accession[16384];
-    TaxID taxID;
-    int count = 0;
-    while (current < end) {
-        char* lineStart = current;
-        while (current < end && *current != '\n') {
-            ++current;
-        }
-        std::string line(lineStart, current - lineStart);
-        if (sscanf(line.c_str(), "%s\t%*s\t%d\t%*d", accession, &taxID) == 2) {
-            char* pos = strchr(accession, '.');
-            if (pos != nullptr) {
-                *pos = '\0';
+    char* dataStart = current;
+    char* dataEnd = end;
+    size_t totalBytes = dataEnd - dataStart;
+    std::vector<char*> chunkBeg(threadNum), chunkEnd(threadNum);
+
+    for (size_t t = 0; t < threadNum; ++t) {
+        size_t off0 = (t * totalBytes) / threadNum;
+        size_t off1 = ((t + 1) * totalBytes) / threadNum;
+        char * b = dataStart + off0;
+        char * e = (t == threadNum - 1) ? dataEnd : dataStart + off1;
+        if (t > 0) {
+            while (b < dataEnd && *b != '\n') {
+                ++b;  // Skip to the end of the line
             }
+            if (b < dataEnd) {
+                ++b;  // Move to the start of the next line
+            }
+        }
+
+        if (t < threadNum - 1) {
+            while (e < dataEnd && *e != '\n') {
+                ++e;  // Skip to the end of the line
+            }
+            if (e < dataEnd) {
+                ++e;  // Move to the start of the next line
+            }
+        }
+        chunkBeg[t] = b;
+        chunkEnd[t] = e;
+    }
+
+    std::vector<std::vector<std::pair<std::string,TaxID>>> localHits(threadNum);
+    
+ #pragma omp parallel
+{
+    int    tid = omp_get_thread_num();
+    auto   begin = chunkBeg[tid];
+    auto   finish = chunkEnd[tid];
+    auto & hits  = localHits[tid];
+    hits.reserve(4096 * 4);
+    char   accession[16384];
+    TaxID  taxID;
+
+    char* cur = begin;
+    while (cur < finish) {
+        char* lineStart = cur;
+        while (cur < finish && *cur != '\n') ++cur;
+        size_t len = cur - lineStart;
+        char buf[1024];
+        size_t nl = len < sizeof(buf)-1 ? len : sizeof(buf)-1;
+        memcpy(buf, lineStart, nl);
+        buf[nl] = '\0';
+        if (sscanf(buf, "%s\t%*s\t%u\t%*d", accession, &taxID) == 2) {
+            // strip version
+            if (char* p = strchr(accession, '.')) *p = '\0';
+
+            // only record if in observedAccessions
             auto it = observedAccessions.find(accession);
             if (it != observedAccessions.end()) {
                 if (old2merged.count(taxID) > 0) {
                     taxID = old2merged[taxID];
                 }
-                it->second = taxID;
-                count++;
+                hits.emplace_back(accession, taxID);
             }
         }
-        ++current;  // Move to the next line
+        if (cur<finish) ++cur;  // skip '\n'
     }
-    if (munmap(fileData, fileSize) == -1) {
-        cerr << "munmap failed" << endl;
-    }       
+}
+    // Merge results from all threads
+    size_t count = 0;
+    for (size_t t = 0; t < threadNum; ++t) {
+        for (const auto & hit : localHits[t]) {
+            auto it = observedAccessions.find(hit.first);
+            it->second = hit.second;  // Update the tax ID
+        }
+        count += localHits[t].size();
+    }
+
+    munmap(fileData, fileSize);
     return count;               
 }
 
-void createnewtaxalistDefault(LocalParameters & par){
-    par.threads = 16;
+void createnewtaxalistDefault(LocalParameters & par) {
+    // par.threads = 16;
 }
 
 
@@ -166,7 +221,7 @@ int createnewtaxalist(int argc, const char **argv, const Command &command) {
     cout << "Number of observed accessions: " << newAccessions.size() << endl;
     
     cout << "Getting taxonomy of observed accessions..." << endl;
-    int taxMappedAccNum = getTaxonomyOfAccessions(newAccessions, newTaxonomy, accession2taxidFileName);
+    int taxMappedAccNum = getTaxonomyOfAccessions(newAccessions, newTaxonomy, accession2taxidFileName, par.threads);
     cout << taxMappedAccNum << " accessions are mapped to taxonomy out of " << newAccessions.size() << endl;
 
     // Converted unordered_map to map for reproducibility
@@ -261,13 +316,20 @@ int createnewtaxalist(TaxonomyWrapper * oldTaxonomy,
             continue;
         }
         TaxonNode const* node = newTaxonomy->taxonNode(it.second);
+        size_t count = 0;
         while (true) {
             if (usedName2externalTaxid.find(newTaxonomy->getString(node->nameIdx)) != usedName2externalTaxid.end()) {
                 changedTaxIDs[node->taxId] = usedName2externalTaxid[newTaxonomy->getString(node->nameIdx)];
                 break;
             }
             if (node->taxId == 1) {
+                // Reached the root node, stop traversing
                 break;
+            }
+            if (count > 100) {
+                cout << "Error: " << it.first << " (Tax ID: " << it.second << ") has too long lineage, more than 100 nodes." << endl;
+                cout << "It is likely that the taxonomy is not correct or the tax ID is not valid." << endl;
+                exit(EXIT_FAILURE);
             }
             if (newTaxaMap.find(node->taxId) == newTaxaMap.end()) {
                 newTaxaMap[node->taxId] = NewTaxon(node->taxId,
@@ -279,6 +341,7 @@ int createnewtaxalist(TaxonomyWrapper * oldTaxonomy,
                 changedTaxIDs[node->taxId] = oldTaxonomy->getSmallestUnusedExternalTaxID(usedExternalTaxIDs);
             }
             node = newTaxonomy->taxonNode(node->parentTaxId);
+            count ++;
         }
     }
 
