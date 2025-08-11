@@ -207,6 +207,9 @@ protected:
                           vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
     size_t AminoAcidPart(size_t kmer) {
+        if (kmerFormat == 3) {
+            return kmer;
+        }
         return (kmer) & MARKER;
     }
 

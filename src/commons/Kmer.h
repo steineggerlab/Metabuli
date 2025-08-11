@@ -102,7 +102,7 @@ struct DeltaIdxOffset{
 };
 
 struct TargetKmer{
-    TargetKmer(): metamer(),spTaxId(0) {};
+    TargetKmer(): metamer(), spTaxId(0) {};
     TargetKmer(uint64_t metamer, TaxID taxIdAtRank, int seqId)
         : metamer(metamer, seqId), spTaxId(taxIdAtRank) {}
     Metamer metamer; // 12 byte
@@ -111,6 +111,8 @@ struct TargetKmer{
     void print() const {
         std::cout << "metamer: " << metamer.metamer << " id: " << metamer.id << " spTaxId: " << spTaxId << std::endl;
     }
+
+    bool isEmpty() const { return metamer.id == 0; }
 };
 
 #endif //ADKMER3_KMER_H

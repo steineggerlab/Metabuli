@@ -10,12 +10,17 @@ KmerExtractor::KmerExtractor(
     for (int i = 0; i < par.threads; ++i) {
         if (kmerFormat == 1) {
             kmerScanners[i] = new OldKmerScanner(geneticCode);
-        } else {
+        } else if (kmerFormat == 2) {
             if (par.syncmer) {
                 kmerScanners[i] = new SyncmerScanner(par.smerLen, geneticCode);
             } else {
                 kmerScanners[i] = new KmerScanner(geneticCode);
             }
+        } else if (kmerFormat == 3) {
+            kmerScanners[i] = new aaKmerScanner(geneticCode, 12);
+        } else {
+            std::cerr << "Error: Invalid k-mer format specified." << std::endl;
+            exit(EXIT_FAILURE);
         }
     }
     spaceNum = 0;
