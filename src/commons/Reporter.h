@@ -21,18 +21,19 @@ private:
     string reportFileName;
     string reportFileName_em;
     string readClassificationFileName;
+    string emResultFileName;
     string mappingResFileName;
     ofstream readClassificationFile;
-    ofstream mappingResFile;
+    FILE * mappingResFile;
 
 
     bool isFirstTime = true;
 
 public:
     Reporter(const LocalParameters &par, TaxonomyWrapper *taxonomy, const std::string &customReportFileName = "");
+
     // Write report
-    void writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt, bool krona = true, const std::string &kronaFileName = "");
-    void writeReportFile2(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt, bool krona = true, const std::string &kronaFileName = "");
+    void writeReportFile(int numOfQuery, unordered_map<TaxID, unsigned int> &taxCnt, bool em);
     
     void writeReport(FILE *FP, const std::unordered_map<TaxID, TaxonCounts> &cladeCounts,
                      unsigned long totalReads, TaxID taxID = 0, int depth = 0);
@@ -44,18 +45,31 @@ public:
     void closeReadClassificationFile();
 
     // Mapping results
-    void openMappingResFile() { mappingResFile.open(mappingResFileName); }
-    void closeMappingResFile() { mappingResFile.close(); }
-    void writeMappingRes(const vector<MappingRes> & mappingResList) {
-        openMappingResFile();
-        if (mappingResFile.is_open()) {
-            for (const auto &res : mappingResList) {
-                mappingResFile << res.queryName << "\t" << taxonomy->getOriginalTaxID(res.taxId) << "\n";
-            }
-        } else {
-            cerr << "Mapping results file is not open!" << endl;
+    void closeMappingResFile() { 
+        if (mappingResFile) {
+            fclose(mappingResFile);
+            mappingResFile = nullptr;
         }
     }
+    
+    void writeMappingResults(
+        const std::vector<Query> & queryList,
+        uint32_t offset) 
+    {   
+        if (offset == 0) {
+            mappingResFile = fopen(mappingResFileName.c_str(), "wb");
+        }
+        for (size_t i = 0; i < queryList.size(); ++i) {
+            if (queryList[i].isClassified) {
+                for (const auto &sp2score : queryList[i].species2Score) {
+                    MappingRes mappingRes(i + offset, sp2score.first, sp2score.second);
+                    fwrite(&mappingRes, sizeof(MappingRes), 1, mappingResFile);
+                }
+            }                
+        }
+    }
+
+    void writeEMResults(const std::vector<Classification> & results);
 
     unsigned int cladeCountVal(const std::unordered_map<TaxID, TaxonCounts> &map, TaxID key);
 
@@ -75,6 +89,14 @@ public:
 
     void setReadClassificationFileName(const string &readClassificationFileName) {
         Reporter::readClassificationFileName = readClassificationFileName;
+    }
+
+    std::string getClassificationFileName() const {
+        return readClassificationFileName;
+    }
+
+    std::string getMappingResFileName() const {
+        return mappingResFileName;
     }
 };
 
