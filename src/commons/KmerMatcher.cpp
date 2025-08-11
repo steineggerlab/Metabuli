@@ -278,6 +278,15 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                     moveMatches(matchBuffer->buffer + posToWrite, matches, matchCnt);
                 }
                 for (size_t k = 0; k < selectedMatchCnt; k++) {
+                    if (candidateKmerInfos[idx] == 0 || taxId2speciesId[candidateKmerInfos[idx]] == 0) {
+                        cout << candidateKmerInfos[idx] << "\t" << taxId2speciesId[candidateKmerInfos[idx]] << endl;
+                        const TaxonNode * node = taxonomy->taxonNode(candidateKmerInfos[idx]);
+                        cout << "TaxID: " << node->taxId << "\t"
+                             << "Species: " << taxonomy->getOriginalTaxID(taxId2speciesId[candidateKmerInfos[idx]]) << endl;
+                        cout << taxonomy->getString(node->nameIdx) << endl;
+                        cout << taxonomy->getString(node->rankIdx) << endl;
+                        exit(1);
+                    }
                     idx = selectedMatches[k];
                     matches[matchCnt] = {queryKmerList[j].info,
                                          candidateKmerInfos[idx],
@@ -309,6 +318,15 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                 }
                 for (size_t k = 0; k < selectedMatchCnt; k++) {
                     idx = selectedMatches[k];
+                    if (candidateKmerInfos[idx] == 0 || taxId2speciesId[candidateKmerInfos[idx]] == 0) {
+                        cout << candidateKmerInfos[idx] << "\t" << taxId2speciesId[candidateKmerInfos[idx]] << endl;
+                        const TaxonNode * node = taxonomy->taxonNode(candidateKmerInfos[idx]);
+                        cout << "TaxID: " << node->taxId << "\t"
+                             << "Species: " << taxonomy->getOriginalTaxID(taxId2speciesId[candidateKmerInfos[idx]]) << endl;
+                        cout << taxonomy->getString(node->nameIdx) << endl;
+                        cout << taxonomy->getString(node->rankIdx) << endl;
+                        exit(1);
+                    }
                     matches[matchCnt] = {queryKmerList[j].info,
                                          candidateKmerInfos[idx],
                                          taxId2speciesId[candidateKmerInfos[idx]],
@@ -401,6 +419,15 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
 
             for (size_t k = 0; k < selectedMatchCnt; k++) {
                 idx = selectedMatches[k];
+                    if (candidateKmerInfos[idx] == 0 || taxId2speciesId[candidateKmerInfos[idx]] == 0) {
+                        cout << candidateKmerInfos[idx] << "\t" << taxId2speciesId[candidateKmerInfos[idx]] << endl;
+                        const TaxonNode * node = taxonomy->taxonNode(candidateKmerInfos[idx]);
+                        cout << "TaxID: " << node->taxId << "\t"
+                             << "Species: " << taxonomy->getOriginalTaxID(taxId2speciesId[candidateKmerInfos[idx]]) << endl;
+                        cout << taxonomy->getString(node->nameIdx) << endl;
+                        cout << taxonomy->getString(node->rankIdx) << endl;
+                        exit(1);
+                    }
                 matches[matchCnt] = {queryKmerList[j].info,
                                      candidateKmerInfos[idx],
                                      taxId2speciesId[candidateKmerInfos[idx]],

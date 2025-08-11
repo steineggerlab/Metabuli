@@ -25,6 +25,7 @@ private:
     // To manage values
     size_t valueBufferSize;
     TargetKmer * valueBuffer;
+    size_t valueBufferIdx = 0;
     size_t valueCnt;
     uint64_t lastValue;
     
@@ -126,6 +127,43 @@ public:
 
     size_t getTotalValueNum() const {
         return totalValueNum;
+    }
+
+    TargetKmer getNextValue() {
+        if (valueBufferIdx >= valueCnt) {
+            valueCnt = 0;
+            valueBufferIdx = 0;
+            fillValueBuffer();
+        }
+        if (valueCnt == 0) {
+            valueBufferCompleted = true;
+            return TargetKmer(); // Return an empty TargetKmer
+        }
+        return valueBuffer[valueBufferIdx++];
+    }
+
+    void setReadPosition(DiffIdxSplit offset) {
+        deltaIdxBuffer.loadBufferAt(offset.diffIdxOffset);
+        infoBuffer.loadBufferAt(offset.infoIdxOffset - (offset.ADkmer != 0));
+        if (offset.ADkmer == 0 && offset.diffIdxOffset == 0 && offset.infoIdxOffset == 0) {
+            valueCnt = 0;
+            lastValue = 0;
+        } else {
+            lastValue = offset.ADkmer;
+            valueBuffer[0].metamer.metamer = lastValue;
+            valueBuffer[0].metamer.id = *infoBuffer.p++;
+            valueCnt = 1;
+        }
+        valueBufferIdx = 0;
+        fillValueBuffer();
+    }
+
+    TargetKmer * getValueBuffer() {
+        return valueBuffer;
+    }
+
+    size_t getValueCnt() const {
+        return valueCnt;
     }
 
 

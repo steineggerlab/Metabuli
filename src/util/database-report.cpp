@@ -5,9 +5,9 @@
 #include <iostream>
 #include "IndexCreator.h"
 #include "common.h"
-#include "report.h"
 #include "FileUtil.h"
 #include <cstdint>
+#include "Reporter.h"
 
 using namespace std;
 
@@ -26,8 +26,11 @@ int databaseReport(int argc, const char **argv, const Command &command) {
     TaxonomyWrapper * taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
     bool internalTaxid = taxonomy->hasInternalTaxID();
 
+    Reporter reporter(par, taxonomy, dbDir + "/database_report.tsv");
+
     vector<int> taxids;
     if (internalTaxid) {
+        cout << "Using internal tax IDs." << endl;
         string taxIdList = dbDir + "/taxID_list";
         if (!FileUtil::fileExists(taxIdList.c_str())) {
             cerr << "Error: taxID_list file " << taxIdList << " does not exist in the provided DBDIR." << endl;
@@ -85,7 +88,8 @@ int databaseReport(int argc, const char **argv, const Command &command) {
     ofstream db_report_file;
     db_report_file.open(dbDir + "/" + "database_report.tsv");
     if (db_report_file.is_open()) {
-        write_report_file(dbDir + "/" + "database_report.tsv", (int) taxids.size(), taxonCounts, *taxonomy);
+        reporter.writeReportFile((int) taxids.size(), taxonCounts, false);
+        // write_report_file(dbDir + "/" + "database_report.tsv", (int) taxids.size(), taxonCounts, false);
     } else {
         cerr << "Cannot open file for new report" << endl;
     }

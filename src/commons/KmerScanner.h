@@ -21,6 +21,13 @@ struct Kmer {
         }
     }
 
+    void printAA(const GeneticCode & code, int k) const {
+        for (int i = 0; i < k; ++i) {
+            int aa = (value >> (((k - 1) * 5) - 5 * i)) & 0x1F;
+            std::cout << code.aminoacids[aa];
+        }
+    }
+
     void printDNA(const GeneticCode & code) const {
         uint64_t dnaPart = value & 0xFFFFFF;
         uint64_t aaPart = value >> 24;
@@ -178,6 +185,79 @@ class OldKmerScanner : public KmerScanner {
             }
             return { UINT64_MAX, 0 }; // No more kmers found
         }    
+};
+
+
+class aaKmerScanner : public KmerScanner {
+private:
+    // Internal values
+    int k;
+    uint64_t mask;
+
+public:
+    aaKmerScanner(const GeneticCode &geneticCode, int k) : KmerScanner(geneticCode), k(k) {
+        this->mask = (1ULL << (5 * k)) - 1;
+        if (k > 12 || k < 1) {
+            std::cerr << "Error: k must be between 1 and 12, inclusive." << std::endl;
+            exit(EXIT_FAILURE);
+        } 
+    }
+
+    ~aaKmerScanner() {
+        // std::cout << "KmerScanner destroyed." << std::endl;
+    }
+
+    const GeneticCode &getGeneticCode() const {
+        return geneticCode;
+    }
+
+    void initScanner(
+        const char * seq, 
+        size_t seqStart, 
+        size_t seqEnd, 
+        bool isForward) override 
+    {
+        KmerScanner::initScanner(seq, seqStart, seqEnd, isForward);
+    }
+
+
+    Kmer next() override {
+        int aa = 0;
+        while (posStart <= aaLen - k) {
+            bool sawN = false;
+            loadedCharCnt -= (loadedCharCnt == k);
+            while (loadedCharCnt < k) {
+                int ci;
+                if (isForward) {
+                    ci = seqStart + (posStart + loadedCharCnt) * 3;
+                    aa = geneticCode.getAA(atcg[seq[ci]], atcg[seq[ci + 1]], atcg[seq[ci + 2]]);
+                } else {
+                    ci = seqEnd - (posStart + loadedCharCnt) * 3;
+                    aa = geneticCode.getAA(iRCT[atcg[seq[ci]]], iRCT[atcg[seq[ci - 1]]], iRCT[atcg[seq[ci - 2]]]);          
+                }
+                if (aa < 0) { sawN = true; break; }
+                aaPart = (aaPart << 5) | (uint64_t)aa;
+                loadedCharCnt++;
+            }
+            if (sawN) {
+                posStart += loadedCharCnt + 1;
+                aaPart = 0;
+                loadedCharCnt = 0;
+                continue;
+            }
+
+            // Kmer result = { aaPart & mask, 0 };
+            // result.printAA(geneticCode, k);
+            // std::cout << "\n";
+
+            if (isForward) {
+                return { aaPart & mask, seqStart + (posStart++) * 3 };
+            } else {
+                return { aaPart & mask, seqEnd - ((posStart++) + k) * 3 + 1 };
+            }
+        }
+        return { UINT64_MAX, 0 }; // No more kmers found
+    }
 };
 
 #endif // METABULI_KMERSCANNER_H

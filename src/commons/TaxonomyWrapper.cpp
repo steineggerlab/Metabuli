@@ -103,6 +103,7 @@ TaxonomyWrapper::TaxonomyWrapper(const std::string &namesFile, const std::string
     maxNodes = tmpNodes.size();
     taxonNodes = new TaxonNode[maxNodes];
     std::copy(tmpNodes.begin(), tmpNodes.end(), taxonNodes);
+    
 
     // for (size_t i = 0; i < maxNodes; ++i) {
     //     taxonNodes[i].print();

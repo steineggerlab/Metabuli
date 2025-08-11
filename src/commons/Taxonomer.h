@@ -104,8 +104,6 @@ private:
     vector<MatchPath> matchPaths;
     vector<MatchPath> combinedMatchPaths;
     vector<TaxID> maxSpecies;
-    vector<TaxID> speciesList;
-    vector<float> speciesScores;
 
     // getMatchPaths
     vector<bool> connectedToNext;
@@ -139,7 +137,7 @@ private:
         const Match *matchList,
         size_t end,
         size_t offset,
-        int queryLength);
+        Query & query);
 
     float combineMatchPaths(
         vector<MatchPath> & matchPaths,

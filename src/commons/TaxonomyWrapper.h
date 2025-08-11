@@ -207,6 +207,46 @@ public:
         }
     }
 
+    int findRankIndex2(const std::string& rank) const {
+        if (rank == "no rank") return 0;
+        
+        if (rank == "varietas") return 2;
+
+        if (rank == "forma") return 1;
+
+        if (rank == "subspecies") return 3;
+
+        if (rank == "species") return 4;
+
+        if (rank == "species subgroup") return 5;
+
+        if (rank == "species group") return 6;
+        if (rank == "subgenus") return 7;
+        if (rank == "genus") return 8;
+        if (rank == "subtribe") return 9;
+        if (rank == "tribe") return 10;
+        if (rank == "subfamily") return 11;
+        if (rank == "family") return 12;
+        if (rank == "superfamily") return 13;
+        if (rank == "parvorder") return 14;
+        if (rank == "infraorder") return 15;
+        if (rank == "suborder") return 16;
+        if (rank == "order") return 17;
+        if (rank == "superorder") return 18;
+        if (rank == "infraclass") return 19;
+        if (rank == "subclass") return 20;
+        if (rank == "class") return 21;
+        if (rank == "superclass") return 22;
+        if (rank == "subphylum") return 23;
+        if (rank == "phylum") return 24;
+        if (rank == "superphylum") return 25;
+        if (rank == "subkingdom") return 26;
+        if (rank == "kingdom") return 27;
+        if (rank == "superkingdom") return 28;
+        if (rank == "domain") return 28;
+        return -1; 
+    }
+
 protected:
     TaxID eukaryotaTaxID;
     int *internal2orgTaxId; 

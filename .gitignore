@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# Files
+*.gz
+*.tsv
+*.dmp
+# Build directories
+build*
+

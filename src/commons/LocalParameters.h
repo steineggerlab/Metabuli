@@ -75,6 +75,7 @@ public:
     PARAMETER(TIE_RATIO)
     PARAMETER(PRINT_LINEAGE)
     PARAMETER(MAX_SHIFT)
+    PARAMETER(EM)
 
     // extract
     PARAMETER(TARGET_TAX_ID)
@@ -163,6 +164,7 @@ public:
     float tieRatio;
     int printLineage;
     int maxShift;
+    bool em;
 
     // Extract
     int targetTaxId;
