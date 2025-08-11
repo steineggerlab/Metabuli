@@ -7,14 +7,13 @@ SeqIterator::~SeqIterator() {
 
 SeqIterator::SeqIterator(const LocalParameters &par) {
     // Mask for spaced k-mer
+    kmerLength = 8;
     size_t maskLen = 8; // par.spaceMask.length();
     mask = new uint32_t[maskLen+1];
     mask_int = new int[maskLen+1];
     spaceNum = 0;
     spaceNum_int = 0;
     string spaceMask = "11111111"; // par.spaceMask;
-    smerLen = par.smerLen;
-    smerMask = (1u << (5 * smerLen)) - 1;
 
     for(size_t i = 0; i < maskLen; i++){
         mask[i] = spaceMask[i] - 48;
@@ -35,7 +34,7 @@ SeqIterator::SeqIterator(const LocalParameters &par) {
         bitsForCodon = 4;
         bitsFor8Codons = 32;
     }
-    for (int i = 0; i < kmerLength; i++) {
+    for (int i = 0; i < 8; i++) {
         powers[i] = pow;
         pow *= numOfAlphabets;
     }
@@ -191,7 +190,7 @@ void SeqIterator::devideToCdsAndNonCds(const char *maskedSeq,
             size_t end = cdsInfo[i].loc[j].second - 1;
             if (j == 0) {
                 int k = 0;
-                while (k < 7 && begin >= 3) {
+                while (k < (this->kmerLength - 1) && begin >= 3) {
                     begin -= 3;
                     currStartCodonPos += 3;
                     k++;
@@ -199,7 +198,7 @@ void SeqIterator::devideToCdsAndNonCds(const char *maskedSeq,
             }
             if (j == locNum - 1) {
                 int k = 0;
-                while (k < 7 && end + 3 < seqLen) {
+                while (k < (this->kmerLength - 1) && end + 3 < seqLen) {
                     end += 3;
                     k++;
                 }
