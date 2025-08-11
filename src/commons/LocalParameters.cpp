@@ -187,6 +187,13 @@ LocalParameters::LocalParameters() :
                     typeid(int),
                     (void *) &maxShift,
                     "[1-7]"),
+        EM(EM_ID,
+                "--em",
+                "Use Expectation-Maximization for classification",
+                "Use Expectation-Maximization for classification",
+                typeid(bool),
+                (void *) &em,
+                ""),
         TARGET_TAX_ID(TARGET_TAX_ID_ID,
                "--tax-id",
                "Tax. ID of clade to be extracted",
@@ -591,6 +598,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&SMER_LEN);
     classify.push_back(&PRINT_LOG);
     classify.push_back(&REDUCED_AA);
+    classify.push_back(&EM);
 
 
     // extract
@@ -661,6 +669,7 @@ LocalParameters::LocalParameters() :
     // expand_diffidx
     expand_diffidx.push_back(&KMER_BEGIN);
     expand_diffidx.push_back(&KMER_END);
+    expand_diffidx.push_back(&PARAM_THREADS);
 
     query2reference.push_back(&TEST_RANK);
 
