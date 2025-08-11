@@ -39,10 +39,17 @@ LocalParameters::LocalParameters() :
                         typeid(int),
                         (void *) &skipRedundancy,
                         "[0-1]"),
+        VALIDATE_DB(VALIDATE_DB_ID,
+                     "--validate-db",
+                     "Validate the database",
+                     "Validate the database. It checks if all required files are present and if the k-mer count is consistent.",
+                     typeid(int),
+                     (void *) &validateDb,
+                     "[0-1]"),
         SYNCMER(SYNCMER_ID,
                 "--syncmer",
-                "Using syncmer for k-mer selection",
-                "Using syncmer for k-mer selection",
+                "Using syncmer (k = 8, s = 6)",
+                "Using syncmer (k = 8, s = 6)",
                 typeid(int),
                 (void *) &syncmer,
                 "[0-1]"),
@@ -52,7 +59,14 @@ LocalParameters::LocalParameters() :
                  "s-mer length for syncmer selection",
                  typeid(int),
                  (void *) &smerLen,
-                 "[0-6]"),
+                 "[0-7]"),
+        KMER_FORMAT(KMER_FORMAT_ID,
+                    "--kmer-format",
+                    "K-mer format",
+                    "K-mer format",
+                    typeid(int),
+                    (void *) &kmerFormat,
+                    "[1-2]"),
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
                  "Sequencing type",
@@ -74,13 +88,6 @@ LocalParameters::LocalParameters() :
                   typeid(float),
                   (void *) &minScore,
                   "^0(\\.[0-9]+)?|1(\\.0+)?$"),
-        MIN_COVERAGE(MIN_COVERAGE_ID,
-                     "--min-cov",
-                     "Min. query coverage",
-                     "Min. query coverage (0.0-1.0)",
-                     typeid(float),
-                     (void *) &minCoverage,
-                     "^0(\\.[0-9]+)?|1(\\.0+)?$"),
         // SPACED(SPACED_ID,
         //        "--spacing-mask",
         //        "Binary patterned mask for spaced k-mer.\nThe same mask must be used for DB creation and classification",
@@ -89,13 +96,6 @@ LocalParameters::LocalParameters() :
         //        typeid(std::string),
         //        (void *) &spaceMask,
         //        "^.*$"),
-        MIN_COVERED_POS(MIN_COVERED_POS_ID,
-                        "--min-covered-pos",
-                        "Minimum number of covered positions of a range",
-                        "Minimum number of covered positions of a range",
-                        typeid(int),
-                        (void *) &minCoveredPos,
-                        "^[0-9]+$"),
         HAMMING_MARGIN(HAMMING_MARGIN_ID,
                        "--hamming-margin",
                        "Allowed extra Hamming distance", 
@@ -182,8 +182,8 @@ LocalParameters::LocalParameters() :
                       "[0-1]"),
         MAX_SHIFT(MAX_SHIFT_ID,
                     "--max-shift",
-                    "Max shift between two consecutive k-mers",
-                    "Max shift between two consecutive k-mers",
+                    "Max triplet shift between two consecutive k-mers (8-smerLen by default)",
+                    "Max triplet shift between two consecutive k-mers (8-smerLen by default)",
                     typeid(int),
                     (void *) &maxShift,
                     "[1-7]"),
@@ -201,6 +201,13 @@ LocalParameters::LocalParameters() :
                      typeid(int),
                      (void *) &extractMode,
                      "[0-2]"),
+        PARAM_OUTDIR(PARAM_OUTDIR_ID,
+                    "--outdir",
+                    "Output directory",
+                    "Output directory",
+                    typeid(std::string),
+                    (void *) &outputDir,
+                    "^.*$"),
         THR_K(THR_K_ID,
                     "--thr-k",
                     "Min. num. of shared kmer for read grouping",
@@ -214,20 +221,6 @@ LocalParameters::LocalParameters() :
                     "Min. score for read grouping",
                     typeid(float),
                     (void *) &groupScoreThr,
-                    "^0(\\.[0-9]+)?|1(\\.0+)?$"),
-        VOTE_MODE(VOTE_MODE_ID,
-                    "--vote-mode",
-                    "Vote mode of majority weighted LCA",
-                    "Vote mode of majority weighted LCA",
-                    typeid(int),
-                    (void *) &voteMode,
-                    "^(0|1|2)$"),
-        MAJORITY_THR(MAJORITY_THR_ID,
-                    "--majority-thr",
-                    "Threshold for majority weighted LCA",
-                    "Threshold for majority weighted LCA",
-                    typeid(float),
-                    (void *) &majorityThr,
                     "^0(\\.[0-9]+)?|1(\\.0+)?$"),
         LIBRARY_PATH(LIBRARY_PATH_ID,
                      "--library-path",
@@ -301,8 +294,8 @@ LocalParameters::LocalParameters() :
                  "^.*$"),
         MAKE_LIBRARY(MAKE_LIBRARY_ID,
                      "--make-library",
-                     "Make library",
-                     "Make library",
+                     "Make species library. Use it when multiple species are in the same FASTA.",
+                     "Make library.",
                      typeid(int),
                      (void *) &makeLibrary,
                      "[0-1]"),
@@ -313,6 +306,13 @@ LocalParameters::LocalParameters() :
                 typeid(int),
                 (void *) &gtdb,
                 "[0-1]"),
+        VALIDATE_INPUT(VALIDATE_INPUT_ID,
+                      "--validate-input",
+                      "Validate format of input FASTA/FASTQ file(s)",
+                      "Validate format of input FASTA/FASTQ file(s)",
+                      typeid(int),
+                      (void *) &validateInput,
+                      "[0-1]"),
         NEW_TAXA(NEW_TAXA_ID,
                 "--new-taxa",
                 "TSV file of new taxa to be added",
@@ -364,8 +364,8 @@ LocalParameters::LocalParameters() :
                      "^[0-9]+$"),
         PRINT_COLUMNS(PRINT_COLUMNS_ID,
                       "--print-columns",
-                      "CSV of column numbers to be printed",
-                      "CSV of column numbers to be printed",
+                      "CSV of columns to print",
+                      "CSV of columns to print",
                       typeid(std::string),
                       (void *) &printColumns,
                       "^.*$"),
@@ -424,7 +424,70 @@ LocalParameters::LocalParameters() :
                 "Last k-mer to print",
                 typeid(size_t),
                 (void *) &kmerEnd,
-                "^[0-9]+$")
+                "^[0-9]+$"),
+        REMOVE_UNCLASSIFIED(REMOVE_UNCLASSIFIED_ID,
+                "--remove-unclassified",
+                "Remove unclassified reads",
+                "Remove unclassified reads",
+                typeid(bool),
+                (void *) &removeUnclassified,
+                ""),
+        EXCLUDE_TAXID(EXCLUDE_TAXID_ID,
+                "--exclude-taxid",
+                "Exclude taxId as well as its children",
+                "Exclude taxId as well as its children",
+                typeid(std::string),
+                (void *) &excludeTaxid,
+                "^.*$"),
+        SELECT_TAXID(SELECT_TAXID_ID,
+                "--select-taxid",
+                "Select taxId as well as its children",
+                "Select taxId as well as its children",
+                typeid(std::string),
+                (void *) &selectTaxid,
+                "^.*$"),
+        SELECT_COLUMNS(SELECT_COLUMNS_ID,
+                "--select-columns",
+                "Select columns with number, (7:full lineage, generated if absent)",
+                "Select columns with number, (7:full lineage, generated if absent)",
+                typeid(std::string),
+                (void *) &selectColumns,
+                "^.*$"),
+        REPORT(REPORT_ID,
+                "--report",
+                "Make report of refined classification file",
+                "Make report of refined classification file",
+                typeid(bool),
+                (void *) &report,
+                ""),
+        RANK(RANK_ID,
+                "--rank",
+                "Adjust classification to the specified rank",
+                "Adjust classification to the specified rank",
+                typeid(std::string),
+                (void *) &rank,
+                "^.*$"),
+        HIGHER_RANK_FILE(HIGHER_RANK_FILE_ID,
+                "--rank-file-type",
+                "0: without higher rank, 1: with higher rank, 2: separate file for higher rank classification",
+                "0: without higher rank, 1: with higher rank, 2: separate file for higher rank classification",
+                typeid(int),
+                (void *) &higherRankFile,
+                "^[0-2]$"),
+        RANDOM_SEED(RANDOM_SEED_ID,
+                    "--random-seed",
+                    "Random seed for random number generation",
+                    "Random seed for random number generation",
+                    typeid(int),
+                    (void *) &randomSeed,
+                    "^[0-9]+"),
+        ASSACC2TAXID(ASSACC2TAXID_ID,
+                    "--assacc2taxid",
+                    "Path to the file mapping from accession to tax ID",
+                    "Path to the file mapping from accession to tax ID",
+                    typeid(std::string),
+                    (void *) &assacc2taxid,
+                    "^.*$") 
   {
     // Initialize the parameters
     // Superkingdom taxonomy id
@@ -440,9 +503,7 @@ LocalParameters::LocalParameters() :
     minConsCnt = 4;
     hammingMargin = 0;
     minSpScore = 0;
-    minCoverage = 0;
     ramUsage = 0;
-    minCoveredPos = 0;
     printLog = 0;
     maxGap = 0;
     minConsCntEuk = 0;
@@ -485,6 +546,17 @@ LocalParameters::LocalParameters() :
     printMode = 0;
     contamList = "";
 
+    // classified to full taxonomy
+    removeUnclassified = false;
+    excludeTaxid = "";
+    selectTaxid = "";
+    selectColumns = "";
+    report = false;
+    rank = "";
+    higherRankFile = 0;
+
+
+
 
     // build
     build.push_back(&PARAM_THREADS);
@@ -499,8 +571,12 @@ LocalParameters::LocalParameters() :
     build.push_back(&RAM_USAGE);
     build.push_back(&MAKE_LIBRARY);
     build.push_back(&GTDB);
+    build.push_back(&VALIDATE_INPUT);
+    build.push_back(&VALIDATE_DB);
     build.push_back(&SYNCMER);
     build.push_back(&SMER_LEN);
+    build.push_back(&REDUCED_AA);
+
 
     // updateDB
     updateDB.push_back(&PARAM_THREADS);
@@ -514,13 +590,16 @@ LocalParameters::LocalParameters() :
     updateDB.push_back(&RAM_USAGE);
     updateDB.push_back(&NEW_TAXA);
     updateDB.push_back(&MAKE_LIBRARY);
+    updateDB.push_back(&GTDB);
+    updateDB.push_back(&VALIDATE_INPUT);
+    updateDB.push_back(&VALIDATE_DB);
     updateDB.push_back(&SYNCMER);
+    updateDB.push_back(&REDUCED_AA);
 
     //classify
     classify.push_back(&PARAM_THREADS);
     classify.push_back(&SEQ_MODE);
     classify.push_back(&MIN_SCORE);
-    classify.push_back(&MIN_COVERAGE);
     classify.push_back(&MIN_CONS_CNT);
     classify.push_back(&MIN_CONS_CNT_EUK);
     classify.push_back(&MIN_SP_SCORE);
@@ -532,13 +611,14 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MATCH_PER_KMER);
     classify.push_back(&ACCESSION_LEVEL);
     classify.push_back(&TIE_RATIO);
-    classify.push_back(&SKIP_REDUNDANCY);
+    // classify.push_back(&SKIP_REDUNDANCY);
     classify.push_back(&PRINT_LINEAGE);
+    classify.push_back(&VALIDATE_INPUT);
+    classify.push_back(&VALIDATE_DB);
     classify.push_back(&SYNCMER);
     classify.push_back(&SMER_LEN);
     classify.push_back(&PRINT_LOG);
-    classify.push_back(&MAX_SHIFT);
-    classify.push_back(&ONLY_AA);
+    classify.push_back(&REDUCED_AA);
 
 
     // extract
@@ -546,6 +626,7 @@ LocalParameters::LocalParameters() :
     extract.push_back(&SEQ_MODE);
     extract.push_back(&TARGET_TAX_ID);
     extract.push_back(&EXTRACT_MODE);
+    extract.push_back(&PARAM_OUTDIR);
 
     //groupGeneration
     groupGeneration.push_back(&PARAM_THREADS);
@@ -554,12 +635,7 @@ LocalParameters::LocalParameters() :
     groupGeneration.push_back(&RAM_USAGE);
     groupGeneration.push_back(&MATCH_PER_KMER);
     groupGeneration.push_back(&THR_K);
-    groupGeneration.push_back(&GROUP_SCORE_THR);
-    groupGeneration.push_back(&VOTE_MODE);
-    groupGeneration.push_back(&MAJORITY_THR);
-    groupGeneration.push_back(&ONLY_AA);
-
-    
+    groupGeneration.push_back(&GROUP_SCORE_THR);    
     groupGeneration.push_back(&MIN_SCORE);
     groupGeneration.push_back(&MIN_COVERAGE);
     groupGeneration.push_back(&MIN_CONS_CNT);
@@ -577,12 +653,10 @@ LocalParameters::LocalParameters() :
     filter.push_back(&VIRUS_TAX_ID);
     filter.push_back(&REDUCED_AA);
     filter.push_back(&MIN_SCORE);
-    filter.push_back(&MIN_COVERAGE);
     filter.push_back(&HAMMING_MARGIN);
     filter.push_back(&MIN_SP_SCORE);
     filter.push_back(&PARAM_V);
     filter.push_back(&RAM_USAGE);
-    filter.push_back(&MIN_COVERED_POS);
     filter.push_back(&PRINT_LOG);
     filter.push_back(&MAX_GAP);
     filter.push_back(&TAXONOMY_PATH);
@@ -615,7 +689,6 @@ LocalParameters::LocalParameters() :
     // Apply thresholds
     applyThreshold.push_back(&MIN_SP_SCORE);
     applyThreshold.push_back(&MIN_SCORE);
-    applyThreshold.push_back(&MIN_COVERAGE);
 
     // Binning to report
     binning2report.push_back(&READID_COL);
@@ -638,6 +711,19 @@ LocalParameters::LocalParameters() :
     expand_diffidx.push_back(&KMER_END);
 
     query2reference.push_back(&TEST_RANK);
+
+    classifiedRefiner.push_back(&REMOVE_UNCLASSIFIED);
+    classifiedRefiner.push_back(&EXCLUDE_TAXID);
+    classifiedRefiner.push_back(&SELECT_TAXID);
+    classifiedRefiner.push_back(&SELECT_COLUMNS);
+    classifiedRefiner.push_back(&REPORT);
+    classifiedRefiner.push_back(&RANK);
+    classifiedRefiner.push_back(&HIGHER_RANK_FILE);
+    classifiedRefiner.push_back(&PARAM_THREADS);
+    classifiedRefiner.push_back(&MIN_SCORE);
+    makeBenchmarkSet.push_back(&RANDOM_SEED);
+    makeBenchmarkSet.push_back(&ASSACC2TAXID);
+    makeBenchmarkSet.push_back(&TEST_TYPE);
 }
 
 void LocalParameters::printParameters(const std::string &module, int argc, const char* pargv[],

@@ -54,6 +54,7 @@ int databaseReport(int argc, const char **argv, const Command &command) {
             return 1;
         }
         string line;
+        getline(acc2taxidFile, line);
         vector<string> tokens = Util::split(line, "\t");
         int using_token = 0;
         if (tokens.size() == 2) { // accession and taxid

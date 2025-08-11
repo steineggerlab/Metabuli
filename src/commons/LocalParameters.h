@@ -43,6 +43,8 @@ public:
     std::vector<MMseqsParameter*> accession2taxid;
     std::vector<MMseqsParameter*> editNames;
     std::vector<MMseqsParameter*> createnewtaxalist;
+    std::vector<MMseqsParameter*> classifiedRefiner;
+    std::vector<MMseqsParameter*> validateDatabase;
     std::vector<MMseqsParameter*> makeBenchmarkSet;
 
     // Superkingdom taxonomy id
@@ -52,16 +54,15 @@ public:
 
     // DB and classify
     PARAMETER(SKIP_REDUNDANCY)
+    PARAMETER(VALIDATE_DB)
     PARAMETER(SYNCMER)
     PARAMETER(SMER_LEN)
-
+    PARAMETER(KMER_FORMAT)
 
     // Classify
     PARAMETER(SEQ_MODE)
     PARAMETER(REDUCED_AA)
     PARAMETER(MIN_SCORE)
-    PARAMETER(MIN_COVERAGE)
-    PARAMETER(MIN_COVERED_POS)
     PARAMETER(HAMMING_MARGIN)
     PARAMETER(MIN_SP_SCORE)
     PARAMETER(TINFO_PATH)
@@ -79,6 +80,7 @@ public:
     // extract
     PARAMETER(TARGET_TAX_ID)
     PARAMETER(EXTRACT_MODE)
+    PARAMETER(PARAM_OUTDIR)
 
     // Group generation
     PARAMETER(THR_K)
@@ -99,6 +101,7 @@ public:
     PARAMETER(CDS_INFO)
     PARAMETER(MAKE_LIBRARY)
     PARAMETER(GTDB)
+    PARAMETER(VALIDATE_INPUT)
 
     // DB updated parameters
     PARAMETER(NEW_TAXA)
@@ -126,6 +129,19 @@ public:
     PARAMETER(KMER_BEGIN)
     PARAMETER(KMER_END)
 
+    // classifiedRefiner
+    PARAMETER(REMOVE_UNCLASSIFIED)
+    PARAMETER(EXCLUDE_TAXID)
+    PARAMETER(SELECT_TAXID)
+    PARAMETER(SELECT_COLUMNS)
+    PARAMETER(REPORT)
+    PARAMETER(RANK)
+    PARAMETER(HIGHER_RANK_FILE)
+
+    // benchmark set
+    PARAMETER(RANDOM_SEED)
+    PARAMETER(ASSACC2TAXID)
+
     // Superkingdom taxonomy id
     int virusTaxId;
     int bacteriaTaxId;
@@ -133,8 +149,10 @@ public:
 
     // DB and classify
     int skipRedundancy;
+    int validateDb;
     int syncmer;
     int smerLen;
+    int kmerFormat;
 
     // Classify
     int seqMode;
@@ -144,9 +162,7 @@ public:
     int minConsCnt;
     uint8_t hammingMargin;
     float minSpScore;
-    float minCoverage;
     int ramUsage;
-    int minCoveredPos;
     int printLog;
     int maxGap;
     int minConsCntEuk;
@@ -164,6 +180,7 @@ public:
     // Extract
     int targetTaxId;
     int extractMode;
+    std::string outputDir;
 
     // Database creation
     std::string tinfoPath;
@@ -178,6 +195,7 @@ public:
     int makeLibrary;
     std::string assAcc2taxid;
     int gtdb;
+    int validateInput;
 
     // DB updated parameters
     std::string newTaxa;
@@ -205,6 +223,18 @@ public:
     size_t infoEnd;
     size_t kmerBegin;
     size_t kmerEnd;
+
+    bool removeUnclassified;
+    std::string excludeTaxid;
+    std::string selectTaxid;
+    std::string selectColumns;
+    bool report;
+    std::string rank;
+    int higherRankFile;
+   
+    // benchmark set
+    int randomSeed;
+    std::string assacc2taxid;
 
     void printParameters(const std::string &module, int argc,
                          const char* pargv[],

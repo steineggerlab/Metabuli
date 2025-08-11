@@ -5,6 +5,12 @@
 #include <cstdint>
 #include <bitset>
 
+struct Smer {
+    uint64_t value;
+    int pos;
+    Smer(uint64_t value, int pos) : value(value), pos(pos) {}
+};
+
 struct QueryKmerInfo {
     explicit QueryKmerInfo(uint32_t seqID = 0, uint32_t pos = 0, uint8_t frame = 0 ) : pos(pos), sequenceID(seqID), frame(frame) {}
     uint64_t pos : 32;
@@ -17,9 +23,11 @@ typedef struct QueryKmer {
     QueryKmer():ADkmer(0), info(0,0,0){}
     uint64_t ADkmer; // 8 byte
     QueryKmerInfo info; // 8 byte
+    void print() const {
+        std::cout << "ADkmer: " << ADkmer << " seqID: " << info.sequenceID 
+                  << " pos: " << info.pos << " frame: " << (int)info.frame << std::endl;
+    }
 } QueryKmer; // 16 byte
-
-
 
 // struct TargetKmer{
 //     TargetKmer(): seqId(0), taxIdAtRank(0), ADkmer(0) {};
@@ -99,6 +107,10 @@ struct TargetKmer{
         : metamer(metamer, seqId), spTaxId(taxIdAtRank) {}
     Metamer metamer; // 12 byte
     TaxID spTaxId; // 4 byte
+
+    void print() const {
+        std::cout << "metamer: " << metamer.metamer << " id: " << metamer.id << " spTaxId: " << spTaxId << std::endl;
+    }
 };
 
 #endif //ADKMER3_KMER_H

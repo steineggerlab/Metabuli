@@ -13,10 +13,25 @@ public:
 
     static std::string getQueryBaseName(const std::string & queryPath);
 
+    static bool isFasta(const std::string & queryPath) {
+        // Allow .fna, .fasta, .fna.gz, .fasta.gz, .fa, .fa.gz
+        return Util::endsWith(".fna", queryPath) || Util::endsWith(".fasta", queryPath) ||
+               Util::endsWith(".fna.gz", queryPath) || Util::endsWith(".fasta.gz", queryPath) ||
+               Util::endsWith(".fa", queryPath) || Util::endsWith(".fa.gz", queryPath);
+    }
+
+    static bool isFastq(const std::string & queryPath) {
+        // Allow .fq, .fastq, .fq.gz, .fastq.gz
+        return Util::endsWith(".fq", queryPath) || Util::endsWith(".fastq", queryPath) ||
+               Util::endsWith(".fq.gz", queryPath) || Util::endsWith(".fastq.gz", queryPath); 
+    }
+
+    static bool isValidQueryFile(const std::string & queryPath) {
+        return isFasta(queryPath) || isFastq(queryPath);
+    }
+
     template<typename T>
     static T getQueryKmerNumber(T queryLength, int spaceNum, bool onlyAA = false);
-
-    static void splitQueryFile(std::vector<SequenceBlock> & seqSegments, const std::string & queryPath);
 
     template<typename T>
     static T getMaxCoveredLength(T queryLength);

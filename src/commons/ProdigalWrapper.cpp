@@ -51,8 +51,7 @@ ProdigalWrapper::ProdigalWrapper() {
     }
 }
 
-void ProdigalWrapper::
-trainASpecies(char * genome){
+void ProdigalWrapper::trainASpecies(unsigned char * genome, size_t seqLength) {
     // Initialize memories to reuse them
     memset(seq, 0, (slen / 4 + 1) * sizeof(unsigned char));
     memset(rseq, 0, (slen / 4 + 1) * sizeof(unsigned char));
@@ -66,7 +65,7 @@ trainASpecies(char * genome){
     tinf.st_wt = 4.35;
     tinf.trans_table = 11;
 
-    slen = getNextSeq(genome, 1);
+    slen = getNextSeq(genome, 1, seqLength);
 
     rcom_seq(seq, rseq, useq, slen);
 
@@ -127,7 +126,7 @@ trainASpecies(char * genome){
     if(tinf.uses_sd == 0) train_starts_nonsd(seq, rseq, slen, nodes, nn, &tinf); 
 }
 
-void ProdigalWrapper::trainMeta(char *genome) {
+void ProdigalWrapper::trainMeta(unsigned char *genome, size_t seqLength) {
     // Initialize memories to reuse them
     memset(seq, 0, (slen / 4 + 1) * sizeof(unsigned char));
     memset(rseq, 0, (slen / 4 + 1) * sizeof(unsigned char));
@@ -145,7 +144,7 @@ void ProdigalWrapper::trainMeta(char *genome) {
         is_first_meta = 0;
     }
     
-    slen = getNextSeq(genome, 1);
+    slen = getNextSeq(genome, 1, seqLength);
 
     rcom_seq(seq, rseq, useq, slen);
 
@@ -186,7 +185,7 @@ void ProdigalWrapper::trainMeta(char *genome) {
     }
 }
 
-void ProdigalWrapper::getPredictedGenes(char * genome) {
+void ProdigalWrapper::getPredictedGenes(unsigned char * genome, size_t seqLength) {
     // Initialize memories to reuse them
     // Initialization should be done here not at the end of the function
     memset(seq, 0, (slen / 4 + 1) * sizeof(unsigned char));
@@ -196,7 +195,7 @@ void ProdigalWrapper::getPredictedGenes(char * genome) {
     nn = 0; slen = 0; nmask = 0; ipath=0;
 
     /* Initialize structure */
-    slen = getNextSeq(genome, 0);
+    slen = getNextSeq(genome, 0, seqLength);
     rcom_seq(seq, rseq, useq, slen);
     if(slen == 0) {
         fprintf(stderr, "\nSequence read failed (file must be Fasta, ");
@@ -255,12 +254,12 @@ void ProdigalWrapper::getPredictedGenes(char * genome) {
     }
 }
 
-int ProdigalWrapper::getNextSeq(char * line, int training) {
+int ProdigalWrapper::getNextSeq(unsigned char * line, int training, size_t length) {
     int bctr = 0, len = 0;
     int gc_cont = 0, mask_beg = -1;
-    size_t lengthOfLine = strlen(line);
+    // size_t lengthOfLine = strlen(line);
 
-    for(size_t i = 0; i < lengthOfLine; i++) {
+    for(size_t i = 0; i < length; i++) {
         if(line[i] < 'A' || line[i] > 'z') {
             continue;
         }
@@ -342,7 +341,7 @@ void ProdigalWrapper::updateTrainingInfo(_training &tinf2) {
 
 // It makes the blocks for translation
 // Each block has a predicted gene part and an intergenic region. When another gene shows up, new block starts.
-void ProdigalWrapper::getExtendedORFs(struct _gene *genes, struct _node *nodes, vector<PredictedBlock> &blocks,
+void ProdigalWrapper::getExtendedORFs(struct _gene *genes, struct _node *nodes, vector<SequenceBlock> &blocks,
                                        size_t numOfGene, size_t length,
                                        size_t &blockIdx, vector<uint64_t> &intergenicKmerList, const char *seq) {
 
@@ -416,8 +415,8 @@ void ProdigalWrapper::getExtendedORFs(struct _gene *genes, struct _node *nodes, 
         } else {
             isReverse = true;
             for (int j = k - 1; j >= 0; j--) {
-                leftKmerReverse[k - j - 1] = SeqIterator::iRCT[leftKmer[j]];
-                rightKmerReverse[k - j - 1] = SeqIterator::iRCT[rightKmer[j]];
+                leftKmerReverse[k - j - 1] = iRCT[leftKmer[j]];
+                rightKmerReverse[k - j - 1] = iRCT[rightKmer[j]];
             }
             leftKmerHash = XXH64(leftKmerReverse, k, 0);
             rightKmerHash = XXH64(rightKmerReverse, k, 0);

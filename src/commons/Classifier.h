@@ -40,8 +40,10 @@ protected:
     // Parameters
     string dbDir;
     size_t matchPerKmer;
+    int kmerFormat;
 
     // Agents
+    GeneticCode * geneticCode;
     QueryIndexer * queryIndexer;
     KmerExtractor * kmerExtractor;
     KmerMatcher * kmerMatcher;

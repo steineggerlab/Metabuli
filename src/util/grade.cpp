@@ -196,7 +196,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
             int classInt;
 
             vector<Score2> tpOrFp;
-            regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
+            regex regex1("(GC[AF]_[0-9]+\\.[0-9]+)");
             smatch assacc;
             size_t numberOfClassifications = 0;
             unordered_map<string, int> observed;
@@ -379,37 +379,69 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
 
 char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTaxonomy, CountAtRank & count,
                              const string & rank) {
-    // Do not count if the rank of target is higher than current rank
-    TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
-    const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
-    int rankIdx = NcbiTaxonomy::findRankIndex(rank);
-    if (NcbiTaxonomy::findRankIndex(ncbiTaxonomy.getString(targetNode->rankIdx)) > rankIdx) {
-        return '-';
-    }
+    if (rank == "subspecies") {
+        // Do not count if the rank of target is higher than current rank
+        // current rank is subspecies
+        // the rank of target is subspecies
 
-    // False negative; no classification or meaningless classification
-    if(shot == 1 || shot == 0) {
-        count.FN ++;
-        count.total ++;
-        return 'N';
-    }
 
-    // False negative if the rank of shot is higher than current rank
-    TaxID shotTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(shot, rank);
-    const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shotTaxIdAtRank);
-    if (NcbiTaxonomy::findRankIndex(ncbiTaxonomy.getString(shotNode->rankIdx)) > rankIdx) {
-        count.FN ++;
-        count.total ++;
-        return 'N';
-    }
+        // False negative; no classification or meaningless classification
+        if (shot == 1 || shot == 0) {
+            count.FN ++;
+            count.total ++;
+            return 'N';
+        }
 
-    count.total++;
-    if(shotTaxIdAtRank == targetTaxIdAtRank){
-        count.TP++;
-        return 'O';
+        // False negative if the rank of shot is higher than current rank
+        const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shot);
+        if (strcmp(ncbiTaxonomy.getString(shotNode->rankIdx), "no rank") != 0) { // no rank is subspecies
+            // cout << ncbiTaxonomy.getString(shotNode->rankIdx) << endl;
+            count.FN ++;
+            count.total ++;
+            return 'N';
+        }
+
+        count.total++;
+        if(shot == target){
+            count.TP++;
+            return 'O';
+        } else {
+            count.FP++;
+            return 'X';
+        }
     } else {
-        count.FP++;
-        return 'X';
+        // Do not count if the rank of target is higher than current rank
+        TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
+        const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
+        int rankIdx = NcbiTaxonomy::findRankIndex(rank);
+        if (NcbiTaxonomy::findRankIndex(ncbiTaxonomy.getString(targetNode->rankIdx)) > rankIdx) {
+            return '-';
+        }
+
+        // False negative; no classification or meaningless classification
+        if(shot == 1 || shot == 0) {
+            count.FN ++;
+            count.total ++;
+            return 'N';
+        }
+
+        // False negative if the rank of shot is higher than current rank
+        TaxID shotTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(shot, rank);
+        const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shotTaxIdAtRank);
+        if (NcbiTaxonomy::findRankIndex(ncbiTaxonomy.getString(shotNode->rankIdx)) > rankIdx) {
+            count.FN ++;
+            count.total ++;
+            return 'N';
+        }
+
+        count.total++;
+        if(shotTaxIdAtRank == targetTaxIdAtRank){
+            count.TP++;
+            return 'O';
+        } else {
+            count.FP++;
+            return 'X';
+        }
     }
 }
 

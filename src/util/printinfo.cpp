@@ -23,6 +23,11 @@ int printInfo(int argc, const char **argv, const Command &command){
         end = infoNum;
     }
     for (size_t i = begin; i < end; i++) {
+        if (infoFile.data[i] == 0) {
+            cout << "No taxID for index " << i << "\n";
+            continue;
+        }
+
         cout << infoFile.data[i] << "\n";
     }
     munmap(infoFile.data, infoFile.fileSize + 1);

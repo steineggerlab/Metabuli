@@ -107,7 +107,7 @@ TaxonomyWrapper::TaxonomyWrapper(const std::string &namesFile, const std::string
     // for (size_t i = 0; i < maxNodes; ++i) {
     //     taxonNodes[i].print();
     // }
-
+    setEukaryoteTaxID();
     initTaxonomy();
 }
 
@@ -138,7 +138,7 @@ void TaxonomyWrapper::initTaxonomy() {
     std::copy(tmpL.begin(), tmpL.end(), L);
 
     M = makeMatrix(maxNodes);
-    InitRangeMinimumQuery();
+    computeSparseTable();
 
     mmapData = NULL;
     mmapSize = 0;
@@ -480,11 +480,16 @@ TaxID TaxonomyWrapper::getTaxIdAtRank(int taxId, const std::string & rank) const
     int rankIndex = findRankIndex(rank);
     const TaxonNode * curNode = taxonNode(taxId, true);
     int cnt = 0;
-    while ((NcbiTaxonomy::findRankIndex(getString(curNode->rankIdx)) < rankIndex ||
-            findRankIndex(getString(curNode->rankIdx)) == 29) && cnt < 30)  {
+
+    while (cnt < 30 && NcbiTaxonomy::findRankIndex(getString(curNode->rankIdx)) < rankIndex) {
         curNode = taxonNode(curNode->parentTaxId, true);
         cnt ++;
     }
+    // while ((NcbiTaxonomy::findRankIndex(getString(curNode->rankIdx)) < rankIndex ||
+    //         findRankIndex(getString(curNode->rankIdx)) == 29) && cnt < 30)  {
+    //     curNode = taxonNode(curNode->parentTaxId, true);
+    //     cnt ++;
+    // }
     if (cnt == 30) {
         return taxId;
     }
@@ -527,7 +532,6 @@ void TaxonomyWrapper::checkNewTaxa(const std::string & newTaxaFile) const {
                 EXIT(EXIT_FAILURE);
             }
             TaxID taxId = (TaxID) strtol(result[0].c_str(), NULL, 10);
-            TaxID parentTaxId = (TaxID) strtol(result[1].c_str(), NULL, 10);
             std::string & name = result[3];
             // Check if new taxID is already in the taxonomy
             // Problmatic cases:

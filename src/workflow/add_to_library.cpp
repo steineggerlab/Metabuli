@@ -104,7 +104,8 @@ int addToLibrary(int argc, const char **argv, const Command &command){
 
         // Process each file
         vector<string> unmapped;
-        regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
+        regex regex1("(GC[AF]_[0-9]+\\.[0-9]+)");
+
         for (size_t i = 0; i < fileNames.size(); ++i) {
             // Get assembly accession from file name using regex and remove the version number
             smatch match;

@@ -1,7 +1,5 @@
 set(commons_source_files
         commons/common.h
-    	commons/FileMerger.h
-		commons/FileMerger.cpp
 	 	commons/IndexCreator.cpp
         commons/IndexCreator.h
         commons/Kmer.h
@@ -38,4 +36,8 @@ set(commons_source_files
 		commons/Reporter.cpp
 		commons/TaxonomyWrapper.h
 		commons/TaxonomyWrapper.cpp
+		commons/SyncmerScanner.h
+		commons/GeneticCode.h
+		commons/KmerScanner.h
+		commons/DeltaIdxReader.h
         PARENT_SCOPE)

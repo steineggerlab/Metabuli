@@ -10,7 +10,18 @@
 #include "sys/mman.h"
 #include <fcntl.h>
 
+const std::string atcg =
+    "................................................................"
+    ".AGCG..GT..G.CN...ACTG.A.T.......agcg..gt..g.cn...actg.a.t......"
+    "................................................................"
+    "................................................................";
 
+const std::string iRCT =
+    "................................................................"
+    ".TVGH..CD..M.KN...YSAABW.R.......tvgh..cd..m.kn...ysaabw.r......"
+    "................................................................"
+    "................................................................";
+    
 void process_mem_usage(double &vm_usage, double &resident_set) {
   vm_usage = 0.0;
   resident_set = 0.0;
@@ -101,6 +112,16 @@ int loadDbParameters(LocalParameters &par, const std::string & dbDir) {
           if (tokens[1] == "1") {
             par.skipRedundancy = 1;
           }
+        } else if (tokens[0] == "Syncmer") {
+          if (tokens[1] == "1" && par.syncmer == 0) {
+            cout << "Syncmer is enabled because the DB was created with syncmer." << endl;
+            par.syncmer = 1;
+          }     
+        } else if (tokens[0] == "S-mer_len") {
+          cout << "s-mer length is set to " << tokens[1] << " according to the DB." << endl;
+          par.smerLen = stoi(tokens[1]);
+        } else if (tokens[0] == "Kmer_format") {
+          par.kmerFormat = stoi(tokens[1]);
         }
       }
       return 1;
@@ -168,9 +189,11 @@ int searchAccession2TaxID(const std::string &name,
   return 0;
 }
 
-void getObservedAccessionList(const string & fnaListFileName,
-                              vector<string> & fastaList,
-                              unordered_map<string, TaxID> & acc2taxid) {
+void getObservedAccessionList(
+  const string & fnaListFileName,
+  vector<string> & fastaList,
+  unordered_map<string, TaxID> & acc2taxid) 
+{
   ifstream fileListFile(fnaListFileName);
   if (fileListFile.is_open()) {
     for (string eachLine; getline(fileListFile, eachLine);) {
@@ -192,6 +215,12 @@ void getObservedAccessionList(const string & fnaListFileName,
         KSeqWrapper* kseq = KSeqFactory(fastaList[i].c_str());
         while (kseq->ReadEntry()) {
             const KSeqWrapper::KSeqEntry & e = kseq->entry;
+            if (e.sequence.l == 0) {
+              cout << "Empty sequence in " << fastaList[i] << endl;
+            }
+            if (e.name.l == 0) {
+              cout << "Empty name in " << fastaList[i] << endl;
+            }
             // Get the accession ID without version
             char* pos = strchr(e.name.s, '.'); 
             if (pos != nullptr) {

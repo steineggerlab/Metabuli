@@ -22,6 +22,7 @@ static const std::map<std::string, std::string> ExtendedShortRanks =
                                                  { "subkingdom", "sk" },
                                                  { "kingdom", "k" },
                                                  { "superkingdom", "d" },
+                                                 { "domain", "d"},
                                                  { "realm", "r" }};
 
 struct NewTaxon {

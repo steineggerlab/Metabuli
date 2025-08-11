@@ -132,8 +132,9 @@ int gradeByCladeSize(int argc, const char **argv, const Command &command) {
         cerr << "Cannot open file for reference list" << endl;
     }
     
-    // Get clade counts
-    unordered_map<TaxID, TaxonCounts> refCladeCnt = ncbiTaxonomy.getCladeCounts(refTaxCnt);
+    // Get clade counts.
+    std::unordered_map<TaxID, std::vector<TaxID>> parentToChildren = ncbiTaxonomy.getParentToChildren();
+    unordered_map<TaxID, TaxonCounts> refCladeCnt = ncbiTaxonomy.getCladeCounts(refTaxCnt, parentToChildren);
 
     // // Load query list
     // ifstream queryListFile;
@@ -195,7 +196,7 @@ ncbiTaxonomy, par, cout, cerr)
             int classInt;
 
             vector<Score2> tpOrFp;
-            regex regex1("(GC[AF]_[0-9]*\\.[0-9]*)");
+            regex regex1("(GC[AF]_[0-9]+\\.[0-9]+)");
             smatch assacc;
             size_t numberOfClassifications = 0;
             while (getline(readClassification, resultLine, '\n')) {
