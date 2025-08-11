@@ -56,10 +56,14 @@ protected:
 
     unordered_map<TaxID, unsigned int> taxCounts;
     unordered_map<TaxID, unsigned int> taxCounts_EM;
-    unordered_map<string, vector<pair<TaxID, float>>> mappingRes;
-    vector<MappingRes> mappingResList;
-
+    MappingRes * mappingResList;
+    std::vector<Classification> classList;
+    size_t mappingResListSize = 0;
     void countUniqueKmerPerSpecies(vector<uint32_t> & sp2uniqKmerCnt);
+
+    void loadMappingResults(const string & mappingResFileName);
+
+    void loadClassificationResults(const string & classificationFileName);
 
 public:
     void startClassify(const LocalParameters &par);
@@ -76,6 +80,9 @@ public:
     unordered_map<TaxID, unsigned int> & getTaxCounts() { return taxCounts; }
 
     void em();
+
+    void reclassify(
+        const std::unordered_map<TaxID, double> & F);
 
 };
 
