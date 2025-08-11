@@ -3,7 +3,6 @@
 #include <istream>
 #include <string>
 #include <vector>
-#include "report.h"
 #include "FileUtil.h"
 #include <cstdint>
 #include "common.h"

@@ -5,7 +5,6 @@
 #include <iostream>
 #include "IndexCreator.h"
 #include "common.h"
-#include "report.h"
 #include "FileUtil.h"
 #include <cstdint>
 
