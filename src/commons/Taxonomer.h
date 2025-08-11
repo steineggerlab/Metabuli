@@ -104,8 +104,6 @@ private:
     vector<MatchPath> matchPaths;
     vector<MatchPath> combinedMatchPaths;
     vector<TaxID> maxSpecies;
-    vector<TaxID> speciesList;
-    vector<float> speciesScores;
 
     // getMatchPaths
     vector<bool> connectedToNext;
