@@ -11,7 +11,6 @@ extern int grade(int argc, const char **argv, const Command& command);
 extern int gradeByCladeSize(int argc, const char **argv, const Command& command);
 extern int seqHeader2TaxId(int argc, const char **argv, const Command& command);
 extern int addToLibrary(int argc, const char **argv, const Command& command);
-extern int binning2report(int argc, const char **argv, const Command& command);
 extern int filterByGenus(int argc, const char **argv, const Command& command);
 extern int databaseReport(int argc, const char **argv, const Command& command);
 extern int mapping2taxon(int argc, const char **argv, const Command& command);
@@ -31,5 +30,6 @@ extern int printDeltaIdx(int argc, const char **argv, const Command& command);
 extern int makeBenchmarkSet(int argc, const char **argv, const Command &command);
 extern int makeQuerySet(int argc, const char **argv, const Command &command);
 extern int makeVirusBenchmarkSet(int argc, const char **argv, const Command &command);
+extern int count_common_kmers(int argc, const char **argv, const Command &command);
 
 #endif //ADCLASSIFIER2_LOCALCOMMANDDECLARATIONS_H

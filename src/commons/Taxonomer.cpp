@@ -64,8 +64,6 @@ Taxonomer::Taxonomer(const LocalParameters &par, TaxonomyWrapper *taxonomy, int 
     matchPaths.reserve(4096);
     combinedMatchPaths.reserve(4096);
     maxSpecies.reserve(4096);
-    speciesList.reserve(4096);
-    speciesScores.reserve(4096);
 
     // lowerRankClassification
     cladeCnt.reserve(4096);
@@ -145,7 +143,7 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
                                          matchList,
                                          end,
                                          offset,                        
-                                         queryList[currentQuery].queryLength + queryList[currentQuery].queryLength2);
+                                         queryList[currentQuery]);
     
     // If there is no proper species for current query, it is un-classified.
     if (speciesScore.score == 0 || speciesScore.score < par.minScore) {
@@ -189,18 +187,22 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
       return;
     }
 
-    // Lower rank classification
-    TaxID result = lowerRankClassification(taxCnt,
-                                           speciesScore.taxId,
-                                           queryList[currentQuery].queryLength + queryList[currentQuery].queryLength2);
-
     // Store classification results
     queryList[currentQuery].isClassified = true;
-    queryList[currentQuery].classification = result;
     queryList[currentQuery].score = speciesScore.score;
     queryList[currentQuery].coverage = speciesScore.coverage;
     queryList[currentQuery].hammingDist = speciesScore.hammingDist;
     queryList[currentQuery].newSpecies = false;
+
+    if (!par.em) {
+        queryList[currentQuery].classification
+            = lowerRankClassification(
+                taxCnt,
+                speciesScore.taxId,
+                queryList[currentQuery].queryLength + queryList[currentQuery].queryLength2);
+    } else {
+        queryList[currentQuery].classification = speciesScore.taxId;
+    }
 }
 
 
@@ -319,11 +321,11 @@ TaxonScore Taxonomer::getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpec
                                             const Match *matchList,
                                             size_t end,
                                             size_t offset,
-                                            int queryLength) {
+                                            Query & query) {
     matchPaths.clear();
     combinedMatchPaths.clear();
-    speciesList.clear();
-    speciesScores.clear();
+    vector<pair<TaxID, float>> sp2score;
+    int queryLength = query.queryLength + query.queryLength2;
     
     TaxonScore bestScore;
     float bestSpScore = 0;
@@ -354,10 +356,12 @@ TaxonScore Taxonomer::getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpec
             }
         }
         if (pathSize > previousPathSize) {
-            speciesList.push_back(currentSpecies);
             float score = combineMatchPaths(matchPaths, previousPathSize, combinedMatchPaths, combinedMatchPaths.size(), queryLength);
             score = min(score, 1.0f);
-            speciesScores.push_back(score);
+            if (score < par.minScore) {
+                continue; // Skip this species if score is too low
+            }
+            sp2score.emplace_back(currentSpecies, score);
             if (score > 0.f) {
                 meaningfulSpecies++;
             }
@@ -374,12 +378,21 @@ TaxonScore Taxonomer::getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpec
         return bestScore;
     }
 
+    if (par.em) {
+        sort(sp2score.begin(), sp2score.end(),
+             [](const pair<TaxID, float> &a, const pair<TaxID, float> &b) {
+                 return a.second > b.second;
+             });
+        for (size_t i = 0; i < 10 && i < sp2score.size(); i++) {
+            query.species2Score.emplace_back(sp2score[i].first, sp2score[i].second * sp2score[i].second);
+        }
+    }
+
     maxSpecies.clear();
-    // float coveredLength = 0.f;
-    for (size_t i = 0; i < speciesList.size(); i++) {
-        if (speciesScores[i] >= bestSpScore * tieRatio) {
-            maxSpecies.push_back(speciesList[i]);
-            bestScore.score += speciesScores[i];   
+    for (size_t i = 0; i < sp2score.size(); i++) {
+        if (sp2score[i].second >= bestSpScore * tieRatio) {
+            maxSpecies.push_back(sp2score[i].first);
+            bestScore.score += sp2score[i].second;   
         }
     }
     

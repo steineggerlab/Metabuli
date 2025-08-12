@@ -12,12 +12,19 @@
 
 #define likely(x) __builtin_expect((x),1)
 #define unlikely(x) __builtin_expect((x),0)
-#define kmerLength 8
-#define kmerLengthAA 12
 #define AA(kmer) ((kmer) & ~16777215)
 
 extern const std::string atcg;
 extern const std::string iRCT;
+
+struct MappingRes {
+    MappingRes(uint32_t queryId, TaxID speicesId, float score) 
+        : queryId(queryId), speciesId(speicesId), score(score) {}
+    MappingRes() : queryId(0), speciesId(0), score(0.0f) {}
+    uint32_t queryId;
+    TaxID speciesId;
+    float score; 
+};
 
 struct Assembly {
     std::string name;
@@ -69,7 +76,18 @@ struct SequenceBlock {
     int strand; //true for forward
 };
 
-struct Query{
+struct Classification {
+    Classification() : taxId(0), length(0), score(0.0) {}
+    Classification(const std::string & name, TaxID taxId, int length, double score)
+        : name(std::move(name)), taxId(taxId), length(length), score(score) {}
+    Classification(const std::string & name, int length) 
+        : name(std::move(name)), taxId(0), length(length), score(0.0) {}
+    std::string name;
+    TaxID taxId;
+    int length;
+    double score;
+};
+struct Query {
     int queryId;
     int classification;
     float score;
@@ -84,6 +102,7 @@ struct Query{
 
     std::string name;
     std::map<TaxID,int> taxCnt; // 8 byte per element
+    std::vector<std::pair<TaxID, float>> species2Score;
     // std::vector<float> pathScores;
 
     bool operator==(int id) const { return queryId == id;}
@@ -133,6 +152,7 @@ struct ReadBuffer {
     FILE * fp;
     T * p;
     size_t size;
+    size_t capacity;
     T * start;
     T * end;
 
@@ -143,27 +163,48 @@ struct ReadBuffer {
             exit(EXIT_FAILURE);
         }
         p = (T *) calloc(sizeOfBuffer, sizeof(T));
-        size = sizeOfBuffer;
+        capacity = sizeOfBuffer;
+        size = 0;
         start = p;
         end = p;
     };
 
+    ~ReadBuffer() {
+        if (fp) {
+            fclose(fp);
+        }
+        if (start) {
+            free(start);
+        }
+    };
+
     size_t loadBuffer(size_t unused = 0) {
-        memmove(start,
-                start + (size - unused),
-                unused * sizeof(T));
-        size_t readCount = fread(start + unused, sizeof(T), size - unused, fp);
+        memmove(start,                   // dest
+                start + (size - unused), // src
+                unused * sizeof(T));     // bytes
+        size_t readCount = fread(start + unused, sizeof(T), capacity - unused, fp);
         size = readCount + unused;
-        end = start + size;
+        end = start + readCount + unused;
         p = start;
         return readCount + unused;
     }
 
     inline T getNext() {
         if (p >= end) {
-            loadBuffer();
+            if(loadBuffer() == 0) {
+               return T(); // Return default value if no more data 
+            }
         }
         return *p++;
+    }
+
+    size_t loadBufferAt(size_t offset) {
+        fseek(fp, offset * sizeof(T), SEEK_SET);
+        size_t readCount = fread(start, sizeof(T), capacity, fp);
+        size = readCount;
+        end = start + readCount;
+        p = start;
+        return readCount;
     }
 };
 

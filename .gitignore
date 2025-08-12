@@ -31,4 +31,10 @@
 *.out
 *.app
 
-/build*
+# Files
+*.gz
+*.tsv
+*.dmp
+# Build directories
+build*
+

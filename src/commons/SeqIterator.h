@@ -43,15 +43,17 @@ private:
     int spaceNum_int;
     int bitsForCodon;
     int bitsFor8Codons;
-    int smerLen;
     uint32_t smerMask;
     uint64_t dnaMask;
     int kmerLen = 12;
     
 public:
     SeqIterator(const LocalParameters &par); 
+    
     ~SeqIterator();
     
+    void setKmerLength(int k) { kmerLength = k; }
+
     string reverseComplement(string &read) const;
     
     void devideToCdsAndNonCds(const char *maskedSeq,
@@ -115,7 +117,7 @@ public:
         string aaStr = "01234567";
         string dnaStr;
         vector<string> dna24mer(8);
-        for (int i = 0; i < kmerLength; i++) {
+        for (int i = 0; i < 8; i++) {
             aaStr[7 - i] = aminoacid[(aaPart >> (5 * i)) & 0x1F];
             uint64_t dnaInfo = (dnaPart >> (3 * i)) & 0x07;
             switch ((aaPart >> (5 * i)) & 0x1F) {
@@ -398,7 +400,7 @@ public:
             }
         }
         dnaStr = "";
-        for (int i = 0; i < kmerLength; i++) {
+        for (int i = 0; i < 8; i++) {
             dnaStr += dna24mer[i];
         }
         cout << "Syncmer: " << aaStr << " " << dnaStr;

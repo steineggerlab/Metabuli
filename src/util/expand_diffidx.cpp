@@ -93,8 +93,10 @@ int expand_diffidx(int argc, const char **argv, const Command &command){
                                                                diffIdxBuffer,
                                                                diffIdxPos);
             if (idx >= startIdx && idx < endIdx) {
-                seqIterator->printKmerInDNAsequence(currentTargetKmer); cout << "\t";
-                print_binary64(64, currentTargetKmer); cout << "\n";  
+                Kmer kmer(currentTargetKmer, 0);
+                kmer.printAA(geneticCode, 12); cout << endl;
+                // seqIterator->printKmerInDNAsequence(currentTargetKmer); cout << "\t";
+                // print_binary64(64, currentTargetKmer); cout << "\n";  
             }
             idx ++;
         }
