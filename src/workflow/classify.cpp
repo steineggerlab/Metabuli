@@ -33,7 +33,6 @@ void setClassifyDefaults(LocalParameters & par){
     par.accessionLevel = 0;
     par.tieRatio = 0.95;
     par.printLineage = 0;
-    par.onlyAA = false;
 }
 
 int classify(int argc, const char **argv, const Command& command) {

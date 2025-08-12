@@ -5,28 +5,26 @@
 #include "Kmer.h"
 
 GroupGenerator::GroupGenerator(LocalParameters & par) {
-    // Load parameters
     dbDir = par.filenames[1 + (par.seqMode == 2)];
+
     matchPerKmer = par.matchPerKmer;
-    loadDbParameters(par, par.filenames[1 + (par.seqMode == 2)]);
+    loadDbParameters(par, par.filenames[1 + (par.seqMode == 2)]);    
+    kmerFormat = par.kmerFormat;
     
-    cout << "DB name: " << par.dbName << endl;
-    cout << "DB creation date: " << par.dbDate << endl;
+    cout << "Database name : " << par.dbName << endl;
+    cout << "Creation date : " << par.dbDate << endl;
     
-    // Taxonomy
     taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
     
-    // Agents
+    geneticCode = new GeneticCode(par.reducedAA == 1);
     queryIndexer = new QueryIndexer(par);
-    kmerExtractor = new KmerExtractor(par);
+    kmerExtractor = new KmerExtractor(par, *geneticCode, kmerFormat);
     if (par.reducedAA) {
-        kmerMatcher = new ReducedKmerMatcher(par, taxonomy);
+        kmerMatcher = new ReducedKmerMatcher(par, taxonomy, kmerFormat);
     } else {
-        kmerMatcher = new KmerMatcher(par, taxonomy);
+        kmerMatcher = new KmerMatcher(par, taxonomy, kmerFormat);
     }
-    taxonomer = new Taxonomer(par, taxonomy);
     reporter = new Reporter(par, taxonomy);
-    seqIterator = new SeqIterator(par);
     kmerFileHandler = new KmerFileHandler();
 }
 
@@ -34,10 +32,8 @@ GroupGenerator::~GroupGenerator() {
     delete taxonomy;
     delete queryIndexer;
     delete kmerExtractor;
-    delete kmerMatcher;
-    delete taxonomer;
     delete reporter;
-    delete seqIterator;
+    delete geneticCode;
     delete kmerFileHandler;
 }
 
@@ -64,12 +60,8 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
         jobId = par.filenames[3];
     }
 
-    size_t voteMode = par.voteMode;
-    float majorityThr = par.majorityThr;
     float groupScoreThr = par.groupScoreThr;
     double thresholdK = par.thresholdK;
-    cout << "voteMode: " << voteMode << endl;
-    cout << "majorityThr: " << majorityThr << endl;
     cout << "groupScoreThr: " << groupScoreThr << endl;
     cout << "thresholdK: " << thresholdK << endl;
     
@@ -151,7 +143,7 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     
 
     unordered_map<uint32_t, int> repLabel; 
-    getRepLabel(outDir, metabuliResult, groupInfo, repLabel, jobId, voteMode, majorityThr, groupScoreThr);
+    getRepLabel(outDir, metabuliResult, groupInfo, repLabel, jobId, groupScoreThr);
     loadRepLabel(outDir, repLabel, jobId);
     applyRepLabel(outDir, outDir, queryGroupInfo, repLabel, groupScoreThr, jobId);
     
@@ -659,8 +651,6 @@ void GroupGenerator::getRepLabel(const string &groupRepFileDir,
                                  const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
                                  unordered_map<uint32_t, int> &repLabel, 
                                  const string &jobId, 
-                                 int voteMode, 
-                                 float majorityThr,
                                  const float groupScoreThr) {
     cout << "Find query group representative labels..." << endl;    
     time_t beforeSearch = time(nullptr);
@@ -678,11 +668,11 @@ void GroupGenerator::getRepLabel(const string &groupRepFileDir,
             int query_label = external2internalTaxId[metabuliResult[queryId].label]; 
             float score = metabuliResult[queryId].score;
             if (query_label != 0 && score >= groupScoreThr) {
-                setTaxa.emplace_back(query_label, score, voteMode);
+                setTaxa.emplace_back(query_label, score, 2); // 2 => vote mode
             }
         }
 
-        WeightedTaxResult result = taxonomy->weightedMajorityLCA(setTaxa, majorityThr);
+        WeightedTaxResult result = taxonomy->weightedMajorityLCA(setTaxa, 0.5);
 
         if (result.taxon != 0 && result.taxon != 1) {
             repLabel[groupId] = result.taxon;

@@ -4,16 +4,17 @@
 #include "FileUtil.h"
 #include "common.h"
 
-void setGroupGenerationDefaults(LocalParameters & par){
+void setGroupGenerationDefaults(LocalParameters & par){    
+    par.syncmer = 0;
+    par.smerLen = 5;
+    par.kmerFormat = 1;
     par.reducedAA = 0;
     par.seqMode = 2;    
     par.minScore = 0;
-    par.minCoverage = 0;
     par.minSpScore = 0;
     par.hammingMargin = 0;
     par.verbosity = 3;
     par.ramUsage = 128;
-    par.minCoveredPos = 4;
     par.printLog = 0;
     par.maxGap = 0;
     par.taxonomyPath = "" ;
@@ -24,12 +25,8 @@ void setGroupGenerationDefaults(LocalParameters & par){
     par.matchPerKmer = 4;
     par.accessionLevel = 0;
     par.tieRatio = 0.95;
-
     par.thresholdK = 0.5;
     par.groupScoreThr = 0.0;
-    par.voteMode = 0;
-    par.majorityThr = 0.5;
-    par.onlyAA = false;
 }
 
 int groupGeneration(int argc, const char **argv, const Command& command)

@@ -36,7 +36,7 @@ using namespace std;
 
 class SeqIterator {
 private:
-    uint64_t powers[10];
+    uint64_t * powers;
     uint32_t * mask;
     int * mask_int;
     uint32_t spaceNum;
@@ -46,6 +46,7 @@ private:
     int smerLen;
     uint32_t smerMask;
     uint64_t dnaMask;
+    int kmerLen = 12;
     
 public:
     SeqIterator(const LocalParameters &par); 

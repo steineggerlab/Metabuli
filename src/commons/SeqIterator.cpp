@@ -5,7 +5,6 @@ SeqIterator::~SeqIterator() {
     delete[] mask_int;
     delete[] powers;
 }
-
 SeqIterator::SeqIterator(const LocalParameters &par) {
     // Mask for spaced k-mer
     size_t maskLen = kmerLen; // par.spaceMask.length();

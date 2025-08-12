@@ -1,8 +1,8 @@
 #include "LocalParameters.h"
 #include "Parameters.h"
+#include "Parameters.cpp"
 #include "Debug.h"
 #include "CommandCaller.h"
-#include "Parameters.cpp"
 #include "ByteParser.h"
 #include <iomanip>
 #include "DistanceCalculator.h"
@@ -243,13 +243,6 @@ LocalParameters::LocalParameters() :
                     typeid(bool),
                     (void *) &assembly,
                     ""),
-        ONLY_AA(ONLY_AA_ID,
-                    "--only-aa",
-                    "Use AA 12mer",
-                    "Use AA 12mer",
-                    typeid(bool),
-                    (void *) &onlyAA,
-                    ""),
         SPLIT_NUM(SPLIT_NUM_ID,
                   "--split-num",
                   "A database is divided to N splits (offsets). During classification, unnecessary splits are skipped",
@@ -474,20 +467,20 @@ LocalParameters::LocalParameters() :
                 typeid(int),
                 (void *) &higherRankFile,
                 "^[0-2]$"),
-        RANDOM_SEED(RANDOM_SEED_ID,
-                    "--random-seed",
-                    "Random seed for random number generation",
-                    "Random seed for random number generation",
-                    typeid(int),
-                    (void *) &randomSeed,
-                    "^[0-9]+"),
         ASSACC2TAXID(ASSACC2TAXID_ID,
                     "--assacc2taxid",
                     "Path to the file mapping from accession to tax ID",
                     "Path to the file mapping from accession to tax ID",
                     typeid(std::string),
                     (void *) &assacc2taxid,
-                    "^.*$") 
+                    "^.*$"),
+        RANDOM_SEED(RANDOM_SEED_ID,
+                    "--random-seed",
+                    "Random seed for random number generation",
+                    "Random seed for random number generation",
+                    typeid(int),
+                    (void *) &randomSeed,
+                    "^[0-9]+$", 0)
   {
     // Initialize the parameters
     // Superkingdom taxonomy id
@@ -512,11 +505,8 @@ LocalParameters::LocalParameters() :
     tieRatio = 0;
 
     // Group generation
-    thresholdK = 3;
-    voteMode = 2;
-    majorityThr = 0.4;
+    thresholdK = 0.5;
     groupScoreThr=0.15;
-    onlyAA = false;
 
     // Database creation
     tinfoPath = "";
@@ -617,6 +607,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&VALIDATE_DB);
     classify.push_back(&SYNCMER);
     classify.push_back(&SMER_LEN);
+    classify.push_back(&KMER_FORMAT);
     classify.push_back(&PRINT_LOG);
     classify.push_back(&REDUCED_AA);
 
@@ -637,7 +628,6 @@ LocalParameters::LocalParameters() :
     groupGeneration.push_back(&THR_K);
     groupGeneration.push_back(&GROUP_SCORE_THR);    
     groupGeneration.push_back(&MIN_SCORE);
-    groupGeneration.push_back(&MIN_COVERAGE);
     groupGeneration.push_back(&MIN_CONS_CNT);
     groupGeneration.push_back(&MIN_CONS_CNT_EUK);
     groupGeneration.push_back(&MIN_SP_SCORE);
@@ -646,6 +636,7 @@ LocalParameters::LocalParameters() :
     groupGeneration.push_back(&PARAM_MASK_PROBABILTY);
     groupGeneration.push_back(&ACCESSION_LEVEL);
     groupGeneration.push_back(&TIE_RATIO);
+    groupGeneration.push_back(&KMER_FORMAT);
 
     // filter 
     filter.push_back(&PARAM_THREADS);
@@ -668,7 +659,6 @@ LocalParameters::LocalParameters() :
     filter.push_back(&PRINT_MODE);
     filter.push_back(&CONTAM_LIST);
     filter.push_back(&ACCESSION_LEVEL);
-    filter.push_back(&ONLY_AA);
     
     //updateTargetDB
     exclusiontest_hiv.push_back(&TEST_RANK);

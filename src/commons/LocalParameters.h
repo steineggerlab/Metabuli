@@ -85,9 +85,6 @@ public:
     // Group generation
     PARAMETER(THR_K)
     PARAMETER(GROUP_SCORE_THR)
-    PARAMETER(VOTE_MODE)
-    PARAMETER(MAJORITY_THR)
-    PARAMETER(ONLY_AA)
 
     // DB build parameters
     PARAMETER(LIBRARY_PATH)
@@ -171,9 +168,6 @@ public:
     float tieRatio;
     float thresholdK;
     float groupScoreThr;
-    bool onlyAA;
-    int voteMode;
-    float majorityThr;
     int printLineage;
     int maxShift;
 

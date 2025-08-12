@@ -142,16 +142,16 @@ class GroupGenerator {
 protected:
     string dbDir;
     size_t matchPerKmer;
+    int kmerFormat;
     
-    // Agents
+    // Agents    
+    GeneticCode * geneticCode;
     QueryIndexer *queryIndexer;
     KmerExtractor *kmerExtractor;
-    KmerMatcher *kmerMatcher;
-    Taxonomer *taxonomer;
-    Reporter *reporter;
+    Reporter *reporter;    
+    KmerMatcher * kmerMatcher;
     TaxonomyWrapper *taxonomy;
     KmerFileHandler *kmerFileHandler;
-    SeqIterator *seqIterator;
     
     unordered_map<TaxID, TaxID> taxId2speciesId;
     unordered_map<TaxID, TaxID> taxId2genusId;
@@ -202,8 +202,6 @@ public:
                      const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
                      unordered_map<uint32_t, int> &repLabel, 
                      const string &jobId, 
-                     int voteMode, 
-                     float majorityThr,
                      const float groupScoreThr);
     
     void loadRepLabel(const std::string &groupRepFileDir,
