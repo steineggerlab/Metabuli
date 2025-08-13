@@ -16,18 +16,14 @@ void setDefaults_build(LocalParameters & par){
     par.ramUsage = 128;
     par.validateInput = 0;
     par.validateDb = 0;
-    // par.spaceMask = "11111111";
     par.taxonomyPath = "" ;
     par.splitNum = 4096;
     par.maskProb = 0.9;
     par.maskMode = 1;
     par.accessionLevel = 0;
-    // Get current date
     time_t now = time(0);
     tm *ltm = localtime(&now);
     par.dbDate = to_string(1900 + ltm->tm_year) + "-" + to_string(1 + ltm->tm_mon) + "-" + to_string(ltm->tm_mday);
-    
-    // Get random alphanumeric string fore dbName from current time
     srand(time(NULL));
     string randStr = to_string(rand());
     par.dbName = randStr.substr(0, 32);
@@ -42,6 +38,10 @@ int build(int argc, const char **argv, const Command &command){
         FileUtil::makeDir(dbDir.c_str());
     }
     
+    #ifdef OPENMP
+        omp_set_num_threads(par.threads);
+    #endif
+
     string taxonomyDir;
     if (par.taxonomyPath.empty()) {
         taxonomyDir = dbDir + "/taxonomy/";
@@ -114,7 +114,7 @@ int build(int argc, const char **argv, const Command &command){
     // idxCre.updateTaxId2SpeciesTaxId(dbDir + "/taxID_list");
     idxCre.printFilesToMerge();
     idxCre.setMergedFileNames(dbDir + "/diffIdx", dbDir + "/info", dbDir + "/split");
-    idxCre.mergeTargetFiles();
+    idxCre.mergeTargetFiles2<FilterMode::DB_CREATION>();
     delete taxonomy;
     cout << "Index creation completed." << endl;
 

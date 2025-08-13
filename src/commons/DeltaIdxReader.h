@@ -24,7 +24,7 @@ private:
 
     // To manage values
     size_t valueBufferSize;
-    TargetKmer * valueBuffer;
+    Kmer_union * valueBuffer;
     size_t valueBufferIdx = 0;
     size_t valueCnt;
     uint64_t lastValue;
@@ -45,8 +45,8 @@ private:
                     break;
                 }
             }
-            valueBuffer[valueCnt].metamer.id = *infoBuffer.p++;
-            valueBuffer[valueCnt].metamer.metamer = getNextMetamer();
+            valueBuffer[valueCnt].tInfo.taxId = *infoBuffer.p++;
+            valueBuffer[valueCnt].value = getNextMetamer();
         }
         if (infoBuffer.p == infoBuffer.end) {
             if (infoBuffer.loadBuffer() == 0) {
@@ -88,7 +88,7 @@ public:
     {
         lastValue = 0;
         valueCnt = 0;
-        valueBuffer = new TargetKmer[valueBufferSize];
+        valueBuffer = new Kmer_union[valueBufferSize];
         fillValueBuffer();
         // Get the size of infoFile
         totalValueNum = FileUtil::getFileSize(infoFileName) / sizeof(TaxID);
@@ -104,14 +104,14 @@ public:
     }
 
     // Copy values <= maxValue to the provided buffer
-    size_t getValues(TargetKmer * largeBuffer, uint64_t maxValue) {
+    size_t getValues(Kmer_union * largeBuffer, uint64_t maxValue) {
         size_t n = 0;
-        while (n < valueCnt && valueBuffer[n].metamer.metamer <= maxValue) {
+        while (n < valueCnt && valueBuffer[n].value <= maxValue) {
             ++n;
         }
         if (n > 0) {
-            std::memcpy(largeBuffer, valueBuffer, n * sizeof(TargetKmer));
-            std::memmove(valueBuffer, valueBuffer + n, (valueCnt - n) * sizeof(TargetKmer));
+            std::memcpy(largeBuffer, valueBuffer, n * sizeof(Kmer_union));
+            std::memmove(valueBuffer, valueBuffer + n, (valueCnt - n) * sizeof(Kmer_union));
             valueCnt -= n;
             if (!fileCompleted) fillValueBuffer();
             if (valueCnt == 0) {
@@ -129,7 +129,7 @@ public:
         return totalValueNum;
     }
 
-    TargetKmer getNextValue() {
+    Kmer_union getNextValue() {
         if (valueBufferIdx >= valueCnt) {
             valueCnt = 0;
             valueBufferIdx = 0;
@@ -137,7 +137,7 @@ public:
         }
         if (valueCnt == 0) {
             valueBufferCompleted = true;
-            return TargetKmer(); // Return an empty TargetKmer
+            return Kmer_union(); // Return an empty TargetKmer
         }
         return valueBuffer[valueBufferIdx++];
     }
@@ -150,15 +150,15 @@ public:
             lastValue = 0;
         } else {
             lastValue = offset.ADkmer;
-            valueBuffer[0].metamer.metamer = lastValue;
-            valueBuffer[0].metamer.id = *infoBuffer.p++;
+            valueBuffer[0].value = lastValue;
+            valueBuffer[0].tInfo.taxId = *infoBuffer.p++;
             valueCnt = 1;
         }
         valueBufferIdx = 0;
         fillValueBuffer();
     }
 
-    TargetKmer * getValueBuffer() {
+    Kmer_union  * getValueBuffer() {
         return valueBuffer;
     }
 

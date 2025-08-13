@@ -18,7 +18,7 @@ protected:
     uint64_t smerMask;
 
     // Variables for syncmer scanning
-    std::deque<Smer> dq;
+    std::deque<Kmer> dq;
     int smerCnt;
     uint64_t smer;
     uint64_t syncmer;

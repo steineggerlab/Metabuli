@@ -367,8 +367,8 @@ int KmerExtractor::extractTargetKmers(
     const char *seq,
     Buffer<TargetKmer> &kmerBuffer,
     size_t &posToWrite,
-    int seqID,
-    int taxIdAtRank,
+    int taxId,
+    int spTaxId,
     SequenceBlock block) 
 {
 #ifdef OPENMP
@@ -379,7 +379,28 @@ int KmerExtractor::extractTargetKmers(
     kmerScanners[threadID]->initScanner(seq, block.start, block.end, (block.strand > -1));
     Kmer kmer;
     while ((kmer = kmerScanners[threadID]->next()).value != UINT64_MAX) {
-        kmerBuffer.buffer[posToWrite++] = { kmer.value, taxIdAtRank, seqID };
+        kmerBuffer.buffer[posToWrite++] = { kmer.value, spTaxId, taxId };
+    }
+    return 0;
+}
+
+int KmerExtractor::extractTargetKmers(
+    const char *seq,
+    Buffer<Kmer_union> &kmerBuffer,
+    size_t &posToWrite,
+    int taxId,
+    int spTaxId,
+    SequenceBlock block) 
+{
+#ifdef OPENMP
+    size_t threadID = omp_get_thread_num();
+#else
+    size_t threadID = 0; // Single-threaded mode
+#endif
+    kmerScanners[threadID]->initScanner(seq, block.start, block.end, (block.strand > -1));
+    Kmer kmer;
+    while ((kmer = kmerScanners[threadID]->next()).value != UINT64_MAX) {
+        kmerBuffer.buffer[posToWrite++] = { kmer.value, spTaxId, taxId };
     }
     return 0;
 }

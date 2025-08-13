@@ -145,6 +145,13 @@ struct Buffer {
             bufferSize = sizeOfBuffer;
         }
     };
+
+    void init() {
+        startIndexOfReserve = 0;
+        if (buffer) {
+            memset(buffer, 0, sizeof(T) * bufferSize);
+        }
+    }
 };
 
 template<typename T>
@@ -205,6 +212,56 @@ struct ReadBuffer {
         end = start + readCount;
         p = start;
         return readCount;
+    }
+};
+
+template<typename T>
+struct WriteBuffer {
+    FILE * fp;
+    size_t capacity;
+    size_t size;
+    T * p;
+    T * start;
+    size_t writeCnt;
+    // T * end;
+
+    explicit WriteBuffer(std::string file, size_t sizeOfBuffer=100) {
+        fp = fopen(file.c_str(), "wb");
+        if (!fp) {
+            std::cerr << "Error opening file: " << file << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        p = (T *) calloc(sizeOfBuffer, sizeof(T));
+        capacity = sizeOfBuffer;
+        size = 0;
+        writeCnt = 0;
+        start = p;
+        // end = p;
+    };
+
+    ~WriteBuffer() {
+        if (fp) {
+            fclose(fp);
+        }
+        if (start) {
+            free(start);
+        }
+    };
+
+    void flush() {
+        fwrite(start, sizeof(T), (p - start), fp);
+        p = start;
+        size = 0;
+    }
+
+    void write(T *data, size_t dataNum = 1) {
+        if (size + dataNum > capacity) {
+            flush();
+        }
+        memcpy(p, data, dataNum * sizeof(T));
+        p += dataNum;
+        size += dataNum;
+        writeCnt += dataNum;
     }
 };
 

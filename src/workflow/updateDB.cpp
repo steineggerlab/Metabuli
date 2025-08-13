@@ -139,7 +139,7 @@ int updateDB(int argc, const char **argv, const Command &command){
     idxCre.addFilesToMerge(oldDbDir + "/diffIdx", oldDbDir + "/info");
     idxCre.printFilesToMerge();
     idxCre.setMergedFileNames(newDbDir + "/diffIdx", newDbDir + "/info", newDbDir + "/split");
-    idxCre.mergeTargetFiles();
+    idxCre.mergeTargetFiles2<FilterMode::DB_CREATION>();
     
     delete taxonomy;
     cout << "Index creation completed." << endl;

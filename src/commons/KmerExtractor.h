@@ -86,6 +86,14 @@ public:
         int seqID,
         int taxIdAtRank,
         SequenceBlock block);
+
+    int extractTargetKmers(
+        const char *seq,
+        Buffer<Kmer_union> &kmerBuffer,
+        size_t &posToWrite,
+        int seqID,
+        int taxIdAtRank,
+        SequenceBlock block);
 };
 
 static inline bool compareForLinearSearch(const QueryKmer &a, const QueryKmer &b) {

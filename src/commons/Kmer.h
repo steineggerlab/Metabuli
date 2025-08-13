@@ -2,14 +2,11 @@
 #define ADKMER3_KMER_H
 #include <iostream>
 #include "NcbiTaxonomy.h"
+#include "GeneticCode.h"
 #include <cstdint>
 #include <bitset>
 
-struct Smer {
-    uint64_t value;
-    int pos;
-    Smer(uint64_t value, int pos) : value(value), pos(pos) {}
-};
+
 
 struct QueryKmerInfo {
     explicit QueryKmerInfo(uint32_t seqID = 0, uint32_t pos = 0, uint8_t frame = 0 ) : pos(pos), sequenceID(seqID), frame(frame) {}
@@ -17,6 +14,113 @@ struct QueryKmerInfo {
     uint64_t sequenceID : 29;
     uint64_t frame : 3; // 0, 1, 2 are forward, and 3, 4, 5 are reverse 1 byte
 }; // 8 byte
+
+struct TargetKmerInfo {
+    explicit TargetKmerInfo(TaxID taxId = 0, TaxID speciesId = 0) : taxId(taxId), speciesId(speciesId) {}
+    TaxID taxId;     // 4 byte
+    TaxID speciesId; // 4 byte
+};
+
+struct Kmer_union {
+    uint64_t value;
+    union {
+        uint32_t pos;
+        uint32_t id;
+        QueryKmerInfo qInfo;
+        TargetKmerInfo tInfo;
+    };
+
+    Kmer_union() : value(0), id(0) {}
+
+    Kmer_union(uint64_t value, uint32_t id) : value(value), id(id) {}
+
+    Kmer_union(uint64_t value, const QueryKmerInfo & qInfo) : value(value), qInfo(qInfo) {}
+
+    Kmer_union(uint64_t value, const TargetKmerInfo & tInfo) : value(value), tInfo(tInfo) {}
+
+    Kmer_union(uint64_t value, TaxID taxId, TaxID speciesId) : value(value), tInfo(taxId, speciesId) {}
+
+    bool isEmpty() const {
+        return value == 0 && id == 0;
+    }
+
+    void printAA(const GeneticCode & code) const {
+        uint64_t aaPart = value >> 24;
+        for (int i = 0; i < 8; ++i) {
+            int aa = (aaPart >> (35 - 5 * i)) & 0x1F;
+            std::cout << code.aminoacids[aa];
+        }
+    }
+
+    void printAA(const GeneticCode & code, int k) const {
+        for (int i = 0; i < k; ++i) {
+            int aa = (value >> (((k - 1) * 5) - 5 * i)) & 0x1F;
+            std::cout << code.aminoacids[aa];
+        }
+    }
+
+    void printDNA(const GeneticCode & code) const {
+        uint64_t dnaPart = value & 0xFFFFFF;
+        uint64_t aaPart = value >> 24;
+        for (int i = 0; i < 8; ++i) {
+            int aa = (aaPart >> (35 - 5 * i)) & 0x1F;
+            int codon = (dnaPart >> (21 - 3 * i)) & 0x7;
+            std::cout << code.aa2codon[aa][codon];
+        }
+    }
+
+    static bool compareTargetKmer(const Kmer_union & a, const Kmer_union & b) {
+        if (a.value != b.value) {
+            return a.value < b.value;
+        }
+
+        if (a.tInfo.speciesId != b.tInfo.speciesId) {
+            return a.tInfo.speciesId < b.tInfo.speciesId;
+        }
+
+        return a.tInfo.taxId < b.tInfo.taxId;
+    }
+};
+
+
+struct Kmer {
+    uint64_t value;
+    uint32_t pos;
+    Kmer() : value(0), pos(0) {}
+    Kmer(uint64_t value, uint32_t pos) : value(value), pos(pos) {}
+    void printAA(const GeneticCode & code) const {
+        uint64_t aaPart = value >> 24;
+        for (int i = 0; i < 8; ++i) {
+            int aa = (aaPart >> (35 - 5 * i)) & 0x1F;
+            std::cout << code.aminoacids[aa];
+        }
+    }
+
+    void printAA(const GeneticCode & code, int k) const {
+        for (int i = 0; i < k; ++i) {
+            int aa = (value >> (((k - 1) * 5) - 5 * i)) & 0x1F;
+            std::cout << code.aminoacids[aa];
+        }
+    }
+
+    void printDNA(const GeneticCode & code) const {
+        uint64_t dnaPart = value & 0xFFFFFF;
+        uint64_t aaPart = value >> 24;
+        for (int i = 0; i < 8; ++i) {
+            int aa = (aaPart >> (35 - 5 * i)) & 0x1F;
+            int codon = (dnaPart >> (21 - 3 * i)) & 0x7;
+            std::cout << code.aa2codon[aa][codon];
+        }
+    }
+};
+
+// struct Smer {
+//     uint64_t value;
+//     int pos;
+//     Smer(uint64_t value, int pos) : value(value), pos(pos) {}
+// };
+
+
 
 typedef struct QueryKmer {
     QueryKmer(uint64_t ADkmer, uint32_t seqID, uint32_t pos, uint8_t frame) : ADkmer(ADkmer), info(seqID, pos, frame) {}

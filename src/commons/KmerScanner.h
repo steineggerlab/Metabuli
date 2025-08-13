@@ -5,39 +5,7 @@
 #include <deque>
 
 #include "Kmer.h"
-#include "GeneticCode.h"
 #include "common.h"
-
-struct Kmer {
-    uint64_t value;
-    uint32_t pos;
-    Kmer() : value(0), pos(0) {}
-    Kmer(uint64_t value, uint32_t pos) : value(value), pos(pos) {}
-    void printAA(const GeneticCode & code) const {
-        uint64_t aaPart = value >> 24;
-        for (int i = 0; i < 8; ++i) {
-            int aa = (aaPart >> (35 - 5 * i)) & 0x1F;
-            std::cout << code.aminoacids[aa];
-        }
-    }
-
-    void printAA(const GeneticCode & code, int k) const {
-        for (int i = 0; i < k; ++i) {
-            int aa = (value >> (((k - 1) * 5) - 5 * i)) & 0x1F;
-            std::cout << code.aminoacids[aa];
-        }
-    }
-
-    void printDNA(const GeneticCode & code) const {
-        uint64_t dnaPart = value & 0xFFFFFF;
-        uint64_t aaPart = value >> 24;
-        for (int i = 0; i < 8; ++i) {
-            int aa = (aaPart >> (35 - 5 * i)) & 0x1F;
-            int codon = (dnaPart >> (21 - 3 * i)) & 0x7;
-            std::cout << code.aa2codon[aa][codon];
-        }
-    }
-};
 
 class KmerScanner {
 protected:
