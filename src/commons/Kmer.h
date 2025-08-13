@@ -133,15 +133,6 @@ typedef struct QueryKmer {
     }
 } QueryKmer; // 16 byte
 
-// struct TargetKmer{
-//     TargetKmer(): seqId(0), taxIdAtRank(0), ADkmer(0) {};
-//     TargetKmer(uint64_t ADkmer, TaxID taxIdAtRank, int seqId)
-//         : seqId(seqId), taxIdAtRank(taxIdAtRank), ADkmer(ADkmer) {}
-//     TaxID seqId; // 4 byte
-//     TaxID taxIdAtRank; // 4 byte
-//     uint64_t ADkmer; // 8 byte
-// };
-
 struct DiffIdxSplit{
     DiffIdxSplit(uint64_t ADkmer, size_t diffIdxOffset, size_t infoIdxOffset) : ADkmer(ADkmer), diffIdxOffset(diffIdxOffset), infoIdxOffset(infoIdxOffset) { }
     DiffIdxSplit(const DiffIdxSplit & copy) {ADkmer = copy.ADkmer; diffIdxOffset = copy.diffIdxOffset; infoIdxOffset=copy.infoIdxOffset;}
@@ -205,18 +196,5 @@ struct DeltaIdxOffset{
     size_t offset;
 };
 
-struct TargetKmer{
-    TargetKmer(): metamer(), spTaxId(0) {};
-    TargetKmer(uint64_t metamer, TaxID taxIdAtRank, int seqId)
-        : metamer(metamer, seqId), spTaxId(taxIdAtRank) {}
-    Metamer metamer; // 12 byte
-    TaxID spTaxId; // 4 byte
-
-    void print() const {
-        std::cout << "metamer: " << metamer.metamer << " id: " << metamer.id << " spTaxId: " << spTaxId << std::endl;
-    }
-
-    bool isEmpty() const { return metamer.id == 0; }
-};
 
 #endif //ADKMER3_KMER_H

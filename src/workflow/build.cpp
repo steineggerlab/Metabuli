@@ -92,7 +92,7 @@ int build(int argc, const char **argv, const Command &command){
                                                       true);
 
     IndexCreator idxCre(par, taxonomy, 2);
-    idxCre.createIndex(par);
+    idxCre.createIndex();
     if (par.accessionLevel == 1) 
     {
         taxonomy = idxCre.getTaxonomy();
@@ -114,7 +114,7 @@ int build(int argc, const char **argv, const Command &command){
     // idxCre.updateTaxId2SpeciesTaxId(dbDir + "/taxID_list");
     idxCre.printFilesToMerge();
     idxCre.setMergedFileNames(dbDir + "/diffIdx", dbDir + "/info", dbDir + "/split");
-    idxCre.mergeTargetFiles2<FilterMode::DB_CREATION>();
+    idxCre.mergeTargetFiles<FilterMode::DB_CREATION>();
     delete taxonomy;
     cout << "Index creation completed." << endl;
 

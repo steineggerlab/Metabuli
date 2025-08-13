@@ -153,21 +153,8 @@ protected:
     };
 
     void writeTargetFiles(
-        TargetKmer * kmerBuffer,
-        size_t & kmerNum,
-        const size_t * uniqeKmerIdx,
-        const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
-
-    void writeTargetFiles(
         Buffer<Kmer_union> & kmerBuffer,
         const size_t * uniqeKmerIdx,
-        const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
-
-    void writeTargetFilesAndSplits(
-        TargetKmer * kmerBuffer,
-        size_t & kmerNum,
-        const size_t * uniqeKmerIdx, 
-        size_t & uniqKmerCnt, 
         const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
     void writeTargetFilesAndSplits(
@@ -175,22 +162,8 @@ protected:
         const size_t * uniqeKmerIdx, 
         size_t & uniqKmerCnt, 
         const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
-
-    static void writeDiffIdx(
-        uint16_t *buffer,
-        size_t bufferSize,
-        FILE* handleKmerTable,
-        uint16_t *toWrite,
-        size_t size,
-        size_t & localBufIdx);
 
     void writeDbParameters();
-
-    size_t fillTargetKmerBuffer(
-        Buffer<TargetKmer> &kmerBuffer,                 
-        std::vector<std::atomic<bool>> & batchChecker,
-        size_t &processedSplitCnt,
-        const LocalParameters &par);
 
     size_t fillTargetKmerBuffer(
         Buffer<Kmer_union> &kmerBuffer,                 
@@ -219,12 +192,6 @@ protected:
     TaxID getMaxTaxID();
 
     void editTaxonomyDumpFiles(const vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid);
-
-    void reduceRedundancy(
-        Buffer<TargetKmer> & kmerBuffer,
-        size_t * uniqeKmerIdx,
-        size_t & uniqKmerCnt,
-        vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
     template <FilterMode M>
     void filterKmers(
@@ -261,7 +228,7 @@ protected:
             exit(EXIT_FAILURE);
         }
         return static_cast<size_t>((maxRam * 1024.0 * 1024.0 * 1024.0 * c - (par.threads * 50.0 * 1024.0 * 1024.0))/ 
-                                  (sizeof(TargetKmer) + sizeof(size_t)));
+                                  (sizeof(Kmer_union) + sizeof(size_t)));
     }
 
     size_t calculateBufferSizeForMerge(size_t maxRam, int fileCnt) {
@@ -277,7 +244,7 @@ protected:
             exit(EXIT_FAILURE);
         }
         return static_cast<size_t>((maxRam * 1024.0 * 1024.0 * 1024.0 * c - (par.threads * 50.0 * 1024.0 * 1024.0))/ 
-                                  (sizeof(TargetKmer) + sizeof(size_t)));
+                                  (sizeof(Kmer_union) + sizeof(size_t)));
     }
 
     void loadMergedTaxIds(const std::string &mergedFile, unordered_map<TaxID, TaxID> & old2new);
@@ -286,69 +253,35 @@ protected:
                         const std::string & fileList,
                         const std::string & acc2taxIdFileName);
 
-public:
-    static void printIndexSplitList(DiffIdxSplit * splitList) {
-        for (int i = 0; i < 4096; i++) {
-            std::cout << splitList[i].infoIdxOffset << " " << 
-                    splitList[i].diffIdxOffset << " " << 
-                    splitList[i].ADkmer << std::endl;
-        }
-    }
-
-    IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy, int kmerFormat);
-
-    ~IndexCreator();
-    
-    int getNumOfFlush();
-
-    TaxonomyWrapper* getTaxonomy() const {
-        return taxonomy;
-    }
-
-    void setIsUpdating(bool isUpdating) { this->isUpdating = isUpdating; }
-    void setIsNewFormat(int kmerFormat) { this->kmerFormat = kmerFormat; }
-
-    void createIndex(const LocalParameters & par);
-
-    void createCommonKmerIndex();
-
-    void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
-                    uint16_t *kmerBuf, size_t bufferSize, size_t & localBufIdx);
-
-    void getDiffIdx(const uint64_t & lastKmer, const uint64_t & entryToWrite, FILE* handleKmerTable,
-                    uint16_t *kmerBuf, size_t bufferSize, size_t & localBufIdx, size_t & totalBufferIdx);
-
     void getDiffIdx(
         uint64_t & lastKmer,
         uint64_t entryToWrite,
         WriteBuffer<uint16_t> & diffBuffer);
 
-    static void getDeltaIdx(const Metamer & previousMetamer,
-                     const Metamer & currentMetamer,
-                     FILE* handleKmerTable,
-                     uint16_t * deltaIndexBuffer,
-                     size_t bufferSize,
-                     size_t & localBufIdx,
-                     size_t & totalBufferIdx);
+public:
 
-    static void getDeltaIdx(const Metamer & previousMetamer,
-                     const Metamer & currentMetamer,
-                     FILE* handleKmerTable,
-                     uint16_t * deltaIndexBuffer,
-                     size_t bufferSize,
-                     size_t & localBufIdx);
+    IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy, int kmerFormat);
 
-    void writeInfo(uint32_t entryToWrite, FILE * infoFile, uint32_t * infoBuffer, size_t bufferSize, size_t & infoBufferIdx);
+    ~IndexCreator();
     
+    void createIndex();
+
+    void createCommonKmerIndex();
+
+    template <FilterMode M>
+    void mergeTargetFiles();
+
+    // Getters
+    int getNumOfFlush() const { return numOfFlush; }
+    TaxonomyWrapper* getTaxonomy() const { return taxonomy;}
     unordered_set<TaxID> getTaxIdSet() { return taxIdSet; }
 
-    static void flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t & localBufIdx);
-
-    static void flushInfoBuf(uint32_t * buffer, FILE * infoFile, size_t & localBufIdx );
-
-    static bool compareMetamerID(const Metamer & a, const Metamer & b);
-
-    static bool compareForDiffIdx(const TargetKmer & a, const TargetKmer & b);
+    // Setters
+    void setIsUpdating(bool isUpdating) { this->isUpdating = isUpdating; }
+    void setIsNewFormat(int kmerFormat) { this->kmerFormat = kmerFormat; }
+    void addFilesToMerge(string diffIdxFileName, string infoFileName);
+    void updateTaxId2SpeciesTaxId(const string & taxIdListFileName);
+    void setMergedFileNames(string diffFileName, string infoFileName, string splitFileName);
 
     void printFilesToMerge() {
         cout << "Files to merge :" << endl;
@@ -356,22 +289,19 @@ public:
             cout << deltaIdxFileNames[i] << " " << infoFileNames[i] << endl;
         }
     }
-
-    void mergeTargetFiles();
-
-    template <FilterMode M>
-    void mergeTargetFiles2();
-
-    void updateTaxId2SpeciesTaxId(const string & taxIdListFileName);
-
-    void addFilesToMerge(string diffIdxFileName, string infoFileName);
-
-    void setMergedFileNames(string diffFileName, string infoFileName, string splitFileName);
+    
+    static void printIndexSplitList(DiffIdxSplit * splitList) {
+        for (int i = 0; i < 4096; i++) {
+            std::cout << splitList[i].infoIdxOffset << " " << 
+                    splitList[i].diffIdxOffset << " " << 
+                    splitList[i].ADkmer << std::endl;
+        }
+    }
 };
 #endif //ADKMER4_INDEXCREATOR_H
 
 template <FilterMode M>
-void IndexCreator::mergeTargetFiles2() {
+void IndexCreator::mergeTargetFiles() {
     size_t bufferSize = 1024 * 1024 * 512;
     WriteBuffer<uint16_t> diffBuffer(mergedDeltaIdxFileName, bufferSize);
     WriteBuffer<uint32_t> infoBuffer(mergedInfoFileName, bufferSize);

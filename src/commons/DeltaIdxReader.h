@@ -137,7 +137,7 @@ public:
         }
         if (valueCnt == 0) {
             valueBufferCompleted = true;
-            return Kmer_union(); // Return an empty TargetKmer
+            return Kmer_union(); // Return an empty k-mer
         }
         return valueBuffer[valueBufferIdx++];
     }
