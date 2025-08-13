@@ -113,7 +113,8 @@ void Reporter::kronaReport(FILE *FP, const TaxonomyWrapper &taxDB, const std::un
 void Reporter::writeReportFile(
     int numOfQuery, 
     unordered_map<TaxID, unsigned int> &taxCnt, 
-    bool em) 
+    bool em,
+    string kronaFileName) 
 {
     std::unordered_map<TaxID, std::vector<TaxID>> parentToChildren = taxonomy->getParentToChildren();
     unordered_map<TaxID, TaxonCounts> cladeCounts = taxonomy->getCladeCounts(taxCnt, parentToChildren);
@@ -133,6 +134,11 @@ void Reporter::writeReportFile(
     }
     FILE *kronaFile = nullptr;
     if (!em) { 
+        if (!kronaFileName.empty()) {
+            kronaFile = fopen(kronaFileName.c_str(), "w");
+        } else {
+            kronaFile = fopen((outDir + "/" + jobId + "_krona.html").c_str(), "w");
+        }
         kronaFile = fopen((outDir + "/" + jobId + "_krona.html").c_str(), "w");
     } else {
         kronaFile = fopen((outDir + "/" + jobId + "_EM_krona.html").c_str(), "w");
