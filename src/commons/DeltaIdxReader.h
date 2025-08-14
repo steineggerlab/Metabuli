@@ -24,7 +24,7 @@ private:
 
     // To manage values
     size_t valueBufferSize;
-    Kmer_union * valueBuffer;
+    Kmer * valueBuffer;
     size_t valueBufferIdx = 0;
     size_t valueCnt;
     uint64_t lastValue;
@@ -88,7 +88,7 @@ public:
     {
         lastValue = 0;
         valueCnt = 0;
-        valueBuffer = new Kmer_union[valueBufferSize];
+        valueBuffer = new Kmer[valueBufferSize];
         fillValueBuffer();
         // Get the size of infoFile
         totalValueNum = FileUtil::getFileSize(infoFileName) / sizeof(TaxID);
@@ -104,14 +104,14 @@ public:
     }
 
     // Copy values <= maxValue to the provided buffer
-    size_t getValues(Kmer_union * largeBuffer, uint64_t maxValue) {
+    size_t getValues(Kmer * largeBuffer, uint64_t maxValue) {
         size_t n = 0;
         while (n < valueCnt && valueBuffer[n].value <= maxValue) {
             ++n;
         }
         if (n > 0) {
-            std::memcpy(largeBuffer, valueBuffer, n * sizeof(Kmer_union));
-            std::memmove(valueBuffer, valueBuffer + n, (valueCnt - n) * sizeof(Kmer_union));
+            std::memcpy(largeBuffer, valueBuffer, n * sizeof(Kmer));
+            std::memmove(valueBuffer, valueBuffer + n, (valueCnt - n) * sizeof(Kmer));
             valueCnt -= n;
             if (!fileCompleted) fillValueBuffer();
             if (valueCnt == 0) {
@@ -129,7 +129,7 @@ public:
         return totalValueNum;
     }
 
-    Kmer_union getNextValue() {
+    Kmer getNextValue() {
         if (valueBufferIdx >= valueCnt) {
             valueCnt = 0;
             valueBufferIdx = 0;
@@ -137,7 +137,7 @@ public:
         }
         if (valueCnt == 0) {
             valueBufferCompleted = true;
-            return Kmer_union(); // Return an empty k-mer
+            return Kmer(); // Return an empty k-mer
         }
         return valueBuffer[valueBufferIdx++];
     }
@@ -158,7 +158,7 @@ public:
         fillValueBuffer();
     }
 
-    Kmer_union  * getValueBuffer() {
+    Kmer  * getValueBuffer() {
         return valueBuffer;
     }
 

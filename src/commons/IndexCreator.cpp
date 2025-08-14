@@ -52,7 +52,7 @@ IndexCreator::~IndexCreator() {
 
 
 void IndexCreator::createCommonKmerIndex() {
-    Buffer<Kmer_union> kmerBuffer(calculateBufferSize(par.ramUsage));
+    Buffer<Kmer> kmerBuffer(calculateBufferSize(par.ramUsage));
 
     indexReferenceSequences(kmerBuffer.bufferSize);
 
@@ -76,7 +76,7 @@ void IndexCreator::createCommonKmerIndex() {
     while(processedBatchCnt < accessionBatches.size()) {
         cout << "Init buffers    : " << flush;
         time_t start = time(nullptr);
-        memset(kmerBuffer.buffer, 0, kmerBuffer.bufferSize * sizeof(Kmer_union));
+        memset(kmerBuffer.buffer, 0, kmerBuffer.bufferSize * sizeof(Kmer));
         memset(uniqKmerIdx, 0, kmerBuffer.bufferSize * sizeof(size_t));
         cout << time(nullptr) - start << " s" << endl;
 
@@ -88,7 +88,7 @@ void IndexCreator::createCommonKmerIndex() {
         cout << "Sort k-mers     : " << flush;
         SORT_PARALLEL(kmerBuffer.buffer,
                       kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
-                      Kmer_union::compareTargetKmer);
+                      Kmer::compareTargetKmer);
         cout << time(nullptr) - start << " s" << endl;
 
         // Filter k-mers
@@ -133,7 +133,7 @@ void IndexCreator::createCommonKmerIndex() {
 }
 
 void IndexCreator::createIndex() {
-    Buffer<Kmer_union> kmerBuffer(calculateBufferSize(par.ramUsage));
+    Buffer<Kmer> kmerBuffer(calculateBufferSize(par.ramUsage));
     cout << "Target metamer buffer size: " << kmerBuffer.bufferSize << endl;
     
     indexReferenceSequences(kmerBuffer.bufferSize);
@@ -169,7 +169,7 @@ void IndexCreator::createIndex() {
         // Sort the k-mers
         time_t start = time(nullptr);
         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
-                      Kmer_union::compareTargetKmer);
+                      Kmer::compareTargetKmer);
         time_t sort = time(nullptr);
         cout << "Reference k-mer sort : " << sort - start << endl;
 
@@ -596,7 +596,7 @@ void IndexCreator::getAccessionBatches(std::vector<Accession> & observedAccessio
 
 
 void IndexCreator::writeTargetFiles(
-    Buffer<Kmer_union> & kmerBuffer, 
+    Buffer<Kmer> & kmerBuffer, 
     const size_t * uniqKmerIdx,
     const vector<pair<size_t, size_t>> & uniqKmerIdxRanges) 
 {
@@ -626,7 +626,7 @@ void IndexCreator::writeTargetFiles(
 }
 
 void IndexCreator::writeTargetFilesAndSplits(
-    Buffer<Kmer_union> & kmerBuffer,
+    Buffer<Kmer> & kmerBuffer,
     const size_t * uniqKmerIdx,
     size_t & uniqKmerCnt,
     const vector<pair<size_t, size_t>> & uniqKmerIdxRanges,
@@ -754,7 +754,7 @@ void IndexCreator::load_assacc2taxid(const string & mappingFile, unordered_map<s
     map.close();
 }
 
-size_t IndexCreator::fillTargetKmerBuffer(Buffer<Kmer_union> &kmerBuffer,
+size_t IndexCreator::fillTargetKmerBuffer(Buffer<Kmer> &kmerBuffer,
                                           std::vector<std::atomic<bool>> & batchChecker,
                                           size_t &processedBatchCnt,
                                           const LocalParameters &par) {

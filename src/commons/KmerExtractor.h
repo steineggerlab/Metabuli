@@ -81,7 +81,7 @@ public:
 
     int extractTargetKmers(
         const char *seq,
-        Buffer<Kmer_union> &kmerBuffer,
+        Buffer<Kmer> &kmerBuffer,
         size_t &posToWrite,
         int seqID,
         int taxIdAtRank,

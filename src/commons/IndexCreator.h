@@ -152,12 +152,12 @@ protected:
     };
 
     void writeTargetFiles(
-        Buffer<Kmer_union> & kmerBuffer,
+        Buffer<Kmer> & kmerBuffer,
         const size_t * uniqeKmerIdx,
         const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
     void writeTargetFilesAndSplits(
-        Buffer<Kmer_union> & kmerBuffer,
+        Buffer<Kmer> & kmerBuffer,
         const size_t * uniqeKmerIdx, 
         size_t & uniqKmerCnt, 
         const vector<pair<size_t, size_t>> & uniqKmerIdxRanges,
@@ -166,7 +166,7 @@ protected:
     void writeDbParameters();
 
     size_t fillTargetKmerBuffer(
-        Buffer<Kmer_union> &kmerBuffer,                 
+        Buffer<Kmer> &kmerBuffer,                 
         std::vector<std::atomic<bool>> & batchChecker,
         size_t &processedSplitCnt,
         const LocalParameters &par);
@@ -195,15 +195,15 @@ protected:
 
     template <FilterMode M>
     void filterKmers(
-        Buffer<Kmer_union> & kmerBuffer,
+        Buffer<Kmer> & kmerBuffer,
         size_t * uniqeKmerIdx,
         size_t & uniqKmerCnt,
         vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
     template <FilterMode M>
     bool areKmersDuplicate(
-        const Kmer_union & kmer1,
-        const Kmer_union & kmer2
+        const Kmer & kmer1,
+        const Kmer & kmer2
     );
 
     size_t AminoAcidPart(size_t kmer) {
@@ -228,7 +228,7 @@ protected:
             exit(EXIT_FAILURE);
         }
         return static_cast<size_t>((maxRam * 1024.0 * 1024.0 * 1024.0 * c - (par.threads * 50.0 * 1024.0 * 1024.0))/ 
-                                  (sizeof(Kmer_union) + sizeof(size_t)));
+                                  (sizeof(Kmer) + sizeof(size_t)));
     }
 
     size_t calculateBufferSizeForMerge(size_t maxRam, int fileCnt) {
@@ -244,7 +244,7 @@ protected:
             exit(EXIT_FAILURE);
         }
         return static_cast<size_t>((maxRam * 1024.0 * 1024.0 * 1024.0 * c - (par.threads * 50.0 * 1024.0 * 1024.0))/ 
-                                  (sizeof(Kmer_union) + sizeof(size_t)));
+                                  (sizeof(Kmer) + sizeof(size_t)));
     }
 
     void loadMergedTaxIds(const std::string &mergedFile, unordered_map<TaxID, TaxID> & old2new);
@@ -305,12 +305,12 @@ void IndexCreator::mergeTargetFiles() {
     size_t numOfKmerBeforeMerge = 0;
     size_t splitNum = deltaIdxFileNames.size();
     DeltaIdxReader ** deltaIdxReaders = new DeltaIdxReader*[splitNum];
-    size_t valueBufferSize = 1024 * 1024 * 4; // -> 35 GB
+    size_t valueBufferSize = 1024 * 1024 * 16; // -> 35 GB
     for (size_t file = 0; file < splitNum; file++) {
         deltaIdxReaders[file] = new DeltaIdxReader(deltaIdxFileNames[file],
                                                    infoFileNames[file],
                                                    valueBufferSize, 
-                                                   1024 * 1024); // 3GB
+                                                   1024 * 1024 * 4); // 3GB
         numOfKmerBeforeMerge += deltaIdxReaders[file]->getTotalValueNum();
     }
 
@@ -337,7 +337,7 @@ void IndexCreator::mergeTargetFiles() {
     if (kmerBufferSize < valueBufferSize * splitNum * 2) {
         kmerBufferSize = valueBufferSize * splitNum * 2; // 4,429,185,024
     }
-    Buffer<Kmer_union> kmerBuffer(kmerBufferSize); // 64GB
+    Buffer<Kmer> kmerBuffer(kmerBufferSize); // 64GB
     std::atomic<int> hasOverflow{0};
     std::vector<std::atomic<bool>> completedSplits(splitNum);
     int remainingSplits = splitNum;
@@ -349,13 +349,10 @@ void IndexCreator::mergeTargetFiles() {
         kmerBuffer.init();
         memset(uniqKmerIdx, 0, kmerBuffer.bufferSize * sizeof(size_t));
         time_t start = time(nullptr);
-        while (true) {
-            uint64_t max = UINT64_MAX;
+        while (remainingSplits > 0
+                && kmerBuffer.startIndexOfReserve + valueBufferSize * remainingSplits <= kmerBuffer.bufferSize) {
             size_t posToWrite = kmerBuffer.reserveMemory(valueBufferSize * remainingSplits);
-            if (posToWrite + valueBufferSize * remainingSplits > kmerBuffer.bufferSize) {
-                kmerBuffer.startIndexOfReserve -= valueBufferSize * remainingSplits;
-                break;
-            }
+            uint64_t max = UINT64_MAX;
             splitToProcess.clear();
             for (size_t i = 0; i < splitNum; i++) {
                 if (completedSplits[i].load(std::memory_order_acquire))
@@ -386,7 +383,7 @@ void IndexCreator::mergeTargetFiles() {
         time_t beforeSort = time(nullptr);
         SORT_PARALLEL(kmerBuffer.buffer, 
                       kmerBuffer.buffer + kmerBuffer.bufferSize,
-                      Kmer_union::compareTargetKmer);
+                      Kmer::compareTargetKmer);
         time_t afterSort = time(nullptr);
         cout << "Sorting k-mer list  : " << afterSort - beforeSort << " s" << endl;
 
@@ -445,7 +442,7 @@ void IndexCreator::mergeTargetFiles() {
 
 template <FilterMode M>
 void IndexCreator::filterKmers(
-    Buffer<Kmer_union> & kmerBuffer,
+    Buffer<Kmer> & kmerBuffer,
     size_t * selectedKmerIdx,
     size_t & selectedKmerCnt,
     vector<pair<size_t, size_t>> & selectedKmerIdxRanges) 
@@ -489,7 +486,7 @@ void IndexCreator::filterKmers(
     }
 #pragma omp parallel default(none), shared(kmerBuffer, cntOfEachSplit, splits, par, cout, selectedKmerCnt, selectedKmerIdx, selectedKmerIdxRanges)
     {
-        Kmer_union * lookingKmer;
+        Kmer * lookingKmer;
         size_t lookingIndex;
         vector<TaxID> taxIds;
         size_t * localSelectedIdx = new size_t[16 * 1024 * 1024];
@@ -567,8 +564,8 @@ void IndexCreator::filterKmers(
 
 template <FilterMode M>
 bool IndexCreator::areKmersDuplicate(
-    const Kmer_union & kmer1,
-    const Kmer_union & kmer2) 
+    const Kmer & kmer1,
+    const Kmer & kmer2) 
 {
     if constexpr (M == FilterMode::DB_CREATION) {
         return kmer1.tInfo.speciesId == kmer2.tInfo.speciesId &&

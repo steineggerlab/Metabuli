@@ -364,7 +364,7 @@ void KmerExtractor::fillQueryKmerBuffer(
 
 int KmerExtractor::extractTargetKmers(
     const char *seq,
-    Buffer<Kmer_union> &kmerBuffer,
+    Buffer<Kmer> &kmerBuffer,
     size_t &posToWrite,
     int taxId,
     int spTaxId,
