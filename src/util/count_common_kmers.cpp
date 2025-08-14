@@ -55,7 +55,7 @@ int count_common_kmers(int argc, const char **argv, const Command &command) {
         uint64_t mask = 16777215;
         mask = ~ mask;
         unsigned int mask2 = ~((static_cast<unsigned int>(1) << 31));
-        Kmer_union nextKmer;
+        Kmer nextKmer;
         size_t localDistinctKmerCount = 0;
     #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < numOfDiffIdxSplits_use; ++i) {
@@ -68,7 +68,7 @@ int count_common_kmers(int argc, const char **argv, const Command &command) {
             }
 
             deltaIdxReaders->setReadPosition(currOffset);
-            Kmer_union kmer = deltaIdxReaders->getNextValue();
+            Kmer kmer = deltaIdxReaders->getNextValue();
             while (!deltaIdxReaders->isCompleted() &&
                 (kmer.value < nextOffsetKmer)) 
             {
