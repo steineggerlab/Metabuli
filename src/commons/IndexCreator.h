@@ -118,7 +118,6 @@ protected:
     KmerExtractor * kmerExtractor;
 
     bool externTaxonomy;
-    // NcbiTaxonomy * taxonomy;
     string dbDir;
     string fnaListFileName;
     string taxonomyDir;
@@ -161,7 +160,8 @@ protected:
         Buffer<Kmer_union> & kmerBuffer,
         const size_t * uniqeKmerIdx, 
         size_t & uniqKmerCnt, 
-        const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
+        const vector<pair<size_t, size_t>> & uniqKmerIdxRanges,
+        bool writeInfo = true);
 
     void writeDbParameters();
 
@@ -259,15 +259,10 @@ protected:
         WriteBuffer<uint16_t> & diffBuffer);
 
 public:
-
     IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy, int kmerFormat);
-
     ~IndexCreator();
-    
     void createIndex();
-
     void createCommonKmerIndex();
-
     template <FilterMode M>
     void mergeTargetFiles();
 
@@ -298,7 +293,7 @@ public:
         }
     }
 };
-#endif //ADKMER4_INDEXCREATOR_H
+
 
 template <FilterMode M>
 void IndexCreator::mergeTargetFiles() {
@@ -310,12 +305,12 @@ void IndexCreator::mergeTargetFiles() {
     size_t numOfKmerBeforeMerge = 0;
     size_t splitNum = deltaIdxFileNames.size();
     DeltaIdxReader ** deltaIdxReaders = new DeltaIdxReader*[splitNum];
-    size_t valueBufferSize = 1024 * 1024 * 32; // -> 35 GB
+    size_t valueBufferSize = 1024 * 1024 * 4; // -> 35 GB
     for (size_t file = 0; file < splitNum; file++) {
         deltaIdxReaders[file] = new DeltaIdxReader(deltaIdxFileNames[file],
                                                    infoFileNames[file],
                                                    valueBufferSize, 
-                                                   1024 * 1024 * 8); // 3GB
+                                                   1024 * 1024); // 3GB
         numOfKmerBeforeMerge += deltaIdxReaders[file]->getTotalValueNum();
     }
 
@@ -347,44 +342,42 @@ void IndexCreator::mergeTargetFiles() {
     std::vector<std::atomic<bool>> completedSplits(splitNum);
     int remainingSplits = splitNum;
     vector<pair<size_t, size_t>> uniqKmerIdxRanges;
-    size_t write = 0;
     size_t lastKmer = 0;
-    size_t totalValueNum = 0;
     auto * uniqKmerIdx = new size_t[kmerBuffer.bufferSize];
+    vector<size_t> splitToProcess;
     while (remainingSplits > 0) {
         kmerBuffer.init();
         memset(uniqKmerIdx, 0, kmerBuffer.bufferSize * sizeof(size_t));
         time_t start = time(nullptr);
         while (true) {
-            size_t posToWrite;
             uint64_t max = UINT64_MAX;
-            posToWrite = kmerBuffer.reserveMemory(valueBufferSize * splitNum);
-            if (posToWrite + valueBufferSize * splitNum > kmerBuffer.bufferSize) {
-                kmerBuffer.startIndexOfReserve -= valueBufferSize * splitNum;
+            size_t posToWrite = kmerBuffer.reserveMemory(valueBufferSize * remainingSplits);
+            if (posToWrite + valueBufferSize * remainingSplits > kmerBuffer.bufferSize) {
+                kmerBuffer.startIndexOfReserve -= valueBufferSize * remainingSplits;
                 break;
             }
+            splitToProcess.clear();
             for (size_t i = 0; i < splitNum; i++) {
                 if (completedSplits[i].load(std::memory_order_acquire))
                     continue; 
                 if (deltaIdxReaders[i]->getLastValue() < max) {
                     max = deltaIdxReaders[i]->getLastValue();
                 }
+                splitToProcess.push_back(i);
             }
-#pragma omp parallel for default(none), shared(cout, kmerBuffer, deltaIdxReaders, completedSplits, posToWrite, max, splitNum, valueBufferSize, taxId2speciesId, mask, remainingSplits, totalValueNum)
-            for (size_t split = 0; split < splitNum; split++) {
-                if (completedSplits[split].load(std::memory_order_acquire))
-                    continue; 
-                size_t offset = posToWrite + split * valueBufferSize;
+#pragma omp parallel for default(none), shared(cout, kmerBuffer, deltaIdxReaders, splitToProcess, completedSplits, posToWrite, max, splitNum, valueBufferSize, taxId2speciesId, mask, remainingSplits)
+            for (size_t i = 0; i < splitToProcess.size(); i ++) {
+                size_t split = splitToProcess[i];
+                size_t offset = posToWrite + i * valueBufferSize;
                 size_t valueNum = deltaIdxReaders[split]->getValues(kmerBuffer.buffer + offset, max);
-                totalValueNum += valueNum;
                 if (deltaIdxReaders[split]->isCompleted()) {
                     completedSplits[split].store(true, std::memory_order_release);
                     __sync_fetch_and_sub(&remainingSplits, 1);
                 }
-                for (size_t i = 0; i < valueNum; i++) {
-                    kmerBuffer.buffer[offset + i].tInfo.speciesId 
-                        = taxId2speciesId[kmerBuffer.buffer[offset + i].tInfo.taxId & mask];
-                }    
+                for (size_t j = 0; j < valueNum; j++) {
+                    kmerBuffer.buffer[offset + j].tInfo.speciesId 
+                        = taxId2speciesId[kmerBuffer.buffer[offset + j].tInfo.taxId & mask];
+                }
             }
         }
         time_t end = time(nullptr);
@@ -403,6 +396,7 @@ void IndexCreator::mergeTargetFiles() {
         filterKmers<M>(kmerBuffer, uniqKmerIdx, uniqKmerCnt, uniqKmerIdxRanges);
         time_t reduction = time(nullptr);
         cout << "Filtering k-mers    : " << (double) (reduction - afterSort) << " s" << endl;
+        cout << "Selected count      : " << uniqKmerCnt << endl;
 
         // Write       
         for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
@@ -422,11 +416,9 @@ void IndexCreator::mergeTargetFiles() {
                 }
             }
         }  
-        infoBuffer.flush();
-        diffBuffer.flush();
         time_t writeTime = time(nullptr);
         cout << "Writing k-mers      : " << (double) (writeTime - reduction) << " s" << endl;
-        cout << "Written k-mers      : " << write << " " << std::fixed << std::setprecision(2) << ((float) write / numOfKmerBeforeMerge) * 100 << "%" << endl;
+        cout << "Written k-mers      : " << infoBuffer.writeCnt << " " << std::fixed << std::setprecision(2) << ((float) infoBuffer.writeCnt / numOfKmerBeforeMerge) * 100 << "%" << endl;
         cout << "--------------------" << endl;
         cout << "remaining splits    : " << remainingSplits << endl;
         std::cout.unsetf(std::ios::fixed | std::ios::scientific);
@@ -474,7 +466,7 @@ void IndexCreator::filterKmers(
             break;
         }
     }
-
+    cout << "Loaded k-mer count  : " << (kmerBuffer.startIndexOfReserve - startIdx) << endl;
     // Make splits
     vector<Split> splits;
     size_t splitWidth = (kmerBuffer.startIndexOfReserve - startIdx) / par.threads;
@@ -510,20 +502,27 @@ void IndexCreator::filterKmers(
                 lookingKmer = & kmerBuffer.buffer[i - 1];
                 lookingIndex = i - 1;
                 bool selected = false;
+                taxIds.clear();
+                if constexpr (M == FilterMode::DB_CREATION) {
+                    taxIds.push_back(lookingKmer->tInfo.taxId);
+                } else if constexpr (M == FilterMode::COMMON_KMER) {
+                    taxIds.push_back(lookingKmer->tInfo.speciesId);
+                }
+
                 while ((i < splits[split].end + 1) && areKmersDuplicate<M>(*lookingKmer, kmerBuffer.buffer[i])) {
+                    if constexpr (M == FilterMode::DB_CREATION) {
+                        taxIds.push_back(kmerBuffer.buffer[i].tInfo.taxId);
+                    } else if constexpr (M == FilterMode::COMMON_KMER) {
+                        taxIds.push_back(kmerBuffer.buffer[i].tInfo.speciesId);
+                    }
                     i++;
                 }
                 
                 if constexpr (M == FilterMode::DB_CREATION) {
-                    taxIds.clear();
-                    for (size_t k = lookingIndex; k < i; k++) {
-                        taxIds.push_back(kmerBuffer.buffer[k].tInfo.taxId);
-                    }
-                    lookingKmer->tInfo.taxId = taxonomy->LCA(taxIds)->taxId;
                     selected = true;
                 } else if constexpr (M == FilterMode::COMMON_KMER) {
-                    for (size_t k = lookingIndex + 1; k < i; k++) {
-                        if (kmerBuffer.buffer[k].tInfo.speciesId != kmerBuffer.buffer[lookingIndex].tInfo.speciesId) {
+                    for (size_t i = 0; i < taxIds.size(); i++) {
+                        if (taxIds[i] != lookingKmer->tInfo.speciesId) {
                             selected = true;
                             break;
                         }
@@ -531,6 +530,7 @@ void IndexCreator::filterKmers(
                 }
 
                 if (selected) {
+                    lookingKmer->tInfo.taxId = taxonomy->LCA(taxIds)->taxId;
                     if (tempSelectedKmerCnt >= 16 * 1024 * 1024) {
                         memcpy(selectedKmerIdx + splits[split].offset, localSelectedIdx, tempSelectedKmerCnt * sizeof(size_t));
                         splits[split].offset += tempSelectedKmerCnt;
@@ -578,3 +578,5 @@ bool IndexCreator::areKmersDuplicate(
     }
     return false; // Default case, should not be reached
 }
+
+#endif

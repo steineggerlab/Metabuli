@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 # keep old policy for setting implicit link libraries
 # zlib causes issues in static builds otherwise
-cmake_policy(SET CMP0060 OLD)
+# cmake_policy(SET CMP0060 OLD)
 project(metabuli CXX)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/lib/mmseqs/cmake")
 

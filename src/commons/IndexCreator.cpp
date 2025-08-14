@@ -102,7 +102,7 @@ void IndexCreator::createCommonKmerIndex() {
 
         // Write the target files
         if(processedBatchCnt == accessionBatches.size() && numOfFlush == 0 && !isUpdating) {
-            writeTargetFilesAndSplits(kmerBuffer, uniqKmerIdx, selectedKmerCnt, uniqKmerIdxRanges);
+            writeTargetFilesAndSplits(kmerBuffer, uniqKmerIdx, selectedKmerCnt, uniqKmerIdxRanges, true);
         } else {
             writeTargetFiles(kmerBuffer, uniqKmerIdx, uniqKmerIdxRanges);
         }
@@ -117,6 +117,13 @@ void IndexCreator::createCommonKmerIndex() {
         return;
     }
     cout << "Merge reference DB files ... " << endl;
+
+    // for (int i = 0; i < 66; i++) {
+    //     addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
+    //                     dbDir + "/" + to_string(i) + "_info");
+    // }
+    // updateTaxId2SpeciesTaxId(dbDir + "/taxID_list");
+
     printFilesToMerge();
     setMergedFileNames(
         par.filenames[0] + "/diffIdx",  
@@ -622,7 +629,8 @@ void IndexCreator::writeTargetFilesAndSplits(
     Buffer<Kmer_union> & kmerBuffer,
     const size_t * uniqKmerIdx,
     size_t & uniqKmerCnt,
-    const vector<pair<size_t, size_t>> & uniqKmerIdxRanges)
+    const vector<pair<size_t, size_t>> & uniqKmerIdxRanges,
+    bool writeInfo)
 {
     DiffIdxSplit * splitList = new DiffIdxSplit[par.splitNum];
     memset(splitList, 0, sizeof(DiffIdxSplit) * par.splitNum);    
@@ -660,26 +668,40 @@ void IndexCreator::writeTargetFilesAndSplits(
 
     numOfFlush++;
     size_t bufferSize = 1024 * 1024 * 32;
-    WriteBuffer<uint16_t> diffBuffer(dbDir + "/diffIdx", bufferSize);
-    WriteBuffer<uint32_t> infoBuffer(dbDir + "/info", bufferSize); 
     uint64_t lastKmer = 0;
     size_t splitIdx = 1;
-    for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
-        for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
-            infoBuffer.write(&kmerBuffer.buffer[uniqKmerIdx[j]].id);
-            getDiffIdx(lastKmer, kmerBuffer.buffer[uniqKmerIdx[j]].value, diffBuffer);
-            if((splitIdx < splitCnt) && (lastKmer == splitList[splitIdx].ADkmer)){
-                splitList[splitIdx].diffIdxOffset = diffBuffer.writeCnt;
-                splitList[splitIdx].infoIdxOffset = infoBuffer.writeCnt;
-                splitIdx ++;
+    WriteBuffer<uint16_t> diffBuffer(dbDir + "/diffIdx", bufferSize);
+    
+    if (writeInfo) {
+        WriteBuffer<uint32_t> infoBuffer(dbDir + "/info", bufferSize); 
+        for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
+            for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
+                infoBuffer.write(&kmerBuffer.buffer[uniqKmerIdx[j]].id);
+                getDiffIdx(lastKmer, kmerBuffer.buffer[uniqKmerIdx[j]].value, diffBuffer);
+                if((splitIdx < splitCnt) && (lastKmer == splitList[splitIdx].ADkmer)){
+                    splitList[splitIdx].diffIdxOffset = diffBuffer.writeCnt;
+                    splitList[splitIdx].infoIdxOffset = infoBuffer.writeCnt;
+                    splitIdx ++;
+                }
             }
         }
+        cout << "Written k-mer count : " << infoBuffer.writeCnt << endl;
+    } else {
+        size_t writeCnt = 0;
+        for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
+            for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
+                getDiffIdx(lastKmer, kmerBuffer.buffer[uniqKmerIdx[j]].value, diffBuffer);
+                writeCnt++;
+                if((splitIdx < splitCnt) && (lastKmer == splitList[splitIdx].ADkmer)){
+                    splitList[splitIdx].diffIdxOffset = diffBuffer.writeCnt;
+                    splitList[splitIdx].infoIdxOffset = 0;
+                    splitIdx ++;
+                }
+            }
+        }
+        cout << "Written k-mer count : " << writeCnt << endl;
     }
-    infoBuffer.flush();
-    diffBuffer.flush();
     
-    cout<<"Written k-mer count : "<< infoBuffer.writeCnt << endl;
-
     FILE * deltaIdxSplitFile = fopen((dbDir + "/split").c_str(), "wb");
     if (deltaIdxSplitFile == nullptr) {
         cout << "Cannot open the file for writing target DB" << endl;
