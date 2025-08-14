@@ -109,7 +109,7 @@ void KmerMatcher::loadTaxIdList(const LocalParameters & par) {
 }
 
 
-bool KmerMatcher::matchKmers(Buffer<QueryKmer> * queryKmerBuffer,
+bool KmerMatcher::matchKmers(Buffer<Kmer> * queryKmerBuffer,
                              Buffer<Match> * matchBuffer,
                              const string & db){
     // Set database files
@@ -126,12 +126,12 @@ bool KmerMatcher::matchKmers(Buffer<QueryKmer> * queryKmerBuffer,
     MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str(), 3);
     size_t numOfDiffIdx = FileUtil::getFileSize(targetDiffIdxFileName) / sizeof(uint16_t);
     size_t queryKmerNum = queryKmerBuffer->startIndexOfReserve;
-    QueryKmer * queryKmerList = queryKmerBuffer->buffer;
+    Kmer * queryKmerList = queryKmerBuffer->buffer;
     
 
     size_t blankCnt = 0;
     for (size_t i = 0; i < queryKmerNum; i++) {
-        if (queryKmerList[i].info.sequenceID == 0) {
+        if (queryKmerList[i].qInfo.sequenceID == 0) {
             blankCnt++;
         } else {
             break;
@@ -167,7 +167,7 @@ bool KmerMatcher::matchKmers(Buffer<QueryKmer> * queryKmerBuffer,
             remainder--;
         }
         bool needLastTargetBlock = true;
-        queryAA = AMINO_ACID_PART(queryKmerList[startIdx].ADkmer);
+        queryAA = AMINO_ACID_PART(queryKmerList[startIdx].value);
         for (size_t j = 0; j < numOfDiffIdxSplits_use; j ++) {
             if (queryAA <= AMINO_ACID_PART(diffIdxSplits.data[j].ADkmer)) {
                 j = j - (j != 0);
@@ -263,8 +263,8 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
         currentQueryAA = UINT64_MAX;
         for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
             // Reuse the comparison data if queries are exactly identical
-            if (currentQuery == queryKmerList[j].ADkmer
-                && (currentQueryInfo.frame/3 == queryKmerList[j].info.frame/3)) {
+            if (currentQuery == queryKmerList[j].value
+                && (currentQueryInfo.frame/3 == queryKmerList[j].qInfo.frame/3)) {
                 // If local buffer is full, copy them to the shared buffer.
                 if (unlikely(matchCnt + selectedMatchCnt > localBufferSize)) {
                     // Check if the shared buffer is full.
@@ -288,7 +288,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                         exit(1);
                     }
                     idx = selectedMatches[k];
-                    matches[matchCnt] = {queryKmerList[j].info,
+                    matches[matchCnt] = {queryKmerList[j].qInfo,
                                          candidateKmerInfos[idx],
                                          taxId2speciesId[candidateKmerInfos[idx]],
                                          (unsigned int) (candidateTargetKmers[idx] & AA_MASK),
@@ -301,9 +301,9 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
             selectedMatchCnt = 0;
 
             // Reuse the candidate target k-mers to compare in DNA level if queries are the same at amino acid level but not at DNA level
-            if (currentQueryAA == AMINO_ACID_PART(queryKmerList[j].ADkmer)) {
-                compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, hammingDists, selectedMatches,
-                           selectedHammingSum, selectedHammings, selectedMatchCnt, queryKmerList[j].info.frame);
+            if (currentQueryAA == AMINO_ACID_PART(queryKmerList[j].value)) {
+                compareDna(queryKmerList[j].value, candidateTargetKmers, hammingDists, selectedMatches,
+                           selectedHammingSum, selectedHammings, selectedMatchCnt, queryKmerList[j].qInfo.frame);
                 // If local buffer is full, copy them to the shared buffer.
                 if (unlikely(matchCnt + selectedMatchCnt > localBufferSize)) {
                     // Check if the shared buffer is full.
@@ -327,7 +327,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                         cout << taxonomy->getString(node->rankIdx) << endl;
                         exit(1);
                     }
-                    matches[matchCnt] = {queryKmerList[j].info,
+                    matches[matchCnt] = {queryKmerList[j].qInfo,
                                          candidateKmerInfos[idx],
                                          taxId2speciesId[candidateKmerInfos[idx]],
                                          (unsigned int) (candidateTargetKmers[idx] & AA_MASK),
@@ -335,18 +335,18 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                                          selectedHammingSum[k]};
                     matchCnt++;
                 }
-                currentQuery = queryKmerList[j].ADkmer;
+                currentQuery = queryKmerList[j].value;
                 currentQueryAA = AMINO_ACID_PART(currentQuery);
-                currentQueryInfo = queryKmerList[j].info;
+                currentQueryInfo = queryKmerList[j].qInfo;
                 continue;
             }
             candidateTargetKmers.clear();
             candidateKmerInfos.clear();
 
             // Get next query, and start to find
-            currentQuery = queryKmerList[j].ADkmer;
+            currentQuery = queryKmerList[j].value;
             currentQueryAA = AMINO_ACID_PART(currentQuery);
-            currentQueryInfo = queryKmerList[j].info;
+            currentQueryInfo = queryKmerList[j].qInfo;
 
             // Skip target k-mers that are not matched in amino acid level
             while (diffIdxPos != numOfDiffIdx
@@ -402,7 +402,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
 
             // Compare the current query and the loaded target k-mers and select
             compareDna(currentQuery, candidateTargetKmers, hammingDists, selectedMatches, selectedHammingSum,
-                       selectedHammings, selectedMatchCnt, queryKmerList[j].info.frame);
+                       selectedHammings, selectedMatchCnt, queryKmerList[j].qInfo.frame);
 
             // If local buffer is full, copy them to the shared buffer.
             if (unlikely(matchCnt + selectedMatchCnt > localBufferSize)) {
@@ -428,7 +428,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                         cout << taxonomy->getString(node->rankIdx) << endl;
                         exit(1);
                     }
-                matches[matchCnt] = {queryKmerList[j].info,
+                matches[matchCnt] = {queryKmerList[j].qInfo,
                                      candidateKmerInfos[idx],
                                      taxId2speciesId[candidateKmerInfos[idx]],
                                      (unsigned int) (candidateTargetKmers[idx] & AA_MASK),
@@ -470,7 +470,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
 }
 
 
-bool KmerMatcher::matchMetamers(Buffer<QueryKmer> * queryKmerBuffer,
+bool KmerMatcher::matchMetamers(Buffer<Kmer> * queryKmerBuffer,
                              Buffer<Match> * matchBuffer,
                              const string & db){
     std::cout << "Comparing query and reference metamers..." << std::endl;
@@ -480,11 +480,11 @@ bool KmerMatcher::matchMetamers(Buffer<QueryKmer> * queryKmerBuffer,
     MmapedData<DeltaIdxOffset> diffIdxSplits = mmapData<DeltaIdxOffset>(diffIdxSplitFileName.c_str(), 3);
     size_t numOfDiffIdx = FileUtil::getFileSize(targetDiffIdxFileName) / sizeof(uint16_t);
     size_t queryKmerNum = queryKmerBuffer->startIndexOfReserve;
-    QueryKmer * queryKmerList = queryKmerBuffer->buffer;
+    Kmer * queryKmerList = queryKmerBuffer->buffer;
 
     size_t blankCnt = 0;
     for (size_t i = 0; i < queryKmerNum; i++) {
-        if (queryKmerList[i].info.sequenceID == 0) {
+        if (queryKmerList[i].qInfo.sequenceID == 0) {
             blankCnt++;
         } else {
             break;
@@ -519,7 +519,7 @@ bool KmerMatcher::matchMetamers(Buffer<QueryKmer> * queryKmerBuffer,
             remainder--;
         }
         bool needLastTargetBlock = true;
-        queryAA = AMINO_ACID_PART(queryKmerList[startIdx].ADkmer);
+        queryAA = AMINO_ACID_PART(queryKmerList[startIdx].value);
         for (size_t j = 0; j < numOfDiffIdxSplits_use; j ++) {
             if (queryAA <= AMINO_ACID_PART(diffIdxSplits.data[j].metamer.metamer)) {
                 j = j - (j != 0);
@@ -603,8 +603,8 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
         currentQueryAA = UINT64_MAX;
         for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
             // Reuse the comparison data if queries are exactly identical
-            if (currentQuery == queryKmerList[j].ADkmer
-                && (currentQueryInfo.frame/3 == queryKmerList[j].info.frame/3)) {
+            if (currentQuery == queryKmerList[j].value
+                && (currentQueryInfo.frame/3 == queryKmerList[j].qInfo.frame/3)) {
                 // If local buffer is full, copy them to the shared buffer.
                 if (unlikely(matchCnt + selectedMatchCnt > localBufferSize)) {
                     // Check if the shared buffer is full.
@@ -619,7 +619,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                 }
                 for (size_t k = 0; k < selectedMatchCnt; k++) {
                     idx = selectedMatches[k];
-                    matches[matchCnt] = {queryKmerList[j].info,
+                    matches[matchCnt] = {queryKmerList[j].qInfo,
                                          candidateKmerInfos[idx],
                                          taxId2speciesId[candidateKmerInfos[idx]],
                                          (unsigned int) (candidateTargetKmers[idx] & AA_MASK),
@@ -632,9 +632,9 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
             selectedMatchCnt = 0;
 
             // Reuse the candidate target k-mers to compare in DNA level if queries are the same at amino acid level but not at DNA level
-            if (currentQueryAA == AMINO_ACID_PART(queryKmerList[j].ADkmer)) {
-                compareDna(queryKmerList[j].ADkmer, candidateTargetKmers, hammingDists, selectedMatches,
-                           selectedHammingSum, selectedHammings, selectedMatchCnt, queryKmerList[j].info.frame);
+            if (currentQueryAA == AMINO_ACID_PART(queryKmerList[j].value)) {
+                compareDna(queryKmerList[j].value, candidateTargetKmers, hammingDists, selectedMatches,
+                           selectedHammingSum, selectedHammings, selectedMatchCnt, queryKmerList[j].qInfo.frame);
                 // If local buffer is full, copy them to the shared buffer.
                 if (unlikely(matchCnt + selectedMatchCnt > localBufferSize)) {
                     // Check if the shared buffer is full.
@@ -649,7 +649,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                 }
                 for (size_t k = 0; k < selectedMatchCnt; k++) {
                     idx = selectedMatches[k];
-                    matches[matchCnt] = {queryKmerList[j].info,
+                    matches[matchCnt] = {queryKmerList[j].qInfo,
                                          candidateKmerInfos[idx],
                                          taxId2speciesId[candidateKmerInfos[idx]],
                                          (unsigned int) (candidateTargetKmers[idx] & AA_MASK),
@@ -657,18 +657,18 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
                                          selectedHammingSum[k]};
                     matchCnt++;
                 }
-                currentQuery = queryKmerList[j].ADkmer;
+                currentQuery = queryKmerList[j].value;
                 currentQueryAA = AMINO_ACID_PART(currentQuery);
-                currentQueryInfo = queryKmerList[j].info;
+                currentQueryInfo = queryKmerList[j].qInfo;
                 continue;
             }
             candidateTargetKmers.clear();
             candidateKmerInfos.clear();
 
             // Get next query, and start to find
-            currentQuery = queryKmerList[j].ADkmer;
+            currentQuery = queryKmerList[j].value;
             currentQueryAA = AMINO_ACID_PART(currentQuery);
-            currentQueryInfo = queryKmerList[j].info;
+            currentQueryInfo = queryKmerList[j].qInfo;
 
             // Skip target k-mers that are not matched in amino acid level
             while (diffIdxPos != numOfDiffIdx
@@ -708,7 +708,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
 
             // Compare the current query and the loaded target k-mers and select
             compareDna(currentQuery, candidateTargetKmers, hammingDists, selectedMatches, selectedHammingSum,
-                       selectedHammings, selectedMatchCnt, queryKmerList[j].info.frame);
+                       selectedHammings, selectedMatchCnt, queryKmerList[j].qInfo.frame);
 
             // If local buffer is full, copy them to the shared buffer.
             if (unlikely(matchCnt + selectedMatchCnt > localBufferSize)) {
@@ -724,7 +724,7 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
             }
             for (size_t k = 0; k < selectedMatchCnt; k++) {
                 idx = selectedMatches[k];
-                matches[matchCnt] = {queryKmerList[j].info,
+                matches[matchCnt] = {queryKmerList[j].qInfo,
                                      candidateKmerInfos[idx],
                                      taxId2speciesId[candidateKmerInfos[idx]],
                                      (unsigned int) (candidateTargetKmers[idx] & AA_MASK),

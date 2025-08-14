@@ -1,5 +1,5 @@
-#ifndef ADKMER4_SEARCHER_H
-#define ADKMER4_SEARCHER_H
+#ifndef METABULI_CLASSIFIER_H
+#define METABULI_CLASSIFIER_H
 
 #include "BitManipulateMacros.h"
 #include "Mmap.h"
@@ -87,4 +87,4 @@ public:
 };
 
 
-#endif //ADKMER4_SEARCHER_H
+#endif //METABULI_CLASSIFIER_H

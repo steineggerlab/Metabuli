@@ -41,7 +41,7 @@ Classifier::~Classifier() {
 }
 
 void Classifier::startClassify(const LocalParameters &par) {
-    Buffer<QueryKmer> queryKmerBuffer;
+    Buffer<Kmer> queryKmerBuffer;
     Buffer<Match> matchBuffer;
     vector<Query> queryList;
     size_t numOfTatalQueryKmerCnt = 0;
@@ -91,12 +91,12 @@ void Classifier::startClassify(const LocalParameters &par) {
 
             // Allocate memory for query k-mer buffer
             queryKmerBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt);
-            memset(queryKmerBuffer.buffer, 0, queryReadSplit[splitIdx].kmerCnt * sizeof(QueryKmer));
+            memset(queryKmerBuffer.buffer, 0, queryReadSplit[splitIdx].kmerCnt * sizeof(Kmer));
 
             // Allocate memory for match buffer
             if (queryReadSplit.size() == 1) {
                 size_t remain = queryIndexer->getAvailableRam() 
-                                - (queryReadSplit[splitIdx].kmerCnt * sizeof(QueryKmer)) 
+                                - (queryReadSplit[splitIdx].kmerCnt * sizeof(Kmer)) 
                                 - (queryIndexer->getReadNum_1() * 200); // TODO: check it later
                 matchBuffer.reallocateMemory(remain / sizeof(Match));
             } else {

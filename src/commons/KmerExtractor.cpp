@@ -39,7 +39,7 @@ KmerExtractor::~KmerExtractor() {
     delete[] kmerScanners;
 }
 
-void KmerExtractor::extractQueryKmers(Buffer<QueryKmer> &kmerBuffer,
+void KmerExtractor::extractQueryKmers(Buffer<Kmer> &kmerBuffer,
                                       vector<Query> & queryList,
                                       const QuerySplit & currentSplit,
                                       const LocalParameters &par,
@@ -66,12 +66,12 @@ void KmerExtractor::extractQueryKmers(Buffer<QueryKmer> &kmerBuffer,
     // Sort query k-mer
     time_t beforeQueryKmerSort = time(nullptr);
     std::cout << "Query k-mer sorting    : " << flush;
-    SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, compareForLinearSearch);
+    SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Kmer::compareQueryKmer);
     cout << double(time(nullptr) - beforeQueryKmerSort) << " s" << endl;
 }
 
 void KmerExtractor::fillQueryKmerBufferParallel(KSeqWrapper *kseq,
-                                                Buffer<QueryKmer> &kmerBuffer,
+                                                Buffer<Kmer> &kmerBuffer,
                                                 std::vector<Query> &queryList,
                                                 const QuerySplit &currentSplit,
                                                 const LocalParameters &par) {   
@@ -165,7 +165,7 @@ queryList, currentSplit, processedQueryNum, kseq, chunkSize, chunkReads_thread, 
 
 void KmerExtractor::fillQueryKmerBufferParallel_paired(KSeqWrapper *kseq1,
                                                        KSeqWrapper *kseq2,
-                                                       Buffer<QueryKmer> &kmerBuffer,
+                                                       Buffer<Kmer> &kmerBuffer,
                                                        vector<Query> &queryList,
                                                        const QuerySplit &currentSplit,
                                                        const LocalParameters &par) {
@@ -287,7 +287,7 @@ void KmerExtractor::processSequence(
     char *seq,
     char *maskedSeq,
     size_t & maxReadLength,
-    Buffer<QueryKmer> &kmerBuffer,
+    Buffer<Kmer> &kmerBuffer,
     const vector<Query> & queryList,
     bool isReverse) 
 {
@@ -332,7 +332,7 @@ void KmerExtractor::processSequence(
 void KmerExtractor::fillQueryKmerBuffer(
     const char *seq,
     int seqLen, 
-    Buffer<QueryKmer> &kmerBuffer, 
+    Buffer<Kmer> &kmerBuffer, 
     size_t &posToWrite, 
     uint32_t seqID, 
     uint32_t offset) 
@@ -361,6 +361,7 @@ void KmerExtractor::fillQueryKmerBuffer(
         }
     }
 }
+
 
 int KmerExtractor::extractTargetKmers(
     const char *seq,

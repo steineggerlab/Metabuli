@@ -200,11 +200,11 @@ public:
 
   virtual ~KmerMatcher();
   
-  bool matchKmers(Buffer<QueryKmer> *queryKmerBuffer,
+  bool matchKmers(Buffer<Kmer> *queryKmerBuffer,
                   Buffer<Match> *matchBuffer,
                   const string &db = string());
 
-  bool matchMetamers(Buffer<QueryKmer> *queryKmerBuffer,
+  bool matchMetamers(Buffer<Kmer> *queryKmerBuffer,
                      Buffer<Match> *matchBuffer,
                      const string &db = string());
 

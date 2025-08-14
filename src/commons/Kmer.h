@@ -9,7 +9,7 @@
 
 
 struct QueryKmerInfo {
-    explicit QueryKmerInfo(uint32_t seqID = 0, uint32_t pos = 0, uint8_t frame = 0 ) : pos(pos), sequenceID(seqID), frame(frame) {}
+    explicit QueryKmerInfo(uint32_t seqID = 0, uint32_t pos = 0, uint8_t frame = 0 ) : sequenceID(seqID), pos(pos), frame(frame) {}
     uint64_t pos : 32;
     uint64_t sequenceID : 29;
     uint64_t frame : 3; // 0, 1, 2 are forward, and 3, 4, 5 are reverse 1 byte
@@ -39,6 +39,9 @@ struct Kmer {
     Kmer(uint64_t value, const TargetKmerInfo & tInfo) : value(value), tInfo(tInfo) {}
 
     Kmer(uint64_t value, TaxID taxId, TaxID speciesId) : value(value), tInfo(taxId, speciesId) {}
+
+    Kmer(uint64_t value, uint32_t seqId, uint32_t pos, uint8_t frame) 
+        : value(value), qInfo(seqId, pos, frame) {}
 
     bool isEmpty() const {
         return value == 0 && id == 0;
@@ -80,18 +83,14 @@ struct Kmer {
 
         return a.tInfo.taxId < b.tInfo.taxId;
     }
-};
 
-typedef struct QueryKmer {
-    QueryKmer(uint64_t ADkmer, uint32_t seqID, uint32_t pos, uint8_t frame) : ADkmer(ADkmer), info(seqID, pos, frame) {}
-    QueryKmer():ADkmer(0), info(0,0,0){}
-    uint64_t ADkmer; // 8 byte
-    QueryKmerInfo info; // 8 byte
-    void print() const {
-        std::cout << "ADkmer: " << ADkmer << " seqID: " << info.sequenceID 
-                  << " pos: " << info.pos << " frame: " << (int)info.frame << std::endl;
+    static bool compareQueryKmer(const Kmer &a, const Kmer &b) {
+        if (a.value != b.value) {
+            return a.value < b.value;
+        }
+        return a.qInfo.sequenceID < b.qInfo.sequenceID;
     }
-} QueryKmer; // 16 byte
+};
 
 struct DiffIdxSplit{
     DiffIdxSplit(uint64_t ADkmer, size_t diffIdxOffset, size_t infoIdxOffset) : ADkmer(ADkmer), diffIdxOffset(diffIdxOffset), infoIdxOffset(infoIdxOffset) { }
