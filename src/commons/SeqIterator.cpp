@@ -192,7 +192,7 @@ void SeqIterator::devideToCdsAndNonCds(const char *maskedSeq,
             size_t end = cdsInfo[i].loc[j].second - 1;
             if (j == 0) {
                 int k = 0;
-                while (k < (this->kmerLength - 1) && begin >= 3) {
+                while (k < (this->kmerLen - 1) && begin >= 3) {
                     begin -= 3;
                     currStartCodonPos += 3;
                     k++;
@@ -200,7 +200,7 @@ void SeqIterator::devideToCdsAndNonCds(const char *maskedSeq,
             }
             if (j == locNum - 1) {
                 int k = 0;
-                while (k < (this->kmerLength - 1) && end + 3 < seqLen) {
+                while (k < (this->kmerLen - 1) && end + 3 < seqLen) {
                     end += 3;
                     k++;
                 }

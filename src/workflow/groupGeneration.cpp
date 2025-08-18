@@ -7,7 +7,7 @@
 void setGroupGenerationDefaults(LocalParameters & par){    
     par.syncmer = 0;
     par.smerLen = 5;
-    par.kmerFormat = 1;
+    par.kmerFormat = 3;
     par.reducedAA = 0;
     par.seqMode = 2;    
     par.minScore = 0;

@@ -28,8 +28,6 @@
 
 KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
 
-#define kmerLength 8
-
 #define nuc2int(x) (x & 14u)>>1u
 
 using namespace std;
@@ -46,14 +44,13 @@ private:
     uint32_t smerMask;
     uint64_t dnaMask;
     int kmerLen = 12;
+    int smerLen;
     
 public:
     SeqIterator(const LocalParameters &par); 
     
     ~SeqIterator();
     
-    void setKmerLength(int k) { kmerLength = k; }
-
     string reverseComplement(string &read) const;
     
     void devideToCdsAndNonCds(const char *maskedSeq,
@@ -102,7 +99,7 @@ public:
     void printSmer(const uint32_t smer) {
         string aminoacid = "ARNDCQEGHILKMFPSTWYVX";
         string smerStr;
-        for (int i = 0; i < smerLen; i++) {
+        for (int i = 0; i < 12; i++) {
             smerStr += aminoacid[(smer >> (5 * i)) & 0x1F];
         }
         reverse(smerStr.begin(), smerStr.end());

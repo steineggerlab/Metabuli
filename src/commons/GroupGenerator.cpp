@@ -113,6 +113,7 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
                                              par,
                                              kseq1,
                                              kseq2); 
+            filterCommonKmers(queryKmerBuffer, outDir);
             kmerFileHandler->writeQueryKmerFile(queryKmerBuffer, outDir, numOfSplits, numOfThreads, processedReadCnt, jobId);
             processedReadCnt += queryReadSplit[splitIdx].readCnt;
             cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
@@ -148,6 +149,123 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     applyRepLabel(outDir, outDir, queryGroupInfo, repLabel, groupScoreThr, jobId);
     
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
+}
+
+void GroupGenerator::filterCommonKmers(Buffer<QueryKmer>& queryKmerBuffer,
+                                       const string & db){
+    cout << "Filtering common AA kmers from query-kmer buffer..." << endl;
+    time_t beforeFilter = time(nullptr);
+
+    const size_t BATCH_SIZE = 4096;
+    ifstream commonKmerFile;    
+    queue<uint64_t> commonKmerBuffers;
+
+    // commonKmerFile.open(dbDir + "/" + db + "/commonKmer_list", ios::binary);
+    commonKmerFile.open(db + "/commonKmer_list");
+    std::cout << db + "/commonKmer_list" << std::endl;
+    if (!commonKmerFile.is_open()) {
+        cerr << "Error opening common kmer list file" << endl;
+        return;
+    }
+
+    // auto readNextBatch = [&]() {
+    //     for (size_t j = 0; j < BATCH_SIZE; ++j) {
+    //         uint64_t kmer;
+    //         if (!commonKmerFile.read(reinterpret_cast<char*>(&kmer), sizeof(uint64_t))) break;
+    //         commonKmerBuffers.push(kmer);
+    //     }
+    // };
+    auto readNextBatch = [&]() {
+        uint64_t kmer;
+        for (size_t j = 0; j < BATCH_SIZE; ++j) {
+            if (!(commonKmerFile >> kmer)) break; // 텍스트 입력
+            commonKmerBuffers.push(kmer);
+        }
+    };
+
+    size_t queryKmerNum = queryKmerBuffer.startIndexOfReserve;
+    QueryKmer *queryKmerList = queryKmerBuffer.buffer;
+    for (size_t checkN = queryKmerNum - 1; checkN > 0; checkN--) {
+        if (queryKmerList[checkN].ADkmer != UINT64_MAX) {
+            queryKmerNum = checkN + 1;
+            break;
+        }
+    }
+    if (queryKmerNum == 0) return;
+    
+    // filter common kmers
+    vector<pair<uint32_t, uint32_t>> targetKmerPos;
+    int queryKmerIdx = 0;
+    readNextBatch();
+    
+    while(queryKmerIdx < (int)queryKmerNum && !commonKmerBuffers.empty()){
+        if(queryKmerList[queryKmerIdx].ADkmer < commonKmerBuffers.front()){
+            queryKmerIdx++;
+        }
+        else if(queryKmerList[queryKmerIdx].ADkmer > commonKmerBuffers.front()){
+            commonKmerBuffers.pop();
+            if (commonKmerBuffers.empty()) readNextBatch();
+        }
+        else{
+            auto seq = static_cast<uint32_t>(queryKmerList[queryKmerIdx].info.sequenceID);
+            auto pos = static_cast<uint32_t>(queryKmerList[queryKmerIdx].info.pos);
+            targetKmerPos.emplace_back(seq, pos);
+            queryKmerIdx++;
+        }
+    }
+    std::sort(targetKmerPos.begin(), targetKmerPos.end());
+    targetKmerPos.erase(std::unique(targetKmerPos.begin(), targetKmerPos.end()), targetKmerPos.end());
+
+    // sort buffer by locaion idx
+    SORT_PARALLEL(queryKmerList, queryKmerList + queryKmerNum, compareForKmerFilter());
+
+    // filter neighbor kmers
+    queryKmerIdx = 0;
+    int targetKmerPosIdx = 0;
+    int queryKmerIdx_copy = 0;
+    while(queryKmerIdx_copy < (int)queryKmerNum){
+        if (targetKmerPosIdx < targetKmerPos.size()){
+            // copy
+            if (queryKmerList[queryKmerIdx_copy].info.sequenceID < targetKmerPos[targetKmerPosIdx].first){
+                queryKmerList[queryKmerIdx] = queryKmerList[queryKmerIdx_copy];
+                queryKmerIdx++;
+                queryKmerIdx_copy++;
+            }
+            // next target check
+            else if(queryKmerList[queryKmerIdx_copy].info.sequenceID > targetKmerPos[targetKmerPosIdx].first){
+                targetKmerPosIdx++;
+            }
+            // same seq
+            else{
+                // copy
+                if (queryKmerList[queryKmerIdx_copy].info.pos < int(targetKmerPos[targetKmerPosIdx].second) - 2){
+                    queryKmerList[queryKmerIdx] = queryKmerList[queryKmerIdx_copy];
+                    queryKmerIdx++;
+                    queryKmerIdx_copy++;
+                }
+                // next target check
+                else if(int(targetKmerPos[targetKmerPosIdx].second) + 2 < queryKmerList[queryKmerIdx_copy].info.pos){
+                    targetKmerPosIdx++;
+                }
+                // pass
+                else{
+                    queryKmerIdx_copy++;
+                }
+            }            
+        }
+        else{
+            queryKmerList[queryKmerIdx] = queryKmerList[queryKmerIdx_copy];
+            queryKmerIdx++;
+            queryKmerIdx_copy++;
+        }
+    }
+    queryKmerBuffer.startIndexOfReserve = size_t(queryKmerIdx);
+    
+    // sort buffer by kmer
+    SORT_PARALLEL(queryKmerList, queryKmerList + queryKmerBuffer.startIndexOfReserve, compareForLinearSearch);
+
+    cout << "Query-kmer buffer filtered successfully." << endl;
+    cout << "Time spent: " << double(time(nullptr) - beforeFilter) << " seconds." << endl;
 }
 
 void GroupGenerator::makeGraph(const string &queryKmerFileDir, 
@@ -351,32 +469,11 @@ double GroupGenerator::mergeRelations(const string& subGraphFileDir,
     const size_t BATCH_SIZE = 4096;
     vector<ifstream> files(numOfGraph);
     vector<queue<Relation>> relationBuffers(numOfGraph);
-    vector<bool> fileHasData(numOfGraph, true);
 
     ofstream relationLog(subGraphFileDir + "/" + jobId + "_allRelations.txt");
     if (!relationLog.is_open()) {
         cerr << "Failed to open relation log file." << endl;
         return 0.0;
-    }
-
-    // 초기 파일 열기 및 버퍼 채우기
-    for (size_t i = 0; i < numOfGraph; ++i) {
-        string fileName = subGraphFileDir + "/" + jobId + "_subGraph" + to_string(i);
-        files[i].open(fileName, ios::binary);
-        if (!files[i].is_open()) {
-            cerr << "Error opening file: " << fileName << endl;
-            fileHasData[i] = false;
-            continue;
-        }
-
-        for (size_t j = 0; j < BATCH_SIZE; ++j) {
-            Relation r;
-            if (!files[i].read(reinterpret_cast<char*>(&r.id1), sizeof(uint32_t))) break;
-            if (!files[i].read(reinterpret_cast<char*>(&r.id2), sizeof(uint32_t))) break;
-            if (!files[i].read(reinterpret_cast<char*>(&r.weight), sizeof(uint32_t))) break;
-            relationBuffers[i].push(r);
-        }
-        if (relationBuffers[i].empty()) fileHasData[i] = false;
     }
 
     auto readNextBatch = [&](size_t i) {
@@ -387,8 +484,20 @@ double GroupGenerator::mergeRelations(const string& subGraphFileDir,
             if (!files[i].read(reinterpret_cast<char*>(&r.weight), sizeof(uint32_t))) break;
             relationBuffers[i].push(r);
         }
-        if (relationBuffers[i].empty()) fileHasData[i] = false;
     };
+
+    // 초기 파일 열기 및 버퍼 채우기
+    for (size_t i = 0; i < numOfGraph; ++i) {
+        string fileName = subGraphFileDir + "/" + jobId + "_subGraph" + to_string(i);
+        files[i].open(fileName, ios::binary);
+        if (!files[i].is_open()) {
+            cerr << "Error opening file: " << fileName << endl;
+            continue;
+        }
+
+        readNextBatch(i);
+    }
+
 
     // weight 저장
     std::unordered_map<int, int> external2internalTaxId;
@@ -421,16 +530,6 @@ double GroupGenerator::mergeRelations(const string& subGraphFileDir,
             }
         }
 
-        // metabuli 결과 기반 taxonomy 비교
-        // int label1 = external2internalTaxId[metabuliResult[minKey.first].label];
-        // int label2 = external2internalTaxId[metabuliResult[minKey.second].label];
-        
-        // if (taxonomy->getTaxIdAtRank(label1, "genus") == taxonomy->getTaxIdAtRank(label2, "genus"))
-        //     trueWeights.emplace_back(totalWeight);
-        // else
-        //     falseWeights.emplace_back(totalWeight);
-
-        //  query name 기반 taxonomy 비교
         if (metabuliResult[minKey.first].name == metabuliResult[minKey.second].name)
             trueWeights.emplace_back(totalWeight);
         else
@@ -900,17 +999,18 @@ void KmerFileHandler::writeQueryKmerFile(Buffer<QueryKmer>& queryKmerBuffer,
 
     // 💡 첫 split일 때만 k-mer 개수 기반으로 균등 분포 계산
     if (!boundariesInitialized) {
-        vector<uint64_t> allKmers(queryKmerNum);
-        for (size_t i = 0; i < queryKmerNum; ++i)
-            allKmers[i] = queryKmerList[i].ADkmer;
+        // vector<uint64_t> allKmers(queryKmerNum);
+        // for (size_t i = 0; i < queryKmerNum; ++i)
+        //     allKmers[i] = queryKmerList[i].ADkmer;
 
-        std::sort(allKmers.begin(), allKmers.end());
+        // std::sort(allKmers.begin(), allKmers.end());
 
         kmerBoundaries.clear();
         for (size_t i = 0; i <= numOfThreads; ++i) {
             size_t index = (i * queryKmerNum) / numOfThreads;
             if (index >= queryKmerNum) index = queryKmerNum - 1;
-            kmerBoundaries.emplace_back(allKmers[index]);
+            // kmerBoundaries.emplace_back(allKmers[index]);
+            kmerBoundaries.emplace_back(queryKmerList[index].ADkmer);
         }
 
         boundariesInitialized = true;

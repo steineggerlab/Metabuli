@@ -355,7 +355,7 @@ void Classifier::em() {
         }
     }
 }
-   double(time(nullptr) - st) << " s" << endl;
+   std::cout << double(time(nullptr) - st) << " s" << endl;
 }
 
 void Classifier::countUniqueKmerPerSpecies(

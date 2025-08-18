@@ -35,6 +35,14 @@ struct Relation {
     }
 };
 
+struct compareForKmerFilter {
+    bool operator()(const QueryKmer& a, const QueryKmer& b) const {
+        if (a.info.sequenceID != b.info.sequenceID)
+            return a.info.sequenceID < b.info.sequenceID;
+        return a.info.pos < b.info.pos;
+    }
+};
+
 struct relation_hash {
     size_t operator()(const Relation& r) const {
         return hash<uint64_t>()((static_cast<uint64_t>(r.id1) << 32) | r.id2);
@@ -160,6 +168,8 @@ public:
     GroupGenerator(LocalParameters & par);
 
     void startGroupGeneration(const LocalParameters & par);
+    
+    void filterCommonKmers(Buffer<QueryKmer>& queryKmerBuffer, const string & db="");
 
     void makeGraph(const string &queryKmerFileDir, 
                    size_t &numOfSplits, 
@@ -225,5 +235,6 @@ public:
 
     ~GroupGenerator();
 };
+
 
 #endif // GROUP_GENERATOR_H
