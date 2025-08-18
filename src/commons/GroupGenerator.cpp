@@ -156,32 +156,12 @@ void GroupGenerator::filterCommonKmers(Buffer<QueryKmer>& queryKmerBuffer,
     cout << "Filtering common AA kmers from query-kmer buffer..." << endl;
     time_t beforeFilter = time(nullptr);
 
-    const size_t BATCH_SIZE = 4096;
-    ifstream commonKmerFile;    
-    queue<uint64_t> commonKmerBuffers;
-
-    // commonKmerFile.open(dbDir + "/" + db + "/commonKmer_list", ios::binary);
-    commonKmerFile.open(db + "/commonKmer_list");
-    std::cout << db + "/commonKmer_list" << std::endl;
-    if (!commonKmerFile.is_open()) {
-        cerr << "Error opening common kmer list file" << endl;
-        return;
-    }
-
-    // auto readNextBatch = [&]() {
-    //     for (size_t j = 0; j < BATCH_SIZE; ++j) {
-    //         uint64_t kmer;
-    //         if (!commonKmerFile.read(reinterpret_cast<char*>(&kmer), sizeof(uint64_t))) break;
-    //         commonKmerBuffers.push(kmer);
-    //     }
-    // };
-    auto readNextBatch = [&]() {
-        uint64_t kmer;
-        for (size_t j = 0; j < BATCH_SIZE; ++j) {
-            if (!(commonKmerFile >> kmer)) break; // 텍스트 입력
-            commonKmerBuffers.push(kmer);
-        }
-    };
+    std::string diffIdxFileName = db + "/commonKmerDiffIdx";
+    std::string infoFileName = db + "/commonKmerInfo";
+    DeltaIdxReader* deltaIdxReaders = new DeltaIdxReader(diffIdxFileName, 
+                                                         infoFileName, 
+                                                         1024 * 1024 * 32, 
+                                                         1024 * 1024);
 
     size_t queryKmerNum = queryKmerBuffer.startIndexOfReserve;
     QueryKmer *queryKmerList = queryKmerBuffer.buffer;
@@ -196,14 +176,14 @@ void GroupGenerator::filterCommonKmers(Buffer<QueryKmer>& queryKmerBuffer,
     // filter common kmers
     vector<pair<uint32_t, uint32_t>> targetKmerPos;
     int queryKmerIdx = 0;
-    readNextBatch();
-    
-    while(queryKmerIdx < (int)queryKmerNum && !commonKmerBuffers.empty()){
-        if(queryKmerList[queryKmerIdx].ADkmer < commonKmerBuffers.front()){
+
+    TargetKmer kmer = deltaIdxReaders->getNextValue();
+    while(queryKmerIdx < (int)queryKmerNum && !deltaIdxReaders->isCompleted()){
+        if(queryKmerList[queryKmerIdx].ADkmer < kmer.metamer.metamer){
             queryKmerIdx++;
         }
-        else if(queryKmerList[queryKmerIdx].ADkmer > commonKmerBuffers.front()){
-            commonKmerBuffers.pop();
+        else if(queryKmerList[queryKmerIdx].ADkmer > kmer.metamer.metamer){
+            kmer = deltaIdxReaders->getNextValue();
             if (commonKmerBuffers.empty()) readNextBatch();
         }
         else{
@@ -213,6 +193,8 @@ void GroupGenerator::filterCommonKmers(Buffer<QueryKmer>& queryKmerBuffer,
             queryKmerIdx++;
         }
     }
+    delete deltaIdxReaders;
+
     std::sort(targetKmerPos.begin(), targetKmerPos.end());
     targetKmerPos.erase(std::unique(targetKmerPos.begin(), targetKmerPos.end()), targetKmerPos.end());
 
