@@ -26,7 +26,7 @@ void setGroupGenerationDefaults(LocalParameters & par){
     par.accessionLevel = 0;
     par.tieRatio = 0.95;
     par.thresholdK = 0.5;
-    par.groupScoreThr = 0.0;
+    par.groupScoreThr = 0.15;
 }
 
 int groupGeneration(int argc, const char **argv, const Command& command)

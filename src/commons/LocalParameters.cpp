@@ -66,7 +66,7 @@ LocalParameters::LocalParameters() :
                     "K-mer format",
                     typeid(int),
                     (void *) &kmerFormat,
-                    "[1-2]"),
+                    "[1-3]"),
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
                  "Sequencing type",

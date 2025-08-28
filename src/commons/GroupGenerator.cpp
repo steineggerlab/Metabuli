@@ -113,7 +113,7 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
                                              par,
                                              kseq1,
                                              kseq2); 
-            filterCommonKmers(queryKmerBuffer, outDir);
+            filterCommonKmers(queryKmerBuffer, dbDir);
             kmerFileHandler->writeQueryKmerFile(queryKmerBuffer, outDir, numOfSplits, numOfThreads, processedReadCnt, jobId);
             processedReadCnt += queryReadSplit[splitIdx].readCnt;
             cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
@@ -153,11 +153,21 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
 
 void GroupGenerator::filterCommonKmers(Buffer<QueryKmer>& queryKmerBuffer,
                                        const string & db){
-    cout << "Filtering common AA kmers from query-kmer buffer..." << endl;
+    cout << "Filtering common k-mers from query k-mer buffer... ";
     time_t beforeFilter = time(nullptr);
 
-    std::string diffIdxFileName = db + "/commonKmerDiffIdx";
-    std::string infoFileName = db + "/commonKmerInfo";
+    string gtdbListDB;
+    ifstream gtdbListFile;
+    gtdbListFile.open(db + "/filter_list");
+    if (gtdbListFile.is_open()) {
+        getline(gtdbListFile, gtdbListDB);
+    } else {
+        cerr << "Cannot open file for k-mer filter file: " << db + "/filter_list" << endl;
+        return;
+    }
+
+    std::string diffIdxFileName = gtdbListDB + "/diffIdx";
+    std::string infoFileName = gtdbListDB + "/info";
     DeltaIdxReader* deltaIdxReaders = new DeltaIdxReader(diffIdxFileName, 
                                                          infoFileName, 
                                                          1024 * 1024 * 32, 
@@ -184,7 +194,6 @@ void GroupGenerator::filterCommonKmers(Buffer<QueryKmer>& queryKmerBuffer,
         }
         else if(queryKmerList[queryKmerIdx].ADkmer > kmer.metamer.metamer){
             kmer = deltaIdxReaders->getNextValue();
-            if (commonKmerBuffers.empty()) readNextBatch();
         }
         else{
             auto seq = static_cast<uint32_t>(queryKmerList[queryKmerIdx].info.sequenceID);
@@ -199,7 +208,9 @@ void GroupGenerator::filterCommonKmers(Buffer<QueryKmer>& queryKmerBuffer,
     targetKmerPos.erase(std::unique(targetKmerPos.begin(), targetKmerPos.end()), targetKmerPos.end());
 
     // sort buffer by locaion idx
+    time_t firstSort = time(nullptr);
     SORT_PARALLEL(queryKmerList, queryKmerList + queryKmerNum, compareForKmerFilter());
+    firstSort = time(nullptr) - firstSort;
 
     // filter neighbor kmers
     queryKmerIdx = 0;
@@ -244,10 +255,14 @@ void GroupGenerator::filterCommonKmers(Buffer<QueryKmer>& queryKmerBuffer,
     queryKmerBuffer.startIndexOfReserve = size_t(queryKmerIdx);
     
     // sort buffer by kmer
+    time_t secondSort = time(nullptr);
     SORT_PARALLEL(queryKmerList, queryKmerList + queryKmerBuffer.startIndexOfReserve, compareForLinearSearch);
+    secondSort = time(nullptr) - secondSort;
 
-    cout << "Query-kmer buffer filtered successfully." << endl;
-    cout << "Time spent: " << double(time(nullptr) - beforeFilter) << " seconds." << endl;
+    cout << "Done : " << double(time(nullptr) - beforeFilter) << " s" << endl;
+    cout << "Query k-mer sorting (1): " << double(firstSort) << " s" << endl;
+    cout << "Query k-mer sorting (2): " << double(secondSort) << " s" << endl;
+    cout << "Number of k-mers : " << queryKmerNum << " -> " << queryKmerIdx << endl;
 }
 
 void GroupGenerator::makeGraph(const string &queryKmerFileDir, 
@@ -524,7 +539,7 @@ double GroupGenerator::mergeRelations(const string& subGraphFileDir,
 
     if (trueWeights.size() < 10 || falseWeights.size() < 10) {
         cerr << "Insufficient true/false edges for elbow detection." << endl;
-        return 0.0;
+        return 120.0;
     }
 
     // Elbow 계산 함수
@@ -858,23 +873,14 @@ void GroupGenerator::applyRepLabel(const string &resultFileDir,
             fields[7] = to_string(groupId);
             auto repLabelIt = repLabel.find(groupId);
             if (repLabelIt != repLabel.end()){
-                // // LCA successed
-                // if (repLabelIt->second != 0) {
-                //     if (fields[0] == "0") {
-                //         fields[0] = "1";
-                //         fields[2] = to_string(taxonomy->getOriginalTaxID(repLabelIt->second));
-                //         fields[5] = taxonomy->getString(taxonomy->taxonNode(repLabelIt->second)->rankIdx);
-                //     }
-                // }
-                // // LCA failed
-                // else {
-                //     fields[0] = "0";
-                //     fields[2] = "0";
-                //     fields[5] = "no rank";
-                // }         
-                fields[0] = "1";
-                fields[2] = to_string(taxonomy->getOriginalTaxID(repLabelIt->second));
-                fields[5] = taxonomy->getString(taxonomy->taxonNode(repLabelIt->second)->rankIdx);   
+                // LCA successed
+                if (repLabelIt->second != 0) {
+                    if (fields[0] == "0") {
+                        fields[0] = "1";
+                        fields[2] = to_string(taxonomy->getOriginalTaxID(repLabelIt->second));
+                        fields[5] = taxonomy->getString(taxonomy->taxonNode(repLabelIt->second)->rankIdx);
+                    }
+                }
             }
         }
         for (size_t i = 0; i < fields.size(); ++i) {

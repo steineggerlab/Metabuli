@@ -17,6 +17,7 @@
 #include "Taxonomer.h"
 #include "Reporter.h"
 #include "KSeqWrapper.h"
+#include "DeltaIdxReader.h"
 #include <set>
 #include <cassert>
 #include <thread>
