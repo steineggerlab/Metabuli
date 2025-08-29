@@ -87,6 +87,24 @@ public:
         int seqID,
         int taxIdAtRank,
         SequenceBlock block);
+
+    bool extractKmers(
+        KSeqWrapper *kseq,
+        Buffer<Kmer> &kmerBuffer,
+        std::unordered_map<string, uint32_t> & accession2index,
+        uint32_t & idOffset,
+        SeqEntry & savedSeq);
+
+    bool extractUnirefKmers(
+        KSeqWrapper *kseq,
+        Buffer<Kmer> &kmerBuffer,
+        std::unordered_map<string, TaxID> & accession2taxId,
+        uint32_t & seqCnt,
+        SeqEntry & savedSeq);
+    
+    size_t countKmers(
+        KSeqWrapper *checker,
+        size_t seqNum);
 };
 
 #endif //METABULI_KMEREXTRACTER_H

@@ -9,6 +9,11 @@
 #include "FileUtil.h"
 #include <cstdint>
 
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+
+
 
 #define likely(x) __builtin_expect((x),1)
 #define unlikely(x) __builtin_expect((x),0)
@@ -16,7 +21,6 @@
 
 extern const std::string atcg;
 extern const std::string iRCT;
-
 struct MappingRes {
     MappingRes(uint32_t queryId, TaxID speicesId, float score) 
         : queryId(queryId), speciesId(speicesId), score(score) {}
@@ -91,12 +95,12 @@ struct Query {
     int queryId;
     int classification;
     float score;
-    float coverage;
     int hammingDist;
     int queryLength;
     int queryLength2;
     int kmerCnt;
     int kmerCnt2;
+    TaxID topSpeciesId; 
     bool isClassified;
     bool newSpecies; // 36 byte
 
@@ -107,13 +111,13 @@ struct Query {
 
     bool operator==(int id) const { return queryId == id;}
 
-    Query(int queryId, int classification, float score, float coverage, int hammingDist, int queryLength,
+    Query(int queryId, int classification, float score, int hammingDist, int queryLength,
           int queryLength2, int kmerCnt, int kmerCnt2, bool isClassified, bool newSpecies, std::string name)
-            : queryId(queryId), classification(classification), score(score), coverage(coverage),
+            : queryId(queryId), classification(classification), score(score),
               hammingDist(hammingDist), queryLength(queryLength), queryLength2(queryLength2), kmerCnt(kmerCnt), kmerCnt2(kmerCnt2),
               isClassified(isClassified), newSpecies(newSpecies), name(std::move(name)) {}
 
-    Query() : queryId(0), classification(0), score(0), coverage(0), hammingDist(0), queryLength(0),
+    Query() : queryId(0), classification(0), score(0), hammingDist(0), queryLength(0),
               queryLength2(0), kmerCnt(0), kmerCnt2(0), isClassified(false), newSpecies(false) {}
 };
 
@@ -151,6 +155,30 @@ struct Buffer {
         if (buffer) {
             memset(buffer, 0, sizeof(T) * bufferSize);
         }
+    }
+
+    static size_t calculateBufferSize(size_t maxRam, size_t threads, size_t bytePerKmer) {
+        constexpr double GIGABYTE = 1024.0 * 1024.0 * 1024.0;
+        constexpr double MEGABYTE = 1024.0 * 1024.0;
+        constexpr double MEMORY_PER_THREAD_MB = 50.0;
+        
+        float c = 0.7f;
+        if (maxRam < 16) {
+            c = 0.5f;
+        } else if (maxRam <= 32) {
+            c = 0.6f;
+        }
+        double totalRamBytes = maxRam * GIGABYTE * c;
+        double memoryForThreads = threads * MEMORY_PER_THREAD_MB * MEGABYTE;
+        double availableMemory = totalRamBytes - memoryForThreads;
+
+        if (availableMemory <= 0.0) {
+            std::cerr << "Not enough memory to create index" << std::endl;
+            std::cerr << "Please increase the RAM usage or decrease the number of threads" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+
+        return static_cast<size_t>(availableMemory / bytePerKmer);
     }
 };
 
@@ -336,5 +364,60 @@ void fillAcc2TaxIdMap(std::unordered_map<std::string, TaxID> & acc2taxid,
                       const std::string & acc2taxidFileName);
                                 
 bool haveRedundancyInfo(const std::string & dbDir);
+
+
+struct SeqEntry {
+    std::string name;
+    std::string s;
+    SeqEntry () = default;
+    SeqEntry (const std::string & name, const std::string & sequence) 
+        : name(name), s(sequence) {}
+};
+struct WorkItem {
+    int bufferIndex;
+    size_t sequenceCount;
+    size_t writePos;
+    uint32_t sequenceIdOffset;
+};
+
+// A simple thread-safe queue for passing chunks of reads
+template<typename T>
+class BlockingQueue {
+private:
+    std::mutex mtx;
+    std::condition_variable cv;
+    std::queue<T> q;
+
+public:
+    void push(T value) {
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            q.push(std::move(value));
+        }
+        cv.notify_one();
+    }
+
+    // Tries to pop a value. Returns true on success, false if the queue is empty.
+    bool try_pop(T& value) {
+        std::lock_guard<std::mutex> lock(mtx);
+        if (q.empty()) {
+            return false;
+        }
+        value = std::move(q.front());
+        q.pop();
+        return true;
+    }
+
+    // Waits until a value is available and then pops it.
+    void wait_and_pop(T& value) {
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait(lock, [this]{ return !q.empty(); });
+        value = std::move(q.front());
+        q.pop();
+    }
+};
+
+
+
 
 #endif //ADCLASSIFIER2_COMMON_H

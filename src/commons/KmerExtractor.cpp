@@ -9,15 +9,20 @@ KmerExtractor::KmerExtractor(
     // Initialize k-mer scanners for each thread
     for (int i = 0; i < par.threads; ++i) {
         if (kmerFormat == 1) {
-            kmerScanners[i] = new OldKmerScanner(geneticCode);
+            if (i == 0) {
+                std::cout << "Using OldMetamerScanner." << std::endl;
+            }
+            kmerScanners[i] = new OldMetamerScanner(geneticCode);
         } else if (kmerFormat == 2) {
             if (par.syncmer) {
                 kmerScanners[i] = new SyncmerScanner(par.smerLen, geneticCode);
             } else {
-                kmerScanners[i] = new KmerScanner(geneticCode);
+                kmerScanners[i] = new MetamerScanner(geneticCode);
             }
         } else if (kmerFormat == 3) {
-            kmerScanners[i] = new aaKmerScanner(geneticCode, 12);
+            kmerScanners[i] = new KmerScanner_dna2aa(geneticCode, 12);
+        } else if (kmerFormat == 4) {
+            kmerScanners[i] = new KmerScanner_aa2aa(12);
         } else {
             std::cerr << "Error: Invalid k-mer format specified." << std::endl;
             exit(EXIT_FAILURE);
@@ -209,7 +214,7 @@ chunkSize, chunkReads1_thread, chunkReads2_thread, busyThreads, cout, emptyReads
         char *maskedSeq2 = new char[maxReadLength2];   
         char *seq1 = nullptr;
         char *seq2 = nullptr;  
-#pragma omp single nowait
+#pragma omp single
         {
             int masterThread = 0;
             #ifdef OPENMP
@@ -437,4 +442,246 @@ void KmerExtractor::loadChunkOfReads(KSeqWrapper *kseq,
             count++;
         }
     }
+}
+
+
+bool KmerExtractor::extractKmers(
+    KSeqWrapper *kseq,
+    Buffer<Kmer> &kmerBuffer,
+    std::unordered_map<string, uint32_t> & accession2index,
+    uint32_t & idOffset,
+    SeqEntry & savedSeq)
+{
+    if (!savedSeq.name.empty()) {
+        if (savedSeq.s.length() >= 12) {
+            size_t writePos = kmerBuffer.reserveMemory(savedSeq.s.length() - 11);
+            kmerScanners[0]->initScanner(savedSeq.s.c_str(), 0, savedSeq.s.length() - 1, true);
+            Kmer kmer;
+            while((kmer = kmerScanners[0]->next()).value != UINT64_MAX) {
+                kmerBuffer.buffer[writePos++] = {kmer.value, idOffset};
+            }
+            idOffset += 1;
+        }
+        savedSeq.s.clear(); 
+        savedSeq.name.clear();
+    }
+
+    size_t seqLen = 1000;
+    size_t chunkSize = 100;
+    std::vector<std::vector<string>> readsPerThread(par.threads);
+    std::vector<std::vector<string>> seqNamesPerThread(par.threads);
+    for (int i = 0; i < par.threads; ++i) {
+        readsPerThread[i].resize(chunkSize);
+        seqNamesPerThread[i].resize(chunkSize);
+        for (size_t j = 0; j < chunkSize; ++j) {
+            readsPerThread[i][j].reserve(seqLen);
+            seqNamesPerThread[i][j].reserve(128);
+        }
+    }
+
+    BlockingQueue<int> freeBufferQueue;
+    BlockingQueue<WorkItem> filledBufferQueue;
+
+    for (int i = 1; i < par.threads; ++i) {
+        freeBufferQueue.push(i); 
+    }
+    int producerBufferIndex = 0;
+    bool moreData = true;
+    #pragma omp parallel default(none) shared(par, seqLen, kmerBuffer, kseq, std::cout, \
+    readsPerThread, seqNamesPerThread, chunkSize, filledBufferQueue, moreData, accession2index, savedSeq, producerBufferIndex, freeBufferQueue, idOffset)
+    {
+        int threadId = omp_get_thread_num();
+
+        if (threadId == 0) {
+            bool bufferNotFull = true;
+            while (moreData && bufferNotFull) {
+                auto & seqChunk = readsPerThread[producerBufferIndex];
+                auto & nameChunk = seqNamesPerThread[producerBufferIndex];
+                size_t seqCnt = 0;
+                size_t kmerCnt = 0;
+                for (; seqCnt < chunkSize; ++seqCnt) {
+                    if (!kseq->ReadEntry()) {
+                        // std::cout << "No more sequences to read" << std::endl;
+                        moreData = false; // No more data to read
+                        break;
+                    }
+                    size_t currentKmerCnt 
+                        = (kseq->entry.sequence.l > 11) ? (kseq->entry.sequence.l - 11) : 0;
+                    
+                    if (kmerBuffer.startIndexOfReserve + kmerCnt + currentKmerCnt >= kmerBuffer.bufferSize) {
+                        savedSeq.s = kseq->entry.sequence.s;
+                        savedSeq.name = kseq->entry.name.s;
+                        bufferNotFull = false;
+                        // std::cout << "Buffer is full" << std::endl;
+                        break;
+                    }
+
+                    kmerCnt += currentKmerCnt;
+                    nameChunk[seqCnt] = kseq->entry.name.s;
+                    seqChunk[seqCnt] = (currentKmerCnt > 0) ? kseq->entry.sequence.s : "";
+                }
+                if (seqCnt > 0) {
+                    filledBufferQueue.push({producerBufferIndex, seqCnt, kmerBuffer.startIndexOfReserve, idOffset});
+                    kmerBuffer.reserveMemory(kmerCnt);
+                    idOffset += seqCnt;
+                    if (moreData && bufferNotFull) {
+                        freeBufferQueue.wait_and_pop(producerBufferIndex); // Wait for an idle thread
+                    }
+                }
+            }
+
+            for (int i = 0; i < par.threads - 1; ++i) {
+                filledBufferQueue.push({-1, 0, 0, 0}); // Signal to other threads that no more data will be produced
+            }
+        } else {
+            WorkItem workItem;
+            std::unordered_map<string, uint32_t> localAccession2Index;
+            while (true) {
+                filledBufferQueue.wait_and_pop(workItem); 
+                if (workItem.bufferIndex == -1) { break; }
+                uint32_t currentId = workItem.sequenceIdOffset;
+                size_t posToWrite = workItem.writePos;
+                const auto & seqChunk = readsPerThread[workItem.bufferIndex];
+                const auto & nameChunk = seqNamesPerThread[workItem.bufferIndex];
+                for (size_t i = 0; i < workItem.sequenceCount; ++i) {
+                    if (seqChunk[i].empty()) {
+                        continue; // Skip empty reads
+                    }
+                    localAccession2Index[nameChunk[i]] = currentId;
+                    kmerScanners[threadId]->initScanner(seqChunk[i].c_str(), 0, seqChunk[i].length() - 1, true);
+                    Kmer kmer;
+                    while((kmer = kmerScanners[threadId]->next()).value != UINT64_MAX) {
+                        kmerBuffer.buffer[posToWrite++] = {kmer.value, currentId};
+                    }
+                    currentId++;
+                }
+                freeBufferQueue.push(workItem.bufferIndex);
+            }
+            // Merge local accession2index into global map
+            #pragma omp critical
+            {
+                for (const auto & entry : localAccession2Index) {
+                    accession2index[entry.first] = entry.second;
+                }
+            }
+        }
+    }
+    return moreData;
+}
+
+bool KmerExtractor::extractUnirefKmers(
+    KSeqWrapper *kseq,
+    Buffer<Kmer> &kmerBuffer,
+    std::unordered_map<string, TaxID> & uniref100toTaxId,
+    uint32_t & processedSeqCnt,
+    SeqEntry & savedSeq)
+{
+    if (!savedSeq.name.empty()) {
+        if (savedSeq.s.length() >= 12) {
+            size_t writePos = kmerBuffer.reserveMemory(savedSeq.s.length() - 11);
+            TaxID currentId = uniref100toTaxId[savedSeq.name];
+            kmerScanners[0]->initScanner(savedSeq.s.c_str(), 0, savedSeq.s.length() - 1, true);
+            Kmer kmer;
+            while((kmer = kmerScanners[0]->next()).value != UINT64_MAX) {
+                kmerBuffer.buffer[writePos++] = {kmer.value, currentId};
+            }
+        }
+        savedSeq.s.clear(); 
+        savedSeq.name.clear();
+        ++processedSeqCnt;
+    }
+    std::cout << "1" << std::endl;
+
+    size_t seqLen = 1000;
+    size_t chunkSize = 100;
+    std::vector<std::vector<string>> readsPerThread(par.threads);
+    std::vector<std::vector<string>> seqNamesPerThread(par.threads);
+    for (int i = 0; i < par.threads; ++i) {
+        readsPerThread[i].resize(chunkSize);
+        seqNamesPerThread[i].resize(chunkSize);
+        for (size_t j = 0; j < chunkSize; ++j) {
+            readsPerThread[i][j].reserve(seqLen);
+            seqNamesPerThread[i][j].reserve(128);
+        }
+    }
+
+    BlockingQueue<int> freeBufferQueue;
+    BlockingQueue<WorkItem> filledBufferQueue;
+    std::cout << "2" << std::endl;
+    for (int i = 1; i < par.threads; ++i) {
+        freeBufferQueue.push(i); 
+    }
+    int producerBufferIndex = 0;
+    bool moreData = true;
+    #pragma omp parallel default(none) shared(par, kmerBuffer, kseq, std::cout, processedSeqCnt, \
+    readsPerThread, seqNamesPerThread, chunkSize, filledBufferQueue, moreData, uniref100toTaxId, savedSeq, producerBufferIndex, freeBufferQueue)
+    {
+        int threadId = omp_get_thread_num();
+
+        if (threadId == 0) {
+            bool bufferNotFull = true;
+            while (moreData && bufferNotFull) {
+                auto & seqChunk = readsPerThread[producerBufferIndex];
+                auto & nameChunk = seqNamesPerThread[producerBufferIndex];
+                size_t seqCnt = 0;
+                size_t kmerCnt = 0;
+                for (; seqCnt < chunkSize; ++seqCnt) {
+                    if (!kseq->ReadEntry()) {
+                        moreData = false; // No more data to read
+                        break;
+                    }
+                    size_t currentKmerCnt 
+                        = (kseq->entry.sequence.l > 11) ? (kseq->entry.sequence.l - 11) : 0;
+                    
+                    if (kmerBuffer.startIndexOfReserve + kmerCnt + currentKmerCnt >= kmerBuffer.bufferSize) {
+                        savedSeq.s = kseq->entry.sequence.s;
+                        savedSeq.name = kseq->entry.name.s;
+                        bufferNotFull = false;
+                        break;
+                    }
+
+                    kmerCnt += currentKmerCnt;
+                    nameChunk[seqCnt] = kseq->entry.name.s;
+                    seqChunk[seqCnt] = (currentKmerCnt > 0) ? kseq->entry.sequence.s : "";
+                }
+                if (seqCnt > 0) {
+                    filledBufferQueue.push({producerBufferIndex, seqCnt, kmerBuffer.startIndexOfReserve, 0});
+                    std::cout << "3" << std::endl;
+                    processedSeqCnt += seqCnt;
+                    kmerBuffer.reserveMemory(kmerCnt);
+                    if (moreData && bufferNotFull) {
+                        freeBufferQueue.wait_and_pop(producerBufferIndex); // Wait for an idle thread
+                    }
+                }
+            }
+
+            for (int i = 0; i < par.threads - 1; ++i) {
+                filledBufferQueue.push({-1, 0, 0, 0}); // Signal to other threads that no more data will be produced
+            }
+        } else {
+            WorkItem workItem;
+            while (true) {
+                filledBufferQueue.wait_and_pop(workItem); 
+                if (workItem.bufferIndex == -1) { break; }
+                // uint32_t currentId = workItem.sequenceIdOffset;
+                size_t posToWrite = workItem.writePos;
+                const auto & seqChunk = readsPerThread[workItem.bufferIndex];
+                const auto & nameChunk = seqNamesPerThread[workItem.bufferIndex];
+                for (size_t i = 0; i < workItem.sequenceCount; ++i) {
+                    if (seqChunk[i].empty()) {
+                        continue; // Skip empty reads
+                    }
+                    TaxID currentId = 0; //uniref100toTaxId[nameChunk[i]];
+                    std::cout << nameChunk[i] << std::endl;
+                    kmerScanners[threadId]->initScanner(seqChunk[i].c_str(), 0, seqChunk[i].length() - 1, true);
+                    Kmer kmer;
+                    while((kmer = kmerScanners[threadId]->next()).value != UINT64_MAX) {
+                        kmerBuffer.buffer[posToWrite++] = {kmer.value, currentId};
+                    }
+                }
+                freeBufferQueue.push(workItem.bufferIndex);
+            }
+        }
+    }
+    return moreData;
 }

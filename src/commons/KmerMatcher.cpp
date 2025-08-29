@@ -471,8 +471,8 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
 
 
 bool KmerMatcher::matchMetamers(Buffer<Kmer> * queryKmerBuffer,
-                             Buffer<Match> * matchBuffer,
-                             const string & db){
+                                Buffer<Match> * matchBuffer,
+                                const string & db){
     std::cout << "Comparing query and reference metamers..." << std::endl;
     targetDiffIdxFileName = dbDir + "/deltaIdx.mtbl";
     diffIdxSplitFileName = dbDir + "/deltaIdxSplits.mtbl";
@@ -501,8 +501,6 @@ bool KmerMatcher::matchMetamers(Buffer<Kmer> * queryKmerBuffer,
             numOfDiffIdxSplits_use--;
         }
     }
-
-    
 
     // Divide query k-mer list into blocks for multi threading.
     // Each split has start and end points of query list + proper offset point of target k-mer list

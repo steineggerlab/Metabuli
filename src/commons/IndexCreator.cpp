@@ -15,16 +15,14 @@ IndexCreator::IndexCreator(
     const LocalParameters & par, 
     TaxonomyWrapper * taxonomy,
     int kmerFormat) 
-    : par(par), taxonomy(taxonomy), kmerFormat(kmerFormat) {
+    : par(par), taxonomy(taxonomy), kmerFormat(kmerFormat) 
+{
     dbDir = par.filenames[0];
-    if (par.taxonomyPath.empty()) {
-        taxonomyDir = dbDir + "/taxonomy/";
-    } else {
-        taxonomyDir = par.taxonomyPath + "/";
-    }
     fnaListFileName = par.filenames[1];
-    acc2taxidFileName = par.filenames[2];
-
+    if (par.filenames.size() >= 3) {
+        acc2taxidFileName = par.filenames[2];
+    }
+    
     taxidListFileName = dbDir + "/taxID_list";
     taxonomyBinaryFileName = dbDir + "/taxonomyDB";
     versionFileName = dbDir + "/db.version";
@@ -43,6 +41,17 @@ IndexCreator::IndexCreator(
     subMat = new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0);
 }
 
+IndexCreator::IndexCreator(
+    const LocalParameters & par, 
+    int kmerFormat) : par(par), kmerFormat(kmerFormat) 
+{
+    dbDir = par.filenames[0];
+    geneticCode = new GeneticCode(par.reducedAA == 1);
+    kmerExtractor = new KmerExtractor(par, *geneticCode, kmerFormat);
+    isUpdating = false;
+    subMat = new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0);
+}
+
 
 IndexCreator::~IndexCreator() {
     delete geneticCode;
@@ -50,6 +59,158 @@ IndexCreator::~IndexCreator() {
     delete subMat;
 }
 
+void IndexCreator::createLcaKmerIndex() {
+    Buffer<Kmer> kmerBuffer(Buffer<Kmer>::calculateBufferSize(par.ramUsage, par.threads, sizeof(Kmer) + sizeof(size_t)));
+    Buffer<size_t> uniqKmerIdx(kmerBuffer.bufferSize);
+    vector<pair<size_t, size_t>> uniqKmerIdxRanges;
+
+    string fileName = par.filenames[1];
+    KSeqWrapper * kseq = KSeqFactory(fileName.c_str());
+    std::unordered_map<string, TaxID> name2taxId;
+    uint32_t idOffset = 0;
+
+    std::cout << "Filling UniRef100 to TaxID mapping ... " << std::endl;
+    time_t start = time(nullptr);
+    taxonomy->getSpeciesName2TaxId(name2taxId);
+    cout << "Mapping filled in " << time(nullptr) - start << " s." << endl;
+
+
+    bool complete = false;
+    SeqEntry savedSeq;
+    uint32_t processedSeqCnt = 0;
+    while (!complete) {
+        // Extract k-mers
+        time_t start = time(nullptr);
+        cout << "K-mer extraction    : " << flush;
+        bool moreData = kmerExtractor->extractUnirefKmers(kseq, kmerBuffer, name2taxId, processedSeqCnt, savedSeq);
+        complete = !moreData;
+        cout << double(time(nullptr) - start) << " s" << endl;
+        cout << "Processed sequences : " << processedSeqCnt << endl;
+
+        // Sort the k-mers
+        start = time(nullptr);
+        cout << "Sort k-mers         : " << flush;
+        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Kmer::compareKmer);
+        cout << double(time(nullptr) - start) << " s" << endl;
+
+        // Filter k-mers
+        start = time(nullptr);
+        size_t selectedKmerCnt = 0;
+        uniqKmerIdxRanges.clear();
+        filterKmers<FilterMode::LCA>(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges);
+        cout << "Filter k-mers       : " << time(nullptr) - start << " s" << endl; 
+        cout << "Selected k-mers     : " << selectedKmerCnt << endl;
+
+        // Write k-mers
+        start = time(nullptr);
+        if (complete && numOfFlush == 0 && !isUpdating) {
+            writeTargetFilesAndSplits(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges, true);
+        } else {
+            writeTargetFiles(kmerBuffer, uniqKmerIdx.buffer, uniqKmerIdxRanges);
+        }
+        cout << "Write k-mers        : " << time(nullptr) - start << " s" << endl;
+
+        if (!complete) {
+            kmerBuffer.init();
+            uniqKmerIdx.init();
+        }
+        cout << "--------" << endl;
+    }
+    
+
+    if (numOfFlush == 1) {
+        cout << "Index creation completed." << endl;
+        return;
+    }
+    cout << "Merge reference DB files ... " << endl;
+    printFilesToMerge();
+    setMergedFileNames(
+        par.filenames[0] + "/diffIdx",  
+        par.filenames[0] + "/info", 
+        par.filenames[0] + "/split");
+    mergeTargetFiles<FilterMode::LCA>();
+
+}
+
+void IndexCreator::createUniqueKmerIndex() {
+    Buffer<Kmer> kmerBuffer(Buffer<Kmer>::calculateBufferSize(par.ramUsage, par.threads, sizeof(Kmer) + sizeof(size_t)));
+    Buffer<size_t> uniqKmerIdx(kmerBuffer.bufferSize);
+    bool complete = false;
+    string fileName = par.filenames[1];
+    KSeqWrapper * kseq = KSeqFactory(fileName.c_str());
+    std::unordered_map<string, uint32_t> accession2index;
+    uint32_t idOffset = 0;
+    SeqEntry savedSeq;
+    vector<pair<size_t, size_t>> uniqKmerIdxRanges;
+    while (!complete) {
+        // Extract k-mers
+        time_t start = time(nullptr);
+        cout << "K-mer extraction    : " << flush;
+        bool moreData = kmerExtractor->extractKmers(kseq, kmerBuffer, accession2index, idOffset, savedSeq);
+        complete = !moreData;
+        cout << double(time(nullptr) - start) << " s" << endl;
+        cout << "Processed sequences : " << idOffset << endl;
+
+        // Sort the k-mers
+        start = time(nullptr);
+        cout << "Sort k-mers         : " << flush;
+        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Kmer::compareKmer);
+        cout << double(time(nullptr) - start) << " s" << endl;
+
+        // Filter k-mers
+        
+        start = time(nullptr);
+        size_t selectedKmerCnt = 0;
+        uniqKmerIdxRanges.clear();
+        filterKmers<FilterMode::UNIQ_KMER>(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges);
+        cout << "Filter k-mers       : " << time(nullptr) - start << " s" << endl; 
+        cout << "Selected k-mers     : " << selectedKmerCnt << endl;
+
+        // Write k-mers
+        
+        start = time(nullptr);
+        if (complete && numOfFlush == 0 && !isUpdating) {
+            writeTargetFilesAndSplits(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges, true);
+        } else {
+            writeTargetFiles(kmerBuffer, uniqKmerIdx.buffer, uniqKmerIdxRanges);
+        }
+        cout << "Write k-mers        : " << time(nullptr) - start << " s" << endl;
+
+        // Write accession to index mapping
+        FILE * accIndexFile = fopen((dbDir + "/accession2index").c_str(), "a");
+        for (const auto & entry : accession2index) {
+            fprintf(accIndexFile, "%s\t%u\n", entry.first.c_str(), entry.second);
+        }
+        fclose(accIndexFile);
+
+        if (!complete) {
+            accession2index.clear();
+            kmerBuffer.init();
+            uniqKmerIdx.init();
+        }
+        cout << "--------" << endl;
+    }
+    
+
+    if (numOfFlush == 1) {
+        cout << "Index creation completed." << endl;
+        return;
+    }
+    cout << "Merge reference DB files ... " << endl;
+
+    // for (int i = 0; i < 10; i++) {
+    //     addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
+    //                     dbDir + "/" + to_string(i) + "_info");
+    // }
+
+    printFilesToMerge();
+    setMergedFileNames(
+        par.filenames[0] + "/diffIdx",  
+        par.filenames[0] + "/info", 
+        par.filenames[0] + "/split");
+    mergeTargetFiles<FilterMode::UNIQ_KMER>();
+
+}
 
 void IndexCreator::createCommonKmerIndex() {
     Buffer<Kmer> kmerBuffer(calculateBufferSize(par.ramUsage));
@@ -621,7 +782,7 @@ void IndexCreator::writeTargetFiles(
     infoBuffer.flush();
     diffBuffer.flush();
 
-    cout<<"Written k-mer count : "<< infoBuffer.writeCnt << endl;    
+    // cout<<"Written k-mer count : "<< infoBuffer.writeCnt << endl;    
     kmerBuffer.startIndexOfReserve = 0; // Reset the buffer for the next batch
 }
 
@@ -1014,112 +1175,6 @@ void IndexCreator::writeDbParameters() {
     fclose(handle);
 }
 
-void IndexCreator::editTaxonomyDumpFiles(const vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid) {
-    // Load merged.dmp
-    string mergedFileName = taxonomyDir + "/merged.dmp";
-    std::ifstream ss(mergedFileName);
-    if (ss.fail()) {
-        Debug(Debug::ERROR) << "File " << mergedFileName << " not found!\n";
-        EXIT(EXIT_FAILURE);
-    }
-
-    std::string line;
-    unordered_map<int, int> mergedMap;
-    while (std::getline(ss, line)) {
-        std::vector<std::string> result = splitByDelimiter(line, "\t|\t", 2);
-        if (result.size() != 2) {
-            Debug(Debug::ERROR) << "Invalid name entry!\n";
-            EXIT(EXIT_FAILURE);
-        }
-        mergedMap[atoi(result[0].c_str())] = atoi(result[1].c_str());
-    }
-
-    // Edit names.dmp
-    string nameFileName = taxonomyDir + "/names.dmp";
-    string newNameFileName = taxonomyDir + "/names.dmp.new";
-    FileUtil::copyFile(nameFileName.c_str(), newNameFileName.c_str());
-    FILE *nameFile = fopen(newNameFileName.c_str(), "a");
-    if (nameFile == NULL) {
-        Debug(Debug::ERROR) << "Could not open " << newNameFileName << " for writing\n";
-        EXIT(EXIT_FAILURE);
-    }
-
-    for (size_t i = 0; i < newAcc2taxid.size() - 1; i++) {
-        fprintf(nameFile, "%d\t|\t%s\t|\t\t|\tscientific name\t|\n", newAcc2taxid[i].second.second, newAcc2taxid[i].first.c_str());
-    }
-    fprintf(nameFile, "%d\t|\t%s\t|\t\t|\tscientific name\t|", newAcc2taxid.back().second.second, newAcc2taxid.back().first.c_str());
-    fclose(nameFile);
-
-    // Edit nodes.dmp
-    string nodeFileName = taxonomyDir + "/nodes.dmp";
-    string newNodeFileName = taxonomyDir + "/nodes.dmp.new";
-    FileUtil::copyFile(nodeFileName.c_str(), newNodeFileName.c_str());
-    FILE *nodeFile = fopen(newNodeFileName.c_str(), "a");
-    if (nodeFile == NULL) {
-        Debug(Debug::ERROR) << "Could not open " << newNodeFileName << " for writing\n";
-        EXIT(EXIT_FAILURE);
-    }
-
-    for (size_t i = 0; i < newAcc2taxid.size() - 1; i++) {
-        // Check if the parent taxon is merged
-        if (mergedMap.find(newAcc2taxid[i].second.first) != mergedMap.end()) { // merged
-            fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\n", newAcc2taxid[i].second.second, mergedMap[newAcc2taxid[i].second.first]);
-        } else {
-            fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\n", newAcc2taxid[i].second.second, newAcc2taxid[i].second.first);
-        }
-        // fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\n", newAcc2taxid[i].second.second, taxonomy->taxonNode(newAcc2taxid[i].second.first)->taxId);
-    }
-    // Check if the parent taxon is merged
-    if (mergedMap.find(newAcc2taxid.back().second.first) != mergedMap.end()) { // merged
-        fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|", newAcc2taxid.back().second.second, mergedMap[newAcc2taxid.back().second.first]);
-    } else {
-        fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|", newAcc2taxid.back().second.second, newAcc2taxid.back().second.first);
-    }
-    fclose(nodeFile);
-}
-
-TaxID IndexCreator::getMaxTaxID() {
-    // Check nodes.dmp
-    string nodeFileName = taxonomyDir + "/nodes.dmp";
-    std::ifstream ss(nodeFileName);
-    if (ss.fail()) {
-        Debug(Debug::ERROR) << "File " << nodeFileName << " not found!\n";
-        EXIT(EXIT_FAILURE);
-    }
-
-    std::string line;
-    TaxID maxTaxID = 0;
-    while (std::getline(ss, line)) {
-        std::vector<std::string> result = splitByDelimiter(line, "\t|\t", 2);
-        if (result.size() != 2) {
-            Debug(Debug::ERROR) << "Invalid name entry!\n";
-            EXIT(EXIT_FAILURE);
-        }
-        maxTaxID = std::max(maxTaxID, (TaxID) atoi(result[0].c_str()));
-    }
-    ss.close();
-
-    // Check names.dmp
-    string nameFileName = taxonomyDir + "/names.dmp";
-    ss = std::ifstream(nameFileName);
-    if (ss.fail()) {
-        Debug(Debug::ERROR) << "File " << nameFileName << " not found!\n";
-        EXIT(EXIT_FAILURE);
-    }
-
-    while (std::getline(ss, line)) {
-        std::vector<std::string> result = splitByDelimiter(line, "\t|\t", 2);
-        if (result.size() != 2) {
-            Debug(Debug::ERROR) << "Invalid name entry!\n";
-            EXIT(EXIT_FAILURE);
-        }
-        maxTaxID = std::max(maxTaxID, (TaxID) atoi(result[0].c_str()));
-    }
-    ss.close();
-
-    return maxTaxID;
-}
-
 
 void IndexCreator::loadCdsInfo(const string & cdsInfoFileList) {
     uint32_t prtId = 1;
@@ -1297,3 +1352,110 @@ void IndexCreator::updateTaxId2SpeciesTaxId(const string & taxIdListFileName) {
 }
 
 
+
+// void IndexCreator::editTaxonomyDumpFiles(const vector<pair<string, pair<TaxID, TaxID>>> & newAcc2taxid) {
+//     // Load merged.dmp
+//     string mergedFileName = taxonomyDir + "/merged.dmp";
+//     std::ifstream ss(mergedFileName);
+//     if (ss.fail()) {
+//         Debug(Debug::ERROR) << "File " << mergedFileName << " not found!\n";
+//         EXIT(EXIT_FAILURE);
+//     }
+
+//     std::string line;
+//     unordered_map<int, int> mergedMap;
+//     while (std::getline(ss, line)) {
+//         std::vector<std::string> result = splitByDelimiter(line, "\t|\t", 2);
+//         if (result.size() != 2) {
+//             Debug(Debug::ERROR) << "Invalid name entry!\n";
+//             EXIT(EXIT_FAILURE);
+//         }
+//         mergedMap[atoi(result[0].c_str())] = atoi(result[1].c_str());
+//     }
+
+//     // Edit names.dmp
+//     string nameFileName = taxonomyDir + "/names.dmp";
+//     string newNameFileName = taxonomyDir + "/names.dmp.new";
+//     FileUtil::copyFile(nameFileName.c_str(), newNameFileName.c_str());
+//     FILE *nameFile = fopen(newNameFileName.c_str(), "a");
+//     if (nameFile == NULL) {
+//         Debug(Debug::ERROR) << "Could not open " << newNameFileName << " for writing\n";
+//         EXIT(EXIT_FAILURE);
+//     }
+
+//     for (size_t i = 0; i < newAcc2taxid.size() - 1; i++) {
+//         fprintf(nameFile, "%d\t|\t%s\t|\t\t|\tscientific name\t|\n", newAcc2taxid[i].second.second, newAcc2taxid[i].first.c_str());
+//     }
+//     fprintf(nameFile, "%d\t|\t%s\t|\t\t|\tscientific name\t|", newAcc2taxid.back().second.second, newAcc2taxid.back().first.c_str());
+//     fclose(nameFile);
+
+//     // Edit nodes.dmp
+//     string nodeFileName = taxonomyDir + "/nodes.dmp";
+//     string newNodeFileName = taxonomyDir + "/nodes.dmp.new";
+//     FileUtil::copyFile(nodeFileName.c_str(), newNodeFileName.c_str());
+//     FILE *nodeFile = fopen(newNodeFileName.c_str(), "a");
+//     if (nodeFile == NULL) {
+//         Debug(Debug::ERROR) << "Could not open " << newNodeFileName << " for writing\n";
+//         EXIT(EXIT_FAILURE);
+//     }
+
+//     for (size_t i = 0; i < newAcc2taxid.size() - 1; i++) {
+//         // Check if the parent taxon is merged
+//         if (mergedMap.find(newAcc2taxid[i].second.first) != mergedMap.end()) { // merged
+//             fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\n", newAcc2taxid[i].second.second, mergedMap[newAcc2taxid[i].second.first]);
+//         } else {
+//             fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\n", newAcc2taxid[i].second.second, newAcc2taxid[i].second.first);
+//         }
+//         // fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\n", newAcc2taxid[i].second.second, taxonomy->taxonNode(newAcc2taxid[i].second.first)->taxId);
+//     }
+//     // Check if the parent taxon is merged
+//     if (mergedMap.find(newAcc2taxid.back().second.first) != mergedMap.end()) { // merged
+//         fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|", newAcc2taxid.back().second.second, mergedMap[newAcc2taxid.back().second.first]);
+//     } else {
+//         fprintf(nodeFile, "%d\t|\t%d\t|\t\t|\tscientific name\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|\t\t|", newAcc2taxid.back().second.second, newAcc2taxid.back().second.first);
+//     }
+//     fclose(nodeFile);
+// }
+
+
+// TaxID IndexCreator::getMaxTaxID() {
+//     // Check nodes.dmp
+//     string nodeFileName = taxonomyDir + "/nodes.dmp";
+//     std::ifstream ss(nodeFileName);
+//     if (ss.fail()) {
+//         Debug(Debug::ERROR) << "File " << nodeFileName << " not found!\n";
+//         EXIT(EXIT_FAILURE);
+//     }
+
+//     std::string line;
+//     TaxID maxTaxID = 0;
+//     while (std::getline(ss, line)) {
+//         std::vector<std::string> result = splitByDelimiter(line, "\t|\t", 2);
+//         if (result.size() != 2) {
+//             Debug(Debug::ERROR) << "Invalid name entry!\n";
+//             EXIT(EXIT_FAILURE);
+//         }
+//         maxTaxID = std::max(maxTaxID, (TaxID) atoi(result[0].c_str()));
+//     }
+//     ss.close();
+
+//     // Check names.dmp
+//     string nameFileName = taxonomyDir + "/names.dmp";
+//     ss = std::ifstream(nameFileName);
+//     if (ss.fail()) {
+//         Debug(Debug::ERROR) << "File " << nameFileName << " not found!\n";
+//         EXIT(EXIT_FAILURE);
+//     }
+
+//     while (std::getline(ss, line)) {
+//         std::vector<std::string> result = splitByDelimiter(line, "\t|\t", 2);
+//         if (result.size() != 2) {
+//             Debug(Debug::ERROR) << "Invalid name entry!\n";
+//             EXIT(EXIT_FAILURE);
+//         }
+//         maxTaxID = std::max(maxTaxID, (TaxID) atoi(result[0].c_str()));
+//     }
+//     ss.close();
+
+//     return maxTaxID;
+// }

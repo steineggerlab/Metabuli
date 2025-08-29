@@ -195,7 +195,7 @@ void QueryFilter::filterReads(LocalParameters & par) {
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
     cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
     printFilteredReads();
-    reporter->writeReportFile(numOfSeq, taxonomer->getTaxCounts(), false);
+    reporter->writeReportFile(numOfSeq, taxonomer->getTaxCounts(), ReportType::Default);
     reporter->closeReadClassificationFile();
 
     // Memory deallocation

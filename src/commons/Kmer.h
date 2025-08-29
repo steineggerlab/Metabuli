@@ -32,6 +32,8 @@ struct Kmer {
 
     Kmer() : value(0), id(0) {}
 
+    Kmer(uint64_t value, TaxID taxid) : value(value), id(uint32_t(taxid)){}
+
     Kmer(uint64_t value, uint32_t id) : value(value), id(id) {}
 
     Kmer(uint64_t value, const QueryKmerInfo & qInfo) : value(value), qInfo(qInfo) {}
@@ -89,6 +91,13 @@ struct Kmer {
             return a.value < b.value;
         }
         return a.qInfo.sequenceID < b.qInfo.sequenceID;
+    }
+
+    static bool compareKmer(const Kmer &a, const Kmer &b) {
+        if (a.value != b.value) {
+            return a.value < b.value;
+        }
+        return a.id < b.id;
     }
 };
 

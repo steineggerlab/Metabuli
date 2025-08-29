@@ -5,4 +5,5 @@ set(workflow_source_files
         workflow/build.cpp
         workflow/filter.cpp
         workflow/extract.cpp
+        workflow/create-unirefdb.cpp
         PARENT_SCOPE)

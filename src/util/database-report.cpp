@@ -88,7 +88,7 @@ int databaseReport(int argc, const char **argv, const Command &command) {
     ofstream db_report_file;
     db_report_file.open(dbDir + "/" + "database_report.tsv");
     if (db_report_file.is_open()) {
-        reporter.writeReportFile((int) taxids.size(), taxonCounts, false);
+        reporter.writeReportFile((int) taxids.size(), taxonCounts, ReportType::Default);
         // write_report_file(dbDir + "/" + "database_report.tsv", (int) taxids.size(), taxonCounts, false);
     } else {
         cerr << "Cannot open file for new report" << endl;

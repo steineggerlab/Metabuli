@@ -9,7 +9,6 @@
 #include "DeltaIdxReader.h"
 #include "TaxonomyWrapper.h"   
 #include "Mmap.h" 
-#include "KmerScanner.h"
 
 void set_count_common_kmers_default(LocalParameters & par) {
     

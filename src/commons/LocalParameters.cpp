@@ -67,6 +67,13 @@ LocalParameters::LocalParameters() :
                     typeid(int),
                     (void *) &kmerFormat,
                     "[1-2]"),
+        UNIREF_XML(UNIREF_XML_ID,
+                    "--uniref-xml",
+                    "Path to UniRef XML file",
+                    "Path to UniRef XML file",
+                    typeid(std::string),
+                    (void *) &unirefXml,
+                    "^.*$"),
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
                  "Sequencing type",
@@ -534,8 +541,15 @@ LocalParameters::LocalParameters() :
     rank = "";
     higherRankFile = 0;
 
-
-
+    buildUnirefDb.push_back(&UNIREF_XML);
+    buildUnirefDb.push_back(&PARAM_THREADS);
+    buildUnirefDb.push_back(&TAXONOMY_PATH);
+    buildUnirefDb.push_back(&SPLIT_NUM);
+    buildUnirefDb.push_back(&DB_NAME);
+    buildUnirefDb.push_back(&DB_DATE);
+    buildUnirefDb.push_back(&RAM_USAGE);
+    buildUnirefDb.push_back(&VALIDATE_DB);
+    
 
     // build
     build.push_back(&PARAM_THREADS);
@@ -665,6 +679,7 @@ LocalParameters::LocalParameters() :
     // printInfo
     printInfo.push_back(&INFO_BEGIN);
     printInfo.push_back(&INFO_END);
+    printInfo.push_back(&PARAM_THREADS);
 
     // expand_diffidx
     expand_diffidx.push_back(&KMER_BEGIN);
