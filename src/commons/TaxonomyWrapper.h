@@ -180,7 +180,7 @@ public:
     void getSpeciesName2TaxId(std::unordered_map<std::string, TaxID> & name2TaxId) {
         for (size_t i = 0; i < maxNodes; i++) {
             const TaxonNode &node = taxonNodes[i];
-            if (getString(node.rankIdx) == "species") {
+            if (strcmp(getString(node.rankIdx), "species") == 0) {
                 name2TaxId[getString(node.nameIdx)] = node.taxId;
             }
         }

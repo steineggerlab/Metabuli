@@ -12,6 +12,7 @@
 #include "LocalParameters.h"
 #include "TaxonomyWrapper.h"
 #include "FileUtil.h"
+#include "UnirefTree.h"
 
 #include "tinyxml2.h"
 #include "yxml.h"
@@ -44,6 +45,12 @@ private:
     );
 
     void createUnirefDumpFiles(
+        const std::unordered_map<std::string, std::string> & uniref100to90,
+        const std::unordered_map<std::string, std::string> & uniref90to50
+    );
+
+
+    void dumpUnirefTree(
         const std::unordered_map<std::string, std::string> & uniref100to90,
         const std::unordered_map<std::string, std::string> & uniref90to50
     );

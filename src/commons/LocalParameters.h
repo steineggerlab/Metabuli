@@ -46,6 +46,11 @@ public:
     std::vector<MMseqsParameter*> validateDatabase;
     std::vector<MMseqsParameter*> makeBenchmarkSet;
     std::vector<MMseqsParameter*> buildUnirefDb;
+    std::vector<MMseqsParameter*> buildUnirefTree;
+
+    // UniRef
+    PARAMETER(UNIREF_NUMBERS)
+    std::string unirefNumbers;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)

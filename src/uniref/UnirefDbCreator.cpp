@@ -10,97 +10,12 @@ UnirefDbCreator::UnirefDbCreator(
 }
 
 
-// void UnirefDbCreator::createUnirefDb() {
-//     std::cout << "Creating UniRef database..." << std::endl;
-    
-//     Buffer<Kmer> kmerBuffer(Buffer<Kmer>::calculateBufferSize(par.ramUsage, par.threads, sizeof(Kmer) + sizeof(size_t)));
-//     Buffer<size_t> uniqKmerIdx(kmerBuffer.bufferSize);
-//     vector<pair<size_t, size_t>> uniqKmerIdxRanges;
-    
-//     KSeqWrapper * kseq = KSeqFactory(uniref100fasta.c_str());
-//     std::unordered_map<string, uint32_t> uniref100toTaxId;
-//     uint32_t idOffset = 0;
-    
-    
-//     bool complete = false;
-//     SeqEntry savedSeq;
-//     size_t processedSeqCnt = 0;
-//     while (!complete) {
-//         // Extract k-mers
-//         time_t start = time(nullptr);
-//         cout << "K-mer extraction    : " << flush;
-//         bool moreData = kmerExtractor->extractUnirefKmers(kseq, kmerBuffer, uniref100toTaxId, processedSeqCnt, savedSeq);
-//         complete = !moreData;
-//         cout << double(time(nullptr) - start) << " s" << endl;
-//         cout << "Processed sequences : " << processedSeqCnt << endl;
-
-//         // Sort the k-mers
-//         start = time(nullptr);
-//         cout << "Sort k-mers         : " << flush;
-//         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Kmer::compareKmer);
-//         cout << double(time(nullptr) - start) << " s" << endl;
-
-//         // Filter k-mers
-//         start = time(nullptr);
-//         size_t selectedKmerCnt = 0;
-//         uniqKmerIdxRanges.clear();
-//         filterKmers<FilterMode::LCA>(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges);
-//         cout << "Reduce k-mers       : " << time(nullptr) - start << " s" << endl; 
-//         cout << "Selected k-mers     : " << selectedKmerCnt << endl;
-
-//         // Write k-mers
-//         start = time(nullptr);
-//         if (complete && numOfFlush == 0 && !isUpdating) {
-//             writeTargetFilesAndSplits(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges, true);
-//         } else {
-//             writeTargetFiles(kmerBuffer, uniqKmerIdx.buffer, uniqKmerIdxRanges);
-//         }
-//         cout << "Write k-mers        : " << time(nullptr) - start << " s" << endl;
-
-//         // Write accession to index mapping
-//         FILE * accIndexFile = fopen((dbDir + "/accession2index").c_str(), "a");
-//         for (const auto & entry : accession2index) {
-//             fprintf(accIndexFile, "%s\t%u\n", entry.first.c_str(), entry.second);
-//         }
-//         fclose(accIndexFile);
-
-//         if (!complete) {
-//             accession2index.clear();
-//             kmerBuffer.init();
-//             uniqKmerIdx.init();
-//         }
-//         cout << "--------" << endl;
-//     }
-    
-
-//     if (numOfFlush == 1) {
-//         cout << "Index creation completed." << endl;
-//         return;
-//     }
-//     cout << "Merge reference DB files ... " << endl;
-
-//     // for (int i = 0; i < 10; i++) {
-//     //     addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
-//     //                     dbDir + "/" + to_string(i) + "_info");
-//     // }
-
-//     indexCreator->printFilesToMerge();
-//     indexCreator->setMergedFileNames(
-//         dbDir + "/diffIdx",  
-//         dbDir + "/info", 
-//         dbDir + "/split");
-    
-//     indexCreator->mergeTargetFiles<FilterMode::LCA>();
-
-
-//     std::cout << "UniRef database creation completed." << std::endl;
-// }
 
 void UnirefDbCreator::createUnirefTaxonomy(const std::string & unirefXmlFileName) {
     std::unordered_map<std::string, std::string> uniref100to90;
     std::unordered_map<std::string, std::string> uniref90to50;
     parseUnirefIds(unirefXmlFileName, uniref100to90, uniref90to50);
-    createUnirefDumpFiles(uniref100to90, uniref90to50);
+    dumpUnirefTree(uniref100to90, uniref90to50);
 }
 
 void UnirefDbCreator::createUnirefDumpFiles(
@@ -200,6 +115,105 @@ void UnirefDbCreator::createUnirefDumpFiles(
     std::cout << "merged.dmp created successfully." << std::endl;
 
     std::cout << "Taxonomy generation complete." << std::endl;
+}
+
+void UnirefDbCreator::dumpUnirefTree(
+    const std::unordered_map<std::string, std::string> & uniref100to90,
+    const std::unordered_map<std::string, std::string> & uniref90to50
+) {
+    std::cout << "Starting taxonomy generation..." << std::endl;
+
+    // This map will store the mapping from a string UniRef ID to a unique integer tax_id.
+    std::unordered_map<std::string, int> unirefName2Id;
+    int nextTaxId = 2; // Start assigning IDs from 2, since 1 is reserved for the root.
+    
+    unirefTaxPath = dbDir + "/taxonomy";
+    if (!FileUtil::directoryExists(unirefTaxPath.c_str())) {
+        FileUtil::makeDir(unirefTaxPath.c_str());
+    }
+
+    std::vector<std::string> uniref50s;
+    std::vector<std::string> uniref90s;
+    std::vector<std::string> uniref100s;
+
+    // 1. First pass: Assign unique integer tax_ids to all unique UniRef IDs.
+    std::cout << "Step 1: Assigning unique integer tax_ids to all clusters..." << std::endl;
+    // std::unordered_set<std::string> all50s; // Keep track of all top-level clusters.
+    // UniRef50s have smaller IDs.
+    for (const auto& pair : uniref90to50) {
+        if (unirefName2Id.find(pair.second) == unirefName2Id.end()) {
+            uniref50s.push_back(pair.second);
+            unirefName2Id[pair.second] = nextTaxId++;
+                        
+        }
+    }
+
+    for (const auto& pair : uniref90to50) {
+        uniref90s.push_back(pair.first);
+        unirefName2Id[pair.first] = nextTaxId++;
+    }
+
+    for (const auto& pair : uniref100to90) {
+        uniref100s.push_back(pair.first);
+        unirefName2Id[pair.first] = nextTaxId++;
+    }
+
+    std::cout << "Found " << unirefName2Id.size() << " unique 100/90/50 clusters." << std::endl;
+
+    // 2. Generate child-parent relationships in a binary file
+    std::cout << "Step 2: Dumping child-parent relationships" << std::endl;
+    std::string treeFileName = unirefTaxPath + "/uniref_tree.bin";
+    std::ofstream treeFile(treeFileName, std::ios::binary);
+
+    // Write root node
+    // Order in the list is child ID itself. So child ID is not written.
+    int rootId = 1;
+    int rootRank = 1; // root rank
+    treeFile.write(reinterpret_cast<const char*>(&rootId), sizeof(int));   // parent tax_id
+    treeFile.write(reinterpret_cast<const char*>(&rootRank), sizeof(int)); // child tax_id
+
+    // Write UniRef50 -> root relationships
+    int uniref50rank = 2;
+    for (size_t i = 0; i < uniref50s.size(); i++) {
+        treeFile.write(reinterpret_cast<const char*>(&rootId), sizeof(int));        // parent tax_id
+        treeFile.write(reinterpret_cast<const char*>(&uniref50rank), sizeof(int)); // child rank
+    }
+
+    // Write UniRef90 -> UniRef50 relationships
+    int uniref90rank = 3;
+    for (size_t i = 0; i < uniref90s.size(); i ++) {
+        const std::string& uniref50Name = uniref90to50.at(uniref90s[i]);
+        int parentId = unirefName2Id[uniref50Name];
+        treeFile.write(reinterpret_cast<const char*>(&parentId), sizeof(int));     // parent tax_id
+        treeFile.write(reinterpret_cast<const char*>(&uniref90rank), sizeof(int)); // child rank
+    }
+
+    // Write UniRef100 -> UniRef90 relationships
+    int uniref100rank = 4;
+    for (size_t i = 0; i < uniref100s.size(); i ++) {
+        const std::string& uniref90Name = uniref100to90.at(uniref100s[i]);
+        int parentId = unirefName2Id[uniref90Name];
+        treeFile.write(reinterpret_cast<const char*>(&parentId), sizeof(int));     // parent tax_id
+        treeFile.write(reinterpret_cast<const char*>(&uniref90rank), sizeof(int)); // child rank
+    }
+    treeFile.close();
+
+    // 3. Generate ID to name mapping in a text file
+    std::cout << "Step 3: Dumping UniRef cluster IDs" << std::endl;
+    std::ofstream namesFile(unirefTaxPath + "/uniref_ids.dmp");
+
+    namesFile << "1\troot" << "\n";
+    int idx = 2;
+    for (size_t i = 0; i < uniref50s.size(); i++) {
+        namesFile << idx++ << "\t" << uniref50s[i] << "\t" << unirefName2Id[uniref50s[i]] << "\n";
+    }
+    for (size_t i = 0; i < uniref90s.size(); i++) {
+        namesFile << idx++ << "\t" << uniref90s[i] << "\t" << unirefName2Id[uniref90s[i]] << "\n";
+    }
+    for (size_t i = 0; i < uniref100s.size(); i++) {
+        namesFile << idx++ << "\t" << uniref100s[i] << "\t" << unirefName2Id[uniref100s[i]] << "\n";
+    }
+    namesFile.close();
 }
 
 void UnirefDbCreator::parseUnirefIds(
@@ -569,3 +583,91 @@ int UnirefDbCreator::getLCA(
     
     return 1; // If nothing matched, the LCA is the root.
 }
+
+
+
+// void UnirefDbCreator::createUnirefDb() {
+//     std::cout << "Creating UniRef database..." << std::endl;
+    
+//     Buffer<Kmer> kmerBuffer(Buffer<Kmer>::calculateBufferSize(par.ramUsage, par.threads, sizeof(Kmer) + sizeof(size_t)));
+//     Buffer<size_t> uniqKmerIdx(kmerBuffer.bufferSize);
+//     vector<pair<size_t, size_t>> uniqKmerIdxRanges;
+    
+//     KSeqWrapper * kseq = KSeqFactory(uniref100fasta.c_str());
+//     std::unordered_map<string, uint32_t> uniref100toTaxId;
+//     uint32_t idOffset = 0;
+    
+    
+//     bool complete = false;
+//     SeqEntry savedSeq;
+//     size_t processedSeqCnt = 0;
+//     while (!complete) {
+//         // Extract k-mers
+//         time_t start = time(nullptr);
+//         cout << "K-mer extraction    : " << flush;
+//         bool moreData = kmerExtractor->extractUnirefKmers(kseq, kmerBuffer, uniref100toTaxId, processedSeqCnt, savedSeq);
+//         complete = !moreData;
+//         cout << double(time(nullptr) - start) << " s" << endl;
+//         cout << "Processed sequences : " << processedSeqCnt << endl;
+
+//         // Sort the k-mers
+//         start = time(nullptr);
+//         cout << "Sort k-mers         : " << flush;
+//         SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Kmer::compareKmer);
+//         cout << double(time(nullptr) - start) << " s" << endl;
+
+//         // Filter k-mers
+//         start = time(nullptr);
+//         size_t selectedKmerCnt = 0;
+//         uniqKmerIdxRanges.clear();
+//         filterKmers<FilterMode::LCA>(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges);
+//         cout << "Reduce k-mers       : " << time(nullptr) - start << " s" << endl; 
+//         cout << "Selected k-mers     : " << selectedKmerCnt << endl;
+
+//         // Write k-mers
+//         start = time(nullptr);
+//         if (complete && numOfFlush == 0 && !isUpdating) {
+//             writeTargetFilesAndSplits(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges, true);
+//         } else {
+//             writeTargetFiles(kmerBuffer, uniqKmerIdx.buffer, uniqKmerIdxRanges);
+//         }
+//         cout << "Write k-mers        : " << time(nullptr) - start << " s" << endl;
+
+//         // Write accession to index mapping
+//         FILE * accIndexFile = fopen((dbDir + "/accession2index").c_str(), "a");
+//         for (const auto & entry : accession2index) {
+//             fprintf(accIndexFile, "%s\t%u\n", entry.first.c_str(), entry.second);
+//         }
+//         fclose(accIndexFile);
+
+//         if (!complete) {
+//             accession2index.clear();
+//             kmerBuffer.init();
+//             uniqKmerIdx.init();
+//         }
+//         cout << "--------" << endl;
+//     }
+    
+
+//     if (numOfFlush == 1) {
+//         cout << "Index creation completed." << endl;
+//         return;
+//     }
+//     cout << "Merge reference DB files ... " << endl;
+
+//     // for (int i = 0; i < 10; i++) {
+//     //     addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
+//     //                     dbDir + "/" + to_string(i) + "_info");
+//     // }
+
+//     indexCreator->printFilesToMerge();
+//     indexCreator->setMergedFileNames(
+//         dbDir + "/diffIdx",  
+//         dbDir + "/info", 
+//         dbDir + "/split");
+    
+//     indexCreator->mergeTargetFiles<FilterMode::LCA>();
+
+
+//     std::cout << "UniRef database creation completed." << std::endl;
+// }

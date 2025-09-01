@@ -25,7 +25,7 @@ int create_unirefdb(int argc, const char **argv, const Command &command){
             return 1;
         }
         UnirefDbCreator unirefDbCreator(par, dbDir);
-        unirefDbCreator.createUnirefHierarchy(par.unirefXml);
+        unirefDbCreator.createUnirefTaxonomy(par.unirefXml);
         taxonomyDir = dbDir + "/taxonomy";
     } else {
         taxonomyDir = par.taxonomyPath;

@@ -6,4 +6,5 @@ set(workflow_source_files
         workflow/filter.cpp
         workflow/extract.cpp
         workflow/create-unirefdb.cpp
+        workflow/create-uniref-tree.cpp
         PARENT_SCOPE)

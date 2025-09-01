@@ -11,6 +11,13 @@ extern const char *version;
 
 LocalParameters::LocalParameters() :
         Parameters(),
+        UNIREF_NUMBERS(UNIREF_NUMBERS_ID,
+                    "--uniref-size",
+                    "CSV of UniRef 100/90/50 cluster sizes",
+                    "CSV of UniRef 100/90/50 cluster sizes. Check UniRef release notes.",
+                    typeid(std::string),
+                    (void *) &unirefNumbers,
+                    "^.*$"),
         VIRUS_TAX_ID(VIRUS_TAX_ID_ID,
                      "--virus-taxid",
                      "Taxonomy ID of virus taxon",
@@ -549,6 +556,8 @@ LocalParameters::LocalParameters() :
     buildUnirefDb.push_back(&DB_DATE);
     buildUnirefDb.push_back(&RAM_USAGE);
     buildUnirefDb.push_back(&VALIDATE_DB);
+
+    buildUnirefTree.push_back(&UNIREF_NUMBERS);
     
 
     // build
