@@ -231,13 +231,13 @@ void GroupGenerator::filterCommonKmers(Buffer<QueryKmer>& queryKmerBuffer,
             // same seq
             else{
                 // copy
-                if (queryKmerList[queryKmerIdx_copy].info.pos < int(targetKmerPos[targetKmerPosIdx].second) - 2){
+                if (int64_t(queryKmerList[queryKmerIdx_copy].info.pos) < int(targetKmerPos[targetKmerPosIdx].second) - 2){
                     queryKmerList[queryKmerIdx] = queryKmerList[queryKmerIdx_copy];
                     queryKmerIdx++;
                     queryKmerIdx_copy++;
                 }
                 // next target check
-                else if(int(targetKmerPos[targetKmerPosIdx].second) + 2 < queryKmerList[queryKmerIdx_copy].info.pos){
+                else if(int(targetKmerPos[targetKmerPosIdx].second) + 2 < int64_t(queryKmerList[queryKmerIdx_copy].info.pos)){
                     targetKmerPosIdx++;
                 }
                 // pass
