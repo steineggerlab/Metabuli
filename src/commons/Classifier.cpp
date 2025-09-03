@@ -85,7 +85,8 @@ void Classifier::startClassify(const LocalParameters &par) {
 
             // Allocate memory for query k-mer buffer
             queryKmerBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt);
-            memset(queryKmerBuffer.buffer, 0, queryReadSplit[splitIdx].kmerCnt * sizeof(Kmer));
+            queryKmerBuffer.init();
+            // memset(queryKmerBuffer.buffer, 0, queryReadSplit[splitIdx].kmerCnt * sizeof(Kmer));
 
             // Allocate memory for match buffer
             if (queryReadSplit.size() == 1) {
@@ -98,7 +99,6 @@ void Classifier::startClassify(const LocalParameters &par) {
             }
 
             // Initialize query k-mer buffer and match buffer
-            queryKmerBuffer.startIndexOfReserve = 0;
             matchBuffer.startIndexOfReserve = 0;
 
             // Extract query k-mers

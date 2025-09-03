@@ -1,65 +1,69 @@
 #include "UnirefTree.h"
 
-UnirefTree* UnirefTree::openUnirefTree(const std::string &database) {
-    std::string binFile = database + "/uniref_tree.mtbl";
-    if (FileUtil::fileExists(binFile.c_str())) {
-        FILE* handle = fopen(binFile.c_str(), "r");
-        struct stat sb;
-        if (fstat(fileno(handle), &sb) < 0) {
-            Debug(Debug::ERROR) << "Failed to fstat file " << binFile << "\n";
-            EXIT(EXIT_FAILURE);
-        }
-        char* data = (char*)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fileno(handle), 0);
-        if (data == MAP_FAILED){
-            Debug(Debug::ERROR) << "Failed to mmap file " << binFile << " with error " << errno << "\n";
-            EXIT(EXIT_FAILURE);
-        }
-        fclose(handle);
-        UnirefTree* t = UnirefTree::unserialize(data);
-        if (t != NULL) {
-            t->mmapData = data;
-            t->mmapSize = sb.st_size;
-            return t;
-        } else {
-            Debug(Debug::WARNING) << "Outdated taxonomy information, please recreate with createtaxdb.\n";
-        }
+UnirefTree* UnirefTree::openUnirefTree(const std::string &binFile) {
+    if (!FileUtil::fileExists(binFile.c_str())) {
+        Debug(Debug::ERROR) << "File " << binFile << " does not exist!\n";
+        EXIT(EXIT_FAILURE);
+    }   
+    FILE* handle = fopen(binFile.c_str(), "r");
+    struct stat sb;
+    if (fstat(fileno(handle), &sb) < 0) {
+        Debug(Debug::ERROR) << "Failed to fstat file " << binFile << "\n";
+        EXIT(EXIT_FAILURE);
     }
-
+    char* data = (char*)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fileno(handle), 0);
+    if (data == MAP_FAILED){
+        Debug(Debug::ERROR) << "Failed to mmap file " << binFile << " with error " << errno << "\n";
+        EXIT(EXIT_FAILURE);
+    }
+    fclose(handle);
+    UnirefTree* t = UnirefTree::unserialize(data);
+    if (t == nullptr) {
+        Debug(Debug::ERROR) << "Failed to unserialize file " << binFile << "\n";
+        EXIT(EXIT_FAILURE);
+    }
+    t->mmapData = data;
+    t->mmapSize = sb.st_size;
+    return t;
 }
 
 std::pair<char*, size_t> UnirefTree::serialize(const UnirefTree& t) {
     t.block->compact();
-    size_t blockSize = StringBlock<unsigned int>::memorySize(*t.block);
-    size_t memSize = 
-          sizeof(int)                    // SERIALIZATION_VERSION
-        + sizeof(size_t)                 // nodeNum
-        + t.nodeNum * sizeof(UnirefNode) // unirefNodes
-        + blockSize;                     // block
+    size_t blockSize = StringBlock<uint64_t>::memorySize(*t.block);
+    size_t memSize = sizeof(size_t)                   // nodeNum
+                     + t.nodeNum * sizeof(UnirefNode) // unirefNodes
+                     + blockSize;                     // block
 
     char* mem = (char*) malloc(memSize);
     if (!mem) {
         Debug(Debug::ERROR) << "Failed to allocate memory for serialization\n";
         EXIT(EXIT_FAILURE);
     }
-
     char* p = mem;
+    
     memcpy(p, &t.nodeNum, sizeof(size_t));
     p += sizeof(size_t);
+    
     memcpy(p, t.nodes, t.nodeNum * sizeof(UnirefNode));
     p += t.nodeNum * sizeof(UnirefNode);
-    char* blockData = StringBlock<unsigned int>::serialize(*t.block);
+    
+    char* blockData = StringBlock<uint64_t>::serialize(*t.block);
     memcpy(p, blockData, blockSize);
+    
     free(blockData);
     return std::make_pair(mem, memSize);
 }
 
 UnirefTree* UnirefTree::unserialize(char* data) {
     const char* p = data;
+
     size_t nodeNum = *((size_t*)p);
     p += sizeof(size_t);
+    
     UnirefNode* nodes = (UnirefNode*)p;
     p += nodeNum * sizeof(UnirefNode);
-    StringBlock<unsigned int>* block = StringBlock<unsigned int>::unserialize(p);
+    
+    StringBlock<uint64_t>* block = StringBlock<uint64_t>::unserialize(p);
     return new UnirefTree(nodes, nodeNum, block);
 }
 
@@ -76,77 +80,13 @@ void UnirefTree::writeUnirefTree(const std::string & fileName) {
     free(serialized.first);
 }
 
-
-
-void UnirefTree::loadTree(
-    const std::string & unirefIdxFileName,
-    const std::string & unirefTreeFileName
-) {
-    std::vector<UnirefNode> tmpNodes;
-    tmpNodes.emplace_back(0, 0, 0); // dummy node for 0
-
-    ReadBuffer<int> treeReader(unirefTreeFileName);
-    int value;
-    while ((value = treeReader.getNext()) != 0) {
-        int parentId = value;
-        int rank = treeReader.getNext();
-        tmpNodes.emplace_back(parentId, (size_t)-1, (uint8_t)rank);
-    }
-    
-    std::ifstream idxFile(unirefIdxFileName);
-    if (!idxFile.is_open()) {
-        std::cerr << "Error opening file: " << unirefIdxFileName << std::endl;
-        return;
-    }
-    std::string line;
-    while (std::getline(idxFile, line)) {
-        std::istringstream iss(line);
-        std::string idxString;
-        std::string nameString;
-
-        std::getline(iss, idxString, '\t');
-        std::getline(iss, nameString);
-        int idx = std::stoi(idxString);
-        if (idx >= tmpNodes.size()) {
-            std::cerr << "Index out of bounds in unirefIdxFile: " << idx << std::endl;
-            exit(EXIT_FAILURE);
-        }
-        size_t nameIdx = block->append(nameString.c_str(), nameString.size());
-        tmpNodes[idx].nameIdx = nameIdx;
-    }
-    idxFile.close();
-
-    std::cout << "Loaded " << tmpNodes.size() << " nodes from UniRef tree." << std::endl;
-    std::cout << "Validating UniRef tree..." << std::flush;
-    for (size_t i = 2; i < tmpNodes.size(); ++i) {
-        if (tmpNodes[i].nameIdx == (size_t)-1) {
-            std::cerr << "Missing name for node index: " << i << std::endl;
-            exit(EXIT_FAILURE);
-        }
-        if (tmpNodes[i].parentId >= i) {
-            std::cerr << "Parent Id must be smaller than current Id: " << i << std::endl;
-            exit(EXIT_FAILURE);
-        }
-        if (tmpNodes[i].rank == 0 || tmpNodes[i].rank > 4) {
-            std::cerr << "Invalid rank for node index: " << i << std::endl;
-            exit(EXIT_FAILURE);
-        }
-    }
-    std::cout << " Done." << std::endl;
-    nodeNum = tmpNodes.size();
-    nodes = new UnirefNode[nodeNum];
-    memcpy(nodes, tmpNodes.data(), nodeNum * sizeof(UnirefNode));
-    std::cout << "UniRef tree loaded successfully." << std::endl;
-}
-
-
 UnirefTree::UnirefTree(
     const std::string & xmlFileName,
     uint32_t uniref100num,
     uint32_t uniref90num,
     uint32_t uniref50num
 ) {
-    block = new StringBlock<unsigned int>();
+    block = new StringBlock<uint64_t>();
     FILE* input_file = std::fopen(xmlFileName.c_str(), "r");
     if (!input_file) {
         std::perror("fopen (input file)");
@@ -250,7 +190,8 @@ UnirefTree::UnirefTree(
                                 // New UniRef50 ID           
                                 id_50 = uniref50Id++;
                                 name2id_50[name_50] = id_50;
-                                size_t nameIdx = block->append(name_50.c_str(), name_50.size());
+                                std::string shortName = name_50.substr(9);
+                                size_t nameIdx = block->append(shortName.c_str(), shortName.size());
                                 nodes[id_50] = UnirefNode(1, nameIdx, 2);                        
                             }                             
 
@@ -264,14 +205,33 @@ UnirefTree::UnirefTree(
                                 // New UniRef90 ID           
                                 id_90 = uniref90Id++;
                                 name2id_90[name_90] = id_90;
-                                size_t nameIdx = block->append(name_90.c_str(), name_90.size());
+                                std::string shortName = name_90.substr(9);
+                                size_t nameIdx = block->append(shortName.c_str(), shortName.size());
                                 nodes[id_90] = UnirefNode(id_50, nameIdx, 3);
                             }
 
                             // Add UniRef100 node. UniRef100 nodes are always new.
                             int id_100 = uniref100Id++;
-                            size_t nameIdx = block->append(name_100.c_str(), name_100.size());
+                            std::string shortName = name_100.substr(10);
+                            size_t nameIdx = block->append(shortName.c_str(), shortName.size());
                             nodes[id_100] = UnirefNode(id_90, nameIdx, 4);
+                            cnt++;
+
+                            if (cnt % 1000000 == 0) {
+                                std::cout << cnt << " " << name_100 << " " << name_90 << " " << name_50 << std::endl;
+                            }
+                            if (cnt % 1000000 == 0) {
+                                std::string name1 = getName(id_100);
+                                std::string name2 = getName(nodes[id_100].parentId); 
+                                std::string name3 = getName(nodes[nodes[id_100].parentId].parentId); 
+                                std::cout << cnt << " " << name1 << " " << name2 << " " << name3 << std::endl;
+                                // std::string name2 = block->getString(nodes[nodes[id_100].parentId].nameIdx);
+                                // std::string name3 = block->getString(nodes[nodes[nodes[id_100].parentId].parentId].nameIdx);
+                                
+                                // std::cout << cnt << " " << block->getString(nodes[id_100].nameIdx) << " " 
+                                //           << block->getString(nodes[nodes[id_100].parentId].nameIdx) << " " 
+                                //           << block->getString(nodes[nodes[nodes[id_100].parentId].parentId].nameIdx) << std::endl;
+                            }
                         }
                         inProperty = false; // Reset property state
                     } else if (std::strcmp(x.elem, "representativeMember") == 0) {
@@ -287,4 +247,83 @@ UnirefTree::UnirefTree(
         }
     }    
     std::fclose(input_file);
+}
+
+// This function's logic is adapted from the Kraken2 project.
+// Original source: https://github.com/DerrickWood/kraken2/blob/master/src/taxonomy.cc
+bool UnirefTree::isAncestor(uint32_t anc, uint32_t desc) const {
+    if (anc == 0 || desc == 0) {
+        std::cerr << "Error: Invalid node ID(s) provided for isAncestor check." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    while (desc > anc) {
+        desc = nodes[desc].parentId;
+    }
+    return desc == anc;
+}
+
+
+uint32_t UnirefTree::getLCA(uint32_t id1, uint32_t id2) const {
+    if (id1 == 0 || id2 == 0) {
+        return id1 ? id1 : id2;
+    }
+    while (id1 != id2) {
+        if (id1 > id2) {
+            id1 = nodes[id1].parentId;
+        } else {
+            id2 = nodes[id2].parentId;
+        }
+    }
+    return id1;
+}
+
+uint32_t UnirefTree::getLCA(const std::vector<uint32_t> & ids) const {
+    if (ids.empty()) {
+        std::cerr << "Error: Empty ID list provided for LCA computation." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    uint32_t lca = ids[0];
+    for (size_t i = 1; i < ids.size(); ++i) {
+        lca = getLCA(lca, ids[i]);
+        if (lca == 1) { // Early exit if we reach the root
+            break;
+        }
+    }
+    return lca;
+}
+
+void UnirefTree::dumpUnirefTree(const std::string & fileName) {
+    std::ofstream outfile(fileName);
+    if (!outfile.is_open()) {
+        std::cerr << "Error: Could not open file " << fileName << " for writing." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    outfile << "ID\tParentID\tName\n";
+    for (size_t i = 1; i < nodeNum; ++i) {
+        // const UnirefNode& node = nodes[i];
+        // std::string name = getName(i);
+        // std::string name = (node.nameIdx != (size_t)-1) ? block->getString(node.nameIdx) : "N/A";
+        outfile << i << "\t" << nodes[i].parentId << "\t" << getName(i) << "\n";
+    }
+
+    outfile.close();
+}
+
+
+void UnirefTree::getName2Id(std::unordered_map<std::string, uint32_t> & name2id) const {
+    for (size_t i = 2; i < nodeNum; ++i) {
+        name2id[getName(i)] = i;
+    }
+}
+
+std::string UnirefTree::getName(size_t i) const {
+    const char * prefix;
+    switch (nodes[i].rank) {
+        case 2: prefix = "UniRef50_"; break;
+        case 3: prefix = "UniRef90_"; break;
+        case 4: prefix = "UniRef100_"; break;
+        default: prefix = ""; break;
+    }
+    return prefix + std::string(block->getString(nodes[i].nameIdx));
 }

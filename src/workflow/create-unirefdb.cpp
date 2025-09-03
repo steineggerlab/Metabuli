@@ -16,35 +16,32 @@ int create_unirefdb(int argc, const char **argv, const Command &command){
     setDefaults_create_unirefdb(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
 
-    const std::string & dbDir = par.filenames[0];
-    std::string taxonomyDir;
-    
-    if (par.taxonomyPath.empty()) {
-        if (par.unirefXml.empty()) {
-            std::cerr << "Error: --uniref-xml option is required when taxonomy path is not provided." << std::endl;
+    const std::string & dbDir        = par.filenames[0];
+    const std::string & unirefFasta  = par.filenames[1];
+    const std::string & unirefTreeDb = par.filenames[2];
+
+    if (!FileUtil::fileExists(unirefFasta.c_str())) {
+        std::cerr << "Error: UniRef100 FASTA file " << unirefFasta << " does not exist." << std::endl;
+        return 1;
+    }
+    if (!FileUtil::fileExists(unirefTreeDb.c_str())) {
+        std::cerr << "Error: UniRef tree database " << unirefTreeDb << " does not exist." << std::endl;
+        return 1;
+    }
+    if (!FileUtil::directoryExists(dbDir.c_str())) {
+        if (!FileUtil::makeDir(dbDir.c_str())) {
+            std::cerr << "Error: Could not create output directory " << dbDir << std::endl;
             return 1;
         }
-        UnirefDbCreator unirefDbCreator(par, dbDir);
-        unirefDbCreator.createUnirefTaxonomy(par.unirefXml);
-        taxonomyDir = dbDir + "/taxonomy";
-    } else {
-        taxonomyDir = par.taxonomyPath;
     }
-
-    return 0;
 
     time_t start = time(nullptr);
     std::cout << "Loading Taxonomy" << std::endl;
-    TaxonomyWrapper * taxonomy =  new TaxonomyWrapper(taxonomyDir + "/names.dmp",
-                                                      taxonomyDir + "/nodes.dmp",
-                                                      taxonomyDir + "/merged.dmp",
-                                                      false);
+    UnirefTree * unirefTree = UnirefTree::openUnirefTree(unirefTreeDb);
     std::cout << "Taxonomy loaded in " << time(nullptr) - start << " seconds." << std::endl;
 
-    IndexCreator idxCre(par, taxonomy, 4);
+    IndexCreator idxCre(par, unirefTree, 4);
     idxCre.createLcaKmerIndex();
-    taxonomy->writeTaxonomyDB(dbDir + "/taxonomyDB");
-    delete taxonomy;
 
     if (par.validateDb)
     {

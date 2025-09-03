@@ -18,7 +18,7 @@ void setDefaults(LocalParameters & par){
     par.taxonomyPath = "" ;
     par.splitNum = 4096;
     par.maskProb = 0.9;
-    par.maskMode = 1;
+    par.maskMode = 0;
     par.accessionLevel = 0;
     time_t now = time(0);
     tm *ltm = localtime(&now);

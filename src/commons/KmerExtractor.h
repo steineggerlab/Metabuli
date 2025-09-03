@@ -98,7 +98,7 @@ public:
     bool extractUnirefKmers(
         KSeqWrapper *kseq,
         Buffer<Kmer> &kmerBuffer,
-        std::unordered_map<string, TaxID> & accession2taxId,
+        std::unordered_map<std::string, uint32_t> & unirefName2Id,
         uint32_t & seqCnt,
         SeqEntry & savedSeq);
     

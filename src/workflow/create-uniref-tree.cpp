@@ -41,6 +41,8 @@ int create_uniref_tree(int argc, const char **argv, const Command &command) {
     uint32_t uniref50num  = std::stoul(sizes[2]);
 
     UnirefTree tree(xmlFileName, uniref100num, uniref90num, uniref50num);
+    // std::string dumpName = dbDir + "/uniref_tree.dmp";
+    // tree.dumpUnirefTree(dumpName);
     std::string idxFileName = dbDir + "/uniref_tree.mtbl";
     tree.writeUnirefTree(idxFileName);
     return 0;

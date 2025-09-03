@@ -572,14 +572,14 @@ bool KmerExtractor::extractKmers(
 bool KmerExtractor::extractUnirefKmers(
     KSeqWrapper *kseq,
     Buffer<Kmer> &kmerBuffer,
-    std::unordered_map<string, TaxID> & uniref100toTaxId,
+    std::unordered_map<string, uint32_t> & unirefName2Id,
     uint32_t & processedSeqCnt,
     SeqEntry & savedSeq)
 {
     if (!savedSeq.name.empty()) {
         if (savedSeq.s.length() >= 12) {
             size_t writePos = kmerBuffer.reserveMemory(savedSeq.s.length() - 11);
-            TaxID currentId = uniref100toTaxId[savedSeq.name];
+            TaxID currentId = unirefName2Id[savedSeq.name];
             kmerScanners[0]->initScanner(savedSeq.s.c_str(), 0, savedSeq.s.length() - 1, true);
             Kmer kmer;
             while((kmer = kmerScanners[0]->next()).value != UINT64_MAX) {
@@ -590,8 +590,6 @@ bool KmerExtractor::extractUnirefKmers(
         savedSeq.name.clear();
         ++processedSeqCnt;
     }
-    std::cout << "1" << std::endl;
-
     size_t seqLen = 1000;
     size_t chunkSize = 100;
     std::vector<std::vector<string>> readsPerThread(par.threads);
@@ -607,14 +605,13 @@ bool KmerExtractor::extractUnirefKmers(
 
     BlockingQueue<int> freeBufferQueue;
     BlockingQueue<WorkItem> filledBufferQueue;
-    std::cout << "2" << std::endl;
     for (int i = 1; i < par.threads; ++i) {
         freeBufferQueue.push(i); 
     }
     int producerBufferIndex = 0;
     bool moreData = true;
     #pragma omp parallel default(none) shared(par, kmerBuffer, kseq, std::cout, processedSeqCnt, \
-    readsPerThread, seqNamesPerThread, chunkSize, filledBufferQueue, moreData, uniref100toTaxId, savedSeq, producerBufferIndex, freeBufferQueue)
+    readsPerThread, seqNamesPerThread, chunkSize, filledBufferQueue, unirefName2Id, moreData, savedSeq, producerBufferIndex, freeBufferQueue)
     {
         int threadId = omp_get_thread_num();
 
@@ -646,7 +643,6 @@ bool KmerExtractor::extractUnirefKmers(
                 }
                 if (seqCnt > 0) {
                     filledBufferQueue.push({producerBufferIndex, seqCnt, kmerBuffer.startIndexOfReserve, 0});
-                    std::cout << "3" << std::endl;
                     processedSeqCnt += seqCnt;
                     kmerBuffer.reserveMemory(kmerCnt);
                     if (moreData && bufferNotFull) {
@@ -671,8 +667,8 @@ bool KmerExtractor::extractUnirefKmers(
                     if (seqChunk[i].empty()) {
                         continue; // Skip empty reads
                     }
-                    TaxID currentId = 0; //uniref100toTaxId[nameChunk[i]];
-                    std::cout << nameChunk[i] << std::endl;
+                    TaxID currentId = unirefName2Id[nameChunk[i]];
+                    // std::cout << nameChunk[i] << std::endl;
                     kmerScanners[threadId]->initScanner(seqChunk[i].c_str(), 0, seqChunk[i].length() - 1, true);
                     Kmer kmer;
                     while((kmer = kmerScanners[threadId]->next()).value != UINT64_MAX) {

@@ -33,9 +33,10 @@
 #include "GeneticCode.h"
 #include "KmerExtractor.h"
 #include "DeltaIdxReader.h"
+#include "UnirefTree.h"
 
 
-enum class FilterMode { DB_CREATION, COMMON_KMER, UNIQ_KMER, LCA};
+enum class FilterMode { DB_CREATION, COMMON_KMER, UNIQ_KMER, UNIREF_LCA};
 struct Accession {
     Accession() = default;
     Accession(const string & accession, uint32_t whichFasta, uint32_t order, uint32_t length) 
@@ -114,7 +115,8 @@ protected:
     unordered_map<TaxID, TaxID> taxId2speciesId;
 
     // Inputs
-    TaxonomyWrapper * taxonomy;
+    TaxonomyWrapper * taxonomy = nullptr;
+    UnirefTree * unirefTree = nullptr;
     GeneticCode * geneticCode;
     KmerExtractor * kmerExtractor;
 
@@ -263,6 +265,7 @@ protected:
 
 public:
     IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy, int kmerFormat);
+    IndexCreator(const LocalParameters & par, UnirefTree * unirefTree, int kmerFormat);
     IndexCreator(const LocalParameters & par, int kmerFormat);
     ~IndexCreator();
     void createIndex();
@@ -401,7 +404,7 @@ void IndexCreator::mergeTargetFiles() {
             SORT_PARALLEL(kmerBuffer.buffer, 
                           kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
                           Kmer::compareTargetKmer);
-        } else if constexpr (M == FilterMode::UNIQ_KMER || M == FilterMode::LCA) {
+        } else if constexpr (M == FilterMode::UNIQ_KMER || M == FilterMode::UNIREF_LCA) {
             SORT_PARALLEL(kmerBuffer.buffer, 
                           kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
                           Kmer::compareKmer);
@@ -459,7 +462,6 @@ void IndexCreator::mergeTargetFiles() {
     cout<<mergedInfoFileName<<endl;
     cout<<string(dbDir) + "/taxID_list"<<endl;
     cout<<deltaIdxSplitFileName<<endl;
-    cout<<taxonomyBinaryFileName<<endl;
 }
 
 
@@ -523,29 +525,29 @@ void IndexCreator::filterKmers(
                 lookingKmer = & kmerBuffer.buffer[i - 1];
                 lookingIndex = i - 1;
                 bool selected = false;
-                if constexpr (M == FilterMode::DB_CREATION || M == FilterMode::LCA) {
+                if constexpr (M == FilterMode::DB_CREATION) {
                     taxIds.clear();
                     taxIds.push_back(lookingKmer->tInfo.taxId);
                 } else if constexpr (M == FilterMode::COMMON_KMER) {
                     taxIds.clear();
                     taxIds.push_back(lookingKmer->tInfo.speciesId);
-                } else if constexpr (M == FilterMode::UNIQ_KMER) {
+                } else if constexpr (M == FilterMode::UNIQ_KMER || M == FilterMode::UNIREF_LCA) {
                     ids.clear();
                     ids.push_back(lookingKmer->id);
                 }
 
                 while ((i < splits[split].end + 1) && areKmersDuplicate<M>(*lookingKmer, kmerBuffer.buffer[i])) {
-                    if constexpr (M == FilterMode::DB_CREATION || M == FilterMode::LCA) {
+                    if constexpr (M == FilterMode::DB_CREATION) {
                         taxIds.push_back(kmerBuffer.buffer[i].tInfo.taxId);
                     } else if constexpr (M == FilterMode::COMMON_KMER) {
                         taxIds.push_back(kmerBuffer.buffer[i].tInfo.speciesId);
-                    } else if constexpr (M == FilterMode::UNIQ_KMER) {
+                    } else if constexpr (M == FilterMode::UNIQ_KMER || M == FilterMode::UNIREF_LCA) {
                         ids.push_back(kmerBuffer.buffer[i].id);
                     }
                     i++;
                 }
                 
-                if constexpr (M == FilterMode::DB_CREATION || M == FilterMode::LCA) {
+                if constexpr (M == FilterMode::DB_CREATION || M == FilterMode::UNIREF_LCA) {
                     selected = true;
                 } else if constexpr (M == FilterMode::COMMON_KMER) {
                     for (size_t i = 0; i < taxIds.size(); i++) {
@@ -565,9 +567,12 @@ void IndexCreator::filterKmers(
                 }
 
                 if (selected) {
-                    if constexpr (M == FilterMode::DB_CREATION || M == FilterMode::COMMON_KMER || M == FilterMode::LCA) {
+                    if constexpr (M == FilterMode::DB_CREATION || M == FilterMode::COMMON_KMER) {
                         lookingKmer->tInfo.taxId = taxonomy->LCA(taxIds)->taxId;
-                    } 
+                    } else if constexpr (M == FilterMode::UNIREF_LCA) {
+                        lookingKmer->id = unirefTree->getLCA(ids);
+                    }
+
                     if (tempSelectedKmerCnt >= 16 * 1024 * 1024) {
                         memcpy(selectedKmerIdx + splits[split].offset, localSelectedIdx, tempSelectedKmerCnt * sizeof(size_t));
                         splits[split].offset += tempSelectedKmerCnt;
@@ -581,7 +586,7 @@ void IndexCreator::filterKmers(
             }
 
             // Check the last k-mer
-            if constexpr (M == FilterMode::DB_CREATION || M == FilterMode::UNIQ_KMER || M == FilterMode::LCA) {
+            if constexpr (M == FilterMode::DB_CREATION || M == FilterMode::UNIQ_KMER || M == FilterMode::UNIREF_LCA) {
                 if(!areKmersDuplicate<M>(kmerBuffer.buffer[splits[split].end - 1], kmerBuffer.buffer[splits[split].end])){
                     if (tempSelectedKmerCnt >= 16 * 1024 * 1024) {
                         memcpy(selectedKmerIdx + splits[split].offset, localSelectedIdx, tempSelectedKmerCnt * sizeof(size_t));
@@ -610,7 +615,7 @@ bool IndexCreator::areKmersDuplicate(
     if constexpr (M == FilterMode::DB_CREATION) {
         return kmer1.tInfo.speciesId == kmer2.tInfo.speciesId &&
                kmer1.value == kmer2.value;
-    } else if constexpr (M == FilterMode::COMMON_KMER || M == FilterMode::UNIQ_KMER || M == FilterMode::LCA) {
+    } else if constexpr (M == FilterMode::COMMON_KMER || M == FilterMode::UNIQ_KMER || M == FilterMode::UNIREF_LCA) {
         return kmer1.value == kmer2.value;
     }
     return false; // Default case, should not be reached

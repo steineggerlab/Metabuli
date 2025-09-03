@@ -43,6 +43,18 @@ IndexCreator::IndexCreator(
 
 IndexCreator::IndexCreator(
     const LocalParameters & par, 
+    UnirefTree * unirefTree,
+    int kmerFormat) 
+    : par(par), unirefTree(unirefTree), kmerFormat(kmerFormat) 
+{
+    dbDir = par.filenames[0];
+    geneticCode = new GeneticCode(par.reducedAA == 1);
+    kmerExtractor = new KmerExtractor(par, *geneticCode, kmerFormat);
+    isUpdating = false;
+}
+
+IndexCreator::IndexCreator(
+    const LocalParameters & par, 
     int kmerFormat) : par(par), kmerFormat(kmerFormat) 
 {
     dbDir = par.filenames[0];
@@ -66,12 +78,12 @@ void IndexCreator::createLcaKmerIndex() {
 
     string fileName = par.filenames[1];
     KSeqWrapper * kseq = KSeqFactory(fileName.c_str());
-    std::unordered_map<string, TaxID> name2taxId;
+    std::unordered_map<string, uint32_t> name2id;
     uint32_t idOffset = 0;
 
-    std::cout << "Filling UniRef100 to TaxID mapping ... " << std::endl;
+    std::cout << "Filling UniRef100 name to ID mapping ... " << std::endl;
     time_t start = time(nullptr);
-    taxonomy->getSpeciesName2TaxId(name2taxId);
+    unirefTree->getName2Id(name2id);
     cout << "Mapping filled in " << time(nullptr) - start << " s." << endl;
 
 
@@ -82,7 +94,7 @@ void IndexCreator::createLcaKmerIndex() {
         // Extract k-mers
         time_t start = time(nullptr);
         cout << "K-mer extraction    : " << flush;
-        bool moreData = kmerExtractor->extractUnirefKmers(kseq, kmerBuffer, name2taxId, processedSeqCnt, savedSeq);
+        bool moreData = kmerExtractor->extractUnirefKmers(kseq, kmerBuffer, name2id, processedSeqCnt, savedSeq);
         complete = !moreData;
         cout << double(time(nullptr) - start) << " s" << endl;
         cout << "Processed sequences : " << processedSeqCnt << endl;
@@ -97,7 +109,7 @@ void IndexCreator::createLcaKmerIndex() {
         start = time(nullptr);
         size_t selectedKmerCnt = 0;
         uniqKmerIdxRanges.clear();
-        filterKmers<FilterMode::LCA>(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges);
+        filterKmers<FilterMode::UNIREF_LCA>(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges);
         cout << "Filter k-mers       : " << time(nullptr) - start << " s" << endl; 
         cout << "Selected k-mers     : " << selectedKmerCnt << endl;
 
@@ -117,6 +129,10 @@ void IndexCreator::createLcaKmerIndex() {
         cout << "--------" << endl;
     }
     
+    // for (int i = 0; i < 47; i++) {
+    //     addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
+    //                     dbDir + "/" + to_string(i) + "_info");
+    // }
 
     if (numOfFlush == 1) {
         cout << "Index creation completed." << endl;
@@ -128,7 +144,7 @@ void IndexCreator::createLcaKmerIndex() {
         par.filenames[0] + "/diffIdx",  
         par.filenames[0] + "/info", 
         par.filenames[0] + "/split");
-    mergeTargetFiles<FilterMode::LCA>();
+    mergeTargetFiles<FilterMode::UNIREF_LCA>();
 
 }
 
@@ -214,6 +230,7 @@ void IndexCreator::createUniqueKmerIndex() {
 
 void IndexCreator::createCommonKmerIndex() {
     Buffer<Kmer> kmerBuffer(calculateBufferSize(par.ramUsage));
+    Buffer<size_t> uniqKmerIdx(kmerBuffer.bufferSize);
 
     indexReferenceSequences(kmerBuffer.bufferSize);
 
@@ -233,41 +250,42 @@ void IndexCreator::createCommonKmerIndex() {
     size_t processedBatchCnt = 0;
     
     vector<pair<size_t, size_t>> uniqKmerIdxRanges;
-    auto * uniqKmerIdx = new size_t[kmerBuffer.bufferSize];
     while(processedBatchCnt < accessionBatches.size()) {
-        cout << "Init buffers    : " << flush;
-        time_t start = time(nullptr);
-        memset(kmerBuffer.buffer, 0, kmerBuffer.bufferSize * sizeof(Kmer));
-        memset(uniqKmerIdx, 0, kmerBuffer.bufferSize * sizeof(size_t));
-        cout << time(nullptr) - start << " s" << endl;
-
         // Extract target k-mers
+        time_t start = time(nullptr);
+        cout << "K-mer extraction : " << flush;
         fillTargetKmerBuffer(kmerBuffer, batchChecker, processedBatchCnt, par);
-
+        cout << double(time(nullptr) - start) << " s" << endl;
+        
         // Sort the k-mers
         start = time(nullptr);
-        cout << "Sort k-mers     : " << flush;
-        SORT_PARALLEL(kmerBuffer.buffer,
-                      kmerBuffer.buffer + kmerBuffer.startIndexOfReserve,
-                      Kmer::compareTargetKmer);
+        cout << "Sort k-mers      : " << flush;
+        SORT_PARALLEL(kmerBuffer.buffer, kmerBuffer.buffer + kmerBuffer.startIndexOfReserve, Kmer::compareTargetKmer);
         cout << time(nullptr) - start << " s" << endl;
 
         // Filter k-mers
-        cout << "Filter k-mers   : " << flush;
         start = time(nullptr);
         size_t selectedKmerCnt = 0;
-        uniqKmerIdxRanges.clear();
-        filterKmers<FilterMode::COMMON_KMER>(kmerBuffer, uniqKmerIdx, selectedKmerCnt, uniqKmerIdxRanges);
-        cout << time(nullptr) - start << " s" << endl; 
-        cout << "Selected k-mers : " << selectedKmerCnt << endl;
+        filterKmers<FilterMode::DB_CREATION>(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges);
+        cout << "Filter k-mers    : " << time(nullptr) - start << " s" << endl; 
+        cout << "Selected k-mers  : " << selectedKmerCnt << endl;
 
         // Write the target files
+        start = time(nullptr);
         if(processedBatchCnt == accessionBatches.size() && numOfFlush == 0 && !isUpdating) {
-            writeTargetFilesAndSplits(kmerBuffer, uniqKmerIdx, selectedKmerCnt, uniqKmerIdxRanges, true);
+            writeTargetFilesAndSplits(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges, true);
         } else {
-            writeTargetFiles(kmerBuffer, uniqKmerIdx, uniqKmerIdxRanges);
+            writeTargetFiles(kmerBuffer, uniqKmerIdx.buffer, uniqKmerIdxRanges);
         }
-        delete[] uniqKmerIdx;
+        cout << "Write k-mers     : " << time(nullptr) - start << " s" << endl;
+
+        // Reset buffers
+        if (processedBatchCnt < accessionBatches.size()) {
+            kmerBuffer.init();
+            uniqKmerIdx.init();
+            uniqKmerIdxRanges.clear();
+        }
+
     }
 
     taxonomy->writeTaxonomyDB(par.filenames[0] + "/taxonomyDB");
@@ -279,7 +297,7 @@ void IndexCreator::createCommonKmerIndex() {
     }
     cout << "Merge reference DB files ... " << endl;
 
-    // for (int i = 0; i < 66; i++) {
+    // for (int i = 0; i < 243; i++) {
     //     addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
     //                     dbDir + "/" + to_string(i) + "_info");
     // }
