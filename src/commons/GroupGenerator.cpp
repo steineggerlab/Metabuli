@@ -18,6 +18,7 @@ GroupGenerator::GroupGenerator(LocalParameters & par) {
     
     geneticCode = new GeneticCode(par.reducedAA == 1);
     queryIndexer = new QueryIndexer(par);
+    queryIndexer->setKmerLen(12);
     kmerExtractor = new KmerExtractor(par, *geneticCode, kmerFormat);
     if (par.reducedAA) {
         kmerMatcher = new ReducedKmerMatcher(par, taxonomy, kmerFormat);
@@ -126,6 +127,8 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
         }
         if (processedReadCnt == totalSeqCnt) {
             complete = true;
+        } else {
+            memset(queryKmerBuffer.buffer, 0, queryKmerBuffer.bufferSize * sizeof(Kmer));
         }
     }   
     makeGraph(outDir, numOfSplits, numOfThreads, numOfGraph, processedReadCnt, jobId);   

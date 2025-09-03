@@ -17,6 +17,7 @@ private:
     int spaceNum;
     int maskMode;
     float maskProb;
+    int kmerLen;
 
     // For masking reads
     ProbabilityMatrix * probMatrix;
