@@ -115,11 +115,7 @@ void Reporter::kronaReport(FILE *FP, const TaxonomyWrapper &taxDB, const std::un
 void Reporter::writeReportFile(
     int numOfQuery, 
     unordered_map<TaxID, unsigned int> &taxCnt, 
-<<<<<<< HEAD
-    bool em,
-=======
     ReportType reportType,
->>>>>>> kmer_union
     string kronaFileName) 
 {
     std::unordered_map<TaxID, std::vector<TaxID>> parentToChildren = taxonomy->getParentToChildren();
@@ -140,23 +136,14 @@ void Reporter::writeReportFile(
     if (jobId.empty()) { return; }
     
     FILE *kronaFile = nullptr;
-<<<<<<< HEAD
-    if (!em) { 
-=======
 
     if (reportType == ReportType::Default) {
->>>>>>> kmer_union
         if (!kronaFileName.empty()) {
             kronaFile = fopen(kronaFileName.c_str(), "w");
         } else {
             kronaFile = fopen((outDir + "/" + jobId + "_krona.html").c_str(), "w");
         }
-<<<<<<< HEAD
-        kronaFile = fopen((outDir + "/" + jobId + "_krona.html").c_str(), "w");
-    } else {
-=======
     } else if (reportType == ReportType::EM) {
->>>>>>> kmer_union
         kronaFile = fopen((outDir + "/" + jobId + "_EM_krona.html").c_str(), "w");
     } else if (reportType == ReportType::EM_RECLASSIFY) {
         kronaFile = fopen((outDir + "/" + jobId + "_EM+reclassify_krona.html").c_str(), "w");
