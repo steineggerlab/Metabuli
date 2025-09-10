@@ -384,7 +384,7 @@ void Classifier::reclassify(
             explainedQueryCnt += taxCount.second;
         }
     }
-    reclassifyTaxCounts[0] = totalQueryCnt - explainedQueryCnt;
+   std::cout << double(time(nullptr) - st) << " s" << endl;
 }
 
 void Classifier::countUniqueKmerPerSpecies(

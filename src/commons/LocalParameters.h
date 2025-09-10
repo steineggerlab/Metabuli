@@ -22,6 +22,7 @@ public:
     }
 
     std::vector<MMseqsParameter*> classify;
+    std::vector<MMseqsParameter*> groupGeneration;
     std::vector<MMseqsParameter*> extract;
     std::vector<MMseqsParameter*> filter;
     std::vector<MMseqsParameter*> exclusiontest_hiv;
@@ -89,6 +90,10 @@ public:
     PARAMETER(TARGET_TAX_ID)
     PARAMETER(EXTRACT_MODE)
     PARAMETER(PARAM_OUTDIR)
+
+    // Group generation
+    PARAMETER(THR_K)
+    PARAMETER(GROUP_SCORE_THR)
 
     // DB build parameters
     PARAMETER(LIBRARY_PATH)
@@ -171,6 +176,8 @@ public:
     int matchPerKmer;
     int minSSMatch;
     float tieRatio;
+    float thresholdK;
+    float groupScoreThr;
     int printLineage;
     int maxShift;
     bool em;

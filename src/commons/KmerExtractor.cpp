@@ -7,6 +7,7 @@ KmerExtractor::KmerExtractor(
     int kmerFormat) 
     : par(par), geneticCode(geneticCode), kmerScanners(new KmerScanner*[par.threads]) {
     // Initialize k-mer scanners for each thread
+    kmerLen = 8;
     for (int i = 0; i < par.threads; ++i) {
         if (kmerFormat == 1) {
             if (i == 0) {
@@ -21,6 +22,7 @@ KmerExtractor::KmerExtractor(
             }
         } else if (kmerFormat == 3) {
             kmerScanners[i] = new KmerScanner_dna2aa(geneticCode, 12);
+            kmerLen = 12;
         } else if (kmerFormat == 4) {
             kmerScanners[i] = new KmerScanner_aa2aa(12);
         } else {
@@ -363,6 +365,7 @@ void KmerExtractor::fillQueryKmerBuffer(
         Kmer kmer;
         while ((kmer = kmerScanners[threadID]->next()).value != UINT64_MAX) {
             kmerBuffer.buffer[posToWrite++] = {kmer.value, seqID, kmer.pos + offset, (uint8_t) frame};
+            kmer.printAA(kmerScanners[threadID]->getGeneticCode(), 12); cout << endl;// For test
         }
     }
 }
@@ -410,7 +413,7 @@ void KmerExtractor::loadChunkOfReads(KSeqWrapper *kseq,
             }
 
             // Check if the read is too short
-            int kmerCnt = LocalUtil::getQueryKmerNumber<int>((int) kseq->entry.sequence.l, spaceNum);
+            int kmerCnt = LocalUtil::getQueryKmerNumber<int>((int) kseq->entry.sequence.l, spaceNum, this->kmerLen);
             if (kmerCnt < 1) {
                 reads[i] = "";
                 emptyReads[i] = true;
@@ -429,7 +432,7 @@ void KmerExtractor::loadChunkOfReads(KSeqWrapper *kseq,
             queryList[processedQueryNum].queryLength = LocalUtil::getMaxCoveredLength((int) kseq->entry.sequence.l);
 
             // Check if the read is too short
-            int kmerCnt = LocalUtil::getQueryKmerNumber<int>((int) kseq->entry.sequence.l, spaceNum);
+            int kmerCnt = LocalUtil::getQueryKmerNumber<int>((int) kseq->entry.sequence.l, spaceNum, this->kmerLen);
             if (kmerCnt < 1) {
                 reads[i] = "";
                 emptyReads[i] = true;

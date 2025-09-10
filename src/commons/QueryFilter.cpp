@@ -175,9 +175,10 @@ void QueryFilter::filterReads(LocalParameters & par) {
                                          kseq2);
         numOfTatalQueryKmerCnt += kmerBuffer.startIndexOfReserve;
 
+        // new code
         // Search matches between query and target k-mers
         for (auto db : contams) {
-            kmerMatcher->matchKmers(&kmerBuffer, &matchBuffer, db);
+            cout <<"";
         }
         kmerMatcher->sortMatches(&matchBuffer);
 

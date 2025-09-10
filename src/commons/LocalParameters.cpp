@@ -1,8 +1,8 @@
 #include "LocalParameters.h"
 #include "Parameters.h"
+#include "Parameters.cpp"
 #include "Debug.h"
 #include "CommandCaller.h"
-#include "Parameters.cpp"
 #include "ByteParser.h"
 #include <iomanip>
 #include "DistanceCalculator.h"
@@ -73,7 +73,7 @@ LocalParameters::LocalParameters() :
                     "K-mer format",
                     typeid(int),
                     (void *) &kmerFormat,
-                    "[1-2]"),
+                    "[1-3]"),
         UNIREF_XML(UNIREF_XML_ID,
                     "--uniref-xml",
                     "Path to UniRef XML file",
@@ -229,6 +229,20 @@ LocalParameters::LocalParameters() :
                     typeid(std::string),
                     (void *) &outputDir,
                     "^.*$"),
+        THR_K(THR_K_ID,
+                    "--thr-k",
+                    "Min. num. of shared kmer for read grouping",
+                    "Min. num. of shared kmer for read grouping",
+                    typeid(float),
+                    (void *) &thresholdK,
+                    "^(-?(10(\\.0+)?|[0-9](\\.[0-9]+)?))$"),
+        GROUP_SCORE_THR(GROUP_SCORE_THR_ID,
+                    "--group-score-thr",
+                    "Min. score for read grouping",
+                    "Min. score for read grouping",
+                    typeid(float),
+                    (void *) &groupScoreThr,
+                    "^0(\\.[0-9]+)?|1(\\.0+)?$"),
         LIBRARY_PATH(LIBRARY_PATH_ID,
                      "--library-path",
                      "Path to library where the FASTA files are stored",
@@ -474,20 +488,20 @@ LocalParameters::LocalParameters() :
                 typeid(int),
                 (void *) &higherRankFile,
                 "^[0-2]$"),
-        RANDOM_SEED(RANDOM_SEED_ID,
-                    "--random-seed",
-                    "Random seed for random number generation",
-                    "Random seed for random number generation",
-                    typeid(int),
-                    (void *) &randomSeed,
-                    "^[0-9]+"),
         ASSACC2TAXID(ASSACC2TAXID_ID,
                     "--assacc2taxid",
                     "Path to the file mapping from accession to tax ID",
                     "Path to the file mapping from accession to tax ID",
                     typeid(std::string),
                     (void *) &assacc2taxid,
-                    "^.*$") 
+                    "^.*$"),
+        RANDOM_SEED(RANDOM_SEED_ID,
+                    "--random-seed",
+                    "Random seed for random number generation",
+                    "Random seed for random number generation",
+                    typeid(int),
+                    (void *) &randomSeed,
+                    "^[0-9]+$", 0)
   {
     // Initialize the parameters
     // Superkingdom taxonomy id
@@ -510,6 +524,10 @@ LocalParameters::LocalParameters() :
     matchPerKmer = 0;
     minSSMatch = 0;
     tieRatio = 0;
+
+    // Group generation
+    thresholdK = 0.5;
+    groupScoreThr=0.15;
 
     // Database creation
     tinfoPath = "";
@@ -618,6 +636,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&VALIDATE_DB);
     classify.push_back(&SYNCMER);
     classify.push_back(&SMER_LEN);
+    classify.push_back(&KMER_FORMAT);
     classify.push_back(&PRINT_LOG);
     classify.push_back(&REDUCED_AA);
     classify.push_back(&EM);
@@ -634,6 +653,25 @@ LocalParameters::LocalParameters() :
     extract.push_back(&TARGET_TAX_ID);
     extract.push_back(&EXTRACT_MODE);
     extract.push_back(&PARAM_OUTDIR);
+
+    //groupGeneration
+    groupGeneration.push_back(&PARAM_THREADS);
+    groupGeneration.push_back(&SEQ_MODE);
+    groupGeneration.push_back(&TAXONOMY_PATH);
+    groupGeneration.push_back(&RAM_USAGE);
+    groupGeneration.push_back(&MATCH_PER_KMER);
+    groupGeneration.push_back(&THR_K);
+    groupGeneration.push_back(&GROUP_SCORE_THR);    
+    groupGeneration.push_back(&MIN_SCORE);
+    groupGeneration.push_back(&MIN_CONS_CNT);
+    groupGeneration.push_back(&MIN_CONS_CNT_EUK);
+    groupGeneration.push_back(&MIN_SP_SCORE);
+    groupGeneration.push_back(&HAMMING_MARGIN);    
+    groupGeneration.push_back(&PARAM_MASK_RESIDUES);
+    groupGeneration.push_back(&PARAM_MASK_PROBABILTY);
+    groupGeneration.push_back(&ACCESSION_LEVEL);
+    groupGeneration.push_back(&TIE_RATIO);
+    groupGeneration.push_back(&KMER_FORMAT);
 
     // filter 
     filter.push_back(&PARAM_THREADS);

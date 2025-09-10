@@ -28,11 +28,13 @@
 
 KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
 
+#define nuc2int(x) (x & 14u)>>1u
+
 using namespace std;
 
 class SeqIterator {
 private:
-    uint64_t powers[10];
+    uint64_t * powers;
     uint32_t * mask;
     int * mask_int;
     uint32_t spaceNum;
@@ -41,15 +43,14 @@ private:
     int bitsFor8Codons;
     uint32_t smerMask;
     uint64_t dnaMask;
-    int kmerLength;
+    int kmerLen = 12;
+    int smerLen;
     
 public:
     SeqIterator(const LocalParameters &par); 
     
     ~SeqIterator();
     
-    void setKmerLength(int k) { kmerLength = k; }
-
     string reverseComplement(string &read) const;
     
     void devideToCdsAndNonCds(const char *maskedSeq,
