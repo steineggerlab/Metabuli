@@ -43,8 +43,8 @@ int groupGeneration(int argc, const char **argv, const Command& command)
             exit(1);
         }
 
-        if (!FileUtil::directoryExists(par.filenames[3].c_str())) {
-            FileUtil::makeDir(par.filenames[3].c_str());
+        if (!FileUtil::directoryExists(par.filenames[5].c_str())) {
+            FileUtil::makeDir(par.filenames[5].c_str());
         }
     } else {
         // Check if the second argument is file
@@ -55,8 +55,8 @@ int groupGeneration(int argc, const char **argv, const Command& command)
             exit(1);
         }
 
-        if (!FileUtil::directoryExists(par.filenames[2].c_str())) {
-            FileUtil::makeDir(par.filenames[2].c_str());
+        if (!FileUtil::directoryExists(par.filenames[4].c_str())) {
+            FileUtil::makeDir(par.filenames[4].c_str());
         }
     }
 

@@ -365,7 +365,6 @@ void KmerExtractor::fillQueryKmerBuffer(
         Kmer kmer;
         while ((kmer = kmerScanners[threadID]->next()).value != UINT64_MAX) {
             kmerBuffer.buffer[posToWrite++] = {kmer.value, seqID, kmer.pos + offset, (uint8_t) frame};
-            kmer.printAA(kmerScanners[threadID]->getGeneticCode(), 12); cout << endl;// For test
         }
     }
 }

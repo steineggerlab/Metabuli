@@ -4,17 +4,20 @@
 #include "common.h"
 #include "Kmer.h"
 
-GroupGenerator::GroupGenerator(LocalParameters & par) {
-    dbDir = par.filenames[1 + (par.seqMode == 2)];
-
+GroupGenerator::GroupGenerator(LocalParameters & par) : par(par) {
+    commonKmerDB = par.filenames[1 + (par.seqMode == 2)];
+    taxDbDir     = par.filenames[2 + (par.seqMode == 2)];
     matchPerKmer = par.matchPerKmer;
-    loadDbParameters(par, par.filenames[1 + (par.seqMode == 2)]);    
     kmerFormat = par.kmerFormat;
     
     cout << "Database name : " << par.dbName << endl;
     cout << "Creation date : " << par.dbDate << endl;
     
-    taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
+    taxonomy = new TaxonomyWrapper(
+                    taxDbDir + "/names.dmp",
+                    taxDbDir + "/nodes.dmp",
+                    taxDbDir + "/merged.dmp",
+                    true);
     
     geneticCode = new GeneticCode(par.reducedAA == 1);
     queryIndexer = new QueryIndexer(par);
@@ -39,7 +42,8 @@ GroupGenerator::~GroupGenerator() {
 }
 
 void GroupGenerator::startGroupGeneration(const LocalParameters &par) {  
-    Buffer<QueryKmer> queryKmerBuffer;
+    Buffer<Kmer> queryKmerBuffer;
+    Buffer<std::pair<uint32_t, uint32_t>> matchBuffer; // seq id, pos
     vector<Query> queryList;
     size_t numOfTatalQueryKmerCnt = 0;
     size_t numOfThreads = par.threads;
@@ -103,6 +107,10 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
 
             // Allocate memory for query k-mer buffer
             queryKmerBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt);
+            queryKmerBuffer.init();
+            matchBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt * 0.3);
+            matchBuffer.init();
+
 
             // Initialize query k-mer buffer and match buffer
             queryKmerBuffer.startIndexOfReserve = 0;
@@ -114,7 +122,9 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
                                              par,
                                              kseq1,
                                              kseq2); 
-            filterCommonKmers(queryKmerBuffer, dbDir);
+            
+               
+            filterCommonKmers(queryKmerBuffer, matchBuffer, commonKmerDB);
             kmerFileHandler->writeQueryKmerFile(queryKmerBuffer, outDir, numOfSplits, numOfThreads, processedReadCnt, jobId);
             processedReadCnt += queryReadSplit[splitIdx].readCnt;
             cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
@@ -154,84 +164,178 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
 }
 
-void GroupGenerator::filterCommonKmers(Buffer<QueryKmer>& queryKmerBuffer,
-                                       const string & db){
+void GroupGenerator::filterCommonKmers(
+    Buffer<Kmer> & qKmers,
+    Buffer<std::pair<uint32_t, uint32_t>> & matchBuffer,
+    const string & commonKmerDB
+) {
     cout << "Filtering common k-mers from query k-mer buffer... ";
-    time_t beforeFilter = time(nullptr);
-
     string gtdbListDB;
-    std::string diffIdxFileName = db + "/common-kmers-with-mask" + "/diffIdx";
-    std::string infoFileName = db + "/common-kmers-with-mask" + "/info";
-    DeltaIdxReader* deltaIdxReaders = new DeltaIdxReader(diffIdxFileName, 
-                                                         infoFileName, 
-                                                         1024 * 1024 * 32, 
-                                                         1024 * 1024);
+    std::string diffIdxFileName = commonKmerDB +"/diffIdx";
+    std::string infoFileName    = commonKmerDB + "/info";
+    std::string diffIdxSplitFileName = commonKmerDB + "/split";
 
-    size_t queryKmerNum = queryKmerBuffer.startIndexOfReserve;
-    QueryKmer *queryKmerList = queryKmerBuffer.buffer;
-    for (size_t checkN = queryKmerNum - 1; checkN > 0; checkN--) {
-        if (queryKmerList[checkN].ADkmer != UINT64_MAX) {
-            queryKmerNum = checkN + 1;
-            break;
+    size_t blankCnt = std::find_if(qKmers.buffer,
+                               qKmers.buffer + qKmers.startIndexOfReserve, 
+                               [](const auto& kmer) { return kmer.id != 0;}
+                                  ) - qKmers.buffer;
+    size_t queryKmerNum = qKmers.startIndexOfReserve - blankCnt;
+    std::cout << "Query k-mer number     : " << queryKmerNum << endl;
+
+    // Filter out meaningless target splits
+    MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str(), 3);
+    size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
+    size_t numOfDiffIdxSplits_use = numOfDiffIdxSplits;
+    for (size_t i = 1; i < numOfDiffIdxSplits; i++) {
+        if (diffIdxSplits.data[i].ADkmer == 0 || diffIdxSplits.data[i].ADkmer == UINT64_MAX) {
+            numOfDiffIdxSplits_use--;
         }
     }
-    if (queryKmerNum == 0) return;
+
+    // Divide query k-mer list into blocks for multi threading.
+    std::vector<QueryKmerSplit> querySplits;
+    size_t quotient = queryKmerNum / par.threads;
+    size_t remainder = queryKmerNum % par.threads;
+    size_t startIdx = blankCnt;
+    size_t endIdx = 0; // endIdx is inclusive
+    for (size_t i = 0; i < par.threads; i++) {
+        endIdx = startIdx + quotient - 1;
+        if (remainder > 0) {
+            endIdx++;
+            remainder--;
+        }
+        bool needLastTargetBlock = true;
+        uint64_t queryAA = qKmers.buffer[startIdx].value;
+        for (size_t j = 0; j < numOfDiffIdxSplits_use; j ++) {
+            if (queryAA <= diffIdxSplits.data[j].ADkmer) {
+                querySplits.emplace_back(startIdx, endIdx, diffIdxSplits.data[j - (j != 0)]);
+                needLastTargetBlock = false;
+                break;
+            }
+        }
+        if (needLastTargetBlock) {
+            querySplits.emplace_back(startIdx, endIdx, diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
+        }
+        startIdx = endIdx + 1;
+    }
+    munmap(diffIdxSplits.data, diffIdxSplits.fileSize);
+
+    time_t beforeFilter = time(nullptr);
+    std::cout << "Common k-mer searching : " << std::flush;
+    #pragma omp parallel default(none), shared(matchBuffer, commonKmerDB, querySplits, qKmers, cout)
+    {
+        Buffer<std::pair<uint32_t, uint32_t>> localMatches(1024 * 1024 * 2);  // 16 Mb <queryID, pos>
+        DeltaIdxReader * deltaIdxReaders 
+            = new DeltaIdxReader(commonKmerDB + "/diffIdx",
+                                 commonKmerDB + "/info", 
+                                 1024 * 1024, 1024 * 1024);
+        std::vector<std::pair<uint32_t, uint32_t>> tempMatches;  
+        bool hasOverflow = false;
     
-    // filter common kmers
-    vector<pair<uint32_t, uint32_t>> targetKmerPos;
-    int queryKmerIdx = 0;
+        #pragma omp for schedule(dynamic, 1)
+        for (size_t i = 0; i < querySplits.size(); i++) {
+            deltaIdxReaders->setReadPosition(querySplits[i].diffIdxSplit);
+            Kmer tKmer = deltaIdxReaders->next();
+            Kmer qKmer(UINT64_MAX, 0);
+            for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
+                // Reuse the AA matches if queries are identical
+                if (qKmer.value == qKmers.buffer[j].value) {
+                    if (unlikely(!localMatches.afford(tempMatches.size()))) {
+                        if (!Buffer<std::pair<uint32_t, uint32_t>>::moveSmallToLarge(&localMatches, &matchBuffer)) {
+                            hasOverflow = true;
+                            break;
+                        }
+                    }
+                    size_t posToWrite = localMatches.reserveMemory(tempMatches.size());
+                    memcpy(localMatches.buffer + posToWrite, tempMatches.data(),
+                           sizeof(std::pair<uint32_t, uint32_t>) * tempMatches.size());
+                    for (size_t k = 0; k < tempMatches.size(); k++) {
+                        localMatches.buffer[posToWrite + k].first = qKmers.buffer[j].qInfo.sequenceID;
+                        localMatches.buffer[posToWrite + k].second = qKmers.buffer[j].qInfo.pos;
+                    }
+                    continue;
+                }
+                tempMatches.clear();
+                // Get next query, and start to find
+                qKmer = qKmers.buffer[j];
 
-    TargetKmer kmer = deltaIdxReaders->getNextValue();
-    while(queryKmerIdx < (int)queryKmerNum && !deltaIdxReaders->isCompleted()){
-        if(queryKmerList[queryKmerIdx].ADkmer < kmer.metamer.metamer){
-            queryKmerIdx++;
-        }
-        else if(queryKmerList[queryKmerIdx].ADkmer > kmer.metamer.metamer){
-            kmer = deltaIdxReaders->getNextValue();
-        }
-        else{
-            auto seq = static_cast<uint32_t>(queryKmerList[queryKmerIdx].info.sequenceID);
-            auto pos = static_cast<uint32_t>(queryKmerList[queryKmerIdx].info.pos);
-            targetKmerPos.emplace_back(seq, pos);
-            queryKmerIdx++;
-        }
-    }
-    delete deltaIdxReaders;
+                // Skip target k-mers lexiocographically smaller
+                while (!deltaIdxReaders->isCompleted() && qKmer.value > tKmer.value) {
+                    tKmer = deltaIdxReaders->next();
+                }
 
-    std::sort(targetKmerPos.begin(), targetKmerPos.end());
-    targetKmerPos.erase(std::unique(targetKmerPos.begin(), targetKmerPos.end()), targetKmerPos.end());
+                // No match found - skip to the next query
+                if (qKmer.value != tKmer.value) { continue; } 
 
-    // sort buffer by locaion idx
+                // Match found - load target k-mers matching at amino acid level
+                while (!deltaIdxReaders->isCompleted() && qKmer.value == tKmer.value) {
+                    tempMatches.emplace_back((uint32_t) qKmer.qInfo.sequenceID, (uint32_t) qKmer.qInfo.pos);
+                    tKmer = deltaIdxReaders->next();                                      
+                }
+
+                if (unlikely(!localMatches.afford(tempMatches.size()))) {
+                    if (!Buffer<std::pair<uint32_t, uint32_t>>::moveSmallToLarge(&localMatches, &matchBuffer)) {
+                        hasOverflow = true;
+                        break;
+                    }
+                }
+
+                size_t posToWrite = localMatches.reserveMemory(tempMatches.size());
+                memcpy(localMatches.buffer + posToWrite, tempMatches.data(),
+                       sizeof(std::pair<uint32_t, uint32_t>) * tempMatches.size());
+            } // End of one split
+
+            // Move matches in the local buffer to the shared buffer
+            if (!Buffer<std::pair<uint32_t, uint32_t>>::moveSmallToLarge(&localMatches, &matchBuffer)) {
+                hasOverflow = true;
+            }
+        } // End of omp for (Iterating for splits)
+    } // End of omp parallel
+    std::cout << time(nullptr) - beforeFilter << " s" << endl;
+
+    time_t here = time(nullptr);
+    std::cout << "Sorting matches        : " << std::flush;
+    SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve);
+    here = time(nullptr) - here;
+    std::cout << double(here) << " s" << endl;
+
+    // std::sort(targetKmerPos.begin(), targetKmerPos.end());
+    // targetKmerPos.erase(std::unique(targetKmerPos.begin(), targetKmerPos.end()), targetKmerPos.end());
+
+    // Sort query k-mers by <seqID, pos>
     time_t firstSort = time(nullptr);
-    SORT_PARALLEL(queryKmerList, queryKmerList + queryKmerNum, compareForKmerFilter());
+    SORT_PARALLEL(qKmers.buffer + blankCnt, qKmers.buffer + qKmers.startIndexOfReserve, Kmer::compareQKmerByIdAndPos);
     firstSort = time(nullptr) - firstSort;
+    std::cout << "Query k-mer sorting (1): " << double(firstSort) << " s" << std::endl;
 
-    // filter neighbor kmers
-    queryKmerIdx = 0;
+    // Filter neighbor k-mers
+    here = time(nullptr);
+    std::cout << "Filtering common k-mers: " << std::flush;
+    size_t queryKmerIdx = blankCnt;
     int targetKmerPosIdx = 0;
-    int queryKmerIdx_copy = 0;
-    while(queryKmerIdx_copy < (int)queryKmerNum){
-        if (targetKmerPosIdx < targetKmerPos.size()){
+    size_t queryKmerIdx_copy = blankCnt;
+    while (queryKmerIdx_copy < qKmers.startIndexOfReserve) {
+        if (targetKmerPosIdx < matchBuffer.startIndexOfReserve) {
             // copy
-            if (queryKmerList[queryKmerIdx_copy].info.sequenceID < targetKmerPos[targetKmerPosIdx].first){
-                queryKmerList[queryKmerIdx] = queryKmerList[queryKmerIdx_copy];
+            if (qKmers.buffer[queryKmerIdx_copy].qInfo.sequenceID < matchBuffer.buffer[targetKmerPosIdx].first){
+                qKmers.buffer[queryKmerIdx] = qKmers.buffer[queryKmerIdx_copy];
                 queryKmerIdx++;
                 queryKmerIdx_copy++;
             }
             // next target check
-            else if(queryKmerList[queryKmerIdx_copy].info.sequenceID > targetKmerPos[targetKmerPosIdx].first){
+            else if(qKmers.buffer[queryKmerIdx_copy].qInfo.sequenceID > matchBuffer.buffer[targetKmerPosIdx].first){
                 targetKmerPosIdx++;
             }
             // same seq
             else{
                 // copy
-                if (int64_t(queryKmerList[queryKmerIdx_copy].info.pos) < int(targetKmerPos[targetKmerPosIdx].second) - 0){
-                    queryKmerList[queryKmerIdx] = queryKmerList[queryKmerIdx_copy];
+                if (int64_t(qKmers.buffer[queryKmerIdx_copy].qInfo.pos) < int(matchBuffer.buffer[targetKmerPosIdx].second) - 0){
+                    qKmers.buffer[queryKmerIdx] = qKmers.buffer[queryKmerIdx_copy];
                     queryKmerIdx++;
                     queryKmerIdx_copy++;
                 }
                 // next target check
-                else if(int(targetKmerPos[targetKmerPosIdx].second) + 0 < int64_t(queryKmerList[queryKmerIdx_copy].info.pos)){
+                else if(int(matchBuffer.buffer[targetKmerPosIdx].second) + 0 < int64_t(qKmers.buffer[queryKmerIdx_copy].qInfo.pos)){
                     targetKmerPosIdx++;
                 }
                 // pass
@@ -241,22 +345,20 @@ void GroupGenerator::filterCommonKmers(Buffer<QueryKmer>& queryKmerBuffer,
             }            
         }
         else{
-            queryKmerList[queryKmerIdx] = queryKmerList[queryKmerIdx_copy];
+            qKmers.buffer[queryKmerIdx] = qKmers.buffer[queryKmerIdx_copy];
             queryKmerIdx++;
             queryKmerIdx_copy++;
         }
     }
-    queryKmerBuffer.startIndexOfReserve = size_t(queryKmerIdx);
+    qKmers.startIndexOfReserve = size_t(queryKmerIdx);
+    cout << double(time(nullptr) - here) << " s" << endl;
     
     // sort buffer by kmer
     time_t secondSort = time(nullptr);
-    SORT_PARALLEL(queryKmerList, queryKmerList + queryKmerBuffer.startIndexOfReserve, compareForLinearSearch);
-    secondSort = time(nullptr) - secondSort;
-
-    cout << "Done : " << double(time(nullptr) - beforeFilter) << " s" << endl;
-    cout << "Query k-mer sorting (1): " << double(firstSort) << " s" << endl;
+    SORT_PARALLEL(qKmers.buffer, qKmers.buffer + qKmers.startIndexOfReserve, Kmer::compareQueryKmer);
+    secondSort = time(nullptr) - secondSort;    
     cout << "Query k-mer sorting (2): " << double(secondSort) << " s" << endl;
-    cout << "Number of k-mers : " << queryKmerNum << " -> " << queryKmerIdx << endl;
+    cout << "Number of k-mers       : " << queryKmerNum << " -> " << queryKmerIdx << endl;
 }
 
 void GroupGenerator::makeGraph(const string &queryKmerFileDir, 
@@ -961,21 +1063,20 @@ vector<pair<uint64_t, QueryKmerInfo>> KmerFileHandler::getNextKmersBatch(const M
     return batch;
 }
 
-void KmerFileHandler::writeQueryKmerFile(Buffer<QueryKmer>& queryKmerBuffer, 
+void KmerFileHandler::writeQueryKmerFile(Buffer<Kmer>& queryKmerBuffer, 
                                          const string& queryKmerFileDir, 
                                          size_t& numOfSplits, 
                                          size_t numOfThreads,
                                          size_t processedReadCnt, 
                                          const string & jobId) {
 
+    size_t blankCnt = std::find_if(queryKmerBuffer.buffer,
+                                   queryKmerBuffer.buffer + queryKmerBuffer.startIndexOfReserve, 
+                                   [](const auto& kmer) { return kmer.id != 0;}
+                                  ) - queryKmerBuffer.buffer;                                        
+
     size_t queryKmerNum = queryKmerBuffer.startIndexOfReserve;
-    QueryKmer *queryKmerList = queryKmerBuffer.buffer;
-    for (size_t checkN = queryKmerNum - 1; checkN > 0; checkN--) {
-        if (queryKmerList[checkN].ADkmer != UINT64_MAX) {
-            queryKmerNum = checkN + 1;
-            break;
-        }
-    }
+    Kmer *queryKmerList = queryKmerBuffer.buffer + blankCnt;
 
     // 💡 첫 split일 때만 k-mer 개수 기반으로 균등 분포 계산
     if (!boundariesInitialized) {
@@ -990,7 +1091,7 @@ void KmerFileHandler::writeQueryKmerFile(Buffer<QueryKmer>& queryKmerBuffer,
             size_t index = (i * queryKmerNum) / numOfThreads;
             if (index >= queryKmerNum) index = queryKmerNum - 1;
             // kmerBoundaries.emplace_back(allKmers[index]);
-            kmerBoundaries.emplace_back(queryKmerList[index].ADkmer);
+            kmerBoundaries.emplace_back(queryKmerList[index].value);
         }
 
         boundariesInitialized = true;
@@ -1027,15 +1128,15 @@ void KmerFileHandler::writeQueryKmerFile(Buffer<QueryKmer>& queryKmerBuffer,
     uint64_t lastKmer[numOfThreads] = {0, };
     size_t write = 0;
 
-    for (size_t i = 0; i < queryKmerNum ; i++) {
+    for (size_t i = blankCnt; i < queryKmerNum ; i++) {
         // 💡 실제 분포 기반 boundary를 사용한 split index 결정
-        size_t splitIdx = upper_bound(kmerBoundaries.begin(), kmerBoundaries.end(), queryKmerList[i].ADkmer) - kmerBoundaries.begin() - 1;
+        size_t splitIdx = upper_bound(kmerBoundaries.begin(), kmerBoundaries.end(), queryKmerList[i].value) - kmerBoundaries.begin() - 1;
         if (splitIdx >= numOfThreads) splitIdx = numOfThreads - 1;
         
-        queryKmerList[i].info.sequenceID += processedReadCnt;
-        fwrite(&queryKmerList[i].info, sizeof(QueryKmerInfo), 1, infoFiles[splitIdx]); 
-        getDiffIdx(lastKmer[splitIdx], queryKmerList[i].ADkmer, diffIdxFiles[splitIdx], diffIdxBuffers[splitIdx], localBufIdxs[splitIdx], bufferSize); 
-        lastKmer[splitIdx] = queryKmerList[i].ADkmer;   
+        queryKmerList[i].qInfo.sequenceID += processedReadCnt;
+        fwrite(&queryKmerList[i].qInfo, sizeof(QueryKmerInfo), 1, infoFiles[splitIdx]); 
+        getDiffIdx(lastKmer[splitIdx], queryKmerList[i].value, diffIdxFiles[splitIdx], diffIdxBuffers[splitIdx], localBufIdxs[splitIdx], bufferSize); 
+        lastKmer[splitIdx] = queryKmerList[i].value;   
         write++; 
     }
 

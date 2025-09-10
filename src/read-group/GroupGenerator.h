@@ -36,13 +36,13 @@ struct Relation {
     }
 };
 
-struct compareForKmerFilter {
-    bool operator()(const QueryKmer& a, const QueryKmer& b) const {
-        if (a.info.sequenceID != b.info.sequenceID)
-            return a.info.sequenceID < b.info.sequenceID;
-        return a.info.pos < b.info.pos;
-    }
-};
+// struct compareForKmerFilter {
+//     bool operator()(const QueryKmer& a, const QueryKmer& b) const {
+//         if (a.info.sequenceID != b.info.sequenceID)
+//             return a.info.sequenceID < b.info.sequenceID;
+//         return a.info.pos < b.info.pos;
+//     }
+// };
 
 struct relation_hash {
     size_t operator()(const Relation& r) const {
@@ -125,7 +125,7 @@ public:
                                                             uint64_t& currentVal,
                                                             size_t maxBatchSize);
 
-    void writeQueryKmerFile(Buffer<QueryKmer>& queryKmerBuffer, 
+    void writeQueryKmerFile(Buffer<Kmer>& queryKmerBuffer, 
                                    const string& queryKmerFileDir, 
                                    size_t& numOfSplits, 
                                    size_t numOfThreads, 
@@ -149,7 +149,9 @@ public:
 
 class GroupGenerator {
 protected:
-    string dbDir;
+    const LocalParameters & par;
+    string commonKmerDB;
+    string taxDbDir;
     size_t matchPerKmer;
     int kmerFormat;
     
@@ -170,7 +172,9 @@ public:
 
     void startGroupGeneration(const LocalParameters & par);
     
-    void filterCommonKmers(Buffer<QueryKmer>& queryKmerBuffer, const string & db="");
+    void filterCommonKmers(Buffer<Kmer>& queryKmerBuffer,
+                           Buffer<std::pair<uint32_t, uint32_t>> & matchBuffer,
+                           const string & db="");
 
     void makeGraph(const string &queryKmerFileDir, 
                    size_t &numOfSplits, 
