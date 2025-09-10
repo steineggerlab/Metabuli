@@ -137,7 +137,7 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
     // for (size_t i = offset; i < end+1; i ++) {
     //     matchList[i].printMatch();
     // }
-    TaxonScore speciesScore(0, 0, 0, 0, 0);
+    TaxonScore speciesScore(0, 0, 0, 0);
     std::pair<size_t, size_t> bestSpeciesRange;
     speciesScore = getBestSpeciesMatches(bestSpeciesRange,
                                          matchList,
@@ -150,7 +150,6 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
         queryList[currentQuery].isClassified = false;
         queryList[currentQuery].classification = 0;
         queryList[currentQuery].score = speciesScore.score;
-        queryList[currentQuery].coverage = speciesScore.coverage;
         queryList[currentQuery].hammingDist = speciesScore.hammingDist;
         queryList[currentQuery].newSpecies = false;
         return;
@@ -161,7 +160,6 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
         queryList[currentQuery].isClassified = true;
         queryList[currentQuery].classification = speciesScore.taxId;
         queryList[currentQuery].score = speciesScore.score;
-        queryList[currentQuery].coverage = speciesScore.coverage;
         queryList[currentQuery].hammingDist = speciesScore.hammingDist;
         return;
     }
@@ -182,7 +180,6 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
       queryList[currentQuery].classification = taxonomy->taxonNode(
               taxonomy->getTaxIdAtRank(speciesScore.taxId, "species"))->parentTaxId;
       queryList[currentQuery].score = speciesScore.score;
-      queryList[currentQuery].coverage = speciesScore.coverage;
       queryList[currentQuery].hammingDist = speciesScore.hammingDist;
       return;
     }
@@ -190,7 +187,6 @@ void Taxonomer::chooseBestTaxon(uint32_t currentQuery,
     // Store classification results
     queryList[currentQuery].isClassified = true;
     queryList[currentQuery].score = speciesScore.score;
-    queryList[currentQuery].coverage = speciesScore.coverage;
     queryList[currentQuery].hammingDist = speciesScore.hammingDist;
     queryList[currentQuery].newSpecies = false;
 
@@ -378,11 +374,12 @@ TaxonScore Taxonomer::getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpec
         return bestScore;
     }
 
-    if (par.em) {
+    if (par.em && !sp2score.empty()) {
         sort(sp2score.begin(), sp2score.end(),
              [](const pair<TaxID, float> &a, const pair<TaxID, float> &b) {
                  return a.second > b.second;
              });
+        query.topSpeciesId = sp2score[0].first;
         for (size_t i = 0; i < 10 && i < sp2score.size(); i++) {
             query.species2Score.emplace_back(sp2score[i].first, sp2score[i].second * sp2score[i].second);
         }
@@ -401,7 +398,6 @@ TaxonScore Taxonomer::getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpec
         bestScore.LCA = true;
         bestScore.taxId = taxonomy->LCA(maxSpecies)->taxId;
         bestScore.score /= maxSpecies.size();
-        // bestScore.coverage /= maxSpecies.size();
         return bestScore;
     }
     

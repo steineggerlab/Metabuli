@@ -68,7 +68,7 @@ public:
     // Setters
     void setAvailableRam();
     void setBytesPerKmer(size_t matchPerKmer) {
-        bytesPerKmer = sizeof(QueryKmer) + matchPerKmer * sizeof(Match);
+        bytesPerKmer = sizeof(Kmer) + matchPerKmer * sizeof(Match);
     }
 
 };

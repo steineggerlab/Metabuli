@@ -125,7 +125,7 @@ int accession2taxid(const std::string & assemblyList, const std::string & assacc
         string accession = it.first;
         size_t pos = accession.find('.');
         if (pos != string::npos) { accession = accession.substr(0, pos);}
-        fprintf(handle, "%s\t%s\t%d\t0\n", it.first.c_str(), accession.c_str(), it.second);
+        fprintf(handle, "%s\t%s\t%d\t0\n", accession.c_str(), it.first.c_str(), it.second);
     }
     fclose(handle);
 

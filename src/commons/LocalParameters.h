@@ -45,6 +45,13 @@ public:
     std::vector<MMseqsParameter*> classifiedRefiner;
     std::vector<MMseqsParameter*> validateDatabase;
     std::vector<MMseqsParameter*> makeBenchmarkSet;
+    std::vector<MMseqsParameter*> buildUnirefDb;
+    std::vector<MMseqsParameter*> buildUnirefTree;
+    std::vector<MMseqsParameter*> assignUniref;
+
+    // UniRef
+    PARAMETER(UNIREF_NUMBERS)
+    std::string unirefNumbers;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
@@ -57,6 +64,7 @@ public:
     PARAMETER(SYNCMER)
     PARAMETER(SMER_LEN)
     PARAMETER(KMER_FORMAT)
+    PARAMETER(UNIREF_XML)
 
     // Classify
     PARAMETER(SEQ_MODE)
@@ -146,6 +154,7 @@ public:
     int syncmer;
     int smerLen;
     int kmerFormat;
+    std::string unirefXml;
 
     // Classify
     int seqMode;
