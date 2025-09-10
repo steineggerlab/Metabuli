@@ -67,12 +67,12 @@ int count_common_kmers(int argc, const char **argv, const Command &command) {
             }
 
             deltaIdxReaders->setReadPosition(currOffset);
-            Kmer kmer = deltaIdxReaders->getNextValue();
+            Kmer kmer = deltaIdxReaders->next();
             while (!deltaIdxReaders->isCompleted() &&
                 (kmer.value < nextOffsetKmer)) 
             {
                 taxIds.push_back(kmer.tInfo.taxId & mask2);
-                while (((nextKmer = deltaIdxReaders->getNextValue()).isEmpty() == false)
+                while (((nextKmer = deltaIdxReaders->next()).isEmpty() == false)
                     && ((nextKmer.value) == (kmer.value))) 
                 {
                     taxIds.push_back(nextKmer.tInfo.taxId & mask2);

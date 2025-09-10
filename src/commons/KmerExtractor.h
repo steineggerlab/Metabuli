@@ -7,10 +7,12 @@
 #include <unordered_map>
 #include <atomic>
 #include <cstdint>
+#include "GeneticCode.h"
 
 class KmerExtractor {
 private:
     const LocalParameters &par;
+    const GeneticCode &geneticCode;
     KmerScanner ** kmerScanners;
     
     // Parameters
@@ -72,6 +74,7 @@ public:
         const GeneticCode &geneticCode,
         int kmerFormat);
     ~KmerExtractor();
+
     void extractQueryKmers(
         Buffer<Kmer> &kmerBuffer,
         vector<Query> & queryList,
@@ -79,6 +82,23 @@ public:
         const LocalParameters &par,
         KSeqWrapper* kseq1,
         KSeqWrapper* kseq2 = nullptr);
+
+    bool extractQueryKmers_aa2aa(
+        Buffer<Kmer> &kmerBuffer,
+        std::vector<ProteinQuery> & queryList,
+        KSeqWrapper* kseq,
+        uint64_t & processedSeqCnt,
+        SeqEntry & savedSeq
+    );
+
+    void processSequenceChunk_aa2aa(
+        Buffer<Kmer> &kmerBuffer,
+        size_t writePos,
+        uint32_t queryOffset,
+        const std::vector<std::string> & aaSeqs, 
+        size_t seqNum,
+        int threadID
+    );
 
     int extractTargetKmers(
         const char *seq,

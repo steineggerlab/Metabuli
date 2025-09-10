@@ -129,13 +129,13 @@ public:
         return totalValueNum;
     }
 
-    Kmer getNextValue() {
-        if (valueBufferIdx >= valueCnt) {
+    Kmer next() {
+        if (unlikely(valueBufferIdx >= valueCnt)) {
             valueCnt = 0;
             valueBufferIdx = 0;
             fillValueBuffer();
         }
-        if (valueCnt == 0) {
+        if (unlikely(valueCnt == 0)) {
             valueBufferCompleted = true;
             return Kmer(); // Return an empty k-mer
         }

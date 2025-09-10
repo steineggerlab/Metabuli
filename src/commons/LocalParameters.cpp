@@ -613,7 +613,6 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MATCH_PER_KMER);
     classify.push_back(&ACCESSION_LEVEL);
     classify.push_back(&TIE_RATIO);
-    // classify.push_back(&SKIP_REDUNDANCY);
     classify.push_back(&PRINT_LINEAGE);
     classify.push_back(&VALIDATE_INPUT);
     classify.push_back(&VALIDATE_DB);
@@ -622,6 +621,11 @@ LocalParameters::LocalParameters() :
     classify.push_back(&PRINT_LOG);
     classify.push_back(&REDUCED_AA);
     classify.push_back(&EM);
+
+    assignUniref.push_back(&PARAM_THREADS);
+    assignUniref.push_back(&RAM_USAGE);
+    assignUniref.push_back(&MATCH_PER_KMER);
+    assignUniref.push_back(&VALIDATE_INPUT);
 
 
     // extract

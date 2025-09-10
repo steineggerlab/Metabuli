@@ -19,7 +19,6 @@ constexpr uint16_t KmerMatcher::HAMMING_LUT7[64];
 KmerMatcher::KmerMatcher(
     const LocalParameters & par,
     TaxonomyWrapper * taxonomy,
-
     int kmerFormat) 
     : par(par), 
       kmerFormat(kmerFormat) 
@@ -37,6 +36,18 @@ KmerMatcher::KmerMatcher(
     loadTaxIdList(par);
 }
 
+KmerMatcher::KmerMatcher(
+    const LocalParameters &par,
+    int kmerFormat) : par(par),
+                      kmerFormat(kmerFormat)
+{
+    geneticCode = new GeneticCode(false);
+    dbDir = par.filenames[1];
+    targetDiffIdxFileName = dbDir + "/diffIdx";
+    targetInfoFileName = dbDir + "/info";
+    diffIdxSplitFileName = dbDir + "/split";
+    totalMatchCnt = 0;
+}
 
 KmerMatcher::~KmerMatcher() {
     delete geneticCode;
@@ -171,13 +182,13 @@ bool KmerMatcher::matchKmers(Buffer<Kmer> * queryKmerBuffer,
         for (size_t j = 0; j < numOfDiffIdxSplits_use; j ++) {
             if (queryAA <= AMINO_ACID_PART(diffIdxSplits.data[j].ADkmer)) {
                 j = j - (j != 0);
-                querySplits.emplace_back(startIdx, endIdx, endIdx - startIdx + 1, diffIdxSplits.data[j]);
+                querySplits.emplace_back(startIdx, endIdx, diffIdxSplits.data[j]);
                 needLastTargetBlock = false;
                 break;
             }
         }
         if (needLastTargetBlock) {
-            querySplits.emplace_back(startIdx, endIdx, endIdx - startIdx + 1, diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
+            querySplits.emplace_back(startIdx, endIdx, diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
         }
         startIdx = endIdx + 1;
     }
@@ -466,6 +477,301 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
     std::cout << double(time(nullptr) - beforeSearch) << " s" << std::endl;
     free(splitCheckList);
     totalMatchCnt += matchBuffer->startIndexOfReserve;
+    return true;
+}
+
+std::vector<QueryKmerSplit> KmerMatcher::makeQueryKmerSplits(const Buffer<Kmer> * qKmers) 
+{
+    size_t blankCnt = std::find_if(qKmers->buffer,
+                                   qKmers->buffer + qKmers->startIndexOfReserve, 
+                                   [](const auto& kmer) { return kmer.id != 0;}
+                                  ) - qKmers->buffer;
+    size_t queryKmerNum = qKmers->startIndexOfReserve - blankCnt;
+    std::cout << "Query k-mer number     : " << queryKmerNum << endl;
+
+    // Filter out meaningless target splits
+    MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str(), 3);
+    size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
+    size_t numOfDiffIdxSplits_use = numOfDiffIdxSplits;
+    for (size_t i = 1; i < numOfDiffIdxSplits; i++) {
+        if (diffIdxSplits.data[i].ADkmer == 0 || diffIdxSplits.data[i].ADkmer == UINT64_MAX) {
+            numOfDiffIdxSplits_use--;
+        }
+    }
+
+    // Divide query k-mer list into blocks for multi threading.
+    std::vector<QueryKmerSplit> querySplits;
+    size_t quotient = queryKmerNum / par.threads;
+    size_t remainder = queryKmerNum % par.threads;
+    size_t startIdx = blankCnt;
+    size_t endIdx = 0; // endIdx is inclusive
+    for (size_t i = 0; i < par.threads; i++) {
+        endIdx = startIdx + quotient - 1;
+        if (remainder > 0) {
+            endIdx++;
+            remainder--;
+        }
+        bool needLastTargetBlock = true;
+        uint64_t queryAA = AminoAcidPart(qKmers->buffer[startIdx].value);
+        for (size_t j = 0; j < numOfDiffIdxSplits_use; j ++) {
+            if (queryAA <= AminoAcidPart(diffIdxSplits.data[j].ADkmer)) {
+                // Kmer qkmer(queryAA, 0);
+                // Kmer tkmer (diffIdxSplits.data[j].ADkmer, 0);
+                // cout << j << "\t" << startIdx << "\t";
+                // qkmer.printAA(*geneticCode, 12); cout << "\t";
+                // tkmer.printAA(*geneticCode, 12); cout << endl;
+                querySplits.emplace_back(startIdx, endIdx, diffIdxSplits.data[j - (j != 0)]);
+                needLastTargetBlock = false;
+                break;
+            }
+        }
+        if (needLastTargetBlock) {
+            querySplits.emplace_back(startIdx, endIdx, diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
+        }
+        startIdx = endIdx + 1;
+    }
+
+    for (size_t i = 0; i < querySplits.size(); i++) {
+        std::cout << "Split " << i << ": Query k-mer index " << querySplits[i].start << " - " << querySplits[i].end
+                  << ", Target k-mer offset " << querySplits[i].diffIdxSplit.ADkmer
+                  << " (diffIdx: " << querySplits[i].diffIdxSplit.diffIdxOffset
+                  << ", infoIdx: " << querySplits[i].diffIdxSplit.infoIdxOffset << ")" << std::endl;
+    }
+
+    munmap(diffIdxSplits.data, diffIdxSplits.fileSize);
+    return querySplits;
+}
+
+
+bool KmerMatcher::matchKmers2(
+    const Buffer<Kmer> * queryKmerBuffer,
+    Buffer<Match> * totalMatches,
+    const string & db)
+{
+    std::vector<QueryKmerSplit> querySplits = makeQueryKmerSplits(queryKmerBuffer);
+    const Kmer * qKmers = queryKmerBuffer->buffer;
+    bool *splitCheckList = (bool *) calloc(querySplits.size(), sizeof(bool));
+    size_t totalOverFlowCnt = 0;
+    unsigned int mask = ~((static_cast<unsigned int>(par.skipRedundancy == 0) << 31)); 
+
+    std::cout << "Reference k-mer search : " << flush;
+    time_t beforeSearch = time(nullptr);
+#pragma omp parallel default(none), shared(splitCheckList, totalOverFlowCnt, \
+querySplits, qKmers, totalMatches, cout, mask)
+{
+    Buffer<Match> localMatches(1024 * 1024 * 2);
+    DeltaIdxReader * deltaIdxReaders = new DeltaIdxReader(targetDiffIdxFileName,
+                                                    targetInfoFileName, 
+                                                    1024 * 1024 * 32, 1024 * 1024);
+    std::vector<Kmer> candidates;
+    std::vector<Match> filteredMatches;
+    bool hasOverflow = false;
+#pragma omp for schedule(dynamic, 1)
+    for (size_t i = 0; i < querySplits.size(); i++) {
+        if (totalOverFlowCnt > 0 || splitCheckList[i]) { continue; } 
+
+        deltaIdxReaders->setReadPosition(querySplits[i].diffIdxSplit);
+        Kmer tKmer = deltaIdxReaders->next();
+        uint64_t nextOffsetKmer = (i == querySplits.size() - 1)
+                         ? UINT64_MAX
+                         : querySplits[i + 1].diffIdxSplit.ADkmer;
+        
+        Kmer qKmer(UINT64_MAX, 0);
+        uint64_t qKmerAA = UINT64_MAX;
+        for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
+            // Reuse the filtered matches if queries are exactly identical
+            if (qKmer.value == qKmers[j].value && (qKmer.qInfo.frame/3 == qKmers[j].qInfo.frame/3)) {
+                size_t filteredMatchCnt = filteredMatches.size();
+                if (unlikely(!localMatches.afford(filteredMatchCnt))) {
+                    if (!Buffer<Match>::moveSmallToLarge(&localMatches, totalMatches)) {
+                        hasOverflow = true;
+                        __sync_fetch_and_add(&totalOverFlowCnt, 1);
+                        break;
+                    }
+                }
+                size_t posToWrite = localMatches.reserveMemory(filteredMatchCnt);
+                memcpy(localMatches.buffer + posToWrite, filteredMatches.data(),
+                       sizeof(Match) * filteredMatchCnt);
+                for (size_t k = 0; k < filteredMatchCnt; k++) {
+                    localMatches.buffer[posToWrite + k].qInfo = qKmers[j].qInfo;
+                }
+                continue;
+            }
+
+            // Reuse the candidate target k-mers to compare in DNA level if queries are the same at amino acid level but not at DNA level
+            if (qKmerAA == AminoAcidPart(qKmers[j].value)) {
+                filterCandidates(qKmers[j], candidates, filteredMatches);
+                size_t filteredMatchCnt = filteredMatches.size();
+                if (unlikely(!localMatches.afford(filteredMatchCnt))) {
+                    if (!Buffer<Match>::moveSmallToLarge(&localMatches, totalMatches)) {
+                        hasOverflow = true;
+                        __sync_fetch_and_add(&totalOverFlowCnt, 1);
+                        break;
+                    }
+                }
+                size_t posToWrite = localMatches.reserveMemory(filteredMatchCnt);
+                memcpy(localMatches.buffer + posToWrite, filteredMatches.data(),
+                       sizeof(Match) * filteredMatchCnt);
+                for (size_t k = 0; k < filteredMatchCnt; k++) {
+                    localMatches.buffer[posToWrite + k].qInfo = qKmers[j].qInfo;
+                }
+                qKmer = qKmers[j];
+                qKmerAA = AminoAcidPart(qKmer.value);
+                continue;
+            }
+            candidates.clear();
+
+            // Get next query, and start to find
+            qKmer = qKmers[j];
+            qKmerAA = AminoAcidPart(qKmer.value);
+
+            // Skip target k-mers lexiocographically smaller at amino acid level
+            while (tKmer.value < nextOffsetKmer 
+                    && !deltaIdxReaders->isCompleted() 
+                    && qKmerAA > AminoAcidPart(tKmer.value)) {
+                tKmer = deltaIdxReaders->next();
+            }
+
+            // No match found - skip to the next query
+            if (qKmerAA != AminoAcidPart(tKmer.value)) {
+                continue;
+            } 
+                    
+            // Match found - load target k-mers matching at amino acid level
+            while (tKmer.value < nextOffsetKmer 
+                    && !deltaIdxReaders->isCompleted() 
+                    && qKmerAA == AminoAcidPart(tKmer.value)) {
+                candidates.emplace_back(tKmer.value, tKmer.id & mask);
+                tKmer = deltaIdxReaders->next();                                      
+            }
+
+            filterCandidates(qKmer, candidates, filteredMatches);
+            if (unlikely(!localMatches.afford(filteredMatches.size()))) {
+                if (!Buffer<Match>::moveSmallToLarge(&localMatches, totalMatches)) {
+                    hasOverflow = true;
+                    __sync_fetch_and_add(&totalOverFlowCnt, 1);
+                    break;
+                }
+            }
+
+            size_t posToWrite = localMatches.reserveMemory(filteredMatches.size());
+            memcpy(localMatches.buffer + posToWrite, filteredMatches.data(),
+                   sizeof(Match) * filteredMatches.size());
+        } // End of one split
+
+        // Move matches in the local buffer to the shared buffer
+        if (!Buffer<Match>::moveSmallToLarge(&localMatches, totalMatches)) {
+            hasOverflow = true;
+            __sync_fetch_and_add(&totalOverFlowCnt, 1);
+        }
+
+        // Check whether current split is completed or not
+        if (!hasOverflow) {
+            splitCheckList[i] = true;
+        }
+    } // End of omp for (Iterating for splits)
+} // End of omp parallel
+        
+    if (totalOverFlowCnt > 0) {
+        return false;
+    }
+    std::cout << double(time(nullptr) - beforeSearch) << " s" << std::endl;
+    free(splitCheckList);
+    totalMatchCnt += totalMatches->startIndexOfReserve;
+    return true;
+}
+
+
+bool KmerMatcher::matchKmers_AA(
+    const Buffer<Kmer> * queryKmerBuffer,
+    Buffer<Match_AA> * totalMatches,
+    const string & db)
+{
+    std::vector<QueryKmerSplit> querySplits = makeQueryKmerSplits(queryKmerBuffer);
+    const Kmer * qKmers = queryKmerBuffer->buffer;
+    std::atomic<int> totalOverFlowCnt{0};
+    #pragma omp parallel default(none), shared(totalOverFlowCnt, querySplits, qKmers, totalMatches, cout)
+    {
+        Buffer<Match_AA> localMatches(1024 * 1024 * 2);  // 16 Mb
+        DeltaIdxReader * deltaIdxReaders 
+            = new DeltaIdxReader(targetDiffIdxFileName,
+                                 targetInfoFileName, 
+                                 1024 * 1024, 1024 * 1024);
+        std::vector<Match_AA> tempMatches;  
+        bool hasOverflow = false;
+    
+        #pragma omp for schedule(dynamic, 1)
+        for (size_t i = 0; i < querySplits.size(); i++) {
+            if (totalOverFlowCnt.load() > 0) { continue; }
+            deltaIdxReaders->setReadPosition(querySplits[i].diffIdxSplit);
+            Kmer tKmer = deltaIdxReaders->next();
+            uint64_t nextOffsetKmer = (i == querySplits.size() - 1)
+                             ? UINT64_MAX
+                             : querySplits[i + 1].diffIdxSplit.ADkmer;
+
+            Kmer qKmer(UINT64_MAX, 0);
+            for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
+                // Reuse the AA matches if queries are identical
+                if (qKmer.value == qKmers[j].value) {
+                    if (unlikely(!localMatches.afford(tempMatches.size()))) {
+                        if (!Buffer<Match_AA>::moveSmallToLarge(&localMatches, totalMatches)) {
+                            hasOverflow = true;
+                            totalOverFlowCnt++;
+                            break;
+                        }
+                    }
+                    size_t posToWrite = localMatches.reserveMemory(tempMatches.size());
+                    memcpy(localMatches.buffer + posToWrite, tempMatches.data(),
+                           sizeof(Match) * tempMatches.size());
+                    for (size_t k = 0; k < tempMatches.size(); k++) {
+                        localMatches.buffer[posToWrite + k].queryId = qKmers[j].qInfo.sequenceID;
+                        localMatches.buffer[posToWrite + k].pos = qKmers[j].qInfo.pos;
+                    }
+                    continue;
+                }
+                tempMatches.clear();
+                // Get next query, and start to find
+                qKmer = qKmers[j];
+
+                // Skip target k-mers lexiocographically smaller
+                while (!deltaIdxReaders->isCompleted() && qKmer.value > tKmer.value) {
+                    tKmer = deltaIdxReaders->next();
+                }
+
+                // No match found - skip to the next query
+                if (qKmer.value != tKmer.value) { continue; } 
+
+                // Match found - load target k-mers matching at amino acid level
+                while (!deltaIdxReaders->isCompleted() && qKmer.value == tKmer.value) {
+                    tempMatches.emplace_back((uint32_t) qKmer.qInfo.sequenceID, tKmer.id, (uint32_t) qKmer.qInfo.pos, tKmer.value);
+                    tKmer = deltaIdxReaders->next();                                      
+                }
+
+                if (unlikely(!localMatches.afford(tempMatches.size()))) {
+                    if (!Buffer<Match_AA>::moveSmallToLarge(&localMatches, totalMatches)) {
+                        hasOverflow = true;
+                        totalOverFlowCnt++;
+                        break;
+                    }
+                }
+
+                size_t posToWrite = localMatches.reserveMemory(tempMatches.size());
+                memcpy(localMatches.buffer + posToWrite, tempMatches.data(),
+                       sizeof(Match_AA) * tempMatches.size());
+            } // End of one split
+
+            // Move matches in the local buffer to the shared buffer
+            if (!Buffer<Match_AA>::moveSmallToLarge(&localMatches, totalMatches)) {
+                hasOverflow = true;
+                totalOverFlowCnt++;
+            }
+        } // End of omp for (Iterating for splits)
+    } // End of omp parallel
+        
+    if (totalOverFlowCnt.load() > 0) {
+        return false;
+    }
+    this->totalMatchCnt += totalMatches->startIndexOfReserve;
     return true;
 }
 
@@ -773,6 +1079,36 @@ void KmerMatcher::sortMatches(Buffer<Match> * matchBuffer) {
 void KmerMatcher::moveMatches(Match *dest, Match *src, size_t & matchNum) {
     memcpy(dest, src, sizeof(Match) * matchNum);
     matchNum = 0;
+}
+
+void KmerMatcher::filterCandidates(
+    Kmer qKmer,
+    const std::vector<Kmer> &candidates,
+    std::vector<Match> &filteredMatches
+) {
+    filteredMatches.clear();
+    std::vector<uint8_t> hammingDists(candidates.size());
+    uint8_t hDistCutoff = UINT8_MAX;
+    for (size_t i = 0; i < candidates.size(); i++) {
+        hammingDists[i] = getHammingDistanceSum(qKmer.value, candidates[i].value);
+        hDistCutoff = min(hDistCutoff, hammingDists[i]);
+    }
+    hDistCutoff = min(hDistCutoff * 2, 7);
+    for (size_t h = 0; h < candidates.size(); h++) {
+        if (hammingDists[h] <= hDistCutoff) {
+            uint16_t hDists = !((qKmer.qInfo.frame < 3) ^ (kmerFormat == 2))
+                ? getHammings(qKmer.value, candidates[h].value)
+                : getHammings_reverse(qKmer.value, candidates[h].value);
+            filteredMatches.emplace_back(
+                qKmer.qInfo,                                    // query k-mer info
+                candidates[h].id,                               // target TaxID
+                taxId2speciesId[candidates[h].id],              // target species ID
+                (unsigned int) (candidates[h].value & AA_MASK), // target DNA encoding
+                hDists,                                         // Hamming dist. per codon                        
+                hammingDists[h]                                 // Hamming dist. sum
+            );
+        }
+    }
 }
 
 // It compares query k-mers to target k-mers.

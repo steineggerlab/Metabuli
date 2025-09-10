@@ -41,13 +41,24 @@ int printInfo(int argc, const char **argv, const Command &command){
 
     uint32_t * infoArray = new uint32_t[maxIdx];
 
+    ReadBuffer<uint32_t> infoIdxFile(infoFileName, 1024 * 1024 * 16);
+    size_t idx = 0;
+    uint32_t value;
+    while ((value = infoIdxFile.getNext()) > 0) {
+        if (begin <= idx && idx < end) {
+            std::cout << value << std::endl;
+        }
+        idx++;
+    }
+
+
     // unordered_map<uint32_t, size_t> id2Cnt;
     vector<uint32_t> id2Cnt;
-    id2Cnt.resize(500'000'000); // Initial size, can be adjusted based on expected number of unique IDs
+    // id2Cnt.resize(500'000'000); // Initial size, can be adjusted based on expected number of unique IDs
     #pragma omp parallel default(none) shared(cout, infoFileName, id2Cnt, ranges)
     {
         vector<uint32_t> local_id2Cnt;
-        local_id2Cnt.resize(500'000'000);
+        // local_id2Cnt.resize(500'000'000);
         ReadBuffer<uint32_t> infoIdxFile(infoFileName, 1024 * 1024 * 16);
         // unordered_map<uint32_t, size_t> local_id2Cnt;
         size_t threadId = omp_get_thread_num();
@@ -56,14 +67,15 @@ int printInfo(int argc, const char **argv, const Command &command){
         infoIdxFile.loadBufferAt(begin);
         for (size_t i = begin; i < end; i++) {
             uint32_t id = infoIdxFile.getNext();
-            local_id2Cnt[id]++;
+            std::cout << id << std::endl;
+            // local_id2Cnt[id]++;
         }
-        #pragma omp critical
-        {   
-            for (size_t i = 0; i < local_id2Cnt.size(); i++) {
-                id2Cnt[i] += local_id2Cnt[i];
-            }
-        }
+        // #pragma omp critical
+        // {   
+        //     for (size_t i = 0; i < local_id2Cnt.size(); i++) {
+        //         id2Cnt[i] += local_id2Cnt[i];
+        //     }
+        // }
     }
     size_t totalCount = 0;
     for (size_t i = 0; i < id2Cnt.size(); i++) {

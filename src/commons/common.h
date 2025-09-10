@@ -121,6 +121,23 @@ struct Query {
               queryLength2(0), kmerCnt(0), kmerCnt2(0), isClassified(false), newSpecies(false) {}
 };
 
+struct ProteinQuery {
+    uint32_t queryId;
+    uint32_t length;
+    uint32_t kmerCnt;
+    uint32_t result;
+    uint32_t kmerMatchCnt;
+    float score;
+
+    std::string name;
+
+    ProteinQuery(uint32_t queryId, uint32_t length, uint32_t kmerCnt, uint32_t result, float score, std::string name)
+        : queryId(queryId), length(length), kmerCnt(kmerCnt), result(result), score(score), name(std::move(name)) {}
+    
+    ProteinQuery() : queryId(0), length(0), kmerCnt(0), result(0), kmerMatchCnt(0), score(0.0) {}
+
+};
+
 template<typename T>
 struct Buffer {
     T *buffer;
@@ -179,6 +196,21 @@ struct Buffer {
         }
 
         return static_cast<size_t>(availableMemory / bytePerKmer);
+    }
+
+    static bool moveSmallToLarge(Buffer<T> * small, Buffer<T> * large) {
+        size_t posToWrite = large->reserveMemory(small->startIndexOfReserve);
+        if (unlikely(posToWrite + small->startIndexOfReserve >= large->bufferSize)) {
+            __sync_fetch_and_sub(&large->startIndexOfReserve, small->startIndexOfReserve);
+            return false;
+        }
+        memcpy(large->buffer + posToWrite, small->buffer, sizeof(T) * small->startIndexOfReserve);
+        small->startIndexOfReserve = 0;
+        return true;
+    } 
+
+    bool afford(size_t num) {
+        return (startIndexOfReserve + num < bufferSize);
     }
 };
 

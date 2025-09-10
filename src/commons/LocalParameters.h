@@ -47,6 +47,7 @@ public:
     std::vector<MMseqsParameter*> makeBenchmarkSet;
     std::vector<MMseqsParameter*> buildUnirefDb;
     std::vector<MMseqsParameter*> buildUnirefTree;
+    std::vector<MMseqsParameter*> assignUniref;
 
     // UniRef
     PARAMETER(UNIREF_NUMBERS)

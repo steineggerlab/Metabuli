@@ -229,11 +229,10 @@ void IndexCreator::createUniqueKmerIndex() {
 }
 
 void IndexCreator::createCommonKmerIndex() {
-    Buffer<Kmer> kmerBuffer(calculateBufferSize(par.ramUsage));
-    Buffer<size_t> uniqKmerIdx(kmerBuffer.bufferSize);
-
-    indexReferenceSequences(kmerBuffer.bufferSize);
-
+    size_t sizE = calculateBufferSize(par.ramUsage);
+    indexReferenceSequences(sizE);
+    Buffer<Kmer> kmerBuffer(sizE);
+    Buffer<size_t> uniqKmerIdx(sizE);
     if (!par.cdsInfo.empty()) {
         cout << "Loading CDS info from: " << par.cdsInfo << endl;
         loadCdsInfo(par.cdsInfo);
@@ -272,7 +271,7 @@ void IndexCreator::createCommonKmerIndex() {
 
         // Write the target files
         start = time(nullptr);
-        if(processedBatchCnt == accessionBatches.size() && numOfFlush == 0 && !isUpdating) {
+        if(processedBatchCnt == accessionBatches.size() && numOfFlush == 0) {
             writeTargetFilesAndSplits(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges, true);
         } else {
             writeTargetFiles(kmerBuffer, uniqKmerIdx.buffer, uniqKmerIdxRanges);
@@ -285,7 +284,6 @@ void IndexCreator::createCommonKmerIndex() {
             uniqKmerIdx.init();
             uniqKmerIdxRanges.clear();
         }
-
     }
 
     taxonomy->writeTaxonomyDB(par.filenames[0] + "/taxonomyDB");
@@ -626,10 +624,10 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
         // Parse the line
         if (sscanf(line.c_str(), "%s\t%*s\t%d\t%*d", accession, &taxID) == 2) {
             // Get the accession ID without version
-            char* pos = strchr(accession, '.');
-            if (pos != nullptr) {
-                *pos = '\0';
-            }
+            // char* pos = strchr(accession, '.');
+            // if (pos != nullptr) {
+            //     *pos = '\0';
+            // }
             auto it = accession2index.find(accession);
             if (it != accession2index.end()) {
                 if (old2merged.count(taxID) > 0) {
@@ -666,19 +664,19 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
     vector<std::string> unmappedAccessions;
     std::unordered_map<TaxID, TaxID> external2internalTaxID;
     taxonomy->getExternal2internalTaxID(external2internalTaxID);
+    std::unordered_set<TaxID> spIdSet;
     for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {    
         auto it = external2internalTaxID.find(observedAccessionsVec[i].taxID);
         if (it == external2internalTaxID.end() || observedAccessionsVec[i].taxID == 0) {
-            // cout << "TaxID is not found for accession " << observedAccessionsVec[i].accession << " " << observedAccessionsVec[i].taxID << endl;
+            cout << "TaxID is not found for accession " << observedAccessionsVec[i].accession << " " << observedAccessionsVec[i].taxID << endl;
             unmappedAccessions.push_back(observedAccessionsVec[i].accession);
             continue;
         }
         observedAccessionsVec[i].taxID = it->second; // store the internal taxID
         observedAccessionsVec[i].speciesID = taxonomy->getTaxIdAtRank(it->second, "species");
+        spIdSet.insert(observedAccessionsVec[i].speciesID);
         taxIdSet.insert(it->second);
         taxId2speciesId[it->second] = observedAccessionsVec[i].speciesID;
-        taxId2speciesId[observedAccessionsVec[i].speciesID] = observedAccessionsVec[i].speciesID;
-
         if (observedAccessionsVec[i].speciesID == 0) {
             cout << "Species ID is not found for accession " << observedAccessionsVec[i].accession << " " << it->second << endl;
             unmappedAccessions.push_back(observedAccessionsVec[i].accession);
@@ -686,6 +684,9 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
         }
         taxId2speciesId[observedAccessionsVec[i].speciesID] = observedAccessionsVec[i].speciesID;
     }
+
+    cout << "Number of unique taxIDs: " << taxIdSet.size() << endl;
+    cout << "Number of unique speciesIDs: " << spIdSet.size() << endl;
     
     string mappingFileName = dbDir + "/acc2taxid.map";
     FILE * acc2taxidFile = nullptr;
@@ -800,7 +801,6 @@ void IndexCreator::writeTargetFiles(
     infoBuffer.flush();
     diffBuffer.flush();
 
-    // cout<<"Written k-mer count : "<< infoBuffer.writeCnt << endl;    
     kmerBuffer.startIndexOfReserve = 0; // Reset the buffer for the next batch
 }
 
@@ -947,7 +947,7 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<Kmer> &kmerBuffer,
         vector<SequenceBlock> extendedORFs;
         priority_queue<uint64_t> standardList;
         priority_queue<uint64_t> currentList;
-        size_t lengthOfTrainingSeq;
+        size_t lengthOfTrainingSeq = 0;
         char *reverseComplement;
         vector<uint64_t> intergenicKmers;
         vector<string> cds;
