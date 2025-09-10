@@ -142,13 +142,13 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     int dynamicGroupKmerThr = static_cast<int>(mergeRelations(outDir, numOfGraph, jobId, metabuliResult, thresholdK));
     
     makeGroups(outDir, jobId, dynamicGroupKmerThr, groupInfo, queryGroupInfo);    
-    saveGroupsToFile(groupInfo, queryGroupInfo, outDir, jobId);
-    loadGroupsFromFile(groupInfo, queryGroupInfo, outDir, jobId);
+    saveGroupsToFile(groupInfo, queryGroupInfo, outDir, metabuliResult, jobId);
+    //loadGroupsFromFile(groupInfo, queryGroupInfo, outDir, jobId);
     
 
     unordered_map<uint32_t, int> repLabel; 
     getRepLabel(outDir, metabuliResult, groupInfo, repLabel, jobId, groupScoreThr);
-    loadRepLabel(outDir, repLabel, jobId);
+    //loadRepLabel(outDir, repLabel, jobId);
     applyRepLabel(outDir, outDir, queryGroupInfo, repLabel, groupScoreThr, jobId);
     
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
@@ -160,17 +160,8 @@ void GroupGenerator::filterCommonKmers(Buffer<QueryKmer>& queryKmerBuffer,
     time_t beforeFilter = time(nullptr);
 
     string gtdbListDB;
-    ifstream gtdbListFile;
-    gtdbListFile.open(db + "/filter_list");
-    if (gtdbListFile.is_open()) {
-        getline(gtdbListFile, gtdbListDB);
-    } else {
-        cerr << "Cannot open file for k-mer filter file: " << db + "/filter_list" << endl;
-        return;
-    }
-
-    std::string diffIdxFileName = gtdbListDB + "/diffIdx";
-    std::string infoFileName = gtdbListDB + "/info";
+    std::string diffIdxFileName = db + "/common-kmers-with-mask" + "/diffIdx";
+    std::string infoFileName = db + "/common-kmers-with-mask" + "/info";
     DeltaIdxReader* deltaIdxReaders = new DeltaIdxReader(diffIdxFileName, 
                                                          infoFileName, 
                                                          1024 * 1024 * 32, 
@@ -234,13 +225,13 @@ void GroupGenerator::filterCommonKmers(Buffer<QueryKmer>& queryKmerBuffer,
             // same seq
             else{
                 // copy
-                if (int64_t(queryKmerList[queryKmerIdx_copy].info.pos) < int(targetKmerPos[targetKmerPosIdx].second) - 2){
+                if (int64_t(queryKmerList[queryKmerIdx_copy].info.pos) < int(targetKmerPos[targetKmerPosIdx].second) - 0){
                     queryKmerList[queryKmerIdx] = queryKmerList[queryKmerIdx_copy];
                     queryKmerIdx++;
                     queryKmerIdx_copy++;
                 }
                 // next target check
-                else if(int(targetKmerPos[targetKmerPosIdx].second) + 2 < int64_t(queryKmerList[queryKmerIdx_copy].info.pos)){
+                else if(int(targetKmerPos[targetKmerPosIdx].second) + 0 < int64_t(queryKmerList[queryKmerIdx_copy].info.pos)){
                     targetKmerPosIdx++;
                 }
                 // pass
@@ -530,7 +521,10 @@ double GroupGenerator::mergeRelations(const string& subGraphFileDir,
             }
         }
 
-        if (metabuliResult[minKey.first].name == metabuliResult[minKey.second].name)
+        int label1 = external2internalTaxId[metabuliResult[minKey.first].label];
+        int label2 = external2internalTaxId[metabuliResult[minKey.second].label];
+        
+        if (taxonomy->getTaxIdAtRank(label1, "genus") == taxonomy->getTaxIdAtRank(label2, "genus"))
             trueWeights.emplace_back(totalWeight);
         else
             falseWeights.emplace_back(totalWeight);
@@ -632,6 +626,7 @@ void GroupGenerator::makeGroups(const string& relationFileDir,
 void GroupGenerator::saveGroupsToFile(const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
                                       const vector<int> &queryGroupInfo, 
                                       const string &groupFileDir, 
+                                      const vector<MetabuliInfo>& metabuliResult, 
                                       const string &jobId) {
     // save group in txt file
     const string& groupInfoFileName = groupFileDir + "/" + jobId + "_groups";
@@ -644,7 +639,7 @@ void GroupGenerator::saveGroupsToFile(const unordered_map<uint32_t, unordered_se
     for (const auto& [groupId, queryIds] : groupInfo) {
         outFile1 << groupId << " ";
         for (const auto& queryId : queryIds) {
-            outFile1 << queryId << " ";
+            outFile1 << metabuliResult[queryId].name << " ";
         }
         outFile1 << endl;
     }
@@ -729,12 +724,6 @@ void GroupGenerator::loadMetabuliResult(const string &resultFileDir,
         string query_name; 
 
         ss >> label >> query_name >> query_label >> read_length >> score;
-        if (query_name.find('.') != string::npos){
-            query_name = query_name.substr(0, query_name.find('.'));
-        }
-        else{
-            query_name = "";
-        }
 
         metabuliResult.push_back({query_label, score, query_name});
     }
@@ -878,11 +867,11 @@ void GroupGenerator::applyRepLabel(const string &resultFileDir,
             if (repLabelIt != repLabel.end()){
                 // LCA successed
                 if (repLabelIt->second != 0) {
-                    if (fields[0] == "0") {
-                        fields[0] = "1";
-                        fields[2] = to_string(taxonomy->getOriginalTaxID(repLabelIt->second));
-                        fields[5] = taxonomy->getString(taxonomy->taxonNode(repLabelIt->second)->rankIdx);
-                    }
+                    // if (fields[0] == "0") {
+                    // }
+                    fields[0] = "1";
+                    fields[2] = to_string(taxonomy->getOriginalTaxID(repLabelIt->second));
+                    fields[5] = taxonomy->getString(taxonomy->taxonNode(repLabelIt->second)->rankIdx);
                 }
             }
         }

@@ -198,6 +198,7 @@ public:
     void saveGroupsToFile(const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
                           const vector<int> &queryGroupInfo, 
                           const string &groupFileDir, 
+                          const vector<MetabuliInfo>& metabuliResult, 
                           const string &jobId);
 
     void loadGroupsFromFile(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo,
