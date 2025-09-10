@@ -11,6 +11,13 @@ extern const char *version;
 
 LocalParameters::LocalParameters() :
         Parameters(),
+        UNIREF_NUMBERS(UNIREF_NUMBERS_ID,
+                    "--uniref-size",
+                    "CSV of UniRef 100/90/50 cluster sizes",
+                    "CSV of UniRef 100/90/50 cluster sizes. Check UniRef release notes.",
+                    typeid(std::string),
+                    (void *) &unirefNumbers,
+                    "^.*$"),
         VIRUS_TAX_ID(VIRUS_TAX_ID_ID,
                      "--virus-taxid",
                      "Taxonomy ID of virus taxon",
@@ -67,6 +74,13 @@ LocalParameters::LocalParameters() :
                     typeid(int),
                     (void *) &kmerFormat,
                     "[1-3]"),
+        UNIREF_XML(UNIREF_XML_ID,
+                    "--uniref-xml",
+                    "Path to UniRef XML file",
+                    "Path to UniRef XML file",
+                    typeid(std::string),
+                    (void *) &unirefXml,
+                    "^.*$"),
         SEQ_MODE(SEQ_MODE_ID,
                  "--seq-mode",
                  "Sequencing type",
@@ -552,8 +566,17 @@ LocalParameters::LocalParameters() :
     rank = "";
     higherRankFile = 0;
 
+    buildUnirefDb.push_back(&UNIREF_XML);
+    buildUnirefDb.push_back(&PARAM_THREADS);
+    buildUnirefDb.push_back(&TAXONOMY_PATH);
+    buildUnirefDb.push_back(&SPLIT_NUM);
+    buildUnirefDb.push_back(&DB_NAME);
+    buildUnirefDb.push_back(&DB_DATE);
+    buildUnirefDb.push_back(&RAM_USAGE);
+    buildUnirefDb.push_back(&VALIDATE_DB);
 
-
+    buildUnirefTree.push_back(&UNIREF_NUMBERS);
+    
 
     // build
     build.push_back(&PARAM_THREADS);
@@ -608,7 +631,6 @@ LocalParameters::LocalParameters() :
     classify.push_back(&MATCH_PER_KMER);
     classify.push_back(&ACCESSION_LEVEL);
     classify.push_back(&TIE_RATIO);
-    // classify.push_back(&SKIP_REDUNDANCY);
     classify.push_back(&PRINT_LINEAGE);
     classify.push_back(&VALIDATE_INPUT);
     classify.push_back(&VALIDATE_DB);
@@ -618,6 +640,11 @@ LocalParameters::LocalParameters() :
     classify.push_back(&PRINT_LOG);
     classify.push_back(&REDUCED_AA);
     classify.push_back(&EM);
+
+    assignUniref.push_back(&PARAM_THREADS);
+    assignUniref.push_back(&RAM_USAGE);
+    assignUniref.push_back(&MATCH_PER_KMER);
+    assignUniref.push_back(&VALIDATE_INPUT);
 
 
     // extract
@@ -703,6 +730,7 @@ LocalParameters::LocalParameters() :
     // printInfo
     printInfo.push_back(&INFO_BEGIN);
     printInfo.push_back(&INFO_END);
+    printInfo.push_back(&PARAM_THREADS);
 
     // expand_diffidx
     expand_diffidx.push_back(&KMER_BEGIN);

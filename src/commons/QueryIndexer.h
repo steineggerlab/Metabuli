@@ -70,7 +70,7 @@ public:
     void setKmerLen(int kmerLen2) { this->kmerLen = kmerLen2; }
     void setAvailableRam();
     void setBytesPerKmer(size_t matchPerKmer) {
-        bytesPerKmer = sizeof(QueryKmer) + matchPerKmer * sizeof(Match);
+        bytesPerKmer = sizeof(Kmer) + matchPerKmer * sizeof(Match);
     }
 
 };

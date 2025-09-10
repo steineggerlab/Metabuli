@@ -9,11 +9,13 @@
 #include "common.h"
 #include "unordered_map"
 #include "GeneticCode.h"
+#include "DeltaIdxReader.h"
 
 #include <string>
 #include <vector>
 #include <unistd.h>
 #include <cstdint>
+#include <algorithm>
 
 #define BufferSize 16'777'216 // 16 * 1024 * 1024 // 16 M
 
@@ -28,11 +30,21 @@
 
 using namespace std;
 
+struct QueryKmerSplit {
+  QueryKmerSplit(size_t start, size_t end, 
+                 const DiffIdxSplit &diffIdxSplit)
+      : start(start), end(end), diffIdxSplit(diffIdxSplit) {}
+  size_t start; // start idx in query k-mer list
+  size_t end;   // end idx in query k-mer list
+  DiffIdxSplit diffIdxSplit; // index in target k-mer list from where the
+                             // search begins.
+};
+
 class KmerMatcher {
 protected:
   const LocalParameters &par;
-  TaxonomyWrapper *taxonomy;
-  GeneticCode *geneticCode;
+  TaxonomyWrapper *taxonomy = nullptr;
+  GeneticCode *geneticCode  = nullptr;
   int kmerFormat;
   
   size_t threads;
@@ -147,16 +159,7 @@ protected:
   string diffIdxSplitFileName;
     
 
-  struct QueryKmerSplit {
-    QueryKmerSplit(size_t start, size_t end, size_t length,
-                   const DiffIdxSplit &diffIdxSplit)
-        : start(start), end(end), length(length), diffIdxSplit(diffIdxSplit) {}
-    size_t start; // start idx in query k-mer list
-    size_t end;   // end idx in query k-mer list
-    size_t length;
-    DiffIdxSplit diffIdxSplit; // index in target k-mer list from where the
-                               // search begins.
-  };
+
 
   struct QueryKmerSplit2 {
     QueryKmerSplit2(size_t start, size_t end, size_t length,
@@ -169,7 +172,13 @@ protected:
                                // search begins.
   };
 
-  inline size_t AminoAcidPart(size_t kmer) const { return (kmer)&DNA_MASK; }
+  inline size_t AminoAcidPart(size_t kmer) const {
+    if (kmerFormat == 3 || kmerFormat == 4) {
+        return kmer;
+    }
+    return kmer & DNA_MASK;
+  }
+  // inline size_t AminoAcidPart(size_t kmer) const { return (kmer) & DNA_MASK; }
 
   void moveMatches(Match *dest, Match *src, size_t & matchNum);
 
@@ -181,6 +190,12 @@ protected:
                   std::vector<uint16_t> &rightEndHammings,
                   size_t & selectedMatchIdx,
                   uint8_t frame);
+  
+  void filterCandidates(
+    Kmer qKmer,
+    const std::vector<Kmer> &candidates,
+    std::vector<Match> &filteredMatches
+  );
 
   virtual uint8_t getHammingDistanceSum(uint64_t kmer1, uint64_t kmer2);
 
@@ -192,21 +207,33 @@ protected:
 
   void loadTaxIdList(const LocalParameters & par);
 
+  std::vector<QueryKmerSplit> makeQueryKmerSplits(const Buffer<Kmer> * queryKmerBuffer);
+ 
 
 public:
   KmerMatcher(const LocalParameters &par,
     TaxonomyWrapper *taxonomy,
     int kmerFormat);
 
+  KmerMatcher(const LocalParameters &par, int kmerFormat);
+
   virtual ~KmerMatcher();
   
-  bool matchKmers(Buffer<QueryKmer> *queryKmerBuffer,
+  bool matchKmers(Buffer<Kmer> *queryKmerBuffer,
                   Buffer<Match> *matchBuffer,
                   const string &db = string());
 
-  bool matchMetamers(Buffer<QueryKmer> *queryKmerBuffer,
+  bool matchMetamers(Buffer<Kmer> *queryKmerBuffer,
                      Buffer<Match> *matchBuffer,
                      const string &db = string());
+
+  bool matchKmers2(const Buffer<Kmer> *queryKmerBuffer,
+                  Buffer<Match> *matchBuffer,
+                  const string &db);
+
+  bool matchKmers_AA(const Buffer<Kmer> *queryKmerBuffer,
+                     Buffer<Match_AA> *matchBuffer,
+                     const string &db);
 
   void sortMatches(Buffer<Match> *matchBuffer);
 

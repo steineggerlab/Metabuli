@@ -4,53 +4,37 @@
 #include <iostream>
 #include <deque>
 
-#include "Kmer.h"
 #include "KmerScanner.h"
-#include "GeneticCode.h"
-#include "common.h"
 
-
-
-class SyncmerScanner : public KmerScanner {
+class SyncmerScanner : public MetamerScanner {
 protected:
     // Internal values
     int smerLen;
     uint64_t smerMask;
 
     // Variables for syncmer scanning
-    std::deque<Smer> dq;
+    std::deque<Kmer> dq;
     int smerCnt;
     uint64_t smer;
-    uint64_t syncmer;
     int prevPos;
 
 public:
-    SyncmerScanner(int smerLen, const GeneticCode &geneticCode) : KmerScanner(geneticCode) {
+    SyncmerScanner(int smerLen, const GeneticCode &geneticCode) : MetamerScanner(geneticCode) {
         // std::cout << "SyncmerScanner initialized with smerLen: " << smerLen << std::endl;
         this->smerLen = smerLen;
         this->smerMask = (1ULL << (5 * smerLen)) - 1;
     }
 
     void initScanner(const char * seq, size_t seqStart, size_t seqEnd, bool isForward) override {
-        this->seq = seq;
-        this->seqStart = seqStart;
-        this->seqEnd = seqEnd;
-        this->seqLen = seqEnd - seqStart + 1;
-        this->aaLen = seqLen / 3;
-        this->dnaPart = 0;
-        this->aaPart = 0;
+        MetamerScanner::initScanner(seq, seqStart, seqEnd, isForward);
         this->dq.clear();
         this->smerCnt = 0;
-        this->loadedCharCnt = 0;
         this->smer = 0;
         this->prevPos = -8;
-        this->posStart = 0;
-        this->isForward = isForward;
     }
 
     Kmer next() override {
         bool syncmerFound = false;
-        syncmer = 0;
         int aa = 0;
         while (posStart <= aaLen - 8 && !syncmerFound) {
             bool sawN = false;
@@ -100,16 +84,15 @@ public:
                     }
                 }
                 prevPos = posStart;
-                syncmer = (aaPart << 24) | (dnaPart & dnaMask);
                 syncmerFound = true;
             }
             ++posStart;
         }
         if (syncmerFound) {
             if (isForward) {
-                return {syncmer, seqStart + prevPos * 3};
+                return {(aaPart << 24) | (dnaPart & dnaMask), seqStart + prevPos * 3};
             } else {
-                return {syncmer, seqEnd - (prevPos + 8) * 3 + 1};
+                return {(aaPart << 24) | (dnaPart & dnaMask), seqEnd - (prevPos + 8) * 3 + 1};
             }
         } else {
             return {UINT64_MAX, 0}; // No more syncmers found

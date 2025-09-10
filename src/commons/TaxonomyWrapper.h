@@ -41,6 +41,12 @@ struct NewTaxon {
     }
 };
 
+struct TaxonProbs {
+    double taxProb;
+    double cladeProb;
+    std::vector<TaxID> children;
+};
+
 class TaxonomyWrapper : public NcbiTaxonomy {
 public:
     TaxonomyWrapper(const std::string &namesFile,
@@ -170,6 +176,19 @@ public:
         } 
         return taxonId <= maxTaxID && D[taxonId] != -1;
     }
+
+    void getSpeciesName2TaxId(std::unordered_map<std::string, TaxID> & name2TaxId) {
+        for (size_t i = 0; i < maxNodes; i++) {
+            const TaxonNode &node = taxonNodes[i];
+            if (strcmp(getString(node.rankIdx), "species") == 0) {
+                name2TaxId[getString(node.nameIdx)] = node.taxId;
+            }
+        }
+    }
+
+    std::unordered_map<TaxID, TaxonProbs> getCladeProbs(
+        const std::unordered_map<TaxID, double> & taxonProbs, 
+        const std::unordered_map<TaxID, std::vector<TaxID>>& parentToChildren) const; 
 
     void writeTaxonomyDB(const std::string & fileName);
 

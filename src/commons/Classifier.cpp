@@ -38,10 +38,11 @@ Classifier::~Classifier() {
     delete kmerMatcher;
     delete reporter;
     delete geneticCode;
+    if (mappingResList) delete[] mappingResList;
 }
 
 void Classifier::startClassify(const LocalParameters &par) {
-    Buffer<QueryKmer> queryKmerBuffer;
+    Buffer<Kmer> queryKmerBuffer;
     Buffer<Match> matchBuffer;
     vector<Query> queryList;
     size_t numOfTatalQueryKmerCnt = 0;
@@ -55,18 +56,11 @@ void Classifier::startClassify(const LocalParameters &par) {
     // Extract k-mers from query sequences and compare them to target k-mer DB
     while (!complete) {
         tries++;
-
-        // Get splits for remaining sequences
-        // if (tries == 1) {
-        //         cout << "Deviding a query file ... " << std::flush;
-        // }
         queryIndexer->setBytesPerKmer(matchPerKmer);
         queryIndexer->indexQueryFile(processedReadCnt);
         const vector<QuerySplit> & queryReadSplit = queryIndexer->getQuerySplits();
-
         if (tries == 1) {
             totalSeqCnt = queryIndexer->getReadNum_1();
-            // cout << "Done" << endl;
             cout << "--------------------" << endl;
             cout << "Total read count : " << queryIndexer->getReadNum_1() << endl;
             cout << "Total read length: " << queryIndexer->getTotalReadLength() <<  "nt" << endl;
@@ -91,12 +85,13 @@ void Classifier::startClassify(const LocalParameters &par) {
 
             // Allocate memory for query k-mer buffer
             queryKmerBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt);
-            memset(queryKmerBuffer.buffer, 0, queryReadSplit[splitIdx].kmerCnt * sizeof(QueryKmer));
+            queryKmerBuffer.init();
+            // memset(queryKmerBuffer.buffer, 0, queryReadSplit[splitIdx].kmerCnt * sizeof(Kmer));
 
             // Allocate memory for match buffer
             if (queryReadSplit.size() == 1) {
                 size_t remain = queryIndexer->getAvailableRam() 
-                                - (queryReadSplit[splitIdx].kmerCnt * sizeof(QueryKmer)) 
+                                - (queryReadSplit[splitIdx].kmerCnt * sizeof(Kmer)) 
                                 - (queryIndexer->getReadNum_1() * 200); // TODO: check it later
                 matchBuffer.reallocateMemory(remain / sizeof(Match));
             } else {
@@ -104,7 +99,6 @@ void Classifier::startClassify(const LocalParameters &par) {
             }
 
             // Initialize query k-mer buffer and match buffer
-            queryKmerBuffer.startIndexOfReserve = 0;
             matchBuffer.startIndexOfReserve = 0;
 
             // Extract query k-mers
@@ -113,7 +107,8 @@ void Classifier::startClassify(const LocalParameters &par) {
                                              queryReadSplit[splitIdx],
                                              par,
                                              kseq1,
-                                             kseq2); // sync kseq1 and kseq2
+                                             kseq2);
+            
             // Search matches between query and target k-mers
             bool searchComplete = false;
             searchComplete = kmerMatcher->matchKmers(&queryKmerBuffer, &matchBuffer);
@@ -123,7 +118,8 @@ void Classifier::startClassify(const LocalParameters &par) {
                 assignTaxonomy(matchBuffer.buffer, matchBuffer.startIndexOfReserve, queryList, par);
                 reporter->writeReadClassification(queryList);
                 if (par.em) {
-                    reporter->writeMappingResults(queryList, processedReadCnt);
+                    reporter->writeMappings(queryList, processedReadCnt);
+                    getTopSpecies(queryList);
                 }
                 processedReadCnt += queryReadSplit[splitIdx].readCnt;
                 cout << "Processed read count   : " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
@@ -147,21 +143,24 @@ void Classifier::startClassify(const LocalParameters &par) {
         cout << "--------------------" << endl;
     }
 
+    // Finalize original classification results
+    cout << "Total k-mer match count: " << kmerMatcher->getTotalMatchCnt() << endl;    
     reporter->closeReadClassificationFile();
-    if (par.em) {
-        reporter->closeMappingResFile();
-        cout << "Running EM algorithm for taxonomic assignment..." << endl;
-        classList.reserve(totalSeqCnt);
-        loadClassificationResults(reporter->getClassificationFileName());   
-        em();
-        reporter->writeEMResults(classList);
-        reporter->writeReportFile(totalSeqCnt, taxCounts_EM, true);
-    }
-    // cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
-    cout << "Total k-mer match count: " << kmerMatcher->getTotalMatchCnt() << endl;
-    
-    reporter->writeReportFile(totalSeqCnt, taxCounts, false);
+    reporter->writeReportFile(totalSeqCnt, taxCounts, ReportType::Default);
+    cout << "Taxonomic classification completed." << endl;
 
+    // Perform EM algorithm    
+    if (par.em) {
+        cout << "Running EM algorithm for taxonomic re-assignment..." << endl;
+        reporter->freeMappingWriteBuffer();        
+        loadOriginalResults(reporter->getClassificationFileName(), totalSeqCnt);   
+        em(totalSeqCnt);
+        reporter->writeReclassifyResults(emResults);
+        reporter->writeReportFile(totalSeqCnt, emTaxCounts, ReportType::EM);
+        reporter->writeReportFile(totalSeqCnt, reclassifyTaxCounts, ReportType::EM_RECLASSIFY);
+    }
+    
+    return;
 }
 
 void Classifier::assignTaxonomy(const Match *matchList,
@@ -208,9 +207,8 @@ void Classifier::assignTaxonomy(const Match *matchList,
 
 }
 
-void Classifier::em() {
-    loadMappingResults(reporter->getMappingResFileName());
-    // unordered_map<TaxID, unsigned int> sp2uniqKmerCnt;
+void Classifier::em(size_t totalQueryCnt) {
+    loadMappings(reporter->getMappingFileName());
     int maxTaxId = taxonomy->getMaxTaxID();
     vector<uint32_t> sp2uniqKmerCnt(maxTaxId + 1, 0);
     countUniqueKmerPerSpecies(sp2uniqKmerCnt);
@@ -222,8 +220,7 @@ void Classifier::em() {
             sp2lengthFactor[i] = 0.0;
         }
     }
-    std::unordered_set<TaxID> speciesSet;
-    std::vector<TaxID> spList;
+    
     time_t st = time(nullptr);
     cout << "EM algorithm for taxonomic assignment: " << std::endl;
     size_t idx = 0;
@@ -232,129 +229,161 @@ void Classifier::em() {
         TaxID currentQuery = mappingResList[idx].queryId;
         size_t startIdx = idx;
         while (idx < mappingResListSize && mappingResList[idx].queryId == currentQuery) {
-            if (speciesSet.find(mappingResList[idx].speciesId) == speciesSet.end()) {
-                spList.push_back(mappingResList[idx].speciesId);
-                speciesSet.insert(mappingResList[idx].speciesId);
-            }            
             idx++;
         }
         queryRanges.emplace_back(startIdx, idx);
     }
-    cout << "Species count: " << speciesSet.size() << std::endl;
 
-    std::unordered_map<TaxID, double> F, Fnew;
-    for (const auto & sp : speciesSet) {
-        F[sp] = 1.0 / speciesSet.size();
+    cout << "Species count: " << topSpeciesSet.size() << std::endl;
+    std::unordered_map<TaxID, double> Fnew;
+    std::vector<TaxID> spList;
+    for (const auto & sp : topSpeciesSet) {
+        taxProbs[sp] = 1.0 / topSpeciesSet.size();
         Fnew[sp] = 0.0;
+        spList.push_back(sp);
     }
 
     std::atomic<int> converged{0};
-#pragma omp parallel default(none) shared(queryRanges, converged, mappingResList, F, Fnew, sp2lengthFactor, spList, std::cout)
-{
+    size_t queryCount = 0;
+    #pragma omp parallel default(none) shared(queryRanges, queryCount, converged, mappingResList, taxProbs, Fnew, sp2lengthFactor, spList, std::cout)
+    {
     std::unordered_map<TaxID, double> localFnew;
+    size_t localQueryCount = 0;
+
     for (size_t iter = 0; iter < 1000; ++iter) {
         if (converged.load(std::memory_order_acquire))
             continue;
 
-        for (auto & sp : localFnew) {
-            sp.second = 0.0; // Reset localFnew
-        }
-        #pragma omp barrier
+        // Init local variables
+        for (auto & sp : localFnew) { sp.second = 0.0; }
+        localQueryCount = 0;
 
+        // Init shared variables
         #pragma omp single
         {
-            for (auto & sp : Fnew) {
-                sp.second = 0.0; // Reset Fnew
-            }
+            for (auto & sp : Fnew) { sp.second = 0.0; }
+            queryCount = 0;
             cout << "Iteration " << iter + 1 << ": " << std::endl;
         }
-        #pragma omp barrier
 
+        // Calculate new probabilities for each species
         #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < queryRanges.size(); ++i) {
-            size_t startIdx = queryRanges[i].first;
-            size_t endIdx = queryRanges[i].second;
             double denom = 0.0;
-            for (size_t j = startIdx; j < endIdx; ++j) {
-                denom += mappingResList[j].score * F[mappingResList[j].speciesId] * sp2lengthFactor[mappingResList[j].speciesId];
+            for (size_t j = queryRanges[i].first; j < queryRanges[i].second; ++j) {
+                denom += mappingResList[j].score * taxProbs[mappingResList[j].speciesId] * sp2lengthFactor[mappingResList[j].speciesId];
             }
-            for (size_t j = startIdx; j < endIdx; ++j) {
-                localFnew[mappingResList[j].speciesId] += (mappingResList[j].score * F[mappingResList[j].speciesId] * sp2lengthFactor[mappingResList[j].speciesId]) / denom;
+            if (denom == 0.0) { continue; }
+            localQueryCount++;
+            for (size_t j = queryRanges[i].first; j < queryRanges[i].second; ++j) {
+                localFnew[mappingResList[j].speciesId] += (mappingResList[j].score * taxProbs[mappingResList[j].speciesId] * sp2lengthFactor[mappingResList[j].speciesId]) / denom;
             }
         }
     
+        // Accumulate results from all threads
         #pragma omp critical
         {
             for (const auto & sp : localFnew) {
-                Fnew[sp.first] += sp.second; // Accumulate results from all threads
+                Fnew[sp.first] += sp.second; 
             }
+            queryCount += localQueryCount;
         }
         #pragma omp barrier
 
+        // Update probabilities and check convergence
         #pragma omp single
         {
             for (size_t i = 0; i < spList.size(); i++) {
-                Fnew[spList[i]] /= queryRanges.size();
+                Fnew[spList[i]] /= queryCount;
             }
-
             double delta = 0.0;
             for (size_t i = 0; i < spList.size(); i++) {
-                delta += fabs(Fnew[spList[i]] - F[spList[i]]);
+                delta += fabs(Fnew[spList[i]] - taxProbs[spList[i]]);
+                if (iter > 10 && Fnew[spList[i]] < 1e-5) {
+                    Fnew[spList[i]] = 0.0;
+                }
             }
             cout << "Delta: " << delta << endl;
-            F.swap(Fnew); 
+            taxProbs.swap(Fnew);    
             if (delta < 1e-6) {
                 converged.fetch_add(1, std::memory_order_relaxed);
             }
         }
     }
-}
-    idx = 0;
+    } // end of parallel region
 
-#pragma omp parallel default(none) shared(queryRanges, mappingResList, F, sp2lengthFactor, taxonomy, classList, std::cout)
+    size_t explainedQueryCount = 0;
+    for (size_t i = 0; i < spList.size(); i++) {
+        emTaxCounts[spList[i]] = taxProbs[spList[i]] * queryCount;
+        explainedQueryCount += emTaxCounts[spList[i]];
+    }
+    emTaxCounts[0] = totalQueryCnt - explainedQueryCount; // Unclassified queries
+    cout << double(time(nullptr) - st) << " s" << endl;
+    reclassify(queryRanges, mappingResList, sp2lengthFactor, totalQueryCnt);
+}
+
+
+void Classifier::reclassify(
+    const std::vector<std::pair<size_t, size_t>> & queryRanges,
+    const MappingRes * mappingResList,
+    const vector<double> & sp2lengthFactor,
+    size_t totalQueryCnt) 
 {
-    std::vector<std::pair<TaxID, double>> sp2prob;
-    std::vector<TaxID> candidateSpecies;
-    std::unordered_map<TaxID, unsigned int> localTaxCounts;
-
-    #pragma omp for schedule(dynamic, 1)
-    for (size_t i = 0; i < queryRanges.size(); ++i) {
-        double denom = 0.0;
-        candidateSpecies.clear();
-        sp2prob.clear();
-
-        TaxID currentQuery = mappingResList[queryRanges[i].first].queryId;
-        for (size_t j = queryRanges[i].first; j < queryRanges[i].second; ++j) {
-            double score = F[mappingResList[j].speciesId] * mappingResList[j].score * sp2lengthFactor[mappingResList[j].speciesId];
-            denom += score;
-            sp2prob.emplace_back(mappingResList[j].speciesId, score);
-        }
-
-        for (auto & sp : sp2prob) {
-            sp.second /= denom; // Normalize scores
-        }
-
-        std::sort(sp2prob.begin(), sp2prob.end(),
-                  [](const std::pair<TaxID, double> &a, const std::pair<TaxID, double> &b) {
-                      return a.second > b.second;
-                  });
-
-        double sum = 0.0;
-        for (size_t j = 0; j < sp2prob.size() && sum < 0.5; ++j) {
-            sum += sp2prob[j].second;
-            candidateSpecies.push_back(sp2prob[j].first);
-        }
-        classList[currentQuery].taxId = taxonomy->LCA(candidateSpecies)->taxId;
-        classList[currentQuery].score = sum;
-        localTaxCounts[classList[currentQuery].taxId] += 1;
-    }
-    #pragma omp critical
+    #pragma omp parallel default(none) shared(queryRanges, mappingResList, sp2lengthFactor, std::cout)
     {
-        for (const auto & taxCount : localTaxCounts) {
-            taxCounts_EM[taxCount.first] += taxCount.second;
+        std::vector<std::pair<TaxID, double>> sp2prob;
+        std::vector<TaxID> candidateSpecies;
+        std::unordered_map<TaxID, unsigned int> localTaxCounts;
+
+        #pragma omp for schedule(dynamic, 1)
+        for (size_t i = 0; i < queryRanges.size(); ++i) {
+            double denom = 0.0;
+            candidateSpecies.clear();
+            sp2prob.clear();
+
+            TaxID currentQuery = mappingResList[queryRanges[i].first].queryId;
+            for (size_t j = queryRanges[i].first; j < queryRanges[i].second; ++j) {
+                double score = taxProbs[mappingResList[j].speciesId] * mappingResList[j].score * sp2lengthFactor[mappingResList[j].speciesId];
+                denom += score;
+                sp2prob.emplace_back(mappingResList[j].speciesId, score);
+            }
+            if (denom == 0.0) {
+                emResults[currentQuery].taxId = 0;
+                emResults[currentQuery].score = 0.0;
+                continue;
+            }
+
+            for (auto & sp : sp2prob) {
+                sp.second /= denom; // Normalize scores
+            }
+
+            std::sort(sp2prob.begin(), sp2prob.end(),
+                      [](const std::pair<TaxID, double> &a, const std::pair<TaxID, double> &b) {
+                          return a.second > b.second;
+                      });
+
+            double sum = 0.0;
+            for (size_t j = 0; j < sp2prob.size() && sum < 0.5; ++j) {
+                sum += sp2prob[j].second;
+                candidateSpecies.push_back(sp2prob[j].first);
+            }
+            emResults[currentQuery].taxId = taxonomy->LCA(candidateSpecies)->taxId;
+            emResults[currentQuery].score = sum;
+            localTaxCounts[emResults[currentQuery].taxId] += 1;
+        }
+        #pragma omp critical
+        {
+            for (const auto & taxCount : localTaxCounts) {
+                reclassifyTaxCounts[taxCount.first] += taxCount.second;
+            }
         }
     }
-}
+    size_t explainedQueryCnt = 0;
+    for (const auto & taxCount : reclassifyTaxCounts) {
+        if (taxCount.first != 0) { // Skip unclassified
+            explainedQueryCnt += taxCount.second;
+        }
+    }
    std::cout << double(time(nullptr) - st) << " s" << endl;
 }
 
@@ -410,11 +439,10 @@ void Classifier::countUniqueKmerPerSpecies(
     }
 }
 
-void Classifier::loadMappingResults(const string & mappingResFileName) {
+void Classifier::loadMappings(const string & mappingResFileName) {
     size_t fileSize = FileUtil::getFileSize(mappingResFileName);
     mappingResListSize = fileSize / sizeof(MappingRes);
     mappingResList = new MappingRes[mappingResListSize];
-    
     FILE * mappingResFile = fopen(mappingResFileName.c_str(), "rb");
     if (mappingResFile == nullptr) {
         cerr << "Error: Could not open mapping results file " << mappingResFileName << endl;
@@ -429,14 +457,16 @@ void Classifier::loadMappingResults(const string & mappingResFileName) {
     fclose(mappingResFile);
 }
 
-void Classifier::loadClassificationResults(const string & classificationFileName) {
-    // The file has 7 or 8 columns per line
-    // I need only 2nd(string) and 4th(int) columns. 
+void Classifier::loadOriginalResults(
+    const string & classificationFileName,
+    size_t seqNum) 
+{
     ifstream classificationFile(classificationFileName);
     if (!classificationFile.is_open()) {
         cerr << "Error: Could not open classification results file " << classificationFileName << endl;
         return;
     }
+    emResults.reserve(seqNum);
     string line;
     while (getline(classificationFile, line)) {
         if (line.empty() || line[0] == '#') {
@@ -449,7 +479,6 @@ void Classifier::loadClassificationResults(const string & classificationFileName
         }
         string queryName = columns[1];
         int length = atoi(columns[3].c_str());
-        classList.emplace_back(queryName, length);
+        emResults.emplace_back(queryName, length);
     }
-
 }

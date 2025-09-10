@@ -96,16 +96,6 @@ public:
 
     void printAAKmer(uint64_t kmer, int shits = 28);
 
-    void printSmer(const uint32_t smer) {
-        string aminoacid = "ARNDCQEGHILKMFPSTWYVX";
-        string smerStr;
-        for (int i = 0; i < 12; i++) {
-            smerStr += aminoacid[(smer >> (5 * i)) & 0x1F];
-        }
-        reverse(smerStr.begin(), smerStr.end());
-        cout << "Smer: " << smerStr << endl;
-    }
-
     void printSyncmer(const uint64_t syncmer) {
         string aminoacid = "ARNDCQEGHILKMFPSTWYVX";
 

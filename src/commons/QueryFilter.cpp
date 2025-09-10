@@ -132,7 +132,7 @@ void QueryFilter::filterReads(LocalParameters & par) {
 
     isFiltered = new bool[queryIndexer->getReadNum_1()];
     memset(isFiltered, 0, sizeof(bool) * queryIndexer->getReadNum_1());
-    Buffer<QueryKmer> kmerBuffer;
+    Buffer<Kmer> kmerBuffer;
     Buffer<Match> matchBuffer;
     vector<Query> queryList;
 
@@ -156,7 +156,7 @@ void QueryFilter::filterReads(LocalParameters & par) {
         // Allocate memory for query k-mer list and match list
         kmerBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt);
         if (queryReadSplit.size() == 1) {
-            size_t remain = queryIndexer->getAvailableRam() - queryReadSplit[splitIdx].kmerCnt * sizeof(QueryKmer) - numOfSeq * 200;
+            size_t remain = queryIndexer->getAvailableRam() - queryReadSplit[splitIdx].kmerCnt * sizeof(Kmer) - numOfSeq * 200;
             matchBuffer.reallocateMemory(remain / sizeof(Match));
         } else {
             matchBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt * matchPerKmer);
@@ -196,7 +196,7 @@ void QueryFilter::filterReads(LocalParameters & par) {
     cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
     cout << "The number of matches: " << kmerMatcher->getTotalMatchCnt() << endl;
     printFilteredReads();
-    reporter->writeReportFile(numOfSeq, taxonomer->getTaxCounts(), false);
+    reporter->writeReportFile(numOfSeq, taxonomer->getTaxCounts(), ReportType::Default);
     reporter->closeReadClassificationFile();
 
     // Memory deallocation

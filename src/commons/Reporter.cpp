@@ -16,11 +16,13 @@ Reporter::Reporter(const LocalParameters &par, TaxonomyWrapper *taxonomy, const 
             }
             // Output file names
             reportFileName = outDir + + "/" + jobId + "_report.tsv";
-            reportFileName_em = outDir + "/" + jobId + "_EM_report.tsv";
             readClassificationFileName = outDir + "/" + jobId + "_classifications.tsv";
             if (par.em) {
-                emResultFileName = outDir + "/" + jobId + "_EM_results.tsv";
-                mappingResFileName = outDir + "/" + jobId + "_mapping_results.txt";
+                reportFileName_em            = outDir + "/" + jobId + "_EM_report.tsv";
+                reportFileName_em_reclassify = outDir + "/" + jobId + "_EM+reclassify_report.tsv";
+                reclassifyFileName           = outDir + "/" + jobId + "_EM+reclassify_results.tsv";
+                mappingResFileName           = outDir + "/" + jobId + "_mapping_results.txt";
+                mappingResBuffer = new WriteBuffer<MappingRes>(mappingResFileName, 1000000);
             }
         }
     }    
@@ -113,29 +115,42 @@ void Reporter::kronaReport(FILE *FP, const TaxonomyWrapper &taxDB, const std::un
 void Reporter::writeReportFile(
     int numOfQuery, 
     unordered_map<TaxID, unsigned int> &taxCnt, 
-    bool em) 
+    ReportType reportType,
+    string kronaFileName) 
 {
     std::unordered_map<TaxID, std::vector<TaxID>> parentToChildren = taxonomy->getParentToChildren();
     unordered_map<TaxID, TaxonCounts> cladeCounts = taxonomy->getCladeCounts(taxCnt, parentToChildren);
-    FILE *fp;
-    if (em) {
-        fp = fopen(reportFileName_em.c_str(), "w");
-    } else {
+    FILE *fp = nullptr;
+    if (reportType == ReportType::Default) {
         fp = fopen(reportFileName.c_str(), "w");
+    } else if (reportType == ReportType::EM) {
+        fp = fopen(reportFileName_em.c_str(), "w");
+    } else if (reportType == ReportType::EM_RECLASSIFY) {
+        fp = fopen(reportFileName_em_reclassify.c_str(), "w");
     }
     fprintf(fp, "#clade_proportion\tclade_count\ttaxon_count\trank\ttaxID\tname\n");
     writeReport(fp, cladeCounts, numOfQuery);
     fclose(fp);
 
     // Write Krona chart
-    if (jobId.empty()) {
-        return;
-    }
+    if (jobId.empty()) { return; }
+    
     FILE *kronaFile = nullptr;
-    if (!em) { 
-        kronaFile = fopen((outDir + "/" + jobId + "_krona.html").c_str(), "w");
-    } else {
+
+    if (reportType == ReportType::Default) {
+        if (!kronaFileName.empty()) {
+            kronaFile = fopen(kronaFileName.c_str(), "w");
+        } else {
+            kronaFile = fopen((outDir + "/" + jobId + "_krona.html").c_str(), "w");
+        }
+    } else if (reportType == ReportType::EM) {
         kronaFile = fopen((outDir + "/" + jobId + "_EM_krona.html").c_str(), "w");
+    } else if (reportType == ReportType::EM_RECLASSIFY) {
+        kronaFile = fopen((outDir + "/" + jobId + "_EM+reclassify_krona.html").c_str(), "w");
+    }
+    if (kronaFile == nullptr) {
+        Debug(Debug::ERROR) << "Could not open Krona file for writing: " << kronaFileName << "\n";
+        EXIT(EXIT_FAILURE);
     }
     fwrite(krona_prelude_html, krona_prelude_html_len, sizeof(char), kronaFile);
     fprintf(kronaFile, "<node name=\"all\"><magnitude><val>%zu</val></magnitude>", (size_t) numOfQuery);
@@ -176,6 +191,38 @@ void Reporter::writeReport(FILE *FP, const std::unordered_map<TaxID, TaxonCounts
         }
     }
 }
+
+// void Reporter::writeEMreportFile(
+//     unordered_map<TaxID, double> &taxProbs) 
+// {
+//     std::unordered_map<TaxID, std::vector<TaxID>> parentToChildren = taxonomy->getParentToChildren();
+//     unordered_map<TaxID, TaxonCounts> cladeCounts = taxonomy->getCladeProbs(taxCnt, parentToChildren);
+//     FILE *fp = fopen(reportFileName_em.c_str(), "w");
+//     fprintf(fp, "#clade_proportion\tclade_count\ttaxon_count\trank\ttaxID\tname\n");
+//     writeReport(fp, cladeCounts, numOfQuery);
+//     fclose(fp);
+
+//     // Write Krona chart
+//     if (jobId.empty()) {
+//         return;
+//     }
+//     FILE *kronaFile = nullptr;
+//     if (!em) { 
+//         if (!kronaFileName.empty()) {
+//             kronaFile = fopen(kronaFileName.c_str(), "w");
+//         } else {
+//             kronaFile = fopen((outDir + "/" + jobId + "_krona.html").c_str(), "w");
+//         }
+//     } else {
+//         kronaFile = fopen((outDir + "/" + jobId + "_EM_krona.html").c_str(), "w");
+//     }
+//     fwrite(krona_prelude_html, krona_prelude_html_len, sizeof(char), kronaFile);
+//     fprintf(kronaFile, "<node name=\"all\"><magnitude><val>%zu</val></magnitude>", (size_t) numOfQuery);
+//     kronaReport(kronaFile, *taxonomy, cladeCounts, numOfQuery);
+//     fprintf(kronaFile, "</node></krona></div></body></html>");
+//     fclose(kronaFile);
+// }
+
 
 unsigned int Reporter::cladeCountVal(const std::unordered_map<TaxID, TaxonCounts> &map, TaxID key) {
     typename std::unordered_map<TaxID, TaxonCounts>::const_iterator it = map.find(key);
@@ -307,11 +354,11 @@ void Reporter::printSpecifiedReads(const vector<size_t> & readIdxs,
     delete kseq;
 }
 
-void Reporter::writeEMResults(const std::vector<Classification> & results)
+void Reporter::writeReclassifyResults(const std::vector<Classification> & results)
 {   
-    ofstream emResultFile(emResultFileName, std::ios::out | std::ios::trunc);
+    ofstream emResultFile(reclassifyFileName, std::ios::out | std::ios::trunc);
     if (!emResultFile.is_open()) {
-        cerr << "Error: Could not open EM results file " << emResultFileName << endl;
+        cerr << "Error: Could not open EM results file " << reclassifyFileName << endl;
         return;
     }
 
@@ -348,5 +395,5 @@ void Reporter::writeEMResults(const std::vector<Classification> & results)
     }
 
     emResultFile.close();
-    cout << "EM results written to " << emResultFileName << endl;
+    cout << "EM results written to " << reclassifyFileName << endl;
 }

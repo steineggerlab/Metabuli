@@ -15,12 +15,11 @@ using namespace std;
 struct TaxonScore {
     TaxID taxId;
     float score;
-    float coverage;
     int hammingDist;
     bool LCA;
-    TaxonScore(TaxID taxId, float score, float coverage, int hammingDist, bool LCA) :
-            taxId(taxId), score(score), coverage(coverage), hammingDist(hammingDist), LCA(LCA) {}
-    TaxonScore() : taxId(0), score(0.0f), coverage(0.0f), hammingDist(0), LCA(false) {}
+    TaxonScore(TaxID taxId, float score, int hammingDist, bool LCA) :
+            taxId(taxId), score(score), hammingDist(hammingDist), LCA(LCA) {}
+    TaxonScore() : taxId(0), score(0.0f), hammingDist(0), LCA(false) {}
 };
 
 struct depthScore {
@@ -57,13 +56,6 @@ struct MatchPath {
     void printMatchPath() {
         std::cout << start << " " << end << " " << score << " " << hammingDist << " " << depth << std::endl;
     }
-};
-struct MatchBlock {
-    MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) {}
-    MatchBlock() : start(0), end(0), id(0) {}
-    size_t start;
-    size_t end;
-    uint32_t id;
 };
 
 class Taxonomer {

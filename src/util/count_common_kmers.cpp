@@ -9,7 +9,6 @@
 #include "DeltaIdxReader.h"
 #include "TaxonomyWrapper.h"   
 #include "Mmap.h" 
-#include "KmerScanner.h"
 
 void set_count_common_kmers_default(LocalParameters & par) {
     
@@ -55,7 +54,7 @@ int count_common_kmers(int argc, const char **argv, const Command &command) {
         uint64_t mask = 16777215;
         mask = ~ mask;
         unsigned int mask2 = ~((static_cast<unsigned int>(1) << 31));
-        TargetKmer nextKmer;
+        Kmer nextKmer;
         size_t localDistinctKmerCount = 0;
     #pragma omp for schedule(dynamic, 1)
         for (size_t i = 0; i < numOfDiffIdxSplits_use; ++i) {
@@ -68,15 +67,15 @@ int count_common_kmers(int argc, const char **argv, const Command &command) {
             }
 
             deltaIdxReaders->setReadPosition(currOffset);
-            TargetKmer kmer = deltaIdxReaders->getNextValue();
+            Kmer kmer = deltaIdxReaders->next();
             while (!deltaIdxReaders->isCompleted() &&
-                (kmer.metamer.metamer < nextOffsetKmer)) 
+                (kmer.value < nextOffsetKmer)) 
             {
-                taxIds.push_back(kmer.metamer.id & mask2);
-                while (((nextKmer = deltaIdxReaders->getNextValue()).isEmpty() == false)
-                    && ((nextKmer.metamer.metamer) == (kmer.metamer.metamer))) 
+                taxIds.push_back(kmer.tInfo.taxId & mask2);
+                while (((nextKmer = deltaIdxReaders->next()).isEmpty() == false)
+                    && ((nextKmer.value) == (kmer.value))) 
                 {
-                    taxIds.push_back(nextKmer.metamer.id & mask2);
+                    taxIds.push_back(nextKmer.tInfo.taxId & mask2);
                 }
                 TaxID lcaTaxId = taxonomy->LCA(taxIds)->taxId;
                 localTaxon2Count[lcaTaxId] += taxIds.size();

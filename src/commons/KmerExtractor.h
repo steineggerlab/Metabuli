@@ -7,10 +7,12 @@
 #include <unordered_map>
 #include <atomic>
 #include <cstdint>
+#include "GeneticCode.h"
 
 class KmerExtractor {
 private:
     const LocalParameters &par;
+    const GeneticCode &geneticCode;
     KmerScanner ** kmerScanners;
     
     // Parameters
@@ -25,14 +27,14 @@ private:
 
     // Extract query k-mer
     void fillQueryKmerBufferParallel(KSeqWrapper* kseq1,
-                                     Buffer<QueryKmer> &kmerBuffer,
+                                     Buffer<Kmer> &kmerBuffer,
                                      vector<Query> & queryList,
                                      const QuerySplit & currentSplit,
                                      const LocalParameters &par);
 
     void fillQueryKmerBufferParallel_paired(KSeqWrapper* kseq1,
                                             KSeqWrapper* kseq2,
-                                            Buffer<QueryKmer> &kmerBuffer,
+                                            Buffer<Kmer> &kmerBuffer,
                                             vector<Query> &queryList,
                                             const QuerySplit & currentSplit,
                                             const LocalParameters &par);
@@ -55,14 +57,14 @@ private:
         char *seq,
         char *maskedSeq,
         size_t & maxReadLength,
-        Buffer<QueryKmer> &kmerBuffer,
+        Buffer<Kmer> &kmerBuffer,
         const vector<Query> & queryList,
         bool isReverse);
 
     void fillQueryKmerBuffer(
         const char *seq,
         int seqLen, 
-        Buffer<QueryKmer> &kmerBuffer, 
+        Buffer<Kmer> &kmerBuffer, 
         size_t &posToWrite, 
         uint32_t seqID, 
         uint32_t offset = 0);
@@ -73,29 +75,57 @@ public:
         const GeneticCode &geneticCode,
         int kmerFormat);
     ~KmerExtractor();
-    void extractQueryKmers(Buffer<QueryKmer> &kmerBuffer,
-                           vector<Query> & queryList,
-                           const QuerySplit & currentSplit,
-                           const LocalParameters &par,
-                           KSeqWrapper* kseq1,
-                           KSeqWrapper* kseq2 = nullptr);
+
+    void extractQueryKmers(
+        Buffer<Kmer> &kmerBuffer,
+        vector<Query> & queryList,
+        const QuerySplit & currentSplit,
+        const LocalParameters &par,
+        KSeqWrapper* kseq1,
+        KSeqWrapper* kseq2 = nullptr);
+
+    bool extractQueryKmers_aa2aa(
+        Buffer<Kmer> &kmerBuffer,
+        std::vector<ProteinQuery> & queryList,
+        KSeqWrapper* kseq,
+        uint64_t & processedSeqCnt,
+        SeqEntry & savedSeq
+    );
+
+    void processSequenceChunk_aa2aa(
+        Buffer<Kmer> &kmerBuffer,
+        size_t writePos,
+        uint32_t queryOffset,
+        const std::vector<std::string> & aaSeqs, 
+        size_t seqNum,
+        int threadID
+    );
 
     int extractTargetKmers(
         const char *seq,
-        Buffer<TargetKmer> &kmerBuffer,
+        Buffer<Kmer> &kmerBuffer,
         size_t &posToWrite,
         int seqID,
         int taxIdAtRank,
         SequenceBlock block);
-};
 
-static inline bool compareForLinearSearch(const QueryKmer &a, const QueryKmer &b) {
-    if (a.ADkmer < b.ADkmer) {
-        return true;
-    } else if (a.ADkmer == b.ADkmer) {
-        return (a.info.sequenceID < b.info.sequenceID);
-    }
-    return false;
-}
+    bool extractKmers(
+        KSeqWrapper *kseq,
+        Buffer<Kmer> &kmerBuffer,
+        std::unordered_map<string, uint32_t> & accession2index,
+        uint32_t & idOffset,
+        SeqEntry & savedSeq);
+
+    bool extractUnirefKmers(
+        KSeqWrapper *kseq,
+        Buffer<Kmer> &kmerBuffer,
+        std::unordered_map<std::string, uint32_t> & unirefName2Id,
+        uint32_t & seqCnt,
+        SeqEntry & savedSeq);
+    
+    size_t countKmers(
+        KSeqWrapper *checker,
+        size_t seqNum);
+};
 
 #endif //METABULI_KMEREXTRACTER_H

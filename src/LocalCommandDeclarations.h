@@ -31,5 +31,10 @@ extern int makeBenchmarkSet(int argc, const char **argv, const Command &command)
 extern int makeQuerySet(int argc, const char **argv, const Command &command);
 extern int makeVirusBenchmarkSet(int argc, const char **argv, const Command &command);
 extern int count_common_kmers(int argc, const char **argv, const Command &command);
+extern int create_common_kmer_list(int argc, const char **argv, const Command &command);
+extern int create_unique_kmer_list(int argc, const char **argv, const Command &command);
+extern int create_unirefdb(int argc, const char **argv, const Command &command);
+extern int create_uniref_tree(int argc, const char **argv, const Command &command);
+extern int assign_uniref(int argc, const char **argv, const Command &command);
 
 #endif //ADCLASSIFIER2_LOCALCOMMANDDECLARATIONS_H
