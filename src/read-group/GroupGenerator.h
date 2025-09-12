@@ -8,6 +8,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include "IndexCreator.h"
 #include "SeqIterator.h"
 #include "NcbiTaxonomy.h"
 #include "LocalParameters.h"
@@ -125,12 +126,26 @@ public:
                                                             uint64_t& currentVal,
                                                             size_t maxBatchSize);
 
-    void writeQueryKmerFile(Buffer<Kmer>& queryKmerBuffer, 
-                                   const string& queryKmerFileDir, 
-                                   size_t& numOfSplits, 
-                                   size_t numOfThreads, 
-                                   size_t processedReadCnt, 
-                                   const string & jobId);
+    void writeQueryKmerFile(
+        Buffer<Kmer>& queryKmerBuffer, 
+        const string& outDir, 
+        size_t& numOfSplits, 
+        size_t numOfThreads, 
+        size_t processedReadCnt);
+
+    std::vector<std::pair<size_t, size_t>> getKmerRanges(
+        const Buffer<Kmer> & kmerBuffer, 
+        size_t offset);
+
+    void writeQueryKmerFile2(
+        Buffer<Kmer>& queryKmerBuffer, 
+        const string& outDir,
+        size_t& numOfSplits, 
+        size_t numOfThreads, 
+        size_t processedReadCnt);
+
+    
+    
     static size_t bufferSize;
 
     template <typename T>
@@ -152,6 +167,8 @@ protected:
     const LocalParameters & par;
     string commonKmerDB;
     string taxDbDir;
+    string orgRes;
+    string outDir;
     size_t matchPerKmer;
     int kmerFormat;
     
@@ -160,7 +177,7 @@ protected:
     QueryIndexer *queryIndexer;
     KmerExtractor *kmerExtractor;
     Reporter *reporter;    
-    KmerMatcher * kmerMatcher;
+    // KmerMatcher * kmerMatcher;
     TaxonomyWrapper *taxonomy;
     KmerFileHandler *kmerFileHandler;
     
@@ -175,61 +192,56 @@ public:
     void filterCommonKmers(Buffer<Kmer>& queryKmerBuffer,
                            Buffer<std::pair<uint32_t, uint32_t>> & matchBuffer,
                            const string & db="");
+    void filterCommonKmers(Buffer<Kmer>& queryKmerBuffer,
+                                       const string & db);
 
-    void makeGraph(const string &queryKmerFileDir, 
-                   size_t &numOfSplits, 
-                   size_t &numOfThreads, 
-                   size_t &numOfGraph,
-                   size_t processedReadCnt,
-                   const string &jobId);
+    void makeGraph(
+        size_t &numOfSplits, 
+        size_t &numOfThreads, 
+        size_t &numOfGraph,
+        size_t processedReadCnt);
 
-    void saveSubGraphToFile(const unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> &subRelation, 
-                            const string &subGraphFileDir, 
-                            const size_t counter_now,
-                            const string &jobId);
-    double mergeRelations(const string& subGraphFileDir,
-                          size_t numOfGraph,
-                          const string& jobId,
+    void makeGraph2(
+        size_t &numOfSplits, 
+        size_t &numOfThreads, 
+        size_t &numOfGraph,
+        size_t processedReadCnt);
+
+    void saveSubGraphToFile(
+        const unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> &subRelation, 
+        const size_t counter_now);
+
+    double mergeRelations(size_t numOfGraph,
                           const vector<MetabuliInfo>& metabuliResult,
                           const double thresholdK);
 
-    void makeGroups(const string& relationFileDir,
-                    const string& jobId,
-                    int groupKmerThr,
+    void makeGroups(int groupKmerThr,
                     unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
                     vector<int> &queryGroupInfo);
 
     void saveGroupsToFile(const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
-                          const vector<int> &queryGroupInfo, 
-                          const string &groupFileDir, 
-                          const vector<MetabuliInfo>& metabuliResult, 
-                          const string &jobId);
+                          const vector<int> &queryGroupInfo,
+                          const vector<MetabuliInfo>& metabuliResult);
 
     void loadGroupsFromFile(unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo,
                        vector<int> &queryGroupInfo,
                        const string &groupFileDir,
                        const string &jobId);
 
-    void loadMetabuliResult(const string &resultFileDir, 
-                            vector<MetabuliInfo>& metabuliResult);
+    void loadMetabuliResult(vector<MetabuliInfo>& metabuliResult);
 
-    void getRepLabel(const string &groupRepFileDir, 
-                     vector<MetabuliInfo>& metabuliResult, 
-                     const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
-                     unordered_map<uint32_t, int> &repLabel, 
-                     const string &jobId, 
-                     const float groupScoreThr);
+    void getRepLabel(
+        vector<MetabuliInfo>& metabuliResult, 
+        const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
+        unordered_map<uint32_t, int> &repLabel, 
+        const float groupScoreThr);
     
-    void loadRepLabel(const std::string &groupRepFileDir,
-                      std::unordered_map<uint32_t, int> &repLabel,
-                      const std::string &jobId);
+    void loadRepLabel(std::unordered_map<uint32_t, int> &repLabel);
 
-    void applyRepLabel(const string &resultFileDir, 
-                       const string &newResultFileDir, 
-                       const vector<int> &queryGroupInfo, 
-                       const unordered_map<uint32_t, int> &repLabel, 
-                       const float groupScoreThr, 
-                       const string &jobId);
+    void applyRepLabel( 
+        const vector<int> &queryGroupInfo, 
+        const unordered_map<uint32_t, int> &repLabel, 
+        const float groupScoreThr);
     
     void makeGroupsFromBinning(const string &binningFileDir, 
                                unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> &relation,

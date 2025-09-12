@@ -258,10 +258,7 @@ protected:
                         const std::string & fileList,
                         const std::string & acc2taxIdFileName);
 
-    void getDiffIdx(
-        uint64_t & lastKmer,
-        uint64_t entryToWrite,
-        WriteBuffer<uint16_t> & diffBuffer);
+
 
 public:
     IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy, int kmerFormat);
@@ -282,6 +279,11 @@ public:
         size_t * uniqeKmerIdx,
         size_t & uniqKmerCnt,
         vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
+
+    static void getDiffIdx(
+        uint64_t & lastKmer,
+        uint64_t entryToWrite,
+        WriteBuffer<uint16_t> & diffBuffer);
 
     // Getters
     int getNumOfFlush() const { return numOfFlush; }
