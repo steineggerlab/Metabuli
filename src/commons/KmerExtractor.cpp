@@ -25,6 +25,9 @@ KmerExtractor::KmerExtractor(
             kmerLen = 12;
         } else if (kmerFormat == 4) {
             kmerScanners[i] = new KmerScanner_aa2aa(12);
+        } else if (kmerFormat == 5) {
+            kmerScanners[i] = new SyncmerScanner_dna2aa(geneticCode, 12, par.smerLen);
+            kmerLen = 12;
         } else {
             std::cerr << "Error: Invalid k-mer format specified." << std::endl;
             exit(EXIT_FAILURE);

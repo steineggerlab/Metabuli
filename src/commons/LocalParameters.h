@@ -93,6 +93,7 @@ public:
 
     // Group generation
     PARAMETER(THR_K)
+    PARAMETER(MIN_EDGE_WEIGHT)
     PARAMETER(GROUP_SCORE_THR)
 
     // DB build parameters
@@ -178,6 +179,7 @@ public:
     float tieRatio;
     float thresholdK;
     float groupScoreThr;
+    int minEdgeWeight;
     int printLineage;
     int maxShift;
     bool em;

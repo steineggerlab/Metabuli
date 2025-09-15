@@ -22,11 +22,6 @@ GroupGenerator::GroupGenerator(LocalParameters & par) : par(par) {
     queryIndexer = new QueryIndexer(par);
     queryIndexer->setKmerLen(12);
     kmerExtractor = new KmerExtractor(par, *geneticCode, kmerFormat);
-    // if (par.reducedAA) {
-    //     kmerMatcher = new ReducedKmerMatcher(par, taxonomy, kmerFormat);
-    // } else {
-    //     kmerMatcher = new KmerMatcher(par, taxonomy, kmerFormat);
-    // }
     reporter = new Reporter(par, taxonomy);
     kmerFileHandler = new KmerFileHandler();
 }
@@ -59,7 +54,7 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     cout << "groupScoreThr: " << groupScoreThr << endl;
     cout << "thresholdK: " << thresholdK << endl;
     
-    //Extract k-mers from query sequences and compare them to target k-mer DB
+    // Extract k-mers from query sequences and compare them to target k-mer DB
     while (!complete) {
         tries++;
 
@@ -142,9 +137,13 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     unordered_map<uint32_t, unordered_set<uint32_t>> groupInfo;
     vector<int> queryGroupInfo;
     queryGroupInfo.resize(processedReadCnt, -1);
-    int dynamicGroupKmerThr = static_cast<int>(mergeRelations(numOfGraph, metabuliResult, thresholdK));
-    
-    makeGroups(dynamicGroupKmerThr, groupInfo, queryGroupInfo);    
+    mergeRelations(numOfGraph);
+    // int dynamicGroupKmerThr = static_cast<int>(mergeRelations(numOfGraph, metabuliResult, thresholdK));
+    if (par.minEdgeWeight != 0) {
+        makeGroups(par.minEdgeWeight, groupInfo, queryGroupInfo);
+    } else {
+        makeGroups(132, groupInfo, queryGroupInfo);    
+    }
     saveGroupsToFile(groupInfo, queryGroupInfo, metabuliResult);
     //loadGroupsFromFile(groupInfo, queryGroupInfo, outDir, jobId);
     
@@ -690,6 +689,7 @@ void GroupGenerator::makeGraph(
         }
 
         vector<uint32_t> currentQueryIds;
+        // vector<QueryKmerInfo> currentQueryInfos;
         currentQueryIds.reserve(1024);
 
         while (true) {
@@ -706,22 +706,41 @@ void GroupGenerator::makeGraph(
             if (currentKmer == UINT64_MAX) break;
 
             currentQueryIds.clear();
-
+            // currentQueryInfos.clear();
             // 현재 k-mer와 동일한 k-mer를 가지는 query ID 수집
             for (size_t file = 0; file < numOfSplits; ++file) {
                 while (bufferPos[file] < kmerInfoBuffers[file].size() &&
                     kmerInfoBuffers[file][bufferPos[file]].first == currentKmer) {
                     
-                    uint32_t seqId = kmerInfoBuffers[file][bufferPos[file]].second.sequenceID;
+                    uint32_t seqId = (uint32_t) kmerInfoBuffers[file][bufferPos[file]].second.sequenceID;
                     // #pragma omp critical 
                     // cout << "[READ ] seqID: " << seqId
                     // << ", kmer: " << currentKmer
                     // << ", fileIdx: " << file << ", thread: " << threadIdx << endl;
             
-
                     if (seqId != UINT32_MAX && seqId < processedReadCnt) {
                         currentQueryIds.emplace_back(seqId);
+                        // currentQueryInfos.emplace_back(kmerInfoBuffers[file][bufferPos[file]].second);
                     }
+
+                    // if (currentQueryIds.size() > 1) {
+                    //     for (size_t z = 0; z < currentQueryIds.size();z++) {
+                    //         for (size_t k = z+1; k < currentQueryIds.size();k++) {
+                    //             uint32_t a = currentQueryIds[z];
+                    //             uint32_t b = currentQueryIds[k];
+                    //             uint32_t diff = std::max(a, b) - std::min(a, b);
+                    //             if (diff > 100000 && a < 10 || b < 10) {
+                    //                 #pragma omp critical
+                    //                 {
+                    //                     cout << currentKmer << endl;
+                    //                     cout << currentQueryInfos[z].sequenceID << ", " << currentQueryInfos[z].pos << ", " << currentQueryInfos[z].frame << endl;
+                    //                     cout << currentQueryInfos[k].sequenceID << ", " << currentQueryInfos[k].pos << ", " << currentQueryInfos[k].frame << endl;
+                    //                 }
+
+                    //             }
+                    //         }
+                    //     }
+                    // }                    
 
                     bufferPos[file]++;
 
@@ -819,6 +838,7 @@ void GroupGenerator::saveSubGraphToFile(
     }
 }
 
+
 double GroupGenerator::mergeRelations(
     size_t numOfGraph,
     const vector<MetabuliInfo>& metabuliResult,
@@ -893,7 +913,9 @@ double GroupGenerator::mergeRelations(
 
         int label1 = external2internalTaxId[metabuliResult[minKey.first].label];
         int label2 = external2internalTaxId[metabuliResult[minKey.second].label];
-        
+        // classified + unclasssified -> false edge
+        // unclassified + unclassified -> true edge
+        // classified + classified -> genus 비교
         if (taxonomy->getTaxIdAtRank(label1, "genus") == taxonomy->getTaxIdAtRank(label2, "genus"))
             trueWeights.emplace_back(totalWeight);
         else
@@ -908,6 +930,22 @@ double GroupGenerator::mergeRelations(
         cerr << "Insufficient true/false edges for elbow detection." << endl;
         return 120.0;
     }
+
+    vector<double> tempSorted = falseWeights;
+    std::sort(tempSorted.begin(), tempSorted.end());
+    double tempFalse = tempSorted[0];
+    int tempFalseCnt = 0;
+    for (int i = 0; i < tempSorted.size(); i++){
+        if (tempFalse == tempSorted[i]){
+            tempFalseCnt++;
+        }
+        else{
+            cout << tempFalse << ": " << tempFalseCnt << endl;
+            tempFalse = tempSorted[i];
+            tempFalseCnt = 1;
+        }
+    }
+    cout << tempFalse << ": " << tempFalseCnt << endl;
 
     // Elbow 계산 함수
     auto findElbow = [](const vector<double>& data) -> double {
@@ -950,6 +988,77 @@ double GroupGenerator::mergeRelations(
     cout << "Time: " << time(nullptr) - before << " sec" << endl;
 
     return threshold;
+}
+
+
+void GroupGenerator::mergeRelations(
+    size_t numOfGraph
+) {
+    cout << "Merging and calculating threshold via elbow..." << endl;
+    time_t before = time(nullptr);
+
+    const size_t BATCH_SIZE = 4096;
+    vector<ifstream> files(numOfGraph);
+    vector<queue<Relation>> relationBuffers(numOfGraph);
+
+    ofstream relationLog(outDir + "/allRelations.txt");
+    if (!relationLog.is_open()) {
+        cerr << "Failed to open relation log file." << endl;
+        return;
+    }
+
+    auto readNextBatch = [&](size_t i) {
+        for (size_t j = 0; j < BATCH_SIZE; ++j) {
+            Relation r;
+            if (!files[i].read(reinterpret_cast<char*>(&r.id1), sizeof(uint32_t))) break;
+            if (!files[i].read(reinterpret_cast<char*>(&r.id2), sizeof(uint32_t))) break;
+            if (!files[i].read(reinterpret_cast<char*>(&r.weight), sizeof(uint32_t))) break;
+            relationBuffers[i].push(r);
+        }
+    };
+
+    // 초기 파일 열기 및 버퍼 채우기
+    for (size_t i = 0; i < numOfGraph; ++i) {
+        string fileName = outDir + "/subGraph_" + to_string(i);
+        files[i].open(fileName, ios::binary);
+        if (!files[i].is_open()) {
+            cerr << "Error opening file: " << fileName << endl;
+            continue;
+        }
+        readNextBatch(i);
+    }
+
+    while (true) {
+        pair<uint32_t, uint32_t> minKey = {UINT32_MAX, UINT32_MAX};
+
+        for (size_t i = 0; i < numOfGraph; ++i) {
+            if (!relationBuffers[i].empty()) {
+                const Relation& r = relationBuffers[i].front();
+                pair<uint32_t, uint32_t> key = {r.id1, r.id2};
+                if (key < minKey) minKey = key;
+            }
+        }
+
+        if (minKey.first == UINT32_MAX) break;
+
+        uint32_t totalWeight = 0;
+
+        for (size_t i = 0; i < numOfGraph; ++i) {
+            while (!relationBuffers[i].empty()) {
+                const Relation& r = relationBuffers[i].front();
+                if (r.id1 == minKey.first && r.id2 == minKey.second) {
+                    totalWeight += r.weight;
+                    relationBuffers[i].pop();
+                    if (relationBuffers[i].empty()) readNextBatch(i);
+                } else break;
+            }
+        }
+        relationLog << minKey.first << ' ' << minKey.second << ' ' << totalWeight << '\n';
+    }
+
+    relationLog.close();
+
+    return;
 }
 
 
@@ -1145,7 +1254,7 @@ void GroupGenerator::getRepLabel(
     }
 
     for (const auto& [groupId, groupRep] : repLabel) {
-        outFile << groupId << "\t" << groupRep << "\n";
+        outFile << groupId << "\t" << taxonomy->getOriginalTaxID(groupRep) << "\n";
     }
 
     outFile.close();
@@ -1500,7 +1609,7 @@ void KmerFileHandler::writeQueryKmerFile2(
         uint64_t lastKmer = 0;
         for (size_t i = startIdx; i < endIdx; i++) {
             queryKmerBuffer.buffer[i].qInfo.sequenceID += processedReadCnt;
-            // queryKmerBuffer.buffer[i].qInfo.sequenceID --;
+            queryKmerBuffer.buffer[i].qInfo.sequenceID --;
             infoBuffer.write(&queryKmerBuffer.buffer[i].qInfo);
             IndexCreator::getDiffIdx(lastKmer, queryKmerBuffer.buffer[i].value, diffBuffer);
         }

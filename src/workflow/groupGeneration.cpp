@@ -5,25 +5,19 @@
 #include "common.h"
 
 void setGroupGenerationDefaults(LocalParameters & par){    
+    par.minEdgeWeight = 0;
     par.syncmer = 0;
-    par.smerLen = 5;
+    par.smerLen = 9;
     par.kmerFormat = 3;
-    par.reducedAA = 0;
     par.seqMode = 2;    
     par.minScore = 0;
     par.minSpScore = 0;
-    par.hammingMargin = 0;
     par.verbosity = 3;
     par.ramUsage = 128;
     par.printLog = 0;
-    par.maxGap = 0;
-    par.taxonomyPath = "" ;
-    par.minConsCnt = 4;
-    par.minConsCntEuk = 9;
     par.maskMode = 0;
     par.maskProb = 0.9;
     par.matchPerKmer = 4;
-    par.accessionLevel = 0;
     par.tieRatio = 0.95;
     par.thresholdK = 0.5;
     par.groupScoreThr = 0.15;

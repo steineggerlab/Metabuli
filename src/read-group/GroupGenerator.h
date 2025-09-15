@@ -215,6 +215,8 @@ public:
                           const vector<MetabuliInfo>& metabuliResult,
                           const double thresholdK);
 
+    void mergeRelations(size_t numOfGraph);
+
     void makeGroups(int groupKmerThr,
                     unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
                     vector<int> &queryGroupInfo);

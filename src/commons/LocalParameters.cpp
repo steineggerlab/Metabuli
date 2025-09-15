@@ -66,14 +66,14 @@ LocalParameters::LocalParameters() :
                  "s-mer length for syncmer selection",
                  typeid(int),
                  (void *) &smerLen,
-                 "[0-7]"),
+                 "^[0-9]+$"),
         KMER_FORMAT(KMER_FORMAT_ID,
                     "--kmer-format",
                     "K-mer format",
                     "K-mer format",
                     typeid(int),
                     (void *) &kmerFormat,
-                    "[1-3]"),
+                    "[1-5]"),
         UNIREF_XML(UNIREF_XML_ID,
                     "--uniref-xml",
                     "Path to UniRef XML file",
@@ -236,6 +236,13 @@ LocalParameters::LocalParameters() :
                     typeid(float),
                     (void *) &thresholdK,
                     "^(-?(10(\\.0+)?|[0-9](\\.[0-9]+)?))$"),
+        MIN_EDGE_WEIGHT(MIN_EDGE_WEIGHT_ID,
+                        "--min-edge",
+                        "Min. edge weight for read grouping",
+                        "Min. edge weight for read grouping",
+                        typeid(int),
+                        (void *) &minEdgeWeight,
+                        "^[0-9]+$"),
         GROUP_SCORE_THR(GROUP_SCORE_THR_ID,
                     "--group-score-thr",
                     "Min. score for read grouping",
@@ -657,21 +664,20 @@ LocalParameters::LocalParameters() :
     //groupGeneration
     groupGeneration.push_back(&PARAM_THREADS);
     groupGeneration.push_back(&SEQ_MODE);
-    groupGeneration.push_back(&TAXONOMY_PATH);
     groupGeneration.push_back(&RAM_USAGE);
     groupGeneration.push_back(&MATCH_PER_KMER);
     groupGeneration.push_back(&THR_K);
     groupGeneration.push_back(&GROUP_SCORE_THR);    
     groupGeneration.push_back(&MIN_SCORE);
-    groupGeneration.push_back(&MIN_CONS_CNT);
-    groupGeneration.push_back(&MIN_CONS_CNT_EUK);
     groupGeneration.push_back(&MIN_SP_SCORE);
-    groupGeneration.push_back(&HAMMING_MARGIN);    
     groupGeneration.push_back(&PARAM_MASK_RESIDUES);
     groupGeneration.push_back(&PARAM_MASK_PROBABILTY);
-    groupGeneration.push_back(&ACCESSION_LEVEL);
     groupGeneration.push_back(&TIE_RATIO);
     groupGeneration.push_back(&KMER_FORMAT);
+    groupGeneration.push_back(&VALIDATE_INPUT);
+    groupGeneration.push_back(&SYNCMER);
+    groupGeneration.push_back(&SMER_LEN);
+    groupGeneration.push_back(&MIN_EDGE_WEIGHT);
 
     // filter 
     filter.push_back(&PARAM_THREADS);
