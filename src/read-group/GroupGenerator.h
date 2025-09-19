@@ -30,11 +30,29 @@ using namespace std;
 struct Relation {
     uint32_t id1;
     uint32_t id2;
-    uint32_t weight;
+    uint16_t weight;
+
+    Relation() : id1(0), id2(0), weight(0) {}
+    Relation(uint32_t id1, uint32_t id2, uint16_t weight) : id1(id1), id2(id2), weight(weight) {}
 
     bool operator==(const Relation& other) const {
         return id1 == other.id1 && id2 == other.id2;
     }
+
+    bool operator<(const Relation& other) const {
+        if (id1 != other.id1)
+            return id1 < other.id1;
+        if (id2 != other.id2)
+            return id2 < other.id2;
+        return weight < other.weight;
+    }
+
+    static bool compare(const Relation& a, const Relation& b) {
+        if (a.id1 != b.id1)
+            return a.id1 < b.id1;
+        return a.id2 < b.id2;
+    }
+
 };
 
 // struct compareForKmerFilter {
@@ -96,72 +114,6 @@ struct MetabuliInfo {
     string name;
 };
 
-class KmerFileHandler {
-private:
-    std::vector<uint64_t> kmerBoundaries;
-    bool boundariesInitialized = false;
-protected:
-
-public:
-    KmerFileHandler() {}
-    static void flushKmerBuf(uint16_t *buffer, 
-                             FILE *handleKmerTable, 
-                             size_t &localBufIdx);
-    static void getDiffIdx(const uint64_t &lastKmer, 
-                           const uint64_t &entryToWrite, 
-                           FILE *handleKmerTable, 
-                           uint16_t *buffer, 
-                           size_t &localBufIdx,
-                           size_t bufferSize);
-    static void writeDiffIdx(uint16_t *buffer, 
-                             FILE *handleKmerTable, 
-                             uint16_t *toWrite, 
-                             size_t size, 
-                             size_t &localBufIdx,
-                             size_t bufferSize);
-    vector<pair<uint64_t, QueryKmerInfo>> getNextKmersBatch(const MmapedData<uint16_t>& diffList,
-                                                            const MmapedData<QueryKmerInfo>& infoList,
-                                                            size_t& idxDiff,
-                                                            size_t& idxInfo,
-                                                            uint64_t& currentVal,
-                                                            size_t maxBatchSize);
-
-    void writeQueryKmerFile(
-        Buffer<Kmer>& queryKmerBuffer, 
-        const string& outDir, 
-        size_t& numOfSplits, 
-        size_t numOfThreads, 
-        size_t processedReadCnt);
-
-    std::vector<std::pair<size_t, size_t>> getKmerRanges(
-        const Buffer<Kmer> & kmerBuffer, 
-        size_t offset);
-
-    void writeQueryKmerFile2(
-        Buffer<Kmer>& queryKmerBuffer, 
-        const string& outDir,
-        size_t& numOfSplits, 
-        size_t numOfThreads, 
-        size_t processedReadCnt);
-
-    
-    
-    static size_t bufferSize;
-
-    template <typename T>
-    static size_t  loadBuffer(FILE *fp, T *buffer, size_t size) {
-        return fread(buffer, sizeof(T), size, fp);
-    }
-
-    size_t  fillKmerInfoBuffer(size_t bufferSize,
-                            FILE *kmerInfoFp,
-                            TaxID *infoBuffer) {
-        return loadBuffer(kmerInfoFp, infoBuffer, bufferSize);
-    }
-};
-
-
-
 class GroupGenerator {
 protected:
     const LocalParameters & par;
@@ -179,10 +131,15 @@ protected:
     Reporter *reporter;    
     // KmerMatcher * kmerMatcher;
     TaxonomyWrapper *taxonomy;
-    KmerFileHandler *kmerFileHandler;
+    // KmerFileHandler *kmerFileHandler;
     
     unordered_map<TaxID, TaxID> taxId2speciesId;
     unordered_map<TaxID, TaxID> taxId2genusId;
+    size_t numOfSplits = 0;
+    size_t numOfGraph = 0;
+    std::vector<uint64_t> kmerBoundaries;
+    bool boundariesInitialized = false;
+    bool useOnlyTrueRelations = false; // for debug
 
 public:
     GroupGenerator(LocalParameters & par);
@@ -192,34 +149,31 @@ public:
     void filterCommonKmers(Buffer<Kmer>& queryKmerBuffer,
                            Buffer<std::pair<uint32_t, uint32_t>> & matchBuffer,
                            const string & db="");
-    void filterCommonKmers(Buffer<Kmer>& queryKmerBuffer,
-                                       const string & db);
 
-    void makeGraph(
-        size_t &numOfSplits, 
-        size_t &numOfThreads, 
-        size_t &numOfGraph,
-        size_t processedReadCnt);
-
-    void makeGraph2(
-        size_t &numOfSplits, 
-        size_t &numOfThreads, 
-        size_t &numOfGraph,
-        size_t processedReadCnt);
-
+    void makeGraph(size_t processedReadCnt);
+    
     void saveSubGraphToFile(
-        const unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> &subRelation, 
+        const unordered_map<uint64_t, uint16_t> & pair2weight,
         const size_t counter_now);
 
     double mergeRelations(size_t numOfGraph,
                           const vector<MetabuliInfo>& metabuliResult,
                           const double thresholdK);
+    
+    void mergeTrueRelations(
+        const vector<MetabuliInfo>& metabuliResult);
 
-    void mergeRelations(size_t numOfGraph);
+    void mergeRelations();
 
     void makeGroups(int groupKmerThr,
                     unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
                     vector<int> &queryGroupInfo);
+
+    void makeGroupsFromSubGraphs(
+        uint32_t groupKmerThr,
+        unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
+        vector<int> &queryGroupInfo,
+        const vector<MetabuliInfo>& metabuliResult);
 
     void saveGroupsToFile(const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
                           const vector<int> &queryGroupInfo,
@@ -244,14 +198,14 @@ public:
         const vector<int> &queryGroupInfo, 
         const unordered_map<uint32_t, int> &repLabel, 
         const float groupScoreThr);
-    
-    void makeGroupsFromBinning(const string &binningFileDir, 
-                               unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> &relation,
-                               unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
-                               vector<int> &queryGroupInfo, 
-                               int groupKmerThr);
 
-    void tempFunction();
+    void writeKmers(
+        Buffer<Kmer>& queryKmerBuffer, 
+        size_t processedReadCnt);
+
+    std::vector<std::pair<size_t, size_t>> getKmerRanges(
+        const Buffer<Kmer> & kmerBuffer, 
+        size_t offset);
 
     ~GroupGenerator();
 };

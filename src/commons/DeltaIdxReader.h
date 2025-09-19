@@ -142,6 +142,19 @@ public:
         return valueBuffer[valueBufferIdx++];
     }
 
+    Kmer current() {
+        if (unlikely(valueBufferIdx >= valueCnt)) {
+            valueCnt = 0;
+            valueBufferIdx = 0;
+            fillValueBuffer();
+        }
+        if (unlikely(valueCnt == 0)) {
+            valueBufferCompleted = true;
+            return {UINT64_MAX, UINT32_MAX}; // Return a dummy k-mer
+        }
+        return valueBuffer[valueBufferIdx];
+    }
+
     void setReadPosition(DiffIdxSplit offset) {
         deltaIdxBuffer.loadBufferAt(offset.diffIdxOffset);
         infoBuffer.loadBufferAt(offset.infoIdxOffset - (offset.ADkmer != 0));

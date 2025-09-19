@@ -23,7 +23,7 @@ GroupGenerator::GroupGenerator(LocalParameters & par) : par(par) {
     queryIndexer->setKmerLen(12);
     kmerExtractor = new KmerExtractor(par, *geneticCode, kmerFormat);
     reporter = new Reporter(par, taxonomy);
-    kmerFileHandler = new KmerFileHandler();
+    // kmerFileHandler = new KmerFileHandler();
 }
 
 GroupGenerator::~GroupGenerator() {
@@ -32,7 +32,7 @@ GroupGenerator::~GroupGenerator() {
     delete kmerExtractor;
     delete reporter;
     delete geneticCode;
-    delete kmerFileHandler;
+    // delete kmerFileHandler;
 }
 
 void GroupGenerator::startGroupGeneration(const LocalParameters &par) {  
@@ -46,8 +46,6 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     size_t processedReadCnt = 0;
     size_t tries = 0;
     size_t totalSeqCnt = 0;
-    size_t numOfSplits = 0;
-    size_t numOfGraph = 0;
 
     float groupScoreThr = par.groupScoreThr;
     double thresholdK = par.thresholdK;
@@ -95,10 +93,6 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
             matchBuffer.reallocateMemory(queryReadSplit[splitIdx].kmerCnt);
             matchBuffer.init();
 
-
-            // Initialize query k-mer buffer and match buffer
-            queryKmerBuffer.startIndexOfReserve = 0;
-
             // Extract query k-mers
             kmerExtractor->extractQueryKmers(queryKmerBuffer,
                                              queryList,
@@ -106,13 +100,10 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
                                              par,
                                              kseq1,
                                              kseq2); 
-                                            
-            cout << "The number of extracted query k-mers: " << queryKmerBuffer.startIndexOfReserve << endl;
-            
-            // filterCommonKmers(queryKmerBuffer, commonKmerDB);
+                                                        
             filterCommonKmers(queryKmerBuffer, matchBuffer, commonKmerDB);
             time_t t = time(nullptr);
-            kmerFileHandler->writeQueryKmerFile2(queryKmerBuffer, this->outDir, numOfSplits, numOfThreads, processedReadCnt);
+            writeKmers(queryKmerBuffer, processedReadCnt);
             cout << "Writing query k-mer file: " << double(time(nullptr) - t) << " s" << endl;
             processedReadCnt += queryReadSplit[splitIdx].readCnt;
             cout << "The number of processed sequences: " << processedReadCnt << " (" << (double) processedReadCnt / (double) totalSeqCnt << ")" << endl;
@@ -127,147 +118,57 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
             complete = true;
         } 
     }   
-    // processedReadCnt = 10151370;
-    // numOfSplits = 6;
-    makeGraph(numOfSplits, numOfThreads, numOfGraph, processedReadCnt);   
 
+    makeGraph(processedReadCnt);   
     vector<MetabuliInfo> metabuliResult;       
     loadMetabuliResult(metabuliResult);
 
     unordered_map<uint32_t, unordered_set<uint32_t>> groupInfo;
     vector<int> queryGroupInfo;
     queryGroupInfo.resize(processedReadCnt, -1);
-    mergeRelations(numOfGraph);
-    // int dynamicGroupKmerThr = static_cast<int>(mergeRelations(numOfGraph, metabuliResult, thresholdK));
-    if (par.minEdgeWeight != 0) {
-        makeGroups(par.minEdgeWeight, groupInfo, queryGroupInfo);
+    
+    // Use all edges
+    if (par.printLog) {
+        mergeRelations();
+        if (par.minEdgeWeight != 0) {
+            makeGroups(par.minEdgeWeight, groupInfo, queryGroupInfo);
+        } else {
+            makeGroups(132, groupInfo, queryGroupInfo);    
+        }
     } else {
-        makeGroups(132, groupInfo, queryGroupInfo);    
+        if (par.minEdgeWeight != 0) {
+            makeGroupsFromSubGraphs(par.minEdgeWeight, groupInfo, queryGroupInfo, metabuliResult);
+        } else {
+            makeGroupsFromSubGraphs(132, groupInfo, queryGroupInfo, metabuliResult);    
+        }
     }
     saveGroupsToFile(groupInfo, queryGroupInfo, metabuliResult);
-    //loadGroupsFromFile(groupInfo, queryGroupInfo, outDir, jobId);
-    
-
     unordered_map<uint32_t, int> repLabel; 
     getRepLabel(metabuliResult, groupInfo, repLabel, groupScoreThr);
-    //loadRepLabel(outDir, repLabel, jobId);
     applyRepLabel(queryGroupInfo, repLabel, groupScoreThr);
-    
-    cout << "Number of query k-mers: " << numOfTatalQueryKmerCnt << endl;
-}
 
-void GroupGenerator::filterCommonKmers(Buffer<Kmer>& queryKmerBuffer,
-                                       const string & db){
-    cout << "Filtering common k-mers from query k-mer buffer... ";
-    time_t beforeFilter = time(nullptr);
-
-    std::string diffIdxFileName = db + "/diffIdx";
-    std::string infoFileName = db + "/info";
-    DeltaIdxReader* deltaIdxReaders = new DeltaIdxReader(diffIdxFileName, 
-                                                         infoFileName, 
-                                                         1024 * 1024 * 32, 
-                                                         1024 * 1024);
-    size_t blankCnt = std::find_if(queryKmerBuffer.buffer,
-                                   queryKmerBuffer.buffer + queryKmerBuffer.startIndexOfReserve, 
-                                   [](const auto& kmer) { return kmer.qInfo.sequenceID != 0;}
-                                  ) - queryKmerBuffer.buffer;
-    cout << "Blank k-mers (1): " << blankCnt << "\n";
-
-    size_t queryKmerNum = queryKmerBuffer.startIndexOfReserve - blankCnt;
-
-    // size_t queryKmerNum = queryKmerBuffer.startIndexOfReserve - blankCnt;
-    
-    // filter common kmers
-    vector<pair<uint32_t, uint32_t>> targetKmerPos;
-    int queryKmerIdx = blankCnt;
-
-    Kmer kmer = deltaIdxReaders->next();
-    while(queryKmerIdx < (int)queryKmerBuffer.startIndexOfReserve && !deltaIdxReaders->isCompleted()){
-        if(queryKmerBuffer.buffer[queryKmerIdx].value < kmer.value){
-            queryKmerIdx++;
+    // Use only true edges
+    useOnlyTrueRelations = true;
+    groupInfo.clear();
+    queryGroupInfo.clear();
+    repLabel.clear();
+    if (par.printLog) {
+        mergeTrueRelations(metabuliResult);
+        if (par.minEdgeWeight != 0) {
+            makeGroups(par.minEdgeWeight, groupInfo, queryGroupInfo);
+        } else {
+            makeGroups(132, groupInfo, queryGroupInfo);    
         }
-        else if(queryKmerBuffer.buffer[queryKmerIdx].value > kmer.value){
-            kmer = deltaIdxReaders->next();
-        }
-        else{
-            // Kmer query(queryKmerList[queryKmerIdx].ADkmer, 0);
-            // Kmer target(kmer.metamer.metamer, 0);
-            // query.printAA(*geneticCode, 12); std::cout << " ";
-            // target.printAA(*geneticCode, 12); std::cout << "\n";
-            auto seq = static_cast<uint32_t>(queryKmerBuffer.buffer[queryKmerIdx].qInfo.sequenceID);
-            auto pos = static_cast<uint32_t>(queryKmerBuffer.buffer[queryKmerIdx].qInfo.pos);
-            targetKmerPos.emplace_back(seq, pos);
-            queryKmerIdx++;
+    } else {
+        if (par.minEdgeWeight != 0) {
+            makeGroupsFromSubGraphs(par.minEdgeWeight, groupInfo, queryGroupInfo, metabuliResult);
+        } else {
+            makeGroupsFromSubGraphs(132, groupInfo, queryGroupInfo, metabuliResult);    
         }
     }
-    delete deltaIdxReaders;
+    getRepLabel(metabuliResult, groupInfo, repLabel, groupScoreThr);
+    applyRepLabel(queryGroupInfo, repLabel, groupScoreThr);
 
-    cout << "Found " << targetKmerPos.size() << " common k-mers\n";
-    std::sort(targetKmerPos.begin(), targetKmerPos.end());
-    targetKmerPos.erase(std::unique(targetKmerPos.begin(), targetKmerPos.end()), targetKmerPos.end());
-    cout << "Unique common k-mers: " << targetKmerPos.size() << "\n";
-
-    // sort buffer by locaion idx
-    time_t firstSort = time(nullptr);
-    SORT_PARALLEL(queryKmerBuffer.buffer + blankCnt,
-                  queryKmerBuffer.buffer + queryKmerBuffer.startIndexOfReserve,
-                  Kmer::compareQKmerByIdAndPos);
-    firstSort = time(nullptr) - firstSort;
-
-    // filter neighbor kmers
-    queryKmerIdx = blankCnt;
-    int targetKmerPosIdx = 0;
-    int queryKmerIdx_copy = blankCnt;
-    while(queryKmerIdx_copy < (int)queryKmerBuffer.startIndexOfReserve){
-        if (targetKmerPosIdx < targetKmerPos.size()){
-            // copy
-            if (queryKmerBuffer.buffer[queryKmerIdx_copy].qInfo.sequenceID < targetKmerPos[targetKmerPosIdx].first){
-                queryKmerBuffer.buffer[queryKmerIdx] = queryKmerBuffer.buffer[queryKmerIdx_copy];
-                queryKmerIdx++;
-                queryKmerIdx_copy++;
-            }
-            // next target check
-            else if(queryKmerBuffer.buffer[queryKmerIdx_copy].qInfo.sequenceID > targetKmerPos[targetKmerPosIdx].first){
-                targetKmerPosIdx++;
-            }
-            // same seq
-            else{
-                // copy
-                if (int64_t(queryKmerBuffer.buffer[queryKmerIdx_copy].qInfo.pos) < int(targetKmerPos[targetKmerPosIdx].second) - 0){
-                    queryKmerBuffer.buffer[queryKmerIdx] = queryKmerBuffer.buffer[queryKmerIdx_copy];
-                    queryKmerIdx++;
-                    queryKmerIdx_copy++;
-                }
-                // next target check
-                else if(int(targetKmerPos[targetKmerPosIdx].second) + 0 < int64_t(queryKmerBuffer.buffer[queryKmerIdx_copy].qInfo.pos)){
-                    targetKmerPosIdx++;
-                }
-                // pass
-                else{
-                    // Kmer query(queryKmerList[queryKmerIdx_copy].value, 0);
-                    // query.printAA(*geneticCode, 12);
-                    // std::cout << " " << int64_t(queryKmerList[queryKmerIdx_copy].qInfo.pos) - int64_t(targetKmerPos[targetKmerPosIdx].second) << "\n";
-                    queryKmerIdx_copy++;
-                }
-            }            
-        }
-        else{
-            queryKmerBuffer.buffer[queryKmerIdx] = queryKmerBuffer.buffer[queryKmerIdx_copy];
-            queryKmerIdx++;
-            queryKmerIdx_copy++;
-        }
-    }
-    queryKmerBuffer.startIndexOfReserve = size_t(queryKmerIdx);
-    
-    // sort buffer by kmer
-    time_t secondSort = time(nullptr);
-    SORT_PARALLEL(queryKmerBuffer.buffer + blankCnt, queryKmerBuffer.buffer + queryKmerBuffer.startIndexOfReserve, Kmer::compareQueryKmer);
-    secondSort = time(nullptr) - secondSort;
-
-    cout << "Done : " << double(time(nullptr) - beforeFilter) << " s" << endl;
-    cout << "Query k-mer sorting (1): " << double(firstSort) << " s" << endl;
-    cout << "Query k-mer sorting (2): " << double(secondSort) << " s" << endl;
-    cout << "Number of k-mers : " << queryKmerNum << " -> " << queryKmerIdx - blankCnt << endl;
 }
 
 void GroupGenerator::filterCommonKmers(
@@ -286,7 +187,6 @@ void GroupGenerator::filterCommonKmers(
                                    [](const auto& kmer) { return kmer.qInfo.sequenceID != 0;}
                                   ) - qKmers.buffer;
 
-                                  cout << "Blank k-mers (1): " << blankCnt << "\n";
     size_t queryKmerNum = qKmers.startIndexOfReserve - blankCnt;
     std::cout << "Query k-mer number     : " << queryKmerNum << endl;
 
@@ -399,20 +299,16 @@ void GroupGenerator::filterCommonKmers(
             }
         } // End of omp for (Iterating for splits)
     } // End of omp parallel
-    std::cout << time(nullptr) - beforeFilter << " s" << endl;
+    std::cout << time(nullptr) - beforeFilter << " s (" << matchBuffer.startIndexOfReserve << " matches found)" << endl;
 
     time_t here = time(nullptr);
-    std::cout << "Sorting matches        : " << std::flush;
-    SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve);
-    cout << matchBuffer.startIndexOfReserve << " matches, ";
-    here = time(nullptr) - here;
-    std::cout << double(here) << " s" << endl;
-
+    SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve);    
+    std::cout << "Sorting matches        : " << double(time(nullptr) - here) << " s" << std::endl;
+ 
     // Sort query k-mers by <seqID, pos>
     time_t firstSort = time(nullptr);
     SORT_PARALLEL(qKmers.buffer + blankCnt, qKmers.buffer + qKmers.startIndexOfReserve, Kmer::compareQKmerByIdAndPos);
-    firstSort = time(nullptr) - firstSort;
-    std::cout << "Query k-mer sorting (1): " << double(firstSort) << " s" << std::endl;
+    std::cout << "Query k-mer sorting (1): " << double(time(nullptr) - firstSort) << " s" << std::endl;
 
     // Filter neighbor k-mers
     here = time(nullptr);
@@ -435,13 +331,13 @@ void GroupGenerator::filterCommonKmers(
             // same seq
             else{
                 // copy
-                if (int64_t(qKmers.buffer[queryKmerIdx_copy].qInfo.pos) < int(matchBuffer.buffer[targetKmerPosIdx].second) - 0){
+                if (int64_t(qKmers.buffer[queryKmerIdx_copy].qInfo.pos) < int(matchBuffer.buffer[targetKmerPosIdx].second) - par.neighborKmers){
                     qKmers.buffer[queryKmerIdx] = qKmers.buffer[queryKmerIdx_copy];
                     queryKmerIdx++;
                     queryKmerIdx_copy++;
                 }
                 // next target check
-                else if(int(matchBuffer.buffer[targetKmerPosIdx].second) + 0 < int64_t(qKmers.buffer[queryKmerIdx_copy].qInfo.pos)){
+                else if(int(matchBuffer.buffer[targetKmerPosIdx].second) + par.neighborKmers < int64_t(qKmers.buffer[queryKmerIdx_copy].qInfo.pos)){
                     targetKmerPosIdx++;
                 }
                 // pass
@@ -468,370 +364,112 @@ void GroupGenerator::filterCommonKmers(
 }
 
 
-// void GroupGenerator::makeGraph2(
-//     size_t &numOfSplits, 
-//     size_t &numOfThreads, 
-//     size_t &numOfGraph,
-//     size_t processedReadCnt
-// ) {
-//     cout << "Creating graphs based on kmer-query relation..." << endl;
-//     time_t beforeSearch = time(nullptr);
-
-//     const size_t RELATION_THRESHOLD = 100'000'000;  // relation 크기 제한
-//     std::atomic<int> counter(0);
-
-//     #pragma omp parallel num_threads(numOfThreads)
-//     {
-//         int threadIdx = omp_get_thread_num();
-//         size_t processedRelationCnt = 0;
-//         unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> threadRelation;
-
-//         std::vector<DeltaIdxReader*> deltaIdxReaders;
-//         for (size_t i = 0; i < numOfSplits; i++) {
-//             string diffFile = outDir + "/queryKmerRelation_" + to_string(i) + "_diffIdx" + to_string(threadIdx);
-//             string infoFile = outDir + "/queryKmerRelation_" + to_string(i) + "_info"    + to_string(threadIdx);
-//             DeltaIdxReader* reader = new DeltaIdxReader(diffFile, infoFile, 1024 * 1024, 1024 * 1024);
-//             deltaIdxReaders.push_back(reader);
-//         }
-
-//         // // 파일 관련 초기화
-//         // MmapedData<uint16_t> *diffFileList = new MmapedData<uint16_t>[numOfSplits];
-//         // MmapedData<QueryKmerInfo> *infoFileList = new MmapedData<QueryKmerInfo>[numOfSplits];
-
-//         // // 💡 버퍼링용 구조
-//         // vector<vector<pair<uint64_t, QueryKmerInfo>>> kmerInfoBuffers(numOfSplits);
-
-//         // // 각 파일 버퍼의 위치 초기화
-//         // vector<size_t> bufferPos(numOfSplits, 0);
-
-//         // // 각 파일별 diff와 info 인덱스 분리 관리
-//         // vector<size_t> diffFileIdx(numOfSplits, 0);
-//         // vector<size_t> infoFileIdx(numOfSplits, 0);
-//         // vector<uint64_t> kmerCurrentVal(numOfSplits, 0);
-
-//         // const size_t BATCH_SIZE = 1024;
-
-//         // for (size_t file = 0; file < numOfSplits; ++file) {
-//         //     string diffFile = outDir + "/queryKmerRelation_" + to_string(file) + "_diffIdx" + to_string(threadIdx);
-//         //     string infoFile = outDir + "/queryKmerRelation_" + to_string(file) + "_info"    + to_string(threadIdx);
-//         //     diffFileList[file] = mmapData<uint16_t>(diffFile.c_str());
-//         //     infoFileList[file] = mmapData<QueryKmerInfo>(infoFile.c_str());
-
-//         //     if (!diffFileList[file].data) {
-//         //         cerr << "Failed to mmap diff file " << file << endl;
-//         //         exit(1);
-//         //     }
-//         //     if (!infoFileList[file].data) {
-//         //         cerr << "Failed to mmap info file " << file << endl;
-//         //         exit(1);
-//         //     }
-
-//         //     kmerInfoBuffers[file] = kmerFileHandler->getNextKmersBatch(
-//         //         diffFileList[file], infoFileList[file], 
-//         //         diffFileIdx[file], infoFileIdx[file], 
-//         //         kmerCurrentVal[file], BATCH_SIZE);
-
-//         //     bufferPos[file] = 0;
-//         // }
-
-//         vector<uint32_t> currentQueryIds;
-//         currentQueryIds.reserve(1024);
-
-//         while (true) {
-//             uint64_t currentKmer = UINT64_MAX;
-
-//             // 현재 가장 작은 k-mer 찾기
-//             for (size_t file = 0; file < numOfSplits; ++file) {
-//                 if (bufferPos[file] < kmerInfoBuffers[file].size()) {
-//                     currentKmer = min(currentKmer, kmerInfoBuffers[file][bufferPos[file]].first);
-//                 }
-//             }
-            
-            
-//             if (currentKmer == UINT64_MAX) break;
-
-//             currentQueryIds.clear();
-
-//             // 현재 k-mer와 동일한 k-mer를 가지는 query ID 수집
-//             for (size_t file = 0; file < numOfSplits; ++file) {
-//                 while (bufferPos[file] < kmerInfoBuffers[file].size() &&
-//                     kmerInfoBuffers[file][bufferPos[file]].first == currentKmer) {
-                    
-//                     uint32_t seqId = kmerInfoBuffers[file][bufferPos[file]].second.sequenceID;
-//                     // #pragma omp critical 
-//                     // cout << "[READ ] seqID: " << seqId
-//                     // << ", kmer: " << currentKmer
-//                     // << ", fileIdx: " << file << ", thread: " << threadIdx << endl;
-            
-
-//                     if (seqId != UINT32_MAX && seqId < processedReadCnt) {
-//                         currentQueryIds.emplace_back(seqId);
-//                     }
-
-//                     bufferPos[file]++;
-
-//                     // 버퍼 끝이면 다시 채우기
-//                     if (bufferPos[file] >= kmerInfoBuffers[file].size()) {
-//                         kmerInfoBuffers[file] = kmerFileHandler->getNextKmersBatch(
-//                             diffFileList[file], infoFileList[file],
-//                             diffFileIdx[file], infoFileIdx[file],
-//                             kmerCurrentVal[file], BATCH_SIZE);
-
-//                         bufferPos[file] = 0;
-//                     }
-//                 }
-//             }
-
-            
-//             std::sort(currentQueryIds.begin(), currentQueryIds.end());
-//             auto last = std::unique(currentQueryIds.begin(), currentQueryIds.end());
-//             currentQueryIds.erase(last, currentQueryIds.end());
-
-//             // 수집된 query ID 간 관계 누적
-//             for (size_t i = 0; i < currentQueryIds.size(); ++i) {
-//                 for (size_t j = i+1; j < currentQueryIds.size(); ++j) {            
-//                     uint32_t a = min(currentQueryIds[i], currentQueryIds[j]);
-//                     uint32_t b = max(currentQueryIds[i], currentQueryIds[j]);
-//                     if (threadRelation[a][b] == 0){
-//                         processedRelationCnt++;
-//                     }
-//                     threadRelation[a][b]++;
-//                 }
-//             }
-
-//             if (processedRelationCnt > RELATION_THRESHOLD) {
-//                 size_t counter_now = counter.fetch_add(1, memory_order_relaxed);
-//                 saveSubGraphToFile(threadRelation, counter_now);
-//                 threadRelation.clear();
-//                 processedRelationCnt = 0;
-//             }
-//         }
-
-//         if (!threadRelation.empty()) {
-//             size_t counter_now = counter.fetch_add(1, std::memory_order_relaxed);
-//             saveSubGraphToFile(threadRelation, counter_now);
-//         }
-
-//         // mmap 해제
-//         for (size_t file = 0; file < numOfSplits; file++) {
-//             if (diffFileList[file].data) munmap(diffFileList[file].data, diffFileList[file].fileSize);
-//             if (infoFileList[file].data) munmap(infoFileList[file].data, infoFileList[file].fileSize);
-//         }
-
-//         delete[] diffFileList;
-//         delete[] infoFileList;
-//     }
-
-    
-//     numOfGraph = counter.load(std::memory_order_relaxed);
-
-//     cout << "Relations generated from files successfully." << endl;
-//     cout << "Time spent: " << double(time(nullptr) - beforeSearch) << " seconds." << endl;
-// }
-
 void GroupGenerator::makeGraph(
-    size_t &numOfSplits, 
-    size_t &numOfThreads, 
-    size_t &numOfGraph,
     size_t processedReadCnt
 ) {
-    
-    cout << "Creating graphs based on kmer-query relation..." << endl;
+    cout << "Connecting reads with shared k-mer..." << endl;
     time_t beforeSearch = time(nullptr);
 
-    const size_t RELATION_THRESHOLD = 100'000'000;  // relation 크기 제한
+    const size_t RELATION_THRESHOLD = 50'000'000;  // relation 크기 제한
     std::atomic<int> counter(0);
 
-    #pragma omp parallel num_threads(numOfThreads)
+    #pragma omp parallel num_threads(par.threads)
     {
         int threadIdx = omp_get_thread_num();
-        size_t processedRelationCnt = 0;
-        unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> threadRelation;
-
-        // 파일 관련 초기화
-        MmapedData<uint16_t> *diffFileList = new MmapedData<uint16_t>[numOfSplits];
-        MmapedData<QueryKmerInfo> *infoFileList = new MmapedData<QueryKmerInfo>[numOfSplits];
-
-        // 💡 버퍼링용 구조
-        vector<vector<pair<uint64_t, QueryKmerInfo>>> kmerInfoBuffers(numOfSplits);
-
-        // 각 파일 버퍼의 위치 초기화
-        vector<size_t> bufferPos(numOfSplits, 0);
-
-        // 각 파일별 diff와 info 인덱스 분리 관리
-        vector<size_t> diffFileIdx(numOfSplits, 0);
-        vector<size_t> infoFileIdx(numOfSplits, 0);
-        vector<uint64_t> kmerCurrentVal(numOfSplits, 0);
-
-        const size_t BATCH_SIZE = 1024;
-
-        for (size_t file = 0; file < numOfSplits; ++file) {
-            string diffFile = outDir + "/queryKmerRelation_" + to_string(file) + "_diffIdx" + to_string(threadIdx);
-            string infoFile = outDir + "/queryKmerRelation_" + to_string(file) + "_info"    + to_string(threadIdx);
-            diffFileList[file] = mmapData<uint16_t>(diffFile.c_str());
-            infoFileList[file] = mmapData<QueryKmerInfo>(infoFile.c_str());
-
-            if (!diffFileList[file].data) {
-                cerr << "Failed to mmap diff file " << file << endl;
-                exit(1);
-            }
-            if (!infoFileList[file].data) {
-                cerr << "Failed to mmap info file " << file << endl;
-                exit(1);
-            }
-
-            kmerInfoBuffers[file] = kmerFileHandler->getNextKmersBatch(
-                diffFileList[file], infoFileList[file], 
-                diffFileIdx[file], infoFileIdx[file], 
-                kmerCurrentVal[file], BATCH_SIZE);
-
-            bufferPos[file] = 0;
+        std::unordered_map<uint64_t, uint16_t> pair2weight;
+        pair2weight.reserve(RELATION_THRESHOLD);
+        std::vector<DeltaIdxReader*> deltaIdxReaders;
+        std::vector<Kmer> currentKmers;
+        for (size_t i = 0; i < this->numOfSplits; i++) {
+            string diffFile = outDir + "/kmer_delta_" + to_string(i) + "_" + to_string(threadIdx);
+            string infoFile = outDir + "/kmer_info_"  + to_string(i) + "_" + to_string(threadIdx);
+            DeltaIdxReader* reader = new DeltaIdxReader(diffFile, infoFile, 1024 * 1024, 1024 * 1024);
+            deltaIdxReaders.push_back(reader);
+            currentKmers.push_back(reader->next());
         }
 
         vector<uint32_t> currentQueryIds;
-        // vector<QueryKmerInfo> currentQueryInfos;
         currentQueryIds.reserve(1024);
 
         while (true) {
-            uint64_t currentKmer = UINT64_MAX;
-
-            // 현재 가장 작은 k-mer 찾기
-            for (size_t file = 0; file < numOfSplits; ++file) {
-                if (bufferPos[file] < kmerInfoBuffers[file].size()) {
-                    currentKmer = min(currentKmer, kmerInfoBuffers[file][bufferPos[file]].first);
+            // Find the smallest k-mer
+            uint64_t minKmer = UINT64_MAX;
+            for (size_t file = 0; file < this->numOfSplits; ++file) {
+                if (!deltaIdxReaders[file]->isCompleted()) {
+                    minKmer = min(minKmer, currentKmers[file].value);
                 }
             }
-            
-            
-            if (currentKmer == UINT64_MAX) break;
+            if (minKmer == UINT64_MAX) break;
 
+            // Collect query IDs having the same k-mer
             currentQueryIds.clear();
-            // currentQueryInfos.clear();
-            // 현재 k-mer와 동일한 k-mer를 가지는 query ID 수집
-            for (size_t file = 0; file < numOfSplits; ++file) {
-                while (bufferPos[file] < kmerInfoBuffers[file].size() &&
-                    kmerInfoBuffers[file][bufferPos[file]].first == currentKmer) {
-                    
-                    uint32_t seqId = (uint32_t) kmerInfoBuffers[file][bufferPos[file]].second.sequenceID;
-                    // #pragma omp critical 
-                    // cout << "[READ ] seqID: " << seqId
-                    // << ", kmer: " << currentKmer
-                    // << ", fileIdx: " << file << ", thread: " << threadIdx << endl;
-            
+            for (size_t file = 0; file < this->numOfSplits; ++file) {
+                while (currentKmers[file].value == minKmer) {
+                    uint32_t seqId = currentKmers[file].tInfo.taxId; // query ID is stored in taxId field
                     if (seqId != UINT32_MAX && seqId < processedReadCnt) {
                         currentQueryIds.emplace_back(seqId);
-                        // currentQueryInfos.emplace_back(kmerInfoBuffers[file][bufferPos[file]].second);
                     }
-
-                    // if (currentQueryIds.size() > 1) {
-                    //     for (size_t z = 0; z < currentQueryIds.size();z++) {
-                    //         for (size_t k = z+1; k < currentQueryIds.size();k++) {
-                    //             uint32_t a = currentQueryIds[z];
-                    //             uint32_t b = currentQueryIds[k];
-                    //             uint32_t diff = std::max(a, b) - std::min(a, b);
-                    //             if (diff > 100000 && a < 10 || b < 10) {
-                    //                 #pragma omp critical
-                    //                 {
-                    //                     cout << currentKmer << endl;
-                    //                     cout << currentQueryInfos[z].sequenceID << ", " << currentQueryInfos[z].pos << ", " << currentQueryInfos[z].frame << endl;
-                    //                     cout << currentQueryInfos[k].sequenceID << ", " << currentQueryInfos[k].pos << ", " << currentQueryInfos[k].frame << endl;
-                    //                 }
-
-                    //             }
-                    //         }
-                    //     }
-                    // }                    
-
-                    bufferPos[file]++;
-
-                    // 버퍼 끝이면 다시 채우기
-                    if (bufferPos[file] >= kmerInfoBuffers[file].size()) {
-                        kmerInfoBuffers[file] = kmerFileHandler->getNextKmersBatch(
-                            diffFileList[file], infoFileList[file],
-                            diffFileIdx[file], infoFileIdx[file],
-                            kmerCurrentVal[file], BATCH_SIZE);
-
-                        bufferPos[file] = 0;
+                    currentKmers[file] = deltaIdxReaders[file]->next();
+                    if (deltaIdxReaders[file]->isCompleted()) {
+                        currentKmers[file].value = UINT64_MAX;
+                        break;
                     }
                 }
             }
 
-            
+            // Relate query IDs having the same k-mer
             std::sort(currentQueryIds.begin(), currentQueryIds.end());
             auto last = std::unique(currentQueryIds.begin(), currentQueryIds.end());
             currentQueryIds.erase(last, currentQueryIds.end());
-
-            // 수집된 query ID 간 관계 누적
             for (size_t i = 0; i < currentQueryIds.size(); ++i) {
-                for (size_t j = i+1; j < currentQueryIds.size(); ++j) {            
-                    uint32_t a = min(currentQueryIds[i], currentQueryIds[j]);
-                    uint32_t b = max(currentQueryIds[i], currentQueryIds[j]);
-                    if (threadRelation[a][b] == 0){
-                        processedRelationCnt++;
-                    }
-                    threadRelation[a][b]++;
+                for (size_t j = i+1; j < currentQueryIds.size(); ++j) {        
+                    uint64_t pairKey = (static_cast<uint64_t>(currentQueryIds[i]) << 32) | currentQueryIds[j];
+                    pair2weight[pairKey] ++;
                 }
             }
 
-            if (processedRelationCnt > RELATION_THRESHOLD) {
+            if (pair2weight.size() >= RELATION_THRESHOLD) {
                 size_t counter_now = counter.fetch_add(1, memory_order_relaxed);
-                saveSubGraphToFile(threadRelation, counter_now);
-                threadRelation.clear();
-                processedRelationCnt = 0;
+                saveSubGraphToFile(pair2weight, counter_now);
+                pair2weight.clear();
             }
         }
-
-        if (!threadRelation.empty()) {
+        if (!pair2weight.empty()) {
             size_t counter_now = counter.fetch_add(1, std::memory_order_relaxed);
-            saveSubGraphToFile(threadRelation, counter_now);
+            saveSubGraphToFile(pair2weight, counter_now);
         }
-
-        // mmap 해제
-        for (size_t file = 0; file < numOfSplits; file++) {
-            if (diffFileList[file].data) munmap(diffFileList[file].data, diffFileList[file].fileSize);
-            if (infoFileList[file].data) munmap(infoFileList[file].data, infoFileList[file].fileSize);
+        for (size_t file = 0; file < this->numOfSplits; file++) {
+            delete deltaIdxReaders[file];
         }
-
-        delete[] diffFileList;
-        delete[] infoFileList;
-    }
-
-    
-    numOfGraph = counter.load(std::memory_order_relaxed);
+    }    
+    this->numOfGraph = counter.load(std::memory_order_relaxed);
 
     cout << "Relations generated from files successfully." << endl;
     cout << "Time spent: " << double(time(nullptr) - beforeSearch) << " seconds." << endl;
 }
 
 void GroupGenerator::saveSubGraphToFile(
-    const unordered_map<uint32_t, unordered_map<uint32_t, uint32_t>> &subRelation, 
+    const unordered_map<uint64_t, uint16_t> & pair2weight,
     const size_t counter_now
 ) {
     const string subGraphFileName = outDir + "/subGraph_" + to_string(counter_now);
-
-    ofstream outFile(subGraphFileName, ios::binary);
-    if (!outFile.is_open()) {
+    FILE * outFile = fopen(subGraphFileName.c_str(), "wb");
+    if (!outFile) {
         cerr << "Error opening file: " << subGraphFileName << endl;
         return;
     }
-
-    // 정렬 후 저장
-    vector<tuple<uint32_t, uint32_t, uint32_t>> sortedRelations;
-    for (const auto &[id1, inner_map] : subRelation) {
-        for (const auto &[id2, weight] : inner_map) {
-            sortedRelations.emplace_back(id1, id2, weight);
-        }
+    
+    // Get a sorted vector of relations
+    std::vector<Relation> relations;
+    relations.reserve(pair2weight.size());
+    for (const auto& [pairKey, weight] : pair2weight) {
+        uint32_t id1 = static_cast<uint32_t>(pairKey >> 32);
+        uint32_t id2 = static_cast<uint32_t>(pairKey & 0xFFFFFFFF);
+        relations.emplace_back(id1, id2, weight);
     }
-    sort(sortedRelations.begin(), sortedRelations.end());
-
-    for (const auto &[id1, id2, weight] : sortedRelations) {
-        outFile.write(reinterpret_cast<const char*>(&id1), sizeof(uint32_t));
-        outFile.write(reinterpret_cast<const char*>(&id2), sizeof(uint32_t));
-        outFile.write(reinterpret_cast<const char*>(&weight), sizeof(uint32_t));
-    }
-
-    outFile.close();
-
+    sort(relations.begin(), relations.end(), Relation::compare);
+    fwrite(relations.data(), sizeof(Relation), relations.size(), outFile);
+    fclose(outFile);
     #pragma omp critical
     {
         cout << "Query sub-graph saved to " << subGraphFileName << " successfully." << endl;
@@ -991,76 +629,169 @@ double GroupGenerator::mergeRelations(
 }
 
 
-void GroupGenerator::mergeRelations(
-    size_t numOfGraph
+void GroupGenerator::mergeTrueRelations(
+    const vector<MetabuliInfo>& metabuliResult
 ) {
-    cout << "Merging and calculating threshold via elbow..." << endl;
+    cout << "Merging only true edges" << endl;
     time_t before = time(nullptr);
-
-    const size_t BATCH_SIZE = 4096;
-    vector<ifstream> files(numOfGraph);
-    vector<queue<Relation>> relationBuffers(numOfGraph);
-
     ofstream relationLog(outDir + "/allRelations.txt");
     if (!relationLog.is_open()) {
         cerr << "Failed to open relation log file." << endl;
         return;
     }
 
-    auto readNextBatch = [&](size_t i) {
-        for (size_t j = 0; j < BATCH_SIZE; ++j) {
-            Relation r;
-            if (!files[i].read(reinterpret_cast<char*>(&r.id1), sizeof(uint32_t))) break;
-            if (!files[i].read(reinterpret_cast<char*>(&r.id2), sizeof(uint32_t))) break;
-            if (!files[i].read(reinterpret_cast<char*>(&r.weight), sizeof(uint32_t))) break;
-            relationBuffers[i].push(r);
-        }
-    };
-
-    // 초기 파일 열기 및 버퍼 채우기
-    for (size_t i = 0; i < numOfGraph; ++i) {
+    std::vector<ReadBuffer<Relation> *> relationBuffers(this->numOfGraph);
+    std::vector<Relation> currentRelations(this->numOfGraph);
+        for (size_t i = 0; i < this->numOfGraph; ++i) {
         string fileName = outDir + "/subGraph_" + to_string(i);
-        files[i].open(fileName, ios::binary);
-        if (!files[i].is_open()) {
-            cerr << "Error opening file: " << fileName << endl;
-            continue;
-        }
-        readNextBatch(i);
-    }
+        relationBuffers[i] = new ReadBuffer<Relation>(fileName, 1024 * 1024);
+        currentRelations[i] = relationBuffers[i]->getNext();
+    } 
 
     while (true) {
-        pair<uint32_t, uint32_t> minKey = {UINT32_MAX, UINT32_MAX};
-
-        for (size_t i = 0; i < numOfGraph; ++i) {
-            if (!relationBuffers[i].empty()) {
-                const Relation& r = relationBuffers[i].front();
-                pair<uint32_t, uint32_t> key = {r.id1, r.id2};
-                if (key < minKey) minKey = key;
+        Relation minRelation(UINT32_MAX, UINT32_MAX, 0);
+        for (size_t i = 0; i < this->numOfGraph; ++i) {
+            if (currentRelations[i] < minRelation) {
+                minRelation = currentRelations[i];
             }
         }
-
-        if (minKey.first == UINT32_MAX) break;
-
+        if (minRelation.id1 == UINT32_MAX) break;
         uint32_t totalWeight = 0;
-
-        for (size_t i = 0; i < numOfGraph; ++i) {
-            while (!relationBuffers[i].empty()) {
-                const Relation& r = relationBuffers[i].front();
-                if (r.id1 == minKey.first && r.id2 == minKey.second) {
-                    totalWeight += r.weight;
-                    relationBuffers[i].pop();
-                    if (relationBuffers[i].empty()) readNextBatch(i);
-                } else break;
+        for (size_t i = 0; i < this->numOfGraph; ++i) {
+            if (currentRelations[i] == minRelation) {
+                totalWeight += currentRelations[i].weight;
+                currentRelations[i] = relationBuffers[i]->getNext();
+                if (currentRelations[i] == Relation()) {
+                    currentRelations[i] = Relation(UINT32_MAX, UINT32_MAX, UINT16_MAX);
+                }
             }
         }
-        relationLog << minKey.first << ' ' << minKey.second << ' ' << totalWeight << '\n';
+        std::string name1 = metabuliResult[minRelation.id1].name.substr(0, 15);
+        std::string name2 = metabuliResult[minRelation.id2].name.substr(0, 15);
+        if (name1 == name2) {
+            relationLog << minRelation.id1 << ' ' << minRelation.id2 << ' ' << totalWeight << '\n';
+        }
+    }
+    relationLog.close();
+    for (size_t i = 0; i < numOfGraph; ++i) {
+        delete relationBuffers[i];
+    }
+    cout << "Time: " << time(nullptr) - before << " sec" << endl;
+    return;
+}
+
+
+void GroupGenerator::mergeRelations() {
+    cout << "Merging subgraphs." << endl;
+    time_t before = time(nullptr);
+    ofstream relationLog(outDir + "/allRelations.txt");
+    if (!relationLog.is_open()) {
+        cerr << "Failed to open relation log file." << endl;
+        return;
     }
 
+    std::vector<ReadBuffer<Relation> *> relationBuffers(this->numOfGraph);
+    std::vector<Relation> currentRelations(this->numOfGraph);
+    for (size_t i = 0; i < this->numOfGraph; ++i) {
+        string fileName = outDir + "/subGraph_" + to_string(i);
+        relationBuffers[i] = new ReadBuffer<Relation>(fileName, 1024 * 1024);
+        currentRelations[i] = relationBuffers[i]->getNext();
+    } 
+
+    while (true) {
+        Relation minRelation(UINT32_MAX, UINT32_MAX, 0);
+        for (size_t i = 0; i < this->numOfGraph; ++i) {
+            if (currentRelations[i] < minRelation) {
+                minRelation = currentRelations[i];
+            }
+        }
+        if (minRelation.id1 == UINT32_MAX) break;
+        uint32_t totalWeight = 0;
+        for (size_t i = 0; i < this->numOfGraph; ++i) {
+            if (currentRelations[i] == minRelation) {
+                totalWeight += currentRelations[i].weight;
+                currentRelations[i] = relationBuffers[i]->getNext();
+                if (currentRelations[i] == Relation()) {
+                    currentRelations[i] = Relation(UINT32_MAX, UINT32_MAX, UINT16_MAX);
+                }
+            }
+        }
+        relationLog << minRelation.id1 << ' ' << minRelation.id2 << ' ' << totalWeight << '\n';
+    }
     relationLog.close();
+
+    for (size_t i = 0; i < numOfGraph; ++i) {
+        delete relationBuffers[i];
+    }
 
     return;
 }
 
+void GroupGenerator::makeGroupsFromSubGraphs(
+    uint32_t groupKmerThr,
+    unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
+    vector<int> &queryGroupInfo,
+    const vector<MetabuliInfo>& metabuliResult
+) {
+    cout << "Make groups from subgraphs." << endl;
+    time_t before = time(nullptr);
+    DisjointSet ds;
+    std::vector<ReadBuffer<Relation> *> relationBuffers(this->numOfGraph);
+    std::vector<Relation> currentRelations(this->numOfGraph);
+    for (size_t i = 0; i < this->numOfGraph; ++i) {
+        string fileName = outDir + "/subGraph_" + to_string(i);
+        relationBuffers[i] = new ReadBuffer<Relation>(fileName, 1024 * 1024);
+        currentRelations[i] = relationBuffers[i]->getNext();
+    } 
+
+    while (true) {
+        Relation minRelation(UINT32_MAX, UINT32_MAX, 0);
+        for (size_t i = 0; i < this->numOfGraph; ++i) {
+            if (currentRelations[i] < minRelation) {
+                minRelation = currentRelations[i];
+            }
+        }
+        if (minRelation.id1 == UINT32_MAX) break;
+        uint32_t totalWeight = 0;
+        for (size_t i = 0; i < this->numOfGraph; ++i) {
+            if (currentRelations[i] == minRelation) {
+                totalWeight += currentRelations[i].weight;
+                currentRelations[i] = relationBuffers[i]->getNext();
+                if (currentRelations[i] == Relation()) {
+                    currentRelations[i] = Relation(UINT32_MAX, UINT32_MAX, UINT16_MAX);
+                }
+            }
+        }
+
+        if (useOnlyTrueRelations) { // Only for development purpose
+            std::string name1 = metabuliResult[minRelation.id1].name.substr(0, 15);
+            std::string name2 = metabuliResult[minRelation.id2].name.substr(0, 15);
+            if (name1 != name2) continue;
+        }
+        
+        if (totalWeight > groupKmerThr) {
+            if (ds.parent.find(minRelation.id1) == ds.parent.end()) ds.makeSet(minRelation.id1);
+            if (ds.parent.find(minRelation.id2) == ds.parent.end()) ds.makeSet(minRelation.id2);
+            ds.unionSets(minRelation.id1, minRelation.id2);
+        }
+    }
+
+    for (size_t i = 0; i < numOfGraph; ++i) {
+        delete relationBuffers[i];
+    }
+
+    for (const auto& [queryId, _] : ds.parent) {
+        uint32_t groupId = ds.find(queryId);
+        groupInfo[groupId].insert(queryId);
+        if (queryId >= queryGroupInfo.size()) {
+            queryGroupInfo.resize(queryId + 1, -1);
+        }
+        queryGroupInfo[queryId] = static_cast<int>(groupId);
+    }
+
+    cout << "Query groups created successfully: " << groupInfo.size() << " groups." << endl;
+    cout << "Time spent: " << double(time(nullptr) - before) << " seconds." << endl;
+}
 
 void GroupGenerator::makeGroups(int groupKmerThr,
                                 unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
@@ -1309,6 +1040,9 @@ void GroupGenerator::applyRepLabel(
 
 
     string resultFileName = outDir + "/updated_classifications.tsv";
+    if (useOnlyTrueRelations) {
+        resultFileName = outDir + "/updated_classifications_true.tsv";
+    }
     ofstream outFile(resultFileName);
     if (!outFile.is_open()) {
         cerr << "Error opening file: " << resultFileName << endl;
@@ -1369,160 +1103,7 @@ void GroupGenerator::applyRepLabel(
     cout << "Time spent: " << double(time(nullptr) - beforeSearch) << " seconds." << endl;
 }
 
-// KmerFileHandler function implementations
-void KmerFileHandler::flushKmerBuf(uint16_t *buffer, FILE *handleKmerTable, size_t &localBufIdx) {
-    fwrite(buffer, sizeof(uint16_t), localBufIdx, handleKmerTable);
-    localBufIdx = 0; // Reset buffer index
-}
-
-void KmerFileHandler::getDiffIdx(const uint64_t &lastKmer, const uint64_t &entryToWrite, FILE *handleKmerTable, uint16_t *buffer, size_t &localBufIdx, size_t bufferSize) {
-    uint64_t kmerdiff = entryToWrite - lastKmer;
-    uint16_t tempBuffer[5];
-    int idx = 3;
-    tempBuffer[4] = SET_END_FLAG(GET_15_BITS(kmerdiff));
-    kmerdiff >>= 15U;
-    while (kmerdiff) {
-        uint16_t toWrite = GET_15_BITS(kmerdiff);
-        kmerdiff >>= 15U;
-        tempBuffer[idx] = toWrite;
-        idx--;
-    }
-    // Buffer the result
-    writeDiffIdx(buffer, handleKmerTable, tempBuffer + idx + 1, 4 - idx, localBufIdx, bufferSize);
-}
-
-void KmerFileHandler::writeDiffIdx(uint16_t *buffer, FILE *handleKmerTable, uint16_t *toWrite, size_t size, size_t &localBufIdx, size_t bufferSize) {
-    if (localBufIdx + size >= bufferSize) {
-        flushKmerBuf(buffer, handleKmerTable, localBufIdx); // Flush if buffer is full
-    }
-    memcpy(buffer + localBufIdx, toWrite, sizeof(uint16_t) * size); // Add new data to buffer
-    localBufIdx += size; // Update buffer index
-}
-
-// 반환형 수정: k-mer와 QueryKmerInfo를 pair로 묶어 반환
-vector<pair<uint64_t, QueryKmerInfo>> KmerFileHandler::getNextKmersBatch(const MmapedData<uint16_t>& diffList,
-                                                                         const MmapedData<QueryKmerInfo>& infoList,
-                                                                         size_t& idxDiff,
-                                                                         size_t& idxInfo,
-                                                                         uint64_t& currentVal,
-                                                                         size_t maxBatchSize) {
-    vector<pair<uint64_t, QueryKmerInfo>> batch;
-    uint16_t fragment;
-    uint64_t diffIn64bit;
-    const uint16_t check = 32768;
-
-    size_t totalElements = diffList.fileSize / sizeof(uint16_t);
-    size_t infoElements = infoList.fileSize / sizeof(QueryKmerInfo);
-    size_t count = 0;
-
-    while (idxDiff < totalElements && idxInfo < infoElements && count < maxBatchSize) {
-        diffIn64bit = 0;
-        fragment = diffList.data[idxDiff++];
-        while (!(fragment & check)) {
-            diffIn64bit = (diffIn64bit << 15u) | fragment;
-            if (idxDiff >= totalElements) break; 
-            fragment = diffList.data[idxDiff++];
-        }
-        fragment &= ~check;
-        diffIn64bit = (diffIn64bit << 15u) | fragment;
-
-        currentVal += diffIn64bit;
-
-        // QueryKmerInfo를 반드시 함께 읽어 옴
-        QueryKmerInfo info = infoList.data[idxInfo++];
-        
-        batch.emplace_back(currentVal, info);
-        count++;
-    }
-
-    return batch;
-}
-
-void KmerFileHandler::writeQueryKmerFile(
-    Buffer<Kmer>& queryKmerBuffer, 
-    const string& outDir, 
-    size_t& numOfSplits, 
-    size_t numOfThreads,
-    size_t processedReadCnt
-) {
-    size_t blankCnt = std::find_if(queryKmerBuffer.buffer,
-                                   queryKmerBuffer.buffer + queryKmerBuffer.startIndexOfReserve, 
-                                   [](const auto& kmer) { return kmer.qInfo.sequenceID != 0;}
-                                  ) - queryKmerBuffer.buffer;                                  
-
-    size_t queryKmerNum = queryKmerBuffer.startIndexOfReserve - blankCnt;
-    Kmer *queryKmerList = queryKmerBuffer.buffer + blankCnt;
-
-    // 💡 첫 split일 때만 k-mer 개수 기반으로 균등 분포 계산
-    if (!boundariesInitialized) {
-        kmerBoundaries.clear();
-        for (size_t i = 0; i <= numOfThreads; ++i) {
-            size_t index = (i * queryKmerNum) / numOfThreads;
-            if (index >= queryKmerNum) index = queryKmerNum - 1;
-            // kmerBoundaries.emplace_back(allKmers[index]);
-            kmerBoundaries.emplace_back(queryKmerList[index].value);
-        }
-        boundariesInitialized = true;
-    }
-
-    // 💾 파일 열기 및 버퍼 준비
-    vector<FILE*> diffIdxFiles(numOfThreads, nullptr);
-    vector<FILE*> infoFiles(numOfThreads, nullptr);
-    vector<uint16_t*> diffIdxBuffers(numOfThreads, nullptr);
-    vector<size_t> localBufIdxs(numOfThreads, 0);
-
-    size_t bufferSize = max(10'000'000 / numOfThreads, size_t(100'000)); 
-
-    for (size_t i = 0; i < numOfThreads; i++) {
-        string diffIdxFileName = outDir + "/queryKmerRelation_" + to_string(numOfSplits) + "_diffIdx" + to_string(i);
-        string infoFileName    = outDir + "/queryKmerRelation_" + to_string(numOfSplits) + "_info"    + to_string(i);
-        diffIdxFiles[i] = fopen(diffIdxFileName.c_str(), "wb");
-        infoFiles[i]    = fopen(infoFileName.c_str()   , "wb");
-        if (diffIdxFiles[i] == nullptr || infoFiles[i] == nullptr) {
-            cout << "Cannot open file for writing: " << diffIdxFileName << " or " << infoFileName << endl;
-            return;
-        }
-
-        diffIdxBuffers[i] = (uint16_t *)malloc(sizeof(uint16_t) * bufferSize);
-        if (diffIdxBuffers[i] == nullptr ) {
-            cout << "Memory allocation failed for diffIdxBuffer[" << i << "]" << endl;
-            flushKmerBuf(diffIdxBuffers[i], diffIdxFiles[i], localBufIdxs[i]);
-            free(diffIdxBuffers[i]); 
-            return;
-        }
-    }
-
-    uint64_t lastKmer[numOfThreads] = {0, };
-    size_t write = 0;
-
-    for (size_t i = 0; i < queryKmerNum ; i++) {
-        // 💡 실제 분포 기반 boundary를 사용한 split index 결정
-        size_t splitIdx = upper_bound(kmerBoundaries.begin(), kmerBoundaries.end(), queryKmerList[i].value) - kmerBoundaries.begin() - 1;
-        if (splitIdx >= numOfThreads) splitIdx = numOfThreads - 1;
-        
-        queryKmerList[i].qInfo.sequenceID += processedReadCnt;
-        queryKmerList[i].qInfo.sequenceID --;
-        fwrite(&queryKmerList[i].qInfo, sizeof(QueryKmerInfo), 1, infoFiles[splitIdx]); 
-        getDiffIdx(lastKmer[splitIdx], queryKmerList[i].value, diffIdxFiles[splitIdx], diffIdxBuffers[splitIdx], localBufIdxs[splitIdx], bufferSize); 
-        lastKmer[splitIdx] = queryKmerList[i].value;   
-        write++; 
-    }
-
-    cout << "total k-mer count  : " << queryKmerNum << endl;
-    cout << "written k-mer count: " << write << endl;
-
-    for (size_t i = 0; i < numOfThreads; i++) {
-        flushKmerBuf(diffIdxBuffers[i], diffIdxFiles[i], localBufIdxs[i]);
-        free(diffIdxBuffers[i]);     
-        diffIdxBuffers[i] = nullptr;
-        fclose(diffIdxFiles[i]);
-        fclose(infoFiles[i]);
-    }
-
-    numOfSplits++;
-}
-
-std::vector<std::pair<size_t, size_t>> KmerFileHandler::getKmerRanges(
+std::vector<std::pair<size_t, size_t>> GroupGenerator::getKmerRanges(
     const Buffer<Kmer> & kmerBuffer, 
     size_t offset
 ) {
@@ -1555,27 +1136,22 @@ std::vector<std::pair<size_t, size_t>> KmerFileHandler::getKmerRanges(
 }
 
 
-void KmerFileHandler::writeQueryKmerFile2(
+void GroupGenerator::writeKmers(
     Buffer<Kmer>& queryKmerBuffer,
-    const string& outDir,
-    size_t& numOfSplits, 
-    size_t numOfThreads,
     size_t processedReadCnt
 ) {
     size_t blankCnt = std::find_if(queryKmerBuffer.buffer,
                                    queryKmerBuffer.buffer + queryKmerBuffer.startIndexOfReserve, 
                                    [](const auto& kmer) { return kmer.qInfo.sequenceID != 0;}
                                   ) - queryKmerBuffer.buffer;                                        
-
-    // Kmer *queryKmerList = queryKmerBuffer.buffer + blankCnt;
     size_t queryKmerNum = queryKmerBuffer.startIndexOfReserve - blankCnt;
 
     // Make k-mer boundaries based on actual distribution
     if (!boundariesInitialized) {
-        size_t quotient = queryKmerNum / numOfThreads;
-        size_t remainder = queryKmerNum % numOfThreads;
+        size_t quotient = queryKmerNum / par.threads;
+        size_t remainder = queryKmerNum % par.threads;
         size_t idx = blankCnt;
-        for (size_t i = 0; i < numOfThreads - 1; i++) {
+        for (size_t i = 0; i < par.threads - 1; i++) {
             idx = idx + quotient - (i == 0);
             if (remainder > 0) {
                 idx++;
@@ -1588,33 +1164,27 @@ void KmerFileHandler::writeQueryKmerFile2(
             kmerBoundaries.emplace_back(queryKmerBuffer.buffer[idx].value);
         }
         boundariesInitialized = true;
-        for (size_t i = 0; i < kmerBoundaries.size(); i++) {
-            std::cout << "Boundary " << i << ": " << kmerBoundaries[i] << "\n";
-        }
     }
 
     // Make query k-mer ranges for each split
     std::vector<std::pair<size_t, size_t>> queryKmerRanges = getKmerRanges(queryKmerBuffer, blankCnt);
-    for (size_t i = 0; i < queryKmerRanges.size(); i++) {
-        std::cout << "Split " << i << ": Range (" << queryKmerRanges[i].first << ", " << queryKmerRanges[i].second << ")\n";
-    }
-
-    #pragma omp parallel default(none), shared(queryKmerBuffer, queryKmerRanges, outDir, numOfSplits, processedReadCnt)
+    #pragma omp parallel default(none), shared(queryKmerBuffer, queryKmerRanges, processedReadCnt)
     {
         size_t threadId = omp_get_thread_num();
         size_t startIdx = queryKmerRanges[threadId].first;
         size_t endIdx = queryKmerRanges[threadId].second;
-        WriteBuffer<uint16_t>      diffBuffer(outDir + "/queryKmerRelation_" + to_string(numOfSplits) + "_diffIdx" + to_string(threadId), 1024 * 1024);
-        WriteBuffer<QueryKmerInfo> infoBuffer(outDir + "/queryKmerRelation_" + to_string(numOfSplits) + "_info"    + to_string(threadId), 1024 * 1024);
+        WriteBuffer<uint16_t> diffBuffer(this->outDir + "/kmer_delta_" + to_string(this->numOfSplits) + "_" + to_string(threadId), 1024 * 1024);
+        WriteBuffer<uint32_t> infoBuffer(this->outDir + "/kmer_info_"  + to_string(this->numOfSplits) + "_" + to_string(threadId), 1024 * 1024);
         uint64_t lastKmer = 0;
         for (size_t i = startIdx; i < endIdx; i++) {
             queryKmerBuffer.buffer[i].qInfo.sequenceID += processedReadCnt;
-            queryKmerBuffer.buffer[i].qInfo.sequenceID --;
-            infoBuffer.write(&queryKmerBuffer.buffer[i].qInfo);
+            uint32_t id = static_cast<uint32_t>(queryKmerBuffer.buffer[i].qInfo.sequenceID - 1);
+            // queryKmerBuffer.buffer[i].qInfo.sequenceID --;
+            infoBuffer.write(&id);
             IndexCreator::getDiffIdx(lastKmer, queryKmerBuffer.buffer[i].value, diffBuffer);
         }
         infoBuffer.flush();
         diffBuffer.flush();
     }
-    numOfSplits++;
+    this->numOfSplits++;
 }

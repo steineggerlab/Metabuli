@@ -5,6 +5,7 @@
 #include "common.h"
 
 void setGroupGenerationDefaults(LocalParameters & par){    
+    par.neighborKmers = 0;
     par.minEdgeWeight = 0;
     par.syncmer = 0;
     par.smerLen = 9;

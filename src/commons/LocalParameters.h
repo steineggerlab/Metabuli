@@ -85,6 +85,7 @@ public:
     PARAMETER(PRINT_LINEAGE)
     PARAMETER(MAX_SHIFT)
     PARAMETER(EM)
+    PARAMETER(NEIGHBOR_KMERS)
 
     // extract
     PARAMETER(TARGET_TAX_ID)
@@ -180,6 +181,7 @@ public:
     float thresholdK;
     float groupScoreThr;
     int minEdgeWeight;
+    int neighborKmers;
     int printLineage;
     int maxShift;
     bool em;

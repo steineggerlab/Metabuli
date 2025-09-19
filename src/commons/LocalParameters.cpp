@@ -208,6 +208,13 @@ LocalParameters::LocalParameters() :
                 typeid(bool),
                 (void *) &em,
                 ""),
+        NEIGHBOR_KMERS(NEIGHBOR_KMERS_ID,
+                "--neighbor-kmers",
+                "Discard common k-mer's neighbors",
+                "Discard common k-mer's neighbors",
+                typeid(int),
+                (void *) &neighborKmers,
+                "[0-2]"),
         TARGET_TAX_ID(TARGET_TAX_ID_ID,
                "--tax-id",
                "Tax. ID of clade to be extracted",
@@ -668,8 +675,6 @@ LocalParameters::LocalParameters() :
     groupGeneration.push_back(&MATCH_PER_KMER);
     groupGeneration.push_back(&THR_K);
     groupGeneration.push_back(&GROUP_SCORE_THR);    
-    groupGeneration.push_back(&MIN_SCORE);
-    groupGeneration.push_back(&MIN_SP_SCORE);
     groupGeneration.push_back(&PARAM_MASK_RESIDUES);
     groupGeneration.push_back(&PARAM_MASK_PROBABILTY);
     groupGeneration.push_back(&TIE_RATIO);
@@ -678,6 +683,8 @@ LocalParameters::LocalParameters() :
     groupGeneration.push_back(&SYNCMER);
     groupGeneration.push_back(&SMER_LEN);
     groupGeneration.push_back(&MIN_EDGE_WEIGHT);
+    groupGeneration.push_back(&NEIGHBOR_KMERS);
+    groupGeneration.push_back(&PRINT_LOG);
 
     // filter 
     filter.push_back(&PARAM_THREADS);
