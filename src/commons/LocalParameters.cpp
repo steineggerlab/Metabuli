@@ -55,8 +55,8 @@ LocalParameters::LocalParameters() :
                      "[0-1]"),
         SYNCMER(SYNCMER_ID,
                 "--syncmer",
-                "Using syncmer (k = 8, s = 6)",
-                "Using syncmer (k = 8, s = 6)",
+                "Using syncmer",
+                "Using syncmer",
                 typeid(int),
                 (void *) &syncmer,
                 "[0-1]"),
@@ -214,7 +214,7 @@ LocalParameters::LocalParameters() :
                 "Discard common k-mer's neighbors",
                 typeid(int),
                 (void *) &neighborKmers,
-                "[0-2]"),
+                "[0-4]"),
         TARGET_TAX_ID(TARGET_TAX_ID_ID,
                "--tax-id",
                "Tax. ID of clade to be extracted",
@@ -315,8 +315,8 @@ LocalParameters::LocalParameters() :
                 "^.*$"),
         CDS_INFO(CDS_INFO_ID,
                  "--cds-info",
-                 "List of CDS files",
-                 "List of CDS files",
+                 "List of CDS files. Set 'x' for six-frame translation.",
+                 "List of CDS files. Set 'x' for six-frame translation.",
                  typeid(std::string),
                  (void *) &cdsInfo,
                  "^.*$"),
@@ -610,6 +610,16 @@ LocalParameters::LocalParameters() :
     build.push_back(&SYNCMER);
     build.push_back(&SMER_LEN);
     build.push_back(&REDUCED_AA);
+
+    createCommonKmerList.push_back(&PARAM_THREADS);
+    createCommonKmerList.push_back(&PARAM_MASK_PROBABILTY);
+    createCommonKmerList.push_back(&PARAM_MASK_RESIDUES);
+    createCommonKmerList.push_back(&RAM_USAGE);
+    createCommonKmerList.push_back(&SYNCMER);
+    createCommonKmerList.push_back(&SMER_LEN);
+    createCommonKmerList.push_back(&GTDB);
+    createCommonKmerList.push_back(&CDS_INFO);
+    createCommonKmerList.push_back(&KMER_FORMAT);
 
 
     // updateDB

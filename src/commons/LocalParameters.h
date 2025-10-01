@@ -49,6 +49,7 @@ public:
     std::vector<MMseqsParameter*> buildUnirefDb;
     std::vector<MMseqsParameter*> buildUnirefTree;
     std::vector<MMseqsParameter*> assignUniref;
+    std::vector<MMseqsParameter*> createCommonKmerList;
 
     // UniRef
     PARAMETER(UNIREF_NUMBERS)

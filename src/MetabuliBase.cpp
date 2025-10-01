@@ -45,7 +45,7 @@ std::vector<Command> metabuliCommands = {
                 CITATION_SPACEPHARER,
                 {{"Database directory", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::empty},
                  {"UniRef100 XML file", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
-        {"create-common-kmer-list", create_common_kmer_list, &localPar.build, COMMAND_EXPERT,
+        {"create-common-kmer-list", create_common_kmer_list, &localPar.createCommonKmerList, COMMAND_EXPERT,
                 "Create a list of k-mers that appear in multiple species",
                 nullptr,
                 "Jaebeom Kim <jbeom0731@gmail.com>",
