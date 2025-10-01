@@ -233,7 +233,7 @@ void IndexCreator::createCommonKmerIndex() {
     indexReferenceSequences(sizE);
     Buffer<Kmer> kmerBuffer(sizE);
     Buffer<size_t> uniqKmerIdx(sizE);
-    if (!par.cdsInfo.empty()) {
+    if (!par.cdsInfo.empty() && par.cdsInfo != "x") {
         cout << "Loading CDS info from: " << par.cdsInfo << endl;
         loadCdsInfo(par.cdsInfo);
     }
@@ -253,7 +253,11 @@ void IndexCreator::createCommonKmerIndex() {
         // Extract target k-mers
         time_t start = time(nullptr);
         cout << "K-mer extraction : " << flush;
-        fillTargetKmerBuffer(kmerBuffer, batchChecker, processedBatchCnt, par);
+        if (par.cdsInfo == "x") {
+            extractKmerFromSixFrames(kmerBuffer, batchChecker, processedBatchCnt);
+        } else {
+            fillTargetKmerBuffer(kmerBuffer, batchChecker, processedBatchCnt, par);
+        }
         cout << double(time(nullptr) - start) << " s" << endl;
         
         // Sort the k-mers
@@ -933,6 +937,106 @@ void IndexCreator::load_assacc2taxid(const string & mappingFile, unordered_map<s
     map.close();
 }
 
+
+bool IndexCreator::extractKmerFromSixFrames(
+    Buffer<Kmer> & kmerBuffer,
+    std::vector<std::atomic<bool>> & batchChecker,
+    size_t &processedBatchCnt
+) {
+    std::atomic<int> hasOverflow{0};
+    #pragma omp parallel default(none), shared(kmerBuffer, batchChecker, processedBatchCnt, hasOverflow, par, cout)
+    {
+        ProbabilityMatrix probMatrix(*subMat);
+        char *reverseComplement;
+        size_t estimatedKmerCnt = 0;
+#pragma omp for schedule(dynamic, 1)
+        for (size_t batchIdx = 0; batchIdx < accessionBatches.size(); batchIdx ++) {
+            if (hasOverflow.load(std::memory_order_acquire))
+                continue;
+            
+            if (batchChecker[batchIdx].exchange(true, std::memory_order_acq_rel))
+                continue; 
+            
+            // Estimate the number of k-mers to be extracted from current split
+            size_t totalLength = 0;
+            for (size_t p = 0; p < accessionBatches[batchIdx].lengths.size(); p++) {
+                totalLength += accessionBatches[batchIdx].lengths[p];
+            }
+
+            if (par.syncmer) {
+                estimatedKmerCnt = static_cast<size_t>(
+                    (totalLength * 2.5) / ((12 - par.smerLen + 1) / 2.0)
+                );
+            } else {
+                estimatedKmerCnt = static_cast<size_t>(
+                    totalLength * 2.5
+                );
+            }
+                
+            // Process current split if buffer has enough space.
+            size_t posToWrite = kmerBuffer.reserveMemory(estimatedKmerCnt);
+            if (posToWrite + estimatedKmerCnt < kmerBuffer.bufferSize) {
+                KSeqWrapper* kseq = KSeqFactory(fastaPaths[accessionBatches[batchIdx].whichFasta].c_str());
+                size_t seqCnt = 0;
+                size_t idx = 0;
+                while (kseq->ReadEntry()) {
+                    if (seqCnt == accessionBatches[batchIdx].orders[idx]) {
+                        if (accessionBatches[batchIdx].taxIDs[idx] == 0) {
+                            #pragma omp critical
+                            {
+                                accessionBatches[batchIdx].print();
+                                exit(1);
+                            }
+                        }
+                        const KSeqWrapper::KSeqEntry & e = kseq->entry;
+
+                        // Mask low complexity regions
+                        char *maskedSeq = nullptr;
+                        if (par.maskMode) {
+                            maskedSeq = new char[e.sequence.l + 1]; 
+                            SeqIterator::maskLowComplexityRegions((unsigned char *) e.sequence.s, (unsigned char *) maskedSeq, probMatrix, par.maskProb, subMat);
+                            maskedSeq[e.sequence.l] = '\0';
+                        } else {
+                            maskedSeq = e.sequence.s;
+                        }
+
+                        kmerExtractor->extractKmer_dna2aa(
+                            maskedSeq,
+                            e.sequence.l,
+                            kmerBuffer,
+                            posToWrite,
+                            accessionBatches[batchIdx].taxIDs[idx],
+                            accessionBatches[batchIdx].speciesID);
+                            
+                        idx++;
+                        if (par.maskMode) {
+                            delete[] maskedSeq;
+                        }
+                        if (idx == accessionBatches[batchIdx].lengths.size()) {
+                            break;
+                        }
+                    }
+                    seqCnt++;
+                }
+                delete kseq;
+                __sync_fetch_and_add(&processedBatchCnt, 1);
+                #pragma omp critical
+                {
+                    cout << processedBatchCnt << " batches processed out of " << accessionBatches.size() << endl;
+                        // cout << fastaPaths[accessionBatches[batchIdx].whichFasta] << " processed\n";
+                }
+            } else {
+                batchChecker[batchIdx].store(false, std::memory_order_release);
+                hasOverflow.fetch_add(1, std::memory_order_relaxed);
+                __sync_fetch_and_sub(&kmerBuffer.startIndexOfReserve, estimatedKmerCnt);
+            }
+        }
+    }
+
+    // cout << "Before return: " << kmerBuffer.startIndexOfReserve << endl;
+    return 0;
+    
+}
 size_t IndexCreator::fillTargetKmerBuffer(Buffer<Kmer> &kmerBuffer,
                                           std::vector<std::atomic<bool>> & batchChecker,
                                           size_t &processedBatchCnt,

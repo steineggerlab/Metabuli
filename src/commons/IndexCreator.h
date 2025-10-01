@@ -108,6 +108,7 @@ protected:
     const LocalParameters & par;
     bool isUpdating;
     int kmerFormat;
+    int kmerLen;
 
     uint64_t MARKER;
     BaseMatrix *subMat;
@@ -172,6 +173,11 @@ protected:
         std::vector<std::atomic<bool>> & batchChecker,
         size_t &processedSplitCnt,
         const LocalParameters &par);
+    
+    bool extractKmerFromSixFrames(
+        Buffer<Kmer> & kmerBuffer,
+        std::vector<std::atomic<bool>> & batchChecker,
+        size_t &processedBatchCnt);
 
     void indexReferenceSequences(size_t bufferSize);
 
