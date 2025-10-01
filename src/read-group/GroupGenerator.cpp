@@ -470,10 +470,10 @@ void GroupGenerator::saveSubGraphToFile(
     sort(relations.begin(), relations.end(), Relation::compare);
     fwrite(relations.data(), sizeof(Relation), relations.size(), outFile);
     fclose(outFile);
-    #pragma omp critical
-    {
-        cout << "Query sub-graph saved to " << subGraphFileName << " successfully." << endl;
-    }
+    // #pragma omp critical
+    // {
+    //     cout << "Query sub-graph saved to " << subGraphFileName << " successfully." << endl;
+    // }
 }
 
 
