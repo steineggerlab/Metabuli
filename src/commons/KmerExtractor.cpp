@@ -372,6 +372,37 @@ void KmerExtractor::fillQueryKmerBuffer(
     }
 }
 
+void KmerExtractor::extractKmer_dna2aa(
+    const char *seq,
+    int seqLen, 
+    Buffer<Kmer> &kmerBuffer, 
+    size_t &posToWrite, 
+    uint32_t seqId1, // eg. taxID
+    uint32_t seqId2  // eg. speciesID
+) {
+#ifdef OPENMP
+    size_t threadID = omp_get_thread_num();
+#else
+    size_t threadID = 0; // Single-threaded mode
+#endif
+    for (int frame = 0; frame < 6; frame++) {
+        bool isForward = frame < 3;
+        int begin = 0;
+        if (isForward) {
+            begin = frame % 3;
+        } else {
+            begin = (seqLen % 3) - (frame % 3);
+            if (begin < 0) {
+                begin += 3;
+            }
+        }
+        kmerScanners[threadID]->initScanner(seq, begin, begin + seqLen - 1, isForward);
+        Kmer kmer;
+        while ((kmer = kmerScanners[threadID]->next()).value != UINT64_MAX) {
+            kmerBuffer.buffer[posToWrite++] = {kmer.value, seqId1, seqId2};
+        }
+    }
+}
 
 int KmerExtractor::extractTargetKmers(
     const char *seq,
