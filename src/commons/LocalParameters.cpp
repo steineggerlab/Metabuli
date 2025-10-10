@@ -236,13 +236,6 @@ LocalParameters::LocalParameters() :
                     typeid(std::string),
                     (void *) &outputDir,
                     "^.*$"),
-        THR_K(THR_K_ID,
-                    "--thr-k",
-                    "Min. num. of shared kmer for read grouping",
-                    "Min. num. of shared kmer for read grouping",
-                    typeid(float),
-                    (void *) &thresholdK,
-                    "^(-?(10(\\.0+)?|[0-9](\\.[0-9]+)?))$"),
         MIN_EDGE_WEIGHT(MIN_EDGE_WEIGHT_ID,
                         "--min-edge",
                         "Min. edge weight for read grouping",
@@ -250,13 +243,27 @@ LocalParameters::LocalParameters() :
                         typeid(int),
                         (void *) &minEdgeWeight,
                         "^[0-9]+$"),
-        GROUP_SCORE_THR(GROUP_SCORE_THR_ID,
-                    "--group-score-thr",
-                    "Min. score for read grouping",
-                    "Min. score for read grouping",
+        MIN_VOTE_SCORE(MIN_VOTE_SCORE_ID,
+                    "--min-vote-score",
+                    "Min. classification score to vote.",
+                    "Min. classification score to vote.",
                     typeid(float),
-                    (void *) &groupScoreThr,
+                    (void *) &minVoteScr,
                     "^0(\\.[0-9]+)?|1(\\.0+)?$"),
+        SCORE_COL(SCORE_COL_ID,
+                  "--score-col",
+                  "Score column index (1-based).",
+                  "Score column index (1-based).",
+                  typeid(int),
+                  (void *) &scoreCol,
+                  "^[0-9]+$"),
+        WEIGHT_MODE(WEIGHT_MODE_ID,
+                    "--weight-mode",
+                    "Majority LCA weight mode.",
+                    "Majority LCA weight mode. 0:uniform, 1:score, 2:score squared",
+                    typeid(int),
+                    (void *) &weightMode,
+                    "[0-2]"),
         LIBRARY_PATH(LIBRARY_PATH_ID,
                      "--library-path",
                      "Path to library where the FASTA files are stored",
@@ -376,20 +383,6 @@ LocalParameters::LocalParameters() :
                   typeid(int),
                   (void *) &taxidCol,
                   "^[0-9]+$"),
-        SCORE_COL(SCORE_COL_ID,
-                  "--score-col",
-                  "Column number of score in classification result",
-                  "Column number of score in classification result",
-                  typeid(int),
-                  (void *) &scoreCol,
-                  "^[0-9]+$"),
-        COVERAGE_COL(COVERAGE_COL_ID,
-                     "--coverage-col",
-                     "Column number of coverage in classification result",
-                     "Column number of coverage in classification result",
-                     typeid(int),
-                     (void *) &coverageCol,
-                     "^[0-9]+$"),
         PRINT_COLUMNS(PRINT_COLUMNS_ID,
                       "--print-columns",
                       "CSV of columns to print",
@@ -539,10 +532,6 @@ LocalParameters::LocalParameters() :
     minSSMatch = 0;
     tieRatio = 0;
 
-    // Group generation
-    thresholdK = 0.5;
-    groupScoreThr=0.15;
-
     // Database creation
     tinfoPath = "";
     libraryPath = "";
@@ -560,7 +549,6 @@ LocalParameters::LocalParameters() :
     readIdCol = 0;
     taxidCol = 0;
     scoreCol = 0;
-    coverageCol = 0;
     cladeRank = "";
     skipSecondary = 0;
 
@@ -683,18 +671,19 @@ LocalParameters::LocalParameters() :
     groupGeneration.push_back(&SEQ_MODE);
     groupGeneration.push_back(&RAM_USAGE);
     groupGeneration.push_back(&MATCH_PER_KMER);
-    groupGeneration.push_back(&THR_K);
-    groupGeneration.push_back(&GROUP_SCORE_THR);    
     groupGeneration.push_back(&PARAM_MASK_RESIDUES);
     groupGeneration.push_back(&PARAM_MASK_PROBABILTY);
-    groupGeneration.push_back(&TIE_RATIO);
-    groupGeneration.push_back(&KMER_FORMAT);
     groupGeneration.push_back(&VALIDATE_INPUT);
     groupGeneration.push_back(&SYNCMER);
     groupGeneration.push_back(&SMER_LEN);
     groupGeneration.push_back(&MIN_EDGE_WEIGHT);
     groupGeneration.push_back(&NEIGHBOR_KMERS);
     groupGeneration.push_back(&PRINT_LOG);
+    groupGeneration.push_back(&PARAM_MAJORITY);
+    groupGeneration.push_back(&MIN_VOTE_SCORE);
+    groupGeneration.push_back(&SCORE_COL);
+    groupGeneration.push_back(&WEIGHT_MODE);
+ 
 
     // filter 
     filter.push_back(&PARAM_THREADS);
@@ -729,7 +718,6 @@ LocalParameters::LocalParameters() :
     grade.push_back(&TAXID_COL);
     grade.push_back(&PARAM_V);
     grade.push_back(&SCORE_COL);
-    grade.push_back(&COVERAGE_COL);
     grade.push_back(&PRINT_COLUMNS);
     grade.push_back(&CLADE_RANK);
     grade.push_back(&SKIP_SECONDARY);

@@ -6,22 +6,20 @@
 
 void setGroupGenerationDefaults(LocalParameters & par){    
     par.neighborKmers = 0;
-    par.minEdgeWeight = 0;
-    par.syncmer = 0;
-    par.smerLen = 9;
-    par.kmerFormat = 3;
+    par.minEdgeWeight = 10;
+    par.syncmer = 1;
+    par.smerLen = 7;
     par.seqMode = 2;    
-    par.minScore = 0;
-    par.minSpScore = 0;
     par.verbosity = 3;
     par.ramUsage = 128;
     par.printLog = 0;
     par.maskMode = 0;
     par.maskProb = 0.9;
     par.matchPerKmer = 4;
-    par.tieRatio = 0.95;
-    par.thresholdK = 0.5;
-    par.groupScoreThr = 0.15;
+    par.majorityThr = 0.5;   
+    par.scoreCol = 4;
+    par.weightMode = 1;
+    par.minVoteScr = 0.15;
 }
 
 int groupGeneration(int argc, const char **argv, const Command& command)
@@ -29,6 +27,11 @@ int groupGeneration(int argc, const char **argv, const Command& command)
     LocalParameters & par = LocalParameters::getLocalInstance();
     setGroupGenerationDefaults(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
+    if (par.syncmer == 0) {
+        par.kmerFormat = 3;
+    } else {
+        par.kmerFormat = 5;
+    }
 
     if (par.seqMode == 2) {
         // Check if the second argument is a directory
