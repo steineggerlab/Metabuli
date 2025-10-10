@@ -16,6 +16,113 @@
 #define MEM_SIZE_16MB ((size_t) (16 * 1024 * 1024))
 #define MEM_SIZE_32MB ((size_t) (32 * 1024 * 1024))
 
+class KmerDbReader {
+private:
+    std::string fileName;
+
+    size_t valueBufferSize;
+    uint64_t * valueBuffer;
+    size_t valueBufferIdx = 0;
+    size_t valueCnt;
+    uint64_t lastValue;
+
+    size_t readBufferSize;
+    ReadBuffer<uint16_t> deltaIdxBuffer;
+    bool fileCompleted = false;
+    bool valueBufferCompleted = false;
+
+    void fillValueBuffer() {
+        for (; valueCnt < valueBufferSize; ++valueCnt) {
+            valueBuffer[valueCnt] = getNextMetamer();
+            if (unlikely(valueBuffer[valueCnt] == UINT64_MAX)) {
+                fileCompleted = true;
+                break;
+            }
+        }
+    }
+
+    uint64_t getNextMetamer() {
+        if (deltaIdxBuffer.end < deltaIdxBuffer.p + 7) {
+            size_t readCnt = deltaIdxBuffer.loadBuffer(deltaIdxBuffer.end - deltaIdxBuffer.p);
+            if (readCnt == 0) {
+                return UINT64_MAX; // No more values
+            }
+        }
+        uint64_t diffIn64bit = 0;
+        while ((*deltaIdxBuffer.p & 0x8000) == 0) {
+            diffIn64bit = (diffIn64bit << 15) | *deltaIdxBuffer.p;
+            ++deltaIdxBuffer.p;
+        }
+        diffIn64bit = (diffIn64bit << 15) | (*deltaIdxBuffer.p & 0x7FFF);
+        ++deltaIdxBuffer.p;
+        this->lastValue = diffIn64bit + this->lastValue;
+        return this->lastValue;
+    }
+
+public:
+    KmerDbReader(
+        std::string fileName,
+        size_t valueBufferSize = 32768, 
+        size_t readBufferSize = 8192)
+        : fileName(fileName),
+        valueBufferSize(valueBufferSize), 
+        readBufferSize(readBufferSize),
+        deltaIdxBuffer(fileName, readBufferSize)
+    {
+        lastValue = 0;
+        valueCnt = 0;
+        valueBuffer = new uint64_t[valueBufferSize];
+        fillValueBuffer();
+    }
+
+    ~KmerDbReader() {
+        delete[] valueBuffer;
+    }
+
+    uint64_t getLastValue() const {
+        return lastValue;
+    }
+
+    bool isCompleted() const {
+        return fileCompleted && valueBufferCompleted;
+    }
+
+    uint64_t next() {
+        if (unlikely(valueBufferIdx >= valueCnt)) {
+            valueCnt = 0;
+            valueBufferIdx = 0;
+            fillValueBuffer();
+        }
+        if (unlikely(valueCnt == 0)) {
+            valueBufferCompleted = true;
+            return uint64_t(); // Return an empty k-mer
+        }
+        return valueBuffer[valueBufferIdx++];
+    }
+
+    void setReadPosition(DiffIdxSplit offset) {
+        deltaIdxBuffer.loadBufferAt(offset.diffIdxOffset);
+        if (offset.ADkmer == 0 && offset.diffIdxOffset == 0 && offset.infoIdxOffset == 0) {
+            valueCnt = 0;
+            lastValue = 0;
+        } else {
+            lastValue = offset.ADkmer;
+            valueBuffer[0] = lastValue;
+            valueCnt = 1;
+        }
+        valueBufferIdx = 0;
+        fillValueBuffer();
+    }
+
+    uint64_t * getValueBuffer() {
+        return valueBuffer;
+    }
+
+    size_t getValueCnt() const {
+        return valueCnt;
+    }
+
+};
 class DeltaIdxReader {
 private:
     std::string infoFileName;
