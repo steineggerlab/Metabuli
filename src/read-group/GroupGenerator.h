@@ -150,15 +150,15 @@ public:
                            Buffer<std::pair<uint32_t, uint32_t>> & matchBuffer,
                            const string & db="");
 
+    void filterCommonKmers2(Buffer<Kmer>& queryKmerBuffer,
+                           Buffer<std::pair<uint32_t, uint32_t>> & matchBuffer,
+                           const string & db="");
+
     void makeGraph(size_t processedReadCnt);
     
     void saveSubGraphToFile(
         const unordered_map<uint64_t, uint16_t> & pair2weight,
         const size_t counter_now);
-
-    double mergeRelations(size_t numOfGraph,
-                          const vector<MetabuliInfo>& metabuliResult,
-                          const double thresholdK);
     
     void mergeTrueRelations(
         const vector<MetabuliInfo>& metabuliResult);
@@ -189,15 +189,13 @@ public:
     void getRepLabel(
         vector<MetabuliInfo>& metabuliResult, 
         const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
-        unordered_map<uint32_t, int> &repLabel, 
-        const float groupScoreThr);
+        unordered_map<uint32_t, int> &repLabel);
     
     void loadRepLabel(std::unordered_map<uint32_t, int> &repLabel);
 
     void applyRepLabel( 
         const vector<int> &queryGroupInfo, 
-        const unordered_map<uint32_t, int> &repLabel, 
-        const float groupScoreThr);
+        const unordered_map<uint32_t, int> &repLabel);
 
     void writeKmers(
         Buffer<Kmer>& queryKmerBuffer, 

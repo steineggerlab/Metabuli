@@ -47,11 +47,6 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     size_t tries = 0;
     size_t totalSeqCnt = 0;
 
-    float groupScoreThr = par.groupScoreThr;
-    double thresholdK = par.thresholdK;
-    cout << "groupScoreThr: " << groupScoreThr << endl;
-    cout << "thresholdK: " << thresholdK << endl;
-    
     // Extract k-mers from query sequences and compare them to target k-mer DB
     while (!complete) {
         tries++;
@@ -101,7 +96,7 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
                                              kseq1,
                                              kseq2); 
                                                         
-            filterCommonKmers(queryKmerBuffer, matchBuffer, commonKmerDB);
+            filterCommonKmers2(queryKmerBuffer, matchBuffer, commonKmerDB);
             time_t t = time(nullptr);
             writeKmers(queryKmerBuffer, processedReadCnt);
             cout << "Writing query k-mer file: " << double(time(nullptr) - t) << " s" << endl;
@@ -130,22 +125,14 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     // Use all edges
     if (par.printLog) {
         mergeRelations();
-        if (par.minEdgeWeight != 0) {
-            makeGroups(par.minEdgeWeight, groupInfo, queryGroupInfo);
-        } else {
-            makeGroups(132, groupInfo, queryGroupInfo);    
-        }
+        makeGroups(par.minEdgeWeight, groupInfo, queryGroupInfo);
     } else {
-        if (par.minEdgeWeight != 0) {
-            makeGroupsFromSubGraphs(par.minEdgeWeight, groupInfo, queryGroupInfo, metabuliResult);
-        } else {
-            makeGroupsFromSubGraphs(132, groupInfo, queryGroupInfo, metabuliResult);    
-        }
+        makeGroupsFromSubGraphs(par.minEdgeWeight, groupInfo, queryGroupInfo, metabuliResult);
     }
     saveGroupsToFile(groupInfo, queryGroupInfo, metabuliResult);
     unordered_map<uint32_t, int> repLabel; 
-    getRepLabel(metabuliResult, groupInfo, repLabel, groupScoreThr);
-    applyRepLabel(queryGroupInfo, repLabel, groupScoreThr);
+    getRepLabel(metabuliResult, groupInfo, repLabel);
+    applyRepLabel(queryGroupInfo, repLabel);
 
     // Use only true edges
     useOnlyTrueRelations = true;
@@ -154,20 +141,12 @@ void GroupGenerator::startGroupGeneration(const LocalParameters &par) {
     repLabel.clear();
     if (par.printLog) {
         mergeTrueRelations(metabuliResult);
-        if (par.minEdgeWeight != 0) {
-            makeGroups(par.minEdgeWeight, groupInfo, queryGroupInfo);
-        } else {
-            makeGroups(132, groupInfo, queryGroupInfo);    
-        }
+        makeGroups(par.minEdgeWeight, groupInfo, queryGroupInfo);
     } else {
-        if (par.minEdgeWeight != 0) {
-            makeGroupsFromSubGraphs(par.minEdgeWeight, groupInfo, queryGroupInfo, metabuliResult);
-        } else {
-            makeGroupsFromSubGraphs(132, groupInfo, queryGroupInfo, metabuliResult);    
-        }
+        makeGroupsFromSubGraphs(par.minEdgeWeight, groupInfo, queryGroupInfo, metabuliResult);
     }
-    getRepLabel(metabuliResult, groupInfo, repLabel, groupScoreThr);
-    applyRepLabel(queryGroupInfo, repLabel, groupScoreThr);
+    getRepLabel(metabuliResult, groupInfo, repLabel);
+    applyRepLabel(queryGroupInfo, repLabel);
 
 }
 
@@ -363,6 +342,193 @@ void GroupGenerator::filterCommonKmers(
     cout << "Filtered k-mer number  : " << queryKmerIdx - blankCnt << endl;
 }
 
+void GroupGenerator::filterCommonKmers2(
+    Buffer<Kmer> & qKmers,
+    Buffer<std::pair<uint32_t, uint32_t>> & matchBuffer,
+    const string & commonKmerDB
+) {
+    string gtdbListDB;
+    std::string diffIdxFileName = commonKmerDB +"/diffIdx";
+    std::string diffIdxSplitFileName = commonKmerDB + "/split";
+
+    size_t blankCnt = std::find_if(qKmers.buffer,
+                                   qKmers.buffer + qKmers.startIndexOfReserve, 
+                                   [](const auto& kmer) { return kmer.qInfo.sequenceID != 0;}
+                                  ) - qKmers.buffer;
+
+    size_t queryKmerNum = qKmers.startIndexOfReserve - blankCnt;
+    std::cout << "Query k-mer number     : " << queryKmerNum << endl;
+
+    // Filter out meaningless target splits
+    MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str(), 3);
+    size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
+    size_t numOfDiffIdxSplits_use = numOfDiffIdxSplits;
+    for (size_t i = 1; i < numOfDiffIdxSplits; i++) {
+        if (diffIdxSplits.data[i].ADkmer == 0 || diffIdxSplits.data[i].ADkmer == UINT64_MAX) {
+            numOfDiffIdxSplits_use--;
+        }
+    }
+
+    // Divide query k-mer list into blocks for multi threading.
+    std::vector<QueryKmerSplit> querySplits;
+    size_t quotient = queryKmerNum / par.threads;
+    size_t remainder = queryKmerNum % par.threads;
+    size_t startIdx = blankCnt;
+    size_t endIdx = 0; // endIdx is inclusive
+    for (size_t i = 0; i < par.threads; i++) {
+        endIdx = startIdx + quotient - 1;
+        if (remainder > 0) {
+            endIdx++;
+            remainder--;
+        }
+        bool needLastTargetBlock = true;
+        uint64_t queryAA = qKmers.buffer[startIdx].value;
+        for (size_t j = 0; j < numOfDiffIdxSplits_use; j ++) {
+            if (queryAA <= diffIdxSplits.data[j].ADkmer) {
+                querySplits.emplace_back(startIdx, endIdx, diffIdxSplits.data[j - (j != 0)]);
+                needLastTargetBlock = false;
+                break;
+            }
+        }
+        if (needLastTargetBlock) {
+            querySplits.emplace_back(startIdx, endIdx, diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
+        }
+        startIdx = endIdx + 1;
+    }
+    munmap(diffIdxSplits.data, diffIdxSplits.fileSize);
+
+    time_t beforeFilter = time(nullptr);
+    std::cout << "Common k-mer searching : " << std::flush;
+    #pragma omp parallel default(none), shared(matchBuffer, commonKmerDB, querySplits, qKmers, cout)
+    {
+        Buffer<std::pair<uint32_t, uint32_t>> localMatches(1024 * 1024 * 2);  // 16 Mb <queryID, pos>
+        KmerDbReader * kmerDbReader
+            = new KmerDbReader(commonKmerDB + "/diffIdx", 1024 * 1024, 1024 * 1024);
+        std::vector<std::pair<uint32_t, uint32_t>> tempMatches;  
+        bool hasOverflow = false;
+    
+        #pragma omp for schedule(dynamic, 1)
+        for (size_t i = 0; i < querySplits.size(); i++) {
+            kmerDbReader->setReadPosition(querySplits[i].diffIdxSplit);
+            uint64_t tKmer = kmerDbReader->next();
+            Kmer qKmer(UINT64_MAX, 0);
+            for (size_t j = querySplits[i].start; j < querySplits[i].end + 1; j++) {
+                // Reuse the AA matches if queries are identical
+                if (qKmer.value == qKmers.buffer[j].value) {
+                    if (unlikely(!localMatches.afford(tempMatches.size()))) {
+                        if (!Buffer<std::pair<uint32_t, uint32_t>>::moveSmallToLarge(&localMatches, &matchBuffer)) {
+                            hasOverflow = true;
+                            break;
+                        }
+                    }
+                    size_t posToWrite = localMatches.reserveMemory(tempMatches.size());
+                    memcpy(localMatches.buffer + posToWrite, tempMatches.data(),
+                           sizeof(std::pair<uint32_t, uint32_t>) * tempMatches.size());
+                    for (size_t k = 0; k < tempMatches.size(); k++) {
+                        localMatches.buffer[posToWrite + k].first = qKmers.buffer[j].qInfo.sequenceID;
+                        localMatches.buffer[posToWrite + k].second = qKmers.buffer[j].qInfo.pos;
+                    }
+                    continue;
+                }
+                tempMatches.clear();
+                // Get next query, and start to find
+                qKmer = qKmers.buffer[j];
+
+                // Skip target k-mers lexiocographically smaller
+                while (!kmerDbReader->isCompleted() && qKmer.value > tKmer) {
+                    tKmer = kmerDbReader->next();
+                }
+
+                // No match found - skip to the next query
+                if (qKmer.value != tKmer) { continue; } 
+
+                // Match found - load target k-mers matching at amino acid level
+                while (!kmerDbReader->isCompleted() && qKmer.value == tKmer) {
+                    tempMatches.emplace_back((uint32_t) qKmer.qInfo.sequenceID, (uint32_t) qKmer.qInfo.pos);
+                    tKmer = kmerDbReader->next();                                      
+                }
+
+                if (unlikely(!localMatches.afford(tempMatches.size()))) {
+                    if (!Buffer<std::pair<uint32_t, uint32_t>>::moveSmallToLarge(&localMatches, &matchBuffer)) {
+                        hasOverflow = true;
+                        break;
+                    }
+                }
+
+                size_t posToWrite = localMatches.reserveMemory(tempMatches.size());
+                memcpy(localMatches.buffer + posToWrite, tempMatches.data(),
+                       sizeof(std::pair<uint32_t, uint32_t>) * tempMatches.size());
+            } // End of one split
+
+            // Move matches in the local buffer to the shared buffer
+            if (!Buffer<std::pair<uint32_t, uint32_t>>::moveSmallToLarge(&localMatches, &matchBuffer)) {
+                hasOverflow = true;
+            }
+        } // End of omp for (Iterating for splits)
+    } // End of omp parallel
+    std::cout << time(nullptr) - beforeFilter << " s (" << matchBuffer.startIndexOfReserve << " matches found)" << endl;
+
+    time_t here = time(nullptr);
+    SORT_PARALLEL(matchBuffer.buffer, matchBuffer.buffer + matchBuffer.startIndexOfReserve);    
+    std::cout << "Sorting matches        : " << double(time(nullptr) - here) << " s" << std::endl;
+ 
+    // Sort query k-mers by <seqID, pos>
+    time_t firstSort = time(nullptr);
+    SORT_PARALLEL(qKmers.buffer + blankCnt, qKmers.buffer + qKmers.startIndexOfReserve, Kmer::compareQKmerByIdAndPos);
+    std::cout << "Query k-mer sorting (1): " << double(time(nullptr) - firstSort) << " s" << std::endl;
+
+    // Filter neighbor k-mers
+    here = time(nullptr);
+    std::cout << "Filtering common k-mers: " << std::flush;
+    size_t queryKmerIdx = blankCnt;
+    int targetKmerPosIdx = 0;
+    size_t queryKmerIdx_copy = blankCnt;
+    while (queryKmerIdx_copy < qKmers.startIndexOfReserve) {
+        if (targetKmerPosIdx < matchBuffer.startIndexOfReserve) {
+            // copy
+            if (qKmers.buffer[queryKmerIdx_copy].qInfo.sequenceID < matchBuffer.buffer[targetKmerPosIdx].first){
+                qKmers.buffer[queryKmerIdx] = qKmers.buffer[queryKmerIdx_copy];
+                queryKmerIdx++;
+                queryKmerIdx_copy++;
+            }
+            // next target check
+            else if(qKmers.buffer[queryKmerIdx_copy].qInfo.sequenceID > matchBuffer.buffer[targetKmerPosIdx].first){
+                targetKmerPosIdx++;
+            }
+            // same seq
+            else{
+                // copy
+                if (int64_t(qKmers.buffer[queryKmerIdx_copy].qInfo.pos) < int(matchBuffer.buffer[targetKmerPosIdx].second) - par.neighborKmers){
+                    qKmers.buffer[queryKmerIdx] = qKmers.buffer[queryKmerIdx_copy];
+                    queryKmerIdx++;
+                    queryKmerIdx_copy++;
+                }
+                // next target check
+                else if(int(matchBuffer.buffer[targetKmerPosIdx].second) + par.neighborKmers < int64_t(qKmers.buffer[queryKmerIdx_copy].qInfo.pos)){
+                    targetKmerPosIdx++;
+                }
+                // pass
+                else{
+                    queryKmerIdx_copy++;
+                }
+            }            
+        }
+        else{
+            qKmers.buffer[queryKmerIdx] = qKmers.buffer[queryKmerIdx_copy];
+            queryKmerIdx++;
+            queryKmerIdx_copy++;
+        }
+    }
+    qKmers.startIndexOfReserve = size_t(queryKmerIdx);
+    cout << double(time(nullptr) - here) << " s" << endl;
+    
+    // sort buffer by kmer
+    time_t secondSort = time(nullptr);
+    SORT_PARALLEL(qKmers.buffer, qKmers.buffer + qKmers.startIndexOfReserve, Kmer::compareQueryKmer);
+    secondSort = time(nullptr) - secondSort;    
+    cout << "Query k-mer sorting (2): " << double(secondSort) << " s" << endl;
+    cout << "Filtered k-mer number  : " << queryKmerIdx - blankCnt << endl;
+}
 
 void GroupGenerator::makeGraph(
     size_t processedReadCnt
@@ -475,159 +641,6 @@ void GroupGenerator::saveSubGraphToFile(
     //     cout << "Query sub-graph saved to " << subGraphFileName << " successfully." << endl;
     // }
 }
-
-
-double GroupGenerator::mergeRelations(
-    size_t numOfGraph,
-    const vector<MetabuliInfo>& metabuliResult,
-    double thresholdK
-) {
-    cout << "Merging and calculating threshold via elbow..." << endl;
-    time_t before = time(nullptr);
-
-    const size_t BATCH_SIZE = 4096;
-    vector<ifstream> files(numOfGraph);
-    vector<queue<Relation>> relationBuffers(numOfGraph);
-
-    ofstream relationLog(outDir + "/allRelations.txt");
-    if (!relationLog.is_open()) {
-        cerr << "Failed to open relation log file." << endl;
-        return 0.0;
-    }
-
-    auto readNextBatch = [&](size_t i) {
-        for (size_t j = 0; j < BATCH_SIZE; ++j) {
-            Relation r;
-            if (!files[i].read(reinterpret_cast<char*>(&r.id1), sizeof(uint32_t))) break;
-            if (!files[i].read(reinterpret_cast<char*>(&r.id2), sizeof(uint32_t))) break;
-            if (!files[i].read(reinterpret_cast<char*>(&r.weight), sizeof(uint32_t))) break;
-            relationBuffers[i].push(r);
-        }
-    };
-
-    // 초기 파일 열기 및 버퍼 채우기
-    for (size_t i = 0; i < numOfGraph; ++i) {
-        string fileName = outDir + "/subGraph_" + to_string(i);
-        files[i].open(fileName, ios::binary);
-        if (!files[i].is_open()) {
-            cerr << "Error opening file: " << fileName << endl;
-            continue;
-        }
-
-        readNextBatch(i);
-    }
-
-
-    // weight 저장
-    std::unordered_map<int, int> external2internalTaxId;
-    taxonomy->getExternal2internalTaxID(external2internalTaxId);
-    vector<double> trueWeights, falseWeights;
-
-    while (true) {
-        pair<uint32_t, uint32_t> minKey = {UINT32_MAX, UINT32_MAX};
-
-        for (size_t i = 0; i < numOfGraph; ++i) {
-            if (!relationBuffers[i].empty()) {
-                const Relation& r = relationBuffers[i].front();
-                pair<uint32_t, uint32_t> key = {r.id1, r.id2};
-                if (key < minKey) minKey = key;
-            }
-        }
-
-        if (minKey.first == UINT32_MAX) break;
-
-        uint32_t totalWeight = 0;
-
-        for (size_t i = 0; i < numOfGraph; ++i) {
-            while (!relationBuffers[i].empty()) {
-                const Relation& r = relationBuffers[i].front();
-                if (r.id1 == minKey.first && r.id2 == minKey.second) {
-                    totalWeight += r.weight;
-                    relationBuffers[i].pop();
-                    if (relationBuffers[i].empty()) readNextBatch(i);
-                } else break;
-            }
-        }
-
-        int label1 = external2internalTaxId[metabuliResult[minKey.first].label];
-        int label2 = external2internalTaxId[metabuliResult[minKey.second].label];
-        // classified + unclasssified -> false edge
-        // unclassified + unclassified -> true edge
-        // classified + classified -> genus 비교
-        if (taxonomy->getTaxIdAtRank(label1, "genus") == taxonomy->getTaxIdAtRank(label2, "genus"))
-            trueWeights.emplace_back(totalWeight);
-        else
-            falseWeights.emplace_back(totalWeight);
-
-        relationLog << minKey.first << ' ' << minKey.second << ' ' << totalWeight << '\n';
-    }
-
-    relationLog.close();
-
-    if (trueWeights.size() < 10 || falseWeights.size() < 10) {
-        cerr << "Insufficient true/false edges for elbow detection." << endl;
-        return 120.0;
-    }
-
-    vector<double> tempSorted = falseWeights;
-    std::sort(tempSorted.begin(), tempSorted.end());
-    double tempFalse = tempSorted[0];
-    int tempFalseCnt = 0;
-    for (int i = 0; i < tempSorted.size(); i++){
-        if (tempFalse == tempSorted[i]){
-            tempFalseCnt++;
-        }
-        else{
-            cout << tempFalse << ": " << tempFalseCnt << endl;
-            tempFalse = tempSorted[i];
-            tempFalseCnt = 1;
-        }
-    }
-    cout << tempFalse << ": " << tempFalseCnt << endl;
-
-    // Elbow 계산 함수
-    auto findElbow = [](const vector<double>& data) -> double {
-        vector<double> sorted = data;
-        std::sort(sorted.begin(), sorted.end());
-
-        size_t N = sorted.size();
-        vector<double> x(N), y(N);
-        for (size_t i = 0; i < N; ++i) {
-            x[i] = sorted[i];
-            y[i] = static_cast<double>(i) / (N - 1);
-        }
-
-        double x0 = x.front(), y0 = y.front();
-        double x1 = x.back(), y1 = y.back();
-        double dx = x1 - x0, dy = y1 - y0;
-        double maxDist = -1.0;
-        size_t elbowIdx = 0;
-
-        for (size_t i = 0; i < N; ++i) {
-            double px = x[i], py = y[i];
-            double u = ((px - x0) * dx + (py - y0) * dy) / (dx * dx + dy * dy);
-            double projx = x0 + u * dx, projy = y0 + u * dy;
-            double dist = sqrt((projx - px)*(projx - px) + (projy - py)*(projy - py));
-            if (dist > maxDist) {
-                maxDist = dist;
-                elbowIdx = i;
-            }
-        }
-        return x[elbowIdx];
-    };
-
-    double elbowFalse = findElbow(falseWeights);
-    double elbowTrue = findElbow(trueWeights);
-    double threshold = elbowFalse * (1.0 - thresholdK) + elbowTrue * thresholdK;
-
-    cout << "[Elbow-based thresholding]" << endl;
-    cout << "False elbow: " << elbowFalse << ", True elbow: " << elbowTrue << endl;
-    cout << "Threshold (K=" << thresholdK << "): " << threshold << endl;
-    cout << "Time: " << time(nullptr) - before << " sec" << endl;
-
-    return threshold;
-}
-
 
 void GroupGenerator::mergeTrueRelations(
     const vector<MetabuliInfo>& metabuliResult
@@ -944,8 +957,7 @@ void GroupGenerator::loadMetabuliResult(vector<MetabuliInfo>& metabuliResult) {
 void GroupGenerator::getRepLabel(
     vector<MetabuliInfo> &metabuliResult, 
     const unordered_map<uint32_t, unordered_set<uint32_t>> &groupInfo, 
-    unordered_map<uint32_t, int> &repLabel, 
-    const float groupScoreThr
+    unordered_map<uint32_t, int> &repLabel
 ) {
     cout << "Find query group representative labels..." << endl;    
     time_t beforeSearch = time(nullptr);
@@ -962,12 +974,12 @@ void GroupGenerator::getRepLabel(
         for (const auto& queryId : queryIds) {
             int query_label = external2internalTaxId[metabuliResult[queryId].label]; 
             float score = metabuliResult[queryId].score;
-            if (query_label != 0 && score >= groupScoreThr) {
+            if (query_label != 0 && score >= par.minVoteScr) {
                 setTaxa.emplace_back(query_label, score, 2); // 2 => vote mode
             }
         }
 
-        WeightedTaxResult result = taxonomy->weightedMajorityLCA(setTaxa, 0.5);
+        WeightedTaxResult result = taxonomy->weightedMajorityLCA(setTaxa, par.majorityThr);
 
         if (result.taxon != 0 && result.taxon != 1) {
             repLabel[groupId] = result.taxon;
@@ -1026,8 +1038,7 @@ void GroupGenerator::loadRepLabel(
 
 void GroupGenerator::applyRepLabel(
     const vector<int> &queryGroupInfo, 
-    const unordered_map<uint32_t, int> &repLabel, 
-    const float groupScoreThr
+    const unordered_map<uint32_t, int> &repLabel
 ) {
     cout << "Apply query group representative labels..." << endl;    
     time_t beforeSearch = time(nullptr);
