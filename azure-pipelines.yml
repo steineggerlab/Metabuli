@@ -207,9 +207,10 @@ jobs:
     steps:
       # === Package macOS ===
       - script: |
+          echo "--- Packaging macOS artifact ---"
           cd "${BUILD_SOURCESDIRECTORY}"
           mkdir -p metabuli/bin
-          cp -f README.md LICENCE metabuli
+          cp -f README.md LICENSE metabuli
       - task: DownloadPipelineArtifact@1
         inputs:
           artifactName: metabuli-darwin-universal
@@ -249,7 +250,7 @@ jobs:
           cd "${BUILD_SOURCESDIRECTORY}"
           rm -rf metabuli
           mkdir -p metabuli/bin
-          cp -f README.md LICENCE metabuli
+          cp -f README.md LICENSE metabuli
         displayName: 'Prepare staging dir for Linux-SSE2'
       - task: DownloadPipelineArtifact@1
         inputs:
@@ -271,7 +272,7 @@ jobs:
           cd "${BUILD_SOURCESDIRECTORY}"
           rm -rf metabuli
           mkdir -p metabuli/bin
-          cp -f README.md LICENCE metabuli
+          cp -f README.md LICENSE metabuli
         displayName: 'Prepare staging dir for Linux-AVX2'
       - task: DownloadPipelineArtifact@1
         inputs:
@@ -292,7 +293,7 @@ jobs:
           cd "${BUILD_SOURCESDIRECTORY}"
           rm -rf metabuli
           mkdir -p metabuli/bin
-          cp -f README.md LICENCE metabuli
+          cp -f README.md LICENSE metabuli
         displayName: 'Prepare staging dir for Linux-ARM64'
       - task: DownloadPipelineArtifact@1
         inputs:
