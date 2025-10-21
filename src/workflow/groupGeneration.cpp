@@ -5,10 +5,10 @@
 #include "common.h"
 
 void setGroupGenerationDefaults(LocalParameters & par){    
-    par.neighborKmers = 0;
+    par.neighborKmers = 1;
     par.minEdgeWeight = 10;
     par.syncmer = 1;
-    par.smerLen = 7;
+    par.smerLen = 5;
     par.seqMode = 2;    
     par.verbosity = 3;
     par.ramUsage = 128;
@@ -17,8 +17,9 @@ void setGroupGenerationDefaults(LocalParameters & par){
     par.maskProb = 0.9;
     par.matchPerKmer = 4;
     par.majorityThr = 0.5;   
-    par.scoreCol = 4;
-    par.weightMode = 1;
+    par.scoreCol = 5;
+    par.taxidCol = 3;
+    par.weightMode = 1; // 0: uniform, 1: score, 2: score^2
     par.minVoteScr = 0.15;
 }
 
@@ -31,6 +32,13 @@ int groupGeneration(int argc, const char **argv, const Command& command)
         par.kmerFormat = 3;
     } else {
         par.kmerFormat = 5;
+    }
+
+
+
+    if (par.weightMode != 0) {
+        cout << "Warning: --weight-mode " << par.weightMode << " requires classification scores." << endl;
+        cout << "         Make sure that score column is correctly set using --score-col." << endl;
     }
 
     if (par.seqMode == 2) {
