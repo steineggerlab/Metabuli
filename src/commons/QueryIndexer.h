@@ -42,6 +42,7 @@ private:
     // Internal
     size_t availableRam;
     size_t bytesPerKmer;
+    int kmerLen;
 
     // Output
     std::size_t readNum_1;
@@ -66,9 +67,10 @@ public:
 
 
     // Setters
+    void setKmerLen(int kmerLen2) { this->kmerLen = kmerLen2; }
     void setAvailableRam();
     void setBytesPerKmer(size_t matchPerKmer) {
-        bytesPerKmer = sizeof(QueryKmer) + matchPerKmer * sizeof(Match);
+        bytesPerKmer = sizeof(Kmer) + matchPerKmer * sizeof(Match);
     }
 
 };

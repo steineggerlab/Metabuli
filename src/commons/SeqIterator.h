@@ -28,27 +28,27 @@
 
 KSEQ_INIT(kseq_buffer_t*, kseq_buffer_reader)
 
-#define kmerLength 8
-
-
+#define nuc2int(x) (x & 14u)>>1u
 
 using namespace std;
 
 class SeqIterator {
 private:
-    uint64_t powers[10];
+    uint64_t * powers;
     uint32_t * mask;
     int * mask_int;
     uint32_t spaceNum;
     int spaceNum_int;
     int bitsForCodon;
     int bitsFor8Codons;
-    int smerLen;
     uint32_t smerMask;
     uint64_t dnaMask;
+    int kmerLen = 12;
+    int smerLen;
     
 public:
     SeqIterator(const LocalParameters &par); 
+    
     ~SeqIterator();
     
     string reverseComplement(string &read) const;
@@ -96,16 +96,6 @@ public:
 
     void printAAKmer(uint64_t kmer, int shits = 28);
 
-    void printSmer(const uint32_t smer) {
-        string aminoacid = "ARNDCQEGHILKMFPSTWYVX";
-        string smerStr;
-        for (int i = 0; i < smerLen; i++) {
-            smerStr += aminoacid[(smer >> (5 * i)) & 0x1F];
-        }
-        reverse(smerStr.begin(), smerStr.end());
-        cout << "Smer: " << smerStr << endl;
-    }
-
     void printSyncmer(const uint64_t syncmer) {
         string aminoacid = "ARNDCQEGHILKMFPSTWYVX";
 
@@ -114,7 +104,7 @@ public:
         string aaStr = "01234567";
         string dnaStr;
         vector<string> dna24mer(8);
-        for (int i = 0; i < kmerLength; i++) {
+        for (int i = 0; i < 8; i++) {
             aaStr[7 - i] = aminoacid[(aaPart >> (5 * i)) & 0x1F];
             uint64_t dnaInfo = (dnaPart >> (3 * i)) & 0x07;
             switch ((aaPart >> (5 * i)) & 0x1F) {
@@ -397,7 +387,7 @@ public:
             }
         }
         dnaStr = "";
-        for (int i = 0; i < kmerLength; i++) {
+        for (int i = 0; i < 8; i++) {
             dnaStr += dna24mer[i];
         }
         cout << "Syncmer: " << aaStr << " " << dnaStr;

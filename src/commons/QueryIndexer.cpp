@@ -13,10 +13,10 @@ QueryIndexer::QueryIndexer(const LocalParameters & par) {
     // matchPerKmer = par.matchPerKmer;
     maxRam = par.ramUsage;
     threads = par.threads;
-    // bytesPerKmer = sizeof(QueryKmer) + matchPerKmer * sizeof(Match);
     // std::cout << "bytesPerKmer: " << bytesPerKmer << "\n";
     spaceNum = 0; // par.spaceMask.length() - kmerLength;
     totalReadLength = 0;
+    kmerLen = 8;
 
     setAvailableRam();
 }
@@ -53,7 +53,7 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
             readNum_1++;
             seqCnt++;
             totalReadLength += kseq->entry.sequence.l;
-            int kmerCnt_int = LocalUtil::getQueryKmerNumber<int>(kseq->entry.sequence.l, spaceNum);
+            int kmerCnt_int = LocalUtil::getQueryKmerNumber<int>(kseq->entry.sequence.l, spaceNum, this->kmerLen);
             if (kmerCnt_int > 0) {
                 kmerCnt += (size_t) kmerCnt_int;  
             } else {
@@ -98,7 +98,7 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
                 readNum_1++;
                 seqCnt_1++;
                 totalReadLength += kseq_1->entry.sequence.l;
-                kmerCnt_int_1 = LocalUtil::getQueryKmerNumber<int>(kseq_1->entry.sequence.l, spaceNum);
+                kmerCnt_int_1 = LocalUtil::getQueryKmerNumber<int>(kseq_1->entry.sequence.l, spaceNum, this->kmerLen);
             } else {
                 end = true;
             }
@@ -113,7 +113,7 @@ void QueryIndexer::indexQueryFile(size_t processedQueryNum) {
                 readNum_2++;
                 seqCnt_2++;
                 totalReadLength += kseq_2->entry.sequence.l;
-                kmerCnt_int_2 = LocalUtil::getQueryKmerNumber<int>(kseq_2->entry.sequence.l, spaceNum);                
+                kmerCnt_int_2 = LocalUtil::getQueryKmerNumber<int>(kseq_2->entry.sequence.l, spaceNum, this->kmerLen);                
             } else {
                 end = true;
             }

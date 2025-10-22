@@ -86,58 +86,37 @@ struct Match { // 24 byte
     }
 };
 
+struct Match_AA {
+    uint32_t queryId;
+    uint32_t targetId;
+    uint32_t pos;     // For developing purpose only
+    uint64_t kmer;    // For developing purpose only
 
-struct OldMatch : Match { // 24 byte
-    OldMatch(){}
-    OldMatch(QueryKmerInfo qInfo,
-          int targetId,
-          TaxID speciesId,
-          uint32_t dnaEncoding,
-          uint16_t eachHamming,
-          uint8_t hamming)
-          : Match(qInfo, targetId, speciesId, dnaEncoding, eachHamming, hamming) { }
+    Match_AA(uint32_t queryId, uint32_t targetId) : queryId(queryId), targetId(targetId) { }
 
-    float getRightPartScore(const int range, float score = 0.0f, int cnt = 0) const override {
-        if (cnt == range) {
-            return score;
-        }
-        int currentHamming = GET_2_BITS(rightEndHamming >> (14 - cnt * 2));
-        if (currentHamming == 0) {
-            score += 3.0f;
-        } else {
-            score += 2.0f - 0.5f * currentHamming;
-        }
-        return getRightPartScore(range, score, cnt + 1);    
-    }
+    Match_AA(uint32_t queryId, uint32_t targetId, uint64_t kmer) 
+        : queryId(queryId), targetId(targetId), kmer(kmer) { }
+    
+    Match_AA(uint32_t queryId, uint32_t targetId, uint32_t pos, uint64_t kmer) 
+        : queryId(queryId), targetId(targetId), pos(pos), kmer(kmer) { }
 
-    float getLeftPartScore(const int range, float score = 0.0f, int cnt = 0) const override {
-        if (cnt == range) {
-            return score;
-        }
-        int currentHamming = GET_2_BITS(rightEndHamming >> (cnt * 2));
-        if (currentHamming == 0) {
-            score += 3.0f;
-        } else {
-            score += 2.0f - 0.5f * currentHamming;
-        }
-        return getLeftPartScore(range, score, cnt + 1);    
-    }
-
-    int getRightPartHammingDist(const int range) const override {
-        int sum = 0;
-        for (int i = 0; i < range; i++) {
-            sum += GET_2_BITS(rightEndHamming >> (14 - i * 2));
-        }
-        return sum;
-    }
-
-    int getLeftPartHammingDist(const int range) const override {
-        int sum = 0;
-        for (int i = 0; i < range; i++) {
-            sum += GET_2_BITS(rightEndHamming >> (i * 2));
-        }
-        return sum;
+    static bool compare(const Match_AA &a, const Match_AA &b) {
+        if (a.queryId != b.queryId)
+            return a.queryId < b.queryId;
+        if (a.pos != b.pos)
+            return a.pos < b.pos;
+        return a.targetId < b.targetId;
     }
 };
+
+
+struct MatchBlock {
+    MatchBlock(size_t start, size_t end, int id) : start(start), end(end), id(id) {}
+    MatchBlock() : start(0), end(0), id(0) {}
+    size_t start;
+    size_t end;
+    uint32_t id;
+};
+
 
 #endif //ADCLASSIFIER2_MATCH_H

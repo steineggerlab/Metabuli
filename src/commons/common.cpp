@@ -21,6 +21,8 @@ const std::string iRCT =
     ".TVGH..CD..M.KN...YSAABW.R.......tvgh..cd..m.kn...ysaabw.r......"
     "................................................................"
     "................................................................";
+
+
     
 void process_mem_usage(double &vm_usage, double &resident_set) {
   vm_usage = 0.0;

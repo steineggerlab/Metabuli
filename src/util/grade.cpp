@@ -39,7 +39,7 @@ struct Score2{
 
 
 
-char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTaxonomy, CountAtRank & count,
+char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, const TaxonomyWrapper & ncbiTaxonomy, CountAtRank & count,
                              const string & rank);
 
 char compareTaxonAtRank_CAMI_euk(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTaxonomy, CountAtRank & count,
@@ -92,8 +92,8 @@ int grade(int argc, const char **argv, const Command &command) {
     string names = taxonomy + "/names.dmp";
     string nodes = taxonomy + "/nodes.dmp";
     string merged = taxonomy + "/merged.dmp";
-    TaxonomyWrapper ncbiTaxonomy(names, nodes, merged, false);
-    cout << "Taxonomy loaded" << endl;
+    
+    
 
     // Load mapping file names
     ifstream mappingFileListFile;
@@ -131,7 +131,7 @@ int grade(int argc, const char **argv, const Command &command) {
 #endif
 
 #pragma omp parallel default(none), shared(results, ranks, numberOfFiles, mappingFileNames, readClassificationFileNames,\
-ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
+par, cout, printColumnsIdx, cerr, names, nodes, merged)
     {
         // Grade each file
         unordered_map<string, int> assacc2taxid;
@@ -142,13 +142,18 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
         string mappingFile;
         string readClassificationFileName;
 
+        vector<string> ranks_local = ranks;
+
+        TaxonomyWrapper ncbiTaxonomy(names, nodes, merged, false);
+        cout << "Taxonomy loaded" << endl;
+
         // Print scores of TP and FP
         unordered_map<string, vector<size_t>> rank2TpIdx;
         unordered_map<string, vector<size_t>> rank2FpIdx;
         unordered_map<string, vector<size_t>> rank2FnIdx;
         vector<vector<string>> idx2values;
         if (!printColumnsIdx.empty()){
-            for (const auto & rank : ranks) {
+            for (const auto & rank : ranks_local) {
                 rank2TpIdx[rank] = vector<size_t>();
                 rank2FpIdx[rank] = vector<size_t>();
                 rank2FnIdx[rank] = vector<size_t>();
@@ -164,7 +169,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
             readIds.clear();
             scores.clear();
             if (!printColumnsIdx.empty()){
-                for (const auto & rank : ranks) {
+                for (const auto & rank : ranks_local) {
                     rank2TpIdx[rank].clear();
                     rank2FpIdx[rank].clear();
                     rank2FnIdx[rank].clear();
@@ -180,6 +185,11 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
             if (map.is_open()) {
                 while (getline(map, key, '\t')) {
                     getline(map, value, '\n');
+                    // remove version number
+                    size_t pos = key.find('.');
+                    if (pos != string::npos) {
+                        key = key.substr(0, pos);
+                    }
                     assacc2taxid[key] = stoi(value);
                 }
             } else {
@@ -201,6 +211,10 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
             size_t numberOfClassifications = 0;
             unordered_map<string, int> observed;
             while (getline(readClassification, resultLine, '\n')) {
+                // skip line starting with '#'
+                if (resultLine.empty() || resultLine[0] == '#') {
+                    continue;
+                }
 
                 // Parse classification result
                 fields = Util::split(resultLine, "\t");
@@ -217,6 +231,11 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
                 if (par.testType == "gtdb") {
                     regex_search(id, assacc, regex1);
                     id = assacc[0];
+                    // remove version number
+                    size_t pos = id.find('.');
+                    if (pos != string::npos) {
+                        id = id.substr(0, pos);
+                    }
                 } else if (par.testType == "hiv" || par.testType == "hiv-ex") {
                     size_t pos = id.find('_');
                     id = id.substr(0, pos);
@@ -279,7 +298,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
             char p;
             for (size_t j = 0; j < classList.size(); j++) {
                 if (par.verbosity == 3) cout << readIds[j] << " " << classList[j] << " " << rightAnswers[j];
-                for (const string &rank: ranks) {
+                for (const string &rank: ranks_local) {
                     if (par.testType == "over") {
                         p = compareTaxon_overclassification(classList[j], rightAnswers[j], ncbiTaxonomy,
                                                             results[i].countsAtRanks[rank], rank);
@@ -303,13 +322,13 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
             }
 
             // Calculate the scores
-            for (const string &rank: ranks) {
+            for (const string &rank: ranks_local) {
                 results[i].countsAtRanks[rank].calculate();
             }
 
             // Write the values of TP, FP, and FN
             if (!printColumnsIdx.empty()) {
-                for (const string & rank : ranks) {
+                for (const string & rank : ranks_local) {
                     // TP
                     ofstream tpFile;
                     tpFile.open(readClassificationFileName + "." + rank + ".tp");
@@ -350,7 +369,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
             cout << readClassificationFileName << endl;
             cout << "The number of reads: " << rightAnswers.size() << endl;
             cout << "The number of reads classified: " << numberOfClassifications << endl;
-            for (const string &rank: ranks) {
+            for (const string &rank: ranks_local) {
                 cout << rank << " " << results[i].countsAtRanks[rank].total << " "
                      << results[i].countsAtRanks[rank].TP + results[i].countsAtRanks[rank].FP << " "
                      << results[i].countsAtRanks[rank].TP << " " << results[i].countsAtRanks[rank].FP << " "
@@ -359,7 +378,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
             }
             cout << endl;
         }
-    }
+    } // End of parallel region
 
     cout << "Rank\t";
     for (size_t i = 0; i < results.size(); i++) {
@@ -377,7 +396,7 @@ ncbiTaxonomy, par, cout, printColumnsIdx, cerr)
     return 0;
 }
 
-char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTaxonomy, CountAtRank & count,
+char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, const TaxonomyWrapper & ncbiTaxonomy, CountAtRank & count,
                              const string & rank) {
     if (rank == "subspecies") {
         // Do not count if the rank of target is higher than current rank
@@ -412,12 +431,14 @@ char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTax
     } else {
         // Do not count if the rank of target is higher than current rank
         TaxID targetTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(target, rank);
+        // cout << targetTaxIdAtRank << endl;
         const TaxonNode * targetNode = ncbiTaxonomy.taxonNode(targetTaxIdAtRank);
-        int rankIdx = NcbiTaxonomy::findRankIndex(rank);
-        if (NcbiTaxonomy::findRankIndex(ncbiTaxonomy.getString(targetNode->rankIdx)) > rankIdx) {
+        int rankIdx = ncbiTaxonomy.findRankIndex2(rank);
+        // cout << shot << " " << targetTaxIdAtRank << " " << targetNode->rankIdx << " " << endl;
+        if (ncbiTaxonomy.findRankIndex2(ncbiTaxonomy.getString(targetNode->rankIdx)) > rankIdx) {
             return '-';
         }
-
+        
         // False negative; no classification or meaningless classification
         if(shot == 1 || shot == 0) {
             count.FN ++;
@@ -428,12 +449,11 @@ char compareTaxonAtRank_CAMI(TaxID shot, TaxID target, TaxonomyWrapper & ncbiTax
         // False negative if the rank of shot is higher than current rank
         TaxID shotTaxIdAtRank = ncbiTaxonomy.getTaxIdAtRank(shot, rank);
         const TaxonNode * shotNode = ncbiTaxonomy.taxonNode(shotTaxIdAtRank);
-        if (NcbiTaxonomy::findRankIndex(ncbiTaxonomy.getString(shotNode->rankIdx)) > rankIdx) {
+        if (ncbiTaxonomy.findRankIndex2(ncbiTaxonomy.getString(shotNode->rankIdx)) > rankIdx) {
             count.FN ++;
             count.total ++;
             return 'N';
-        }
-
+        }   
         count.total++;
         if(shotTaxIdAtRank == targetTaxIdAtRank){
             count.TP++;

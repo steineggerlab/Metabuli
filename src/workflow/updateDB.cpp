@@ -102,7 +102,7 @@ int updateDB(int argc, const char **argv, const Command &command){
     loadDbParameters(par, oldDbDir);
     IndexCreator idxCre(par, taxonomy, par.kmerFormat);
     idxCre.setIsUpdating(true);
-    idxCre.createIndex(par);
+    idxCre.createIndex();
     if (par.accessionLevel == 1) {
         taxonomy = idxCre.getTaxonomy();
     }
@@ -139,7 +139,7 @@ int updateDB(int argc, const char **argv, const Command &command){
     idxCre.addFilesToMerge(oldDbDir + "/diffIdx", oldDbDir + "/info");
     idxCre.printFilesToMerge();
     idxCre.setMergedFileNames(newDbDir + "/diffIdx", newDbDir + "/info", newDbDir + "/split");
-    idxCre.mergeTargetFiles();
+    idxCre.mergeTargetFiles<FilterMode::DB_CREATION>();
     
     delete taxonomy;
     cout << "Index creation completed." << endl;

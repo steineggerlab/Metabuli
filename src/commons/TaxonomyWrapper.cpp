@@ -103,6 +103,7 @@ TaxonomyWrapper::TaxonomyWrapper(const std::string &namesFile, const std::string
     maxNodes = tmpNodes.size();
     taxonNodes = new TaxonNode[maxNodes];
     std::copy(tmpNodes.begin(), tmpNodes.end(), taxonNodes);
+    
 
     // for (size_t i = 0; i < maxNodes; ++i) {
     //     taxonNodes[i].print();
@@ -793,4 +794,35 @@ void TaxonomyWrapper::getListOfTaxa(const std::string &newTaxaFile, std::vector<
         newTaxaList.emplace_back(taxId, parentTaxId, result[2], result[3]);
     }
     newTaxa.close();
+}
+
+
+
+std::unordered_map<TaxID, TaxonProbs> TaxonomyWrapper::getCladeProbs(
+    const std::unordered_map<TaxID, double> & taxonProbs, 
+    const std::unordered_map<TaxID, std::vector<TaxID>>& parentToChildren) const 
+{
+    std::unordered_map<TaxID, TaxonProbs> cladeProbs;
+    for (std::unordered_map<TaxID, double>::const_iterator it = taxonProbs.begin(); it != taxonProbs.end(); ++it) {
+        cladeProbs[it->first].taxProb = it->second;
+        cladeProbs[it->first].cladeProb += it->second;
+        if (nodeExists(it->first)) {
+            TaxonNode const* taxon = taxonNode(it->first);
+            while (taxon->parentTaxId != taxon->taxId && nodeExists(taxon->parentTaxId)) {
+                taxon = taxonNode(taxon->parentTaxId);
+                cladeProbs[taxon->taxId].cladeProb += it->second;
+            }
+        }
+    }
+
+   for (std::unordered_map<TaxID, TaxonProbs>::iterator it = cladeProbs.begin(); it != cladeProbs.end(); ++it) {
+        TaxID parentTaxId = it->first;
+        TaxonProbs& taxProb = it->second;
+        std::unordered_map<TaxID, std::vector<TaxID>>::const_iterator ptcIt = parentToChildren.find(parentTaxId);
+        if (ptcIt != parentToChildren.end()) {
+            taxProb.children = ptcIt->second;
+        }
+    }
+
+    return cladeProbs;
 }

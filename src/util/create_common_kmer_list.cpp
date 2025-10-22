@@ -1,13 +1,12 @@
-#include "IndexCreator.h"
-#include "LocalParameters.h"
-#include <Command.h>
-#include "FileUtil.h"
-#include "accession2taxid.h"
-#include "editNames.h"
-#include "fasta_validate.h"
-#include "validateDatabase.h"
+#ifndef METABULI_CREATE_COMMON_KMER_LIST_H
+#define METABULI_CREATE_COMMON_KMER_LIST_H
 
-void setDefaults_build(LocalParameters & par){
+#include "editNames.h"
+#include "accession2taxid.h"
+#include "IndexCreator.h"
+
+
+void setDefaults(LocalParameters & par){
     par.syncmer = 0;
     par.smerLen = 5;
     par.gtdb = 0;
@@ -19,7 +18,7 @@ void setDefaults_build(LocalParameters & par){
     par.taxonomyPath = "" ;
     par.splitNum = 4096;
     par.maskProb = 0.9;
-    par.maskMode = 1;
+    par.maskMode = 0;
     par.accessionLevel = 0;
     time_t now = time(0);
     tm *ltm = localtime(&now);
@@ -29,26 +28,21 @@ void setDefaults_build(LocalParameters & par){
     par.dbName = randStr.substr(0, 32);
 }
 
-int build(int argc, const char **argv, const Command &command){
+int create_common_kmer_list(int argc, const char **argv, const Command &command) {
     LocalParameters &par = LocalParameters::getLocalInstance();
-    setDefaults_build(par);
+    setDefaults(par);
     par.parseParameters(argc, argv, command, true, Parameters::PARSE_ALLOW_EMPTY, 0);
     const string & dbDir = par.filenames[0];
-    if (!FileUtil::directoryExists(dbDir.c_str())) {
-        FileUtil::makeDir(dbDir.c_str());
-    }
-    
+    const string taxonomyDir = par.filenames[3];
+
     #ifdef OPENMP
         omp_set_num_threads(par.threads);
     #endif
 
-    string taxonomyDir;
-    if (par.taxonomyPath.empty()) {
-        taxonomyDir = dbDir + "/taxonomy/";
-    } else {
-        taxonomyDir = par.taxonomyPath + "/";
+    if (!FileUtil::directoryExists(dbDir.c_str())) {
+        FileUtil::makeDir(dbDir.c_str());
     }
-
+    
     if (par.validateInput == 1) {
         const string & fnaListFileName = par.filenames[1];
         // Read the file line by line
@@ -86,47 +80,16 @@ int build(int argc, const char **argv, const Command &command){
         par.filenames[2] = par.filenames[2].substr(0, par.filenames[2].find_last_of('.')) + ".accession2taxid";
     }
 
-    TaxonomyWrapper * taxonomy =  new TaxonomyWrapper(taxonomyDir + "/names.dmp",
-                                                      taxonomyDir + "/nodes.dmp",
-                                                      taxonomyDir + "/merged.dmp",
-                                                      true);
+    TaxonomyWrapper * taxonomy =  
+        new TaxonomyWrapper(taxonomyDir + "/names.dmp",
+                            taxonomyDir + "/nodes.dmp",
+                            taxonomyDir + "/merged.dmp",
+                            true);
 
-    IndexCreator idxCre(par, taxonomy, 2);
-    idxCre.createIndex();
-    if (par.accessionLevel == 1) 
-    {
-        taxonomy = idxCre.getTaxonomy();
-    }
-    taxonomy->writeTaxonomyDB(dbDir + "/taxonomyDB");
-    
-    if (idxCre.getNumOfFlush() == 1) 
-    {
-        delete taxonomy;
-        cout << "Index creation completed." << endl;
-        return 0;
-    }
-
-    cout << "Merge reference DB files ... " << endl;
-    // for (int i = 0; i < 66; i++) {
-    //     idxCre.addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
-    //                            dbDir + "/" + to_string(i) + "_info");
-    // }
-    // idxCre.updateTaxId2SpeciesTaxId(dbDir + "/taxID_list");
-    idxCre.printFilesToMerge();
-    idxCre.setMergedFileNames(dbDir + "/diffIdx", dbDir + "/info", dbDir + "/split");
-    idxCre.mergeTargetFiles<FilterMode::DB_CREATION>();
+    IndexCreator idxCre(par, taxonomy, 3);
+    idxCre.createCommonKmerIndex();  
     delete taxonomy;
-    cout << "Index creation completed." << endl;
-
-    if (par.validateDb) 
-    {
-        cout << "Validating the created database..." << endl;
-        if (validateDatabase(dbDir) != 0) 
-        {
-            cerr << "Database validation failed." << endl;
-            return 1;
-        }
-        cout << "Database validation completed successfully." << endl;
-    }
     return 0;
 }
+
+#endif // METABULI_CREATE_COMMON_KMER_LIST_H

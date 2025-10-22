@@ -1,5 +1,5 @@
-#ifndef ADKMER4_SEARCHER_H
-#define ADKMER4_SEARCHER_H
+#ifndef METABULI_CLASSIFIER_H
+#define METABULI_CLASSIFIER_H
 
 #include "BitManipulateMacros.h"
 #include "Mmap.h"
@@ -37,6 +37,7 @@ using namespace std;
 
 
 
+
 class Classifier {
 protected:
     // Parameters
@@ -45,15 +46,30 @@ protected:
     int kmerFormat;
 
     // Agents
-    GeneticCode * geneticCode;
-    QueryIndexer * queryIndexer;
-    KmerExtractor * kmerExtractor;
-    KmerMatcher * kmerMatcher;
-    // Taxonomer * taxonomer;
-    Reporter * reporter;
-    TaxonomyWrapper * taxonomy;
+    GeneticCode * geneticCode = nullptr;
+    QueryIndexer * queryIndexer = nullptr;
+    KmerExtractor * kmerExtractor = nullptr;
+    KmerMatcher * kmerMatcher = nullptr;
+    Reporter * reporter = nullptr;
+    TaxonomyWrapper * taxonomy = nullptr;
 
     unordered_map<TaxID, unsigned int> taxCounts;
+
+    size_t mappingResListSize = 0;
+
+    // EM algorithm
+    unordered_map<TaxID, unsigned int> emTaxCounts;
+    unordered_map<TaxID, unsigned int> reclassifyTaxCounts;
+    unordered_map<TaxID, double> taxProbs;
+    MappingRes * mappingResList = nullptr;
+    std::vector<Classification> emResults;
+    std::unordered_set<TaxID> topSpeciesSet;
+
+    void countUniqueKmerPerSpecies(vector<uint32_t> & sp2uniqKmerCnt);
+
+    void loadMappings(const string & mappingResFileName);
+
+    void loadOriginalResults(const string & classificationFileName, size_t seqNum);
 
 public:
     void startClassify(const LocalParameters &par);
@@ -69,7 +85,23 @@ public:
 
     unordered_map<TaxID, unsigned int> & getTaxCounts() { return taxCounts; }
 
+    void getTopSpecies(const std::vector<Query> & queries) {
+        for (const auto & query : queries) {
+            if (query.isClassified) {
+                topSpeciesSet.insert(query.topSpeciesId);
+            }
+        }
+    }
+
+    void em(size_t totalQueryCnt);
+
+    void reclassify(
+        const std::vector<std::pair<size_t, size_t>> & queryRanges,
+        const MappingRes * mappingResList,
+        const vector<double> & sp2lengthFactor,
+        size_t totalQueryCnt);
+
 };
 
 
-#endif //ADKMER4_SEARCHER_H
+#endif //METABULI_CLASSIFIER_H

@@ -172,7 +172,6 @@ ncbiTaxonomy, par, cout, cerr)
     {
         // Grade each file
         vector<int> rightAnswers;
-        vector<int> classList;
         vector<string> readIds;
         vector<float> scores;
         string mappingFile;
@@ -182,7 +181,6 @@ ncbiTaxonomy, par, cout, cerr)
         for (size_t i = 0; i < numberOfFiles; ++i) {
             // Initialize
             rightAnswers.clear();
-            classList.clear();
             readIds.clear();
             scores.clear();
             readClassificationFileName = readClassificationFileNames[i];

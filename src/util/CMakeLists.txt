@@ -1,7 +1,4 @@
 set(util_source_files
-        util/binning2report.cpp
-        util/report.h
-        util/report.cpp
         util/grade.cpp
         util/database-report.cpp
         util/mapping2taxon.cpp
@@ -22,4 +19,7 @@ set(util_source_files
         util/validateDatabase.cpp
         util/validateDatabase.h
         util/printDeltaIdx.cpp
+        util/count_common_kmers.cpp
+        util/create_common_kmer_list.cpp
+        util/create_unique_kmer_list.cpp
         PARENT_SCOPE)

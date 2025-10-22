@@ -22,6 +22,7 @@ public:
     }
 
     std::vector<MMseqsParameter*> classify;
+    std::vector<MMseqsParameter*> groupGeneration;
     std::vector<MMseqsParameter*> extract;
     std::vector<MMseqsParameter*> filter;
     std::vector<MMseqsParameter*> exclusiontest_hiv;
@@ -45,6 +46,13 @@ public:
     std::vector<MMseqsParameter*> classifiedRefiner;
     std::vector<MMseqsParameter*> validateDatabase;
     std::vector<MMseqsParameter*> makeBenchmarkSet;
+    std::vector<MMseqsParameter*> buildUnirefDb;
+    std::vector<MMseqsParameter*> buildUnirefTree;
+    std::vector<MMseqsParameter*> assignUniref;
+
+    // UniRef
+    PARAMETER(UNIREF_NUMBERS)
+    std::string unirefNumbers;
 
     // Superkingdom taxonomy id
     PARAMETER(VIRUS_TAX_ID)
@@ -57,6 +65,7 @@ public:
     PARAMETER(SYNCMER)
     PARAMETER(SMER_LEN)
     PARAMETER(KMER_FORMAT)
+    PARAMETER(UNIREF_XML)
 
     // Classify
     PARAMETER(SEQ_MODE)
@@ -75,11 +84,16 @@ public:
     PARAMETER(TIE_RATIO)
     PARAMETER(PRINT_LINEAGE)
     PARAMETER(MAX_SHIFT)
+    PARAMETER(EM)
 
     // extract
     PARAMETER(TARGET_TAX_ID)
     PARAMETER(EXTRACT_MODE)
     PARAMETER(PARAM_OUTDIR)
+
+    // Group generation
+    PARAMETER(THR_K)
+    PARAMETER(GROUP_SCORE_THR)
 
     // DB build parameters
     PARAMETER(LIBRARY_PATH)
@@ -145,6 +159,7 @@ public:
     int syncmer;
     int smerLen;
     int kmerFormat;
+    std::string unirefXml;
 
     // Classify
     int seqMode;
@@ -161,8 +176,11 @@ public:
     int matchPerKmer;
     int minSSMatch;
     float tieRatio;
+    float thresholdK;
+    float groupScoreThr;
     int printLineage;
     int maxShift;
+    bool em;
 
     // Extract
     int targetTaxId;
