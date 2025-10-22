@@ -639,7 +639,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&KMER_FORMAT);
     classify.push_back(&PRINT_LOG);
     classify.push_back(&REDUCED_AA);
-    classify.push_back(&EM);
+    // classify.push_back(&EM);
 
     assignUniref.push_back(&PARAM_THREADS);
     assignUniref.push_back(&RAM_USAGE);
