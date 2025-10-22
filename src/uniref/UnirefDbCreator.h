@@ -14,7 +14,6 @@
 #include "FileUtil.h"
 #include "UnirefTree.h"
 
-#include "tinyxml2.h"
 #include "yxml.h"
 
 struct UniRefIdx {
