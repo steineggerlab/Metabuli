@@ -243,7 +243,17 @@ void Reporter::getReadsClassifiedToClade(TaxID cladeId,
     }
     char line[4096];
     size_t idx = 0;
-    if (taxonomy->hasInternalTaxID()) {
+    if (cladeId == -1) {
+        while (fgets(line, sizeof(line), results)) {
+            if (line[0] == '#') {
+                continue;
+            }
+            if (line[0] == '0') { // unclassified
+                readIdxs.push_back(idx);
+            }
+            idx++;
+        }
+    } else if (taxonomy->hasInternalTaxID()) {
         unordered_map<TaxID, TaxID> extern2intern;
         taxonomy->getExternal2internalTaxID(extern2intern);
         while (fgets(line, sizeof(line), results)) {

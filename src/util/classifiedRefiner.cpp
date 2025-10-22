@@ -103,10 +103,10 @@ int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, co
     Reporter * reporter = new Reporter(par, taxonomy,reportFileName);
 
     string refinedFileName = classifiedFile.substr(0, classifiedFile.find_last_of('.')) + "_refined.tsv";
-    cout << "Write refined classification result to: " << endl;
+    cout << "Write refined classification results to: " << endl;
     cout << refinedFileName << endl;
 
-    if (!FileUtil::fileExists(refinedFileName.c_str())) {
+    if (FileUtil::fileExists(refinedFileName.c_str())) {
         Debug(Debug::INFO) << refinedFileName << " is already exists.\n";
         return 0;
     }

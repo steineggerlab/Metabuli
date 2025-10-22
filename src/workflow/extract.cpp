@@ -81,7 +81,16 @@ int extract(int argc, const char **argv, const Command& command) {
     TaxonomyWrapper *taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
     Reporter reporter(par, taxonomy);
 
-    TaxID targetTaxID = taxonomy->getInternalTaxID(externalTaxID);
+    TaxID targetTaxID;
+    if (externalTaxID == -1) {
+        targetTaxID = -1;
+    } else {
+        targetTaxID = taxonomy->getInternalTaxID(externalTaxID);
+        if (targetTaxID == -1) {
+            cerr << "Error: Taxon ID " << externalTaxID << " not found in the taxonomy database." << endl;
+            exit(1);
+        }
+    }
 
     vector<size_t> readIdxs;
     
