@@ -358,7 +358,7 @@ void IndexCreator::mergeTargetFiles() {
     std::vector<std::atomic<bool>> completedSplits(splitNum);
     int remainingSplits = splitNum;
     vector<pair<size_t, size_t>> uniqKmerIdxRanges;
-    size_t lastKmer = 0;
+    uint64_t lastKmer = 0;
     auto * uniqKmerIdx = new size_t[kmerBuffer.bufferSize];
     vector<size_t> splitToProcess;
     while (remainingSplits > 0) {
@@ -378,7 +378,7 @@ void IndexCreator::mergeTargetFiles() {
                 }
                 splitToProcess.push_back(i);
             }
-#pragma omp parallel for default(none), shared(cout, kmerBuffer, deltaIdxReaders, splitToProcess, completedSplits, posToWrite, max, splitNum, valueBufferSize, taxId2speciesId, mask, remainingSplits)
+            #pragma omp parallel for default(none), shared(cout, kmerBuffer, deltaIdxReaders, splitToProcess, completedSplits, posToWrite, max, splitNum, valueBufferSize, taxId2speciesId, mask, remainingSplits)
             for (size_t i = 0; i < splitToProcess.size(); i ++) {
                 size_t split = splitToProcess[i];
                 size_t offset = posToWrite + i * valueBufferSize;

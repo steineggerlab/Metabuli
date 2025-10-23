@@ -744,7 +744,7 @@ bool KmerExtractor::extractQueryKmers_aa2aa(
             while (moreData && bufferNotFull) {
                 auto & seqChunk = readsPerThread[producerBufferIndex];
                 // auto & nameChunk = seqNamesPerThread[producerBufferIndex];
-                size_t seqCnt = 0;
+                uint32_t seqCnt = 0;
                 size_t kmerCnt = 0;
                 while (queryIdx + chunkSize - 1 >= queryList.size()) {
                     queryList.resize(queryList.size() * 2);

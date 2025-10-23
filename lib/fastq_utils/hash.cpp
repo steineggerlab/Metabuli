@@ -185,7 +185,7 @@ int insere(hashtable table,ulong key,__ptr_t obj)
 
 void free_hashtable(hashtable table)
 {
-   register ulong i;
+   ulong i;
    hashnode *n,*tmp;
    //fprintf(stderr,"free_hashtable\n");fflush(stderr);
    if (table==NULL) return;
@@ -203,7 +203,7 @@ void free_hashtable(hashtable table)
 }
 void reset_hashtable(hashtable table)
 {
-   register ulong i;
+   ulong i;
    hashnode *n,*tmp;
    //fprintf(stderr,"free_hashtable\n");fflush(stderr);
    if (table==NULL) return;
