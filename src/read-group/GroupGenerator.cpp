@@ -1094,6 +1094,10 @@ void GroupGenerator::applyRepLabel(
     string line;
     uint32_t queryIdx = 0;
     while (getline(inFile, line)) {
+        if (line[0] == '#') {
+            outFile << line << '\t' << "groupID" << endl;
+            continue;
+        }
         stringstream ss(line);
         vector<string> fields;
         string field;
@@ -1103,7 +1107,7 @@ void GroupGenerator::applyRepLabel(
         }
 
         while (fields.size() < 8) {
-                fields.emplace_back("-");
+            fields.emplace_back("-");
         }
         
         // metabuli-p
