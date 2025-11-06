@@ -183,7 +183,7 @@ class OldMetamerScanner : public MetamerScanner {
 
 
 class KmerScanner_dna2aa : public KmerScanner {
-private:
+protected:
     const GeneticCode &geneticCode;
     uint64_t mask;
     

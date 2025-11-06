@@ -115,6 +115,14 @@ public:
         std::unordered_map<string, uint32_t> & accession2index,
         uint32_t & idOffset,
         SeqEntry & savedSeq);
+    
+    void extractKmer_dna2aa(
+        const char *seq,
+        int seqLen, 
+        Buffer<Kmer> &kmerBuffer, 
+        size_t &posToWrite,
+        uint32_t seqId1, 
+        uint32_t seqId2 = 0);
 
     bool extractUnirefKmers(
         KSeqWrapper *kseq,

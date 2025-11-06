@@ -111,7 +111,7 @@ int build(int argc, const char **argv, const Command &command){
     //     idxCre.addFilesToMerge(dbDir + "/" + to_string(i) + "_diffIdx",
     //                            dbDir + "/" + to_string(i) + "_info");
     // }
-    // idxCre.updateTaxId2SpeciesTaxId(dbDir + "/taxID_list");
+    idxCre.updateTaxId2SpeciesTaxId(dbDir + "/taxID_list");
     idxCre.printFilesToMerge();
     idxCre.setMergedFileNames(dbDir + "/diffIdx", dbDir + "/info", dbDir + "/split");
     idxCre.mergeTargetFiles<FilterMode::DB_CREATION>();

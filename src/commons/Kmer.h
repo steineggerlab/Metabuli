@@ -93,6 +93,13 @@ struct Kmer {
         return a.qInfo.sequenceID < b.qInfo.sequenceID;
     }
 
+    static bool compareQKmerByIdAndPos(const Kmer &a, const Kmer &b) {
+        if (a.qInfo.sequenceID != b.qInfo.sequenceID) {
+            return a.qInfo.sequenceID < b.qInfo.sequenceID;
+        }
+        return a.qInfo.pos < b.qInfo.pos;
+    }
+
     static bool compareKmer(const Kmer &a, const Kmer &b) {
         if (a.value != b.value) {
             return a.value < b.value;

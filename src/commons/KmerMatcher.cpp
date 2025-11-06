@@ -480,67 +480,6 @@ querySplits, queryKmerList, matchBuffer, cout, mask, targetDiffIdxFileName, numO
     return true;
 }
 
-std::vector<QueryKmerSplit> KmerMatcher::makeQueryKmerSplits(const Buffer<Kmer> * qKmers) 
-{
-    size_t blankCnt = std::find_if(qKmers->buffer,
-                                   qKmers->buffer + qKmers->startIndexOfReserve, 
-                                   [](const auto& kmer) { return kmer.id != 0;}
-                                  ) - qKmers->buffer;
-    size_t queryKmerNum = qKmers->startIndexOfReserve - blankCnt;
-    std::cout << "Query k-mer number     : " << queryKmerNum << endl;
-
-    // Filter out meaningless target splits
-    MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str(), 3);
-    size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
-    size_t numOfDiffIdxSplits_use = numOfDiffIdxSplits;
-    for (size_t i = 1; i < numOfDiffIdxSplits; i++) {
-        if (diffIdxSplits.data[i].ADkmer == 0 || diffIdxSplits.data[i].ADkmer == UINT64_MAX) {
-            numOfDiffIdxSplits_use--;
-        }
-    }
-
-    // Divide query k-mer list into blocks for multi threading.
-    std::vector<QueryKmerSplit> querySplits;
-    size_t quotient = queryKmerNum / par.threads;
-    size_t remainder = queryKmerNum % par.threads;
-    size_t startIdx = blankCnt;
-    size_t endIdx = 0; // endIdx is inclusive
-    for (size_t i = 0; i < par.threads; i++) {
-        endIdx = startIdx + quotient - 1;
-        if (remainder > 0) {
-            endIdx++;
-            remainder--;
-        }
-        bool needLastTargetBlock = true;
-        uint64_t queryAA = AminoAcidPart(qKmers->buffer[startIdx].value);
-        for (size_t j = 0; j < numOfDiffIdxSplits_use; j ++) {
-            if (queryAA <= AminoAcidPart(diffIdxSplits.data[j].ADkmer)) {
-                // Kmer qkmer(queryAA, 0);
-                // Kmer tkmer (diffIdxSplits.data[j].ADkmer, 0);
-                // cout << j << "\t" << startIdx << "\t";
-                // qkmer.printAA(*geneticCode, 12); cout << "\t";
-                // tkmer.printAA(*geneticCode, 12); cout << endl;
-                querySplits.emplace_back(startIdx, endIdx, diffIdxSplits.data[j - (j != 0)]);
-                needLastTargetBlock = false;
-                break;
-            }
-        }
-        if (needLastTargetBlock) {
-            querySplits.emplace_back(startIdx, endIdx, diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
-        }
-        startIdx = endIdx + 1;
-    }
-
-    for (size_t i = 0; i < querySplits.size(); i++) {
-        std::cout << "Split " << i << ": Query k-mer index " << querySplits[i].start << " - " << querySplits[i].end
-                  << ", Target k-mer offset " << querySplits[i].diffIdxSplit.ADkmer
-                  << " (diffIdx: " << querySplits[i].diffIdxSplit.diffIdxOffset
-                  << ", infoIdx: " << querySplits[i].diffIdxSplit.infoIdxOffset << ")" << std::endl;
-    }
-
-    munmap(diffIdxSplits.data, diffIdxSplits.fileSize);
-    return querySplits;
-}
 
 
 bool KmerMatcher::matchKmers2(
@@ -682,6 +621,68 @@ querySplits, qKmers, totalMatches, cout, mask)
 }
 
 
+std::vector<QueryKmerSplit> KmerMatcher::makeQueryKmerSplits(const Buffer<Kmer> * qKmers) 
+{
+    size_t blankCnt = std::find_if(qKmers->buffer,
+                                   qKmers->buffer + qKmers->startIndexOfReserve, 
+                                   [](const auto& kmer) { return kmer.id != 0;}
+                                  ) - qKmers->buffer;
+    size_t queryKmerNum = qKmers->startIndexOfReserve - blankCnt;
+    std::cout << "Query k-mer number     : " << queryKmerNum << endl;
+
+    // Filter out meaningless target splits
+    MmapedData<DiffIdxSplit> diffIdxSplits = mmapData<DiffIdxSplit>(diffIdxSplitFileName.c_str(), 3);
+    size_t numOfDiffIdxSplits = diffIdxSplits.fileSize / sizeof(DiffIdxSplit);
+    size_t numOfDiffIdxSplits_use = numOfDiffIdxSplits;
+    for (size_t i = 1; i < numOfDiffIdxSplits; i++) {
+        if (diffIdxSplits.data[i].ADkmer == 0 || diffIdxSplits.data[i].ADkmer == UINT64_MAX) {
+            numOfDiffIdxSplits_use--;
+        }
+    }
+
+    // Divide query k-mer list into blocks for multi threading.
+    std::vector<QueryKmerSplit> querySplits;
+    size_t quotient = queryKmerNum / par.threads;
+    size_t remainder = queryKmerNum % par.threads;
+    size_t startIdx = blankCnt;
+    size_t endIdx = 0; // endIdx is inclusive
+    for (size_t i = 0; i < par.threads; i++) {
+        endIdx = startIdx + quotient - 1;
+        if (remainder > 0) {
+            endIdx++;
+            remainder--;
+        }
+        bool needLastTargetBlock = true;
+        uint64_t queryAA = AminoAcidPart(qKmers->buffer[startIdx].value);
+        for (size_t j = 0; j < numOfDiffIdxSplits_use; j ++) {
+            if (queryAA <= AminoAcidPart(diffIdxSplits.data[j].ADkmer)) {
+                // Kmer qkmer(queryAA, 0);
+                // Kmer tkmer (diffIdxSplits.data[j].ADkmer, 0);
+                // cout << j << "\t" << startIdx << "\t";
+                // qkmer.printAA(*geneticCode, 12); cout << "\t";
+                // tkmer.printAA(*geneticCode, 12); cout << endl;
+                querySplits.emplace_back(startIdx, endIdx, diffIdxSplits.data[j - (j != 0)]);
+                needLastTargetBlock = false;
+                break;
+            }
+        }
+        if (needLastTargetBlock) {
+            querySplits.emplace_back(startIdx, endIdx, diffIdxSplits.data[numOfDiffIdxSplits_use - 2]);
+        }
+        startIdx = endIdx + 1;
+    }
+
+    for (size_t i = 0; i < querySplits.size(); i++) {
+        std::cout << "Split " << i << ": Query k-mer index " << querySplits[i].start << " - " << querySplits[i].end
+                  << ", Target k-mer offset " << querySplits[i].diffIdxSplit.ADkmer
+                  << " (diffIdx: " << querySplits[i].diffIdxSplit.diffIdxOffset
+                  << ", infoIdx: " << querySplits[i].diffIdxSplit.infoIdxOffset << ")" << std::endl;
+    }
+
+    munmap(diffIdxSplits.data, diffIdxSplits.fileSize);
+    return querySplits;
+}
+
 bool KmerMatcher::matchKmers_AA(
     const Buffer<Kmer> * queryKmerBuffer,
     Buffer<Match_AA> * totalMatches,
@@ -722,7 +723,7 @@ bool KmerMatcher::matchKmers_AA(
                     }
                     size_t posToWrite = localMatches.reserveMemory(tempMatches.size());
                     memcpy(localMatches.buffer + posToWrite, tempMatches.data(),
-                           sizeof(Match) * tempMatches.size());
+                           sizeof(Match_AA) * tempMatches.size());
                     for (size_t k = 0; k < tempMatches.size(); k++) {
                         localMatches.buffer[posToWrite + k].queryId = qKmers[j].qInfo.sequenceID;
                         localMatches.buffer[posToWrite + k].pos = qKmers[j].qInfo.pos;
