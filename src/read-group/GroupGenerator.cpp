@@ -780,11 +780,11 @@ void GroupGenerator::makeGroupsFromSubGraphs(
             }
         }
 
-        if (useOnlyTrueRelations) { // Only for development purpose
-            std::string name1 = metabuliResult[minRelation.id1].name.substr(0, 15);
-            std::string name2 = metabuliResult[minRelation.id2].name.substr(0, 15);
-            if (name1 != name2) continue;
-        }
+        // if (useOnlyTrueRelations) { // Only for development purpose
+        //     std::string name1 = metabuliResult[minRelation.id1].name.substr(0, 15);
+        //     std::string name2 = metabuliResult[minRelation.id2].name.substr(0, 15);
+        //     if (name1 != name2) continue;
+        // }
         
         if (totalWeight > groupKmerThr) {
             if (ds.parent.find(minRelation.id1) == ds.parent.end()) ds.makeSet(minRelation.id1);

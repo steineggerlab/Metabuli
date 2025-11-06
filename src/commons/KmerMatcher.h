@@ -38,6 +38,12 @@ struct QueryKmerSplit {
   size_t end;   // end idx in query k-mer list
   DiffIdxSplit diffIdxSplit; // index in target k-mer list from where the
                              // search begins.
+
+  void print() {
+    std::cout << start << "\t" << end << "\t" << diffIdxSplit.ADkmer << "\t"
+              << diffIdxSplit.diffIdxOffset << "\t"
+              << diffIdxSplit.infoIdxOffset << std::endl;
+  }
 };
 
 class KmerMatcher {

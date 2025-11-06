@@ -116,7 +116,7 @@ void IndexCreator::createLcaKmerIndex() {
         // Write k-mers
         start = time(nullptr);
         if (complete && numOfFlush == 0 && !isUpdating) {
-            writeTargetFilesAndSplits(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges, true);
+            writeTargetFilesAndSplits(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges);
         } else {
             writeTargetFiles(kmerBuffer, uniqKmerIdx.buffer, uniqKmerIdxRanges);
         }
@@ -186,7 +186,7 @@ void IndexCreator::createUniqueKmerIndex() {
         
         start = time(nullptr);
         if (complete && numOfFlush == 0 && !isUpdating) {
-            writeTargetFilesAndSplits(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges, true);
+            writeTargetFilesAndSplits(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges);
         } else {
             writeTargetFiles(kmerBuffer, uniqKmerIdx.buffer, uniqKmerIdxRanges);
         }
@@ -276,7 +276,7 @@ void IndexCreator::createCommonKmerIndex() {
         // Write the target files
         start = time(nullptr);
         if(processedBatchCnt == accessionBatches.size() && numOfFlush == 0) {
-            writeTargetFilesAndSplits(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges, true);
+            writeTargetFilesAndSplits(kmerBuffer, uniqKmerIdx.buffer, selectedKmerCnt, uniqKmerIdxRanges);
         } else {
             writeTargetFiles(kmerBuffer, uniqKmerIdx.buffer, uniqKmerIdxRanges);
         }
@@ -812,42 +812,21 @@ void IndexCreator::writeTargetFilesAndSplits(
     Buffer<Kmer> & kmerBuffer,
     const size_t * uniqKmerIdx,
     size_t & uniqKmerCnt,
-    const vector<pair<size_t, size_t>> & uniqKmerIdxRanges,
-    bool writeInfo)
-{
-    DiffIdxSplit * splitList = new DiffIdxSplit[par.splitNum];
-    memset(splitList, 0, sizeof(DiffIdxSplit) * par.splitNum);    
-    size_t splitWidth = uniqKmerCnt / par.splitNum;
-    size_t remainder = uniqKmerCnt % par.splitNum;
-    size_t splitCnt = 1;
-    size_t start = 0;
-    for (size_t i = 1; i < (size_t) par.splitNum; i++) {
-        start = start + splitWidth;
-        if (remainder > 0) {
-            start++;
-            remainder--;
-        }
-        size_t counter = 0;
-        for (size_t j = 0; j < uniqKmerIdxRanges.size(); j++) {
-            if (counter + (uniqKmerIdxRanges[j].second - uniqKmerIdxRanges[j].first) < start) {
-                counter += uniqKmerIdxRanges[j].second - uniqKmerIdxRanges[j].first;
-                continue;
-            }
-            bool found = false;
-            for (size_t k = uniqKmerIdxRanges[j].first + start - counter; k + 1 < uniqKmerIdxRanges[j].second; k++) {
-                if (AminoAcidPart(kmerBuffer.buffer[uniqKmerIdx[k]].value) 
-                    != AminoAcidPart(kmerBuffer.buffer[uniqKmerIdx[k + 1]].value)) {
-                    splitList[splitCnt++].ADkmer = kmerBuffer.buffer[uniqKmerIdx[k + 1]].value;
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                splitList[splitCnt++].ADkmer = kmerBuffer.buffer[uniqKmerIdx[uniqKmerIdxRanges[j+1].first]].value;
-            }
-            break;
-        }
+    const vector<pair<size_t, size_t>> & uniqKmerIdxRanges)
+{    
+    // To make differential index splits
+    uint64_t AAofTempSplitOffset = UINT64_MAX;
+    size_t sizeOfSplit = uniqKmerCnt / (par.splitNum - 1);
+    size_t offsetList[par.splitNum + 1];
+    int offsetListIdx = 1;
+    for(int os = 0; os < par.splitNum; os++){
+        offsetList[os] = os * sizeOfSplit;
     }
+    offsetList[par.splitNum] = UINT64_MAX;
+    DiffIdxSplit * splitList = new DiffIdxSplit[par.splitNum];
+    memset(splitList, 0, sizeof(DiffIdxSplit) * par.splitNum);
+    int splitListIdx = 1;
+    int splitCheck = 0;
 
     numOfFlush++;
     size_t bufferSize = 1024 * 1024 * 32;
@@ -855,36 +834,25 @@ void IndexCreator::writeTargetFilesAndSplits(
     size_t splitIdx = 1;
     WriteBuffer<uint16_t> diffBuffer(dbDir + "/diffIdx", bufferSize);
     
-    if (writeInfo) {
-        WriteBuffer<uint32_t> infoBuffer(dbDir + "/info", bufferSize); 
-        for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
-            for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
-                infoBuffer.write(&kmerBuffer.buffer[uniqKmerIdx[j]].id);
-                getDiffIdx(lastKmer, kmerBuffer.buffer[uniqKmerIdx[j]].value, diffBuffer);
-                if((splitIdx < splitCnt) && (lastKmer == splitList[splitIdx].ADkmer)){
-                    splitList[splitIdx].diffIdxOffset = diffBuffer.writeCnt;
-                    splitList[splitIdx].infoIdxOffset = infoBuffer.writeCnt;
-                    splitIdx ++;
-                }
+    WriteBuffer<uint32_t> infoBuffer(dbDir + "/info", bufferSize); 
+    for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
+        for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
+            infoBuffer.write(&kmerBuffer.buffer[uniqKmerIdx[j]].id);
+            getDiffIdx(lastKmer, kmerBuffer.buffer[uniqKmerIdx[j]].value, diffBuffer);
+            // Write split info
+            if (AminoAcidPart(lastKmer) != AAofTempSplitOffset && splitCheck == 1) {
+                splitList[splitListIdx++] = {lastKmer, diffBuffer.writeCnt, infoBuffer.writeCnt};
+                splitCheck = 0;
+            }
+            if (infoBuffer.writeCnt == offsetList[offsetListIdx]) {
+                AAofTempSplitOffset = AminoAcidPart(lastKmer);
+                splitCheck = 1;
+                offsetListIdx++;
             }
         }
-        cout << "Written k-mer count : " << infoBuffer.writeCnt << endl;
-    } else {
-        size_t writeCnt = 0;
-        for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
-            for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
-                getDiffIdx(lastKmer, kmerBuffer.buffer[uniqKmerIdx[j]].value, diffBuffer);
-                writeCnt++;
-                if((splitIdx < splitCnt) && (lastKmer == splitList[splitIdx].ADkmer)){
-                    splitList[splitIdx].diffIdxOffset = diffBuffer.writeCnt;
-                    splitList[splitIdx].infoIdxOffset = 0;
-                    splitIdx ++;
-                }
-            }
-        }
-        cout << "Written k-mer count : " << writeCnt << endl;
     }
-    
+    cout << "Written k-mer count : " << infoBuffer.writeCnt << endl;
+
     FILE * deltaIdxSplitFile = fopen((dbDir + "/split").c_str(), "wb");
     if (deltaIdxSplitFile == nullptr) {
         cout << "Cannot open the file for writing target DB" << endl;

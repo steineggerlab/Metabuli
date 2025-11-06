@@ -163,8 +163,7 @@ protected:
         Buffer<Kmer> & kmerBuffer,
         const size_t * uniqeKmerIdx, 
         size_t & uniqKmerCnt, 
-        const vector<pair<size_t, size_t>> & uniqKmerIdxRanges,
-        bool writeInfo = true);
+        const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
     void writeDbParameters();
 
