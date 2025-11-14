@@ -307,7 +307,7 @@ std::vector<DatabaseDownload> externalDownloads = {
         },
         {
                 "GTDB",
-                "GTDB 214.1 (Complete/Chromosome level only, CheckM completeness > 90 and contamination < 5) and a human genome (T2T-CHM13v2.0)",
+                "GTDB 220 (Complete/Chromosome level only, CheckM completeness > 90 and contamination < 5), a human genome (T2T-CHM13v2.0), RefSeq viruses",
                 "Donovan et al. GTDB: an ongoing census of bacterial and archaeal diversity through a phylogenetically consistent, rank normalized and complete genome-based taxonomy. Nucleic Acids Res. (2022)",
                 "https://gtdb.ecogenomic.org/",
                 true, LocalParameters::DBTYPE_INDEX_DB, metabulidatabases_sh, metabulidatabases_sh_len,
