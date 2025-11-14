@@ -10,7 +10,7 @@
 
 
 Taxonomer::Taxonomer(const LocalParameters &par, TaxonomyWrapper *taxonomy, int kmerFormat) 
-    : taxonomy(taxonomy), par(par), kmerFormat(kmerFormat) 
+    :  par(par), taxonomy(taxonomy), kmerFormat(kmerFormat) 
 {
     // Parameters
     string spaceMask = "11111111";

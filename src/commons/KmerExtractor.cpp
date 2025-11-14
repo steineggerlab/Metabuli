@@ -399,7 +399,7 @@ void KmerExtractor::extractKmer_dna2aa(
         kmerScanners[threadID]->initScanner(seq, begin, begin + seqLen - 1, isForward);
         Kmer kmer;
         while ((kmer = kmerScanners[threadID]->next()).value != UINT64_MAX) {
-            kmerBuffer.buffer[posToWrite++] = {kmer.value, seqId1, seqId2};
+            kmerBuffer.buffer[posToWrite++] = {kmer.value, static_cast<TaxID>(seqId1), static_cast<TaxID>(seqId2)};
         }
     }
 }

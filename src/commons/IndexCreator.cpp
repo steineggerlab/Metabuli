@@ -669,20 +669,26 @@ void IndexCreator::getTaxonomyOfAccessions(vector<Accession> & observedAccession
     std::unordered_map<TaxID, TaxID> external2internalTaxID;
     taxonomy->getExternal2internalTaxID(external2internalTaxID);
     std::unordered_set<TaxID> spIdSet;
-    for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {    
-        auto it = external2internalTaxID.find(observedAccessionsVec[i].taxID);
-        if (it == external2internalTaxID.end() || observedAccessionsVec[i].taxID == 0) {
-            cout << "TaxID is not found for accession " << observedAccessionsVec[i].accession << " " << observedAccessionsVec[i].taxID << endl;
-            unmappedAccessions.push_back(observedAccessionsVec[i].accession);
-            continue;
+    for (size_t i = 0; i < observedAccessionsVec.size(); ++i) {
+        TaxID curId = 0;
+        if (taxonomy->hasInternalTaxID()) {
+            auto it = external2internalTaxID.find(observedAccessionsVec[i].taxID);
+            if (it == external2internalTaxID.end() || observedAccessionsVec[i].taxID == 0) {
+                cout << "TaxID is not found for accession " << observedAccessionsVec[i].accession << " " << observedAccessionsVec[i].taxID << endl;
+                unmappedAccessions.push_back(observedAccessionsVec[i].accession);
+                continue;
+            }
+            curId = it->second;
+        } else {
+            curId = observedAccessionsVec[i].taxID;
         }
-        observedAccessionsVec[i].taxID = it->second; // store the internal taxID
-        observedAccessionsVec[i].speciesID = taxonomy->getTaxIdAtRank(it->second, "species");
+        observedAccessionsVec[i].taxID = curId;
+        observedAccessionsVec[i].speciesID = taxonomy->getTaxIdAtRank(curId, "species");
         spIdSet.insert(observedAccessionsVec[i].speciesID);
-        taxIdSet.insert(it->second);
-        taxId2speciesId[it->second] = observedAccessionsVec[i].speciesID;
+        taxIdSet.insert(curId);
+        taxId2speciesId[curId] = observedAccessionsVec[i].speciesID;
         if (observedAccessionsVec[i].speciesID == 0) {
-            cout << "Species ID is not found for accession " << observedAccessionsVec[i].accession << " " << it->second << endl;
+            cout << "Species ID is not found for accession " << observedAccessionsVec[i].accession << " " << curId << endl;
             unmappedAccessions.push_back(observedAccessionsVec[i].accession);
             exit(1);
         }
