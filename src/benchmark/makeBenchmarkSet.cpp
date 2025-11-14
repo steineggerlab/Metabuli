@@ -1,4 +1,5 @@
 #include "IndexCreator.h"
+#include "editNames.h"
 #include <iostream>
 #include <istream>
 #include <string>
@@ -43,6 +44,8 @@ int makeGtdbBenchmarkSet(const LocalParameters & par) {
     string databaseAssemblyList = assemblyList + ".databaseAssembly";
     string totalExludedAssemblyList = assemblyList + ".totalExcludedAssembly";
 
+    // editNames(taxonomyPath + "/names.dmp", par.assacc2taxid);
+
     // Load taxonomy
     TaxonomyWrapper taxonomy(taxonomyPath + "/names.dmp",
                              taxonomyPath + "/nodes.dmp",
@@ -52,18 +55,21 @@ int makeGtdbBenchmarkSet(const LocalParameters & par) {
 
     cout << "Making name2taxid map...";
     std::unordered_map<std::string, TaxID> name2InternalTaxId;
+    std::unordered_map<std::string, TaxID> tempMap;
     taxonomy.getName2InternalTaxid(name2InternalTaxId);
     for (auto &it : name2InternalTaxId) {
         if (it.first.find(".") == std::string::npos) {
             continue;
         }
         string accessionNoVersion = it.first.substr(0, it.first.find("."));
-        name2InternalTaxId[accessionNoVersion] = it.second;
+        tempMap[accessionNoVersion] = it.second;
+    }
+    for (auto &it : tempMap) {
+        name2InternalTaxId[it.first] = it.second;
     }
     cout << "done." << endl;
 
-    cout << "Making observedAcc2taxid map...";
-    std::unordered_map<std::string, TaxID> observedAcc2taxid;
+
     cout << "Loading assembly list...";
     vector<string> totalAssemblyAccessions;
     vector<Assembly> assemblies;
@@ -72,8 +78,11 @@ int makeGtdbBenchmarkSet(const LocalParameters & par) {
         cerr << "Error: could not open assembly list file " << assemblyList << endl;
         return 1;
     }
+
     string assemblyAccession;
     TaxID taxid;
+    cout << "Making observedAcc2taxid map...";
+    std::unordered_map<std::string, TaxID> observedAcc2taxid;
     while (getline(assemblyListFile, assemblyAccession)) {
         string assAccNoVersion = assemblyAccession.substr(0, assemblyAccession.find("."));
         
@@ -88,7 +97,7 @@ int makeGtdbBenchmarkSet(const LocalParameters & par) {
         } else if (name2InternalTaxId.find(assAccNoVersion) != name2InternalTaxId.end()) {
             taxid = name2InternalTaxId[assAccNoVersion];
         } else {
-            cerr << "Error: accession " << assemblyAccession << " not found in the taxonomy" << endl;
+            cerr << "Error: accession " << assemblyAccession << " " << assAccNoVersion << " not found in the taxonomy" << endl;
             return 1;
         }
         observedAcc2taxid[assemblyAccession] = taxid;
@@ -257,7 +266,7 @@ int makeGtdbBenchmarkSet(const LocalParameters & par) {
     }
 
     // Select n genera with multiple species
-    n = int(genusWithMultipleSpecies.size() / 4);
+    n = int(genusWithMultipleSpecies.size() / 3);
     cout << "Excluding " << n << " species" << endl;
     vector<TaxID> selectedGenera;
     for (int i = 0; i < n; i++) {
@@ -314,7 +323,7 @@ int makeGtdbBenchmarkSet(const LocalParameters & par) {
     }
   
     // 2. Select n species with multiple assemblies
-    n = int(speciesWithMultipleAssemblies.size()/2);
+    n = int(speciesWithMultipleAssemblies.size()/3);
     cout << "Excluding " << n << " assemblies" << endl;
     vector<TaxID> selectedSpecies;
     for (int i = 0; i < n; i++) {
@@ -409,17 +418,23 @@ int makeGtdbBenchmarkSet(const LocalParameters & par) {
             const string & rank = taxonomy.getString(lcaTaxon->rankIdx);
             if (rank == "order") {
                 orderCount++;
-            } else if (taxonomy.findRankIndex(rank) == -1) {
-                cout << "Error: LCA rank index is -1." << endl;
-                return 1;
-            } else if (taxonomy.findRankIndex(rank) < taxonomy.findRankIndex("order")) {
-                cout << "Error: " << excludedGenusAssemblies[i] << " is not a valid family exclusion. LCA is below order rank." << endl;
-                cout << excludedGenusAssemblies[i] << " " << databaseAssemblies[j] << " " << rank << endl;
+                continue;
+            } 
+            
+            if (strcmp(taxonomy.getString(lcaTaxon->nameIdx), "root") == 0) {
+                continue;
+            }
+
+            if (taxonomy.findRankIndex(rank) < taxonomy.findRankIndex("order")) {    
+                cout << "Error: " << excludedFamilyAssemblies[i] << " is not a valid family exclusion. LCA is below order rank." << endl;
+                cout << "Name: " << taxonomy.getString(lcaTaxon->nameIdx) << " TaxID: " << lcaTaxon->taxId << endl;
+                cout << "Rank: " << rank << " RankIdx: " << lcaTaxon->rankIdx << endl;
+                cout << excludedFamilyAssemblies[i] << " " << databaseAssemblies[j] << " " << rank << endl;
                 return 1;
             }
         }
         if (orderCount == 0) {
-            cout << "Error: " << excludedGenusAssemblies[i] << " is not a valid exclusion. No order rank LCA." << endl;
+            cout << "Error: " << excludedFamilyAssemblies[i] << " is not a valid exclusion. No order rank LCA." << endl;
             return 1;
         }
     }
@@ -438,14 +453,28 @@ int makeGtdbBenchmarkSet(const LocalParameters & par) {
             const string & rank = taxonomy.getString(lcaTaxon->rankIdx);
             if (rank == "family") {
                 familyCount++;
-            } else if (taxonomy.findRankIndex(rank) == -1) {
-                cout << "Error: LCA rank index is -1." << endl;
-                return 1;
-            } else if (taxonomy.findRankIndex(rank) < taxonomy.findRankIndex("family")) {
-                cout << "Error: " << excludedGenusAssemblies[i] << " is not a valid exclusion. LCA is below Family rank." << endl;
-                cout << excludedGenusAssemblies[i] << " " << databaseAssemblies[j] << " " << rank << endl;
-                return 1;
+                continue;
+            } 
+
+            if (strcmp(taxonomy.getString(lcaTaxon->nameIdx), "root") == 0) {
+                continue;
             }
+
+            if (taxonomy.findRankIndex(rank) < taxonomy.findRankIndex("family")) {    
+                cout << "Error: " << excludedFamilyAssemblies[i] << " is not a valid genus exclusion. LCA is below family rank." << endl;
+                cout << "Name: " << taxonomy.getString(lcaTaxon->nameIdx) << " TaxID: " << lcaTaxon->taxId << endl;
+                cout << "Rank: " << rank << " RankIdx: " << lcaTaxon->rankIdx << endl;
+                cout << excludedFamilyAssemblies[i] << " " << databaseAssemblies[j] << " " << rank << endl;
+                return 1;
+            }            
+            // else if (taxonomy.findRankIndex(rank) == -1) {
+            //     cout << "Error: LCA rank index is -1." << endl;
+            //     return 1;
+            // } else if (taxonomy.findRankIndex(rank) < taxonomy.findRankIndex("family")) {
+            //     cout << "Error: " << excludedGenusAssemblies[i] << " is not a valid exclusion. LCA is below Family rank." << endl;
+            //     cout << excludedGenusAssemblies[i] << " " << databaseAssemblies[j] << " " << rank << endl;
+            //     return 1;
+            // }
         }
         if (familyCount == 0) {
             cout << "Error: " << excludedGenusAssemblies[i] << " is not a valid exclusion. No Family rank LCA." << endl;
@@ -465,16 +494,34 @@ int makeGtdbBenchmarkSet(const LocalParameters & par) {
             TaxID databaseTaxid = observedAcc2taxid[databaseAssemblies[j]];
             const TaxonNode * lcaTaxon = taxonomy.taxonNode(taxonomy.LCA(excludedTaxid, databaseTaxid));
             const string & rank = taxonomy.getString(lcaTaxon->rankIdx);
+
             if (rank == "genus") {
                 genusCount++;
-            } else if (taxonomy.findRankIndex(rank) == -1) {
-                cout << "Error: LCA rank index is -1." << endl;
-                return 1;
-            } else if (taxonomy.findRankIndex(rank) < taxonomy.findRankIndex("genus")) {
-                cout << "Error: " << excludedSpeciesAssemblies[i] << " is not a valid exclusion. LCA is below Genus rank." << endl;
-                cout << excludedSpeciesAssemblies[i] << " " << databaseAssemblies[j] << " " << rank << endl;
-                return 1;
+                continue;
+            } 
+
+            if (strcmp(taxonomy.getString(lcaTaxon->nameIdx), "root") == 0) {
+                continue;
             }
+
+            if (taxonomy.findRankIndex(rank) < taxonomy.findRankIndex("genus")) {    
+                cout << "Error: " << excludedFamilyAssemblies[i] << " is not a valid species exclusion. LCA is below genus rank." << endl;
+                cout << "Name: " << taxonomy.getString(lcaTaxon->nameIdx) << " TaxID: " << lcaTaxon->taxId << endl;
+                cout << "Rank: " << rank << " RankIdx: " << lcaTaxon->rankIdx << endl;
+                cout << excludedFamilyAssemblies[i] << " " << databaseAssemblies[j] << " " << rank << endl;
+                return 1;
+            }            
+
+            // if (rank == "genus") {
+            //     genusCount++;
+            // } else if (taxonomy.findRankIndex(rank) == -1) {
+            //     cout << "Error: LCA rank index is -1." << endl;
+            //     return 1;
+            // } else if (taxonomy.findRankIndex(rank) < taxonomy.findRankIndex("genus")) {
+            //     cout << "Error: " << excludedSpeciesAssemblies[i] << " is not a valid exclusion. LCA is below Genus rank." << endl;
+            //     cout << excludedSpeciesAssemblies[i] << " " << databaseAssemblies[j] << " " << rank << endl;
+            //     return 1;
+            // }
         }
         if (genusCount == 0) {
             cout << "Error: " << excludedSpeciesAssemblies[i] << " is not a valid exclusion. No Genus rank LCA." << endl;
@@ -496,11 +543,20 @@ int makeGtdbBenchmarkSet(const LocalParameters & par) {
             const string & rank = taxonomy.getString(lcaTaxon->rankIdx);
             if (rank == "species") {
                 speciesCount++;
-            } else if (taxonomy.findRankIndex(rank) < taxonomy.findRankIndex("species")) {
-                cout << "Error: " << excludedSubspeciesAssemblies[i] << " is not a valid exclusion. LCA is below Species rank." << endl;
-                cout << excludedSubspeciesAssemblies[i] << " " << databaseAssemblies[j] << " " << rank << endl;
-                return 1;
+                continue;
+            } 
+
+            if (strcmp(taxonomy.getString(lcaTaxon->nameIdx), "root") == 0) {
+                continue;
             }
+
+            if (taxonomy.findRankIndex(rank) < taxonomy.findRankIndex("species")) {    
+                cout << "Error: " << excludedFamilyAssemblies[i] << " is not a valid exclusion. LCA is below species rank." << endl;
+                cout << "Name: " << taxonomy.getString(lcaTaxon->nameIdx) << " TaxID: " << lcaTaxon->taxId << endl;
+                cout << "Rank: " << rank << " RankIdx: " << lcaTaxon->rankIdx << endl;
+                cout << excludedFamilyAssemblies[i] << " " << databaseAssemblies[j] << " " << rank << endl;
+                return 1;
+            } 
         }
         if (speciesCount == 0) {
             cout << "Error: " << excludedSubspeciesAssemblies[i] << " is not a valid exclusion. No Species rank LCA." << endl;
