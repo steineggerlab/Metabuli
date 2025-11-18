@@ -25,6 +25,9 @@ KmerExtractor::KmerExtractor(
             kmerLen = 12;
         } else if (kmerFormat == 4) {
             kmerScanners[i] = new KmerScanner_aa2aa(12);
+        } else if (kmerFormat == 5) {
+            kmerScanners[i] = new SyncmerScanner_dna2aa(geneticCode, 12, par.smerLen);
+            kmerLen = 12;
         } else {
             std::cerr << "Error: Invalid k-mer format specified." << std::endl;
             exit(EXIT_FAILURE);
@@ -365,11 +368,41 @@ void KmerExtractor::fillQueryKmerBuffer(
         Kmer kmer;
         while ((kmer = kmerScanners[threadID]->next()).value != UINT64_MAX) {
             kmerBuffer.buffer[posToWrite++] = {kmer.value, seqID, kmer.pos + offset, (uint8_t) frame};
-            // kmer.printAA(kmerScanners[threadID]->getGeneticCode(), 12); cout << endl;// For test
         }
     }
 }
 
+void KmerExtractor::extractKmer_dna2aa(
+    const char *seq,
+    int seqLen, 
+    Buffer<Kmer> &kmerBuffer, 
+    size_t &posToWrite, 
+    uint32_t seqId1, // eg. taxID
+    uint32_t seqId2  // eg. speciesID
+) {
+#ifdef OPENMP
+    size_t threadID = omp_get_thread_num();
+#else
+    size_t threadID = 0; // Single-threaded mode
+#endif
+    for (int frame = 0; frame < 6; frame++) {
+        bool isForward = frame < 3;
+        int begin = 0;
+        if (isForward) {
+            begin = frame % 3;
+        } else {
+            begin = (seqLen % 3) - (frame % 3);
+            if (begin < 0) {
+                begin += 3;
+            }
+        }
+        kmerScanners[threadID]->initScanner(seq, begin, begin + seqLen - 1, isForward);
+        Kmer kmer;
+        while ((kmer = kmerScanners[threadID]->next()).value != UINT64_MAX) {
+            kmerBuffer.buffer[posToWrite++] = {kmer.value, static_cast<TaxID>(seqId1), static_cast<TaxID>(seqId2)};
+        }
+    }
+}
 
 int KmerExtractor::extractTargetKmers(
     const char *seq,

@@ -7,6 +7,7 @@
 
 
 void setDefaults(LocalParameters & par){
+    par.kmerFormat = 3;
     par.syncmer = 0;
     par.smerLen = 5;
     par.gtdb = 0;
@@ -86,7 +87,7 @@ int create_common_kmer_list(int argc, const char **argv, const Command &command)
                             taxonomyDir + "/merged.dmp",
                             true);
 
-    IndexCreator idxCre(par, taxonomy, 3);
+    IndexCreator idxCre(par, taxonomy, par.kmerFormat);
     idxCre.createCommonKmerIndex();  
     delete taxonomy;
     return 0;

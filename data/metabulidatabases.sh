@@ -92,7 +92,7 @@ mkdir -p "${OUTDB}"
 case "${SELECTION}" in
     "GTDB")
         if notExists "${TMP_PATH}/gtdb.tar.gz"; then
-            downloadFile "https://metabuli.steineggerlab.workers.dev/gtdb.tar.gz" "${TMP_PATH}/gtdb.tar.gz"
+            downloadFile "https://metabuli.steineggerlab.workers.dev/gtdb+virus+human.tar.gz" "${TMP_PATH}/gtdb.tar.gz"
         fi
         tar zxvf "${TMP_PATH}/gtdb.tar.gz" -C "${OUTDB}"
        # push_back "${TMP_PATH}/gtdb"

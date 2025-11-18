@@ -1,12 +1,15 @@
 #include "TaxonomyWrapper.h"
 #include "LocalParameters.h"
-#include <Command.h>
-#include <string>
-#include <iostream>
 #include "IndexCreator.h"
 #include "common.h"
 #include "FileUtil.h"
+
+#include <algorithm>
+#include <random>
 #include <cstdint>
+#include <Command.h>
+#include <string>
+#include <iostream>
 
 using namespace std;
 
@@ -25,13 +28,18 @@ int makeQuerySet(int argc, const char **argv, const Command &command) {
     
     cout << "Making name2taxid map...";
     std::unordered_map<std::string, TaxID> name2InternalTaxId;
+    std::unordered_map<std::string, TaxID> tempMap;
     taxonomy.getName2InternalTaxid(name2InternalTaxId);
     for (auto &it : name2InternalTaxId) {
         if (it.first.find(".") == std::string::npos) {
             continue;
         }
         string accessionNoVersion = it.first.substr(0, it.first.find("."));
-        name2InternalTaxId[accessionNoVersion] = it.second;
+        tempMap[accessionNoVersion] = it.second;
+        // name2InternalTaxId[accessionNoVersion] = it.second;
+    }
+    for (auto &it : tempMap) {
+        name2InternalTaxId[it.first] = it.second;
     }
     cout << "done." << endl;
 
@@ -105,7 +113,14 @@ int makeQuerySet(int argc, const char **argv, const Command &command) {
             speciesWithMultipleAssemblies.push_back(species.first);
         }
     }
-    cout << "Found " << speciesWithMultipleAssemblies.size() << " species with multiple assemblies." << endl;
+    cout << "Found " << speciesWithMultipleAssemblies.size() << " species with multiple assemblies. A random eigth will be used." << endl;
+    
+    std::mt19937 rng1(0);
+    std::shuffle(speciesWithMultipleAssemblies.begin(), speciesWithMultipleAssemblies.end(), rng1);
+    std::size_t eigth = speciesWithMultipleAssemblies.size() / 8; // floor if odd
+    std::vector<TaxID> selectedSpecies(speciesWithMultipleAssemblies.begin(),
+                                  speciesWithMultipleAssemblies.begin() + eigth);
+
 
     // Select two assemblies per species with multiple assemblies
     string includedAssemblyList = assemblyList + ".subspeciesInclusionQuerySet";
@@ -113,7 +128,7 @@ int makeQuerySet(int argc, const char **argv, const Command &command) {
     ofstream includedAssemblyListFile(includedAssemblyList);
     ofstream includedAssembliesFile(includedAssemblies);
     includedAssemblyListFile << "Species\tSpecies_Size\tQuery_Assemblies" << endl;
-    for (auto &species : speciesWithMultipleAssemblies) {
+    for (auto &species : selectedSpecies) {
         if (species2assembly[species].size() < 2) {
             cerr << "Error: species " << species << " has less than 2 assemblies." << endl;
             return 1;
@@ -142,7 +157,14 @@ int makeQuerySet(int argc, const char **argv, const Command &command) {
             genusWithMultipleSpecies.push_back(genus.first);
         }
     }
-    cout << "Found " << genusWithMultipleSpecies.size() << " genera with multiple species." << endl;
+    cout << "Found " << genusWithMultipleSpecies.size() << " genera with multiple species. A random quater will be used." << endl;
+
+
+    std::mt19937 rng(0);
+    std::shuffle(genusWithMultipleSpecies.begin(), genusWithMultipleSpecies.end(), rng);
+    std::size_t quater2 = genusWithMultipleSpecies.size() / 4; // floor if odd
+    std::vector<TaxID> selectedGenera(genusWithMultipleSpecies.begin(),
+                                  genusWithMultipleSpecies.begin() + quater2);
 
     // Select two species per genus with multiple species
     string includedSpeciesList = assemblyList + ".speciesInclusionQuerySet";
@@ -150,7 +172,7 @@ int makeQuerySet(int argc, const char **argv, const Command &command) {
     ofstream includedSpeciesListFile(includedSpeciesList);
     ofstream includedSpeciesAssembliesFile(includedSpeciesAssemblies);
     includedSpeciesListFile << "Genus\tGenus_Size\tQuery_Species\tQuery_Assemblies" << endl;
-    for (auto &genus : genusWithMultipleSpecies) {
+    for (auto &genus : selectedGenera) {
         if (genus2species[genus].size() < 2) {
             cerr << "Error: genus " << genus << " has less than 2 species." << endl;
             return 1;
@@ -179,57 +201,57 @@ int makeQuerySet(int argc, const char **argv, const Command &command) {
     includedSpeciesListFile.close();
     includedSpeciesAssembliesFile.close();
 
-    /* Genus inclusion test */
-    cout << "Making query sets for genus inclusion test..." << endl;
-    // Find families with multiple genera
-    vector<TaxID> familyWithMultipleGenera;
-    for (auto &family : family2genus) {
-        if (family.second.size() > 1) {
-            familyWithMultipleGenera.push_back(family.first);
-        }
-    }
-    cout << "Found " << familyWithMultipleGenera.size() << " families with multiple genera." << endl;
-    // Select two genera per family with multiple genera
-    string includedGenusList = assemblyList + ".genusInclusionQuerySet";
-    string includedGenusAssemblies = assemblyList + ".genusInclusionAssemblies";
-    ofstream includedGenusListFile(includedGenusList);
-    ofstream includedGenusAssembliesFile(includedGenusAssemblies);
-    includedGenusListFile << "Family\tFamily_Size\tQuery_Genera\tQuery_Species\tQuery_Assemblies" << endl;
-    for (auto &family : familyWithMultipleGenera) {
-        if (family2genus[family].size() < 2) {
-            cerr << "Error: family " << family << " has less than 2 genera." << endl;
-            return 1;
-        }
-        int idx1 = rand() % family2genus[family].size();
-        int idx2 = rand() % family2genus[family].size();
-        while (idx2 == idx1) {
-            idx2 = rand() % family2genus[family].size();
-        }
-        TaxID genus1 = family2genus[family][idx1];
-        TaxID genus2 = family2genus[family][idx2];
-        if (genus1 == genus2) {
-            cerr << "Error: selected genera are the same for family " << family << endl;
-            return 1;
-        }
-        // Choose one species from each genus
-        int species1Idx = rand() % genus2species[genus1].size();
-        int species2Idx = rand() % genus2species[genus2].size();
-        TaxID species1 = genus2species[genus1][species1Idx];
-        TaxID species2 = genus2species[genus2][species2Idx];
-        // Choose one assembly from each species
-        int assembly1Idx = rand() % species2assembly[species1].size();
-        int assembly2Idx = rand() % species2assembly[species2].size();
-        includedGenusListFile << family << "\t" << family2genus[family].size() << "\t";
-        includedGenusListFile << genus1 << "," << genus2 << "\t";
-        includedGenusListFile << species1 << "," << species2 << "\t";
-        includedGenusListFile << species2assembly[species1][assembly1Idx].name << "," 
-                              << species2assembly[species2][assembly2Idx].name << endl;
+    // /* Genus inclusion test */
+    // cout << "Making query sets for genus inclusion test..." << endl;
+    // // Find families with multiple genera
+    // vector<TaxID> familyWithMultipleGenera;
+    // for (auto &family : family2genus) {
+    //     if (family.second.size() > 1) {
+    //         familyWithMultipleGenera.push_back(family.first);
+    //     }
+    // }
+    // cout << "Found " << familyWithMultipleGenera.size() << " families with multiple genera." << endl;
+    // // Select two genera per family with multiple genera
+    // string includedGenusList = assemblyList + ".genusInclusionQuerySet";
+    // string includedGenusAssemblies = assemblyList + ".genusInclusionAssemblies";
+    // ofstream includedGenusListFile(includedGenusList);
+    // ofstream includedGenusAssembliesFile(includedGenusAssemblies);
+    // includedGenusListFile << "Family\tFamily_Size\tQuery_Genera\tQuery_Species\tQuery_Assemblies" << endl;
+    // for (auto &family : familyWithMultipleGenera) {
+    //     if (family2genus[family].size() < 2) {
+    //         cerr << "Error: family " << family << " has less than 2 genera." << endl;
+    //         return 1;
+    //     }
+    //     int idx1 = rand() % family2genus[family].size();
+    //     int idx2 = rand() % family2genus[family].size();
+    //     while (idx2 == idx1) {
+    //         idx2 = rand() % family2genus[family].size();
+    //     }
+    //     TaxID genus1 = family2genus[family][idx1];
+    //     TaxID genus2 = family2genus[family][idx2];
+    //     if (genus1 == genus2) {
+    //         cerr << "Error: selected genera are the same for family " << family << endl;
+    //         return 1;
+    //     }
+    //     // Choose one species from each genus
+    //     int species1Idx = rand() % genus2species[genus1].size();
+    //     int species2Idx = rand() % genus2species[genus2].size();
+    //     TaxID species1 = genus2species[genus1][species1Idx];
+    //     TaxID species2 = genus2species[genus2][species2Idx];
+    //     // Choose one assembly from each species
+    //     int assembly1Idx = rand() % species2assembly[species1].size();
+    //     int assembly2Idx = rand() % species2assembly[species2].size();
+    //     includedGenusListFile << family << "\t" << family2genus[family].size() << "\t";
+    //     includedGenusListFile << genus1 << "," << genus2 << "\t";
+    //     includedGenusListFile << species1 << "," << species2 << "\t";
+    //     includedGenusListFile << species2assembly[species1][assembly1Idx].name << "," 
+    //                           << species2assembly[species2][assembly2Idx].name << endl;
 
-        includedGenusAssembliesFile << species2assembly[species1][assembly1Idx].name << endl;
-        includedGenusAssembliesFile << species2assembly[species2][assembly2Idx].name << endl;
-    }
-    includedGenusListFile.close();
-    includedGenusAssembliesFile.close();
+    //     includedGenusAssembliesFile << species2assembly[species1][assembly1Idx].name << endl;
+    //     includedGenusAssembliesFile << species2assembly[species2][assembly2Idx].name << endl;
+    // }
+    // includedGenusListFile.close();
+    // includedGenusAssembliesFile.close();
     cout << "Query sets for inclusion tests created." << endl;
     return 0;
 }

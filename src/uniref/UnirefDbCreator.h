@@ -13,7 +13,6 @@
 #include "TaxonomyWrapper.h"
 #include "FileUtil.h"
 #include "UnirefTree.h"
-
 #include "yxml.h"
 
 struct UniRefIdx {

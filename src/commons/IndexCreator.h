@@ -108,6 +108,7 @@ protected:
     const LocalParameters & par;
     bool isUpdating;
     int kmerFormat;
+    int kmerLen;
 
     uint64_t MARKER;
     BaseMatrix *subMat;
@@ -162,8 +163,7 @@ protected:
         Buffer<Kmer> & kmerBuffer,
         const size_t * uniqeKmerIdx, 
         size_t & uniqKmerCnt, 
-        const vector<pair<size_t, size_t>> & uniqKmerIdxRanges,
-        bool writeInfo = true);
+        const vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
 
     void writeDbParameters();
 
@@ -172,6 +172,11 @@ protected:
         std::vector<std::atomic<bool>> & batchChecker,
         size_t &processedSplitCnt,
         const LocalParameters &par);
+    
+    bool extractKmerFromSixFrames(
+        Buffer<Kmer> & kmerBuffer,
+        std::vector<std::atomic<bool>> & batchChecker,
+        size_t &processedBatchCnt);
 
     void indexReferenceSequences(size_t bufferSize);
 
@@ -258,10 +263,7 @@ protected:
                         const std::string & fileList,
                         const std::string & acc2taxIdFileName);
 
-    void getDiffIdx(
-        uint64_t & lastKmer,
-        uint64_t entryToWrite,
-        WriteBuffer<uint16_t> & diffBuffer);
+
 
 public:
     IndexCreator(const LocalParameters & par, TaxonomyWrapper * taxonomy, int kmerFormat);
@@ -282,6 +284,11 @@ public:
         size_t * uniqeKmerIdx,
         size_t & uniqKmerCnt,
         vector<pair<size_t, size_t>> & uniqKmerIdxRanges);
+
+    static void getDiffIdx(
+        uint64_t & lastKmer,
+        uint64_t entryToWrite,
+        WriteBuffer<uint16_t> & diffBuffer);
 
     // Getters
     int getNumOfFlush() const { return numOfFlush; }
