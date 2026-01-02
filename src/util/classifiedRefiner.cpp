@@ -108,12 +108,16 @@ int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, co
 
     if (FileUtil::fileExists(refinedFileName.c_str())) {
         Debug(Debug::INFO) << refinedFileName << " is already exists.\n";
+        delete taxonomy;
+        delete reporter;
         return 0;
     }
     ofstream refinedFile(refinedFileName.c_str());
     
     if (!refinedFile.is_open()) {
         Debug(Debug::ERROR) << "Could not open " << refinedFileName << " for writing\n";
+        delete taxonomy;
+        delete reporter;
         EXIT(EXIT_FAILURE);
     } 
 
@@ -142,6 +146,8 @@ int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, co
 
             if (checktaxId(taxonomy, contamsTaxIds, targetId)) {
                 Debug(Debug::ERROR) << "Excluded taxid is selected : " << target << "\n";
+                delete taxonomy;
+                delete reporter;
                 EXIT(EXIT_FAILURE);
             }
             
@@ -157,6 +163,8 @@ int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, co
             columnsIdx.push_back(stoi(column));
             if (stoi(column) > 7) {
                 Debug(Debug::ERROR) << "Invalid column index: " << column;
+                delete taxonomy;
+                delete reporter;
                 EXIT(EXIT_FAILURE);
             } 
         }
@@ -172,6 +180,8 @@ int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, co
     // check if criterionRank is valid
     if (!criterionRank.empty() && taxonomy->findRankIndex(criterionRank) == -1) {
         Debug(Debug::ERROR) << "Invalid criterion rank: " << criterionRank << ". Rank not found in NcbiRanks.\n";
+        delete taxonomy;
+        delete reporter;
         EXIT(EXIT_FAILURE);
     }
 
@@ -183,6 +193,8 @@ int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, co
         ofstream upperRankFile(upperRankFileName.c_str());        
         if (!upperRankFile.is_open()) {
             Debug(Debug::ERROR) << "Could not open " << upperRankFileName << " for writing\n";
+            delete taxonomy;
+            delete reporter;
             EXIT(EXIT_FAILURE);
         } 
         upperRankFile.close();
@@ -191,8 +203,10 @@ int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, co
     ifstream file(classifiedFile);
     ofstream refinedFileAppend(refinedFileName.c_str(), ios::app); // Append mode for parallel writes
     if (!file.is_open() || !refinedFileAppend.is_open()) {
-    Debug(Debug::ERROR) << "Could not open input or output file\n";
-    EXIT(EXIT_FAILURE);
+        Debug(Debug::ERROR) << "Could not open input or output file\n";
+        delete taxonomy;
+        delete reporter;
+        EXIT(EXIT_FAILURE);
     }
 
     std::string firstLine;
@@ -221,7 +235,7 @@ int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, co
     std::vector<std::string> resultChunk;
     std::vector<std::string> upperRanks;
     
-    #pragma omp parallel default(none) shared(file, refinedFileAppend, taxonomy, extern2intern, contamsTaxIds, targetsTaxIds, columnsIdx, par, totalSeqCnt, resultChunk, taxcntSum,upperRanks, upperRankFileAppend, createUpperRanksFile, criterionRank)
+    #pragma omp parallel default(none) shared(file, refinedFileAppend, cout, taxonomy, extern2intern, contamsTaxIds, targetsTaxIds, columnsIdx, par, totalSeqCnt, resultChunk, taxcntSum,upperRanks, upperRankFileAppend, createUpperRanksFile, criterionRank)
     {
     
         #pragma omp single
@@ -317,9 +331,8 @@ int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, co
                     if (data.fullLineage != "-" && par.selectColumns == "") {
                         columnsIdx.push_back(7);
                     }
-
                     data.taxonomyId = extern2intern[data.taxonomyId];
-                    if (data.fullLineage == "-") {
+                    if (data.fullLineage == "-" && data.isClassified == true) {
                         data.fullLineage = taxonomy->taxLineage2(taxonomy->taxonNode(data.taxonomyId));
                         fields.pop_back();
                         fields.push_back(data.fullLineage);
