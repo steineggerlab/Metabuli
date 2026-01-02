@@ -221,7 +221,7 @@ LocalParameters::LocalParameters() :
                "Tax. ID of clade. -1 for unclassified reads",
                typeid(int),
                (void *) &targetTaxId,
-               "^[0-9]+$"),
+               "^(?:[0-9]+|-1)$"),
         EXTRACT_MODE(EXTRACT_MODE_ID,
                      "--extract-format",
                      "0: original format, 1: FASTA, 2: FASTQ",
