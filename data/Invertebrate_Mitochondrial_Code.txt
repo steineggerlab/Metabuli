@@ -1,0 +1,36 @@
+===BEGIN_CUSTOM_METAMER===
+{
+  "name": "The Invertebrate Mitochondrial Code (transl_table=5)",
+  "length": 8,
+  "code_count": 1,
+  "position_codes": [0, 0, 0, 0, 0, 0, 0, 0],
+  "codes": [
+    {
+      "id": "transl_table=5",
+      "codons": [
+        ["A", ["GCT", "GCC", "GCA", "GCG"]],
+        ["R", ["CGT", "CGC", "CGA", "CGG"]],
+        ["N", ["AAT", "AAC"]],
+        ["D", ["GAT", "GAC"]],
+        ["C", ["TGT", "TGC"]],
+        ["Q", ["CAA", "CAG"]],
+        ["E", ["GAA", "GAG"]],
+        ["G", ["GGT", "GGC", "GGA", "GGG"]],
+        ["H", ["CAT", "CAC"]],
+        ["I", ["ATT", "ATC"]],
+        ["L", ["TTA", "TTG", "CTT", "CTC", "CTA", "CTG"]],
+        ["K", ["AAA", "AAG"]],
+        ["M", ["ATG", "ATA"]],
+        ["F", ["TTT", "TTC"]],
+        ["P", ["CCT", "CCC", "CCA", "CCG"]],
+        ["S", ["TCT", "TCC", "TCA", "TCG", "AGT", "AGC", "AGA", "AGG"]],
+        ["T", ["ACT", "ACC", "ACA", "ACG"]],
+        ["W", ["TGG", "TGA"]],
+        ["Y", ["TAT", "TAC"]],
+        ["V", ["GTT", "GTC", "GTA", "GTG"]],
+        ["X", ["TAA", "TAG"]]
+      ]
+    }
+  ]
+}
+===END_CUSTOM_METAMER===
