@@ -130,11 +130,15 @@ int makeGtdbBenchmarkSet(const LocalParameters & par) {
         family2genus[familyId].push_back(genus.first);
     }
 
+    cout << "Number of total families: " << family2genus.size() << endl;
+
+
     unordered_map<TaxID, vector<TaxID>> order2family;
     for (auto &family : family2genus) {
         TaxID orderId = taxonomy.getTaxIdAtRank(family.first, "order");
         order2family[orderId].push_back(family.first);
     }
+
 
     vector<string> totalExcludedAssemblies;
     vector<string> currentExcludedAssemblies;
@@ -205,14 +209,18 @@ int makeGtdbBenchmarkSet(const LocalParameters & par) {
     ofstream excludedGenusListFile(excludedGenusList);
     // 1. Find families with multiple genera
     vector<TaxID> familyWithMultipleGenera;
+
+    size_t genusNumBeforeExclusion = 0;
     for (auto &family : family2genus) {
+        if (find(excludedFamilies.begin(), excludedFamilies.end(), family.first) != excludedFamilies.end()) {
+            continue;
+        }
+        genusNumBeforeExclusion += family.second.size();
         if (family.second.size() > 1) {
-            if (find(excludedFamilies.begin(), excludedFamilies.end(), family.first) != excludedFamilies.end()) {
-                continue;
-            }
             familyWithMultipleGenera.push_back(family.first);
         }
     }
+    cout << "Number of genera before exclusion: " << genusNumBeforeExclusion << endl;
     excludedGenusListFile << "Families with multiple genera: " << familyWithMultipleGenera.size() << endl;
     // 2. Randomly choose n families with multiple genera without replacement
     n = familyWithMultipleGenera.size() / 3;
@@ -265,6 +273,7 @@ int makeGtdbBenchmarkSet(const LocalParameters & par) {
         }
     }
 
+    cout << "Number of genera with multiple species: " << genusWithMultipleSpecies.size() << endl;
     // Select n genera with multiple species
     n = int(genusWithMultipleSpecies.size() / 3);
     cout << "Excluding " << n << " species" << endl;
@@ -277,7 +286,7 @@ int makeGtdbBenchmarkSet(const LocalParameters & par) {
 
     // For each selected genus, randomly choose one species to exclude
     ofstream excludedSpeciesListFile(excludedSpeciesList);
-    excludedSpeciesListFile << "Genera with multiple species: " << genusWithMultipleSpecies.size() << endl;
+    excludedSpeciesListFile << "Genera with multiple species: " << genusWithMultipleSpecies.size() + selectedGenera.size() << endl;
     excludedSpeciesListFile << "Genus\tGenus_Size\tExcluded_Species\tSpecies_Size\tAssemblies\tQuery_Assembly" << endl;
     vector<string> excludedSpeciesAssemblies;
     for (auto &genus : selectedGenera) {
@@ -334,7 +343,7 @@ int makeGtdbBenchmarkSet(const LocalParameters & par) {
 
     // 3. For each selected species, randomly choose one assembly to exclude    
     ofstream excludedAssemblyListFile(excludedAssemblyList);
-    excludedAssemblyListFile << "Species with multiple assemblies: " << speciesWithMultipleAssemblies.size() << endl;
+    excludedAssemblyListFile << "Species with multiple assemblies: " << speciesWithMultipleAssemblies.size() + selectedSpecies.size() << endl;
     excludedAssemblyListFile << "Species\tSpecies_Size\tExcluded_Assemblies" << endl;
     vector<string> excludedSubspeciesAssemblies;
     for (auto &species : selectedSpecies) {

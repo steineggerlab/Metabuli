@@ -817,6 +817,8 @@ LocalParameters::LocalParameters() :
     makeBenchmarkSet.push_back(&RANDOM_SEED);
     makeBenchmarkSet.push_back(&ASSACC2TAXID);
     makeBenchmarkSet.push_back(&TEST_TYPE);
+
+    mergeAssemblyFiles.push_back(&DB_NAME);
 }
 
 void LocalParameters::printParameters(const std::string &module, int argc, const char* pargv[],

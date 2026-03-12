@@ -298,7 +298,16 @@ std::vector<Command> metabuliCommands = {
                 "Jaebeom Kim <jbeom0731@gmail.com>",
                 "<i: database directory>",
                 CITATION_SPACEPHARER,
-                {{"database directory", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}}
+                {{"database directory", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}},
+        {"mergeAssemblyFiles", mergeAssemblyFiles, &localPar.mergeAssemblyFiles, COMMAND_EXPERT,
+                "Merge multiple assembly accession files into one file",
+                nullptr,
+                "Jaebeom Kim <jbeom0731@gmail.com>",
+                "<i: assembly list file> <o: output file> <i: assembly accession to taxid mapping>",
+                CITATION_SPACEPHARER,
+                {{"Assembly list file", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                 {"Output file", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile},
+                 {"Assembly accession to taxid mapping", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
 };
 
 std::vector<KmerThreshold> externalThreshold = {};

@@ -50,6 +50,7 @@ public:
     std::vector<MMseqsParameter*> buildUnirefTree;
     std::vector<MMseqsParameter*> assignUniref;
     std::vector<MMseqsParameter*> createCommonKmerList;
+    std::vector<MMseqsParameter*> mergeAssemblyFiles;
 
     // UniRef
     PARAMETER(UNIREF_NUMBERS)
