@@ -33,7 +33,10 @@ Taxonomer::Taxonomer(const LocalParameters &par, TaxonomyWrapper *taxonomy, cons
 
 
     maxCodonShift = par.maxShift;
-    dnaShift = maxCodonShift * 3;
+    dnaShift = 3;
+    if (par.syncmer) {
+        dnaShift = (kmerLen - par.smerLen) * 3;
+    }
     // if (par.syncmer) {
     //     dnaShift = (8 - par.smerLen) * 3;
     //     maxCodonShift = 8 - par.smerLen;
@@ -447,18 +450,18 @@ MatchScore Taxonomer::combineMatchPaths(
     // 3. Repeat 2 until no matchPath can be added
     sortMatchPath(matchPaths, matchPathStart);
     MatchScore score;
+    int spanLength = 0;
     for (size_t i = matchPathStart; i < matchPaths.size(); i++) {  
         if (combMatchPathStart == combinedMatchPaths.size()) {
             combinedMatchPaths.push_back(matchPaths[i]);
             score += matchPaths[i].score;
-            score.logE = computeLEM_logE(
-                queryLength,
-                matchPaths[i].start,
-                matchPaths[i].end,
-                dbSize,
-                score.logP);
-            
-            // std::cout << score.logE << std::endl;
+            spanLength += matchPaths[i].end - matchPaths[i].start + 1;
+
+            // score.logE = computeLEM_logE(
+            //     queryLength,
+            //     matchPaths[i].end - matchPaths[i].start + 1,
+            //     dbSize,
+            //     score.logP);
         } else {
             bool isOverlapped = false;
             for (size_t j = combMatchPathStart; j < combinedMatchPaths.size(); j++) {
@@ -477,7 +480,7 @@ MatchScore Taxonomer::combineMatchPaths(
                         isOverlapped = true;
                         break;
                     }
-                    if (matchPaths[i].end - matchPaths[i].start + 1 < 24) { // Current path trimmed too much 
+                    if (matchPaths[i].end - matchPaths[i].start + 1 < windowSize * 3) { // Current path trimmed too much 
                         isOverlapped = true;
                         break;
                     }  
@@ -485,10 +488,18 @@ MatchScore Taxonomer::combineMatchPaths(
             }
             if (!isOverlapped) {
                 combinedMatchPaths.push_back(matchPaths[i]);
-                score += matchPaths[i].score;           
+                score += matchPaths[i].score;     
+                spanLength += matchPaths[i].end - matchPaths[i].start + 1;      
             }
         }
     }
+
+    score.logE = computeLEM_logE(
+        queryLength,
+        spanLength,
+        dbSize,
+        score.logP);
+
     return score;
 }
 
@@ -508,7 +519,7 @@ void Taxonomer::trimMatchPath(
             newPath.hammingDist = max(0, newPath.hammingDist - metamerPattern->hammingDistSum(
                 newPath.endMatch->qKmer.value,
                 newPath.endMatch->tKmer.value,
-                overlapLength/3,
+                overlapLength/3, // (overlapLength + 2) / 3
                 true));
 
             newPath.score -= metamerPattern->calMatchScore(

@@ -473,13 +473,12 @@ size_t readDbSize(const std::string& dbDir);
 
 inline double computeLEM_logE(
     int queryLengthNt,
-    int matchStartNt,
-    int matchEndNt,
+    int spanLengthNt,
     size_t dbSizeNt,
     double logP)
 {
     const double aaQueryLen = queryLengthNt / 3.0;    
-    const double aaMatchLen = (matchEndNt - matchStartNt + 1) / 3.0;
+    const double aaMatchLen = spanLengthNt / 3.0;
     return std::log((aaQueryLen - aaMatchLen + 1) * 6.0) + 
         std::log(dbSizeNt / 3.0) +
         logP;

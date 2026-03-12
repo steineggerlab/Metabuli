@@ -291,7 +291,6 @@ public:
     }
 
     uint8_t hammingDistSum(uint64_t kmer1, uint64_t kmer2, int count, bool fromR) const override;
-    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, const SubstitutionMatrix& matrix) const override;
     MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t validPosMask, const SubstitutionMatrix& matrix, bool fromR = false) const override;
 
     bool checkOverlap(uint64_t kmer1, uint64_t kmer2, int shift) const override {
@@ -368,6 +367,19 @@ public:
         const uint64_t dnaPart1 = kmer1 & dnaMask;
         const uint64_t dnaPart2 = kmer2 & dnaMask;
         return (dnaPart1 >> (bitPerCodon * shift)) == (dnaPart2 & ((1U << (totalDNABits - bitPerCodon * shift)) - 1));
+    }
+
+    uint8_t hammingDistSum(uint64_t kmer1, uint64_t kmer2, int count, bool fromR) const override;
+    uint8_t hammingDistSum(uint64_t kmer1, uint64_t kmer2) const override;
+    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t count, const SubstitutionMatrix& matrix, bool fromR = false) const override;
+    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, const SubstitutionMatrix& matrix) const override;
+
+    void printAA(uint64_t value) const override {
+        return;
+    }
+    
+    void printDNA(uint64_t value) const override {
+        return;
     }
 };
 

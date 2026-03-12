@@ -134,7 +134,7 @@ struct MatchPath {
     
     MatchPath(const Match * startMath, int windowSizeNt) 
         : start(startMath->qKmer.qInfo.pos),
-          end(startMath->qKmer.qInfo.pos + windowSizeNt - 1), // TODO: make it dynamic
+          end(startMath->qKmer.qInfo.pos + windowSizeNt - 1), 
           score(),
           hammingDist(0),
           depth(1),
@@ -145,7 +145,7 @@ struct MatchPath {
     
     MatchPath(const Match * startMatch, MatchScore score, int hammingDist, int kmerLenNt) 
         : start(startMatch->qKmer.qInfo.pos),
-          end(startMatch->qKmer.qInfo.pos + kmerLenNt - 1), // TODO: make it dynamic
+          end(startMatch->qKmer.qInfo.pos + kmerLenNt - 1),
           score(score),
           hammingDist(hammingDist),
           depth(1),
