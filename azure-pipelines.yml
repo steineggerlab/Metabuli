@@ -50,6 +50,8 @@ jobs:
       - script: |
           mkdir build && cd build
           export CC=gcc-11 ; export CXX=g++-11
+          export CFLAGS="-DSIMDE_ENABLE_NATIVE_ALIASES -Wno-error=redundant-decls"
+          export CXXFLAGS="-DSIMDE_ENABLE_NATIVE_ALIASES -Wno-error=redundant-decls"
           if [ "${STATIC}" -eq "1" ]; then
             LIBGOMP=/usr/lib/gcc/x86_64-linux-gnu/11
             cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DFORCE_STATIC_DEPS=1 -DHAVE_TESTS=1 \
