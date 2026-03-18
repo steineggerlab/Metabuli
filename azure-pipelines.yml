@@ -39,7 +39,7 @@ jobs:
         submodules: true
       - script: |
           sudo apt-get update
-          sudo apt-get install -y gcc-11 g++-11 libgcc-11-dev build-essential
+          sudo apt-get install -y gcc-17 g++-17 libgcc-17-dev build-essential
         retryCountOnTaskFailure: "2"
         displayName: Install newer GCC
       - script: |
@@ -49,11 +49,11 @@ jobs:
         condition: eq(variables['MPI'], 1)
       - script: |
           mkdir build && cd build
-          export CC=gcc-11 ; export CXX=g++-11
+          export CC=gcc-17 ; export CXX=g++-17
           export CFLAGS="-DSIMDE_ENABLE_NATIVE_ALIASES -Wno-error=redundant-decls"
           export CXXFLAGS="-DSIMDE_ENABLE_NATIVE_ALIASES -Wno-error=redundant-decls"
           if [ "${STATIC}" -eq "1" ]; then
-            LIBGOMP=/usr/lib/gcc/x86_64-linux-gnu/11
+            LIBGOMP=/usr/lib/gcc/x86_64-linux-gnu/17
             cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DFORCE_STATIC_DEPS=1 -DHAVE_TESTS=1 \
               -DOpenMP_C_FLAGS="-fopenmp -I${LIBGOMP}" -DOpenMP_C_LIB_NAMES=gomp -DOpenMP_CXX_FLAGS="-fopenmp -I${LIBGOMP}" -DOpenMP_CXX_LIB_NAMES=gomp -DOpenMP_gomp_LIBRARY=${LIBGOMP}/libgomp.a \
               -DENABLE_WERROR=0 -DHAVE_${SIMD}=1 -DHAVE_MPI=${MPI} ..
@@ -105,7 +105,7 @@ jobs:
         displayName: Install Toolchain
       - script: |
           mkdir build && cd build
-          LIBGOMP=/usr/lib/gcc-cross/${CPREF}-linux-gnu/11;
+          LIBGOMP=/usr/lib/gcc-cross/${CPREF}-linux-gnu/17;
           CC=${CPREF}-linux-gnu-gcc CXX=${CPREF}-linux-gnu-g++ \
           cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DHAVE_TESTS=1 -DFORCE_STATIC_DEPS=1 \
             -DOpenMP_C_FLAGS="-fopenmp -I${LIBGOMP}" -DOpenMP_C_LIB_NAMES=gomp -DOpenMP_CXX_FLAGS="-fopenmp -I${LIBGOMP}" -DOpenMP_CXX_LIB_NAMES=gomp -DOpenMP_gomp_LIBRARY=${LIBGOMP}/libgomp.a \
