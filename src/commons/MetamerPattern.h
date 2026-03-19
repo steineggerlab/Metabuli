@@ -4,10 +4,6 @@
 #include <iostream>
 #include <vector>
 #include <memory>
-#if defined(__x86_64__) || defined(_M_X64)
-    #include <immintrin.h> // For _pdep_u64
-#endif
-
 #include "SyncmerScanner.h"
 #include "GeneticCode.h"
 #include "SubstitutionMatrix.h"
@@ -36,39 +32,6 @@ int getWeightedPosNum(const std::string & customFile);
 // /* Y */ -3.532, /* Z */ 0
 // };
 
-inline uint64_t pdep_u64(uint64_t source, uint64_t mask) {
-#if defined(__x86_64__) || defined(_M_X64)
-    // 1. FAST PATH: Intel/AMD Hardware Support
-    // This uses the native BMI2 instruction (~1-3 CPU cycles)
-    return _pdep_u64(source, mask);
-#else
-    // 2. FALLBACK: Apple Silicon / ARM / Other
-    // ARM64 does not (yet) have a direct scalar equivalent to PDEP.
-    // We must emulate it. This takes ~20-30 cycles depending on the number of set bits.
-    
-    uint64_t res = 0;
-    // Iterate through all "1" bits in the mask
-    // We assume the source bits are packed at the bottom (0, 1, 2...)
-    uint64_t src_bit = 1; 
-    
-    while (mask) {
-        // Get the lowest set bit in the mask (e.g., 000100 -> 000100)
-        uint64_t lowest = mask & -mask;
-        
-        // If the corresponding bit in source is 1, turn on the bit in result
-        if (source & src_bit) {
-            res |= lowest;
-        }
-        
-        // Move to the next bit in source
-        src_bit <<= 1;
-        
-        // Clear the processed bit from the mask
-        mask ^= lowest;
-    }
-    return res;
-#endif
-}
 
 class MetamerPattern {
 public:
