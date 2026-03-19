@@ -4,6 +4,9 @@ cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 # cmake_policy(SET CMP0060 OLD)
 project(metabuli CXX C)
 
+set(HAVE_AVX512 0 CACHE BOOL "Disable AVX512" FORCE)
+set(ENABLE_AVX512 0 CACHE BOOL "Disable AVX512" FORCE)
+
 if (HAVE_SSE2)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.1")
