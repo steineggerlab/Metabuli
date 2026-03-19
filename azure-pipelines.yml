@@ -55,10 +55,10 @@ jobs:
             
             cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DFORCE_STATIC_DEPS=1 -DHAVE_TESTS=1 \
               -DOpenMP_C_FLAGS="-fopenmp -I${LIBGOMP}" -DOpenMP_C_LIB_NAMES=gomp -DOpenMP_CXX_FLAGS="-fopenmp -I${LIBGOMP}" -DOpenMP_CXX_LIB_NAMES=gomp -DOpenMP_gomp_LIBRARY=${LIBGOMP}/libgomp.a \
-              -DNATIVE_ARCH=0 -DENABLE_WERROR=0 -DHAVE_${SIMD}=1 -DHAVE_MPI=${MPI} ..
+              -DENABLE_WERROR=0 -DHAVE_${SIMD}=1 -DHAVE_MPI=${MPI} ..
           else
             cmake -DHAVE_SANITIZER=1 -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DHAVE_TESTS=1 \
-              -DNATIVE_ARCH=0 -DENABLE_WERROR=0 -DHAVE_${SIMD}=1 -DHAVE_MPI=${MPI} ..
+              -DENABLE_WERROR=0 -DHAVE_${SIMD}=1 -DHAVE_MPI=${MPI} ..
           fi
           make -j $(nproc --all) VERBOSE=1
         displayName: Build Metabuli
