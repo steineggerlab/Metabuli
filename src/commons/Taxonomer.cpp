@@ -975,7 +975,7 @@ void Taxonomer::getMatchPaths2(
                                     validPosMask,
                                     *substitutionMatrix);
 
-                            if (localMatchPaths[curIdx].score.isLargerThan(bestScore, par.scoreMode)) {
+                            if (totalScore.isLargerThan(bestScore, par.scoreMode)) {
                                 bestPath = &localMatchPaths[curIdx];
                                 bestScore = totalScore;
                                 localMatchPaths[nextIdx].historyMask = shiftedHistoryMask | metamerPattern->spaceMask;
