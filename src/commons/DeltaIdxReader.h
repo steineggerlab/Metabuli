@@ -202,6 +202,7 @@ public:
     }
 
     ~DeltaIdxReader() {
+
         delete[] valueBuffer;
     }
 

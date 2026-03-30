@@ -95,13 +95,6 @@ LocalParameters::LocalParameters() :
                  typeid(int),
                  (void *) &seqMode,
                  "[1-3]"),
-        PRECISION_MODE(PRECISION_MODE_ID,
-                    "--precise",
-                    "Use presets for precise mode. 1: short-read, 2: HiFi long-read.",
-                    "Use presets for precise mode. 1: short-read, 2: HiFi long-read.",
-                    typeid(int),
-                    (void *) &precisionMode,
-                    "[0-2]"),
         MIN_SCORE(MIN_SCORE_ID,
                   "--min-score",
                   "Min. sequence similarity score",
@@ -151,20 +144,27 @@ LocalParameters::LocalParameters() :
                   typeid(int),
                   (void *) &printLog,
                   "^[0-9]+$"),
-        MIN_AA_MATCH(MIN_AA_MATCH_ID,
-                     "--min-aa",
-                     "Min. num. of amino acid matches",
-                     "Min. number of amino acid matches for classification",
+        MAX_GAP(MAX_GAP_ID,
+                "--max-gap",
+                "Maximum gap between two consecutive k-mers (used only with spaced k-mer)",
+                "Maximum gap between two consecutive k-mers (used only with spaced k-mer)",
+                typeid(int),
+                (void *) &maxGap,
+                "^[0-9]+$"),
+        MIN_CONS_CNT(MIN_CONS_CNT_ID,
+                     "--min-cons-cnt",
+                     "Min. num. of cons. matches for non-euk. classification",
+                     "Min. number of consecutive matches for prokaryote/virus classification",
                      typeid(int),
-                     (void *) &minAaMatch,
+                     (void *) &minConsCnt,
                      "^[0-9]+$"),
-        MIN_AA_MATCH_EUK(MIN_AA_MATCH_EUK_ID,
-                    "--min-aa-euk",
-                    "Min. num. of amino acid matches for eukaryotes",
-                    "Min. number of amino acid matches for eukaryotic classification",
-                    typeid(int),
-                    (void *) &minAaMatchEuk,
-                    "^[0-9]+$"),
+        MIN_CONS_CNT_EUK(MIN_CONS_CNT_EUK_ID,
+                         "--min-cons-cnt-euk",
+                         "Min. num. of cons. matches for euk. classification",
+                         "Min. number of consecutive matches for eukaryote classification",
+                         typeid(int),
+                         (void *) &minConsCntEuk,
+                         "^[0-9]+$"),
         MATCH_PER_KMER(MATCH_PER_KMER_ID,
                        "--match-per-kmer",
                        "Number of matches per query k-mer. ",
@@ -195,8 +195,8 @@ LocalParameters::LocalParameters() :
                       "[0-1]"),
         MAX_SHIFT(MAX_SHIFT_ID,
                     "--max-shift",
-                    "Max codon shift to link k-mers (Default: auto. Specify to override).",
-                    "Max codon shift to link k-mers (Default: auto. Specify to override).",
+                    "Max triplet shift between two consecutive k-mers (8-smerLen by default)",
+                    "Max triplet shift between two consecutive k-mers (8-smerLen by default)",
                     typeid(int),
                     (void *) &maxShift,
                     "[1-9]"),
@@ -237,8 +237,8 @@ LocalParameters::LocalParameters() :
                         "^[0-9]+$"),
         MAX_E_VALUE(MAX_E_VALUE_ID,
                         "-e",
-                        "Ignore matches with larger E-value (0 to disable)",
-                        "Ignore matches with larger E-value (0 to disable)",
+                        "Ignore matches with larger E-value",
+                        "Ignore matches with larger E-value",
                         typeid(double),
                         (void *) &maxEValue,
                         "^([-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)|[0-9]*(\\.[0-9]+)?$"),
@@ -510,8 +510,8 @@ LocalParameters::LocalParameters() :
                 "^.*$"),
         SELECT_COLUMNS(SELECT_COLUMNS_ID,
                 "--select-columns",
-                "Columns to print (0-based csv)",
-                "Columns to print (0-based csv)",
+                "Select columns with number, (7:full lineage, generated if absent)",
+                "Select columns with number, (7:full lineage, generated if absent)",
                 typeid(std::string),
                 (void *) &selectColumns,
                 "^.*$"),
@@ -549,7 +549,7 @@ LocalParameters::LocalParameters() :
                     "Random seed for random number generation",
                     typeid(int),
                     (void *) &randomSeed,
-                    "^[0-9]+$")
+                    "^[0-9]+$", 0)
   {
     // Initialize the parameters
     // Superkingdom taxonomy id
@@ -561,10 +561,13 @@ LocalParameters::LocalParameters() :
     // Classify
     seqMode = 2;
     minScore = 0;
+    minConsCnt = 4;
     hammingMargin = 0;
     minSpScore = 0;
     ramUsage = 0;
     printLog = 0;
+    maxGap = 0;
+    minConsCntEuk = 0;
     matchPerKmer = 0;
     minSSMatch = 0;
     tieRatio = 0;
@@ -648,6 +651,17 @@ LocalParameters::LocalParameters() :
     createCommonKmerList.push_back(&CDS_INFO);
     createCommonKmerList.push_back(&KMER_FORMAT);
 
+    createCommonKmerList.push_back(&PARAM_THREADS);
+    createCommonKmerList.push_back(&PARAM_MASK_PROBABILTY);
+    createCommonKmerList.push_back(&PARAM_MASK_RESIDUES);
+    createCommonKmerList.push_back(&RAM_USAGE);
+    createCommonKmerList.push_back(&SYNCMER);
+    createCommonKmerList.push_back(&SMER_LEN);
+    createCommonKmerList.push_back(&GTDB);
+    createCommonKmerList.push_back(&CDS_INFO);
+    createCommonKmerList.push_back(&KMER_FORMAT);
+
+
     // updateDB
     updateDB.push_back(&PARAM_THREADS);
     updateDB.push_back(&SPLIT_NUM);
@@ -668,12 +682,11 @@ LocalParameters::LocalParameters() :
     //classify
     classify.push_back(&PARAM_THREADS);
     classify.push_back(&SEQ_MODE);
-    classify.push_back(&PRECISION_MODE);
-    classify.push_back(&MAX_E_VALUE);
     classify.push_back(&MIN_SCORE);
+    classify.push_back(&MIN_CONS_CNT);
+    classify.push_back(&MIN_CONS_CNT_EUK);
     classify.push_back(&MIN_SP_SCORE);
-    classify.push_back(&MIN_AA_MATCH);
-    classify.push_back(&MIN_AA_MATCH_EUK);
+    classify.push_back(&HAMMING_MARGIN);
     classify.push_back(&TAXONOMY_PATH);
     classify.push_back(&PARAM_MASK_RESIDUES);
     classify.push_back(&PARAM_MASK_PROBABILTY);
@@ -689,9 +702,9 @@ LocalParameters::LocalParameters() :
     classify.push_back(&PARAM_SUB_MAT);
     // classify.push_back(&KMER_FORMAT);
     classify.push_back(&PRINT_LOG);
-    // classify.push_back(&PDM_KMER);
-    // classify.push_back(&SCORE_MODE);
-    
+    classify.push_back(&PDM_KMER);
+    classify.push_back(&SCORE_MODE);
+    classify.push_back(&MAX_E_VALUE);
     classify.push_back(&DB_TOTAL_LENGTH);
     classify.push_back(&MAX_SHIFT);
     // classify.push_back(&EM);
@@ -738,7 +751,10 @@ LocalParameters::LocalParameters() :
     filter.push_back(&PARAM_V);
     filter.push_back(&RAM_USAGE);
     filter.push_back(&PRINT_LOG);
+    filter.push_back(&MAX_GAP);
     filter.push_back(&TAXONOMY_PATH);
+    filter.push_back(&MIN_CONS_CNT);
+    filter.push_back(&MIN_CONS_CNT_EUK);
     filter.push_back(&PARAM_MASK_RESIDUES);
     filter.push_back(&PARAM_MASK_PROBABILTY);
     filter.push_back(&MATCH_PER_KMER);
@@ -798,10 +814,6 @@ LocalParameters::LocalParameters() :
     classifiedRefiner.push_back(&HIGHER_RANK_FILE);
     classifiedRefiner.push_back(&PARAM_THREADS);
     classifiedRefiner.push_back(&MIN_SCORE);
-    classifiedRefiner.push_back(&MAX_E_VALUE);
-    classifiedRefiner.push_back(&PRINT_LINEAGE);
-    classifiedRefiner.push_back(&TAXONOMY_PATH);
-
     makeBenchmarkSet.push_back(&RANDOM_SEED);
     makeBenchmarkSet.push_back(&ASSACC2TAXID);
     makeBenchmarkSet.push_back(&TEST_TYPE);

@@ -13,58 +13,43 @@
 using namespace std;
 
 
-int classifiedRefiner(const string &classifiedFile, const LocalParameters &par);
+int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, const LocalParameters &par);
 bool checktaxId(TaxonomyWrapper *taxonomy, const vector <int> &contamIdx, const int &taxonomyId);
 
 struct ClassificationResult {
-    bool isClassified;
-    std::string readId;
-    int taxonomyId;
-    int effectiveReadLength;
-    float dnaIdentityScore;
-    float evalue;               
-    std::string classificationRank;
-    std::string taxIdKmerCounts;
-    std::string fullLineage;
+    bool isClassified;          // Classified or not
+    std::string readId;         // Read ID
+    int taxonomyId;             // Taxonomy identifier
+    int effectiveReadLength;    // Effective read length
+    float dnaIdentityScore;     // DNA level identity score
+    std::string classificationRank; // Classification Rank
+    std::string taxIdKmerCounts;    // List of "taxID : k-mer match count"
+    std::string fullLineage;    // Full lineage (optional, only if fields.size() == 8)
 };
 
-ClassificationResult parseFields(
-    const std::vector<std::string>& fields, 
-    bool hasEvalue,
-    bool hasLineage) 
-{
+ClassificationResult parseFields(const std::vector<std::string>& fields) {
     ClassificationResult result;
 
-    if (fields.size() < 6) return result; 
-    
+    if (fields.size() < 6) {
+        Debug(Debug::INFO) << "Not enough fields in the classification line.\n";
+    }
+
+
     result.isClassified = (fields[0] == "1");
     result.readId = fields[1];
     result.taxonomyId = std::stoi(fields[2]);
     result.effectiveReadLength = std::stoi(fields[3]);
     result.dnaIdentityScore = std::stof(fields[4]);
-
-    int rankIdx = hasEvalue ? 6 : 5;
-    int evalueIdx = hasEvalue ? 5 : -1;
-    if (evalueIdx == 5) {
-        if (fields[evalueIdx] == "-") {
-            result.evalue = -1.0f; 
-        } else {
-            result.evalue = std::stof(fields[evalueIdx]);
-        }
-    }
-    result.classificationRank = fields[rankIdx];
+    result.classificationRank = fields[5];
     
-    if (hasLineage) {
-        result.fullLineage = fields[rankIdx + 1];
-        result.taxIdKmerCounts = fields[rankIdx + 2];
-    } else {
-        result.fullLineage = "-";
-        result.taxIdKmerCounts = fields[rankIdx + 1];
-    }
+    result.taxIdKmerCounts = fields[6];
+    result.fullLineage = fields[7];
+
+
+    
 
     return result;
 }
-
 
 void classifiedRefinerDefault(LocalParameters & par){
     par.removeUnclassified = false;
@@ -75,7 +60,6 @@ void classifiedRefinerDefault(LocalParameters & par){
     par.rank = "";
     par.higherRankFile = 0;
     par.minScore = 0.0;
-    par.maxEValue = 0;
 }
 
 int classifiedRefiner(int argc, const char **argv, const Command &command) {
@@ -95,23 +79,25 @@ int classifiedRefiner(int argc, const char **argv, const Command &command) {
         return 0;
     }
 
-    return classifiedRefiner(classifiedFile, par);
+    return classifiedRefiner(classifiedFile,taxonomyDir, par);
 }
 //unclassified
 //contam extract mode or see only what we want to see
 //fulltaxonomy
 
-int classifiedRefiner(const string &classifiedFile, const LocalParameters &par) {
+int classifiedRefiner(const string &classifiedFile, const string&taxonomyDir, const LocalParameters &par) {
     #ifdef OPENMP
         omp_set_num_threads(par.threads);
     #endif
     
-    const string &dbDir = par.filenames[1];
-    const string &taxonomyDir = par.taxonomyPath;
-    TaxonomyWrapper * taxonomy = loadTaxonomy(dbDir, taxonomyDir);
+    const string & nodesFile = taxonomyDir + "/nodes.dmp";
+    const string & namesFile = taxonomyDir + "/names.dmp";
+    const string & mergedFile = taxonomyDir + "/merged.dmp";
+
+    
+    TaxonomyWrapper *taxonomy = new TaxonomyWrapper(namesFile, nodesFile, mergedFile, true);
     unordered_map<TaxID, TaxID> extern2intern; // for external2internalTaxID
     taxonomy->getExternal2internalTaxID(extern2intern); // fill extern2intern
-    bool useEvalue = (par.maxEValue > 0);
 
     string reportFileName = classifiedFile.substr(0, classifiedFile.find_last_of('.')) + "_refined_report.tsv";
     Reporter * reporter = new Reporter(par, taxonomy,reportFileName);
@@ -137,11 +123,13 @@ int classifiedRefiner(const string &classifiedFile, const LocalParameters &par) 
 
     refinedFile.close();
     
+    //excluding
     // Parse contamIds, targetIds, selected columns
     vector<string> contams;
     vector<TaxID> contamsTaxIds;
     if (!par.excludeTaxid.empty()) {
         contams = Util::split(par.excludeTaxid, ",");
+        // stoi
         for (const string &contam : contams) {
             contamsTaxIds.push_back(extern2intern[stoi(contam)]);
         }
@@ -151,6 +139,7 @@ int classifiedRefiner(const string &classifiedFile, const LocalParameters &par) 
     vector<int> targetsTaxIds;
     if (!par.selectTaxid.empty()) {
         targets = Util::split(par.selectTaxid, ",");
+        // stoi
         for (const string &target : targets) {
             targetsTaxIds.push_back(extern2intern[stoi(target)]);
             const int targetId = extern2intern[stoi(target)];
@@ -169,11 +158,21 @@ int classifiedRefiner(const string &classifiedFile, const LocalParameters &par) 
     vector<int> columnsIdx;
     if (!par.selectColumns.empty()) {
         columns = Util::split(par.selectColumns, ",");
+        // stoi
         for (const auto &column : columns) {
             columnsIdx.push_back(stoi(column));
+            if (stoi(column) > 7) {
+                Debug(Debug::ERROR) << "Invalid column index: " << column;
+                delete taxonomy;
+                delete reporter;
+                EXIT(EXIT_FAILURE);
+            } 
         }
+    } else {
+        columnsIdx = {0,1,2,3,4,5,6};
     }
 
+    // criterionRank process
     std::string criterionRank = par.rank;
     int createUpperRanksFile = par.higherRankFile;
 
@@ -212,8 +211,6 @@ int classifiedRefiner(const string &classifiedFile, const LocalParameters &par) 
 
     std::string firstLine;
     std::getline(file, firstLine);
-    bool hasEvalue = (firstLine.find("e_value") != std::string::npos);
-    bool hasLineage = (firstLine.find("lineage") != std::string::npos);
 
     if (firstLine[0] != '#') {
         file.seekg(0);
@@ -238,10 +235,7 @@ int classifiedRefiner(const string &classifiedFile, const LocalParameters &par) 
     std::vector<std::string> resultChunk;
     std::vector<std::string> upperRanks;
     
-    #pragma omp parallel default(none) shared(file, refinedFileAppend, cout, taxonomy, \
-        extern2intern, contamsTaxIds, targetsTaxIds, columnsIdx, par, totalSeqCnt, \
-        resultChunk, taxcntSum, upperRanks, upperRankFileAppend, \
-        createUpperRanksFile, criterionRank, hasEvalue, hasLineage, useEvalue)
+    #pragma omp parallel default(none) shared(file, refinedFileAppend, cout, taxonomy, extern2intern, contamsTaxIds, targetsTaxIds, columnsIdx, par, totalSeqCnt, resultChunk, taxcntSum,upperRanks, upperRankFileAppend, createUpperRanksFile, criterionRank)
     {
     
         #pragma omp single
@@ -256,11 +250,13 @@ int classifiedRefiner(const string &classifiedFile, const LocalParameters &par) 
             vector<string> chunk;
             string line;
             size_t chunkCnt = 0;
+            std::unordered_map<TaxID, unsigned int> taxcnt;
 
             while (true){
                 chunk.clear();
                 chunkCnt++;
                 for(size_t i = 0; i < CHUNK_SIZE && getline(file, line); ++i) {
+                    
                     totalSeqCnt++;
                     chunk.push_back(line);
                 }
@@ -316,49 +312,37 @@ int classifiedRefiner(const string &classifiedFile, const LocalParameters &par) 
                 
                 std::unordered_map<TaxID, unsigned int> taxCounts;
                 for (size_t localIdx = 0; localIdx < chunk.size(); ++localIdx) {
-                    const string &localLine = chunk[localIdx];
-                    vector<string> fields = Util::split(localLine, "\t");
+                    const string &line = chunk[localIdx];
+                    vector<string> fields = Util::split(line, "\t");
 
-                    size_t matchCountIdx = 6; // 0-based
-                    matchCountIdx += hasEvalue ? 1 : 0;
-                    matchCountIdx += hasLineage ? 1 : 0;
-
-                    // Fill missing fields
-                    while (fields.size() <= matchCountIdx) {
-                        fields.push_back("-"); // taxId:match_count
+            
+                    if (fields.size() == 6) {
+                        fields.push_back("-");
+                        fields.push_back("-");
                     }
             
-                    // 1. Parse fields robustly
-                    ClassificationResult data = parseFields(fields, hasEvalue, hasLineage);
-                    data.taxonomyId = extern2intern[data.taxonomyId];
+                    if (fields.size() == 7) {
+                        fields.push_back("-");
+                    }
 
-                    // 2. Append lineage ONLY if user requested it AND it isn't already in the file
-                    if (par.printLineage && !hasLineage) {
-                        if (data.isClassified) {
-                            data.fullLineage = taxonomy->taxLineage2(taxonomy->taxonNode(data.taxonomyId));
-                        } else {
-                            data.fullLineage = "-";
-                        }
+            
+                    ClassificationResult data = parseFields(fields);
+
+                    if (data.fullLineage != "-" && par.selectColumns == "") {
+                        columnsIdx.push_back(7);
+                    }
+                    data.taxonomyId = extern2intern[data.taxonomyId];
+                    if (data.fullLineage == "-" && data.isClassified == true) {
+                        data.fullLineage = taxonomy->taxLineage2(taxonomy->taxonNode(data.taxonomyId));
+                        fields.pop_back();
                         fields.push_back(data.fullLineage);
                     }
             
-                    // 3. Dynamic Column List Generation
-                    std::vector<int> printCols;
-                    if (!par.selectColumns.empty()) {
-                        printCols = columnsIdx; // Use strictly what the user asked for
-                    } else {
-                        // If no columns were specified, print every field currently in the vector
-                        for (size_t i = 0; i < fields.size(); ++i) {
-                            printCols.push_back(i);
-                        }
-                    }
-
                     // remove unclassified
                     if (!(par.removeUnclassified == true && data.isClassified == false) &&
                         !(contamsTaxIds.size() > 0 && checktaxId(taxonomy, contamsTaxIds, data.taxonomyId)) &&
                         !(targetsTaxIds.size() > 0 && !checktaxId(taxonomy, targetsTaxIds, data.taxonomyId)) && 
-                        !(data.isClassified == true && par.minScore > data.dnaIdentityScore) &&
-                        !(data.isClassified == true && hasEvalue && useEvalue && data.evalue > par.maxEValue)) { 
+                        !(data.isClassified == true && par.minScore > data.dnaIdentityScore)) { 
                         
                         stringstream ss;
                         stringstream tt;
@@ -368,12 +352,12 @@ int classifiedRefiner(const string &classifiedFile, const LocalParameters &par) 
                                 data.taxonomyId = taxonomy->getTaxIdAtRank(data.taxonomyId, criterionRank);
                                 fields[2] = std::to_string(data.taxonomyId);
                                 data.classificationRank = criterionRank;
-                                fields[hasEvalue ? 6 : 5] = data.classificationRank;
+                                fields[5] = data.classificationRank;
                             }else{
                                 if(createUpperRanksFile == 0){continue;}
                                 if(createUpperRanksFile == 2){
-                                    for (size_t i = 0; i < printCols.size(); i++) {
-                                        tt << fields[printCols[i]] << "\t";
+                                    for (size_t i = 0; i < columnsIdx.size(); i++) {
+                                        tt << fields[columnsIdx[i]] << "\t";
                                     }
                                     tt << endl;
                   
@@ -386,16 +370,9 @@ int classifiedRefiner(const string &classifiedFile, const LocalParameters &par) 
                             }
                         }
 
-                        for (size_t i = 0; i < printCols.size(); i++) {
-                            cout << fields[printCols[i]] << "\t";
-                            if (printCols[i] < static_cast<int>(fields.size())) ss << fields[printCols[i]] << "\t";
+                        for (size_t i = 0; i < columnsIdx.size(); i++) {
+                            ss << fields[columnsIdx[i]] << "\t";
                         }
-                        if (par.printLineage && !hasLineage) {
-                            cout << data.fullLineage << "\t";
-                            ss << data.fullLineage << "\t";
-                        }
-
-                        cout << endl;
                         ss << endl;
                         ++taxCounts[data.taxonomyId];
       

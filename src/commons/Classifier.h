@@ -73,8 +73,6 @@ protected:
 
     void loadOriginalResults(const string & classificationFileName, size_t seqNum);
 
-    void preciseModePreset(LocalParameters & par);
-
 public:
     void startClassify(const LocalParameters &par);
 
