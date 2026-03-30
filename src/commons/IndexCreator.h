@@ -110,6 +110,7 @@ protected:
     bool isUpdating;
     int kmerFormat;
     int kmerLen;
+    int windowSize;
 
     uint64_t MARKER;
     BaseMatrix *subMat;

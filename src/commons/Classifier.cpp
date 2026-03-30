@@ -16,9 +16,15 @@ Classifier::Classifier(LocalParameters & par) : par(par) {
     
     taxonomy = loadTaxonomy(dbDir, par.taxonomyPath);
 
+    if (par.precisionMode != 0) {
+        preciseModePreset(par);
+    }
+
     if (kmerFormat == 1) {
         metamerPattern = new LegacyPattern(std::make_unique<RegularGeneticCode>(), 8);
-        cout << "Using legacy k-mer format." << endl;
+        cerr << "Warning: the specified database uses an old k-mer format." << endl;
+        cerr << "   E-value calculation is not supported." << endl;
+        par.maxEValue = 0;
     } else if (!par.customMetamer.empty()) {
         int codeNum = getCodeNum(par.customMetamer);
         if (codeNum == 1) {
@@ -26,6 +32,7 @@ Classifier::Classifier(LocalParameters & par) : par(par) {
                 cout << "Using SingleCodePattern with custom metamer." << endl;
                 metamerPattern = new SingleCodePattern(par.customMetamer);
             } else {
+                cout << "Using SpacedPattern with custom metamer." << endl;
                 uint32_t mask = parseMask(par.spaceMask.c_str());
                 metamerPattern = new SpacedPattern(par.customMetamer, mask);
             }
@@ -57,6 +64,52 @@ Classifier::~Classifier() {
     delete geneticCode;
     delete metamerPattern;
     if (mappingResList) delete[] mappingResList;
+}
+
+void Classifier::preciseModePreset(LocalParameters & par) {
+    uint32_t mask = parseMask(par.spaceMask.c_str());
+    size_t windowSize = par.spaceMask.length();
+    size_t kmerLen = __builtin_popcount(mask);
+
+    float minScoreCp = par.minScore;
+    float minSpScoreCp = par.minSpScore;
+    double maxEValueCp = par.maxEValue;
+
+    if (par.precisionMode == 1) { // short-read preset
+        if (windowSize == kmerLen || kmerLen == 0) {
+            std::cout << "Using short-read presets for contiguous k-mer search: " << std::endl;
+            std::cout << "   --min-score 0.15 --min-sp-score 0.5 -e 0.001" << std::endl;
+            par.minScore = 0.15;
+            par.minSpScore = 0.5;
+            par.maxEValue = 0.001;
+        } else {
+            std::cout << "Using short-read presets for spaced k-mer search: " << std::endl;
+            std::cout << "   --min-score 0.2 --min-sp-score 0.6 -e 0.001" << std::endl;
+            par.minScore = 0.2;
+            par.minSpScore = 0.6;
+            par.maxEValue = 0.001;
+        }
+    } else if (par.precisionMode == 2) { // HiFi long-read preset
+        std::cout << "Using HiFi long-read presets: " << std::endl;
+        std::cout << "   --min-score 0.07 --min-sp-score 0.3 -e 0.001" << std::endl;
+        par.minScore = 0.07;
+        par.minSpScore = 0.3;
+        par.maxEValue = 0.001;
+    }
+
+    if (minScoreCp != 0 && minScoreCp != par.minScore) {
+        std::cout << "Overriding preset --min-score " << par.minScore << " with user specified value " << minScoreCp << std::endl;
+        par.minScore = minScoreCp;
+    }
+    if (minSpScoreCp != 0 && minSpScoreCp != par.minSpScore) {
+        std::cout << "Overriding preset --min-sp-score " << par.minSpScore << " with user specified value " << minSpScoreCp << std::endl;
+        par.minSpScore = minSpScoreCp;
+    }
+    if (maxEValueCp != 0 && maxEValueCp != par.maxEValue) {
+        std::cout << "Overriding preset --e-value " << par.maxEValue << " with user specified value " << maxEValueCp << std::endl;
+        par.maxEValue = maxEValueCp;
+    }
+
 }
 
 uint64_t Classifier::calculateBufferSize(

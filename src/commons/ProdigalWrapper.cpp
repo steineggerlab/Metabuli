@@ -560,3 +560,140 @@ void ProdigalWrapper::getExtendedORFs(struct _gene *genes, struct _node *nodes, 
     free(leftKmerReverse);
     free(rightKmerReverse);
 }
+
+void ProdigalWrapper::getExtendedORFs_fixed(
+    struct _gene *genes, struct _node *nodes, vector<SequenceBlock> &blocks,
+    size_t numOfGene, size_t length,
+    size_t &blockIdx, vector<uint64_t> &intergenicKmerList, const char *seq, int windowSize) 
+{
+
+    // Exceptional case 1: 0 predicted genes
+    if (numOfGene == 0) {
+        blocks.emplace_back(0, length - 1, 1);
+        blockIdx++;
+        return;
+    }
+
+    // Helper lambdas to cleanly handle frame alignment
+    auto alignForward = [](int pos, int frame) {
+        while (pos % 3 != frame) pos++;
+        return pos;
+    };
+    auto alignReverse = [](int pos, int frame) {
+        while (pos % 3 != frame) pos--;
+        return pos;
+    };
+
+    // Exceptional case 2: Only 1 predicted gene
+    if (numOfGene == 1) {
+        if (nodes[genes[0].start_ndx].strand == 1) { // forward
+            int frame = (genes[0].begin - 1) % 3;
+            blocks.emplace_back(alignForward(0, frame), length - 1, 1);
+        } else { // reverse
+            int frame = (genes[0].end - 1) % 3;
+            blocks.emplace_back(0, alignReverse(length - 1, frame), -1);
+        }
+        blockIdx++;
+        return;
+    }
+
+    /* Main routine */
+    bool hasBeenExtendedToLeft = false;
+    const int k = 23;
+
+    // Helper lambda to safely extract k-mers and compute their XXH64 hash
+    auto getSafeKmerHash = [&](int start_pos, bool is_reverse) -> uint64_t {
+        // Prevent buffer underflow/overflow
+        if (start_pos < 0 || start_pos + k > static_cast<int>(length)) {
+            return 0; // Out of bounds, return dummy hash
+        }
+        
+        char kmer[24] = {0}; // 23 chars + null terminator
+        std::memcpy(kmer, seq + start_pos, k);
+        
+        if (is_reverse) {
+            char rev[24] = {0};
+            for (int j = 0; j < k; j++) {
+                rev[k - 1 - j] = iRCT[static_cast<unsigned char>(kmer[j])];
+            }
+            return XXH64(rev, k, 0);
+        }
+        return XXH64(kmer, k, 0);
+    };
+
+    // 1. Extend the FIRST gene to cover intergenic regions
+    if (nodes[genes[0].start_ndx].strand == 1) { // forward
+        int frame = (genes[0].begin - 1) % 3;
+        int rightBound = std::min(static_cast<int>(length - 1), genes[1].begin - 1 + (windowSize - 2));
+        blocks.emplace_back(alignForward(0, frame), rightBound, 1);
+    } else { // reverse
+        int frame = (genes[0].end - 1) % 3;
+        int rightBound = std::min(static_cast<int>(length - 1), genes[1].begin - 1 + (windowSize - 2));
+        blocks.emplace_back(0, alignReverse(rightBound, frame), -1);
+    }
+    blockIdx++;
+
+    // 2. Loop from the SECOND gene all the way to the LAST gene
+    for (size_t geneIdx = 1; geneIdx < numOfGene; geneIdx++) {
+        bool isLastGene = (geneIdx == numOfGene - 1);
+        bool isReverse = (nodes[genes[geneIdx].start_ndx].strand != 1);
+
+        // Safely extract k-mers
+        int leftKmerStart = genes[geneIdx].begin - 1 - k;
+        int rightKmerStart = genes[geneIdx].end;
+        uint64_t leftKmerHash = getSafeKmerHash(leftKmerStart, isReverse);
+        uint64_t rightKmerHash = getSafeKmerHash(rightKmerStart, isReverse);
+
+        // Calculate safe boundaries (prevents negative coordinates and sequence overflows)
+        int defaultLeftBound = std::max(0, genes[geneIdx - 1].end - 1 - (windowSize - 2));
+        int defaultRightBound = isLastGene ? static_cast<int>(length - 1) : 
+                                std::min(static_cast<int>(length - 1), genes[geneIdx + 1].begin - 1 + (windowSize - 2));
+
+        // Check if left kmer exists in the list (only if we didn't go out of bounds)
+        bool extendLeft = (leftKmerStart >= 0) && 
+            (std::find(intergenicKmerList.begin(), intergenicKmerList.end(), leftKmerHash) != intergenicKmerList.end());
+
+        if (extendLeft) { 
+            // Extension to LEFT
+            if (!hasBeenExtendedToLeft) {
+                blocks.emplace_back(genes[geneIdx].begin - 1, genes[geneIdx].end - 1, isReverse ? -1 : 1);
+            } else {
+                if (!isReverse) { // forward
+                    int frame = (genes[geneIdx].begin - 1) % 3;
+                    blocks.emplace_back(alignForward(defaultLeftBound, frame), genes[geneIdx].end - 1, 1);
+                } else { // reverse
+                    blocks.emplace_back(defaultLeftBound, genes[geneIdx].end - 1, -1);
+                }
+            }
+            hasBeenExtendedToLeft = true;
+            
+        } else { 
+            // Extension to RIGHT
+            if (hasBeenExtendedToLeft) {
+                if (!isReverse) { // forward
+                    int frame = (genes[geneIdx].begin - 1) % 3;
+                    blocks.emplace_back(alignForward(defaultLeftBound, frame), defaultRightBound, 1);
+                } else { // reverse
+                    int frame = (genes[geneIdx].end - 1) % 3;
+                    blocks.emplace_back(defaultLeftBound, alignReverse(defaultRightBound, frame), -1);
+                }
+            } else {
+                if (!isReverse) { // forward
+                    blocks.emplace_back(genes[geneIdx].begin - 1, defaultRightBound, 1);
+                } else { // reverse
+                    int frame = (genes[geneIdx].end - 1) % 3;
+                    blocks.emplace_back(genes[geneIdx].begin - 1, alignReverse(defaultRightBound, frame), -1);
+                }
+            }
+            hasBeenExtendedToLeft = false;
+
+            // Update intergenicKmerList (only if we didn't go out of bounds on the right)
+            if (rightKmerStart + k <= static_cast<int>(length)) {
+                if (std::find(intergenicKmerList.begin(), intergenicKmerList.end(), rightKmerHash) == intergenicKmerList.end()) {
+                    intergenicKmerList.push_back(rightKmerHash);
+                }
+            }
+        }
+        blockIdx++;
+    }
+}

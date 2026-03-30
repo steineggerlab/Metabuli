@@ -321,18 +321,22 @@ int hammingDist(const std::string & codon1, const std::string & codon2) {
 }
 
 size_t readDbSize(const std::string& dbDir) {
-    const std::string path = dbDir + "/db.parameters";
-    if (!fileExist(path)) return 0;
+  std::cerr << "Warning: Estimated database size is used for e-value calculation." << std::endl;
+  std::cerr << "   E-value calculation may be inaccurate." << std::endl;
+  std::cerr << "   New DBs have the correct size information, offering accurate e-value calculation." << std::endl;
+  
+  const std::string path = dbDir + "/info";
+  // Get file size
+  struct stat sb;
+  if (stat(path.c_str(), &sb) == -1) {
+    std::cerr << "Cannot get the size of the info file" << std::endl;
+    exit(1);
+  }
+  size_t fileSize = sb.st_size;
+  size_t kmerCnt = fileSize / sizeof(TaxID);
+  size_t dnaLength = kmerCnt * 3;
 
-    std::ifstream file(path);
-    std::string line;
-
-    while (std::getline(file, line)) {
-        auto tokens = Util::split(line, "\t");
-        if (tokens.size() > 1 && tokens[0] == "Total_seq_length")
-            return std::stoull(tokens[1]);
-    }
-    return 0;
+  return dnaLength * 3;  // Multiply by 3 for more conservative estimation.
 }
 
 
@@ -356,4 +360,79 @@ uint32_t safe_left_shift_32(uint32_t value, unsigned int shift) {
         return 0;
     }
     return value << shift;
+}
+
+int getFirstOneAfterFirstZero(uint32_t mask) {
+    // 1. Find the 0-based index of the first '0' from the left (LSB)
+    // By inverting the mask, the first '0' becomes the first '1'
+    int first_zero_idx = __builtin_ctz(~mask);
+
+    // 2. Clear all bits up to and including the first '0'
+    // This creates a search mask looking strictly "after" the first 0
+    uint32_t search_mask = mask & ~((1U << (first_zero_idx + 1)) - 1);
+
+    // Edge case: if there are no 1s after the first 0
+    if (search_mask == 0) return -1; 
+
+    // 3. Find the 0-based index of the first '1' in the remaining bits
+    int first_one_idx = __builtin_ctz(search_mask);
+
+    // 4. Return the 1-based position
+    return first_one_idx;
+}
+
+uint64_t disperseBits(uint64_t source, uint64_t pattern, int chunk_size) {
+    uint64_t result = 0;
+    int result_shift = 0; // Tracks where we are writing in the result
+
+    // Create a mask to extract 'chunk_size' bits (e.g., if chunk_size is 3, mask is 0b111)
+    uint64_t mask = (1ULL << chunk_size) - 1;
+
+    while (pattern > 0) {
+        // If the current right-most bit of the pattern is 1
+        if (pattern & 1) {
+            // 1. Extract the chunk from the source
+            uint64_t chunk = source & mask;
+            
+            // 2. Place it into the result at the correct shifted position
+            result |= (chunk << result_shift);
+            
+            // 3. Shift the source down to prepare the next chunk
+            source >>= chunk_size;
+        }
+        
+        // Move to the next bit in the pattern
+        pattern >>= 1;
+        
+        // Move our writing position in the result forward by the chunk size
+        result_shift += chunk_size;
+        
+    }
+
+    return result;
+}
+
+uint64_t stretchBits(uint64_t pattern, int repeat_count) {
+    uint64_t result = 0;
+    int result_shift = 0; // Tracks where we are writing in the result
+    
+    // Create a block of 1s equal to the repeat_count (e.g., for 3, mask is 0b111)
+    uint64_t ones_chunk = (1ULL << repeat_count) - 1;
+
+    while (pattern > 0) {
+        // If the current right-most bit of the pattern is 1
+        if (pattern & 1) {
+            // Place the chunk of 1s into the result at the current position
+            result |= (ones_chunk << result_shift);
+        }
+        // Note: If the bit is 0, we do nothing, which naturally leaves 0s in the result
+        
+        // Move to the next bit in the pattern
+        pattern >>= 1;
+        
+        // Move our writing position forward by the repeat count
+        result_shift += repeat_count;
+    }
+
+    return result;
 }

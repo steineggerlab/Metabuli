@@ -1229,9 +1229,10 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<Kmer> &kmerBuffer,
                                 // Get extended ORFs
                                 prodigal->getPredictedGenes((unsigned char *) e.sequence.s, e.sequence.l);
                                 prodigal->removeCompletelyOverlappingGenes();
-                                prodigal->getExtendedORFs(prodigal->finalGenes, prodigal->nodes, extendedORFs,
-                                                             prodigal->fng, e.sequence.l,
-                                                        orfNum, intergenicKmers, e.sequence.s);
+                                prodigal->getExtendedORFs_fixed(
+                                    prodigal->finalGenes, prodigal->nodes, extendedORFs,
+                                    prodigal->fng, e.sequence.l,
+                                    orfNum, intergenicKmers, e.sequence.s, metamerPattern->windowSize * 3);
                                 // Get k-mers from extended ORFs
                                 for (size_t orfCnt = 0; orfCnt < orfNum; orfCnt++) {
                                     tempCheck = kmerExtractor->extractTargetKmers(
@@ -1250,9 +1251,10 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<Kmer> &kmerBuffer,
                                 // Get extended ORFs
                                 prodigal->getPredictedGenes((unsigned char *) reverseComplement, e.sequence.l);
                                 prodigal->removeCompletelyOverlappingGenes();
-                                prodigal->getExtendedORFs(prodigal->finalGenes, prodigal->nodes, extendedORFs,
-                                                                 prodigal->fng, e.sequence.l,
-                                                            orfNum, intergenicKmers, reverseComplement);
+                                prodigal->getExtendedORFs_fixed(
+                                    prodigal->finalGenes, prodigal->nodes, extendedORFs,
+                                    prodigal->fng, e.sequence.l,
+                                    orfNum, intergenicKmers, reverseComplement, metamerPattern->windowSize * 3);
 
                                 // Get reverse masked sequence
                                 if (par.maskMode) {

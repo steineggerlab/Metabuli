@@ -13,8 +13,8 @@ class GeneticCode;
 class KmerScanner {
 protected:
     const char * seq;
-    uint32_t seqStart;
-    uint32_t seqEnd;
+    uint32_t seqStart; // Inclusive
+    uint32_t seqEnd;   // Inclusive
     uint32_t seqLen;
     int loadedCharCnt;
     int posStart;

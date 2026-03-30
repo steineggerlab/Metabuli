@@ -7,14 +7,11 @@
 #include "fastq_info.cpp"
 #include "validateDatabase.h"
 
-void setClassifyDefaults(LocalParameters & par){
-    par.useAllMatches = 0;
-    par.maxEValue = 1000;
-    par.spaceMask = "";
+void setClassifyDefaults(LocalParameters & par){    
+    par.maxEValue = 0;
     par.syncmer = 0;
     par.smerLen = 5;
     par.kmerFormat = 1;
-    par.em = false;
     par.maxShift = 1;
     par.skipRedundancy = 0;
     par.validateInput = 0;
@@ -26,16 +23,20 @@ void setClassifyDefaults(LocalParameters & par){
     par.verbosity = 3;
     par.ramUsage = 128;
     par.printLog = 0;
-    par.maxGap = 0;
     par.taxonomyPath = "" ;
-    par.minConsCnt = 4;
-    par.minConsCntEuk = 9;
     par.maskMode = 0;
     par.maskProb = 0.9;
     par.matchPerKmer = 4;
     par.accessionLevel = 0;
     par.tieRatio = 0.95;
     par.printLineage = 0;
+    par.minAaMatch = 11;
+    par.minAaMatchEuk = 16;
+
+    // unexposed experimental parameters
+    par.spaceMask = "";
+    par.useAllMatches = 0;
+    par.em = false;
     par.pdmKmer = 0;
 }
 

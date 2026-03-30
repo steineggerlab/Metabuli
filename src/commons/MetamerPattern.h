@@ -91,6 +91,7 @@ public:
     virtual uint8_t hammingDistSum(uint64_t kmer1, uint64_t kmer2) const  = 0;
     virtual MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t count, const SubstitutionMatrix& matrix, bool fromR = false) const = 0;
     virtual MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, const SubstitutionMatrix& matrix) const = 0;
+    virtual MatchScore calMatchScore(uint64_t aa, uint64_t codon1, uint64_t codon2, uint32_t validPosMask) const = 0;
     // virtual MatchScore calMatchScore2(uint64_t kmer1, uint64_t kmer2, uint32_t validPosMask, const SubstitutionMatrix& matrix) const = 0;
     
     
@@ -99,8 +100,9 @@ public:
     
     virtual void printAA(uint64_t value) const = 0;
     virtual void printDNA(uint64_t value) const = 0;
+    // virtual void printAA(uint64_t value, int len) const = 0;
+    // virtual void printDNA(uint64_t value, int len) const = 0;
     virtual std::string toDnaString(uint64_t value) const = 0;
-    
 };
 
 class SingleCodePattern : public MetamerPattern {
@@ -145,6 +147,7 @@ public:
     uint8_t hammingDistSum(uint64_t kmer1, uint64_t kmer2) const override;
     MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t count, const SubstitutionMatrix& matrix, bool fromR = false) const override;
     MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, const SubstitutionMatrix& matrix) const override;
+    MatchScore calMatchScore(uint64_t aa, uint64_t codon1, uint64_t codon2, uint32_t validPosMask) const override;
 
     bool checkOverlap(uint64_t kmer1, uint64_t kmer2, int shift) const override {
         const uint64_t dnaPart1 = kmer1 & dnaMask;
@@ -170,6 +173,8 @@ public:
             std::cout << geneticCode->aa2codon[aa][codon];
         }
     }
+
+
 
     std::string toDnaString(uint64_t value) const override {
         std::string dnaStr;
@@ -402,6 +407,11 @@ public:
     float hammingDistScore(uint64_t kmer1, uint64_t kmer2, int count, bool fromR) const override;
     uint8_t hammingDistSum(uint64_t kmer1, uint64_t kmer2, int count, bool fromR) const override;
     uint8_t hammingDistSum(uint64_t kmer1, uint64_t kmer2) const override;
+
+    MatchScore calMatchScore(uint64_t aa, uint64_t codon1, uint64_t codon2, uint32_t validPosMask) const override {
+        cerr << "calMatchScore(aa, codon1, codon2) is not implemented for MultiCodePattern." << std::endl;
+        exit(1);
+    }
 
     void printAA(uint64_t value) const override {
         uint64_t aaPart = value >> totalDNABits;

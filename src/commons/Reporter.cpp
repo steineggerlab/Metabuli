@@ -34,7 +34,7 @@ void Reporter::openReadClassificationFile() {
 
 void Reporter::writeReadClassification(const vector<Query> & queryList, bool classifiedOnly) {
     if (isFirstTime) {
-        readClassificationFile << "#is_classified\tname\ttaxID\tquery_length\tscore\trank";
+        readClassificationFile << "#is_classified\tname\ttaxID\tquery_length\tscore\te_value\trank";
         if (par.printLineage) {
             readClassificationFile << "\tlineage";
         }
@@ -55,7 +55,6 @@ void Reporter::writeReadClassification(const vector<Query> & queryList, bool cla
                 << taxonomy->getOriginalTaxID(queryList[i].classification) << "\t"
                 << queryList[i].queryLength + queryList[i].queryLength2 << "\t"
                 << queryList[i].idScore << "\t"
-                << queryList[i].subScore << "\t"
                 << queryList[i].eValue << "\t"
                 << taxonomy->getString(taxonomy->taxonNode(queryList[i].classification)->rankIdx) << "\t";
             
@@ -74,7 +73,6 @@ void Reporter::writeReadClassification(const vector<Query> & queryList, bool cla
                 << taxonomy->getOriginalTaxID(queryList[i].classification) << "\t"
                 << queryList[i].queryLength + queryList[i].queryLength2 << "\t"
                 << queryList[i].idScore << "\t"
-                << "-" << "\t" // subScore
                 << "-" << "\t" // eValue
                 << "-" << "\t";
             

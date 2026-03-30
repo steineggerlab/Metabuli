@@ -1,7 +1,4 @@
 cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
-# keep old policy for setting implicit link libraries
-# zlib causes issues in static builds otherwise
-# cmake_policy(SET CMP0060 OLD)
 project(metabuli CXX C)
 
 # if(MSVC)
