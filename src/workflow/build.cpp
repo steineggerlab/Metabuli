@@ -8,6 +8,7 @@
 #include "validateDatabase.h"
 
 void setDefaults_build(LocalParameters & par) {
+    par.noMaskTaxa = "";
     par.readingFrame = 0;
     par.spaceMask = "";
     par.syncmer = 0;

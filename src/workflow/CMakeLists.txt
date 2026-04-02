@@ -7,4 +7,5 @@ set(workflow_source_files
         workflow/create-unirefdb.cpp
         workflow/create-uniref-tree.cpp
         workflow/assign-uniref.cpp
+        workflow/create-tax-db.cpp
         PARENT_SCOPE)

@@ -8,7 +8,7 @@
 #include "validateDatabase.h"
 
 void setClassifyDefaults(LocalParameters & par){    
-    par.maxEValue = 0;
+    par.maxEValue = 1;
     par.syncmer = 0;
     par.smerLen = 5;
     par.kmerFormat = 1;
@@ -28,7 +28,7 @@ void setClassifyDefaults(LocalParameters & par){
     par.maskProb = 0.9;
     par.matchPerKmer = 4;
     par.accessionLevel = 0;
-    par.tieRatio = 0.95;
+    par.tieRatio = 0.99;
     par.printLineage = 0;
     par.minAaMatch = 11;
     par.minAaMatchEuk = 16;

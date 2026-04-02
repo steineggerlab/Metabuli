@@ -316,6 +316,14 @@ std::vector<Command> metabuliCommands = {
                 {{"Assembly list file", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                  {"Output file", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::flatfile},
                  {"Assembly accession to taxid mapping", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::flatfile}}},
+        {"create-tax-db", createTaxDb, &localPar.createTaxDb, COMMAND_EXPERT,
+                "Create taxonomy database",
+                nullptr,
+                "Jaebeom Kim <jbeom0731@gmail.com>",
+                "<i: taxdump directory> <o: output directory>",
+                CITATION_SPACEPHARER,
+                {{"Taxdump directory", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory},
+                 {"Output directory", DbType::ACCESS_MODE_OUTPUT, DbType::NEED_DATA, &DbValidator::directory}}}
 };
 
 std::vector<KmerThreshold> externalThreshold = {};

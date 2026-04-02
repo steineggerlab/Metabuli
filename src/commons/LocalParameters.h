@@ -51,6 +51,7 @@ public:
     std::vector<MMseqsParameter*> assignUniref;
     std::vector<MMseqsParameter*> createCommonKmerList;
     std::vector<MMseqsParameter*> mergeAssemblyFiles;
+    std::vector<MMseqsParameter*> createTaxDb;
 
     // UniRef
     PARAMETER(UNIREF_NUMBERS)
@@ -122,6 +123,7 @@ public:
     PARAMETER(GTDB)
     PARAMETER(VALIDATE_INPUT)
     PARAMETER(READING_FRAME)
+    PARAMETER(NO_MASK_TAXA)
 
     // DB updated parameters
     PARAMETER(NEW_TAXA)
@@ -223,6 +225,7 @@ public:
     int gtdb;
     int validateInput;
     int readingFrame;
+    std::string noMaskTaxa;
 
     // DB updated parameters
     std::string newTaxa;

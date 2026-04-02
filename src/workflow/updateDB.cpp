@@ -9,6 +9,7 @@
 
 
 void setDefaults_updateDB(LocalParameters & par){
+    par.noMaskTaxa = "";
     par.makeLibrary = 0;
     par.gtdb = 0;
     par.validateInput = 0;

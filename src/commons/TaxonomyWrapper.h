@@ -226,6 +226,15 @@ public:
         }
     }
 
+    bool isAunderB(TaxID taxonA, const std::vector<TaxID> & taxaB) {
+        for (size_t i = 0; i < taxaB.size(); i++) {
+             if (IsAncestor(taxaB[i], taxonA)) {
+                 return true;
+             }
+        }
+        return false;
+    }
+
     int findRankIndex2(const std::string& rank) const {
         if (rank == "no rank") return 0;
         

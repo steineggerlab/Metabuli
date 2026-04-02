@@ -79,7 +79,6 @@ Taxonomer::Taxonomer(const LocalParameters &par, TaxonomyWrapper *taxonomy, cons
     } else {
         useEvalueFilter = false;
     }
-    dbSize = par.dbTotalLength == 0 ? readDbSize(par.filenames[1 + (par.seqMode == 2)]) : par.dbTotalLength;
     // size_t tempSize = 562762599 * 2; // for nr database
 }
 
@@ -286,27 +285,27 @@ TaxonScore Taxonomer::getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpec
     combinedMatchPaths.clear();
     vector<pair<TaxID, MatchScore>> sp2score;
     int queryLength = query.queryLength + query.queryLength2;
-    if (par.printLog==1) {
-        cout << "## " << query.name << " ##" << endl;
-    }
+    // if (par.printLog==1) {
+    //     cout << "## " << query.name << " ##" << endl;
+    // }
     TaxonScore bestScore;
     MatchScore bestSpScore;
     size_t i = offset;
     size_t meaningfulSpecies = 0;
-    if (par.printLog==1) {
-        cout << "## " << query.name << " ##" << endl;
-        for (size_t j = offset; j < end + 1; j++) {
-            metamerPattern->printDNA(matchList[j].qKmer.value);
-            cout << " " ;
-            metamerPattern->printAA(matchList[j].qKmer.value);
-            cout << " | " ;
-            metamerPattern->printDNA(matchList[j].tKmer.value);
-            cout << " " ;
-            metamerPattern->printAA(matchList[j].tKmer.value);
-            cout << " | " << taxonomy->getOriginalTaxID(matchList[j].tKmer.tInfo.taxId) << " " << taxonomy->getOriginalTaxID(matchList[j].tKmer.tInfo.speciesId) << " ";
-            cout << (int) matchList[j].qKmer.qInfo.frame << " " << (int) matchList[j].qKmer.qInfo.pos << endl;
-        }
-    }
+    // if (par.printLog==1) {
+    //     cout << "## " << query.name << " ##" << endl;
+    //     for (size_t j = offset; j < end + 1; j++) {
+    //         metamerPattern->printDNA(matchList[j].qKmer.value);
+    //         cout << " " ;
+    //         metamerPattern->printAA(matchList[j].qKmer.value);
+    //         cout << " | " ;
+    //         metamerPattern->printDNA(matchList[j].tKmer.value);
+    //         cout << " " ;
+    //         metamerPattern->printAA(matchList[j].tKmer.value);
+    //         cout << " | " << taxonomy->getOriginalTaxID(matchList[j].tKmer.tInfo.taxId) << " " << taxonomy->getOriginalTaxID(matchList[j].tKmer.tInfo.speciesId) << " ";
+    //         cout << (int) matchList[j].qKmer.qInfo.frame << " " << (int) matchList[j].qKmer.qInfo.pos << endl;
+    //     }
+    // }
     while (i  < end + 1) {
         TaxID currentSpecies = matchList[i].tKmer.tInfo.speciesId;
         size_t speciesStart = i;
@@ -329,19 +328,19 @@ TaxonScore Taxonomer::getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpec
         }
         size_t pathSize = matchPaths.size();
         // Combine MatchPaths
-        if (par.printLog==1) {
-            if (pathSize > previousPathSize) {
-                cout << "Current species: " << taxonomy->getOriginalTaxID(currentSpecies) << " " << currentSpecies << endl;
-                for (size_t kk = previousPathSize; kk < matchPaths.size(); kk++) {
-                    matchPaths[kk].printMatchPath();
-                }
-            }
-        }
+        // if (par.printLog==1) {
+        //     if (pathSize > previousPathSize) {
+        //         cout << "Current species: " << taxonomy->getOriginalTaxID(currentSpecies) << " " << currentSpecies << endl;
+        //         for (size_t kk = previousPathSize; kk < matchPaths.size(); kk++) {
+        //             matchPaths[kk].printMatchPath();
+        //         }
+        //     }
+        // }
         if (pathSize > previousPathSize) {
             MatchScore score = combineMatchPaths(matchPaths, previousPathSize, combinedMatchPaths, combinedMatchPaths.size(), queryLength);
-            if (par.printLog==1) {   
-                cout << "Combined score: " << score.idScore << " " << score.subScore << endl;
-            }
+            // if (par.printLog==1) {   
+            //     cout << "Combined score: " << score.idScore << " " << score.subScore << endl;
+            // }
             score.idScore = score.idScore / queryLength;
             score.idScore = min(score.idScore, 1.0f);
             if ((score.idScore < par.minScore) || (useEvalueFilter && score.logE > logMaxEValue)) {
@@ -381,7 +380,7 @@ TaxonScore Taxonomer::getBestSpeciesMatches(std::pair<size_t, size_t> & bestSpec
     if (windowSize == kmerLen) {
         myTieRatio = par.tieRatio;
     } else {
-        float diff = 0.05f;
+        float diff = 0.09f;
         myTieRatio = (par.tieRatio - diff) + (bestSpScore.idScore * diff); 
     }
     for (size_t i = 0; i < sp2score.size(); i++) {
@@ -466,12 +465,11 @@ MatchScore Taxonomer::combineMatchPaths(
             combinedMatchPaths.push_back(matchPaths[i]);
             score += matchPaths[i].score;
             spanLength += matchPaths[i].end - matchPaths[i].start + 1;
-
-            // score.logE = computeLEM_logE(
-            //     queryLength,
-            //     matchPaths[i].end - matchPaths[i].start + 1,
-            //     dbSize,
-            //     score.logP);
+            score.logE = computeLEM_logE(
+                queryLength,
+                matchPaths[i].end - matchPaths[i].start + 1,
+                par.dbTotalLength,
+                score.logP);
         } else {
             bool isOverlapped = false;
             for (size_t j = combMatchPathStart; j < combinedMatchPaths.size(); j++) {
@@ -522,11 +520,11 @@ MatchScore Taxonomer::combineMatchPaths(
         }
     }
 
-    score.logE = computeLEM_logE(
-        queryLength,
-        spanLength,
-        dbSize,
-        score.logP);
+    // score.logE = computeLEM_logE(
+    //     queryLength,
+    //     spanLength,
+    //     par.dbTotalLength,
+    //     score.logP);
 
     return score;
 }

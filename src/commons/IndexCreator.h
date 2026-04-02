@@ -116,6 +116,7 @@ protected:
     BaseMatrix *subMat;
     bool removeRedundancyInfo;
     unordered_map<TaxID, TaxID> taxId2speciesId;
+    std::vector<TaxID> taxaNotToMask;
 
     // Inputs
     TaxonomyWrapper * taxonomy = nullptr;

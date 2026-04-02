@@ -389,6 +389,13 @@ LocalParameters::LocalParameters() :
                 typeid(int),
                 (void *) &readingFrame,
                 "^[0-6]$"),
+        NO_MASK_TAXA(NO_MASK_TAXA_ID,
+                "--no-mask-taxa",
+                "Comma-separated tax IDs to not mask low-complexity regions",
+                "Comma-separated tax IDs to not mask low-complexity regions",
+                typeid(std::string),
+                (void *) &noMaskTaxa,
+                "^.*$"),
         NEW_TAXA(NEW_TAXA_ID,
                 "--new-taxa",
                 "TSV file of new taxa to be added",
@@ -637,6 +644,7 @@ LocalParameters::LocalParameters() :
     build.push_back(&PARAM_CUSTOM_METAMER);
     build.push_back(&SPACE_MASK);
     build.push_back(&READING_FRAME);
+    build.push_back(&NO_MASK_TAXA);
 
     createCommonKmerList.push_back(&PARAM_THREADS);
     createCommonKmerList.push_back(&PARAM_MASK_PROBABILTY);
@@ -664,6 +672,7 @@ LocalParameters::LocalParameters() :
     updateDB.push_back(&VALIDATE_INPUT);
     updateDB.push_back(&VALIDATE_DB);
     updateDB.push_back(&SYNCMER);
+    updateDB.push_back(&NO_MASK_TAXA);
 
     //classify
     classify.push_back(&PARAM_THREADS);
@@ -807,6 +816,8 @@ LocalParameters::LocalParameters() :
     makeBenchmarkSet.push_back(&TEST_TYPE);
 
     mergeAssemblyFiles.push_back(&DB_NAME);
+
+    createTaxDb.push_back(&GTDB);
 }
 
 void LocalParameters::printParameters(const std::string &module, int argc, const char* pargv[],

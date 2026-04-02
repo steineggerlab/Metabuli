@@ -85,6 +85,31 @@ TaxonomyWrapper *loadTaxonomy(const std::string &dbDir,
                              false);
 }
 
+TaxonomyWrapper *loadTaxonomyDB(const std::string & taxDbFile) {
+  FILE *handle = fopen(taxDbFile.c_str(), "r");
+  struct stat sb;
+  if (fstat(fileno(handle), &sb) < 0) {
+    Debug(Debug::ERROR) << "Failed to fstat file " << taxDbFile << "\n";
+    EXIT(EXIT_FAILURE);
+  }
+  char *data = (char *)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE,
+                            fileno(handle), 0);
+  if (data == MAP_FAILED) {
+    Debug(Debug::ERROR) << "Failed to mmap file " << taxDbFile << " with error "
+                        << errno << "\n";
+    EXIT(EXIT_FAILURE);
+  }
+  fclose(handle);
+  TaxonomyWrapper *t = TaxonomyWrapper::unserialize(data);
+  if (t != NULL) {
+    t->setMmapData(data, sb.st_size);
+    return t;
+  } else {
+    Debug(Debug::WARNING) << "Outdated taxonomy information, please recreate "
+                             "with createtaxdb.\n";
+  }
+}
+
 int loadDbParameters(LocalParameters &par, const std::string & dbDir) {
   if (fileExist(dbDir + "/db.parameters")) {
     // open db.parameters

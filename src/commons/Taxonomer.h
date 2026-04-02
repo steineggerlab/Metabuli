@@ -53,7 +53,6 @@ private:
     int maxCodonShift;
     int dnaShift;
     // int smerLength;
-    size_t dbSize;
     double logMaxEValue;
     bool useEvalueFilter = false;
 

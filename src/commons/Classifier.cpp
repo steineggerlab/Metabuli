@@ -10,6 +10,9 @@ Classifier::Classifier(LocalParameters & par) : par(par) {
     matchPerKmer = par.matchPerKmer;
     loadDbParameters(par, par.filenames[1 + (par.seqMode == 2)]);
     kmerFormat = par.kmerFormat;
+    if (par.dbTotalLength == 0) {
+        par.dbTotalLength = readDbSize(par.filenames[1 + (par.seqMode == 2)]);
+    }
 
     cout << "Database name : " << par.dbName << endl;
     cout << "Creation date : " << par.dbDate << endl;

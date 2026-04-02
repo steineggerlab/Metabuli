@@ -335,6 +335,8 @@ void process_mem_usage(double& vm_usage, double& resident_set);
 
 TaxonomyWrapper * loadTaxonomy(const std::string & dbDir, const std::string & taxonomyDir = "");
 
+TaxonomyWrapper * loadTaxonomyDB(const std::string & taxDbFile);
+
 int loadDbParameters(LocalParameters & par, const std::string & dbDir);
 
 int searchAccession2TaxID(const std::string & name, const std::unordered_map<std::string, int> & acc2taxid);

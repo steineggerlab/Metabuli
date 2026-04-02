@@ -183,10 +183,6 @@ int getTaxonomyOfAccessions(
     return count;               
 }
 
-void createnewtaxalistDefault(LocalParameters & par) {
-    // par.threads = 16;
-}
-
 
 int createnewtaxalist(int argc, const char **argv, const Command &command) {
     LocalParameters &par = LocalParameters::getLocalInstance();
@@ -318,6 +314,12 @@ int createnewtaxalist(TaxonomyWrapper * oldTaxonomy,
         TaxonNode const* node = newTaxonomy->taxonNode(it.second);
         size_t count = 0;
         while (true) {
+
+            if (newTaxaMap.find(node->taxId) != newTaxaMap.end()) {
+                break; 
+            }
+
+            // If the same name observed, use the same tax ID as the old taxonomy.
             if (usedName2externalTaxid.find(newTaxonomy->getString(node->nameIdx)) != usedName2externalTaxid.end()) {
                 changedTaxIDs[node->taxId] = usedName2externalTaxid[newTaxonomy->getString(node->nameIdx)];
                 break;
@@ -331,14 +333,19 @@ int createnewtaxalist(TaxonomyWrapper * oldTaxonomy,
                 cout << "It is likely that the taxonomy is not correct or the tax ID is not valid." << endl;
                 exit(EXIT_FAILURE);
             }
+
+            // If the tax ID is not observed, add it to the new taxa list.
             if (newTaxaMap.find(node->taxId) == newTaxaMap.end()) {
                 newTaxaMap[node->taxId] = NewTaxon(node->taxId,
                                                    node->parentTaxId, 
                                                    newTaxonomy->getString(node->rankIdx), 
                                                    newTaxonomy->getString(node->nameIdx));
             }
+
             if (usedExternalTaxIDs.find(node->taxId) != usedExternalTaxIDs.end()) {
                 changedTaxIDs[node->taxId] = oldTaxonomy->getSmallestUnusedExternalTaxID(usedExternalTaxIDs);
+            } else {
+                usedExternalTaxIDs.insert(node->taxId);
             }
             node = newTaxonomy->taxonNode(node->parentTaxId);
             count ++;

@@ -67,6 +67,15 @@ IndexCreator::IndexCreator(
     MARKER = ~ metamerPattern->dnaMask;
     isUpdating = false;
     subMat = new NucleotideMatrix(par.scoringMatrixFile.values.nucleotide().c_str(), 1.0, 0.0);
+
+    if (!par.noMaskTaxa.empty()) { 
+        vector<string> taxaNotToMaskStr = Util::split(par.noMaskTaxa, ",");
+        for (const string &taxIdStr : taxaNotToMaskStr) {
+            TaxID taxId = taxonomy->getInternalTaxID(stoi(taxIdStr));
+            taxaNotToMask.push_back(taxId);
+        }
+    }
+
 }
 
 IndexCreator::IndexCreator(
@@ -826,9 +835,9 @@ void IndexCreator::getAccessionBatches(std::vector<Accession> & observedAccessio
         }
     }
 
-    for (size_t i = 0; i < accessionBatches.size(); ++i) {
-        accessionBatches[i].print();
-    }
+    // for (size_t i = 0; i < accessionBatches.size(); ++i) {
+    //     accessionBatches[i].print();
+    // }
 
 }
 
@@ -1117,6 +1126,16 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<Kmer> &kmerBuffer,
                 size_t idx = 0;
                 while (kseq->ReadEntry()) {
                     if (seqCnt == accessionBatches[batchIdx].orders[idx]) {
+                        bool doMasking = par.maskMode;
+                        bool isNotToMask = taxonomy->isAunderB(accessionBatches[batchIdx].taxIDs[idx], taxaNotToMask);
+                        if (isNotToMask) {
+                            #pragma omp critical
+                            {
+                                cout << "Masking is not applied to " << kseq->entry.name.s << " because it belongs to a taxon that is set to be not masked.\n";
+                            }
+                        }
+                        doMasking = doMasking && !isNotToMask;
+
                         if (accessionBatches[batchIdx].taxIDs[idx] == 0) {
                             #pragma omp critical
                             {
@@ -1127,7 +1146,7 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<Kmer> &kmerBuffer,
                         const KSeqWrapper::KSeqEntry & e = kseq->entry;
                         // Mask low complexity regions
                         char *maskedSeq = nullptr;
-                        if (par.maskMode) {
+                        if (doMasking) {
                             maskedSeq = new char[e.sequence.l + 1]; // TODO: reuse the buffer
                             SeqIterator::maskLowComplexityRegions((unsigned char *) e.sequence.s, (unsigned char *) maskedSeq, probMatrix, par.maskProb, subMat);
                             maskedSeq[e.sequence.l] = '\0';
@@ -1257,7 +1276,7 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<Kmer> &kmerBuffer,
                                     orfNum, intergenicKmers, reverseComplement, metamerPattern->windowSize * 3);
 
                                 // Get reverse masked sequence
-                                if (par.maskMode) {
+                                if (doMasking) {
                                     delete[] maskedSeq;
                                     maskedSeq = new char[e.sequence.l + 1];
                                     SeqIterator::maskLowComplexityRegions((unsigned char *) reverseComplement, (unsigned char *) maskedSeq, probMatrix, par.maskProb, subMat);
@@ -1282,7 +1301,7 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<Kmer> &kmerBuffer,
                             }                            
                         }
                         idx++;
-                        if (par.maskMode) {
+                        if (doMasking) {
                             delete[] maskedSeq;
                         }
                         if (idx == accessionBatches[batchIdx].lengths.size()) {
