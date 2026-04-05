@@ -108,7 +108,7 @@ void Classifier::preciseModePreset(LocalParameters & par) {
         std::cout << "Overriding preset --min-sp-score " << par.minSpScore << " with user specified value " << minSpScoreCp << std::endl;
         par.minSpScore = minSpScoreCp;
     }
-    if (maxEValueCp != 0 && maxEValueCp != par.maxEValue) {
+    if (maxEValueCp != 1 && maxEValueCp != par.maxEValue) {
         std::cout << "Overriding preset --e-value " << par.maxEValue << " with user specified value " << maxEValueCp << std::endl;
         par.maxEValue = maxEValueCp;
     }

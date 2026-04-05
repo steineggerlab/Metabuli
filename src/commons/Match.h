@@ -146,13 +146,11 @@ struct MatchPath {
     MatchPath(
         const Match * startMatch,
         MatchScore score, 
-        int hammingDist,
         int kmerLen, 
         int windowLenNt) 
         : start(startMatch->qKmer.qInfo.pos),
           end(startMatch->qKmer.qInfo.pos + windowLenNt - 1),
           score(score),
-          hammingDist(hammingDist),
           coveredPosCnt(kmerLen),
           startMatch(startMatch),
           endMatch(startMatch),
@@ -162,7 +160,7 @@ struct MatchPath {
     int start;                // query coordinate
     int end;                  // query coordinate
     MatchScore score;
-    int hammingDist;
+    int hammingDist = 0;
     int coveredPosCnt;
     const Match * startMatch;
     const Match * endMatch;

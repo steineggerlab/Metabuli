@@ -484,7 +484,8 @@ inline double computeLEM_logE(
 {
     const double aaQueryLen = queryLengthNt / 3.0;    
     const double aaMatchLen = spanLengthNt / 3.0;
-    return std::log((aaQueryLen - aaMatchLen + 1) * 6.0) + 
+    double lenDiff = std::max(0.0, aaQueryLen - aaMatchLen);
+    return std::log((lenDiff + 1) * 6.0) + 
         std::log(dbSizeNt / 3.0) +
         logP;
 }

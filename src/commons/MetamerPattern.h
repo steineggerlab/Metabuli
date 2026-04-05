@@ -85,15 +85,13 @@ public:
     virtual std::vector<std::unique_ptr<KmerScanner>> createScanners(const LocalParameters & par) const = 0;    
 
 
-    virtual float substitutionScore(uint64_t kmer1, uint64_t kmer2, int count, const SubstitutionMatrix& matrix, bool fromR) const = 0;
+    virtual float substitutionScore(uint64_t kmer1, uint64_t kmer2, int count, const SubstitutionMatrix& matrix,bool fromR) const = 0;
     virtual float hammingDistScore(uint64_t kmer1, uint64_t kmer2, int count, bool fromR) const = 0;
     virtual uint8_t hammingDistSum(uint64_t kmer1, uint64_t kmer2, int count, bool fromR) const = 0;
     virtual uint8_t hammingDistSum(uint64_t kmer1, uint64_t kmer2) const  = 0;
-    virtual MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t count, const SubstitutionMatrix& matrix, bool fromR = false) const = 0;
-    virtual MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, const SubstitutionMatrix& matrix) const = 0;
+    virtual MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t count, bool fromR = false) const = 0;
+    virtual MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2) const = 0;
     virtual MatchScore calMatchScore(uint64_t aa, uint64_t codon1, uint64_t codon2, uint32_t validPosMask) const = 0;
-    // virtual MatchScore calMatchScore2(uint64_t kmer1, uint64_t kmer2, uint32_t validPosMask, const SubstitutionMatrix& matrix) const = 0;
-    
     
     
     virtual bool checkOverlap(uint64_t kmer1, uint64_t kmer2, int shift) const = 0;
@@ -145,8 +143,8 @@ public:
     float hammingDistScore(uint64_t kmer1, uint64_t kmer2, int count, bool fromR) const override;
     uint8_t hammingDistSum(uint64_t kmer1, uint64_t kmer2, int count, bool fromR) const override;
     uint8_t hammingDistSum(uint64_t kmer1, uint64_t kmer2) const override;
-    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t count, const SubstitutionMatrix& matrix, bool fromR = false) const override;
-    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, const SubstitutionMatrix& matrix) const override;
+    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t count, bool fromR = false) const override;
+    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2) const override;
     MatchScore calMatchScore(uint64_t aa, uint64_t codon1, uint64_t codon2, uint32_t validPosMask) const override;
 
     bool checkOverlap(uint64_t kmer1, uint64_t kmer2, int shift) const override {
@@ -259,7 +257,7 @@ public:
     }
 
     uint8_t hammingDistSum(uint64_t kmer1, uint64_t kmer2, int count, bool fromR) const override;
-    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t validPosMask, const SubstitutionMatrix& matrix, bool fromR = false) const override;
+    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t validPosMask, bool fromR = false) const override;
 
     bool checkOverlap(uint64_t kmer1, uint64_t kmer2, int shift) const override {
         uint32_t overlapMask = spaceMask & (spaceMask >> shift);
@@ -339,8 +337,8 @@ public:
 
     uint8_t hammingDistSum(uint64_t kmer1, uint64_t kmer2, int count, bool fromR) const override;
     uint8_t hammingDistSum(uint64_t kmer1, uint64_t kmer2) const override;
-    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t count, const SubstitutionMatrix& matrix, bool fromR = false) const override;
-    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, const SubstitutionMatrix& matrix) const override;
+    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t count, bool fromR = false) const override;
+    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2) const override;
 
     void printAA(uint64_t value) const override {
         return;
@@ -401,8 +399,8 @@ public:
         dnaMask = (1ULL << totalDNABits) - 1;
     }
 
-    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t count, const SubstitutionMatrix& matrix, bool fromR = false) const override;
-    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, const SubstitutionMatrix& matrix) const override;
+    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t count, bool fromR = false) const override;
+    MatchScore calMatchScore(uint64_t kmer1, uint64_t kmer2) const override;
     float substitutionScore(uint64_t kmer1, uint64_t kmer2, int count, const SubstitutionMatrix& matrix, bool fromR) const override;
     float hammingDistScore(uint64_t kmer1, uint64_t kmer2, int count, bool fromR) const override;
     uint8_t hammingDistSum(uint64_t kmer1, uint64_t kmer2, int count, bool fromR) const override;

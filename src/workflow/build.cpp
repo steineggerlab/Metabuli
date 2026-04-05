@@ -30,6 +30,7 @@ void setDefaults_build(LocalParameters & par) {
     srand(time(NULL));
     string randStr = to_string(rand());
     par.dbName = randStr.substr(0, 32);
+    par.dbTotalLength = 0;
 }
 
 int build(int argc, const char **argv, const Command &command){

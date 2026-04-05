@@ -9,6 +9,7 @@
 
 
 void setDefaults_updateDB(LocalParameters & par){
+    par.dbTotalLength = 0;
     par.noMaskTaxa = "";
     par.makeLibrary = 0;
     par.gtdb = 0;
@@ -133,8 +134,6 @@ int updateDB(int argc, const char **argv, const Command &command){
 
     // Merge index files
     cout << "Merge new and old DB files " << endl;;
-    int numOfSplits = idxCre.getNumOfFlush();
-
     idxCre.updateTaxId2SpeciesTaxId(newDbDir + "/taxID_list"); 
     idxCre.addFilesToMerge(oldDbDir + "/diffIdx", oldDbDir + "/info");
     idxCre.printFilesToMerge();

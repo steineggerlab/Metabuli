@@ -249,6 +249,13 @@ LocalParameters::LocalParameters() :
                         typeid(int),
                         (void *) &useAllMatches,
                         "[0-1]"),
+        TIE_BRAKER(TIE_BRAKER_ID,
+                 "--priority-taxid",
+                 "Favors these and child taxa instead of LCA in case of a tie. (Comma-separated list of tax IDs.)",
+                 "Favors these and child taxa instead of LCA in case of a tie. (Comma-separated list of tax IDs.)",
+                 typeid(std::string),
+                 (void *) &priorityTaxa,
+                 "^.*$"),
         TARGET_TAX_ID(TARGET_TAX_ID_ID,
                "--tax-id",
                "Tax. ID of clade. -1 for unclassified reads",
@@ -671,7 +678,7 @@ LocalParameters::LocalParameters() :
     updateDB.push_back(&GTDB);
     updateDB.push_back(&VALIDATE_INPUT);
     updateDB.push_back(&VALIDATE_DB);
-    updateDB.push_back(&SYNCMER);
+    // updateDB.push_back(&SYNCMER);
     updateDB.push_back(&NO_MASK_TAXA);
 
     //classify
@@ -698,6 +705,7 @@ LocalParameters::LocalParameters() :
     classify.push_back(&PARAM_SUB_MAT);
     // classify.push_back(&KMER_FORMAT);
     classify.push_back(&PRINT_LOG);
+    classify.push_back(&TIE_BRAKER);
     // classify.push_back(&PDM_KMER);
     // classify.push_back(&SCORE_MODE);
     

@@ -45,8 +45,8 @@ private:
 
     // Parameters from user
     int accessionLevel;
-    int minSSMatch;
     int eukaryotaTaxId;
+    std::vector<TaxID> priorityTaxa;
 
     // Internal
     int denominator;
@@ -108,12 +108,6 @@ private:
         size_t matchNum,
         vector<MatchPath> & matchPaths,
         TaxID speciesId); 
-    
-    void getSpacedMatchPaths2(
-        const Match * matchList,
-        size_t matchNum,
-        vector<MatchPath> & matchPaths,
-        TaxID speciesId); 
 
     MatchPath makeMatchPath(
         const Match * match
@@ -133,6 +127,7 @@ private:
         
     bool isMatchPathOverlapped(const MatchPath & matchPath1, const MatchPath & matchPath2);
     void trimMatchPath(MatchPath & path1, const MatchPath & path2, int overlapLength);
+    bool trimMatchPath2(MatchPath & path1, const MatchPath & path2, int overlapLength);
     bool trimSpacedMatchPath(MatchPath & path1, const MatchPath & path2, int overlapLength);
     void sortMatchPath(std::vector<MatchPath> & matchPaths, size_t i);
 

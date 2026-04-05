@@ -32,6 +32,7 @@ void setClassifyDefaults(LocalParameters & par){
     par.printLineage = 0;
     par.minAaMatch = 11;
     par.minAaMatchEuk = 16;
+    par.priorityTaxa = "";
 
     // unexposed experimental parameters
     par.spaceMask = "";

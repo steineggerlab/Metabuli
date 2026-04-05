@@ -28,6 +28,8 @@ IndexCreator::IndexCreator(
     versionFileName = dbDir + "/db.version";
     paramterFileName = dbDir + "/db.parameters";
 
+    this->totalLength = par.dbTotalLength;
+
     if (kmerFormat == 1) { // Use the legacy metamer pattern
         metamerPattern = new LegacyPattern(std::make_unique<RegularGeneticCode>(), 8);
     } else if (!par.customMetamer.empty()) {
@@ -1360,8 +1362,24 @@ void IndexCreator::writeDbParameters() {
             EXIT(EXIT_FAILURE);
         }
         string line;
+        bool inSection = false;
         while (getline(metamerFile, line)) {
-            fprintf(handle, "%s\n", line.c_str());
+            if (line.empty()) {
+                continue;
+            }
+
+            if (line.find("===BEGIN_CUSTOM_METAMER===") != string::npos) {
+                inSection = true;
+            }
+
+            if (inSection) {            
+               fprintf(handle, "%s\n", line.c_str());
+            }
+
+            // Stop printing AFTER we have printed the END tag
+            if (line.find("===END_CUSTOM_METAMER===") != string::npos) {
+                inSection = false;
+            }
         }
         metamerFile.close();
     }

@@ -95,6 +95,7 @@ public:
     PARAMETER(DB_TOTAL_LENGTH)
     PARAMETER(MAX_E_VALUE)
     PARAMETER(USE_ALL_MATCHES)
+    PARAMETER(TIE_BRAKER)
 
     // extract
     PARAMETER(TARGET_TAX_ID)
@@ -203,6 +204,7 @@ public:
     int useAllMatches;
     int minAaMatch;
     int minAaMatchEuk;
+    std::string priorityTaxa;
     
 
     // Extract

@@ -133,8 +133,7 @@ SingleCodePattern::SingleCodePattern(const std::string & customFile) {
 
 MatchScore SingleCodePattern::calMatchScore(
     uint64_t kmer1, 
-    uint64_t kmer2,
-    const SubstitutionMatrix& matrix) const 
+    uint64_t kmer2) const 
 {
     float idScore = 0.0f;
     // float subScore = 0.0f;
@@ -171,7 +170,6 @@ MatchScore SingleCodePattern::calMatchScore(
     uint64_t kmer1,
     uint64_t kmer2,
     uint32_t count,
-    const SubstitutionMatrix& matrix,
     bool fromR) const 
 {
     float idScore = 0.0f;
@@ -427,7 +425,6 @@ MatchScore SpacedPattern::calMatchScore(
     uint64_t kmer1,
     uint64_t kmer2,
     uint32_t validPosMask,
-    const SubstitutionMatrix& matrix,
     bool fromR) const 
 {
     float idScore = 0.0f;
@@ -585,7 +582,6 @@ MatchScore MultiCodePattern::calMatchScore(
     uint64_t kmer1,
     uint64_t kmer2,
     uint32_t count,
-    const SubstitutionMatrix& matrix,
     bool fromR) const
 {
     float idScore = 0.0f;
@@ -634,8 +630,7 @@ MatchScore MultiCodePattern::calMatchScore(
 
 MatchScore MultiCodePattern::calMatchScore(
     uint64_t kmer1,
-    uint64_t kmer2,
-    const SubstitutionMatrix& matrix) const
+    uint64_t kmer2) const
 {
     float idScore = 0.0f;
     // float subScore = 0.0f;
@@ -824,7 +819,7 @@ uint8_t LegacyPattern::hammingDistSum(uint64_t kmer1, uint64_t kmer2) const {
     return hammingSum;
 
 }
-MatchScore LegacyPattern::calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t count, const SubstitutionMatrix& matrix, bool fromR) const {
+MatchScore LegacyPattern::calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t count, bool fromR) const {
     float idScore = 0.0f;
     int dnaBitSum = (fromR) ? 0 : totalDNABits;
     for (int i = 0; i < count; ++i) {
@@ -837,7 +832,7 @@ MatchScore LegacyPattern::calMatchScore(uint64_t kmer1, uint64_t kmer2, uint32_t
     }
     return {idScore, 0.0f, 0.0};
 }
-MatchScore LegacyPattern::calMatchScore(uint64_t kmer1, uint64_t kmer2, const SubstitutionMatrix& matrix) const {
+MatchScore LegacyPattern::calMatchScore(uint64_t kmer1, uint64_t kmer2) const {
     float idScore = 0.0f;
     const int bCodon = bitPerCodon;
     for (int i = 0; i < kmerLen; ++i) {
