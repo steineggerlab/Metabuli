@@ -1,6 +1,16 @@
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/metabuli/README.html) 
 ![Platform](https://img.shields.io/badge/platform-Mac%20%7C%20Windows%20%7C%20Linux-brightgreen)
 # Metabuli
+
+### Metabuli v1.2.0 is released! Please check [major improvements](https://jaebeom-kim.github.io/metabuli-doc/introduction/improvements/).
+
+### New preprint about v1.2.0 is available [here](https://www.biorxiv.org/content/10.1101/2024.06.17.545419v1).
+
+
+### README outdated! Please check our new documentation page [here](https://jaebeom-kim.github.io/metabuli-doc/).
+
+---
+
 ***Metabuli*** classifies metagenomic reads by comparing them to reference genomes. You can use Metabuli to profile the taxonomic composition of your samples or to detect specific (pathogenic) species. 
 
 ***Sensitive and Specific.*** Metabuli uses a novel k-mer structure, called *metamer*, to analyze both amino acid (AA) and DNA sequences. It leverages AA conservation for sensitive homology detection and DNA mutations for specific differentiation between closely related taxa.
