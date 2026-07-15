@@ -296,12 +296,7 @@ struct WriteBuffer {
     };
 
     ~WriteBuffer() {
-        if (size > 0) {
-            flush();
-        }
-        if (fp) {
-            fclose(fp);
-        }
+        close();
         if (buffer) {
             free(buffer);
         }
@@ -310,6 +305,16 @@ struct WriteBuffer {
     void flush() {
         fwrite(buffer, sizeof(T), size, fp);
         size = 0;
+    }
+
+    void close() {
+        if (fp) {
+            if (size > 0) {
+                flush();
+            }
+            fclose(fp);
+            fp = nullptr;
+        }
     }
 
     void write(T *data, size_t dataNum = 1) {

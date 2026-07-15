@@ -1,5 +1,6 @@
 #include "common.h"
 #include "FileUtil.h"
+#include "InfoIndex.h"
 #include "TaxonomyWrapper.h"
 #include <fstream>
 #include <iostream>
@@ -357,8 +358,11 @@ size_t readDbSize(const std::string& dbDir) {
     std::cerr << "Cannot get the size of the info file" << std::endl;
     exit(1);
   }
+  // New packed DBs store the logical k-mer count in db.parameters because file
+  // size includes padded lanes in the last packed word.
+  InfoIndexMetadata infoMeta = InfoIndex::loadMetadata(path);
   size_t fileSize = sb.st_size;
-  size_t kmerCnt = fileSize / sizeof(TaxID);
+  size_t kmerCnt = infoMeta.isPacked() ? infoMeta.idCount : fileSize / sizeof(TaxID);
   size_t dnaLength = kmerCnt * 3;
 
   return dnaLength * 3;  // Multiply by 3 for more conservative estimation.

@@ -1,6 +1,7 @@
 #include "LocalParameters.h"
 #include "FileUtil.h"
 #include "Debug.h"
+#include "InfoIndex.h"
 #include "Mmap.h"
 
 #include "validateDatabase.h"
@@ -115,11 +116,25 @@ int validateDatabase(const std::string & dbDir) {
             cerr << "Error: info file is empty." << endl;
             return 1;
         }
-        if (fileSize % sizeof(int) != 0) {
-            cerr << "Error: info file size is not a multiple of " << sizeof(int) << "." << endl;
-            return 1;
+        // Packed info files need metadata to distinguish real IDs from padding
+        // in the final uint64 word.
+        InfoIndexMetadata infoMeta = InfoIndex::loadMetadata(infoFileName);
+        size_t kmerIdNum = 0;
+        if (infoMeta.isPacked()) {
+            size_t expectedSize = InfoIndex::packedWordCount(infoMeta.idCount, infoMeta.idBits) * sizeof(uint64_t);
+            if (fileSize != expectedSize) {
+                cerr << "Error: packed info file size is " << fileSize
+                     << " bytes, expected " << expectedSize << " bytes." << endl;
+                return 1;
+            }
+            kmerIdNum = infoMeta.idCount;
+        } else {
+            if (fileSize % sizeof(uint32_t) != 0) {
+                cerr << "Error: info file size is not a multiple of " << sizeof(uint32_t) << "." << endl;
+                return 1;
+            }
+            kmerIdNum = (size_t) fileSize / sizeof(uint32_t);
         }
-        size_t kmerIdNum = (size_t) fileSize / 4 ;
         cout << "Number of k-mer IDs in info file: " << kmerIdNum << endl;
         if (numOfKmersInDiffIdx != kmerIdNum) {
             cerr << "Error: Number of k-mers in diffIdx file (" << numOfKmersInDiffIdx << ") does not match the number of k-mer IDs in info file (" << kmerIdNum << ")." << endl;

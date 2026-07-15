@@ -12,6 +12,7 @@
 
 #include "Kmer.h"
 #include "common.h"
+#include "InfoIndex.h"
 
 #define MEM_SIZE_16MB ((size_t) (16 * 1024 * 1024))
 #define MEM_SIZE_32MB ((size_t) (32 * 1024 * 1024))
@@ -139,26 +140,23 @@ private:
     // To manage delta indices    
     size_t readBufferSize;
     ReadBuffer<uint16_t> deltaIdxBuffer;
-    ReadBuffer<TaxID> infoBuffer;
+    // Reads either the legacy uint32 info stream or the packed final info file.
+    // The interface exposes logical IDs, so split offsets do not change.
+    InfoIndexReader infoReader;
     bool fileCompleted = false;
     bool valueBufferCompleted = false;
 
     void fillValueBuffer() {
         for (; valueCnt < valueBufferSize; ++valueCnt) {
-            if (unlikely(infoBuffer.p == infoBuffer.end)) {
-                size_t readCnt = infoBuffer.loadBuffer();
-                if (readCnt == 0) {
-                    fileCompleted = true;
-                    break;
-                }
-            }
-            valueBuffer[valueCnt].tInfo.taxId = *infoBuffer.p++;
-            valueBuffer[valueCnt].value = getNextMetamer();
-        }
-        if (infoBuffer.p == infoBuffer.end) {
-            if (infoBuffer.loadBuffer() == 0) {
+            uint32_t taxId = 0;
+            if (unlikely(!infoReader.next(taxId))) {
                 fileCompleted = true;
+                break;
             }
+            // ID retrieval is hidden behind InfoIndexReader; packed databases
+            // pay only one shift/mask per ID before the Kmer enters this buffer.
+            valueBuffer[valueCnt].tInfo.taxId = taxId;
+            valueBuffer[valueCnt].value = getNextMetamer();
         }
     }
 
@@ -191,14 +189,13 @@ public:
         valueBufferSize(valueBufferSize), 
         readBufferSize(readBufferSize),
         deltaIdxBuffer(deltaIdxFileName, readBufferSize),
-        infoBuffer(infoFileName, readBufferSize)
+        infoReader(infoFileName, readBufferSize)
     {
         lastValue = 0;
         valueCnt = 0;
         valueBuffer = new Kmer[valueBufferSize];
+        totalValueNum = infoReader.getTotalValueNum();
         fillValueBuffer();
-        // Get the size of infoFile
-        totalValueNum = FileUtil::getFileSize(infoFileName) / sizeof(TaxID);
     }
 
     ~DeltaIdxReader() {
@@ -263,14 +260,18 @@ public:
 
     void setReadPosition(DiffIdxSplit offset) {
         deltaIdxBuffer.loadBufferAt(offset.diffIdxOffset);
-        infoBuffer.loadBufferAt(offset.infoIdxOffset - (offset.ADkmer != 0));
+        // infoIdxOffset is still a logical ID count. Packed readers translate
+        // it to a physical word/lane internally.
+        infoReader.loadAt(offset.infoIdxOffset - (offset.ADkmer != 0));
         if (offset.ADkmer == 0 && offset.diffIdxOffset == 0 && offset.infoIdxOffset == 0) {
             valueCnt = 0;
             lastValue = 0;
         } else {
             lastValue = offset.ADkmer;
             valueBuffer[0].value = lastValue;
-            valueBuffer[0].tInfo.taxId = *infoBuffer.p++;
+            uint32_t taxId = 0;
+            infoReader.next(taxId);
+            valueBuffer[0].tInfo.taxId = taxId;
             valueCnt = 1;
         }
         valueBufferIdx = 0;

@@ -36,6 +36,7 @@ set(commons_source_files
 		commons/KmerScanner.h
 		commons/KmerScanner.cpp
 		commons/DeltaIdxReader.h
+		commons/InfoIndex.h
 		commons/MetamerPattern.h
 		commons/MetamerPattern.cpp
         PARENT_SCOPE)

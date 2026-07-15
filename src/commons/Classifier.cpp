@@ -125,7 +125,7 @@ uint64_t Classifier::calculateBufferSize(
         1024 * 1024 * sizeof(Match) + // local match buffer 32 MB
         1024 * 1024 * 4 * sizeof(Kmer) +  // DeltaIdxReader::valueBuffer 64 MB
         1024 * 1024 * 4 * sizeof(uint16_t) +   // DeltaIdxReader::deltaBuffer 2 MB
-        1024 * 1024 * 4 * sizeof(uint32_t);    // DeltaIdxReader::infoBuffer 4 MB
+        1024 * 1024 * 4 * sizeof(uint32_t);    // DeltaIdxReader::InfoIndexReader byte budget
 
     size_t overhead = 128 * 1024 * 1024; // 128MB
     size_t queryListBytes = queryListSize * (sizeof(Query) + 150); //  104,857,600

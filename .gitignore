@@ -1,6 +1,8 @@
 # Prerequisites
 *.d
 
+util/metabuli
+
 # Compiled Object files
 *.slo
 *.lo
