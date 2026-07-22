@@ -45,6 +45,7 @@ public:
     std::vector<MMseqsParameter*> createnewtaxalist;
     std::vector<MMseqsParameter*> classifiedRefiner;
     std::vector<MMseqsParameter*> validateDatabase;
+    std::vector<MMseqsParameter*> compactInfoIndex;
     std::vector<MMseqsParameter*> makeBenchmarkSet;
     std::vector<MMseqsParameter*> buildUnirefDb;
     std::vector<MMseqsParameter*> buildUnirefTree;

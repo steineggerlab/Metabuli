@@ -9,6 +9,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "common.h"
 
@@ -127,10 +128,58 @@ struct InfoIndex {
                       << " for writing info index metadata\n";
             std::exit(EXIT_FAILURE);
         }
+        writeMetadata(handle, meta);
+        fclose(handle);
+    }
+
+    static void upsertMetadata(const std::string &parameterFileName,
+                               const InfoIndexMetadata &meta) {
+        std::vector<std::string> keptLines;
+        {
+            std::ifstream in(parameterFileName);
+            std::string line;
+            while (std::getline(in, line)) {
+                const size_t tab = line.find('\t');
+                const std::string key = (tab == std::string::npos) ? line : line.substr(0, tab);
+                // Maintenance commands may run more than once. Drop all old info
+                // metadata keys and write one authoritative block at the end.
+                if (!isMetadataKey(key)) {
+                    keptLines.push_back(line);
+                }
+            }
+        }
+
+        const std::string tmpFileName = parameterFileName + ".info.tmp";
+        FILE *handle = fopen(tmpFileName.c_str(), "w");
+        if (handle == nullptr) {
+            std::cerr << "Could not open " << tmpFileName
+                      << " for writing info index metadata\n";
+            std::exit(EXIT_FAILURE);
+        }
+        for (const std::string &line : keptLines) {
+            fprintf(handle, "%s\n", line.c_str());
+        }
+        writeMetadata(handle, meta);
+        fclose(handle);
+
+        if (std::rename(tmpFileName.c_str(), parameterFileName.c_str()) != 0) {
+            std::cerr << "Could not replace " << parameterFileName
+                      << " with updated info index metadata\n";
+            std::exit(EXIT_FAILURE);
+        }
+    }
+
+private:
+    static bool isMetadataKey(const std::string &key) {
+        return key == "Info_format" ||
+               key == "Info_id_bits" ||
+               key == "Info_id_count";
+    }
+
+    static void writeMetadata(FILE *handle, const InfoIndexMetadata &meta) {
         fprintf(handle, "Info_format\t%s\n", meta.format.c_str());
         fprintf(handle, "Info_id_bits\t%u\n", static_cast<unsigned int>(meta.idBits));
         fprintf(handle, "Info_id_count\t%lu\n", static_cast<unsigned long>(meta.idCount));
-        fclose(handle);
     }
 };
 
