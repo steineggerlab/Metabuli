@@ -7,6 +7,8 @@
 #include <string>
 #include <iostream>
 #include <cstdlib>
+#include <cstring>
+#include <memory>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -140,23 +142,173 @@ private:
     // To manage delta indices    
     size_t readBufferSize;
     ReadBuffer<uint16_t> deltaIdxBuffer;
-    // Reads either the legacy uint32 info stream or the packed final info file.
-    // The interface exposes logical IDs, so split offsets do not change.
-    InfoIndexReader infoReader;
+    InfoIndexMetadata infoMetadata;
+    bool infoIsPacked = false;
+    // Only one info buffer is active. Plain DBs keep the old direct TaxID
+    // pointer path; packed DBs decode from uint64 words.
+    std::unique_ptr<ReadBuffer<TaxID>> plainInfoBuffer;
+    std::unique_ptr<ReadBuffer<uint64_t>> packedInfoBuffer;
+    uint8_t packedIdBits = 32;
+    uint8_t packedValuesPerWord = 1;
+    uint64_t packedIdMask = UINT32_MAX;
+    uint64_t packedCurrentWord = 0;
+    uint8_t packedLane = 0;
+    size_t packedReadCount = 0;
     bool fileCompleted = false;
     bool valueBufferCompleted = false;
 
     void fillValueBuffer() {
-        for (; valueCnt < valueBufferSize; ++valueCnt) {
-            uint32_t taxId = 0;
-            if (unlikely(!infoReader.next(taxId))) {
-                fileCompleted = true;
-                break;
+        // Format is chosen once per refill, not once per ID. This keeps legacy
+        // uint32 databases on the same hot path they used before bitpacking.
+        if (unlikely(infoIsPacked)) {
+            switch (packedIdBits) {
+                case 8:  fillValueBufferPacked<8>(); break;
+                case 10: fillValueBufferPacked<10>(); break;
+                case 12: fillValueBufferPacked<12>(); break;
+                case 16: fillValueBufferPacked<16>(); break;
+                case 21: fillValueBufferPacked<21>(); break;
+                default: fillValueBufferPackedGeneric(); break;
             }
-            // ID retrieval is hidden behind InfoIndexReader; packed databases
-            // pay only one shift/mask per ID before the Kmer enters this buffer.
-            valueBuffer[valueCnt].tInfo.taxId = taxId;
+            return;
+        }
+        fillValueBufferPlain();
+    }
+
+    void fillValueBufferPlain() {
+        for (; valueCnt < valueBufferSize; ++valueCnt) {
+            if (unlikely(plainInfoBuffer->p == plainInfoBuffer->end)) {
+                size_t readCnt = plainInfoBuffer->loadBuffer();
+                if (readCnt == 0) {
+                    fileCompleted = true;
+                    break;
+                }
+            }
+            valueBuffer[valueCnt].tInfo.taxId = *plainInfoBuffer->p++;
             valueBuffer[valueCnt].value = getNextMetamer();
+        }
+    }
+
+    template <uint8_t ID_BITS>
+    void fillValueBufferPacked() {
+        static constexpr uint8_t VALUES_PER_WORD = InfoIndex::WORD_BITS / ID_BITS;
+        static constexpr uint64_t ID_MASK = (uint64_t{1} << ID_BITS) - 1;
+
+        while (valueCnt < valueBufferSize && packedReadCount < totalValueNum) {
+            if (unlikely(packedLane >= VALUES_PER_WORD)) {
+                if (unlikely(!loadPackedWord())) {
+                    break;
+                }
+            }
+
+            // Decode all remaining lanes from the current word before touching
+            // the packed input buffer again. ID_BITS is a compile-time constant
+            // in the common formats, so shifts and masks optimize well.
+            while (valueCnt < valueBufferSize &&
+                   packedLane < VALUES_PER_WORD &&
+                   packedReadCount < totalValueNum) {
+                valueBuffer[valueCnt].tInfo.taxId =
+                    static_cast<TaxID>((packedCurrentWord >> (packedLane * ID_BITS)) & ID_MASK);
+                valueBuffer[valueCnt].value = getNextMetamer();
+                ++valueCnt;
+                ++packedLane;
+                ++packedReadCount;
+            }
+        }
+        if (unlikely(packedReadCount >= totalValueNum)) {
+            fileCompleted = true;
+        }
+    }
+
+    void fillValueBufferPackedGeneric() {
+        while (valueCnt < valueBufferSize && packedReadCount < totalValueNum) {
+            if (unlikely(packedLane >= packedValuesPerWord)) {
+                if (unlikely(!loadPackedWord())) {
+                    break;
+                }
+            }
+            while (valueCnt < valueBufferSize &&
+                   packedLane < packedValuesPerWord &&
+                   packedReadCount < totalValueNum) {
+                valueBuffer[valueCnt].tInfo.taxId =
+                    static_cast<TaxID>((packedCurrentWord >> (packedLane * packedIdBits)) & packedIdMask);
+                valueBuffer[valueCnt].value = getNextMetamer();
+                ++valueCnt;
+                ++packedLane;
+                ++packedReadCount;
+            }
+        }
+        if (unlikely(packedReadCount >= totalValueNum)) {
+            fileCompleted = true;
+        }
+    }
+
+    inline bool loadPackedWord() {
+        if (unlikely(packedInfoBuffer->p >= packedInfoBuffer->end)) {
+            if (packedInfoBuffer->loadBuffer() == 0) {
+                fileCompleted = true;
+                return false;
+            }
+        }
+        packedCurrentWord = *packedInfoBuffer->p++;
+        packedLane = 0;
+        return true;
+    }
+
+    void loadPackedInfoAt(size_t logicalOffset) {
+        packedReadCount = logicalOffset;
+        const size_t wordOffset = logicalOffset / packedValuesPerWord;
+        const uint8_t targetLane = logicalOffset % packedValuesPerWord;
+        packedInfoBuffer->loadBufferAt(wordOffset);
+
+        // Starting exactly on a word boundary lets the normal refill path load
+        // the word. Starting inside a word needs that word cached immediately.
+        packedCurrentWord = 0;
+        packedLane = packedValuesPerWord;
+        if (targetLane != 0) {
+            loadPackedWord();
+            packedLane = targetLane;
+        }
+    }
+
+    inline bool readNextPackedIdGeneric(uint32_t &taxId) {
+        if (unlikely(packedReadCount >= totalValueNum)) {
+            return false;
+        }
+        if (unlikely(packedLane >= packedValuesPerWord && !loadPackedWord())) {
+            return false;
+        }
+        taxId = static_cast<uint32_t>((packedCurrentWord >> (packedLane * packedIdBits)) & packedIdMask);
+        ++packedLane;
+        ++packedReadCount;
+        return true;
+    }
+
+    template <uint8_t ID_BITS>
+    inline bool readNextPackedId(uint32_t &taxId) {
+        static constexpr uint8_t VALUES_PER_WORD = InfoIndex::WORD_BITS / ID_BITS;
+        static constexpr uint64_t ID_MASK = (uint64_t{1} << ID_BITS) - 1;
+        if (unlikely(packedReadCount >= totalValueNum)) {
+            return false;
+        }
+        if (unlikely(packedLane >= VALUES_PER_WORD && !loadPackedWord())) {
+            return false;
+        }
+        taxId = static_cast<uint32_t>((packedCurrentWord >> (packedLane * ID_BITS)) & ID_MASK);
+        ++packedLane;
+        ++packedReadCount;
+        return true;
+    }
+
+    bool readNextPackedId(uint32_t &taxId) {
+        // This is used only after a split seek to seed valueBuffer[0]. Bulk
+        // streaming uses fillValueBufferPacked() above.
+        switch (packedIdBits) {
+            case 8:  return readNextPackedId<8>(taxId);
+            case 10: return readNextPackedId<10>(taxId);
+            case 12: return readNextPackedId<12>(taxId);
+            case 16: return readNextPackedId<16>(taxId);
+            case 21: return readNextPackedId<21>(taxId);
+            default: return readNextPackedIdGeneric(taxId);
         }
     }
 
@@ -189,12 +341,28 @@ public:
         valueBufferSize(valueBufferSize), 
         readBufferSize(readBufferSize),
         deltaIdxBuffer(deltaIdxFileName, readBufferSize),
-        infoReader(infoFileName, readBufferSize)
+        infoMetadata(InfoIndex::loadMetadata(infoFileName))
     {
         lastValue = 0;
         valueCnt = 0;
         valueBuffer = new Kmer[valueBufferSize];
-        totalValueNum = infoReader.getTotalValueNum();
+        infoIsPacked = infoMetadata.isPacked();
+        if (infoIsPacked) {
+            packedIdBits = infoMetadata.idBits;
+            packedValuesPerWord = InfoIndex::idsPerWord(packedIdBits);
+            packedIdMask = InfoIndex::maskForBits(packedIdBits);
+            // readBufferSize is historically a count of 32-bit IDs. A half-size
+            // uint64 buffer keeps roughly the same byte budget for packed data.
+            const size_t wordBufferSize = std::max<size_t>(1, readBufferSize / 2);
+            packedInfoBuffer = std::make_unique<ReadBuffer<uint64_t>>(infoFileName,
+                                                                      wordBufferSize);
+            packedLane = packedValuesPerWord;
+            totalValueNum = infoMetadata.idCount;
+        } else {
+            plainInfoBuffer = std::make_unique<ReadBuffer<TaxID>>(infoFileName,
+                                                                  readBufferSize);
+            totalValueNum = FileUtil::getFileSize(infoFileName) / sizeof(TaxID);
+        }
         fillValueBuffer();
     }
 
@@ -259,19 +427,32 @@ public:
     }
 
     void setReadPosition(DiffIdxSplit offset) {
+        // The same reader instance can be reused for multiple query splits.
+        // Seeking must clear EOF state from any previous scan.
+        fileCompleted = false;
+        valueBufferCompleted = false;
         deltaIdxBuffer.loadBufferAt(offset.diffIdxOffset);
-        // infoIdxOffset is still a logical ID count. Packed readers translate
-        // it to a physical word/lane internally.
-        infoReader.loadAt(offset.infoIdxOffset - (offset.ADkmer != 0));
+        const size_t infoOffset = offset.infoIdxOffset - (offset.ADkmer != 0);
+        if (infoIsPacked) {
+            // Split offsets are logical ID counts. Packed files translate that
+            // once at seek time, then stream IDs from the chosen word/lane.
+            loadPackedInfoAt(infoOffset);
+        } else {
+            plainInfoBuffer->loadBufferAt(infoOffset);
+        }
         if (offset.ADkmer == 0 && offset.diffIdxOffset == 0 && offset.infoIdxOffset == 0) {
             valueCnt = 0;
             lastValue = 0;
         } else {
             lastValue = offset.ADkmer;
             valueBuffer[0].value = lastValue;
-            uint32_t taxId = 0;
-            infoReader.next(taxId);
-            valueBuffer[0].tInfo.taxId = taxId;
+            if (infoIsPacked) {
+                uint32_t taxId = 0;
+                readNextPackedId(taxId);
+                valueBuffer[0].tInfo.taxId = static_cast<TaxID>(taxId);
+            } else {
+                valueBuffer[0].tInfo.taxId = *plainInfoBuffer->p++;
+            }
             valueCnt = 1;
         }
         valueBufferIdx = 0;
