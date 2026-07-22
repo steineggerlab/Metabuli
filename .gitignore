@@ -2,6 +2,7 @@
 *.d
 
 util/metabuli
+master_build
 
 # Compiled Object files
 *.slo
