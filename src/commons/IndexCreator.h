@@ -333,7 +333,7 @@ void IndexCreator::mergeTargetFiles() {
     size_t bufferSize = 1024 * 1024 * 512;
     WriteBuffer<uint16_t> diffBuffer(mergedDeltaIdxFileName, bufferSize);
     // Merge output is written as uint32 first. After the stream is complete,
-    // finalizeInfoIndex() packs it using the actual max ID and logical count.
+    // finalizeInfoIndex() either packs it or records the raw uint32 metadata.
     WriteBuffer<uint32_t> infoBuffer(mergedInfoFileName, bufferSize);
     
     // Prepare files to merge
@@ -377,8 +377,8 @@ void IndexCreator::mergeTargetFiles() {
     int remainingSplits = splitNum;
     vector<pair<size_t, size_t>> uniqKmerIdxRanges;
     uint64_t lastKmer = 0;
-    // Track the selected IDs that actually reach disk. This determines the
-    // smallest useful bit width for the final packed info file.
+    // Track the selected IDs that actually reach disk. If packing is enabled,
+    // this determines the smallest useful bit width for the final info file.
     uint32_t maxInfoId = 0;
     auto * uniqKmerIdx = new size_t[kmerBuffer.bufferSize];
     vector<size_t> splitToProcess;
@@ -477,8 +477,8 @@ void IndexCreator::mergeTargetFiles() {
     fclose(diffIdxSplitFile);
     const size_t finalInfoCount = infoBuffer.writeCnt;
     infoBuffer.close();
-    // Packing happens only after close so the converter can stream the complete
-    // uint32 file into a compact replacement.
+    // Finalization happens only after close so optional packing can stream the
+    // complete uint32 file into a compact replacement.
     finalizeInfoIndex(mergedInfoFileName, maxInfoId, finalInfoCount);
     // for(int i = 0; i < par.splitNum; i++) {
     //     cout<<splitList[i].ADkmer<< " "<<splitList[i].diffIdxOffset<< " "<<splitList[i].infoIdxOffset<<endl;

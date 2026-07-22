@@ -126,6 +126,7 @@ public:
     PARAMETER(VALIDATE_INPUT)
     PARAMETER(READING_FRAME)
     PARAMETER(NO_MASK_TAXA)
+    PARAMETER(PACK_INFO)
 
     // DB updated parameters
     PARAMETER(NEW_TAXA)
@@ -229,6 +230,7 @@ public:
     int validateInput;
     int readingFrame;
     std::string noMaskTaxa;
+    int packInfo;
 
     // DB updated parameters
     std::string newTaxa;

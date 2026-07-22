@@ -24,6 +24,7 @@ void setDefaults_build(LocalParameters & par) {
     par.maskProb = 0.9;
     par.maskMode = 1;
     par.accessionLevel = 0;
+    par.packInfo = 1;
     time_t now = time(0);
     tm *ltm = localtime(&now);
     par.dbDate = to_string(1900 + ltm->tm_year) + "-" + to_string(1 + ltm->tm_mon) + "-" + to_string(ltm->tm_mday);
