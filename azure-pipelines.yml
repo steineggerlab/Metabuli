@@ -145,7 +145,7 @@ jobs:
   - job: build_windows
     displayName: Windows
     pool:
-      vmImage: 'windows-2022'
+      vmImage: 'windows-latest'
     variables:
       CYGWIN_ROOT: $(System.Workfolder)\cygwin
       CYGWIN_MIRROR: http://cygwin.mirror.constant.com
