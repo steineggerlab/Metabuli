@@ -20,7 +20,7 @@ size_t UnirefClassifier::calculateBufferSize() {
   size_t bytesPerThread = 2 * 1024 * 1024 * sizeof(Match_AA) // Local match buffer
                         + 1024 * 1024 * sizeof(Kmer)    // DeltaIdxReader::valueBuffer
                         + 1024 * 1024 * sizeof(uint16_t)     // DeltaIdxReader::deltaIdxBuffer
-                        + 1024 * 1024 * sizeof(uint32_t);    // DeltaIdxReader::infoBuffer
+                        + 1024 * 1024 * sizeof(uint32_t);    // DeltaIdxReader::InfoIndexReader byte budget
   
   size_t overhead = 128 * 1024 * 1024;
   size_t queryListBytes = 512 * 1024 * (sizeof(ProteinQuery) + 40);

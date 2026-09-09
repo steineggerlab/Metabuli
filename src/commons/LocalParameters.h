@@ -45,6 +45,7 @@ public:
     std::vector<MMseqsParameter*> createnewtaxalist;
     std::vector<MMseqsParameter*> classifiedRefiner;
     std::vector<MMseqsParameter*> validateDatabase;
+    std::vector<MMseqsParameter*> compactInfoIndex;
     std::vector<MMseqsParameter*> makeBenchmarkSet;
     std::vector<MMseqsParameter*> buildUnirefDb;
     std::vector<MMseqsParameter*> buildUnirefTree;
@@ -125,6 +126,7 @@ public:
     PARAMETER(VALIDATE_INPUT)
     PARAMETER(READING_FRAME)
     PARAMETER(NO_MASK_TAXA)
+    PARAMETER(PACK_INFO)
 
     // DB updated parameters
     PARAMETER(NEW_TAXA)
@@ -228,6 +230,7 @@ public:
     int validateInput;
     int readingFrame;
     std::string noMaskTaxa;
+    int packInfo;
 
     // DB updated parameters
     std::string newTaxa;

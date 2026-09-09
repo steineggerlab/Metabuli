@@ -403,6 +403,13 @@ LocalParameters::LocalParameters() :
                 typeid(std::string),
                 (void *) &noMaskTaxa,
                 "^.*$"),
+        PACK_INFO(PACK_INFO_ID,
+                "--pack-info",
+                "Pack final info index",
+                "Pack final info index. Set to 0 to keep the legacy uint32 info file.",
+                typeid(int),
+                (void *) &packInfo,
+                "[0-1]"),
         NEW_TAXA(NEW_TAXA_ID,
                 "--new-taxa",
                 "TSV file of new taxa to be added",
@@ -592,6 +599,7 @@ LocalParameters::LocalParameters() :
     splitNum = 0;
     bufferSize = 0;
     accessionLevel = 0;
+    packInfo = 1;
 
     // Test parameters
     testRank = "";
@@ -652,6 +660,7 @@ LocalParameters::LocalParameters() :
     build.push_back(&SPACE_MASK);
     build.push_back(&READING_FRAME);
     build.push_back(&NO_MASK_TAXA);
+    build.push_back(&PACK_INFO);
 
     createCommonKmerList.push_back(&PARAM_THREADS);
     createCommonKmerList.push_back(&PARAM_MASK_PROBABILTY);
@@ -680,6 +689,7 @@ LocalParameters::LocalParameters() :
     updateDB.push_back(&VALIDATE_DB);
     // updateDB.push_back(&SYNCMER);
     updateDB.push_back(&NO_MASK_TAXA);
+    updateDB.push_back(&PACK_INFO);
 
     //classify
     classify.push_back(&PARAM_THREADS);

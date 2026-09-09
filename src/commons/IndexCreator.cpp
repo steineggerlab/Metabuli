@@ -898,12 +898,18 @@ void IndexCreator::writeTargetFilesAndSplits(
     uint64_t lastKmer = 0;
     WriteBuffer<uint16_t> diffBuffer(dbDir + "/diffIdx", bufferSize);
     
+    // Single-flush output is first written in the legacy uint32 layout. The
+    // finalization step may compact it once max ID and logical count are known.
     WriteBuffer<uint32_t> infoBuffer(dbDir + "/info", bufferSize); 
+    uint32_t maxInfoId = 0;
     for (size_t i = 0; i < uniqKmerIdxRanges.size(); i ++) {
         for (size_t j = uniqKmerIdxRanges[i].first; j < uniqKmerIdxRanges[i].second; j ++) {
-            infoBuffer.write(&kmerBuffer.buffer[uniqKmerIdx[j]].id);
+            uint32_t infoId = kmerBuffer.buffer[uniqKmerIdx[j]].id;
+            maxInfoId = std::max(maxInfoId, infoId);
+            infoBuffer.write(&infoId);
             getDiffIdx(lastKmer, kmerBuffer.buffer[uniqKmerIdx[j]].value, diffBuffer);
-            // Write split info
+            // Split files use logical ID offsets, so old and packed info files
+            // share the same random-access contract.
             if (AminoAcidPart(lastKmer) != AAofTempSplitOffset && splitCheck == 1) {
                 splitList[splitListIdx++] = {lastKmer, diffBuffer.writeCnt, infoBuffer.writeCnt};
                 splitCheck = 0;
@@ -925,6 +931,11 @@ void IndexCreator::writeTargetFilesAndSplits(
     fwrite(splitList, sizeof(DiffIdxSplit), par.splitNum, deltaIdxSplitFile);
     delete[] splitList;
     fclose(deltaIdxSplitFile);
+
+    const size_t finalInfoCount = infoBuffer.writeCnt;
+    infoBuffer.close();
+    // Finalization replaces dbDir/info with packed storage unless disabled.
+    finalizeInfoIndex(dbDir + "/info", maxInfoId, finalInfoCount);
     
     kmerBuffer.startIndexOfReserve = 0; // Reset the buffer for the next batch
 }
@@ -1333,6 +1344,39 @@ size_t IndexCreator::fillTargetKmerBuffer(Buffer<Kmer> &kmerBuffer,
 }
 
 
+void IndexCreator::writeInfoMetadata() {
+    if (finalInfoMetadata.idCount == 0) {
+        return;
+    }
+    InfoIndex::appendMetadata(paramterFileName, finalInfoMetadata);
+}
+
+void IndexCreator::finalizeInfoIndex(const std::string &infoFileName,
+                                     uint32_t maxInfoId,
+                                     size_t idCount) {
+    if (par.packInfo == 0) {
+        // Keep the legacy uint32 file exactly as written. This is useful for
+        // byte-for-byte compatibility tests and for users who want old DB layout.
+        finalInfoMetadata.format = "uint32";
+        finalInfoMetadata.idBits = 32;
+        finalInfoMetadata.idCount = idCount;
+        writeInfoMetadata();
+        cout << "Info index format    : " << finalInfoMetadata.format
+             << " (" << static_cast<int>(finalInfoMetadata.idBits)
+             << " bits, " << finalInfoMetadata.idCount << " IDs)" << endl;
+        return;
+    }
+
+    // The final bit width is derived from the IDs that survived filtering/LCA,
+    // not from taxonomy size estimates.
+    finalInfoMetadata = InfoIndex::makeMetadata(maxInfoId, idCount);
+    packInfoFileInPlace(infoFileName, finalInfoMetadata);
+    writeInfoMetadata();
+    cout << "Info index format    : " << finalInfoMetadata.format
+         << " (" << static_cast<int>(finalInfoMetadata.idBits)
+         << " bits, " << finalInfoMetadata.idCount << " IDs)" << endl;
+}
+
 void IndexCreator::writeDbParameters() {
     FILE *handle = fopen(paramterFileName.c_str(), "w");
     if (handle == NULL) {
@@ -1353,6 +1397,11 @@ void IndexCreator::writeDbParameters() {
     }
     fprintf(handle, "Kmer_format\t%d\n", kmerFormat);
     fprintf(handle, "Total_seq_length\t%lu\n", totalLength);
+    if (finalInfoMetadata.idCount > 0) {
+        fprintf(handle, "Info_format\t%s\n", finalInfoMetadata.format.c_str());
+        fprintf(handle, "Info_id_bits\t%u\n", static_cast<unsigned int>(finalInfoMetadata.idBits));
+        fprintf(handle, "Info_id_count\t%lu\n", static_cast<unsigned long>(finalInfoMetadata.idCount));
+    }
 
     if (!par.customMetamer.empty()) {
         // Read the custom metamer file and write to parameter file

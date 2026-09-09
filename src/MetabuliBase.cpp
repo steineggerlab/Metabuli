@@ -257,6 +257,13 @@ std::vector<Command> metabuliCommands = {
                 "<i: database directory>",
                 CITATION_SPACEPHARER,
                 {{"database directory", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}},
+        {"compact-info", compactInfoIndex, &localPar.compactInfoIndex, COMMAND_DATABASE_CREATION,
+                "Compact an existing database info index",
+                nullptr,
+                "Jaebeom Kim <jbeom0731@gmail.com>",
+                "<i: database directory>",
+                CITATION_SPACEPHARER,
+                {{"database directory", DbType::ACCESS_MODE_INPUT, DbType::NEED_DATA, &DbValidator::directory}}},
         {"inspect-db", inspect_db, &localPar.validateDatabase,COMMAND_EXPERT,
                 "Inspect a database",
                 nullptr,
@@ -362,5 +369,4 @@ std::vector<DatabaseDownload> externalDownloads = {
                 {}
         }
 };
-
 

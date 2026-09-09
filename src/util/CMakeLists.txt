@@ -17,6 +17,7 @@ set(util_source_files
         util/createnewtaxalist.h
         util/classifiedRefiner.cpp
         util/validateDatabase.cpp
+        util/compactInfoIndex.cpp
         util/validateDatabase.h
         util/printDeltaIdx.cpp
         util/count_common_kmers.cpp
