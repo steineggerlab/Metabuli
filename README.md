@@ -2,7 +2,7 @@
 ![Platform](https://img.shields.io/badge/platform-Mac%20%7C%20Windows%20%7C%20Linux-brightgreen)
 # Metabuli
 
-### [Documentation/Manual](https://jaebeom-kim.github.io/metabuli-doc/).
+### [Documentation / Databases / Manual](https://jaebeom-kim.github.io/metabuli-doc/).
 
 ### Metabuli v1.2.0 is released! Please check [major improvements](https://jaebeom-kim.github.io/metabuli-doc/introduction/improvements/).
 
